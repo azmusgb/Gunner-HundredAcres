@@ -154,57 +154,144 @@
             40% { transform: scale(1); }
         }
 
-        /* ===== IMMERSIVE NAVIGATION ===== */
-        .main-nav {
+        /* ===== IMMERSIVE LEFT SIDEBAR NAVIGATION ===== */
+        .sidebar-nav {
             position: fixed;
-            top: 20px;
-            left: 50%;
-            transform: translateX(-50%);
-            background: url('data:image/svg+xml,<svg xmlns="http://www.w3.org/2000/svg" width="100" height="50" viewBox="0 0 100 50"><path d="M0,0 L100,0 L85,50 L15,50 Z" fill="%23FFC42B"/></svg>') no-repeat center top;
-            background-size: 100% 100%;
-            border-radius: 0 0 20px 20px;
-            padding: 30px 24px 15px;
-            box-shadow: 0 8px 32px rgba(0,0,0,0.1);
+            top: 0;
+            left: 0;
+            width: 280px;
+            height: 100vh;
+            background: 
+                linear-gradient(to bottom, var(--pooh-yellow) 0%, #FBBF24 100%),
+                url('data:image/svg+xml,<svg xmlns="http://www.w3.org/2000/svg" width="100" height="100" viewBox="0 0 100 100"><path d="M50,0 L75,25 L75,75 L50,100 L25,75 L25,25 Z" fill="%23FFF7EC" opacity="0.2"/></svg>');
+            background-size: auto, 80px;
             z-index: 1000;
             display: flex;
-            gap: 15px;
-            align-items: center;
-            transition: all 0.3s ease;
-            min-width: 70%;
-            justify-content: center;
+            flex-direction: column;
+            padding: 20px 15px;
+            box-shadow: 5px 0 20px rgba(0,0,0,0.15);
+            border-right: 5px solid var(--storybook-brown);
+            transform: translateX(-100%);
+            transition: transform 0.5s cubic-bezier(0.25, 0.46, 0.45, 0.94);
         }
 
-        .nav-btn {
-            background: rgba(255, 255, 255, 0.9);
-            border: none;
-            color: var(--storybook-brown);
-            font-family: 'Lato', sans-serif;
-            font-size: 1rem;
-            padding: 8px 16px;
-            border-radius: 20px;
-            cursor: pointer;
-            transition: all 0.3s ease;
+        .sidebar-nav.active {
+            transform: translateX(0);
+        }
+
+        .nav-toggle {
+            position: fixed;
+            top: 20px;
+            left: 20px;
+            width: 50px;
+            height: 50px;
+            background: var(--pooh-yellow);
+            border: 3px solid var(--storybook-brown);
+            border-radius: 50%;
             display: flex;
             align-items: center;
-            gap: 8px;
-            box-shadow: 0 2px 5px rgba(0,0,0,0.1);
+            justify-content: center;
+            cursor: pointer;
+            z-index: 1001;
+            transition: all 0.3s ease;
+            box-shadow: 0 5px 15px rgba(0,0,0,0.2);
         }
 
-        .nav-btn:hover {
-            background: var(--pooh-yellow);
+        .nav-toggle:hover {
+            background: var(--pooh-red);
+            transform: scale(1.1);
+        }
+
+        .nav-toggle i {
             color: white;
-            transform: translateY(-2px);
+            font-size: 1.5rem;
+            transition: transform 0.3s ease;
         }
 
-        .nav-btn.active {
+        .sidebar-nav.active + .nav-toggle i {
+            transform: rotate(90deg);
+        }
+
+        .nav-header {
+            text-align: center;
+            margin-bottom: 30px;
+            padding-bottom: 20px;
+            border-bottom: 2px dashed var(--storybook-brown);
+        }
+
+        .nav-title {
+            font-family: 'Caveat', cursive;
+            font-size: 2.2rem;
+            color: var(--storybook-brown);
+            margin-bottom: 5px;
+            text-shadow: 1px 1px 0 rgba(255,255,255,0.5);
+        }
+
+        .nav-subtitle {
+            font-family: 'Pinyon Script', cursive;
+            font-size: 1.5rem;
+            color: var(--pooh-red);
+        }
+
+        .nav-menu {
+            display: flex;
+            flex-direction: column;
+            gap: 10px;
+            flex-grow: 1;
+        }
+
+        .nav-item {
+            display: flex;
+            align-items: center;
+            gap: 15px;
+            padding: 15px;
+            background: rgba(255, 255, 255, 0.85);
+            border-radius: 15px;
+            text-decoration: none;
+            color: var(--storybook-brown);
+            font-family: 'Lato', sans-serif;
+            font-weight: 600;
+            transition: all 0.3s ease;
+            border: 2px solid transparent;
+            box-shadow: 0 3px 10px rgba(0,0,0,0.1);
+        }
+
+        .nav-item:hover {
+            background: white;
+            transform: translateX(5px);
+            border-color: var(--pooh-yellow);
+        }
+
+        .nav-item.active {
             background: var(--pooh-red);
             color: white;
+            border-color: var(--storybook-brown);
+        }
+
+        .nav-item i {
+            font-size: 1.3rem;
+            width: 25px;
+            text-align: center;
         }
 
         .nav-divider {
-            width: 1px;
-            height: 24px;
-            background: rgba(139, 69, 19, 0.3);
+            height: 2px;
+            background: var(--storybook-brown);
+            margin: 20px 0;
+            opacity: 0.3;
+        }
+
+        .nav-footer {
+            margin-top: auto;
+            text-align: center;
+            padding-top: 20px;
+            border-top: 2px dashed var(--storybook-brown);
+        }
+
+        .nav-footer-text {
+            font-family: 'Caveat', cursive;
+            font-size: 1.2rem;
+            color: var(--storybook-brown);
         }
 
         /* ===== STORYBOOK COVER ===== */
@@ -395,9 +482,17 @@
             width: 100%;
             opacity: 0;
             transition: opacity 1.5s ease;
-            padding: 100px 20px 40px;
+            padding: 40px 20px 40px;
             max-width: 1200px;
             margin: 0 auto;
+            margin-left: 0;
+        }
+
+        @media (min-width: 768px) {
+            .storybook {
+                margin-left: 280px;
+                padding: 40px 40px 40px 60px;
+            }
         }
 
         .storybook.visible {
@@ -570,6 +665,7 @@
             z-index: 999;
             display: none;
             backdrop-filter: blur(5px);
+            width: 300px;
         }
 
         .honey-toss-game.active {
@@ -660,6 +756,12 @@
             z-index: 1000;
             pointer-events: none;
             transition: all 1s cubic-bezier(0.25, 0.46, 0.45, 0.94);
+        }
+
+        .game-controls {
+            display: flex;
+            justify-content: space-between;
+            margin-top: 15px;
         }
 
         /* ===== CHARACTER SPOTLIGHTS ===== */
@@ -1247,31 +1349,13 @@
 
         /* ===== RESPONSIVE DESIGN ===== */
         @media (max-width: 768px) {
-            .main-nav {
-                flex-wrap: wrap;
-                justify-content: center;
-                padding: 25px 10px 10px;
-                gap: 8px;
-                width: 90%;
-                min-width: auto;
+            .sidebar-nav {
+                width: 250px;
             }
             
-            .nav-btn {
-                font-size: 0.9rem;
-                padding: 6px 12px;
-            }
-            
-            .cover-title {
-                font-size: 2.4rem;
-            }
-            
-            .cover-subtitle {
-                font-size: 1.7rem;
-            }
-            
-            .character-spotlight {
-                flex-direction: column;
-                text-align: center;
+            .storybook {
+                margin-left: 0;
+                padding: 40px 20px;
             }
             
             .content-section {
@@ -1291,6 +1375,10 @@
                 top: 14px;
                 right: 14px;
             }
+            
+            .honey-toss-game {
+                width: 250px;
+            }
         }
 
         @media (max-width: 480px) {
@@ -1305,6 +1393,10 @@
             .open-book-btn {
                 padding: 12px 28px;
                 font-size: 1.05rem;
+            }
+            
+            .sidebar-nav {
+                width: 100%;
             }
         }
 
@@ -1352,31 +1444,63 @@
     <div class="loading-hint">(tap or click anywhere to skip)</div>
 </div>
 
-<!-- IMMERSIVE NAVIGATION -->
-<nav class="main-nav" id="mainNav">
-    <button class="nav-btn" data-section="section1">
-        <i class="fas fa-home"></i> Beginning
-    </button>
-    <button class="nav-btn" data-section="section2">
-        <i class="fas fa-envelope"></i> Invitation
-    </button>
-    <button class="nav-btn" data-section="section3">
-        <i class="fas fa-users"></i> Characters
-    </button>
-    <button class="nav-btn" data-section="section4">
-        <i class="fas fa-gamepad"></i> Activities
-    </button>
-    <div class="nav-divider"></div>
-    <button class="nav-btn" data-section="section5">
-        <i class="fas fa-gift"></i> Registry
-    </button>
-    <button class="nav-btn" data-section="section6">
-        <i class="fas fa-map-marker-alt"></i> Location
-    </button>
-    <button class="nav-btn" id="toggleGameBtn">
-        <i class="fas fa-dice"></i> Mini-Game
-    </button>
+<!-- IMMERSIVE LEFT SIDEBAR NAVIGATION -->
+<nav class="sidebar-nav" id="sidebarNav">
+    <div class="nav-header">
+        <h1 class="nav-title">Hundred Acre Wood</h1>
+        <p class="nav-subtitle">Baby Gunner's Celebration</p>
+    </div>
+    
+    <div class="nav-menu">
+        <a href="#" class="nav-item active" data-section="section1">
+            <i class="fas fa-home"></i>
+            <span>Story Beginning</span>
+        </a>
+        <a href="#" class="nav-item" data-section="section2">
+            <i class="fas fa-envelope"></i>
+            <span>Invitation</span>
+        </a>
+        <a href="#" class="nav-item" data-section="section3">
+            <i class="fas fa-users"></i>
+            <span>Meet the Characters</span>
+        </a>
+        <a href="#" class="nav-item" data-section="section4">
+            <i class="fas fa-gamepad"></i>
+            <span>Woodland Activities</span>
+        </a>
+        
+        <div class="nav-divider"></div>
+        
+        <a href="#" class="nav-item" data-section="section5">
+            <i class="fas fa-gift"></i>
+            <span>Gunner's Treasure Trove</span>
+        </a>
+        <a href="#" class="nav-item" data-section="section6">
+            <i class="fas fa-map-marker-alt"></i>
+            <span>Location & Details</span>
+        </a>
+        
+        <div class="nav-divider"></div>
+        
+        <a href="#" class="nav-item" id="toggleGameNavBtn">
+            <i class="fas fa-dice"></i>
+            <span>Mini-Games</span>
+        </a>
+        <a href="#" class="nav-item" id="toggleMusicNavBtn">
+            <i class="fas fa-music"></i>
+            <span>Toggle Music</span>
+        </a>
+    </div>
+    
+    <div class="nav-footer">
+        <p class="nav-footer-text">Made with love and honey</p>
+    </div>
 </nav>
+
+<!-- NAVIGATION TOGGLE -->
+<div class="nav-toggle" id="navToggle">
+    <i class="fas fa-bars"></i>
+</div>
 
 <!-- STORYBOOK COVER -->
 <div class="storybook-cover" id="storybookCover" aria-label="Storybook cover: The Hundred Acre Celebration">
@@ -1430,7 +1554,10 @@
     <div class="honey-toss-target" id="honeyTarget"></div>
     <div class="honey-pot-tosser" id="honeyTosser"></div>
     <p style="text-align: center; font-size: 0.9rem; margin-top: 10px;">Score: <span id="gameScore">0</span></p>
-    <button class="magical-btn" style="margin-top: 10px; width: 100%; padding: 8px;" id="resetGameBtn">Reset Game</button>
+    <div class="game-controls">
+        <button class="magical-btn" style="padding: 8px 12px; font-size: 0.9rem;" id="resetGameBtn">Reset Game</button>
+        <button class="magical-btn" style="padding: 8px 12px; font-size: 0.9rem;" id="closeGameBtn">Close</button>
+    </div>
 </div>
 
 <!-- FLOATING BEES -->
@@ -1899,17 +2026,20 @@
         const modalCharacterName = document.getElementById('modalCharacterName');
         const modalCharacterQuote = document.getElementById('modalCharacterQuote');
         const modalCharacterBio = document.getElementById('modalCharacterBio');
-        const mainNav = document.getElementById('mainNav');
-        const navBtns = document.querySelectorAll('.nav-btn');
+        const sidebarNav = document.getElementById('sidebarNav');
+        const navToggle = document.getElementById('navToggle');
+        const navItems = document.querySelectorAll('.nav-item');
         const homeBtn = document.getElementById('homeBtn');
         const rsvpBtn = document.getElementById('rsvpBtn');
         const storyModeBtn = document.getElementById('storyModeBtn');
-        const toggleGameBtn = document.getElementById('toggleGameBtn');
+        const toggleGameNavBtn = document.getElementById('toggleGameNavBtn');
+        const toggleMusicNavBtn = document.getElementById('toggleMusicNavBtn');
         const honeyTossGame = document.getElementById('honeyTossGame');
         const honeyTosser = document.getElementById('honeyTosser');
         const honeyTarget = document.getElementById('honeyTarget');
         const gameScore = document.getElementById('gameScore');
         const resetGameBtn = document.getElementById('resetGameBtn');
+        const closeGameBtn = document.getElementById('closeGameBtn');
         const contentSections = document.querySelectorAll('.content-section');
         const scrollAnimateElements = document.querySelectorAll('.scroll-animate');
         const raceResults = document.getElementById('raceResults');
@@ -2038,8 +2168,12 @@
             // Open the storybook
             openBookBtn.addEventListener('click', openStorybook);
             
+            // Toggle navigation
+            navToggle.addEventListener('click', toggleSidebarNav);
+            
             // Music control
             musicBtn.addEventListener('click', toggleMusic);
+            toggleMusicNavBtn.addEventListener('click', toggleMusic);
             
             // Character interactions
             document.querySelectorAll('.character-spotlight').forEach(character => {
@@ -2049,22 +2183,30 @@
             // Close modal
             closeModalBtn.addEventListener('click', closeCharacterModal);
             
-            // Navigation buttons
-            navBtns.forEach(btn => {
-                if (btn.id !== 'toggleGameBtn') {
-                    btn.addEventListener('click', () => {
-                        const sectionId = btn.getAttribute('data-section');
+            // Navigation items
+            navItems.forEach(item => {
+                if (!item.id) {
+                    item.addEventListener('click', (e) => {
+                        e.preventDefault();
+                        const sectionId = item.getAttribute('data-section');
                         scrollToSection(sectionId);
+                        if (window.innerWidth < 768) {
+                            sidebarNav.classList.remove('active');
+                        }
                     });
                 }
             });
             
             // Toggle mini-game
-            toggleGameBtn.addEventListener('click', toggleHoneyTossGame);
+            toggleGameNavBtn.addEventListener('click', toggleHoneyTossGame);
             
             // Honey toss game
             honeyTosser.addEventListener('click', tossHoneyPot);
             resetGameBtn.addEventListener('click', resetHoneyTossGame);
+            closeGameBtn.addEventListener('click', () => {
+                honeyTossGame.classList.remove('active');
+                honeyTossActive = false;
+            });
             
             // Make target move
             honeyTarget.addEventListener('mouseenter', () => {
@@ -2075,7 +2217,12 @@
             
             // FAB actions
             homeBtn.addEventListener('click', backToCover);
-            rsvpBtn.addEventListener('click', () => scrollToSection('section2'));
+            rsvpBtn.addEventListener('click', () => {
+                scrollToSection('section2');
+                if (window.innerWidth < 768) {
+                    sidebarNav.classList.remove('active');
+                }
+            });
             storyModeBtn.addEventListener('click', toggleStoryMode);
             
             // Keyboard navigation
@@ -2085,6 +2232,11 @@
             window.addEventListener('scroll', updateReadingProgress);
             window.addEventListener('scroll', updateActiveNav);
             window.addEventListener('scroll', checkScrollAnimations);
+        }
+
+        // Toggle sidebar navigation
+        function toggleSidebarNav() {
+            sidebarNav.classList.toggle('active');
         }
 
         // Open the storybook
@@ -2154,6 +2306,9 @@
         function toggleHoneyTossGame() {
             honeyTossGame.classList.toggle('active');
             honeyTossActive = honeyTossGame.classList.contains('active');
+            if (window.innerWidth < 768) {
+                sidebarNav.classList.remove('active');
+            }
         }
 
         // Move target randomly
@@ -2280,8 +2435,8 @@
         function updateActiveNav() {
             const scrollPosition = window.pageYOffset + 100;
             
-            navBtns.forEach(btn => {
-                const sectionId = btn.getAttribute('data-section');
+            navItems.forEach(item => {
+                const sectionId = item.getAttribute('data-section');
                 if (sectionId) {
                     const section = document.getElementById(sectionId);
                     if (section) {
@@ -2289,9 +2444,9 @@
                         const sectionBottom = sectionTop + section.offsetHeight;
                         
                         if (scrollPosition >= sectionTop && scrollPosition < sectionBottom) {
-                            btn.classList.add('active');
+                            item.classList.add('active');
                         } else {
-                            btn.classList.remove('active');
+                            item.classList.remove('active');
                         }
                     }
                 }
@@ -2302,6 +2457,9 @@
         function handleKeyPress(event) {
             if (event.key === 'Escape') {
                 closeCharacterModal();
+                honeyTossGame.classList.remove('active');
+                honeyTossActive = false;
+                sidebarNav.classList.remove('active');
             } else if (event.key === 'Home') {
                 backToCover();
             }
