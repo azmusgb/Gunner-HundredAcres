@@ -1774,6 +1774,11 @@
     </button>
 </div>
 
+<!-- Background music element (replace src with your own hosted track if desired) -->
+<audio id="bgMusic" loop preload="auto">
+    <source src="media/hundred-acre-lullaby.mp3" type="audio/mpeg">
+</audio>
+
 <!-- FABs -->
 <div class="fab-container">
     <button class="fab" id="scrollTopFab" aria-label="Back to top">
@@ -2056,6 +2061,8 @@
                                 <div class="stat" id="honeyLives">❤️ Lives: 3</div>
                                 <div class="stat" id="honeyLevel">⭐ Level: 1</div>
                                 <div class="stat" id="honeyTime">⏱️ Time: 60</div>
+                                <!-- New high score stat -->
+                                <div class="stat" id="honeyHighScore">🏆 Best: 0</div>
                             </div>
 
                             <div class="game-area" id="honeyGameArea">
@@ -2292,6 +2299,7 @@ document.addEventListener('DOMContentLoaded', function() {
     const motionToggle = document.getElementById('motionToggle');
     const rsvpForm = document.getElementById('rsvpForm');
     const rsvpStatus = document.getElementById('rsvpStatus');
+    const bgMusic = document.getElementById('bgMusic');
 
     // Character modal
     const characterModal = document.getElementById('characterModal');
@@ -2379,6 +2387,8 @@ document.addEventListener('DOMContentLoaded', function() {
         }
     };
 
+    let honeyHighScore = Number(localStorage.getItem('honeyHighScore') || 0);
+
     const honeyStartBtn = document.getElementById('honeyStartBtn');
     const honeyPauseBtn = document.getElementById('honeyPauseBtn');
     const honeyResetBtn = document.getElementById('honeyResetBtn');
@@ -2386,6 +2396,7 @@ document.addEventListener('DOMContentLoaded', function() {
     const honeyLivesDisplay = document.getElementById('honeyLives');
     const honeyLevelDisplay = document.getElementById('honeyLevel');
     const honeyTimeDisplay = document.getElementById('honeyTime');
+    const honeyHighScoreDisplay = document.getElementById('honeyHighScore');
     const honeyMessage = document.getElementById('honeyMessage');
     const honeyLeftBtn = document.getElementById('honeyLeftBtn');
     const honeyRightBtn = document.getElementById('honeyRightBtn');
@@ -2438,6 +2449,7 @@ document.addEventListener('DOMContentLoaded', function() {
         checkScrollAnimations();
         updateActiveNav();
         initReduceMotionPreference();
+        initMusicPreference();
 
         setTimeout(() => {
             loadingScreen.classList.add('hidden');
@@ -2476,13 +2488,20 @@ document.addEventListener('DOMContentLoaded', function() {
         });
 
         musicToggle.addEventListener('click', () => {
+            if (!bgMusic) return;
             const icon = musicToggle.querySelector('i');
-            if (icon.classList.contains('fa-music')) {
-                icon.classList.remove('fa-music');
-                icon.classList.add('fa-volume-xmark');
-            } else {
+            // Try to play/pause; ignore play promise rejection quietly
+            if (bgMusic.paused) {
+                bgMusic.volume = 0.35;
+                bgMusic.play().catch(() => {});
                 icon.classList.remove('fa-volume-xmark');
                 icon.classList.add('fa-music');
+                localStorage.setItem('bg-music', 'on');
+            } else {
+                bgMusic.pause();
+                icon.classList.remove('fa-music');
+                icon.classList.add('fa-volume-xmark');
+                localStorage.setItem('bg-music', 'off');
             }
         });
 
@@ -2627,6 +2646,25 @@ document.addEventListener('DOMContentLoaded', function() {
     function toggleReduceMotion() {
         const enabled = body.classList.toggle('reduce-motion');
         localStorage.setItem('reduce-motion', enabled ? 'true' : 'false');
+    }
+
+    // Background music preference
+    function initMusicPreference() {
+        if (!bgMusic) return;
+        const stored = localStorage.getItem('bg-music');
+        const icon = musicToggle.querySelector('i');
+        if (stored === 'on') {
+            bgMusic.volume = 0.35;
+            bgMusic.play().catch(() => {});
+            icon.classList.remove('fa-volume-xmark');
+            icon.classList.add('fa-music');
+        } else {
+            // Default to off visually if user has previously turned it off
+            if (stored === 'off') {
+                icon.classList.remove('fa-music');
+                icon.classList.add('fa-volume-xmark');
+            }
+        }
     }
 
     // Woodland sound
@@ -3204,6 +3242,9 @@ document.addEventListener('DOMContentLoaded', function() {
         honeyLivesDisplay.textContent = `❤️ Lives: ${honeyGameState.lives}`;
         honeyLevelDisplay.textContent = `⭐ Level: ${honeyGameState.level}`;
         honeyTimeDisplay.textContent = `⏱️ Time: ${honeyGameState.timeLeft}`;
+        if (honeyHighScoreDisplay) {
+            honeyHighScoreDisplay.textContent = `🏆 Best: ${honeyHighScore}`;
+        }
     }
 
     function checkHoneyAchievements() {
@@ -3230,17 +3271,31 @@ document.addEventListener('DOMContentLoaded', function() {
     function honeyGameOver() {
         clearInterval(honeyGameInterval);
         honeyGameState.isRunning = false;
+
+        if (honeyGameState.score > honeyHighScore) {
+            honeyHighScore = honeyGameState.score;
+            localStorage.setItem('honeyHighScore', honeyHighScore);
+        }
+
         honeyMessage.textContent = "Game Over! Pooh got stung too many times, but you can try again.";
         honeyStartBtn.disabled = false;
         honeyPauseBtn.disabled = true;
+        updateHoneyDisplay();
     }
 
     function honeyWinGame() {
         clearInterval(honeyGameInterval);
         honeyGameState.isRunning = false;
+
+        if (honeyGameState.score > honeyHighScore) {
+            honeyHighScore = honeyGameState.score;
+            localStorage.setItem('honeyHighScore', honeyHighScore);
+        }
+
         honeyMessage.textContent = "Congratulations! You collected 20 honey pots! Pooh is very happy!";
         honeyStartBtn.disabled = false;
         honeyPauseBtn.disabled = true;
+        updateHoneyDisplay();
     }
 
     // ==============================
