@@ -58,10 +58,9 @@
             color: var(--text-dark);
             -webkit-font-smoothing: antialiased;
             position: relative;
-            perspective: 1000px;
         }
 
-        /* LOADING SCREEN */
+        /* ENHANCED LOADING SCREEN */
         .loading-screen {
             position: fixed;
             inset: 0;
@@ -71,7 +70,7 @@
             justify-content: center;
             align-items: center;
             z-index: 10002;
-            transition: opacity 0.6s ease, visibility 0.6s ease;
+            transition: opacity 0.8s ease, visibility 0.8s ease;
         }
 
         .loading-screen.hidden {
@@ -79,23 +78,42 @@
             visibility: hidden;
         }
 
-        .honey-spinner {
-            width: 120px;
-            height: 120px;
+        .honey-loader {
             position: relative;
-            margin-bottom: 25px;
+            width: 180px;
+            height: 240px;
+            margin-bottom: 30px;
         }
 
         .honey-jar {
-            width: 80px;
-            height: 96px;
-            background: var(--honey-gold);
-            border-radius: 16px 16px 10px 10px;
-            position: relative;
+            position: absolute;
+            width: 120px;
+            height: 180px;
+            background: rgba(255, 255, 255, 0.2);
+            border-radius: 40% 40% 30% 30%;
+            bottom: 0;
+            left: 50%;
+            transform: translateX(-50%);
             overflow: hidden;
-            margin: 0 auto;
-            box-shadow: 0 8px 20px rgba(0,0,0,0.25);
-            border: 3px solid #FFF7EC;
+            box-shadow: 
+                inset 0 0 0 4px rgba(255, 255, 255, 0.8),
+                0 15px 30px rgba(0, 0, 0, 0.3);
+            backdrop-filter: blur(5px);
+        }
+
+        .honey-jar::before {
+            content: '';
+            position: absolute;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background: linear-gradient(to bottom, 
+                rgba(255, 255, 255, 0.4) 0%, 
+                rgba(255, 255, 255, 0.1) 30%, 
+                rgba(255, 255, 255, 0.2) 70%, 
+                rgba(255, 255, 255, 0.4) 100%);
+            border-radius: inherit;
         }
 
         .honey-fill {
@@ -104,13 +122,74 @@
             left: 0;
             width: 100%;
             height: 0%;
-            background: linear-gradient(to top, #FFC42B, #FACC15);
-            animation: fill-honey 1.8s ease-in-out infinite;
+            background: linear-gradient(to top, 
+                #FFC42B 0%, 
+                #FACC15 30%, 
+                #E6B86A 70%, 
+                #D97706 100%);
+            border-radius: 0 0 30% 30%;
+            transition: height 3s ease-in-out;
+            box-shadow: 
+                inset 0 10px 20px rgba(255, 255, 255, 0.5),
+                inset 0 -5px 15px rgba(0, 0, 0, 0.2);
         }
 
-        @keyframes fill-honey {
-            0%, 100% { height: 15%; }
-            50% { height: 95%; }
+        .honey-bubbles {
+            position: absolute;
+            width: 100%;
+            height: 100%;
+            bottom: 0;
+            left: 0;
+        }
+
+        .bubble {
+            position: absolute;
+            background: rgba(255, 255, 255, 0.7);
+            border-radius: 50%;
+            animation: bubble-rise 3s infinite ease-in;
+            opacity: 0;
+        }
+
+        @keyframes bubble-rise {
+            0% {
+                transform: translateY(0) scale(0);
+                opacity: 0;
+            }
+            10% {
+                opacity: 0.7;
+            }
+            90% {
+                opacity: 0.5;
+            }
+            100% {
+                transform: translateY(-100px) scale(1.2);
+                opacity: 0;
+            }
+        }
+
+        .jar-lid {
+            position: absolute;
+            width: 140px;
+            height: 25px;
+            background: linear-gradient(to bottom, #8B4513, #A0522D);
+            border-radius: 50%;
+            top: -12px;
+            left: 50%;
+            transform: translateX(-50%);
+            box-shadow: 0 5px 15px rgba(0, 0, 0, 0.3);
+            z-index: 2;
+        }
+
+        .jar-lid::before {
+            content: '';
+            position: absolute;
+            width: 110px;
+            height: 8px;
+            background: linear-gradient(to bottom, #A0522D, #8B4513);
+            border-radius: 50%;
+            top: 50%;
+            left: 50%;
+            transform: translate(-50%, -50%);
         }
 
         .loading-text {
@@ -158,6 +237,203 @@
         @keyframes dot-bounce {
             0%, 80%, 100% { transform: scale(0); }
             40% { transform: scale(1); }
+        }
+
+        /* ENHANCED BEE DESIGN */
+        .floating-bee {
+            position: fixed;
+            width: 60px;
+            height: 60px;
+            z-index: 10;
+            cursor: pointer;
+            filter: drop-shadow(0 5px 5px rgba(0,0,0,0.2));
+            animation: bee-float 15s infinite ease-in-out;
+        }
+
+        .bee-container {
+            width: 100%;
+            height: 100%;
+            position: relative;
+            transform-origin: center;
+            animation: bee-tilt 8s infinite alternate ease-in-out;
+        }
+
+        .bee-body {
+            position: absolute;
+            width: 36px;
+            height: 24px;
+            background: linear-gradient(135deg, #FACC15 0%, #F97316 100%);
+            border-radius: 50% 40% 40% 50%;
+            top: 50%;
+            left: 50%;
+            transform: translate(-50%, -50%);
+            box-shadow: 
+                inset -2px 0 0 rgba(0,0,0,0.2),
+                inset 2px 0 0 rgba(255,255,255,0.3);
+        }
+
+        .bee-stripes {
+            position: absolute;
+            width: 100%;
+            height: 100%;
+            border-radius: inherit;
+        }
+
+        .bee-stripe {
+            position: absolute;
+            background: #1F2937;
+            height: 100%;
+            width: 6px;
+            top: 0;
+        }
+
+        .bee-stripe:nth-child(1) { left: 20%; }
+        .bee-stripe:nth-child(2) { left: 40%; }
+        .bee-stripe:nth-child(3) { left: 60%; }
+
+        .bee-head {
+            position: absolute;
+            width: 14px;
+            height: 14px;
+            background: #1F2937;
+            border-radius: 50%;
+            top: 50%;
+            left: 10%;
+            transform: translate(-50%, -50%);
+            z-index: 2;
+        }
+
+        .bee-eye {
+            position: absolute;
+            width: 4px;
+            height: 4px;
+            background: white;
+            border-radius: 50%;
+            top: 30%;
+            left: 30%;
+        }
+
+        .bee-antenna {
+            position: absolute;
+            width: 8px;
+            height: 2px;
+            background: #1F2937;
+            border-radius: 1px;
+            top: 20%;
+        }
+
+        .bee-antenna.left {
+            left: 5%;
+            transform: rotate(-30deg);
+        }
+
+        .bee-antenna.right {
+            right: 5%;
+            transform: rotate(30deg);
+        }
+
+        .bee-antenna::after {
+            content: '';
+            position: absolute;
+            width: 4px;
+            height: 4px;
+            background: #F9A8D4;
+            border-radius: 50%;
+            top: -3px;
+            left: 0;
+        }
+
+        .bee-wing {
+            position: absolute;
+            width: 24px;
+            height: 24px;
+            background: radial-gradient(circle, rgba(254, 243, 199, 0.9) 0%, rgba(191, 219, 254, 0.6) 100%);
+            border-radius: 50% 50% 40% 40%;
+            top: 10%;
+            animation: wing-flap 0.4s ease-in-out infinite alternate;
+            filter: drop-shadow(0 2px 4px rgba(148, 163, 184, 0.5));
+        }
+
+        .bee-wing.left {
+            left: 15%;
+            transform-origin: bottom right;
+        }
+
+        .bee-wing.right {
+            right: 15%;
+            transform-origin: bottom left;
+            animation-delay: 0.1s;
+        }
+
+        .bee-stinger {
+            position: absolute;
+            width: 6px;
+            height: 8px;
+            background: #1F2937;
+            border-radius: 0 0 50% 50%;
+            bottom: 15%;
+            right: 5%;
+            transform: rotate(15deg);
+        }
+
+        @keyframes bee-float {
+            0%, 100% {
+                transform: translate(0, 0) rotate(0deg);
+            }
+            25% {
+                transform: translate(100px, 50px) rotate(5deg);
+            }
+            50% {
+                transform: translate(200px, -30px) rotate(-5deg);
+            }
+            75% {
+                transform: translate(100px, -50px) rotate(3deg);
+            }
+        }
+
+        @keyframes bee-tilt {
+            0%, 100% {
+                transform: rotate(-3deg);
+            }
+            50% {
+                transform: rotate(3deg);
+            }
+        }
+
+        @keyframes wing-flap {
+            0% {
+                transform: rotateX(0deg) scaleY(1);
+            }
+            100% {
+                transform: rotateX(30deg) scaleY(0.9);
+            }
+        }
+
+        /* HONEY DRIP EFFECT */
+        .honey-drip {
+            position: fixed;
+            width: 20px;
+            height: 40px;
+            background: linear-gradient(to bottom, transparent 0%, #E6B86A 20%, #FACC15 100%);
+            border-radius: 50% 50% 20% 20%;
+            z-index: 5;
+            pointer-events: none;
+            filter: drop-shadow(0 0 8px rgba(230, 184, 106, 0.6));
+            animation: honey-drip-fall 2.5s ease-in forwards;
+        }
+
+        @keyframes honey-drip-fall {
+            0% {
+                transform: translateY(0) scale(1);
+                opacity: 1;
+            }
+            80% {
+                opacity: 0.8;
+            }
+            100% {
+                transform: translateY(100vh) scale(0.8);
+                opacity: 0;
+            }
         }
 
         /* STORYBOOK COVER */
@@ -416,11 +692,10 @@
             50% { opacity: 1; transform: scale(1); }
         }
 
-        /* STORYBOOK CONTAINER */
+        /* STORYBOOK CONTENT - SINGLE PAGE */
         .storybook {
             position: relative;
             width: 100%;
-            min-height: 100vh;
             display: flex;
             flex-direction: column;
             align-items: center;
@@ -443,12 +718,11 @@
             border: 2px dashed rgba(248, 250, 252, 0.55);
         }
 
-        /* PAGES */
-        .page {
+        /* CONTENT SECTIONS */
+        .content-section {
             background: var(--page-yellow);
             width: 92%;
             max-width: 1040px;
-            min-height: 540px;
             margin: 30px 0;
             border-radius: 16px;
             box-shadow: 
@@ -463,12 +737,12 @@
             transition: transform 0.7s cubic-bezier(0.175, 0.885, 0.32, 1.275), box-shadow 0.3s ease;
         }
 
-        .page:hover {
+        .content-section:hover {
             transform: translateY(-8px) rotateX(4deg);
             box-shadow: 0 18px 40px rgba(0,0,0,0.3);
         }
 
-        .page::before {
+        .content-section::before {
             content: '';
             position: absolute;
             inset: 0;
@@ -477,21 +751,12 @@
             pointer-events: none;
         }
 
-        .page-inner {
+        .section-inner {
             position: relative;
             z-index: 1;
         }
 
-        .page-number {
-            position: absolute;
-            bottom: 18px;
-            right: 26px;
-            font-family: 'Caveat', cursive;
-            font-size: 1.5rem;
-            color: var(--storybook-brown);
-        }
-
-        .page-corner {
+        .section-corner {
             position: absolute;
             width: 60px;
             height: 60px;
@@ -502,7 +767,7 @@
             opacity: 0.8;
         }
 
-        .page-corner::before {
+        .section-corner::before {
             content: '';
             position: absolute;
             top: 0;
@@ -552,46 +817,6 @@
             line-height: 1.8;
             color: var(--storybook-brown);
             text-align: justify;
-        }
-
-        /* QUOTE SCRAPS */
-        .quote-scrap {
-            display: inline-block;
-            margin-bottom: 18px;
-            padding: 8px 14px;
-            background: #FFFDF5;
-            border-radius: 6px;
-            border: 1px dashed rgba(139, 69, 19, 0.4);
-            box-shadow: 0 3px 6px rgba(0,0,0,0.12);
-            transform: rotate(-1.5deg);
-        }
-
-        .quote-scrap p {
-            font-family: 'Caveat', cursive;
-            font-size: 1.2rem;
-            color: var(--storybook-brown);
-        }
-
-        /* THINKING SPOT */
-        .thinking-spot {
-            border-left-color: var(--pooh-red);
-            background: linear-gradient(
-                135deg,
-                rgba(255, 255, 255, 0.96),
-                rgba(254, 249, 231, 0.96)
-            );
-            position: relative;
-        }
-
-        .thinking-spot::after {
-            content: "thinking spot";
-            position: absolute;
-            top: 12px;
-            right: 18px;
-            font-family: 'Caveat', cursive;
-            font-size: 1rem;
-            color: var(--storybook-brown);
-            opacity: 0.7;
         }
 
         /* INVITATION DETAILS */
@@ -659,69 +884,6 @@
             color: var(--storybook-brown);
             line-height: 1.6;
             font-size: 1.05rem;
-        }
-
-        /* Honey-style bullet list */
-        .detail-content ul {
-            list-style: none;
-            padding-left: 0;
-            margin: 8px 0 0;
-        }
-
-        .detail-content li {
-            position: relative;
-            padding-left: 26px;
-            margin-bottom: 6px;
-        }
-
-        .detail-content li::before {
-            content: "";
-            position: absolute;
-            left: 6px;
-            top: 8px;
-            width: 10px;
-            height: 14px;
-            border-radius: 6px 6px 4px 4px;
-            background: linear-gradient(to bottom, #FACC15, #E6B86A);
-            box-shadow: 0 1px 3px rgba(0,0,0,0.2);
-        }
-
-        /* EXPOTITION MAP */
-        .expotition-section {
-            border-left-color: var(--sage-green);
-        }
-
-        .expotition-map {
-            margin-top: 18px;
-            padding: 18px 16px;
-            border-radius: 14px;
-            background: rgba(255, 255, 255, 0.95);
-            border: 2px dashed var(--pooh-yellow);
-            text-align: center;
-        }
-
-        .expotition-path {
-            font-family: 'Caveat', cursive;
-            font-size: 1.4rem;
-            color: var(--storybook-brown);
-            margin-bottom: 12px;
-            display: flex;
-            flex-wrap: wrap;
-            gap: 8px;
-            justify-content: center;
-            align-items: center;
-        }
-
-        .expotition-step {
-            padding: 4px 10px;
-            border-radius: 999px;
-            background: var(--page-yellow);
-            border: 1px solid rgba(0,0,0,0.08);
-        }
-
-        .expotition-dot {
-            color: var(--pooh-red);
-            font-size: 1.3rem;
         }
 
         /* CHARACTER SPOTLIGHTS WITH ILLUSTRATIONS */
@@ -966,131 +1128,6 @@
             transform: translateY(-3px) scale(1.07);
         }
 
-        /* FLOATING BEES */
-        .floating-bee {
-            position: fixed;
-            width: 50px;
-            height: 50px;
-            z-index: 10;
-            animation: bee-flight 20s infinite linear;
-            cursor: pointer;
-            filter: drop-shadow(0 5px 5px rgba(0,0,0,0.2));
-        }
-
-        .bee-body {
-            width: 30px;
-            height: 22px;
-            background: linear-gradient(90deg, #FACC15, #F97316);
-            border-radius: 50%;
-            position: relative;
-            margin: 0 auto;
-        }
-
-        .bee-body:before,
-        .bee-body:after {
-            content: "";
-            position: absolute;
-            inset: 0;
-            border-radius: inherit;
-            background: repeating-linear-gradient(
-                    90deg,
-                    rgba(17, 24, 39, 0.9) 0 2px,
-                    transparent 2px 4px
-            );
-            mix-blend-mode: multiply;
-            opacity: 0.85;
-        }
-
-        .bee-head {
-            position: absolute;
-            left: -8px;
-            top: 3px;
-            width: 12px;
-            height: 12px;
-            border-radius: 50%;
-            background: #111827;
-        }
-
-        .bee-wing {
-            position: absolute;
-            width: 18px;
-            height: 18px;
-            border-radius: 50%;
-            background: radial-gradient(circle, #FEF3C7 0, #E0F2FE 40%, #BFDBFE 100%);
-            opacity: 0.95;
-            top: -12px;
-            animation: wing-flutter 0.8s ease-in-out infinite alternate;
-            transform-origin: bottom center;
-            filter: drop-shadow(0 2px 4px rgba(148, 163, 184, 0.65));
-        }
-
-        .bee-wing.left {
-            left: -3px;
-        }
-
-        .bee-wing.right {
-            right: -3px;
-            animation-delay: 0.1s;
-        }
-
-        @keyframes bee-flight {
-            0% { transform: translate(0, 0) rotate(0deg); }
-            25% { transform: translate(120px, 60px) rotate(90deg); }
-            50% { transform: translate(220px, 0) rotate(180deg); }
-            75% { transform: translate(120px, -60px) rotate(270deg); }
-            100% { transform: translate(0, 0) rotate(360deg); }
-        }
-
-        @keyframes wing-flutter {
-            0%   { transform: rotate(-10deg) scale(1); }
-            100% { transform: rotate(20deg) scale(1.06); }
-        }
-
-        /* PAGE TRANSITION EFFECT */
-        .page-transition {
-            position: fixed;
-            inset: 0;
-            background: var(--pooh-yellow);
-            z-index: 10000;
-            transform: scale(0);
-            border-radius: 50%;
-            opacity: 0;
-            pointer-events: none;
-        }
-
-        .page-transition.active {
-            animation: pageTransition 0.8s ease;
-        }
-
-        @keyframes pageTransition {
-            0% {
-                transform: scale(0);
-                opacity: 0.7;
-            }
-            50% {
-                opacity: 0.9;
-            }
-            100% {
-                transform: scale(2);
-                opacity: 0;
-            }
-        }
-
-        /* HONEY DRIP ANIMATION */
-        @keyframes honey-drip-fall {
-            0% {
-                transform: translateY(0) scale(1);
-                opacity: 1;
-            }
-            80% {
-                opacity: 0.8;
-            }
-            100% {
-                transform: translateY(100vh) scale(0.5);
-                opacity: 0;
-            }
-        }
-
         /* READING PROGRESS */
         .reading-progress {
             position: fixed;
@@ -1102,72 +1139,6 @@
             z-index: 999;
             transition: width 0.25s ease;
             box-shadow: 0 2px 5px rgba(0,0,0,0.2);
-        }
-
-        /* NAVIGATION */
-        .storybook-navigation {
-            position: fixed;
-            bottom: 24px;
-            left: 50%;
-            transform: translateX(-50%);
-            display: flex;
-            align-items: center;
-            gap: 16px;
-            background: rgba(255, 255, 255, 0.96);
-            padding: 12px 20px;
-            border-radius: 999px;
-            box-shadow: 0 10px 30px rgba(0,0,0,0.22);
-            z-index: 1000;
-            backdrop-filter: blur(12px);
-            border: 2px solid var(--pooh-yellow);
-            opacity: 0;
-            transition: opacity 0.45s ease;
-        }
-
-        .storybook-navigation.visible {
-            opacity: 1;
-        }
-
-        .nav-btn {
-            width: 48px;
-            height: 48px;
-            border-radius: 50%;
-            background: var(--pooh-yellow);
-            border: none;
-            color: white;
-            font-size: 1.2rem;
-            cursor: pointer;
-            display: flex;
-            align-items: center;
-            justify-content: center;
-            transition: all 0.25s ease;
-            box-shadow: 0 5px 15px rgba(0,0,0,0.2);
-        }
-
-        .nav-btn:hover:enabled {
-            background: var(--pooh-red);
-            transform: scale(1.07);
-        }
-
-        .nav-btn:disabled {
-            background: #CBD5F5;
-            cursor: not-allowed;
-            box-shadow: none;
-        }
-
-        .page-indicator {
-            font-family: 'Caveat', cursive;
-            font-size: 1.6rem;
-            color: var(--storybook-brown);
-            min-width: 90px;
-            text-align: center;
-        }
-
-        .page-indicator-caption {
-            font-size: 0.8rem;
-            font-family: 'Lato', sans-serif;
-            opacity: 0.75;
-            margin-top: -4px;
         }
 
         /* CHARACTER MODAL */
@@ -1356,9 +1327,131 @@
             margin-bottom: 20px;
         }
 
+        /* INTERACTIVE ELEMENTS */
+        .interactive-element {
+            background: rgba(255, 255, 255, 0.9);
+            border-radius: 16px;
+            padding: 28px;
+            margin: 30px 0;
+            box-shadow: 0 6px 18px rgba(0,0,0,0.05);
+            text-align: center;
+        }
+
+        .honey-pot {
+            width: 120px;
+            height: 120px;
+            background: var(--honey-gold);
+            border-radius: 50% 50% 40% 40%;
+            margin: 0 auto 20px;
+            position: relative;
+            cursor: pointer;
+            box-shadow: 0 10px 20px rgba(0,0,0,0.15);
+            transition: transform 0.3s ease;
+        }
+
+        .honey-pot:hover {
+            transform: scale(1.05);
+        }
+
+        .honey-pot::before {
+            content: '';
+            position: absolute;
+            top: 10px;
+            left: 10px;
+            right: 10px;
+            bottom: 30px;
+            background: linear-gradient(to bottom, #FFC42B, #E6B86A);
+            border-radius: 50% 50% 40% 40%;
+        }
+
+        .honey-pot::after {
+            content: '';
+            position: absolute;
+            top: 0;
+            left: 50%;
+            transform: translateX(-50%);
+            width: 60px;
+            height: 20px;
+            background: var(--honey-gold);
+            border-radius: 10px;
+        }
+
+        .message-bottle {
+            width: 80px;
+            height: 120px;
+            background: var(--soft-blue);
+            border-radius: 10px 10px 40px 40px;
+            margin: 0 auto 20px;
+            position: relative;
+            cursor: pointer;
+            box-shadow: 0 10px 20px rgba(0,0,0,0.15);
+            transition: transform 0.3s ease;
+        }
+
+        .message-bottle:hover {
+            transform: scale(1.05);
+        }
+
+        .message-bottle::before {
+            content: '';
+            position: absolute;
+            top: -10px;
+            left: 50%;
+            transform: translateX(-50%);
+            width: 30px;
+            height: 20px;
+            background: var(--soft-blue);
+            border-radius: 5px 5px 0 0;
+        }
+
+        .message-bottle::after {
+            content: '';
+            position: absolute;
+            top: 10px;
+            left: 10px;
+            right: 10px;
+            bottom: 10px;
+            background: rgba(255, 255, 255, 0.7);
+            border-radius: 5px;
+        }
+
+        .countdown {
+            display: flex;
+            justify-content: center;
+            gap: 15px;
+            margin: 30px 0;
+        }
+
+        .countdown-item {
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+        }
+
+        .countdown-number {
+            font-family: 'Playfair Display', serif;
+            font-size: 2.5rem;
+            color: var(--pooh-red);
+            background: white;
+            width: 80px;
+            height: 80px;
+            border-radius: 50%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            box-shadow: 0 5px 15px rgba(0,0,0,0.1);
+            margin-bottom: 8px;
+        }
+
+        .countdown-label {
+            font-family: 'Caveat', cursive;
+            font-size: 1.3rem;
+            color: var(--storybook-brown);
+        }
+
         /* RESPONSIVE */
         @media (max-width: 900px) {
-            .page {
+            .content-section {
                 padding: 28px 22px 40px;
             }
             .story-section {
@@ -1377,9 +1470,6 @@
             .invitation-details {
                 grid-template-columns: 1fr;
             }
-            .storybook-navigation {
-                bottom: 16px;
-            }
             .fab-container {
                 bottom: 90px;
                 right: 16px;
@@ -1387,6 +1477,9 @@
             .music-controls {
                 top: 14px;
                 right: 14px;
+            }
+            .countdown {
+                flex-wrap: wrap;
             }
         }
 
@@ -1401,7 +1494,7 @@
                 padding: 12px 28px;
                 font-size: 1.05rem;
             }
-            .page {
+            .content-section {
                 padding: 22px 16px 34px;
             }
             .story-title {
@@ -1409,13 +1502,6 @@
             }
             .character-quote {
                 font-size: 1.4rem;
-            }
-            .storybook-navigation {
-                padding: 10px 14px;
-            }
-            .nav-btn {
-                width: 44px;
-                height: 44px;
             }
         }
 
@@ -1438,11 +1524,13 @@
 </head>
 <body>
 
-<!-- LOADING SCREEN -->
+<!-- ENHANCED LOADING SCREEN -->
 <div class="loading-screen" id="loadingScreen">
-    <div class="honey-spinner">
+    <div class="honey-loader">
+        <div class="jar-lid"></div>
         <div class="honey-jar">
-            <div class="honey-fill"></div>
+            <div class="honey-fill" id="honeyFill"></div>
+            <div class="honey-bubbles" id="honeyBubbles"></div>
         </div>
     </div>
     <div class="loading-text">Preparing the Hundred Acre Celebration...</div>
@@ -1457,8 +1545,127 @@
     <div class="loading-hint">(tap or click anywhere to skip)</div>
 </div>
 
-<!-- PAGE TRANSITION -->
-<div class="page-transition" id="pageTransition"></div>
+<!-- ENCHANTED FOREST BACKGROUND -->
+<div class="enchanted-forest" aria-hidden="true">
+    <div class="tree" style="left: 5%; height: 380px;"></div>
+    <div class="tree" style="left: 25%; height: 430px;"></div>
+    <div class="tree" style="left: 60%; height: 360px;"></div>
+    <div class="tree" style="left: 85%; height: 410px;"></div>
+
+    <!-- Floating leaves generated via JS -->
+</div>
+
+<div class="golden-light" aria-hidden="true"></div>
+
+<!-- Floating Clouds -->
+<div class="floating-cloud" style="top: 10%; animation-delay: 0s; animation-duration: 70s;" aria-hidden="true"></div>
+<div class="floating-cloud" style="top: 26%; animation-delay: -20s; animation-duration: 80s;" aria-hidden="true"></div>
+<div class="floating-cloud" style="top: 42%; animation-delay: -40s; animation-duration: 90s;" aria-hidden="true"></div>
+
+<!-- READING PROGRESS -->
+<div class="reading-progress" id="readingProgress"></div>
+
+<!-- MUSIC CONTROLS -->
+<div class="music-controls">
+    <button class="music-btn" id="musicBtn" aria-label="Toggle gentle background music">
+        <i class="fas fa-music" aria-hidden="true"></i>
+    </button>
+</div>
+
+<!-- FLOATING ACTION BUTTONS -->
+<div class="fab-container" aria-label="Quick actions">
+    <button class="fab" id="homeBtn" title="Back to top" aria-label="Back to top">
+        <i class="fas fa-home" aria-hidden="true"></i>
+    </button>
+    <button class="fab" id="rsvpBtn" title="Quick RSVP" aria-label="Quick RSVP">
+        <i class="fas fa-envelope" aria-hidden="true"></i>
+    </button>
+    <button class="fab" id="mapBtn" title="View location" aria-label="View location">
+        <i class="fas fa-map-marker-alt" aria-hidden="true"></i>
+    </button>
+</div>
+
+<!-- ENHANCED BEES -->
+<div class="floating-bee" style="top: 15%; left: 10%; animation-delay: 0s;">
+    <div class="bee-container">
+        <div class="bee-body">
+            <div class="bee-stripes">
+                <div class="bee-stripe"></div>
+                <div class="bee-stripe"></div>
+                <div class="bee-stripe"></div>
+            </div>
+        </div>
+        <div class="bee-head">
+            <div class="bee-eye"></div>
+        </div>
+        <div class="bee-antenna left"></div>
+        <div class="bee-antenna right"></div>
+        <div class="bee-wing left"></div>
+        <div class="bee-wing right"></div>
+        <div class="bee-stinger"></div>
+    </div>
+</div>
+
+<div class="floating-bee" style="top: 35%; left: 80%; animation-delay: -3s;">
+    <div class="bee-container">
+        <div class="bee-body">
+            <div class="bee-stripes">
+                <div class="bee-stripe"></div>
+                <div class="bee-stripe"></div>
+                <div class="bee-stripe"></div>
+            </div>
+        </div>
+        <div class="bee-head">
+            <div class="bee-eye"></div>
+        </div>
+        <div class="bee-antenna left"></div>
+        <div class="bee-antenna right"></div>
+        <div class="bee-wing left"></div>
+        <div class="bee-wing right"></div>
+        <div class="bee-stinger"></div>
+    </div>
+</div>
+
+<div class="floating-bee" style="top: 70%; left: 20%; animation-delay: -6s;">
+    <div class="bee-container">
+        <div class="bee-body">
+            <div class="bee-stripes">
+                <div class="bee-stripe"></div>
+                <div class="bee-stripe"></div>
+                <div class="bee-stripe"></div>
+            </div>
+        </div>
+        <div class="bee-head">
+            <div class="bee-eye"></div>
+        </div>
+        <div class="bee-antenna left"></div>
+        <div class="bee-antenna right"></div>
+        <div class="bee-wing left"></div>
+        <div class="bee-wing right"></div>
+        <div class="bee-stinger"></div>
+    </div>
+</div>
+
+<!-- CHARACTER MODAL -->
+<div class="character-modal" id="characterModal" aria-modal="true" role="dialog" aria-labelledby="modalCharacterName">
+    <div class="modal-content">
+        <button class="close-modal" id="closeModal" aria-label="Close character details">
+            <i class="fas fa-times" aria-hidden="true"></i>
+        </button>
+        <div class="modal-character">
+            <div class="modal-character-icon pooh-icon" id="modalCharacterIcon">
+                <i class="fas fa-bear" aria-hidden="true"></i>
+            </div>
+            <div class="modal-character-name" id="modalCharacterName">Honey Bear</div>
+        </div>
+        <div class="modal-character-quote" id="modalCharacterQuote">
+            "Some days call for a new baby, a full heart, and just one more spoon of honey."
+        </div>
+        <div class="modal-character-bio" id="modalCharacterBio">
+            Honey Bear is a gentle, golden bear who thinks best with a small pot of something sweet nearby. He loves slow mornings, soft blankets, and any excuse to gather his friends under the trees to celebrate someone small and wonderful.
+        </div>
+    </div>
+</div>
 
 <!-- STORYBOOK COVER -->
 <div class="storybook-cover" id="storybookCover" aria-label="Storybook cover: The Hundred Acre Celebration">
@@ -1485,110 +1692,16 @@
     </button>
 </div>
 
-<!-- ENCHANTED FOREST BACKGROUND -->
-<div class="enchanted-forest" aria-hidden="true">
-    <div class="tree" style="left: 5%; height: 380px;"></div>
-    <div class="tree" style="left: 25%; height: 430px;"></div>
-    <div class="tree" style="left: 60%; height: 360px;"></div>
-    <div class="tree" style="left: 85%; height: 410px;"></div>
-
-    <!-- Floating leaves generated via JS -->
-</div>
-
-<div class="golden-light" aria-hidden="true"></div>
-
-<!-- Floating Clouds -->
-<div class="floating-cloud" style="top: 10%; animation-delay: 0s; animation-duration: 70s;" aria-hidden="true"></div>
-<div class="floating-cloud" style="top: 26%; animation-delay: -20s; animation-duration: 80s;" aria-hidden="true"></div>
-<div class="floating-cloud" style="top: 42%; animation-delay: -40s; animation-duration: 90s;" aria-hidden="true"></div>
-
-<!-- READING PROGRESS -->
-<div class="reading-progress" id="readingProgress"></div>
-
-<!-- MUSIC CONTROLS -->
-<div class="music-controls">
-    <button class="music-btn" id="musicBtn" aria-label="Toggle a very gentle lullaby in the background">
-        <i class="fas fa-music" aria-hidden="true"></i>
-    </button>
-</div>
-
-<!-- FLOATING ACTION BUTTONS -->
-<div class="fab-container" aria-label="Quick actions">
-    <button class="fab" id="homeBtn" title="Back to the cover" aria-label="Back to the cover">
-        <i class="fas fa-home" aria-hidden="true"></i>
-    </button>
-    <button class="fab" id="rsvpBtn" title="Quick RSVP" aria-label="Quick RSVP">
-        <i class="fas fa-envelope" aria-hidden="true"></i>
-    </button>
-    <button class="fab" id="mapBtn" title="View location" aria-label="View location">
-        <i class="fas fa-map-marker-alt" aria-hidden="true"></i>
-    </button>
-</div>
-
-<!-- FLOATING BEES -->
-<div class="floating-bee" style="top: 10%; left: 5%;">
-    <div class="bee-body"></div>
-    <div class="bee-head"></div>
-    <div class="bee-wing left"></div>
-    <div class="bee-wing right"></div>
-</div>
-<div class="floating-bee" style="top: 32%; left: 78%; animation-delay: -5s;">
-    <div class="bee-body"></div>
-    <div class="bee-head"></div>
-    <div class="bee-wing left"></div>
-    <div class="bee-wing right"></div>
-</div>
-
-<!-- STORYBOOK NAVIGATION -->
-<div class="storybook-navigation" id="storybookNavigation" aria-label="Story page navigation">
-    <button class="nav-btn" id="prevPage" aria-label="Previous page">
-        <i class="fas fa-chevron-left" aria-hidden="true"></i>
-    </button>
-    <div class="page-indicator">
-        <span id="currentPage">1</span> / <span id="totalPages">6</span>
-        <div class="page-indicator-caption">little pages in this story</div>
-    </div>
-    <button class="nav-btn" id="nextPage" aria-label="Next page">
-        <i class="fas fa-chevron-right" aria-hidden="true"></i>
-    </button>
-</div>
-
-<!-- CHARACTER MODAL -->
-<div class="character-modal" id="characterModal" aria-modal="true" role="dialog" aria-labelledby="modalCharacterName">
-    <div class="modal-content">
-        <button class="close-modal" id="closeModal" aria-label="Close character details">
-            <i class="fas fa-times" aria-hidden="true"></i>
-        </button>
-        <div class="modal-character">
-            <div class="modal-character-icon pooh-icon" id="modalCharacterIcon">
-                <i class="fas fa-bear" aria-hidden="true"></i>
-            </div>
-            <div class="modal-character-name" id="modalCharacterName">Honey Bear</div>
-        </div>
-        <div class="modal-character-quote" id="modalCharacterQuote">
-            "Some days call for a new baby, a full heart, and just one more spoon of honey."
-        </div>
-        <div class="modal-character-bio" id="modalCharacterBio">
-            Honey Bear is a gentle, golden bear who thinks best with a small pot of something sweet nearby. He loves slow mornings, soft blankets, and any excuse to gather his friends under the trees to celebrate someone small and wonderful.
-        </div>
-    </div>
-</div>
-
-<!-- STORYBOOK CONTENT -->
+<!-- STORYBOOK CONTENT - SINGLE PAGE -->
 <div class="storybook" id="storybook">
     <div class="storybook-inner-frame" aria-hidden="true"></div>
 
-    <!-- PAGE 1: THE BEGINNING -->
-    <div class="page" id="page1">
-        <div class="page-corner"></div>
-        <div class="page-number">1</div>
-        <div class="page-inner">
-            <div class="quote-scrap">
-                <p>Some days feel like the very first page of something wonderful.</p>
-            </div>
-
+    <!-- WELCOME SECTION -->
+    <div class="content-section" id="welcome">
+        <div class="section-corner"></div>
+        <div class="section-inner">
             <div class="story-section">
-                <h2 class="story-title">In Which News of Baby Gunner Reaches a Little Wood</h2>
+                <h2 class="story-title">Once Upon a Time in a Friendly Little Wood...</h2>
                 <p class="story-text">
                     In a soft, sunlit corner of the world, where the trees lean in to listen and the paths remember
                     every pair of little feet, word has begun to rustle through the leaves. The friends of the Wood
@@ -1597,13 +1710,6 @@
                     The trees are humming, the clouds are drifting a little slower, and even the honey pots seem to
                     shine more brightly than usual. It's not every day a new chapter begins, and certainly not every
                     day a baby is welcomed into the heart of such a cozy place.
-                </p>
-            </div>
-
-            <div class="story-section thinking-spot">
-                <p class="story-text">
-                    Somewhere nearby there will be a quiet chair – a small “thinking spot” for anyone who likes to
-                    listen more than talk, and to watch the celebration unfold like pages turning in a favorite book.
                 </p>
             </div>
 
@@ -1630,20 +1736,41 @@
                     for Baby Gunner and for you.
                 </p>
             </div>
+
+            <!-- Interactive Countdown -->
+            <div class="interactive-element">
+                <h3 class="story-title">Counting Down to the Celebration</h3>
+                <div class="countdown" id="countdown">
+                    <div class="countdown-item">
+                        <div class="countdown-number" id="days">00</div>
+                        <div class="countdown-label">Days</div>
+                    </div>
+                    <div class="countdown-item">
+                        <div class="countdown-number" id="hours">00</div>
+                        <div class="countdown-label">Hours</div>
+                    </div>
+                    <div class="countdown-item">
+                        <div class="countdown-number" id="minutes">00</div>
+                        <div class="countdown-label">Minutes</div>
+                    </div>
+                    <div class="countdown-item">
+                        <div class="countdown-number" id="seconds">00</div>
+                        <div class="countdown-label">Seconds</div>
+                    </div>
+                </div>
+                <p class="story-text" style="text-align: center; margin-top: 20px;">
+                    We can't wait to celebrate with you!
+                </p>
+            </div>
         </div>
     </div>
 
-    <!-- PAGE 2: THE INVITATION -->
-    <div class="page" id="page2">
-        <div class="page-corner"></div>
-        <div class="page-number">2</div>
-        <div class="page-inner">
-            <div class="quote-scrap">
-                <p>A good day begins with knowing where to be and when.</p>
-            </div>
-
+    <!-- INVITATION SECTION -->
+    <div class="content-section" id="invitation">
+        <div class="section-corner"></div>
+        <div class="section-inner">
             <div class="story-section">
-                <h2 class="story-title">In Which We Discover When and Where to Arrive</h2>
+                <h2 class="story-title">You Are Cordially Invited</h2>
                 <p class="story-text">
                     The friends of the Little Wood, together with <strong>Calab &amp; Lea</strong>, invite you to a
                     honey-sweet celebration in honor of Baby Gunner. We'll gather under gentle lights and soft colors
@@ -1689,36 +1816,20 @@
                 </div>
             </div>
 
-            <div class="story-section expotition-section">
-                <h2 class="story-title">In Which We Find Our Way There</h2>
-                <p class="story-text">
-                    Every good gathering begins with a little expedition. Your path will lead you past ordinary roads
-                    and friendly trees to a cozy corner in Wilmington, Delaware, where the lights are soft and the
-                    welcome is decidedly warm.
-                </p>
-
-                <div class="expotition-map">
-                    <div class="expotition-path">
-                        <span class="expotition-step">You</span>
-                        <span class="expotition-dot">· · ·</span>
-                        <span class="expotition-step">The Road</span>
-                        <span class="expotition-dot">· · ·</span>
-                        <span class="expotition-step">A Friendly Door</span>
-                        <span class="expotition-dot">· · ·</span>
-                        <span class="expotition-step">Baby Gunner’s Party</span>
-                    </div>
-                    <button class="magical-btn" type="button" id="mapDetailsBtn">
-                        <i class="fas fa-map" aria-hidden="true"></i>
-                        View Helpful Directions
-                    </button>
-                </div>
-            </div>
-
             <div style="text-align: center; margin-top: 22px;">
-                <a href="tel:+13029220740" class="magical-btn" title="Let the bees carry your reply">
+                <a href="tel:+13029220740" class="magical-btn">
                     <i class="fas fa-phone" aria-hidden="true"></i>
                     Tap to RSVP with a Buzz
                 </a>
+            </div>
+
+            <!-- Interactive Honey Pot -->
+            <div class="interactive-element">
+                <h3 class="story-title">Tap the Honey Pot for a Sweet Surprise</h3>
+                <div class="honey-pot" id="honeyPot"></div>
+                <p class="story-text" id="honeyMessage" style="text-align: center;">
+                    We're so excited to share this sweet day with you!
+                </p>
             </div>
 
             <div class="character-spotlight" data-character="piglet">
@@ -1736,17 +1847,12 @@
         </div>
     </div>
 
-    <!-- PAGE 3: GAMES, JOY & BOUNCING -->
-    <div class="page" id="page3">
-        <div class="page-corner"></div>
-        <div class="page-number">3</div>
-        <div class="page-inner">
-            <div class="quote-scrap">
-                <p>Laughter and crumbs usually arrive together.</p>
-            </div>
-
+    <!-- ACTIVITIES SECTION -->
+    <div class="content-section" id="activities">
+        <div class="section-corner"></div>
+        <div class="section-inner">
             <div class="story-section">
-                <h2 class="story-title">In Which Some Games Are Played and Some Snacks Are Eaten</h2>
+                <h2 class="story-title">Of Bounces, Giggles, and Gentle Chaos</h2>
                 <p class="story-text">
                     Some friends prefer quiet corners and soft chairs. Others prefer seeing just how high joy can
                     bounce before gravity brings it back down. For Baby Gunner's celebration, there will be a bit
@@ -1784,28 +1890,34 @@
                     <div class="detail-content">
                         A table sprinkled with sweet things and savory bites – a little something for every
                         honey-loving heart, with options for those who prefer something light.
-                        <ul>
-                            <li>Soft, friendly finger foods</li>
-                            <li>A little something sweet with honey nearby</li>
-                            <li>Gentle, simple choices for lighter nibbling</li>
-                        </ul>
                     </div>
+                </div>
+            </div>
+
+            <!-- Interactive Message Bottle -->
+            <div class="interactive-element">
+                <h3 class="story-title">Send a Message to Baby Gunner</h3>
+                <div class="message-bottle" id="messageBottle"></div>
+                <p class="story-text" id="bottleMessage" style="text-align: center;">
+                    Click the bottle to leave a special message for Baby Gunner!
+                </p>
+                <div id="messageForm" style="display: none; margin-top: 20px;">
+                    <textarea id="guestMessage" class="form-textarea" placeholder="Type your message here..."></textarea>
+                    <button class="magical-btn" id="submitMessage" style="margin-top: 15px;">
+                        <i class="fas fa-paper-plane" aria-hidden="true"></i>
+                        Send Message
+                    </button>
                 </div>
             </div>
         </div>
     </div>
 
-    <!-- PAGE 4: GIFTS, BOOKS & KANGA VIBES -->
-    <div class="page" id="page4">
-        <div class="page-corner"></div>
-        <div class="page-number">4</div>
-        <div class="page-inner">
-            <div class="quote-scrap">
-                <p>Books are just hugs you can shelve for later.</p>
-            </div>
-
+    <!-- GIFTS SECTION -->
+    <div class="content-section" id="gifts">
+        <div class="section-corner"></div>
+        <div class="section-inner">
             <div class="story-section">
-                <h2 class="story-title">In Which A Small Library Begins</h2>
+                <h2 class="story-title">Gifts, Books &amp; Cuddly Things</h2>
                 <p class="story-text">
                     Your presence is the part that matters most. Truly. But for those who have kindly asked,
                     Baby Gunner's parents have tucked a few ideas into a small registry and a simple request:
@@ -1846,17 +1958,12 @@
         </div>
     </div>
 
-    <!-- PAGE 5: CHARACTER GALLERY & FAREWELL -->
-    <div class="page" id="page5">
-        <div class="page-corner"></div>
-        <div class="page-number">5</div>
-        <div class="page-inner">
-            <div class="quote-scrap">
-                <p>Some families are grown; others are gathered.</p>
-            </div>
-
+    <!-- CHARACTERS SECTION -->
+    <div class="content-section" id="characters">
+        <div class="section-corner"></div>
+        <div class="section-inner">
             <div class="story-section">
-                <h2 class="story-title">In Which Friends Gather Around Every Corner</h2>
+                <h2 class="story-title">Friends Around Every Corner</h2>
                 <p class="story-text">
                     The Wood is full of characters, each with their own way of loving, worrying, bouncing, listening,
                     and caring. In the same way, this celebration is filled with all different kinds of hearts – quiet
@@ -1918,42 +2025,18 @@
                     <div class="character-name">– our quietly loyal grey friend</div>
                 </div>
             </div>
-
-            <div class="story-section" style="margin-top: 30px;">
-                <p class="story-text" style="text-align: center; font-size: 1.25rem;">
-                    And so, this little chapter of the story draws to a close, but the bigger one is only beginning.
-                    Baby Gunner is already surrounded by more love than the Wood could possibly count, and your presence
-                    in this celebration makes that love even louder.
-                    <br><br>
-                    We cannot wait to welcome you into this cozy, honey-sweet moment in our family's story.
-                </p>
-                <p style="text-align: center; font-family: 'Pinyon Script', cursive; font-size: 2.2rem; color: var(--pooh-red); margin-top: 20px;">
-                    With all the love in our Wood,<br>
-                    Calab, Lea &amp; Friends
-                </p>
-            </div>
         </div>
     </div>
 
-    <!-- PAGE 6: RSVP FORM -->
-    <div class="page" id="page6">
-        <div class="page-corner"></div>
-        <div class="page-number">6</div>
-        <div class="page-inner">
-            <div class="quote-scrap">
-                <p>A promise to come is a little celebration all by itself.</p>
-            </div>
-
+    <!-- RSVP SECTION -->
+    <div class="content-section" id="rsvp">
+        <div class="section-corner"></div>
+        <div class="section-inner">
             <div class="story-section">
-                <h2 class="story-title">In Which You Tell Us You’re Coming</h2>
+                <h2 class="story-title">Send Your RSVP</h2>
                 <p class="story-text">
                     Please let us know if you can join us for Baby Gunner's celebration by filling out this form.
                     We're so excited to share this special day with you!
-                </p>
-                <p class="story-text" style="margin-top: 16px;">
-                    Honey Bear has been counting honey pots, Little Pig Friend has been practicing his bravest welcome,
-                    Bouncing Tiger is trying very hard not to bounce on the decorations, and Gloomy Donkey is quietly
-                    pretending not to be pleased at all. They are all quite looking forward to knowing you’re coming.
                 </p>
             </div>
 
@@ -2060,14 +2143,11 @@
     document.addEventListener('DOMContentLoaded', function () {
         // Elements
         const loadingScreen = document.getElementById('loadingScreen');
+        const honeyFill = document.getElementById('honeyFill');
+        const honeyBubbles = document.getElementById('honeyBubbles');
         const storybookCover = document.getElementById('storybookCover');
         const openBookBtn = document.getElementById('openBookBtn');
         const storybook = document.getElementById('storybook');
-        const storybookNavigation = document.getElementById('storybookNavigation');
-        const prevPageBtn = document.getElementById('prevPage');
-        const nextPageBtn = document.getElementById('nextPage');
-        const currentPageSpan = document.getElementById('currentPage');
-        const totalPagesSpan = document.getElementById('totalPages');
         const readingProgress = document.getElementById('readingProgress');
         const musicBtn = document.getElementById('musicBtn');
         const backgroundMusic = document.getElementById('backgroundMusic');
@@ -2080,17 +2160,32 @@
         const homeBtn = document.getElementById('homeBtn');
         const rsvpBtn = document.getElementById('rsvpBtn');
         const mapBtn = document.getElementById('mapBtn');
-        const pageTransition = document.getElementById('pageTransition');
         const rsvpForm = document.getElementById('rsvpForm');
         const successMessage = document.getElementById('successMessage');
         const newRsvpBtn = document.getElementById('newRsvpBtn');
-        const mapDetailsBtn = document.getElementById('mapDetailsBtn');
+        const honeyPot = document.getElementById('honeyPot');
+        const honeyMessage = document.getElementById('honeyMessage');
+        const messageBottle = document.getElementById('messageBottle');
+        const bottleMessage = document.getElementById('bottleMessage');
+        const messageForm = document.getElementById('messageForm');
+        const submitMessage = document.getElementById('submitMessage');
+        const guestMessage = document.getElementById('guestMessage');
+        const countdownDays = document.getElementById('days');
+        const countdownHours = document.getElementById('hours');
+        const countdownMinutes = document.getElementById('minutes');
+        const countdownSeconds = document.getElementById('seconds');
+        const bees = document.querySelectorAll('.floating-bee');
 
         // State
-        const pages = Array.from(document.querySelectorAll('.page'));
-        let currentPage = 1;
-        const totalPages = pages.length;
         let isMusicActive = false;
+        const honeyMessages = [
+            "You found the sweetest spot!",
+            "Honey makes everything better!",
+            "Baby Gunner is going to be so sweet!",
+            "The celebration will be sweeter with you there!",
+            "You're as sweet as honey!"
+        ];
+        let honeyMessageIndex = 0;
 
         // Character data
         const characterData = {
@@ -2131,33 +2226,26 @@
             }
         };
 
-        // Init
+        // Initialize
         function init() {
-            totalPagesSpan.textContent = totalPages.toString();
+            createHoneyBubbles();
+            startHoneyFill();
             createFloatingLeaves();
             createSparkles();
             setupEventListeners();
-            showPage(1, false);
-
-            // Short loading, allow skip
-            const hideLoading = () => loadingScreen.classList.add('hidden');
-            setTimeout(hideLoading, 1800);
+            startCountdown();
+            
+            // Allow skipping loading screen
             loadingScreen.addEventListener('click', hideLoading, { once: true });
         }
 
         function setupEventListeners() {
             openBookBtn.addEventListener('click', openStorybook);
-            prevPageBtn.addEventListener('click', () => goToPage(currentPage - 1));
-            nextPageBtn.addEventListener('click', () => goToPage(currentPage + 1));
-            homeBtn.addEventListener('click', backToCover);
-            rsvpBtn.addEventListener('click', () => goToPage(6));
+            homeBtn.addEventListener('click', () => window.scrollTo({ top: 0, behavior: 'smooth' }));
+            rsvpBtn.addEventListener('click', () => document.getElementById('rsvp').scrollIntoView({ behavior: 'smooth' }));
             mapBtn.addEventListener('click', showMapInfo);
-            if (mapDetailsBtn) {
-                mapDetailsBtn.addEventListener('click', showMapInfo);
-            }
             musicBtn.addEventListener('click', toggleMusic);
 
-            document.addEventListener('keydown', handleKeyPress);
             window.addEventListener('scroll', updateReadingProgress);
 
             // Character click handlers (spotlights + gallery cards)
@@ -2175,14 +2263,97 @@
                 }
             });
 
-            // Bees drip honey effect
-            document.querySelectorAll('.floating-bee').forEach(bee => {
+            // Bee interactions
+            bees.forEach(bee => {
                 bee.addEventListener('click', makeBeeDripHoney);
             });
 
             // RSVP form handling
             rsvpForm.addEventListener('submit', handleRsvpSubmit);
             newRsvpBtn.addEventListener('click', resetRsvpForm);
+
+            // Interactive elements
+            honeyPot.addEventListener('click', changeHoneyMessage);
+            messageBottle.addEventListener('click', toggleMessageForm);
+            submitMessage.addEventListener('click', submitGuestMessage);
+        }
+
+        // Enhanced honey filling animation
+        function startHoneyFill() {
+            setTimeout(() => {
+                honeyFill.style.height = '85%';
+            }, 500);
+            
+            // Hide loading screen after honey is filled
+            setTimeout(() => {
+                hideLoading();
+            }, 3500);
+        }
+
+        function hideLoading() {
+            loadingScreen.classList.add('hidden');
+            setTimeout(() => {
+                loadingScreen.style.display = 'none';
+            }, 800);
+        }
+
+        // Create honey bubbles
+        function createHoneyBubbles() {
+            for (let i = 0; i < 15; i++) {
+                const bubble = document.createElement('div');
+                bubble.className = 'bubble';
+                
+                // Randomize bubble properties
+                const size = Math.random() * 8 + 4;
+                const left = Math.random() * 80 + 10;
+                const delay = Math.random() * 2;
+                const duration = Math.random() * 2 + 2;
+                
+                bubble.style.width = `${size}px`;
+                bubble.style.height = `${size}px`;
+                bubble.style.left = `${left}%`;
+                bubble.style.animationDelay = `${delay}s`;
+                bubble.style.animationDuration = `${duration}s`;
+                
+                honeyBubbles.appendChild(bubble);
+            }
+        }
+
+        // Enhanced bee honey drip
+        function makeBeeDripHoney(event) {
+            const bee = event.currentTarget;
+            
+            // Pause bee animation temporarily
+            bee.style.animationPlayState = 'paused';
+            
+            // Get bee position
+            const rect = bee.getBoundingClientRect();
+            
+            // Create honey drip
+            const honeyDrip = document.createElement('div');
+            honeyDrip.className = 'honey-drip';
+            honeyDrip.style.left = `${rect.left + rect.width / 2 - 10}px`;
+            honeyDrip.style.top = `${rect.bottom}px`;
+            
+            document.body.appendChild(honeyDrip);
+            
+            // Add a little bounce effect to the bee
+            bee.style.transform = 'scale(1.1)';
+            setTimeout(() => {
+                bee.style.transform = 'scale(1)';
+            }, 200);
+            
+            // Resume bee animation after a delay
+            setTimeout(() => {
+                bee.style.animationPlayState = 'running';
+            }, 500);
+            
+            // Remove honey drip after animation completes
+            setTimeout(() => {
+                if (honeyDrip.parentNode) {
+                    honeyDrip.parentNode.removeChild(honeyDrip);
+                }
+            }, 2500);
         }
 
         // Storybook flows
@@ -2190,48 +2361,8 @@
             storybookCover.classList.add('closed');
             setTimeout(() => {
                 storybook.classList.add('visible');
-                storybookNavigation.classList.add('visible');
-                document.getElementById('page1').scrollIntoView({ behavior: 'smooth', block: 'start' });
-            }, 650);
-        }
-
-        function backToCover() {
-            storybook.classList.remove('visible');
-            storybookNavigation.classList.remove('visible');
-            setTimeout(() => {
-                storybookCover.classList.remove('closed');
                 window.scrollTo({ top: 0, behavior: 'smooth' });
-            }, 300);
-        }
-
-        function showPage(pageNumber, animate = true) {
-            if (pageNumber < 1 || pageNumber > totalPages) return;
-
-            currentPage = pageNumber;
-            currentPageSpan.textContent = currentPage.toString();
-            prevPageBtn.disabled = currentPage === 1;
-            nextPageBtn.disabled = currentPage === totalPages;
-
-            const targetPage = pages[currentPage - 1];
-            if (!targetPage) return;
-
-            if (animate) {
-                pageTransition.classList.add('active');
-                setTimeout(() => {
-                    targetPage.scrollIntoView({ behavior: 'smooth', block: 'start' });
-                    updateReadingProgress();
-                    setTimeout(() => pageTransition.classList.remove('active'), 700);
-                }, 250);
-            } else {
-                targetPage.scrollIntoView({ behavior: 'instant', block: 'start' });
-                updateReadingProgress();
-            }
-        }
-
-        function goToPage(pageNumber) {
-            if (pageNumber >= 1 && pageNumber <= totalPages) {
-                showPage(pageNumber, true);
-            }
+            }, 650);
         }
 
         // Music functionality
@@ -2239,11 +2370,13 @@
             isMusicActive = !isMusicActive;
             
             if (isMusicActive) {
+                // Try to play music with user interaction
                 backgroundMusic.play().then(() => {
                     musicBtn.innerHTML = '<i class="fas fa-volume-up" aria-hidden="true"></i>';
                     musicBtn.setAttribute('aria-label', 'Pause background music');
                 }).catch(error => {
                     console.log('Audio play failed:', error);
+                    // If autoplay is blocked, show a message
                     alert('Please interact with the page first to enable music, then try again.');
                     isMusicActive = false;
                 });
@@ -2278,19 +2411,6 @@
             characterModal.classList.remove('active');
         }
 
-        // Keyboard handling
-        function handleKeyPress(event) {
-            if (event.key === 'ArrowLeft') {
-                goToPage(currentPage - 1);
-            } else if (event.key === 'ArrowRight') {
-                goToPage(currentPage + 1);
-            } else if (event.key === 'Escape') {
-                closeCharacterModal();
-            } else if (event.key === 'Home') {
-                backToCover();
-            }
-        }
-
         // Reading progress
         function updateReadingProgress() {
             const scrollTop = window.pageYOffset || document.documentElement.scrollTop;
@@ -2303,40 +2423,12 @@
             readingProgress.style.width = `${scrollPercent}%`;
         }
 
-        // Bee honey drip
-        function makeBeeDripHoney(event) {
-            const bee = event.currentTarget;
-            bee.style.animationPlayState = 'paused';
-
-            const rect = bee.getBoundingClientRect();
-            const honeyDrip = document.createElement('div');
-            honeyDrip.className = 'honey-drip';
-            honeyDrip.style.position = 'fixed';
-            honeyDrip.style.left = `${rect.left + rect.width / 2 - 25}px`;
-            honeyDrip.style.top = `${rect.bottom}px`;
-            honeyDrip.style.width = '50px';
-            honeyDrip.style.height = '80px';
-            honeyDrip.style.background = 'linear-gradient(to bottom, transparent 10%, #E6B86A 10%, #E6B86A 90%, transparent 90%)';
-            honeyDrip.style.borderRadius = '50% 50% 20% 20%';
-            honeyDrip.style.filter = 'drop-shadow(0 0 10px rgba(230, 184, 106, 0.5))';
-            honeyDrip.style.animation = 'honey-drip-fall 2.5s linear';
-            honeyDrip.style.zIndex = '5';
-
-            document.body.appendChild(honeyDrip);
-
-            setTimeout(() => {
-                bee.style.animationPlayState = 'running';
-                if (honeyDrip.parentNode) {
-                    honeyDrip.parentNode.removeChild(honeyDrip);
-                }
-            }, 2500);
-        }
-
         // RSVP form handling
         function handleRsvpSubmit(event) {
             event.preventDefault();
             
             // In a real implementation, you would send this data to a server
+            // For now, we'll just show a success message
             rsvpForm.style.display = 'none';
             successMessage.style.display = 'block';
             
@@ -2348,6 +2440,83 @@
             rsvpForm.reset();
             rsvpForm.style.display = 'block';
             successMessage.style.display = 'none';
+        }
+
+        // Interactive honey pot
+        function changeHoneyMessage() {
+            honeyMessageIndex = (honeyMessageIndex + 1) % honeyMessages.length;
+            honeyMessage.textContent = honeyMessages[honeyMessageIndex];
+            
+            // Add a little animation
+            honeyPot.style.transform = 'scale(1.1)';
+            setTimeout(() => {
+                honeyPot.style.transform = 'scale(1)';
+            }, 300);
+        }
+
+        // Interactive message bottle
+        function toggleMessageForm() {
+            if (messageForm.style.display === 'none') {
+                messageForm.style.display = 'block';
+                bottleMessage.textContent = "Type your message below and send it to Baby Gunner!";
+            } else {
+                messageForm.style.display = 'none';
+                bottleMessage.textContent = "Click the bottle to leave a special message for Baby Gunner!";
+            }
+            
+            // Add a little animation
+            messageBottle.style.transform = 'scale(1.1)';
+            setTimeout(() => {
+                messageBottle.style.transform = 'scale(1)';
+            }, 300);
+        }
+
+        function submitGuestMessage() {
+            const message = guestMessage.value.trim();
+            if (message) {
+                alert(`Thank you for your message: "${message}"\n\nWe'll make sure Baby Gunner hears it!`);
+                guestMessage.value = '';
+                messageForm.style.display = 'none';
+                bottleMessage.textContent = "Thank you for your sweet message!";
+            } else {
+                alert("Please type a message before sending.");
+            }
+        }
+
+        // Countdown timer
+        function startCountdown() {
+            // Set the event date (March 22, 2026)
+            const eventDate = new Date('March 22, 2026 14:00:00').getTime();
+            
+            function updateCountdown() {
+                const now = new Date().getTime();
+                const timeLeft = eventDate - now;
+                
+                if (timeLeft < 0) {
+                    // Event has passed
+                    countdownDays.textContent = '00';
+                    countdownHours.textContent = '00';
+                    countdownMinutes.textContent = '00';
+                    countdownSeconds.textContent = '00';
+                    return;
+                }
+                
+                // Calculate days, hours, minutes, seconds
+                const days = Math.floor(timeLeft / (1000 * 60 * 60 * 24));
+                const hours = Math.floor((timeLeft % (1000 * 60 * 60 * 24)) / (1000 * 60 * 60));
+                const minutes = Math.floor((timeLeft % (1000 * 60 * 60)) / (1000 * 60));
+                const seconds = Math.floor((timeLeft % (1000 * 60)) / 1000);
+                
+                // Update display
+                countdownDays.textContent = days.toString().padStart(2, '0');
+                countdownHours.textContent = hours.toString().padStart(2, '0');
+                countdownMinutes.textContent = minutes.toString().padStart(2, '0');
+                countdownSeconds.textContent = seconds.toString().padStart(2, '0');
+            }
+            
+            // Update immediately and then every second
+            updateCountdown();
+            setInterval(updateCountdown, 1000);
         }
 
         // Background flair
