@@ -143,6 +143,9 @@
         body.reduce-motion .storybook-cover,
         body.reduce-motion .nav-toggle,
         body.reduce-motion .nav-item,
+        body.reduce-motion .nav-dock__panel,
+        body.reduce-motion .nav-dock__pill,
+        body.reduce-motion .nav-dock__progress-fill,
         body.reduce-motion .fab,
         body.reduce-motion .music-btn {
             animation-duration: 0s !important;
@@ -282,84 +285,133 @@
             visibility: visible;
         }
 
-        .nav-quick-controls {
+        /* ===== NAVIGATION CONTROL DOCK ===== */
+        .nav-dock {
             position: fixed;
-            left: calc(var(--sidebar-width) + 16px);
-            top: 16px;
-            right: 24px;
-            display: flex;
-            align-items: center;
-            justify-content: flex-end;
-            gap: 10px;
-            z-index: 950;
+            left: calc(var(--sidebar-width) + 20px);
+            right: 28px;
+            bottom: 20px;
+            z-index: 960;
             pointer-events: none;
         }
 
-        .nav-quick-card {
-            background: rgba(255, 255, 255, 0.9);
-            border-radius: var(--radius-pill);
-            border: 1px solid rgba(139, 69, 19, 0.16);
-            box-shadow: 0 10px 20px rgba(0,0,0,0.08);
-            display: inline-flex;
-            align-items: center;
-            gap: 10px;
-            padding: 8px 14px;
+        .nav-dock__panel {
             pointer-events: auto;
-        }
-
-        .nav-quick-card strong {
-            font-family: var(--font-heading);
-            color: var(--storybook-brown);
-        }
-
-        .nav-control-btn {
-            border: 0;
-            background: linear-gradient(135deg, #f7e3b4, #f1c86a);
-            color: #5b3a1b;
-            font-weight: 700;
-            padding: 10px 14px;
-            border-radius: 999px;
-            cursor: pointer;
-            box-shadow: 0 6px 0 #d69e2e;
-            transition: transform 0.18s ease, box-shadow 0.18s ease;
-            display: inline-flex;
+            background: rgba(255, 255, 255, 0.9);
+            border-radius: 20px;
+            border: 1px solid rgba(139, 69, 19, 0.14);
+            box-shadow: 0 20px 40px rgba(15, 23, 42, 0.16);
+            padding: 14px 16px;
+            display: grid;
+            grid-template-columns: 1.4fr 1fr;
+            gap: 18px;
             align-items: center;
+            backdrop-filter: blur(6px);
+        }
+
+        .nav-dock__status {
+            display: grid;
             gap: 6px;
         }
 
-        .nav-control-btn:hover:not(:disabled) {
+        .nav-dock__eyebrow {
+            text-transform: uppercase;
+            letter-spacing: 0.12em;
+            font-size: 0.72rem;
+            color: #7c6149;
+            font-weight: 800;
+        }
+
+        .nav-dock__title {
+            font-family: var(--font-heading);
+            font-size: 1.3rem;
+            color: var(--storybook-brown);
+        }
+
+        .nav-dock__hint {
+            font-size: 0.9rem;
+            color: #6b7280;
+        }
+
+        .nav-dock__progress {
+            display: grid;
+            grid-template-columns: 1fr auto;
+            gap: 10px;
+            align-items: center;
+        }
+
+        .nav-dock__progress-track {
+            position: relative;
+            height: 8px;
+            background: rgba(139, 69, 19, 0.12);
+            border-radius: 999px;
+            overflow: hidden;
+        }
+
+        .nav-dock__progress-fill {
+            position: absolute;
+            inset: 0;
+            width: 18%;
+            background: linear-gradient(90deg, #f7e3b4, #f1c86a);
+            border-radius: inherit;
+            transition: width 0.4s ease;
+        }
+
+        .nav-dock__progress-text {
+            font-weight: 800;
+            color: #5b3a1b;
+            font-size: 0.95rem;
+        }
+
+        .nav-dock__actions {
+            display: flex;
+            justify-content: flex-end;
+            gap: 10px;
+            flex-wrap: wrap;
+        }
+
+        .nav-dock__pill {
+            border: 1px solid rgba(139, 69, 19, 0.18);
+            background: #fff7ec;
+            color: #5b3a1b;
+            font-weight: 800;
+            padding: 10px 14px;
+            border-radius: 14px;
+            cursor: pointer;
+            display: inline-flex;
+            align-items: center;
+            gap: 8px;
+            transition: transform 0.2s ease, box-shadow 0.2s ease, background 0.2s ease;
+            box-shadow: 0 6px 14px rgba(0,0,0,0.08);
+        }
+
+        .nav-dock__pill:hover:not(:disabled) {
             transform: translateY(-2px);
+            background: #fff;
+            box-shadow: 0 10px 20px rgba(0,0,0,0.1);
+        }
+
+        .nav-dock__pill:active:not(:disabled) {
+            transform: translateY(0);
+            box-shadow: 0 4px 10px rgba(0,0,0,0.12);
+        }
+
+        .nav-dock__pill:disabled {
+            cursor: not-allowed;
+            background: #ede9fe;
+            color: #6b7280;
+            box-shadow: none;
+        }
+
+        .nav-dock__pill--primary {
+            background: linear-gradient(135deg, #f7e3b4, #f1c86a);
+            border-color: rgba(139, 69, 19, 0.24);
             box-shadow: 0 8px 0 #d69e2e;
         }
 
-        .nav-control-btn:active:not(:disabled) {
-            transform: translateY(2px);
-            box-shadow: 0 3px 0 #d69e2e;
-        }
-
-        .nav-control-btn:disabled {
-            background: #e5e7eb;
-            color: #6b7280;
-            box-shadow: 0 4px 0 #9ca3af;
-            cursor: not-allowed;
-        }
-
-        .nav-indicator {
-            display: flex;
-            flex-direction: column;
-            gap: 2px;
-            text-align: left;
-        }
-
-        .nav-indicator-title {
-            font-size: 0.95rem;
-            color: var(--storybook-brown);
-            font-weight: 700;
-        }
-
-        .nav-indicator-hint {
-            font-size: 0.82rem;
-            color: #6b7280;
+        .nav-dock__pill--ghost {
+            background: rgba(255, 255, 255, 0.75);
+            border-style: dashed;
         }
 
         .nav-toggle {
@@ -1902,13 +1954,17 @@
             .nav-overlay.visible {
                 visibility: visible;
             }
-            .nav-quick-controls {
+            .nav-dock {
                 left: 16px;
                 right: 16px;
-                top: auto;
                 bottom: 18px;
-                justify-content: center;
-                flex-wrap: wrap;
+            }
+            .nav-dock__panel {
+                grid-template-columns: 1fr;
+                gap: 12px;
+            }
+            .nav-dock__actions {
+                justify-content: space-between;
             }
         }
 
@@ -1971,19 +2027,20 @@
                 top: 14px;
                 right: 14px;
             }
-            .nav-quick-controls {
-                position: fixed;
+            .nav-dock {
                 bottom: 82px;
                 left: 12px;
                 right: 12px;
-                gap: 6px;
             }
-            .nav-quick-card {
-                width: 100%;
-                justify-content: space-between;
+            .nav-dock__panel {
+                padding: 12px 14px;
             }
-            .nav-indicator-title {
-                font-size: 0.9rem;
+            .nav-dock__title {
+                font-size: 1.15rem;
+            }
+            .nav-dock__pill {
+                flex: 1 1 45%;
+                justify-content: center;
             }
         }
 
@@ -2007,8 +2064,11 @@
             .sidebar-nav {
                 width: 100%;
             }
-            .nav-quick-controls {
+            .nav-dock {
                 bottom: 70px;
+            }
+            .nav-dock__actions {
+                flex-direction: column;
             }
         }
 
@@ -2114,19 +2174,34 @@
 
 <div class="nav-overlay" id="navOverlay" aria-hidden="true"></div>
 
-<!-- QUICK NAVIGATION CONTROLS -->
-<div class="nav-quick-controls" aria-label="Quick navigation controls">
-    <div class="nav-quick-card">
-        <button class="nav-control-btn" id="prevSectionBtn" aria-label="Go to previous section">
-            <i class="fas fa-arrow-left" aria-hidden="true"></i> Prev
-        </button>
-        <div class="nav-indicator">
-            <div class="nav-indicator-title" id="navActiveLabel">Story Beginning</div>
-            <div class="nav-indicator-hint">Alt + ←/→ jumps through the story</div>
+<!-- STORY NAVIGATION DECK -->
+<div class="nav-dock" aria-label="Story navigation controls">
+    <div class="nav-dock__panel">
+        <div class="nav-dock__status">
+            <span class="nav-dock__eyebrow">Now exploring</span>
+            <span class="nav-dock__title" id="navActiveLabel">Story Beginning</span>
+            <span class="nav-dock__hint">Use Alt + ←/→ to jump between chapters</span>
+            <div class="nav-dock__progress" role="presentation">
+                <div class="nav-dock__progress-track">
+                    <div class="nav-dock__progress-fill" id="navProgressFill"></div>
+                </div>
+                <span class="nav-dock__progress-text" id="navProgressText">0% journey</span>
+            </div>
         </div>
-        <button class="nav-control-btn" id="nextSectionBtn" aria-label="Go to next section">
-            Next <i class="fas fa-arrow-right" aria-hidden="true"></i>
-        </button>
+        <div class="nav-dock__actions" role="group" aria-label="Navigate story sections">
+            <button class="nav-dock__pill" id="prevSectionBtn" aria-label="Go to previous section">
+                <i class="fas fa-arrow-left" aria-hidden="true"></i>
+                Previous
+            </button>
+            <button class="nav-dock__pill nav-dock__pill--primary" id="nextSectionBtn" aria-label="Go to next section">
+                Next
+                <i class="fas fa-arrow-right" aria-hidden="true"></i>
+            </button>
+            <button class="nav-dock__pill nav-dock__pill--ghost" id="openNavMapBtn" aria-label="Open chapter map">
+                <i class="fas fa-map-signs" aria-hidden="true"></i>
+                Open map
+            </button>
+        </div>
     </div>
 </div>
 
@@ -2819,8 +2894,11 @@
         const contentSections = document.querySelectorAll('.content-section');
         const scrollAnimateElements = document.querySelectorAll('.scroll-animate');
         const navActiveLabel = document.getElementById('navActiveLabel');
+        const navProgressFill = document.getElementById('navProgressFill');
+        const navProgressText = document.getElementById('navProgressText');
         const prevSectionBtn = document.getElementById('prevSectionBtn');
         const nextSectionBtn = document.getElementById('nextSectionBtn');
+        const openNavMapBtn = document.getElementById('openNavMapBtn');
 
         let isMusicPlaying = false;
         let lastFocusedElement = null;
@@ -2961,6 +3039,15 @@
             openBookBtn.addEventListener('click', openStorybook);
             navToggle.addEventListener('click', () => toggleSidebarNav());
             navOverlay.addEventListener('click', () => toggleSidebarNav(false));
+
+            openNavMapBtn.addEventListener('click', (e) => {
+                e.preventDefault();
+                toggleSidebarNav(true);
+                const activeItem = sidebarNav.querySelector('.nav-item.active') || sidebarNav.querySelector('.nav-item');
+                if (activeItem) {
+                    activeItem.focus({ preventScroll: true });
+                }
+            });
 
             musicBtn.addEventListener('click', toggleMusic);
             motionToggleBtn.addEventListener('click', toggleMotionPreference);
@@ -3210,6 +3297,17 @@
             const currentIndex = navigableSections.indexOf(activeSectionId);
             const navLabel = document.querySelector(`.nav-item[data-section="${activeSectionId}"] span`);
             navActiveLabel.textContent = navLabel ? navLabel.textContent : 'Navigate story';
+
+            const totalSections = navigableSections.length || 1;
+            const progressPercent = currentIndex >= 0 ? Math.round(((currentIndex + 1) / totalSections) * 100) : 0;
+
+            if (navProgressFill) {
+                navProgressFill.style.width = `${Math.min(Math.max(progressPercent, 0), 100)}%`;
+            }
+
+            if (navProgressText) {
+                navProgressText.textContent = `${Math.max(progressPercent, 0)}% journey`;
+            }
 
             prevSectionBtn.disabled = currentIndex <= 0;
             nextSectionBtn.disabled = currentIndex === -1 || currentIndex >= navigableSections.length - 1;
