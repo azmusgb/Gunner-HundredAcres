@@ -42,7 +42,7 @@
 
         html {
             scroll-behavior: smooth;
-            scroll-padding-top: 96px;
+            scroll-padding-top: 140px;
         }
 
         html, body {
@@ -251,22 +251,22 @@
             40% { transform: scale(1); }
         }
 
-        /* ===== IMMERSIVE LEFT SIDEBAR NAVIGATION ===== */
+        /* ===== IMMERSIVE TOP NAVIGATION ===== */
         .sidebar-nav {
-            position: fixed;
+            position: sticky;
             top: 0;
             left: 0;
-            width: var(--sidebar-width);
-            height: 100vh;
-            background: linear-gradient(180deg, #fffaf1 0%, #f3e7cf 100%);
+            width: 100%;
+            height: auto;
+            background: linear-gradient(90deg, #fffaf1 0%, #f3e7cf 100%);
             z-index: 1000;
             display: flex;
-            flex-direction: column;
-            padding: 18px 16px;
-            box-shadow: 4px 0 18px rgba(15, 23, 42, 0.12);
-            border-right: 1px solid rgba(139, 69, 19, 0.18);
-            transform: translateX(0);
-            transition: transform 0.45s cubic-bezier(0.25, 0.46, 0.45, 0.94);
+            align-items: center;
+            gap: 18px;
+            padding: 14px 20px;
+            box-shadow: 0 8px 24px rgba(15, 23, 42, 0.12);
+            border-bottom: 1px solid rgba(139, 69, 19, 0.18);
+            transition: background 0.3s ease, box-shadow 0.3s ease;
         }
 
         .nav-overlay {
@@ -287,31 +287,29 @@
 
         /* ===== NAVIGATION CONTROL DOCK ===== */
         .nav-dock {
-            position: fixed;
-            left: calc(var(--sidebar-width) + 20px);
-            right: 28px;
-            bottom: 20px;
+            flex: 1;
+            display: flex;
+            justify-content: flex-end;
             z-index: 960;
-            pointer-events: none;
+            min-width: 320px;
         }
 
         .nav-dock__panel {
-            pointer-events: auto;
-            background: rgba(255, 255, 255, 0.9);
-            border-radius: 20px;
+            background: rgba(255, 255, 255, 0.92);
+            border-radius: 16px;
             border: 1px solid rgba(139, 69, 19, 0.14);
-            box-shadow: 0 20px 40px rgba(15, 23, 42, 0.16);
-            padding: 14px 16px;
+            box-shadow: 0 12px 28px rgba(15, 23, 42, 0.12);
+            padding: 12px 14px;
             display: grid;
-            grid-template-columns: 1.4fr 1fr;
-            gap: 18px;
+            grid-template-columns: minmax(240px, 1fr) auto;
+            gap: 12px 16px;
             align-items: center;
             backdrop-filter: blur(6px);
         }
 
         .nav-dock__status {
             display: grid;
-            gap: 6px;
+            gap: 4px;
         }
 
         .nav-dock__eyebrow {
@@ -324,19 +322,19 @@
 
         .nav-dock__title {
             font-family: var(--font-heading);
-            font-size: 1.3rem;
+            font-size: 1.1rem;
             color: var(--storybook-brown);
         }
 
         .nav-dock__hint {
-            font-size: 0.9rem;
+            font-size: 0.85rem;
             color: #6b7280;
         }
 
         .nav-dock__progress {
             display: grid;
             grid-template-columns: 1fr auto;
-            gap: 10px;
+            gap: 8px;
             align-items: center;
         }
 
@@ -375,7 +373,7 @@
             background: #fff7ec;
             color: #5b3a1b;
             font-weight: 800;
-            padding: 10px 14px;
+            padding: 8px 12px;
             border-radius: 14px;
             cursor: pointer;
             display: inline-flex;
@@ -417,20 +415,19 @@
         .nav-toggle {
             position: fixed;
             top: 18px;
-            left: 18px;
+            right: 18px;
             width: 48px;
             height: 48px;
             background: var(--pooh-yellow);
             border: 3px solid var(--storybook-brown);
             border-radius: 50%;
-            display: flex;
+            display: none;
             align-items: center;
             justify-content: center;
             cursor: pointer;
             z-index: 1001;
             transition: all 0.3s ease;
             box-shadow: 0 6px 16px rgba(0,0,0,0.25);
-            display: none;
             padding: 0;
             appearance: none;
         }
@@ -451,10 +448,13 @@
         }
 
         .nav-header {
-            text-align: center;
-            margin-bottom: 26px;
-            padding-bottom: 18px;
-            border-bottom: 2px dashed rgba(84, 45, 20, 0.4);
+            text-align: left;
+            padding-right: 12px;
+            border-right: 2px dashed rgba(84, 45, 20, 0.25);
+            display: grid;
+            gap: 2px;
+            min-width: 210px;
+            flex-shrink: 0;
         }
 
         .nav-title {
@@ -473,31 +473,35 @@
 
         .nav-menu {
             display: flex;
-            flex-direction: column;
+            flex-direction: row;
+            flex-wrap: wrap;
             gap: 10px;
-            flex-grow: 1;
-            margin-top: 10px;
+            flex: 1;
+            padding: 4px 0;
+            overflow-x: auto;
+            align-items: center;
         }
 
         .nav-item {
-            display: flex;
+            display: inline-flex;
             align-items: center;
-            gap: 12px;
-            padding: 12px 14px;
-            background: rgba(255, 255, 255, 0.86);
+            gap: 10px;
+            padding: 10px 12px;
+            background: rgba(255, 255, 255, 0.9);
             border-radius: 14px;
             text-decoration: none;
             color: var(--storybook-brown);
-            font-weight: 600;
+            font-weight: 700;
             transition: all 0.25s ease;
-            border: 1px solid rgba(148, 81, 35, 0.12);
+            border: 1px solid rgba(148, 81, 35, 0.14);
             box-shadow: 0 2px 8px rgba(0,0,0,0.08);
             font-size: 0.98rem;
+            white-space: nowrap;
         }
 
         .nav-item:hover {
             background: #FFFFFF;
-            transform: translateX(2px);
+            transform: translateY(-2px);
             border-color: rgba(139, 69, 19, 0.32);
         }
 
@@ -515,23 +519,21 @@
         }
 
         .nav-divider {
-            height: 1px;
-            background: rgba(84, 45, 20, 0.45);
-            margin: 18px 4px;
-            opacity: 0.6;
+            display: none;
         }
 
         .nav-footer {
-            margin-top: auto;
-            text-align: center;
-            padding-top: 16px;
-            border-top: 1px dashed rgba(84, 45, 20, 0.4);
+            margin-left: 12px;
+            text-align: right;
+            padding-top: 0;
+            border-top: none;
         }
 
         .nav-footer-text {
             font-family: var(--font-heading);
             font-size: 1.1rem;
             color: var(--storybook-brown);
+            white-space: nowrap;
         }
 
         /* ===== QUICK STORY MAP ===== */
@@ -849,7 +851,6 @@
             border-radius: 28px;
             box-shadow: var(--shadow-soft);
             padding: 36px 34px 40px;
-            margin-left: var(--sidebar-width);
             border: 1px solid rgba(148, 81, 35, 0.25);
         }
 
@@ -1921,11 +1922,11 @@
 
         /* ===== RESPONSIVE DESIGN ===== */
         @media (max-width: 1200px) {
-            :root {
-                --sidebar-width: 200px;
+            .sidebar-nav {
+                flex-wrap: wrap;
+                gap: 12px;
             }
             .storybook {
-                margin-left: var(--sidebar-width);
                 padding: 34px 26px 36px;
             }
             .nav-title {
@@ -1934,37 +1935,50 @@
             .nav-subtitle {
                 font-size: 1.3rem;
             }
+            .nav-header {
+                border-right: none;
+                border-bottom: 2px dashed rgba(84, 45, 20, 0.25);
+                padding-bottom: 10px;
+                margin-bottom: 4px;
+            }
         }
 
         @media (max-width: 992px) {
-            .storybook {
-                margin-left: 0;
-                padding: 30px 22px 32px;
-            }
-
             .sidebar-nav {
-                transform: translateX(-100%);
+                flex-direction: column;
+                align-items: flex-start;
+                gap: 12px;
             }
-            .sidebar-nav.active {
-                transform: translateX(0);
+            .nav-menu {
+                width: 100%;
+                display: none;
+                flex-direction: column;
+                align-items: stretch;
+            }
+            .nav-dock {
+                width: 100%;
+                display: none;
+                justify-content: flex-start;
+            }
+            .nav-dock__panel {
+                width: 100%;
+                grid-template-columns: 1fr;
+            }
+            .nav-footer {
+                width: 100%;
+                margin-left: 0;
+                text-align: left;
+                padding-top: 4px;
+            }
+            body.nav-open .nav-menu,
+            body.nav-open .nav-dock {
+                display: flex;
             }
             .nav-toggle {
                 display: flex;
             }
             .nav-overlay.visible {
                 visibility: visible;
-            }
-            .nav-dock {
-                left: 16px;
-                right: 16px;
-                bottom: 18px;
-            }
-            .nav-dock__panel {
-                grid-template-columns: 1fr;
-                gap: 12px;
-            }
-            .nav-dock__actions {
-                justify-content: space-between;
             }
         }
 
@@ -2027,11 +2041,6 @@
                 top: 14px;
                 right: 14px;
             }
-            .nav-dock {
-                bottom: 82px;
-                left: 12px;
-                right: 12px;
-            }
             .nav-dock__panel {
                 padding: 12px 14px;
             }
@@ -2060,12 +2069,6 @@
             }
             .actions {
                 grid-template-columns: 1fr;
-            }
-            .sidebar-nav {
-                width: 100%;
-            }
-            .nav-dock {
-                bottom: 70px;
             }
             .nav-dock__actions {
                 flex-direction: column;
@@ -2119,7 +2122,7 @@
     <button class="magical-btn" id="skipLoadingBtn">Skip loading screen</button>
 </div>
 
-<!-- IMMERSIVE LEFT SIDEBAR NAVIGATION -->
+<!-- IMMERSIVE TOP NAVIGATION -->
 <nav class="sidebar-nav" id="sidebarNav" aria-label="Story navigation">
     <div class="nav-header">
         <h1 class="nav-title">Hundred Acre Wood</h1>
@@ -2144,8 +2147,6 @@
             <span>Woodland Activities</span>
         </a>
 
-        <div class="nav-divider"></div>
-
         <a href="#section5" class="nav-item" data-section="section5">
             <i class="fas fa-gift"></i>
             <span>Gunner's Treasure Trove</span>
@@ -2154,8 +2155,6 @@
             <i class="fas fa-map-marker-alt"></i>
             <span>Location & Details</span>
         </a>
-
-        <div class="nav-divider"></div>
 
         <a href="#" class="nav-item" id="toggleGameNavBtn">
             <i class="fas fa-dice"></i>
@@ -2167,43 +2166,42 @@
         </a>
     </div>
 
+    <div class="nav-dock" aria-label="Story navigation controls">
+        <div class="nav-dock__panel">
+            <div class="nav-dock__status">
+                <span class="nav-dock__eyebrow">Now exploring</span>
+                <span class="nav-dock__title" id="navActiveLabel">Story Beginning</span>
+                <span class="nav-dock__hint">Use Alt + ←/→ to jump between chapters</span>
+                <div class="nav-dock__progress" role="presentation">
+                    <div class="nav-dock__progress-track">
+                        <div class="nav-dock__progress-fill" id="navProgressFill"></div>
+                    </div>
+                    <span class="nav-dock__progress-text" id="navProgressText">0% journey</span>
+                </div>
+            </div>
+            <div class="nav-dock__actions" role="group" aria-label="Navigate story sections">
+                <button class="nav-dock__pill" id="prevSectionBtn" aria-label="Go to previous section">
+                    <i class="fas fa-arrow-left" aria-hidden="true"></i>
+                    Previous
+                </button>
+                <button class="nav-dock__pill nav-dock__pill--primary" id="nextSectionBtn" aria-label="Go to next section">
+                    Next
+                    <i class="fas fa-arrow-right" aria-hidden="true"></i>
+                </button>
+                <button class="nav-dock__pill nav-dock__pill--ghost" id="openNavMapBtn" aria-label="Open chapter map">
+                    <i class="fas fa-map-signs" aria-hidden="true"></i>
+                    Open map
+                </button>
+            </div>
+        </div>
+    </div>
+
     <div class="nav-footer">
         <p class="nav-footer-text">Made with love and honey</p>
     </div>
 </nav>
 
 <div class="nav-overlay" id="navOverlay" aria-hidden="true"></div>
-
-<!-- STORY NAVIGATION DECK -->
-<div class="nav-dock" aria-label="Story navigation controls">
-    <div class="nav-dock__panel">
-        <div class="nav-dock__status">
-            <span class="nav-dock__eyebrow">Now exploring</span>
-            <span class="nav-dock__title" id="navActiveLabel">Story Beginning</span>
-            <span class="nav-dock__hint">Use Alt + ←/→ to jump between chapters</span>
-            <div class="nav-dock__progress" role="presentation">
-                <div class="nav-dock__progress-track">
-                    <div class="nav-dock__progress-fill" id="navProgressFill"></div>
-                </div>
-                <span class="nav-dock__progress-text" id="navProgressText">0% journey</span>
-            </div>
-        </div>
-        <div class="nav-dock__actions" role="group" aria-label="Navigate story sections">
-            <button class="nav-dock__pill" id="prevSectionBtn" aria-label="Go to previous section">
-                <i class="fas fa-arrow-left" aria-hidden="true"></i>
-                Previous
-            </button>
-            <button class="nav-dock__pill nav-dock__pill--primary" id="nextSectionBtn" aria-label="Go to next section">
-                Next
-                <i class="fas fa-arrow-right" aria-hidden="true"></i>
-            </button>
-            <button class="nav-dock__pill nav-dock__pill--ghost" id="openNavMapBtn" aria-label="Open chapter map">
-                <i class="fas fa-map-signs" aria-hidden="true"></i>
-                Open map
-            </button>
-        </div>
-    </div>
-</div>
 
 <!-- NAVIGATION TOGGLE -->
 <button class="nav-toggle" id="navToggle" aria-label="Toggle navigation" aria-expanded="false" aria-controls="sidebarNav" type="button">
