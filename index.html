@@ -6,9 +6,9 @@
     <title>The Hundred Acre Celebration: Welcoming Baby Gunner</title>
     
     <!-- SEO & Social Media Meta Tags -->
-    <meta name="description" content="Join us for a storybook baby shower celebration in the Hundred Acre Wood theme, welcoming Baby Gunner with love and joy.">
+    <meta name="description" content="Join us for a storybook baby shower celebration in the Hundred Acre Wood style, welcoming Baby Gunner with love and joy.">
     <meta property="og:title" content="The Hundred Acre Celebration: Welcoming Baby Gunner">
-    <meta property="og:description" content="Join us for a storybook baby shower celebration in the Hundred Acre Wood theme">
+    <meta property="og:description" content="Join us for a storybook baby shower celebration in the Hundred Acre Wood style">
     <meta property="og:image" content="https://placehold.co/1200x630/FFC42B/FFFFFF?text=The+Hundred+Acre+Celebration">
     <meta property="og:url" content="https://example.com/baby-shower">
     <meta name="twitter:card" content="summary_large_image">
@@ -59,6 +59,49 @@
             -webkit-font-smoothing: antialiased;
             position: relative;
             perspective: 1000px;
+        }
+
+        /* STORYTIME MODE (reading-focused, calmer) */
+        body.storytime-active {
+            background: radial-gradient(ellipse at center, #FEF3C7 0%, #FDE68A 35%, #F59E0B 100%);
+        }
+
+        body.storytime-active .page {
+            max-width: 900px;
+            transform: none !important;
+            box-shadow: 0 14px 40px rgba(0,0,0,0.28);
+        }
+
+        body.storytime-active .page:hover {
+            transform: none;
+        }
+
+        body.storytime-active .story-text {
+            font-size: 1.22rem;
+            line-height: 1.9;
+        }
+
+        body.storytime-active .floating-bee,
+        body.storytime-active .floating-leaf,
+        body.storytime-active .floating-cloud,
+        body.storytime-active .sparkle,
+        body.storytime-active .golden-light {
+            opacity: 0.25;
+            animation-play-state: paused !important;
+        }
+
+        body.storytime-active .storybook-navigation {
+            bottom: 18px;
+        }
+
+        /* Reduced motion support */
+        @media (prefers-reduced-motion: reduce) {
+            * {
+                scroll-behavior: auto !important;
+                animation-duration: 0.001ms !important;
+                animation-iteration-count: 1 !important;
+                transition-duration: 0.001ms !important;
+            }
         }
 
         /* LOADING SCREEN */
@@ -1381,7 +1424,6 @@
     <div class="tree" style="left: 25%; height: 430px;"></div>
     <div class="tree" style="left: 60%; height: 360px;"></div>
     <div class="tree" style="left: 85%; height: 410px;"></div>
-
     <!-- Floating leaves generated via JS -->
 </div>
 
@@ -1412,6 +1454,9 @@
     </button>
     <button class="fab" id="mapBtn" title="View location" aria-label="View location">
         <i class="fas fa-map-marker-alt" aria-hidden="true"></i>
+    </button>
+    <button class="fab" id="storyModeBtn" title="Toggle storytime mode" aria-label="Enable storytime mode">
+        <i class="fas fa-book-open" aria-hidden="true"></i>
     </button>
 </div>
 
@@ -1464,7 +1509,7 @@
 </div>
 
 <!-- STORYBOOK CONTENT -->
-<div class="storybook" id="storybook">
+<div class="storybook" id="storybook" role="main">
     <div class="storybook-inner-frame" aria-hidden="true"></div>
 
     <!-- PAGE 1: THE BEGINNING -->
@@ -1781,26 +1826,26 @@
             </div>
 
             <div class="rsvp-form">
-                <form id="rsvpForm">
+                <form id="rsvpForm" novalidate>
                     <div class="form-row">
                         <div class="form-group">
                             <label class="form-label" for="firstName">First Name</label>
-                            <input type="text" id="firstName" class="form-input" required>
+                            <input type="text" id="firstName" class="form-input" required autocomplete="given-name">
                         </div>
                         <div class="form-group">
                             <label class="form-label" for="lastName">Last Name</label>
-                            <input type="text" id="lastName" class="form-input" required>
+                            <input type="text" id="lastName" class="form-input" required autocomplete="family-name">
                         </div>
                     </div>
                     
                     <div class="form-group">
                         <label class="form-label" for="email">Email Address</label>
-                        <input type="email" id="email" class="form-input" required>
+                        <input type="email" id="email" class="form-input" required autocomplete="email" placeholder="you@example.com">
                     </div>
                     
                     <div class="form-group">
                         <label class="form-label" for="phone">Phone Number</label>
-                        <input type="tel" id="phone" class="form-input">
+                        <input type="tel" id="phone" class="form-input" autocomplete="tel" placeholder="(123) 456-7890">
                     </div>
                     
                     <div class="form-group">
@@ -1875,7 +1920,6 @@
 <!-- HIDDEN AUDIO ELEMENT -->
 <audio id="backgroundMusic" loop>
     <source src="https://assets.codepen.io/1468070/gentle-lullaby.mp3" type="audio/mpeg">
-    <!-- Fallback for browsers that don't support MP3 -->
     <source src="https://assets.codepen.io/1468070/gentle-lullaby.ogg" type="audio/ogg">
 </audio>
 
@@ -1903,6 +1947,7 @@
         const homeBtn = document.getElementById('homeBtn');
         const rsvpBtn = document.getElementById('rsvpBtn');
         const mapBtn = document.getElementById('mapBtn');
+        const storyModeBtn = document.getElementById('storyModeBtn');
         const pageTransition = document.getElementById('pageTransition');
         const rsvpForm = document.getElementById('rsvpForm');
         const successMessage = document.getElementById('successMessage');
@@ -1975,6 +2020,7 @@
             rsvpBtn.addEventListener('click', () => goToPage(6));
             mapBtn.addEventListener('click', showMapInfo);
             musicBtn.addEventListener('click', toggleMusic);
+            storyModeBtn.addEventListener('click', toggleStoryMode);
 
             document.addEventListener('keydown', handleKeyPress);
             window.addEventListener('scroll', updateReadingProgress);
@@ -2053,18 +2099,30 @@
             }
         }
 
+        // Storytime Mode
+        function toggleStoryMode() {
+            const isActive = document.body.classList.toggle('storytime-active');
+            if (isActive) {
+                storyModeBtn.innerHTML = '<i class="fas fa-moon" aria-hidden="true"></i>';
+                storyModeBtn.setAttribute('aria-label', 'Disable storytime mode');
+                storyModeBtn.title = 'Disable storytime mode';
+            } else {
+                storyModeBtn.innerHTML = '<i class="fas fa-book-open" aria-hidden="true"></i>';
+                storyModeBtn.setAttribute('aria-label', 'Enable storytime mode');
+                storyModeBtn.title = 'Enable storytime mode';
+            }
+        }
+
         // Music functionality
         function toggleMusic() {
             isMusicActive = !isMusicActive;
             
             if (isMusicActive) {
-                // Try to play music with user interaction
                 backgroundMusic.play().then(() => {
                     musicBtn.innerHTML = '<i class="fas fa-volume-up" aria-hidden="true"></i>';
                     musicBtn.setAttribute('aria-label', 'Pause background music');
                 }).catch(error => {
                     console.log('Audio play failed:', error);
-                    // If autoplay is blocked, show a message
                     alert('Please interact with the page first to enable music, then try again.');
                     isMusicActive = false;
                 });
@@ -2153,12 +2211,15 @@
             }, 2500);
         }
 
-        // RSVP form handling
+        // RSVP form handling (front-end only)
         function handleRsvpSubmit(event) {
             event.preventDefault();
+
+            // Basic client-side validation
+            if (!rsvpForm.reportValidity()) {
+                return;
+            }
             
-            // In a real implementation, you would send this data to a server
-            // For now, we'll just show a success message
             rsvpForm.style.display = 'none';
             successMessage.style.display = 'block';
             
