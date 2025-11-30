@@ -3579,29 +3579,23 @@ document.addEventListener('DOMContentLoaded', function() {
         }
 
         update(enemies) {
-            if (this.cooldown > 0) {
-                this.cooldown--;
-                return null;
-            }
+    // Check if the target is still in the enemies array
+    if (!enemies.includes(this.target)) {
+        return true; // Remove the projectile because the target is gone
+    }
 
-            let closest = null;
-            let closestDistance = this.range;
-            for (const enemy of enemies) {
-                const dx = enemy.x - this.x;
-                const dy = enemy.y - this.y;
-                const distance = Math.sqrt(dx * dx + dy * dy);
-                if (distance < closestDistance) {
-                    closest = enemy;
-                    closestDistance = distance;
-                }
-            }
-
-            if (closest) {
-                this.cooldown = this.cooldownMax;
-                return closest;
-            }
-            return null;
-        }
+    const dx = this.target.x - this.x;
+    const dy = this.target.y - this.y;
+    const distance = Math.sqrt(dx * dx + dy * dy);
+    if (distance < this.speed) {
+        this.target.health -= this.damage;
+        return true;
+    } else {
+        this.x += (dx / distance) * this.speed;
+        this.y += (dy / distance) * this.speed;
+        return false;
+    }
+}
 
         draw(ctx) {
             if (this.type === 'pooh') {
@@ -3695,39 +3689,83 @@ document.addEventListener('DOMContentLoaded', function() {
     }
 
     class Projectile {
-        constructor(x, y, target, damage) {
-            this.x = x;
-            this.y = y;
-            this.target = target;
-            this.speed = 5;
-            this.damage = damage;
-            this.radius = 5;
-        }
+    constructor(x, y, target, damage) {
+        this.x = x;
+        this.y = y;
+        this.target = target;
+        this.speed = 5;
+        this.damage = damage;
+        this.radius = 5;
+        this.active = true;
+    }
 
-        update() {
+    update() {
+        try {
+            // Check if projectile should be removed
+            if (!this.active) return true;
+            
+            // Check if target is valid
+            if (!this.target || typeof this.target.x !== 'number' || typeof this.target.y !== 'number') {
+                this.active = false;
+                return true;
+            }
+            
             const dx = this.target.x - this.x;
             const dy = this.target.y - this.y;
             const distance = Math.sqrt(dx * dx + dy * dy);
+            
+            // If we reached the target
             if (distance < this.speed) {
-                this.target.health -= this.damage;
+                // Apply damage if target has health
+                if (this.target && typeof this.target.health === 'number') {
+                    this.target.health -= this.damage;
+                }
+                this.active = false;
                 return true;
             } else {
+                // Move toward target
                 this.x += (dx / distance) * this.speed;
                 this.y += (dy / distance) * this.speed;
                 return false;
             }
+        } catch (error) {
+            console.error('Projectile update error:', error);
+            this.active = false;
+            return true; // Remove on error
         }
+    }
 
-        draw(ctx) {
+    draw(ctx) {
+        if (!this.active) return;
+        
+        try {
             ctx.fillStyle = '#FFFF00';
             ctx.beginPath();
             ctx.arc(this.x, this.y, this.radius, 0, Math.PI * 2);
             ctx.fill();
+        } catch (error) {
+            console.error('Projectile draw error:', error);
         }
     }
+}
 
-    init();
-});
+// And the safe update loop:
+for (let i = defenseGameState.projectiles.length - 1; i >= 0; i--) {
+    try {
+        const projectile = defenseGameState.projectiles[i];
+        if (projectile && typeof projectile.update === 'function') {
+            if (projectile.update()) {
+                defenseGameState.projectiles.splice(i, 1);
+            }
+        } else {
+            // Remove invalid projectiles
+            defenseGameState.projectiles.splice(i, 1);
+        }
+    } catch (error) {
+        console.error('Error updating projectile:', error);
+        defenseGameState.projectiles.splice(i, 1);
+    }
+}
 </script>
 
 </body>
