@@ -9,1430 +9,1853 @@
     <link href="https://fonts.googleapis.com/css2?family=Playfair+Display:wght@400;600;700&family=Lato:wght@300;400;700&display=swap" rel="stylesheet">
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.1/css/all.min.css">
     <style>
-        /* ===== ENHANCED CSS VARIABLES & RESET ===== */
-        :root {
-            --pooh-yellow: #FFC42B;
-            --pooh-red: #D62E2E;
-            --honey-gold: #E6B86A;
-            --soft-blue: #B0D0E3;
-            --sage-green: #9CAD90;
-            --cream: #FFF7EC;
-            --text-dark: #43302a;
-            --storybook-brown: #8B4513;
-            --page-yellow: #FEF9E7;
-            --deep-ink: #2f1a0e;
-            --shadow-soft: 0 24px 70px rgba(15, 23, 42, 0.18);
-            --radius-lg: 24px;
-            --radius-pill: 999px;
-            --transition-smooth: all 0.5s cubic-bezier(0.25, 0.46, 0.45, 0.94);
-            --font-heading: 'Playfair Display', serif;
-            --font-body: 'Lato', system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
-            
-            /* Enhanced aesthetic variables */
-            --golden-light: rgba(255, 215, 0, 0.18);
-            --page-border: rgba(148, 81, 35, 0.25);
-            --character-shadow: 0 12px 26px rgba(0, 0, 0, 0.22);
-            --honey-glow: rgba(255, 196, 43, 0.4);
-        }
+    /* ===== CSS VARIABLES & RESET ===== */
+    :root {
+        --pooh-yellow: #FFC42B;
+        --pooh-red: #D62E2E;
+        --honey-gold: #E6B86A;
+        --soft-blue: #B0D0E3;
+        --sage-green: #9CAD90;
+        --cream: #FFF7EC;
+        --text-dark: #43302a;
+        --storybook-brown: #8B4513;
+        --page-yellow: #FEF9E7;
+        --deep-ink: #2f1a0e;
+        --shadow-soft: 0 20px 60px rgba(15, 23, 42, 0.16);
+        --radius-lg: 24px;
+        --radius-pill: 999px;
+        --transition-smooth: all 0.5s cubic-bezier(0.25, 0.46, 0.45, 0.94);
+        --font-heading: 'Playfair Display', serif;
+        --font-body: 'Lato', system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
+    }
 
-        *, *::before, *::after {
-            margin: 0;
-            padding: 0;
-            box-sizing: border-box;
-        }
+    *, *::before, *::after {
+        margin: 0;
+        padding: 0;
+        box-sizing: border-box;
+    }
 
-        html {
-            scroll-behavior: smooth;
-            scroll-padding-top: 100px;
-        }
+    html {
+        scroll-behavior: smooth;
+        scroll-padding-top: 100px;
+    }
 
-        body {
-            font-family: var(--font-body);
-            background: radial-gradient(ellipse at top, #FFF7EC 0%, #F5E6CC 35%, #E6D3B1 65%, #D3C1A1 100%);
-            color: var(--text-dark);
-            -webkit-font-smoothing: antialiased;
-            line-height: 1.6;
-            overflow-x: hidden;
-        }
+    body {
+        font-family: var(--font-body);
+        background:
+            radial-gradient(circle at top, #FFFDF6 0%, #F7EAD5 40%, #E2D1B5 80%),
+            linear-gradient(180deg, #f4ebdd 0%, #e2cfb5 60%, #d6c2a8 100%);
+        color: var(--text-dark);
+        -webkit-font-smoothing: antialiased;
+        line-height: 1.7;
+        overflow-x: hidden;
+    }
 
-        /* ===== ENHANCED ACCESSIBILITY ===== */
-        .skip-link {
-            position: absolute;
-            top: -100px;
-            left: 16px;
-            background: #fff;
-            color: var(--storybook-brown);
-            padding: 10px 14px;
-            border-radius: 12px;
-            box-shadow: 0 6px 20px rgba(0, 0, 0, 0.15);
-            transition: top 0.3s ease;
-            z-index: 1100;
-            font-weight: 700;
-        }
+    /* Reduced motion aesthetics */
+    body.reduce-motion,
+    body.reduce-motion * {
+        animation-duration: 0.01ms !important;
+        animation-iteration-count: 1 !important;
+        transition: none !important;
+        scroll-behavior: auto !important;
+    }
 
-        .skip-link:focus-visible {
-            top: 16px;
-            outline: 3px solid var(--pooh-red);
-            outline-offset: 4px;
-        }
+    /* ===== ACCESSIBILITY ===== */
+    .skip-link {
+        position: absolute;
+        top: -100px;
+        left: 16px;
+        background: #fff;
+        color: var(--storybook-brown);
+        padding: 10px 14px;
+        border-radius: 12px;
+        box-shadow: 0 6px 20px rgba(0, 0, 0, 0.15);
+        transition: top 0.3s ease;
+        z-index: 1100;
+        font-weight: 700;
+    }
 
-        :focus-visible {
-            outline: 3px solid var(--pooh-red);
-            outline-offset: 4px;
-            box-shadow: 0 0 0 4px var(--honey-glow);
-        }
+    .skip-link:focus-visible {
+        top: 16px;
+        outline: 3px solid var(--pooh-red);
+        outline-offset: 4px;
+    }
 
-        .sr-only {
-            position: absolute;
-            width: 1px;
-            height: 1px;
-            padding: 0;
-            margin: -1px;
-            overflow: hidden;
-            clip: rect(0, 0, 0, 0);
-            white-space: nowrap;
-            border: 0;
-        }
+    :focus-visible {
+        outline: 3px solid var(--pooh-red);
+        outline-offset: 4px;
+        box-shadow: 0 0 0 4px rgba(255, 196, 43, 0.45);
+    }
 
-        /* ===== ENHANCED LOADING SCREEN ===== */
-        .loading-screen {
-            position: fixed;
-            inset: 0;
-            background: radial-gradient(circle at top, #FFEAA7 0, #FBBF24 35%, #D97706 70%, #7C2D12 100%);
-            display: flex;
-            flex-direction: column;
-            justify-content: center;
-            align-items: center;
-            z-index: 10002;
-            transition: opacity 0.6s ease, visibility 0.6s ease;
-        }
+    .sr-only {
+        position: absolute;
+        width: 1px;
+        height: 1px;
+        padding: 0;
+        margin: -1px;
+        overflow: hidden;
+        clip: rect(0, 0, 0, 0);
+        white-space: nowrap;
+        border: 0;
+    }
 
-        .loading-screen.hidden {
+    /* ===== LOADING SCREEN ===== */
+    .loading-screen {
+        position: fixed;
+        inset: 0;
+        background: radial-gradient(circle at top, #FFEAA7 0, #FBBF24 35%, #D97706 70%, #7C2D12 100%);
+        display: flex;
+        flex-direction: column;
+        justify-content: center;
+        align-items: center;
+        z-index: 10002;
+        transition: opacity 0.6s ease, visibility 0.6s ease;
+    }
+
+    .loading-screen.hidden {
+        opacity: 0;
+        visibility: hidden;
+    }
+
+    .honey-spinner {
+        width: 120px;
+        height: 120px;
+        position: relative;
+        margin-bottom: 25px;
+    }
+
+    .loading-jar {
+        width: 80px;
+        height: 96px;
+        background: var(--honey-gold);
+        border-radius: 16px 16px 10px 10px;
+        position: relative;
+        overflow: hidden;
+        margin: 0 auto;
+        box-shadow: 0 8px 20px rgba(0,0,0,0.25);
+        border: 3px solid #FFF7EC;
+    }
+
+    .loading-honey-fill {
+        position: absolute;
+        bottom: 0;
+        left: 0;
+        width: 100%;
+        height: 0%;
+        background: linear-gradient(to top, #FFC42B, #FACC15);
+        animation: fill-honey 2.1s ease-in-out infinite;
+    }
+
+    @keyframes fill-honey {
+        0%, 100% { height: 25%; }
+        50% { height: 92%; }
+    }
+
+    .loading-text {
+        font-family: var(--font-heading);
+        font-size: 2.2rem;
+        color: #FFF;
+        text-align: center;
+        text-shadow: 0 3px 18px rgba(0,0,0,0.4);
+        margin-bottom: 8px;
+        letter-spacing: 0.04em;
+    }
+
+    .loading-subtext {
+        font-size: 1rem;
+        color: #FFF;
+        text-align: center;
+        opacity: 0.9;
+        max-width: 480px;
+        line-height: 1.6;
+    }
+
+    .loading-dots {
+        display: flex;
+        gap: 10px;
+        margin-top: 16px;
+    }
+
+    .loading-dot {
+        width: 10px;
+        height: 10px;
+        border-radius: 50%;
+        background: white;
+        animation: dot-bounce 1.3s ease-in-out infinite both;
+    }
+
+    .loading-dot:nth-child(1) { animation-delay: -0.28s; }
+    .loading-dot:nth-child(2) { animation-delay: -0.14s; }
+
+    @keyframes dot-bounce {
+        0%, 80%, 100% { transform: scale(0); }
+        40% { transform: scale(1); }
+    }
+
+    .loading-hint {
+        margin-top: 18px;
+        font-size: 0.9rem;
+        color: rgba(255,255,255,0.9);
+    }
+
+    /* ===== IMPROVED NAVIGATION ===== */
+    .main-nav {
+        position: sticky;
+        top: 0;
+        z-index: 1000;
+        background: rgba(255, 250, 241, 0.96);
+        backdrop-filter: blur(12px);
+        border-bottom: 1px solid rgba(139, 69, 19, 0.14);
+        box-shadow: 0 8px 24px rgba(15, 23, 42, 0.12);
+        border-radius: 0 0 18px 18px;
+        transition: all 0.3s ease;
+    }
+
+    .nav-container {
+        max-width: 1240px;
+        margin: 0 auto;
+        padding: 10px 18px;
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+    }
+
+    .nav-brand {
+        display: flex;
+        flex-direction: column;
+        gap: 2px;
+        transition: all 0.3s ease;
+    }
+
+    .nav-title {
+        font-family: var(--font-heading);
+        font-size: 1.6rem;
+        color: var(--storybook-brown);
+        text-decoration: none;
+        letter-spacing: 0.03em;
+        transition: all 0.3s ease;
+    }
+
+    .nav-subtitle {
+        font-family: var(--font-heading);
+        font-style: italic;
+        font-size: 1.05rem;
+        color: var(--pooh-red);
+        transition: all 0.3s ease;
+    }
+
+    .nav-menu {
+        display: flex;
+        gap: 6px;
+        align-items: center;
+    }
+
+    .nav-item {
+        display: inline-flex;
+        align-items: center;
+        gap: 6px;
+        padding: 8px 14px;
+        background: rgba(255, 255, 255, 0.95);
+        border-radius: 999px;
+        text-decoration: none;
+        color: var(--storybook-brown);
+        font-weight: 700;
+        transition: all 0.22s ease;
+        border: 1px solid rgba(148, 81, 35, 0.14);
+        box-shadow: 0 2px 6px rgba(0,0,0,0.06);
+        font-size: 0.9rem;
+        white-space: nowrap;
+        position: relative;
+        overflow: hidden;
+    }
+
+    .nav-item::before {
+        content: '';
+        position: absolute;
+        top: 0;
+        left: -100%;
+        width: 100%;
+        height: 100%;
+        background: linear-gradient(90deg, transparent, rgba(255,255,255,0.6), transparent);
+        transition: left 0.5s ease;
+    }
+
+    .nav-item:hover::before {
+        left: 100%;
+    }
+
+    .nav-item i {
+        font-size: 0.95rem;
+        transition: transform 0.3s ease;
+    }
+
+    .nav-item:hover i {
+        transform: scale(1.1);
+    }
+
+    .nav-item:hover,
+    .nav-item.active {
+        background: linear-gradient(135deg, #fdf2cc, #f3d28a);
+        color: #5b3a1b;
+        border-color: rgba(139, 69, 19, 0.28);
+        box-shadow: 0 8px 18px rgba(149, 92, 24, 0.22);
+        transform: translateY(-1px);
+    }
+
+    .nav-toggle {
+        display: none;
+        background: var(--pooh-yellow);
+        border: 2px solid var(--storybook-brown);
+        border-radius: 12px;
+        width: 44px;
+        height: 44px;
+        align-items: center;
+        justify-content: center;
+        cursor: pointer;
+        transition: all 0.25s ease;
+        position: relative;
+        overflow: hidden;
+    }
+
+    .nav-toggle::before {
+        content: '';
+        position: absolute;
+        top: 0;
+        left: 0;
+        width: 100%;
+        height: 100%;
+        background: radial-gradient(circle at center, rgba(255,255,255,0.3) 0%, transparent 70%);
+        opacity: 0;
+        transition: opacity 0.3s ease;
+    }
+
+    .nav-toggle:hover::before {
+        opacity: 1;
+    }
+
+    .nav-toggle:hover {
+        background: var(--pooh-red);
+        transform: scale(1.06);
+    }
+
+    .nav-toggle i {
+        color: white;
+        font-size: 1.3rem;
+        transition: transform 0.3s ease;
+    }
+
+    .nav-toggle:hover i {
+        transform: rotate(90deg);
+    }
+
+    /* ===== STORYBOOK COVER ===== */
+    .storybook-cover {
+        position: fixed;
+        inset: 0;
+        background: radial-gradient(circle at top, #fff8e8 0%, #f4d9a6 45%, #e4b96f 100%);
+        display: flex;
+        flex-direction: column;
+        justify-content: center;
+        align-items: center;
+        z-index: 10001;
+        transition: transform 1.1s cubic-bezier(0.77, 0, 0.175, 1), opacity 0.8s ease;
+        transform-style: preserve-3d;
+        box-shadow: 0 18px 90px rgba(0,0,0,0.25);
+        overflow: hidden;
+        padding: 20px;
+    }
+
+    .storybook-cover.closed {
+        transform: rotateY(88deg) scale(0.78);
+        opacity: 0;
+        pointer-events: none;
+    }
+
+    .cover-decoration {
+        position: absolute;
+        inset: 8%;
+        border-radius: 26px;
+        border: 2px solid rgba(255,255,255,0.65);
+        box-shadow:
+            inset 0 0 0 1px rgba(0,0,0,0.08),
+            0 0 60px rgba(0,0,0,0.2);
+        background: radial-gradient(circle at center, rgba(255,255,255,0.14) 0, transparent 60%);
+    }
+
+    .cover-title {
+        font-family: var(--font-heading);
+        font-size: clamp(2.8rem, 6vw, 4.4rem);
+        color: #4a2f1e;
+        text-align: center;
+        margin-bottom: 0.5rem;
+        text-shadow: 0 7px 28px rgba(0,0,0,0.22);
+        position: relative;
+        z-index: 2;
+        line-height: 1.08;
+        letter-spacing: 0.05em;
+        text-transform: uppercase;
+    }
+
+    .cover-subtitle {
+        font-family: var(--font-heading);
+        font-style: italic;
+        font-size: clamp(1.9rem, 3.6vw, 2.7rem);
+        color: #6f492d;
+        text-align: center;
+        margin-bottom: 2.1rem;
+        opacity: 0.95;
+        position: relative;
+        z-index: 2;
+    }
+
+    .open-book-btn {
+        padding: 13px 34px;
+        font-size: 1.1rem;
+        background: linear-gradient(135deg, #fef6e4, #f3dfb2);
+        color: #6a3d24;
+        border: none;
+        border-radius: 999px;
+        cursor: pointer;
+        font-weight: 700;
+        box-shadow: 0 10px 26px rgba(0,0,0,0.25);
+        transition: all 0.3s ease;
+        font-family: var(--font-heading);
+        position: relative;
+        z-index: 2;
+        overflow: hidden;
+        letter-spacing: 0.09em;
+        text-transform: uppercase;
+    }
+
+    .open-book-btn::after {
+        content: '';
+        position: absolute;
+        inset: 0;
+        background: radial-gradient(circle at top left, rgba(255,255,255,0.7), transparent 55%);
+        opacity: 0;
+        transition: opacity 0.3s ease;
+    }
+
+    .open-book-btn:hover {
+        transform: translateY(-2px) scale(1.02);
+        box-shadow: 0 14px 32px rgba(0,0,0,0.3);
+    }
+
+    .open-book-btn:hover::after {
+        opacity: 1;
+    }
+
+    /* ===== BACKGROUND ELEMENTS ===== */
+    .honeycomb-bg {
+        position: fixed;
+        top: 0;
+        left: 0;
+        width: 100%;
+        height: 100%;
+        background-image:
+            radial-gradient(circle at 25% 25%, rgba(255, 196, 43, 0.06) 0%, transparent 55%),
+            radial-gradient(circle at 75% 75%, rgba(230, 184, 106, 0.08) 0%, transparent 55%),
+            url('data:image/svg+xml,<svg xmlns="http://www.w3.org/2000/svg" width="120" height="120"><path d="M60,0 L90,30 L90,90 L60,120 L30,90 L30,30 Z" fill="%23E6B86A" opacity="0.04"/></svg>');
+        background-size: auto, auto, 120px;
+        z-index: -3;
+        pointer-events: none;
+    }
+
+    .golden-light {
+        position: fixed;
+        inset: 0;
+        background: radial-gradient(ellipse at center, rgba(255, 215, 0, 0.18) 0%, rgba(255, 215, 0, 0) 70%);
+        z-index: -1;
+        animation: light-pulse 16s ease-in-out infinite;
+        pointer-events: none;
+    }
+
+    @keyframes light-pulse {
+        0%, 100% { opacity: 0.12; }
+        50% { opacity: 0.26; }
+    }
+
+    .enchanted-forest {
+        position: fixed;
+        inset: 0;
+        z-index: -2;
+        overflow: hidden;
+        opacity: 0.33;
+        pointer-events: none;
+    }
+
+    .tree {
+        position: absolute;
+        bottom: -40px;
+        width: 180px;
+        background: linear-gradient(to right, #8B5A2B, #A0522D);
+        border-radius: 20px 20px 0 0;
+        transform-origin: bottom;
+        box-shadow: 0 0 18px rgba(0,0,0,0.25);
+    }
+
+    .floating-leaf {
+        position: absolute;
+        width: 40px;
+        height: 40px;
+        background: radial-gradient(ellipse at center, #BBF7D0, #22C55E);
+        border-radius: 50% 0 50% 50%;
+        transform: rotate(45deg);
+        animation: leaf-fall 15s linear infinite;
+        opacity: 0.7;
+        filter: drop-shadow(0 5px 5px rgba(0,0,0,0.18));
+    }
+
+    @keyframes leaf-fall {
+        0% {
+            transform: translateY(-100vh) rotate(0deg);
             opacity: 0;
-            visibility: hidden;
         }
-
-        .honey-spinner {
-            width: 120px;
-            height: 120px;
-            position: relative;
-            margin-bottom: 25px;
+        10% { opacity: 0.9; }
+        90% { opacity: 0.7; }
+        100% {
+            transform: translateY(100vh) rotate(360deg);
+            opacity: 0;
         }
+    }
 
-        .loading-jar {
-            width: 80px;
-            height: 96px;
-            background: var(--honey-gold);
-            border-radius: 16px 16px 10px 10px;
-            position: relative;
-            overflow: hidden;
-            margin: 0 auto;
-            box-shadow: 0 8px 20px rgba(0,0,0,0.25);
-            border: 3px solid #FFF7EC;
-        }
+    /* ===== MAIN CONTENT ===== */
+    .storybook-shell {
+        max-width: 1180px;
+        margin: 0 auto;
+        padding: 40px 20px 60px;
+    }
 
-        .loading-honey-fill {
-            position: absolute;
-            bottom: 0;
-            left: 0;
-            width: 100%;
-            height: 0%;
-            background: linear-gradient(to top, #FFC42B, #FACC15);
-            animation: fill-honey 2.4s ease-in-out infinite;
-        }
+    .storybook {
+        position: relative;
+        width: 100%;
+        opacity: 0;
+        transition: opacity 1.2s ease;
+        background: rgba(255, 252, 244, 0.98);
+        border-radius: 28px;
+        box-shadow: var(--shadow-soft);
+        padding: 34px 32px 40px;
+        border: 1px solid rgba(148, 81, 35, 0.22);
+        overflow: hidden;
+    }
 
-        @keyframes fill-honey {
-            0%, 100% { height: 15%; }
-            50% { height: 95%; }
-        }
+    .storybook::before {
+        content: '';
+        position: absolute;
+        inset: 16px;
+        background-image: linear-gradient(
+            90deg,
+            rgba(255,255,255,0.5) 0,
+            rgba(230, 215, 190, 0.45) 50%,
+            rgba(255,255,255,0.5) 100%
+        );
+        opacity: 0.12;
+        pointer-events: none;
+        mix-blend-mode: multiply;
+    }
 
-        .loading-text {
-            font-family: var(--font-heading);
-            font-size: 2.3rem;
-            color: #FFF;
-            text-align: center;
-            text-shadow: 2px 2px 0 rgba(0,0,0,0.25);
-            margin-bottom: 8px;
-            letter-spacing: -0.02em;
-        }
+    .storybook::after {
+        content: '';
+        position: absolute;
+        top: 16px;
+        bottom: 16px;
+        left: 50%;
+        width: 2px;
+        background: linear-gradient(
+            to bottom,
+            rgba(160, 120, 80, 0.0),
+            rgba(160, 120, 80, 0.33),
+            rgba(160, 120, 80, 0.0)
+        );
+        opacity: 0.7;
+    }
 
-        .loading-subtext {
-            font-size: 1.05rem;
-            color: #FFF;
-            text-align: center;
-            opacity: 0.9;
-            max-width: 480px;
-            line-height: 1.6;
-        }
+    .storybook.visible {
+        opacity: 1;
+    }
 
-        .loading-dots {
-            display: flex;
-            gap: 10px;
-            margin-top: 16px;
-        }
+    .storybook-inner {
+        max-width: 880px;
+        margin: 0 auto;
+        position: relative;
+        z-index: 1;
+    }
 
-        .loading-dot {
-            width: 11px;
-            height: 11px;
-            border-radius: 50%;
-            background: white;
-            animation: dot-bounce 1.4s ease-in-out infinite both;
-        }
+    .storybook-header {
+        text-align: center;
+        margin-bottom: 18px;
+    }
 
-        .loading-dot:nth-child(1) { animation-delay: -0.32s; }
-        .loading-dot:nth-child(2) { animation-delay: -0.16s; }
+    .storybook-heading {
+        font-family: var(--font-heading);
+        font-size: 2.35rem;
+        color: var(--storybook-brown);
+        margin-bottom: 4px;
+        letter-spacing: 0.03em;
+    }
 
-        @keyframes dot-bounce {
-            0%, 80%, 100% { transform: scale(0); }
-            40% { transform: scale(1); }
-        }
+    .storybook-subheading {
+        font-family: var(--font-heading);
+        font-style: italic;
+        font-size: 1.5rem;
+        color: var(--pooh-red);
+    }
 
-        /* ===== ENHANCED NAVIGATION ===== */
-        .main-nav {
-            position: sticky;
-            top: 0;
-            z-index: 1000;
-            background: rgba(255, 250, 241, 0.95);
-            backdrop-filter: blur(10px);
-            border-bottom: 1px solid rgba(139, 69, 19, 0.18);
-            box-shadow: 0 8px 24px rgba(15, 23, 42, 0.12);
-        }
+    /* ===== CONTENT SECTIONS ===== */
+    .content-section {
+        background: var(--page-yellow);
+        width: 100%;
+        margin: 30px 0;
+        border-radius: 22px;
+        box-shadow: 0 10px 30px rgba(15, 23, 42, 0.14);
+        position: relative;
+        overflow: hidden;
+        padding: 26px 24px 30px;
+        transform-style: preserve-3d;
+        transition: opacity 0.6s ease, transform 0.6s ease, box-shadow 0.25s ease;
+        opacity: 0;
+        transform: translateY(32px);
+        border: 1px solid rgba(148, 81, 35, 0.18);
+    }
 
-        .nav-container {
-            max-width: 1280px;
-            margin: 0 auto;
-            padding: 12px 20px;
-            display: flex;
-            justify-content: space-between;
-            align-items: center;
-        }
+    .content-section.visible {
+        opacity: 1;
+        transform: translateY(0);
+    }
 
-        .nav-brand {
-            display: flex;
-            flex-direction: column;
-        }
+    .content-section:hover {
+        box-shadow: 0 14px 40px rgba(15, 23, 42, 0.18);
+    }
 
-        .nav-title {
-            font-family: var(--font-heading);
-            font-size: 1.8rem;
-            color: var(--storybook-brown);
-            text-decoration: none;
-            letter-spacing: -0.01em;
-        }
+    .content-section::before {
+        content: '';
+        position: absolute;
+        inset: 0;
+        background-image:
+            radial-gradient(circle at 5% 5%, rgba(252, 211, 77, 0.15) 0, transparent 45%),
+            radial-gradient(circle at 95% 95%, rgba(252, 211, 77, 0.12) 0, transparent 45%);
+        opacity: 0.8;
+        pointer-events: none;
+    }
 
-        .nav-subtitle {
-            font-family: var(--font-heading);
-            font-style: italic;
-            font-size: 1.2rem;
-            color: var(--pooh-red);
-        }
+    .content-section-inner {
+        position: relative;
+        z-index: 1;
+    }
 
+    .section-number {
+        position: absolute;
+        top: 16px;
+        right: 22px;
+        font-family: var(--font-heading);
+        font-size: 1.4rem;
+        color: rgba(67, 48, 42, 0.6);
+    }
+
+    .section-header {
+        text-align: center;
+        margin-bottom: 18px;
+    }
+
+    .story-title {
+        font-family: var(--font-heading);
+        font-size: 2.1rem;
+        color: var(--pooh-red);
+        position: relative;
+    }
+
+    .story-title::after {
+        content: '🍯';
+        display: block;
+        font-size: 1.5rem;
+        margin-top: 4px;
+        color: var(--pooh-yellow);
+    }
+
+    /* ===== IMPROVED MINI-GAME ===== */
+    .honey-adventure-game {
+        background: rgba(255, 255, 255, 0.97);
+        border-radius: 20px;
+        padding: 22px 20px 20px;
+        margin: 24px 0;
+        text-align: center;
+        border: 2px dashed rgba(250, 204, 21, 0.9);
+        position: relative;
+        overflow: hidden;
+        box-shadow: 0 10px 28px rgba(15, 23, 42, 0.16);
+    }
+
+    .game-header {
+        text-align: center;
+        margin-bottom: 18px;
+        position: relative;
+    }
+
+    .game-header h1 {
+        color: var(--pooh-red);
+        text-shadow: 1px 2px 0 #ffccbc;
+        font-size: 2rem;
+        margin-bottom: 6px;
+        animation: bounce 2.4s infinite;
+        font-family: var(--font-heading);
+        letter-spacing: 0.03em;
+    }
+
+    .game-header p {
+        font-size: 0.96rem;
+        color: var(--storybook-brown);
+    }
+
+    @keyframes bounce {
+        0%, 100% { transform: translateY(0); }
+        50% { transform: translateY(-6px); }
+    }
+
+    .game-container {
+        position: relative;
+        width: 100%;
+        height: 280px;
+        background: linear-gradient(to bottom, #a5d6a7, #81c784);
+        border-radius: 16px;
+        margin: 16px 0;
+        overflow: hidden;
+        border: 3px solid var(--storybook-brown);
+        box-shadow: 0 8px 24px rgba(0,0,0,0.15);
+        touch-action: none;
+    }
+
+    #gameCanvas {
+        display: block;
+        width: 100%;
+        height: 100%;
+        touch-action: none;
+    }
+
+    .game-controls {
+        display: flex;
+        justify-content: center;
+        gap: 10px;
+        margin: 16px 0;
+        flex-wrap: wrap;
+    }
+
+    .game-btn {
+        padding: 10px 22px;
+        background: linear-gradient(135deg, #ffb74d, #f57c00);
+        border: none;
+        border-radius: 50px;
+        color: white;
+        font-weight: bold;
+        cursor: pointer;
+        box-shadow: 0 4px 0 #e65100;
+        transition: all 0.2s;
+        font-size: 0.96rem;
+        position: relative;
+        overflow: hidden;
+    }
+
+    .game-btn::before {
+        content: '';
+        position: absolute;
+        top: 0;
+        left: -100%;
+        width: 100%;
+        height: 100%;
+        background: linear-gradient(90deg, transparent, rgba(255,255,255,0.4), transparent);
+        transition: left 0.5s ease;
+    }
+
+    .game-btn:hover::before {
+        left: 100%;
+    }
+
+    .game-btn:hover:not(:disabled) {
+        transform: translateY(-1px);
+        box-shadow: 0 6px 0 #e65100;
+    }
+
+    .game-btn:active:not(:disabled) {
+        transform: translateY(1px);
+        box-shadow: 0 2px 0 #e65100;
+    }
+
+    .game-btn:disabled {
+        background: #bdbdbd;
+        box-shadow: 0 4px 0 #757575;
+        cursor: not-allowed;
+    }
+
+    .mobile-controls {
+        display: none;
+        justify-content: space-between;
+        margin: 16px 0;
+        gap: 10px;
+    }
+
+    .mobile-control-btn {
+        flex: 1;
+        padding: 12px;
+        background: linear-gradient(135deg, #ffb74d, #f57c00);
+        border: none;
+        border-radius: 12px;
+        color: white;
+        font-weight: bold;
+        font-size: 1.2rem;
+        box-shadow: 0 4px 0 #e65100;
+        touch-action: manipulation;
+        user-select: none;
+    }
+
+    .mobile-control-btn:active {
+        transform: translateY(2px);
+        box-shadow: 0 2px 0 #e65100;
+    }
+
+    .stats-container {
+        display: grid;
+        grid-template-columns: repeat(3, minmax(0, 1fr));
+        gap: 10px;
+        margin: 16px 0;
+    }
+
+    .stat {
+        background: linear-gradient(135deg, #ffecb3 0%, #ffcc80 100%);
+        padding: 10px 10px;
+        border-radius: 14px;
+        font-size: 1.02em;
+        font-weight: bold;
+        box-shadow: 0 4px 10px rgba(0,0,0,0.12);
+        border: 2px solid #ffb300;
+    }
+
+    .message-box {
+        background: #fff8e1;
+        border: 3px dashed #ffb300;
+        border-radius: 18px;
+        padding: 14px 16px;
+        margin: 16px 0 10px;
+        min-height: 70px;
+        font-size: 1.15em;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        text-align: center;
+        position: relative;
+        animation: pulse 2.2s infinite;
+        font-family: var(--font-heading);
+    }
+
+    @keyframes pulse {
+        0%, 100% { border-color: #ffb300; }
+        50% { border-color: #ff9800; }
+    }
+
+    .pooh-face {
+        font-size: 1.7em;
+        margin-right: 8px;
+    }
+
+    .achievements {
+        margin-top: 14px;
+        padding: 12px 10px 8px;
+        background: #ffecb3;
+        border-radius: 14px;
+        border: 2px solid #ffb300;
+        text-align: left;
+        font-size: 0.92rem;
+    }
+
+    .achievements h3 {
+        margin-bottom: 4px;
+        font-size: 0.98rem;
+    }
+
+    .achievement {
+        display: inline-block;
+        background: #ffcc80;
+        padding: 6px 12px;
+        margin: 3px;
+        border-radius: 999px;
+        font-size: 0.82em;
+    }
+
+    .hidden {
+        display: none;
+    }
+
+    /* ===== STORYTELLING ELEMENTS ===== */
+    .story-section {
+        margin: 16px 0;
+        padding: 20px 20px 18px;
+        background: rgba(255, 255, 255, 0.95);
+        border-radius: 16px;
+        border-left: 4px solid var(--pooh-yellow);
+        position: relative;
+    }
+
+    .story-section::before {
+        content: '“';
+        position: absolute;
+        top: -24px;
+        left: 14px;
+        font-size: 3.6rem;
+        color: rgba(250, 204, 21, 0.4);
+        font-family: 'Playfair Display', serif;
+    }
+
+    .story-text {
+        font-size: 1.04rem;
+        line-height: 1.8;
+        color: var(--text-dark);
+    }
+
+    .woodland-sign {
+        position: relative;
+        background: var(--storybook-brown);
+        color: white;
+        padding: 11px 20px;
+        border-radius: 12px;
+        margin: 10px auto 16px;
+        max-width: 320px;
+        text-align: center;
+        font-family: var(--font-heading);
+        font-size: 1.35rem;
+        box-shadow: 0 8px 22px rgba(55, 31, 14, 0.5);
+        transform: rotate(-1deg);
+        border: 3px solid rgba(250, 204, 21, 0.9);
+        cursor: pointer;
+        transition: all 0.3s ease;
+    }
+
+    .woodland-sign:hover {
+        transform: scale(1.05) rotate(-1deg);
+        box-shadow: 0 15px 30px rgba(139, 69, 19, 0.4);
+    }
+
+    .woodland-sign::before {
+        content: '';
+        position: absolute;
+        bottom: -22px;
+        left: 50%;
+        transform: translateX(-50%);
+        width: 0;
+        height: 0;
+        border-left: 14px solid transparent;
+        border-right: 14px solid transparent;
+        border-top: 20px solid var(--storybook-brown);
+    }
+
+    .woodland-sign::after {
+        content: '';
+        position: absolute;
+        bottom: -28px;
+        left: 50%;
+        transform: translateX(-50%);
+        width: 26px;
+        height: 26px;
+        background: #5D4037;
+        border-radius: 999px;
+    }
+
+    /* ===== CHARACTER SPOTLIGHTS ===== */
+    .character-spotlight {
+        display: flex;
+        align-items: center;
+        gap: 18px;
+        margin: 18px 0;
+        padding: 16px 18px;
+        background: radial-gradient(circle at top left, rgba(255, 244, 214, 0.96), #ffffff 60%);
+        border-radius: 18px;
+        border: 1px solid rgba(148, 81, 35, 0.2);
+        box-shadow: 0 8px 22px rgba(15, 23, 42, 0.12);
+        transition: all 0.25s ease;
+        cursor: pointer;
+        position: relative;
+        overflow: hidden;
+    }
+
+    .character-spotlight::before {
+        content: '';
+        position: absolute;
+        inset: 0;
+        background: radial-gradient(circle at top right, rgba(255, 223, 138, 0.2), transparent 60%);
+        opacity: 0;
+        transition: opacity 0.25s ease;
+    }
+
+    .character-spotlight:hover {
+        transform: translateY(-3px);
+        box-shadow: 0 14px 32px rgba(15, 23, 42, 0.18);
+    }
+
+    .character-spotlight:hover::before {
+        opacity: 1;
+    }
+
+    .character-illustration {
+        width: 105px;
+        height: 105px;
+        border-radius: 999px;
+        overflow: hidden;
+        flex-shrink: 0;
+        box-shadow: 0 12px 26px rgba(0, 0, 0, 0.22);
+        border: 4px solid var(--pooh-yellow);
+        background: var(--page-yellow);
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        transition: transform 0.25s ease;
+    }
+
+    .character-spotlight:hover .character-illustration {
+        transform: scale(1.04);
+    }
+
+    .character-spotlight-content {
+        display: flex;
+        flex-direction: column;
+        gap: 6px;
+    }
+
+    .character-quote {
+        font-family: var(--font-heading);
+        font-size: 1.35rem;
+        color: var(--storybook-brown);
+        line-height: 1.5;
+        text-shadow: 0 1px 0 rgba(255,255,255,0.7);
+    }
+
+    .character-name {
+        font-family: var(--font-heading);
+        font-weight: 700;
+        color: var(--pooh-red);
+        font-size: 1rem;
+    }
+
+    /* ===== INVITATION DETAILS ===== */
+    .invitation-details {
+        display: grid;
+        grid-template-columns: repeat(2, minmax(0, 1fr));
+        gap: 16px;
+        margin: 22px 0 10px;
+    }
+
+    .detail-card {
+        background: #FFFFFF;
+        padding: 16px 16px 14px;
+        border-radius: 16px;
+        box-shadow: 0 6px 16px rgba(15, 23, 42, 0.12);
+        border-top: 4px solid var(--pooh-yellow);
+        transition: all 0.22s ease;
+        position: relative;
+        overflow: hidden;
+    }
+
+    .detail-card::before {
+        content: '';
+        position: absolute;
+        inset: 0;
+        background: linear-gradient(135deg, rgba(255, 249, 219, 0.8), transparent);
+        opacity: 0;
+        transition: opacity 0.22s ease;
+    }
+
+    .detail-card:hover {
+        transform: translateY(-2px);
+        box-shadow: 0 10px 22px rgba(15, 23, 42, 0.18);
+    }
+
+    .detail-card:hover::before {
+        opacity: 1;
+    }
+
+    .detail-title {
+        font-family: var(--font-heading);
+        color: var(--pooh-red);
+        font-size: 1.1rem;
+        margin-bottom: 6px;
+    }
+
+    .detail-content {
+        font-size: 0.96rem;
+        color: var(--storybook-brown);
+        line-height: 1.7;
+    }
+
+    /* ===== RSVP FORM ===== */
+    .rsvp-form {
+        background: rgba(255, 255, 255, 0.96);
+        border-radius: 16px;
+        padding: 18px;
+        border: 1px solid rgba(148, 81, 35, 0.18);
+        box-shadow: 0 12px 26px rgba(15, 23, 42, 0.12);
+        margin-top: 12px;
+    }
+
+    .storybook-form {
+        display: flex;
+        flex-direction: column;
+        gap: 14px;
+    }
+
+    .form-field {
+        display: flex;
+        flex-direction: column;
+        gap: 6px;
+    }
+
+    .field-label {
+        font-weight: 800;
+        color: var(--deep-ink);
+        font-size: 0.96rem;
+        display: inline-flex;
+        align-items: center;
+        gap: 6px;
+    }
+
+    .storybook-form .form-grid {
+        display: grid;
+        grid-template-columns: repeat(auto-fit, minmax(240px, 1fr));
+        gap: 12px;
+    }
+
+    .storybook-form input,
+    .storybook-form select,
+    .storybook-form textarea {
+        width: 100%;
+        padding: 11px 13px;
+        border-radius: 12px;
+        border: 2px solid rgba(148, 81, 35, 0.18);
+        background: #fff;
+        font-family: inherit;
+        font-size: 0.98rem;
+        color: var(--text-dark);
+        transition: border-color 0.18s ease, box-shadow 0.18s ease, background 0.18s ease;
+    }
+
+    .storybook-form input:focus,
+    .storybook-form select:focus,
+    .storybook-form textarea:focus {
+        border-color: var(--pooh-red);
+        box-shadow: 0 0 0 3px rgba(214, 46, 46, 0.18);
+        outline: none;
+        background: #fffdf7;
+    }
+
+    .storybook-form button {
+        align-self: flex-start;
+    }
+
+    .form-status {
+        margin-top: 4px;
+        font-weight: 700;
+        font-size: 0.95rem;
+        color: var(--deep-ink);
+    }
+
+    /* ===== BUTTONS ===== */
+    .magical-btn {
+        display: inline-flex;
+        align-items: center;
+        justify-content: center;
+        gap: 6px;
+        padding: 11px 26px;
+        background: radial-gradient(circle at top, #ffe9a8 0, #f7c948 40%, #d69e2e 100%);
+        color: var(--deep-ink);
+        border: none;
+        border-radius: 50px;
+        font-family: 'Playfair Display', serif;
+        font-size: 1.02rem;
+        font-weight: 700;
+        cursor: pointer;
+        box-shadow: 0 8px 20px rgba(15, 23, 42, 0.32);
+        transition: all 0.24s ease;
+        text-decoration: none;
+        position: relative;
+        overflow: hidden;
+    }
+
+    .magical-btn::after {
+        content: '';
+        position: absolute;
+        inset: 0;
+        background: radial-gradient(circle at top left, rgba(255,255,255,0.7), transparent 55%);
+        mix-blend-mode: screen;
+        opacity: 0;
+        transition: opacity 0.24s ease;
+    }
+
+    .magical-btn:hover {
+        transform: translateY(-1px);
+        box-shadow: 0 12px 26px rgba(15, 23, 42, 0.4);
+    }
+
+    .magical-btn:hover::after {
+        opacity: 1;
+    }
+
+    /* ===== FLOATING ACTION BUTTONS ===== */
+    .fab-container {
+        position: fixed;
+        bottom: 92px;
+        right: 22px;
+        z-index: 1000;
+        display: flex;
+        flex-direction: column;
+        gap: 10px;
+    }
+
+    .fab {
+        width: 52px;
+        height: 52px;
+        border-radius: 50%;
+        background: radial-gradient(circle at top, #ffe9a8 0, #f7c948 40%, #d69e2e 100%);
+        border: none;
+        color: white;
+        font-size: 1.25rem;
+        cursor: pointer;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        box-shadow: 0 10px 22px rgba(15, 23, 42, 0.35);
+        transition: all 0.22s ease;
+        position: relative;
+        overflow: hidden;
+    }
+
+    .fab::before {
+        content: '';
+        position: absolute;
+        top: 0;
+        left: 0;
+        width: 100%;
+        height: 100%;
+        background: radial-gradient(circle at center, rgba(255,255,255,0.3) 0%, transparent 70%);
+        opacity: 0;
+        transition: opacity 0.3s ease;
+    }
+
+    .fab:hover::before {
+        opacity: 1;
+    }
+
+    .fab:hover {
+        background: radial-gradient(circle at top, #ffdba0 0, #f59e0b 40%, #c05621 100%);
+        transform: translateY(-2px) scale(1.04);
+    }
+
+    /* ===== MUSIC CONTROLS ===== */
+    .music-controls {
+        position: fixed;
+        bottom: 92px;
+        left: 22px;
+        z-index: 1000;
+        display: flex;
+        flex-direction: column;
+        gap: 10px;
+    }
+
+    .music-btn,
+    .accessibility-btn {
+        width: 52px;
+        height: 52px;
+        border-radius: 50%;
+        background: radial-gradient(circle at top, #ffe9a8 0, #f7c948 40%, #d69e2e 100%);
+        border: none;
+        color: white;
+        font-size: 1.2rem;
+        cursor: pointer;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        box-shadow: 0 10px 22px rgba(15, 23, 42, 0.35);
+        transition: all 0.22s ease;
+        position: relative;
+        overflow: hidden;
+    }
+
+    .music-btn::before,
+    .accessibility-btn::before {
+        content: '';
+        position: absolute;
+        top: 0;
+        left: 0;
+        width: 100%;
+        height: 100%;
+        background: radial-gradient(circle at center, rgba(255,255,255,0.3) 0%, transparent 70%);
+        opacity: 0;
+        transition: opacity 0.3s ease;
+    }
+
+    .music-btn:hover::before,
+    .accessibility-btn:hover::before {
+        opacity: 1;
+    }
+
+    .music-btn:hover,
+    .accessibility-btn:hover {
+        background: radial-gradient(circle at top, #ffdba0 0, #f59e0b 40%, #c05621 100%);
+        transform: translateY(-2px) scale(1.04);
+    }
+
+    /* ===== READING PROGRESS ===== */
+    .reading-progress {
+        position: fixed;
+        top: 0;
+        left: 0;
+        width: 0%;
+        height: 4px;
+        background: linear-gradient(90deg, var(--pooh-yellow), var(--pooh-red));
+        z-index: 1000;
+        transition: width 0.25s ease;
+    }
+
+    /* ===== CHARACTER MODAL ===== */
+    .character-modal {
+        position: fixed;
+        top: 0;
+        left: 0;
+        width: 100%;
+        height: 100%;
+        background: rgba(15, 23, 42, 0.78);
+        display: flex;
+        justify-content: center;
+        align-items: center;
+        z-index: 10000;
+        opacity: 0;
+        visibility: hidden;
+        transition: all 0.4s ease;
+    }
+
+    .character-modal.active {
+        opacity: 1;
+        visibility: visible;
+    }
+
+    .modal-content {
+        background: #FEF9E7;
+        width: 90%;
+        max-width: 620px;
+        border-radius: 20px;
+        padding: 24px 24px 22px;
+        position: relative;
+        transform: scale(0.86);
+        transition: transform 0.4s ease;
+        box-shadow: 0 28px 80px rgba(0,0,0,0.55);
+    }
+
+    .character-modal.active .modal-content {
+        transform: scale(1);
+    }
+
+    .close-modal {
+        position: absolute;
+        top: 12px;
+        right: 14px;
+        background: none;
+        border: none;
+        font-size: 1.4rem;
+        cursor: pointer;
+        color: var(--storybook-brown);
+        transition: color 0.22s ease, transform 0.18s ease;
+    }
+
+    .close-modal:hover {
+        color: var(--pooh-red);
+        transform: scale(1.08);
+    }
+
+    .modal-character {
+        display: flex;
+        align-items: center;
+        gap: 16px;
+        margin-bottom: 16px;
+    }
+
+    .modal-character-icon {
+        width: 76px;
+        height: 76px;
+        border-radius: 50%;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        font-size: 2rem;
+        color: white;
+        flex-shrink: 0;
+    }
+
+    .modal-character-name {
+        font-family: 'Playfair Display', serif;
+        font-size: 1.8rem;
+        color: var(--pooh-red);
+    }
+
+    .modal-character-quote {
+        font-family: var(--font-heading);
+        font-size: 1.6rem;
+        color: var(--storybook-brown);
+        margin-bottom: 14px;
+        text-align: center;
+    }
+
+    .modal-character-bio {
+        font-size: 0.98rem;
+        color: var(--storybook-brown);
+        line-height: 1.8;
+    }
+
+    .pooh-icon { background: var(--pooh-yellow); }
+    .piglet-icon { background: #F8BBD9; }
+    .tigger-icon { background: #FF8C42; }
+    .eeyore-icon { background: #9CA3AF; }
+    .rabbit-icon { background: var(--sage-green); }
+    .owl-icon { background: #8B7355; }
+    .kanga-icon { background: #FAD7A0; }
+
+    /* ===== FOOTER ===== */
+    .footer {
+        text-align: center;
+        padding: 24px 10px 6px;
+        margin-top: 34px;
+        font-family: var(--font-heading);
+        font-size: 1.35rem;
+        color: var(--storybook-brown);
+        border-top: 1px dashed rgba(250, 204, 21, 0.9);
+    }
+
+    .footer p:last-child {
+        font-size: 1.05rem;
+        margin-top: 4px;
+        opacity: 0.9;
+    }
+
+    /* ===== WINNIE THE POOH THEME ENHANCEMENTS ===== */
+    .honey-drip {
+        position: fixed;
+        width: 14px;
+        height: 14px;
+        border-radius: 999px;
+        background: radial-gradient(circle at top, #FFFBEB 0%, #FACC15 40%, #E6B86A 100%);
+        box-shadow: 0 5px 18px rgba(180, 83, 9, 0.65);
+        animation: honey-drip-fall 3s ease-in forwards;
+        pointer-events: none;
+        z-index: 100;
+    }
+
+    @keyframes honey-drip-fall {
+        0% { transform: translate(0, 0) scale(0.9); opacity: 1; }
+        80% { transform: translate(0, 140px) scale(1); opacity: 1; }
+        100% { transform: translate(0, 160px) scale(0.8); opacity: 0; }
+    }
+
+    .bouncing-tigger {
+        position: fixed;
+        bottom: 20px;
+        right: 20px;
+        width: 76px;
+        height: 76px;
+        background: radial-gradient(circle at top, #ffd1a1 0, #FF8C42 45%, #c05621 100%);
+        border-radius: 50%;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        font-size: 1.9rem;
+        color: white;
+        z-index: 900;
+        animation: bounce 2s infinite;
+        cursor: pointer;
+        box-shadow: 0 12px 26px rgba(0,0,0,0.25);
+    }
+
+    .hunny-pot-collection {
+        display: flex;
+        justify-content: center;
+        gap: 14px;
+        margin: 12px 0 8px;
+        flex-wrap: wrap;
+    }
+
+    .hunny-pot {
+        width: 58px;
+        height: 78px;
+        background: var(--honey-gold);
+        border-radius: 30px 30px 16px 16px;
+        position: relative;
+        cursor: pointer;
+        transition: transform 0.22s ease, box-shadow 0.22s ease;
+        box-shadow: 0 6px 16px rgba(15, 23, 42, 0.35);
+    }
+
+    .hunny-pot:hover {
+        transform: translateY(-4px) rotate(3deg);
+        box-shadow: 0 10px 22px rgba(15, 23, 42, 0.4);
+    }
+
+    .hunny-pot::before {
+        content: '';
+        position: absolute;
+        top: 9px;
+        left: 9px;
+        right: 9px;
+        bottom: 14px;
+        background: linear-gradient(to bottom, #FFC42B, #E6B86A);
+        border-radius: 22px 22px 12px 12px;
+    }
+
+    .hunny-pot::after {
+        content: 'HUNNY';
+        position: absolute;
+        bottom: 6px;
+        left: 0;
+        right: 0;
+        text-align: center;
+        font-family: var(--font-heading);
+        color: var(--storybook-brown);
+        font-size: 0.86rem;
+    }
+
+    .pooh-quote-bubble {
+        position: fixed;
+        bottom: 120px;
+        left: 24px;
+        background: white;
+        border-radius: 18px;
+        padding: 10px 14px;
+        box-shadow: 0 8px 20px rgba(0,0,0,0.15);
+        max-width: 220px;
+        font-family: var(--font-heading);
+        font-size: 1rem;
+        color: var(--storybook-brown);
+        border: 2px solid var(--pooh-yellow);
+        opacity: 0;
+        transform: translateY(18px);
+        transition: all 0.28s ease;
+        z-index: 1000;
+    }
+
+    .pooh-quote-bubble::after {
+        content: '';
+        position: absolute;
+        bottom: -9px;
+        left: 20px;
+        width: 0;
+        height: 0;
+        border-left: 9px solid transparent;
+        border-right: 9px solid transparent;
+        border-top: 9px solid var(--pooh-yellow);
+    }
+
+    .pooh-quote-bubble.visible {
+        opacity: 1;
+        transform: translateY(0);
+    }
+
+    /* ===== ENHANCEMENTS FROM SECTION 1 ===== */
+    .sign-sparkles {
+        position: absolute;
+        top: -5px;
+        right: -5px;
+        width: 20px;
+        height: 20px;
+        background: radial-gradient(circle, #FFD700 20%, transparent 70%);
+        border-radius: 50%;
+        opacity: 0;
+        transition: opacity 0.3s ease;
+    }
+
+    .woodland-sign:hover .sign-sparkles {
+        opacity: 1;
+        animation: sparkle 1.5s ease-in-out infinite;
+    }
+
+    @keyframes sparkle {
+        0%, 100% { transform: scale(1); opacity: 0.7; }
+        50% { transform: scale(1.2); opacity: 1; }
+    }
+
+    .floating-hearts {
+        position: absolute;
+        top: 10px;
+        right: 10px;
+        display: flex;
+        flex-direction: column;
+        gap: 5px;
+    }
+
+    .heart {
+        font-size: 1.2rem;
+        opacity: 0.7;
+        animation: float-heart 3s ease-in-out infinite;
+    }
+
+    .heart:nth-child(1) { animation-delay: 0s; }
+    .heart:nth-child(2) { animation-delay: 1s; }
+    .heart:nth-child(3) { animation-delay: 2s; }
+
+    @keyframes float-heart {
+        0%, 100% { transform: translateY(0) scale(1); }
+        50% { transform: translateY(-10px) scale(1.1); }
+    }
+
+    .honey-drip {
+        position: absolute;
+        bottom: -5px;
+        left: 50%;
+        transform: translateX(-50%);
+        width: 8px;
+        height: 8px;
+        background: linear-gradient(to bottom, #FFC42B, #E6B86A);
+        border-radius: 50%;
+        opacity: 0;
+        transition: opacity 0.3s ease;
+    }
+
+    .hunny-pot:hover .honey-drip {
+        opacity: 1;
+        animation: honey-drip 1s ease-in-out;
+    }
+
+    @keyframes honey-drip {
+        0% { transform: translateX(-50%) translateY(0); opacity: 1; }
+        100% { transform: translateX(-50%) translateY(15px); opacity: 0; }
+    }
+
+    .character-glow {
+        position: absolute;
+        top: 50%;
+        left: 50%;
+        transform: translate(-50%, -50%);
+        width: 80px;
+        height: 80px;
+        background: radial-gradient(circle, rgba(255, 196, 43, 0.3) 0%, transparent 70%);
+        border-radius: 50%;
+        opacity: 0;
+        transition: opacity 0.3s ease;
+    }
+
+    .character-spotlight:hover .character-glow {
+        opacity: 1;
+        animation: glow-pulse 2s ease-in-out infinite;
+    }
+
+    @keyframes glow-pulse {
+        0%, 100% { transform: translate(-50%, -50%) scale(1); opacity: 0.7; }
+        50% { transform: translate(-50%, -50%) scale(1.1); opacity: 0.9; }
+    }
+
+    .spotlight-beam {
+        position: absolute;
+        top: -10px;
+        left: 50%;
+        transform: translateX(-50%);
+        width: 100%;
+        height: 20px;
+        background: linear-gradient(to bottom, rgba(255, 255, 255, 0.8), transparent);
+        clip-path: polygon(50% 0%, 0% 100%, 100% 100%);
+        opacity: 0;
+        transition: opacity 0.3s ease;
+    }
+
+    .character-spotlight:hover .spotlight-beam {
+        opacity: 0.6;
+    }
+
+    .section-animals {
+        position: absolute;
+        bottom: 20px;
+        left: 0;
+        right: 0;
+        display: flex;
+        justify-content: space-around;
+        pointer-events: none;
+    }
+
+    .floating-animal {
+        font-size: 1.5rem;
+        opacity: 0.6;
+        animation: float-animal 8s ease-in-out infinite;
+    }
+
+    .floating-animal[data-animal="bee"] { animation-delay: 0s; }
+    .floating-animal[data-animal="butterfly"] { animation-delay: 2.5s; }
+    .floating-animal[data-animal="bird"] { animation-delay: 5s; }
+
+    @keyframes float-animal {
+        0%, 100% { transform: translateY(0) translateX(0); }
+        25% { transform: translateY(-20px) translateX(10px); }
+        50% { transform: translateY(-10px) translateX(-10px); }
+        75% { transform: translateY(-15px) translateX(5px); }
+    }
+
+    /* Enhanced Section-specific styles */
+    .content-section {
+        position: relative;
+        overflow: hidden;
+    }
+
+    /* Add floating hearts to all story sections */
+    .story-section {
+        position: relative;
+    }
+
+    /* Enhanced woodland signs for all sections */
+    .woodland-sign {
+        position: relative;
+    }
+
+    /* Enhanced honey pots for all sections */
+    .hunny-pot {
+        position: relative;
+        overflow: visible;
+    }
+
+    /* Enhanced character spotlights for all sections */
+    .character-spotlight {
+        position: relative;
+    }
+
+    /* Enhanced detail cards for all sections */
+    .detail-card {
+        position: relative;
+    }
+
+    /* Add decorative elements to all sections */
+    .content-section::after {
+        content: '';
+        position: absolute;
+        top: 0;
+        right: 0;
+        width: 100px;
+        height: 100px;
+        background: radial-gradient(circle, rgba(255, 196, 43, 0.1) 0%, transparent 70%);
+        pointer-events: none;
+    }
+
+    /* ===== RESPONSIVE DESIGN ===== */
+    @media (max-width: 992px) {
         .nav-menu {
-            display: flex;
-            gap: 8px;
-            align-items: center;
+            position: fixed;
+            top: 0;
+            right: -300px;
+            width: 280px;
+            height: 100vh;
+            background: #fffaf1;
+            flex-direction: column;
+            padding: 80px 20px 20px;
+            transition: right 0.28s ease;
+            box-shadow: -5px 0 15px rgba(0,0,0,0.1);
+            z-index: 999;
         }
 
-        .nav-item {
-            display: inline-flex;
-            align-items: center;
-            gap: 8px;
-            padding: 10px 16px;
-            background: rgba(255, 255, 255, 0.9);
-            border-radius: 14px;
-            text-decoration: none;
-            color: var(--storybook-brown);
-            font-weight: 700;
-            transition: all 0.25s ease;
-            border: 1px solid rgba(148, 81, 35, 0.14);
-            box-shadow: 0 2px 8px rgba(0,0,0,0.08);
-            font-size: 0.95rem;
-            white-space: nowrap;
-        }
-
-        .nav-item:hover, .nav-item.active {
-            background: linear-gradient(135deg, #f7e3b4, #f1c86a);
-            color: #5b3a1b;
-            border-color: rgba(139, 69, 19, 0.28);
-            box-shadow: 0 6px 16px rgba(149, 92, 24, 0.28);
-            transform: translateY(-2px);
+        .nav-menu.active {
+            right: 0;
         }
 
         .nav-toggle {
-            display: none;
-            background: var(--pooh-yellow);
-            border: 2px solid var(--storybook-brown);
-            border-radius: 10px;
-            width: 44px;
-            height: 44px;
-            align-items: center;
-            justify-content: center;
-            cursor: pointer;
-            transition: all 0.3s ease;
+            display: flex;
+            z-index: 1001;
         }
 
-        .nav-toggle:hover {
-            background: var(--pooh-red);
-            transform: scale(1.08);
-        }
-
-        .nav-toggle i {
-            color: white;
-            font-size: 1.3rem;
-        }
-
-        /* ===== ENHANCED STORYBOOK COVER ===== */
-        .storybook-cover {
+        .nav-overlay {
             position: fixed;
             inset: 0;
-            background: linear-gradient(135deg, #fff8e8 0%, #f1dba9 45%, #e4c07a 100%);
-            display: flex;
-            flex-direction: column;
-            justify-content: center;
-            align-items: center;
-            z-index: 10001;
-            transition: transform 1.1s cubic-bezier(0.77, 0, 0.175, 1), opacity 0.8s ease;
-            transform-style: preserve-3d;
-            box-shadow: 0 18px 90px rgba(0,0,0,0.25);
-            overflow: hidden;
-            padding: 20px;
-        }
-
-        .storybook-cover.closed {
-            transform: rotateY(88deg) scale(0.78);
-            opacity: 0;
-            pointer-events: none;
-        }
-
-        .cover-decoration {
-            position: absolute;
-            inset: 8%;
-            border-radius: 24px;
-            border: 2px solid rgba(255,255,255,0.6);
-            box-shadow: inset 0 0 0 1px rgba(0,0,0,0.1), 0 0 60px rgba(0,0,0,0.26);
-            background: radial-gradient(circle at center, rgba(255,255,255,0.14) 0, transparent 60%);
-        }
-
-        .cover-title {
-            font-family: var(--font-heading);
-            font-size: clamp(2.8rem, 6vw, 4.6rem);
-            color: #4a2f1e;
-            text-align: center;
-            margin-bottom: 0.5rem;
-            text-shadow: 0 6px 26px rgba(0,0,0,0.12);
-            position: relative;
-            z-index: 2;
-            line-height: 1.1;
-            letter-spacing: -0.02em;
-        }
-
-        .cover-subtitle {
-            font-family: var(--font-heading);
-            font-style: italic;
-            font-size: clamp(2rem, 4vw, 3rem);
-            color: #6f492d;
-            text-align: center;
-            margin-bottom: 2.2rem;
-            opacity: 0.9;
-            position: relative;
-            z-index: 2;
-            letter-spacing: -0.01em;
-        }
-
-        .open-book-btn {
-            padding: 14px 38px;
-            font-size: 1.2rem;
-            background: linear-gradient(135deg, #fef6e4, #f3dfb2);
-            color: #6a3d24;
-            border: none;
-            border-radius: 999px;
-            cursor: pointer;
-            font-weight: 700;
-            box-shadow: 0 10px 26px rgba(0,0,0,0.25);
-            transition: all 0.35s ease;
-            font-family: var(--font-heading);
-            position: relative;
-            z-index: 2;
-            overflow: hidden;
-            letter-spacing: 0.08em;
-            text-transform: uppercase;
-        }
-
-        .open-book-btn:hover {
-            transform: translateY(-2px) scale(1.02);
-            box-shadow: 0 14px 32px rgba(0,0,0,0.3);
-        }
-
-        /* ===== ENHANCED BACKGROUND ELEMENTS ===== */
-        .honeycomb-bg {
-            position: fixed;
-            top: 0;
-            left: 0;
-            width: 100%;
-            height: 100%;
-            background-image:
-                radial-gradient(circle at 25% 25%, rgba(255, 196, 43, 0.08) 0%, transparent 55%),
-                radial-gradient(circle at 75% 75%, rgba(230, 184, 106, 0.1) 0%, transparent 55%),
-                url('data:image/svg+xml,<svg xmlns="http://www.w3.org/2000/svg" width="100" height="100"><path d="M50,0 L75,25 L75,75 L50,100 L25,75 L25,25 Z" fill="%23E6B86A" opacity="0.04"/></svg>');
-            background-size: auto, auto, 120px;
-            z-index: -3;
-            pointer-events: none;
-        }
-
-        .golden-light {
-            position: fixed;
-            inset: 0;
-            background: radial-gradient(ellipse at center, var(--golden-light) 0%, rgba(255, 215, 0, 0) 70%);
-            z-index: -1;
-            animation: light-pulse 16s ease-in-out infinite;
-            pointer-events: none;
-        }
-
-        @keyframes light-pulse {
-            0%, 100% { opacity: 0.12; }
-            50% { opacity: 0.28; }
-        }
-
-        .enchanted-forest {
-            position: fixed;
-            inset: 0;
-            z-index: -2;
-            overflow: hidden;
-            opacity: 0.35;
-            pointer-events: none;
-        }
-
-        .tree {
-            position: absolute;
-            bottom: -40px;
-            width: 180px;
-            background: linear-gradient(to right, #8B5A2B, #A0522D);
-            border-radius: 20px 20px 0 0;
-            transform-origin: bottom;
-            box-shadow: 0 0 18px rgba(0,0,0,0.25);
-        }
-
-        .floating-leaf {
-            position: absolute;
-            width: 40px;
-            height: 40px;
-            background: radial-gradient(ellipse at center, #BBF7D0, #22C55E);
-            border-radius: 50% 0 50% 50%;
-            transform: rotate(45deg);
-            animation: leaf-fall 15s linear infinite;
-            opacity: 0.7;
-            filter: drop-shadow(0 5px 5px rgba(0,0,0,0.18));
-        }
-
-        @keyframes leaf-fall {
-            0% {
-                transform: translateY(-100vh) rotate(0deg);
-                opacity: 0;
-            }
-            10% {
-                opacity: 0.9;
-            }
-            90% {
-                opacity: 0.7;
-            }
-            100% {
-                transform: translateY(100vh) rotate(360deg);
-                opacity: 0;
-            }
-        }
-
-        /* ===== ENHANCED MAIN CONTENT ===== */
-        .storybook-shell {
-            max-width: 1240px;
-            margin: 0 auto;
-            padding: 40px 20px 60px;
-        }
-
-        .storybook {
-            position: relative;
-            width: 100%;
-            opacity: 0;
-            transition: opacity 1.4s ease;
-            background: rgba(254, 249, 231, 0.96);
-            border-radius: 28px;
-            box-shadow: var(--shadow-soft);
-            padding: 36px 34px 40px;
-            border: 1px solid var(--page-border);
-        }
-
-        .storybook.visible {
-            opacity: 1;
-        }
-
-        .storybook-inner {
-            max-width: 880px;
-            margin: 0 auto;
-        }
-
-        .storybook-header {
-            text-align: center;
-            margin-bottom: 18px;
-        }
-
-        .storybook-heading {
-            font-family: var(--font-heading);
-            font-size: 2.4rem;
-            color: var(--storybook-brown);
-            margin-bottom: 4px;
-            letter-spacing: -0.01em;
-        }
-
-        .storybook-subheading {
-            font-family: var(--font-heading);
-            font-style: italic;
-            font-size: 1.7rem;
-            color: var(--pooh-red);
-        }
-
-        /* ===== ENHANCED CONTENT SECTIONS ===== */
-        .content-section {
-            background: var(--page-yellow);
-            width: 100%;
-            margin: 32px 0;
-            border-radius: 20px;
-            box-shadow: 0 14px 40px rgba(15, 23, 42, 0.16);
-            position: relative;
-            overflow: hidden;
-            padding: 28px 26px 30px;
-            transform-style: preserve-3d;
-            transition: opacity 0.6s ease, transform 0.6s ease;
-            opacity: 0;
-            transform: translateY(40px);
-            border: 1px solid var(--page-border);
-        }
-
-        .content-section.visible {
-            opacity: 1;
-            transform: translateY(0);
-        }
-
-        .content-section::before {
-            content: '';
-            position: absolute;
-            inset: 0;
-            background-image:
-                radial-gradient(circle at 5% 5%, rgba(252, 211, 77, 0.25) 0, transparent 45%),
-                radial-gradient(circle at 95% 95%, rgba(252, 211, 77, 0.18) 0, transparent 45%);
-            opacity: 0.7;
-            pointer-events: none;
-        }
-
-        .content-section-inner {
-            position: relative;
-            z-index: 1;
-        }
-
-        .section-number {
-            position: absolute;
-            top: 18px;
-            right: 26px;
-            font-family: var(--font-heading);
-            font-size: 1.5rem;
-            color: rgba(67, 48, 42, 0.7);
-        }
-
-        .section-header {
-            text-align: center;
-            margin-bottom: 18px;
-        }
-
-        .story-title {
-            font-family: var(--font-heading);
-            font-size: 2.35rem;
-            color: var(--pooh-red);
-            position: relative;
-            letter-spacing: -0.01em;
-        }
-
-        .story-title::after {
-            content: '🍯';
-            display: block;
-            font-size: 1.6rem;
-            margin-top: 4px;
-            color: var(--pooh-yellow);
-        }
-
-        /* ===== ENHANCED MINI-GAME ===== */
-        .honey-adventure-game {
-            background: rgba(255, 255, 255, 0.97);
-            border-radius: 22px;
-            padding: 24px 22px 22px;
-            margin: 26px 0;
-            text-align: center;
-            border: 2px dashed rgba(250, 204, 21, 0.9);
-            position: relative;
-            overflow: hidden;
-            box-shadow: 0 12px 32px rgba(15, 23, 42, 0.16);
-        }
-
-        .game-header {
-            text-align: center;
-            margin-bottom: 22px;
-            position: relative;
-        }
-
-        .game-header h1 {
-            color: var(--pooh-red);
-            text-shadow: 2px 2px 0 #ffccbc;
-            font-size: 2.2em;
-            margin-bottom: 6px;
-            animation: bounce 2.4s infinite;
-            font-family: var(--font-heading);
-        }
-
-        .game-header p {
-            font-size: 0.98rem;
-            color: var(--storybook-brown);
-        }
-
-        @keyframes bounce {
-            0%, 100% { transform: translateY(0); }
-            50% { transform: translateY(-8px); }
-        }
-
-        .game-container {
-            position: relative;
-            width: 100%;
-            height: 300px;
-            background: linear-gradient(to bottom, #a5d6a7, #81c784);
-            border-radius: 16px;
-            margin: 18px 0;
-            overflow: hidden;
-            border: 3px solid var(--storybook-brown);
-            box-shadow: 0 8px 24px rgba(0,0,0,0.15);
-        }
-
-        #gameCanvas {
-            display: block;
-            width: 100%;
-            height: 100%;
-        }
-
-        .game-controls {
-            display: flex;
-            justify-content: center;
-            gap: 12px;
-            margin: 18px 0;
-        }
-
-        .game-btn {
-            padding: 12px 24px;
-            background: linear-gradient(135deg, #ff9800, #f57c00);
-            border: none;
-            border-radius: 50px;
-            color: white;
-            font-weight: bold;
-            cursor: pointer;
-            box-shadow: 0 4px 0 #e65100;
-            transition: all 0.2s;
-            font-size: 1rem;
-        }
-
-        .game-btn:hover:not(:disabled) {
-            transform: translateY(-2px);
-            box-shadow: 0 6px 0 #e65100;
-        }
-
-        .game-btn:active:not(:disabled) {
-            transform: translateY(2px);
-            box-shadow: 0 2px 0 #e65100;
-        }
-
-        .game-btn:disabled {
-            background: #bdbdbd;
-            box-shadow: 0 4px 0 #757575;
-            transform: none;
-            cursor: not-allowed;
-        }
-
-        .stats-container {
-            display: grid;
-            grid-template-columns: repeat(3, minmax(0, 1fr));
-            gap: 12px;
-            margin: 18px 0;
-        }
-
-        .stat {
-            background: linear-gradient(135deg, #ffcc80 0%, #ffb74d 100%);
-            padding: 12px 10px;
-            border-radius: 16px;
-            font-size: 1.05em;
-            font-weight: bold;
-            box-shadow: 0 4px 10px rgba(0,0,0,0.12);
-            border: 3px solid #ff9800;
-        }
-
-        .message-box {
-            background: #fff8e1;
-            border: 3px dashed #ffb300;
-            border-radius: 18px;
-            padding: 16px 18px;
-            margin: 18px 0 10px;
-            min-height: 70px;
-            font-size: 1.22em;
-            display: flex;
-            align-items: center;
-            justify-content: center;
-            text-align: center;
-            position: relative;
-            animation: pulse 2.2s infinite;
-            font-family: var(--font-heading);
-        }
-
-        @keyframes pulse {
-            0%, 100% { border-color: #ffb300; }
-            50% { border-color: #ff9800; }
-        }
-
-        .pooh-face {
-            font-size: 1.8em;
-            margin-right: 10px;
-        }
-
-        .achievements {
-            margin-top: 18px;
-            padding: 14px 12px 10px;
-            background: #ffecb3;
-            border-radius: 14px;
-            border: 2px solid #ffb300;
-            text-align: left;
-            font-size: 0.95rem;
-        }
-
-        .achievements h3 {
-            margin-bottom: 6px;
-        }
-
-        .achievement {
-            display: inline-block;
-            background: #ffcc80;
-            padding: 6px 12px;
-            margin: 4px;
-            border-radius: 999px;
-            font-size: 0.84em;
-        }
-
-        /* ===== ENHANCED STORYTELLING ELEMENTS ===== */
-        .story-section {
-            margin: 18px 0;
-            padding: 22px 22px 20px;
-            background: rgba(255, 255, 255, 0.94);
-            border-radius: 16px;
-            border-left: 4px solid var(--pooh-yellow);
-            position: relative;
-        }
-
-        .story-section::before {
-            content: '“';
-            position: absolute;
-            top: -26px;
-            left: 16px;
-            font-size: 4.2rem;
-            color: rgba(250, 204, 21, 0.4);
-            font-family: 'Playfair Display', serif;
-        }
-
-        .story-text {
-            font-size: 1.1rem;
-            line-height: 1.8;
-            color: var(--text-dark);
-        }
-
-        /* ===== ENHANCED WOODLAND SIGN ===== */
-        .woodland-sign {
-            position: relative;
-            background: var(--storybook-brown);
-            color: white;
-            padding: 12px 22px;
-            border-radius: 12px;
-            margin: 10px auto 18px;
-            max-width: 320px;
-            text-align: center;
-            font-family: var(--font-heading);
-            font-size: 1.5rem;
-            box-shadow: 0 10px 26px rgba(55, 31, 14, 0.5);
-            transform: rotate(-1.5deg);
-            border: 3px solid rgba(250, 204, 21, 0.9);
-        }
-
-        .woodland-sign::before {
-            content: '';
-            position: absolute;
-            bottom: -22px;
-            left: 50%;
-            transform: translateX(-50%);
-            width: 0;
-            height: 0;
-            border-left: 14px solid transparent;
-            border-right: 14px solid transparent;
-            border-top: 20px solid var(--storybook-brown);
-        }
-
-        .woodland-sign::after {
-            content: '';
-            position: absolute;
-            bottom: -28px;
-            left: 50%;
-            transform: translateX(-50%);
-            width: 30px;
-            height: 30px;
-            background: #5D4037;
-            border-radius: 999px;
-        }
-
-        /* ===== ENHANCED CHARACTER SPOTLIGHTS ===== */
-        .character-spotlight {
-            display: flex;
-            align-items: center;
-            gap: 20px;
-            margin: 22px 0;
-            padding: 18px 20px;
-            background: rgba(255, 255, 255, 0.96);
-            border-radius: 18px;
-            border: 1px solid rgba(148, 81, 35, 0.25);
-            box-shadow: 0 10px 24px rgba(15, 23, 42, 0.12);
-            transition: all 0.3s ease;
-            cursor: pointer;
-            position: relative;
-            overflow: hidden;
-        }
-
-        .character-spotlight:hover {
-            transform: translateY(-4px);
-            box-shadow: 0 16px 40px rgba(15, 23, 42, 0.18);
-        }
-
-        .character-illustration {
-            width: 110px;
-            height: 110px;
-            border-radius: 999px;
-            overflow: hidden;
-            flex-shrink: 0;
-            box-shadow: var(--character-shadow);
-            border: 4px solid var(--pooh-yellow);
-            background: var(--page-yellow);
-            display: flex;
-            align-items: center;
-            justify-content: center;
-            transition: transform 0.28s ease;
-        }
-
-        .character-spotlight:hover .character-illustration {
-            transform: scale(1.04);
-        }
-
-        .character-spotlight-content {
-            display: flex;
-            flex-direction: column;
-            gap: 6px;
-        }
-
-        .character-quote {
-            font-family: var(--font-heading);
-            font-size: 1.6rem;
-            color: var(--storybook-brown);
-            line-height: 1.4;
-            text-shadow: 1px 1px 0 rgba(255,255,255,0.5);
-        }
-
-        .character-name {
-            font-family: 'Playfair Display', serif;
-            font-weight: 700;
-            color: var(--pooh-red);
-            font-size: 1.05rem;
-        }
-
-        /* ===== ENHANCED INVITATION DETAILS ===== */
-        .invitation-details {
-            display: grid;
-            grid-template-columns: repeat(2, minmax(0, 1fr));
-            gap: 18px;
-            margin: 24px 0 10px;
-        }
-
-        .detail-card {
-            background: #FFFFFF;
-            padding: 18px 18px 16px;
-            border-radius: 16px;
-            box-shadow: 0 6px 16px rgba(15, 23, 42, 0.12);
-            border-top: 5px solid var(--pooh-yellow);
-            transition: all 0.25s ease;
-            position: relative;
-            overflow: hidden;
-        }
-
-        .detail-card:hover {
-            transform: translateY(-4px);
-            box-shadow: 0 10px 24px rgba(15, 23, 42, 0.18);
-        }
-
-        .detail-title {
-            font-family: 'Playfair Display', serif;
-            color: var(--pooh-red);
-            font-size: 1.18rem;
-            margin-bottom: 8px;
-        }
-
-        .detail-content {
-            font-size: 0.98rem;
-            color: var(--storybook-brown);
-            line-height: 1.6;
-        }
-
-        /* ===== ENHANCED RSVP FORM ===== */
-        .rsvp-form {
-            background: rgba(255, 255, 255, 0.94);
-            border-radius: 16px;
-            padding: 18px;
-            border: 1px solid rgba(148, 81, 35, 0.18);
-            box-shadow: 0 12px 30px rgba(15, 23, 42, 0.12);
-            margin-top: 12px;
-        }
-
-        .storybook-form {
-            display: flex;
-            flex-direction: column;
-            gap: 14px;
-        }
-
-        .form-field {
-            display: flex;
-            flex-direction: column;
-            gap: 6px;
-        }
-
-        .field-label {
-            font-weight: 800;
-            color: var(--deep-ink);
-            font-size: 0.98rem;
-            display: inline-flex;
-            align-items: center;
-            gap: 6px;
-        }
-
-        .storybook-form .form-grid {
-            display: grid;
-            grid-template-columns: repeat(auto-fit, minmax(240px, 1fr));
-            gap: 12px;
-        }
-
-        .storybook-form input,
-        .storybook-form select,
-        .storybook-form textarea {
-            width: 100%;
-            padding: 12px 14px;
-            border-radius: 12px;
-            border: 2px solid rgba(148, 81, 35, 0.2);
-            background: #fff;
-            font-family: inherit;
-            font-size: 1rem;
-            color: var(--text-dark);
-            transition: border-color 0.2s ease, box-shadow 0.2s ease;
-        }
-
-        .storybook-form input:focus,
-        .storybook-form select:focus,
-        .storybook-form textarea:focus {
-            border-color: var(--pooh-red);
-            box-shadow: 0 0 0 3px rgba(214, 46, 46, 0.2);
-            outline: none;
-        }
-
-        .storybook-form button {
-            align-self: flex-start;
-        }
-
-        .form-status {
-            margin-top: 4px;
-            font-weight: 700;
-            font-size: 0.98rem;
-            color: var(--deep-ink);
-        }
-
-        /* ===== ENHANCED BUTTONS ===== */
-        .magical-btn {
-            display: inline-flex;
-            align-items: center;
-            justify-content: center;
-            gap: 6px;
-            padding: 12px 28px;
-            background: linear-gradient(135deg, #f7c948, #d69e2e);
-            color: var(--deep-ink);
-            border: none;
-            border-radius: 50px;
-            font-family: var(--font-heading);
-            font-size: 1.05rem;
-            font-weight: 700;
-            cursor: pointer;
-            box-shadow: 0 8px 20px rgba(15, 23, 42, 0.3);
-            transition: all 0.28s ease;
-            text-decoration: none;
-            position: relative;
-            overflow: hidden;
-        }
-
-        .magical-btn:hover {
-            transform: translateY(-2px);
-            box-shadow: 0 12px 28px rgba(15, 23, 42, 0.4);
-        }
-
-        /* ===== ENHANCED FLOATING ACTION BUTTONS ===== */
-        .fab-container {
-            position: fixed;
-            bottom: 96px;
-            right: 24px;
-            z-index: 1000;
-            display: flex;
-            flex-direction: column;
-            gap: 12px;
-        }
-
-        .fab {
-            width: 54px;
-            height: 54px;
-            border-radius: 50%;
-            background: var(--pooh-yellow);
-            border: none;
-            color: white;
-            font-size: 1.3rem;
-            cursor: pointer;
-            display: flex;
-            align-items: center;
-            justify-content: center;
-            box-shadow: 0 10px 22px rgba(15, 23, 42, 0.35);
-            transition: all 0.25s ease;
-        }
-
-        .fab:hover {
-            background: var(--pooh-red);
-            transform: translateY(-3px) scale(1.06);
-        }
-
-        /* ===== ENHANCED MUSIC CONTROLS ===== */
-        .music-controls {
-            position: fixed;
-            bottom: 96px;
-            left: 24px;
-            z-index: 1000;
-            display: flex;
-            flex-direction: column;
-            gap: 12px;
-        }
-
-        .music-btn {
-            width: 54px;
-            height: 54px;
-            border-radius: 50%;
-            background: var(--pooh-yellow);
-            border: none;
-            color: white;
-            font-size: 1.2rem;
-            cursor: pointer;
-            display: flex;
-            align-items: center;
-            justify-content: center;
-            box-shadow: 0 10px 22px rgba(15, 23, 42, 0.35);
-            transition: all 0.25s ease;
-        }
-
-        .music-btn:hover {
-            background: var(--pooh-red);
-            transform: translateY(-3px) scale(1.06);
-        }
-
-        .accessibility-btn {
-            width: 54px;
-            height: 54px;
-            border-radius: 50%;
-            background: var(--pooh-yellow);
-            border: none;
-            color: white;
-            font-size: 1.2rem;
-            cursor: pointer;
-            display: flex;
-            align-items: center;
-            justify-content: center;
-            box-shadow: 0 10px 22px rgba(15, 23, 42, 0.35);
-            transition: all 0.25s ease;
-        }
-
-        .accessibility-btn:hover {
-            background: var(--pooh-red);
-            transform: translateY(-3px) scale(1.06);
-        }
-
-        /* ===== ENHANCED READING PROGRESS ===== */
-        .reading-progress {
-            position: fixed;
-            top: 0;
-            left: 0;
-            width: 0%;
-            height: 4px;
-            background: linear-gradient(90deg, var(--pooh-yellow), var(--pooh-red));
-            z-index: 1000;
-            transition: width 0.25s ease;
-        }
-
-        /* ===== ENHANCED CHARACTER MODAL ===== */
-        .character-modal {
-            position: fixed;
-            top: 0;
-            left: 0;
-            width: 100%;
-            height: 100%;
-            background: rgba(15, 23, 42, 0.78);
-            display: flex;
-            justify-content: center;
-            align-items: center;
-            z-index: 10000;
+            background: rgba(0,0,0,0.5);
             opacity: 0;
             visibility: hidden;
-            transition: all 0.45s ease;
+            transition: all 0.3s ease;
+            z-index: 998;
         }
 
-        .character-modal.active {
+        .nav-overlay.active {
             opacity: 1;
             visibility: visible;
         }
 
-        .modal-content {
-            background: #FEF9E7;
-            width: 90%;
-            max-width: 620px;
-            border-radius: 22px;
-            padding: 26px 26px 24px;
-            position: relative;
-            transform: scale(0.86);
-            transition: transform 0.45s ease;
-            box-shadow: 0 28px 80px rgba(0,0,0,0.55);
+        .music-controls {
+            bottom: 20px;
+            left: 20px;
         }
 
-        .character-modal.active .modal-content {
-            transform: scale(1);
-        }
-
-        .close-modal {
-            position: absolute;
-            top: 14px;
-            right: 16px;
-            background: none;
-            border: none;
-            font-size: 1.4rem;
-            cursor: pointer;
-            color: var(--storybook-brown);
-            transition: color 0.25s ease, transform 0.2s ease;
-        }
-
-        .close-modal:hover {
-            color: var(--pooh-red);
-            transform: scale(1.1);
-        }
-
-        .modal-character {
-            display: flex;
-            align-items: center;
-            gap: 18px;
-            margin-bottom: 18px;
-        }
-
-        .modal-character-icon {
-            width: 78px;
-            height: 78px;
-            border-radius: 50%;
-            display: flex;
-            align-items: center;
-            justify-content: center;
-            font-size: 2rem;
-            color: white;
-            flex-shrink: 0;
-        }
-
-        .modal-character-name {
-            font-family: 'Playfair Display', serif;
-            font-size: 1.9rem;
-            color: var(--pooh-red);
-        }
-
-        .modal-character-quote {
-            font-family: var(--font-heading);
-            font-size: 1.8rem;
-            color: var(--storybook-brown);
-            margin-bottom: 18px;
-            text-align: center;
-        }
-
-        .modal-character-bio {
-            font-size: 1rem;
-            color: var(--storybook-brown);
-            line-height: 1.7;
-        }
-
-        .pooh-icon { background: var(--pooh-yellow); }
-        .piglet-icon { background: #F8BBD9; }
-        .tigger-icon { background: #FF8C42; }
-        .eeyore-icon { background: #9CA3AF; }
-        .rabbit-icon { background: var(--sage-green); }
-        .owl-icon { background: #8B7355; }
-        .kanga-icon { background: #FAD7A0; }
-
-        /* ===== ENHANCED FOOTER ===== */
-        .footer {
-            text-align: center;
-            padding: 26px 10px 6px;
-            margin-top: 40px;
-            font-family: var(--font-heading);
-            font-size: 1.4rem;
-            color: var(--storybook-brown);
-            border-top: 1px dashed rgba(250, 204, 21, 0.9);
-        }
-
-        .footer p:last-child {
-            font-size: 1.15rem;
-            margin-top: 4px;
-        }
-
-        /* ===== ENHANCED WINNIE THE POOH THEME ELEMENTS ===== */
-        .honey-drip {
-            position: fixed;
-            width: 14px;
-            height: 14px;
-            border-radius: 999px;
-            background: radial-gradient(circle at top, #FFFBEB 0%, #FACC15 40%, #E6B86A 100%);
-            box-shadow: 0 5px 18px rgba(180, 83, 9, 0.65);
-            animation: honey-drip-fall 3s ease-in forwards;
-            pointer-events: none;
-            z-index: 100;
-        }
-
-        @keyframes honey-drip-fall {
-            0% { transform: translate(0, 0) scale(0.9); opacity: 1; }
-            80% { transform: translate(0, 140px) scale(1); opacity: 1; }
-            100% { transform: translate(0, 160px) scale(0.8); opacity: 0; }
+        .fab-container {
+            bottom: 20px;
+            right: 20px;
         }
 
         .bouncing-tigger {
-            position: fixed;
-            bottom: 20px;
-            right: 20px;
-            width: 80px;
-            height: 80px;
-            background: #FF8C42;
-            border-radius: 50%;
+            bottom: 96px;
+            right: 18px;
+            width: 64px;
+            height: 64px;
+            font-size: 1.6rem;
+        }
+
+        /* Show mobile controls for game */
+        .mobile-controls {
             display: flex;
-            align-items: center;
-            justify-content: center;
-            font-size: 2rem;
-            color: white;
-            z-index: 900;
-            animation: bounce 2s infinite;
-            cursor: pointer;
-            box-shadow: 0 10px 20px rgba(0,0,0,0.2);
         }
+    }
 
-        /* ===== ENHANCED HONEY POT COLLECTION ===== */
-        .hunny-pot-collection {
-            display: flex;
-            justify-content: center;
-            gap: 18px;
-            margin: 16px 0 10px;
-            flex-wrap: wrap;
+    @media (max-width: 768px) {
+        .storybook-shell {
+            padding-inline: 12px;
         }
-
-        .hunny-pot {
-            width: 62px;
-            height: 82px;
-            background: var(--honey-gold);
-            border-radius: 30px 30px 16px 16px;
-            position: relative;
-            cursor: pointer;
-            transition: transform 0.25s ease, box-shadow 0.25s ease;
-            box-shadow: 0 6px 16px rgba(15, 23, 42, 0.35);
+        .storybook {
+            padding: 24px 18px 28px;
         }
-
-        .hunny-pot:hover {
-            transform: translateY(-6px) rotate(4deg);
-            box-shadow: 0 10px 24px rgba(15, 23, 42, 0.4);
+        .content-section {
+            padding: 20px 16px 22px;
         }
-
-        .hunny-pot::before {
-            content: '';
-            position: absolute;
-            top: 10px;
-            left: 10px;
-            right: 10px;
-            bottom: 16px;
-            background: linear-gradient(to bottom, #FFC42B, #E6B86A);
-            border-radius: 22px 22px 12px 12px;
+        .story-title {
+            font-size: 1.85rem;
         }
-
-        .hunny-pot::after {
-            content: 'HUNNY';
-            position: absolute;
-            bottom: 6px;
-            left: 0;
-            right: 0;
-            text-align: center;
-            font-family: var(--font-heading);
-            color: var(--storybook-brown);
-            font-size: 0.9rem;
+        .invitation-details {
+            grid-template-columns: 1fr;
         }
-
+        .stats-container {
+            grid-template-columns: 1fr;
+        }
+        .character-spotlight {
+            flex-direction: column;
+            align-items: flex-start;
+        }
+        .character-illustration {
+            width: 96px;
+            height: 96px;
+        }
         .pooh-quote-bubble {
-            position: fixed;
-            bottom: 120px;
-            left: 24px;
-            background: white;
-            border-radius: 20px;
-            padding: 12px 16px;
-            box-shadow: 0 8px 20px rgba(0,0,0,0.15);
-            max-width: 200px;
-            font-family: var(--font-heading);
-            font-size: 1.1rem;
-            color: var(--storybook-brown);
-            border: 2px solid var(--pooh-yellow);
-            opacity: 0;
-            transform: translateY(20px);
-            transition: all 0.3s ease;
-            z-index: 1000;
-        }
-
-        .pooh-quote-bubble::after {
-            content: '';
-            position: absolute;
-            bottom: -10px;
+            bottom: 170px;
             left: 20px;
-            width: 0;
-            height: 0;
-            border-left: 10px solid transparent;
-            border-right: 10px solid transparent;
-            border-top: 10px solid var(--pooh-yellow);
+            max-width: 180px;
+        }
+        .nav-title {
+            font-size: 1.4rem;
         }
 
-        .pooh-quote-bubble.visible {
-            opacity: 1;
-            transform: translateY(0);
+        /* Adjust game container for mobile */
+        .game-container {
+            height: 200px;
         }
+    }
 
-        /* ===== ENHANCED RESPONSIVE DESIGN ===== */
-        @media (max-width: 992px) {
-            .nav-menu {
-                position: fixed;
-                top: 0;
-                right: -300px;
-                width: 300px;
-                height: 100vh;
-                background: #fffaf1;
-                flex-direction: column;
-                padding: 80px 20px 20px;
-                transition: right 0.3s ease;
-                box-shadow: -5px 0 15px rgba(0,0,0,0.1);
-                z-index: 999;
-            }
-
-            .nav-menu.active {
-                right: 0;
-            }
-
-            .nav-toggle {
-                display: flex;
-                z-index: 1001;
-            }
-
-            .nav-overlay {
-                position: fixed;
-                inset: 0;
-                background: rgba(0,0,0,0.5);
-                opacity: 0;
-                visibility: hidden;
-                transition: all 0.3s ease;
-                z-index: 998;
-            }
-
-            .nav-overlay.active {
-                opacity: 1;
-                visibility: visible;
-            }
-
-            .music-controls {
-                bottom: 20px;
-                left: 20px;
-            }
-
-            .fab-container {
-                bottom: 20px;
-                right: 20px;
-            }
-
-            .bouncing-tigger {
-                bottom: 100px;
-                right: 20px;
-            }
+    @media (max-width: 520px) {
+        .cover-title {
+            font-size: 2.2rem;
         }
-
-        @media (max-width: 768px) {
-            .storybook-shell {
-                padding-inline: 12px;
-            }
-            .storybook {
-                padding: 26px 18px 30px;
-            }
-            .content-section {
-                padding: 22px 18px 24px;
-            }
-            .story-title {
-                font-size: 2rem;
-            }
-            .invitation-details {
-                grid-template-columns: 1fr;
-            }
-            .stats-container {
-                grid-template-columns: 1fr;
-            }
-            .character-spotlight {
-                flex-direction: column;
-                align-items: flex-start;
-            }
-            .character-illustration {
-                width: 100px;
-                height: 100px;
-            }
-            .pooh-quote-bubble {
-                bottom: 180px;
-                left: 20px;
-                max-width: 160px;
-            }
+        .cover-subtitle {
+            font-size: 1.5rem;
         }
-
-        @media (max-width: 520px) {
-            .cover-title {
-                font-size: 2.2rem;
-            }
-            .cover-subtitle {
-                font-size: 1.6rem;
-            }
-            .open-book-btn {
-                padding: 11px 26px;
-                font-size: 1.02rem;
-            }
-            .game-controls {
-                flex-direction: column;
-            }
-            .bouncing-tigger {
-                width: 60px;
-                height: 60px;
-                font-size: 1.5rem;
-            }
+        .open-book-btn {
+            padding: 10px 22px;
+            font-size: 1rem;
         }
-
-        .hidden {
-            display: none !important;
+        .game-controls {
+            flex-direction: column;
         }
-    </style>
+        .storybook-heading {
+            font-size: 2rem;
+        }
+    }
+</style>
 </head>
 <body>
 
@@ -1594,8 +2017,6 @@
 
                <!-- SECTION 1: THE BEGINNING -->
     <section class="content-section scroll-animate" id="section1">
-        <div class="floating-leaves" id="leaves-container"></div>
-        
         <div class="content-section-inner">
             <div class="section-number">1</div>
 
@@ -1603,8 +2024,9 @@
                 <h2 class="story-title">Once Upon a Time in the Hundred Acre Wood...</h2>
             </div>
 
-            <div class="woodland-sign">
+            <div class="woodland-sign" onclick="playWoodlandSound()">
                 Welcome to the Hundred Acre Wood
+                <div class="sign-sparkles"></div>
             </div>
 
             <div class="story-section">
@@ -1613,17 +2035,31 @@
                     a very special celebration is being prepared. The friends of the Hundred Acre Wood are gathering
                     together, for they've heard the most wonderful news – a new friend is coming to join their adventures!
                 </p>
+                <div class="floating-hearts">
+                    <div class="heart">❤️</div>
+                    <div class="heart">💛</div>
+                    <div class="heart">💙</div>
+                </div>
             </div>
 
             <div class="hunny-pot-collection">
-                <div class="hunny-pot" onclick="playHunnySound()" style="--delay: 0"></div>
-                <div class="hunny-pot" onclick="playHunnySound()" style="--delay: 1"></div>
-                <div class="hunny-pot" onclick="playHunnySound()" style="--delay: 2"></div>
-                <div class="hunny-pot" onclick="playHunnySound()" style="--delay: 3"></div>
+                <div class="hunny-pot" onclick="playHunnySound()" data-delay="0">
+                    <div class="honey-drip"></div>
+                </div>
+                <div class="hunny-pot" onclick="playHunnySound()" data-delay="1">
+                    <div class="honey-drip"></div>
+                </div>
+                <div class="hunny-pot" onclick="playHunnySound()" data-delay="2">
+                    <div class="honey-drip"></div>
+                </div>
+                <div class="hunny-pot" onclick="playHunnySound()" data-delay="3">
+                    <div class="honey-drip"></div>
+                </div>
             </div>
 
-            <div class="character-spotlight" data-character="pooh">
+            <div class="character-spotlight" data-character="pooh" onclick="showCharacterModal('pooh')">
                 <div class="character-illustration">
+                    <div class="character-glow"></div>
                     <i class="fas fa-bear" style="font-size: 3rem; color: var(--pooh-yellow);"></i>
                 </div>
                 <div class="character-spotlight-content">
@@ -1632,6 +2068,7 @@
                     </div>
                     <div class="character-name">- Winnie the Pooh</div>
                 </div>
+                <div class="spotlight-beam"></div>
             </div>
 
             <div class="story-section">
@@ -1641,6 +2078,12 @@
                     plenty of honey and treats. For when a new friend arrives in the Hundred Acre Wood, it is always
                     a cause for the happiest of gatherings.
                 </p>
+            </div>
+
+            <div class="section-animals">
+                <div class="floating-animal" data-animal="bee">🐝</div>
+                <div class="floating-animal" data-animal="butterfly">🦋</div>
+                <div class="floating-animal" data-animal="bird">🐦</div>
             </div>
         </div>
     </section>
@@ -1654,8 +2097,9 @@
                             <h2 class="story-title">You Are Cordially Invited</h2>
                         </div>
 
-                        <div class="woodland-sign">
+                        <div class="woodland-sign" onclick="playWoodlandSound()">
                             Party This Way →
+                            <div class="sign-sparkles"></div>
                         </div>
 
                         <div class="story-section">
@@ -1664,6 +2108,11 @@
                                 Celebration in honor of the impending arrival of Baby Gunner. Come share in the joy, laughter,
                                 and honey-sweet moments as we prepare to welcome this new little adventurer to our story.
                             </p>
+                            <div class="floating-hearts">
+                                <div class="heart">❤️</div>
+                                <div class="heart">💛</div>
+                                <div class="heart">💙</div>
+                            </div>
                         </div>
 
                         <div class="invitation-details">
@@ -1741,6 +2190,12 @@
                                 <div class="form-status" id="rsvpStatus"></div>
                             </form>
                         </div>
+
+                        <div class="section-animals">
+                            <div class="floating-animal" data-animal="bee">🐝</div>
+                            <div class="floating-animal" data-animal="butterfly">🦋</div>
+                            <div class="floating-animal" data-animal="bird">🐦</div>
+                        </div>
                     </div>
                 </section>
 
@@ -1753,8 +2208,9 @@
                             <h2 class="story-title">Meet Our Hosts</h2>
                         </div>
 
-                        <div class="woodland-sign">
+                        <div class="woodland-sign" onclick="playWoodlandSound()">
                             Character Meet &amp; Greet
+                            <div class="sign-sparkles"></div>
                         </div>
 
                         <div class="story-section">
@@ -1762,10 +2218,16 @@
                                 All your favorite friends from the Hundred Acre Wood will be there to welcome you and share
                                 in the celebration. Each has been preparing their own special way to make this day unforgettable.
                             </p>
+                            <div class="floating-hearts">
+                                <div class="heart">❤️</div>
+                                <div class="heart">💛</div>
+                                <div class="heart">💙</div>
+                            </div>
                         </div>
 
-                        <div class="character-spotlight" data-character="pooh">
+                        <div class="character-spotlight" data-character="pooh" onclick="showCharacterModal('pooh')">
                             <div class="character-illustration">
+                                <div class="character-glow"></div>
                                 <i class="fas fa-bear" style="font-size: 3rem; color: var(--pooh-yellow);"></i>
                             </div>
                             <div class="character-spotlight-content">
@@ -1774,10 +2236,12 @@
                                 </div>
                                 <div class="character-name">Winnie the Pooh</div>
                             </div>
+                            <div class="spotlight-beam"></div>
                         </div>
 
-                        <div class="character-spotlight" data-character="piglet">
+                        <div class="character-spotlight" data-character="piglet" onclick="showCharacterModal('piglet')">
                             <div class="character-illustration">
+                                <div class="character-glow"></div>
                                 <i class="fas fa-piggy-bank" style="font-size: 3rem; color: #F8BBD9;"></i>
                             </div>
                             <div class="character-spotlight-content">
@@ -1786,10 +2250,12 @@
                                 </div>
                                 <div class="character-name">Piglet</div>
                             </div>
+                            <div class="spotlight-beam"></div>
                         </div>
 
-                        <div class="character-spotlight" data-character="tigger">
+                        <div class="character-spotlight" data-character="tigger" onclick="showCharacterModal('tigger')">
                             <div class="character-illustration">
+                                <div class="character-glow"></div>
                                 <i class="fas fa-cat" style="font-size: 3rem; color: #FF8C42;"></i>
                             </div>
                             <div class="character-spotlight-content">
@@ -1798,10 +2264,12 @@
                                 </div>
                                 <div class="character-name">Tigger</div>
                             </div>
+                            <div class="spotlight-beam"></div>
                         </div>
 
-                        <div class="character-spotlight" data-character="eeyore">
+                        <div class="character-spotlight" data-character="eeyore" onclick="showCharacterModal('eeyore')">
                             <div class="character-illustration">
+                                <div class="character-glow"></div>
                                 <i class="fas fa-horse" style="font-size: 3rem; color: #9CA3AF;"></i>
                             </div>
                             <div class="character-spotlight-content">
@@ -1810,6 +2278,13 @@
                                 </div>
                                 <div class="character-name">Eeyore</div>
                             </div>
+                            <div class="spotlight-beam"></div>
+                        </div>
+
+                        <div class="section-animals">
+                            <div class="floating-animal" data-animal="bee">🐝</div>
+                            <div class="floating-animal" data-animal="butterfly">🦋</div>
+                            <div class="floating-animal" data-animal="bird">🐦</div>
                         </div>
                     </div>
                 </section>
@@ -1823,8 +2298,9 @@
                             <h2 class="story-title">Woodland Games &amp; Activities</h2>
                         </div>
 
-                        <div class="woodland-sign">
+                        <div class="woodland-sign" onclick="playWoodlandSound()">
                             Games &amp; Adventures
+                            <div class="sign-sparkles"></div>
                         </div>
 
                         <div class="story-section">
@@ -1832,6 +2308,11 @@
                                 The Hundred Acre Wood is full of wonderful games and adventures.
                                 Join us for some classic woodland fun!
                             </p>
+                            <div class="floating-hearts">
+                                <div class="heart">❤️</div>
+                                <div class="heart">💛</div>
+                                <div class="heart">💙</div>
+                            </div>
                         </div>
 
                         <!-- IMPROVED HONEY ADVENTURE GAME -->
@@ -1849,6 +2330,12 @@
 
                             <div class="game-container">
                                 <canvas id="gameCanvas" width="800" height="300"></canvas>
+                            </div>
+
+                            <!-- Mobile Controls -->
+                            <div class="mobile-controls">
+                                <button class="mobile-control-btn" id="leftBtn">←</button>
+                                <button class="mobile-control-btn" id="rightBtn">→</button>
                             </div>
 
                             <div class="game-controls">
@@ -1897,6 +2384,12 @@
                                 </div>
                             </div>
                         </div>
+
+                        <div class="section-animals">
+                            <div class="floating-animal" data-animal="bee">🐝</div>
+                            <div class="floating-animal" data-animal="butterfly">🦋</div>
+                            <div class="floating-animal" data-animal="bird">🐦</div>
+                        </div>
                     </div>
                 </section>
 
@@ -1909,8 +2402,9 @@
                             <h2 class="story-title">Gunner's Treasure Trove</h2>
                         </div>
 
-                        <div class="woodland-sign">
+                        <div class="woodland-sign" onclick="playWoodlandSound()">
                             Baby's First Treasures
+                            <div class="sign-sparkles"></div>
                         </div>
 
                         <div class="story-section">
@@ -1920,6 +2414,11 @@
                                 our little one to the world. But please know that handwritten notes, favorite children's books,
                                 or simple well-wishes are equally treasured.
                             </p>
+                            <div class="floating-hearts">
+                                <div class="heart">❤️</div>
+                                <div class="heart">💛</div>
+                                <div class="heart">💙</div>
+                            </div>
                         </div>
 
                         <div style="text-align: center; margin: 26px 0;">
@@ -1929,8 +2428,9 @@
                             </a>
                         </div>
 
-                        <div class="character-spotlight" data-character="owl">
+                        <div class="character-spotlight" data-character="owl" onclick="showCharacterModal('owl')">
                             <div class="character-illustration">
+                                <div class="character-glow"></div>
                                 <i class="fas fa-feather-alt" style="font-size: 3rem; color: #8B7355;"></i>
                             </div>
                             <div class="character-spotlight-content">
@@ -1939,10 +2439,12 @@
                                 </div>
                                 <div class="character-name">Owl</div>
                             </div>
+                            <div class="spotlight-beam"></div>
                         </div>
 
-                        <div class="character-spotlight" data-character="kanga">
+                        <div class="character-spotlight" data-character="kanga" onclick="showCharacterModal('kanga')">
                             <div class="character-illustration">
+                                <div class="character-glow"></div>
                                 <i class="fas fa-baby" style="font-size: 3rem; color: #FAD7A0;"></i>
                             </div>
                             <div class="character-spotlight-content">
@@ -1951,6 +2453,13 @@
                                 </div>
                                 <div class="character-name">Kanga</div>
                             </div>
+                            <div class="spotlight-beam"></div>
+                        </div>
+
+                        <div class="section-animals">
+                            <div class="floating-animal" data-animal="bee">🐝</div>
+                            <div class="floating-animal" data-animal="butterfly">🦋</div>
+                            <div class="floating-animal" data-animal="bird">🐦</div>
                         </div>
                     </div>
                 </section>
@@ -1964,8 +2473,9 @@
                             <h2 class="story-title">Finding Our Woodland Gathering</h2>
                         </div>
 
-                        <div class="woodland-sign">
+                        <div class="woodland-sign" onclick="playWoodlandSound()">
                             Directions &amp; Details
+                            <div class="sign-sparkles"></div>
                         </div>
 
                         <div class="story-section">
@@ -1973,6 +2483,11 @@
                                 Even the most wonderful adventures require a bit of practical planning. Here you'll find
                                 all the details needed to join our celebration without any bother.
                             </p>
+                            <div class="floating-hearts">
+                                <div class="heart">❤️</div>
+                                <div class="heart">💛</div>
+                                <div class="heart">💙</div>
+                            </div>
                         </div>
 
                         <div class="invitation-details">
@@ -2021,8 +2536,9 @@
                             </div>
                         </div>
 
-                        <div class="character-spotlight" data-character="rabbit">
+                        <div class="character-spotlight" data-character="rabbit" onclick="showCharacterModal('rabbit')">
                             <div class="character-illustration">
+                                <div class="character-glow"></div>
                                 <i class="fas fa-carrot" style="font-size: 3rem; color: var(--sage-green);"></i>
                             </div>
                             <div class="character-spotlight-content">
@@ -2031,6 +2547,13 @@
                                 </div>
                                 <div class="character-name">Rabbit</div>
                             </div>
+                            <div class="spotlight-beam"></div>
+                        </div>
+
+                        <div class="section-animals">
+                            <div class="floating-animal" data-animal="bee">🐝</div>
+                            <div class="floating-animal" data-animal="butterfly">🦋</div>
+                            <div class="floating-animal" data-animal="bird">🐦</div>
                         </div>
                     </div>
                 </section>
@@ -2096,6 +2619,8 @@
         const livesDisplay = document.getElementById('lives-display');
         const levelDisplay = document.getElementById('level-display');
         const gameMessage = document.getElementById('game-message');
+        const leftBtn = document.getElementById('leftBtn');
+        const rightBtn = document.getElementById('rightBtn');
 
         let isMusicPlaying = false;
         let lastFocusedElement = null;
@@ -2181,6 +2706,9 @@
         let gameInterval;
         let lastHoneyTime = 0;
         let lastBeeTime = 0;
+        let touchStartX = 0;
+        let isMovingLeft = false;
+        let isMovingRight = false;
 
         function init() {
             createFloatingLeaves();
@@ -2354,6 +2882,7 @@
             });
 
             document.addEventListener('keydown', handleKeyPress);
+            document.addEventListener('keyup', handleKeyUp);
             window.addEventListener('scroll', updateReadingProgress);
             window.addEventListener('scroll', updateActiveNav);
             window.addEventListener('scroll', checkScrollAnimations);
@@ -2500,6 +3029,14 @@
                 toggleNavMenu(false);
             } else if (event.key === 'Home') {
                 backToCover();
+            } else if (gameState.isRunning && !gameState.isPaused) {
+                keys[event.key] = true;
+            }
+        }
+
+        function handleKeyUp(event) {
+            if (gameState.isRunning && !gameState.isPaused) {
+                keys[event.key] = false;
             }
         }
 
@@ -2513,6 +3050,20 @@
         function handleResize() {
             if (window.innerWidth >= 992) {
                 toggleNavMenu(false);
+            }
+            
+            // Resize canvas if game is running
+            if (canvas) {
+                canvas.width = canvas.offsetWidth;
+                canvas.height = canvas.offsetHeight;
+                
+                // Update Pooh position
+                pooh.x = canvas.width / 2 - pooh.width / 2;
+                pooh.y = canvas.height - pooh.height - 10;
+                
+                if (gameState.isRunning) {
+                    renderGame();
+                }
             }
         }
 
@@ -2528,6 +3079,36 @@
             });
         }
 
+        // Enhanced woodland sign sound function
+        window.playWoodlandSound = function() {
+            const audioContext = new (window.AudioContext || window.webkitAudioContext)();
+            const oscillator = audioContext.createOscillator();
+            const gainNode = audioContext.createGain();
+            
+            oscillator.connect(gainNode);
+            gainNode.connect(audioContext.destination);
+            
+            oscillator.type = 'sine';
+            oscillator.frequency.setValueAtTime(523.25, audioContext.currentTime); // C5
+            oscillator.frequency.setValueAtTime(659.25, audioContext.currentTime + 0.1); // E5
+            oscillator.frequency.setValueAtTime(783.99, audioContext.currentTime + 0.2); // G5
+            
+            gainNode.gain.setValueAtTime(0.1, audioContext.currentTime);
+            gainNode.gain.exponentialRampToValueAtTime(0.001, audioContext.currentTime + 0.8);
+            
+            oscillator.start();
+            oscillator.stop(audioContext.currentTime + 0.8);
+            
+            // Add visual feedback
+            const sign = event.target.closest('.woodland-sign');
+            if (sign) {
+                sign.style.transform = 'scale(1.1)';
+                setTimeout(() => {
+                    sign.style.transform = '';
+                }, 300);
+            }
+        };
+
         // Honey pot sound function
         window.playHunnySound = function() {
             const sound = document.getElementById('hunnySound');
@@ -2539,6 +3120,38 @@
                 setTimeout(() => {
                     event.target.style.transform = '';
                 }, 200);
+                
+                // Create honey splash effect
+                const splash = document.createElement('div');
+                splash.style.position = 'absolute';
+                splash.style.top = '50%';
+                splash.style.left = '50%';
+                splash.style.width = '30px';
+                splash.style.height = '30px';
+                splash.style.background = 'radial-gradient(circle, #FFC42B 0%, transparent 70%)';
+                splash.style.borderRadius = '50%';
+                splash.style.opacity = '0.8';
+                splash.style.transform = 'translate(-50%, -50%) scale(0)';
+                splash.style.transition = 'all 0.5s ease';
+                event.target.appendChild(splash);
+                
+                // Animate splash
+                setTimeout(() => {
+                    splash.style.transform = 'translate(-50%, -50%) scale(2)';
+                    splash.style.opacity = '0';
+                }, 10);
+                
+                // Remove splash after animation
+                setTimeout(() => {
+                    splash.remove();
+                }, 500);
+            }
+        };
+
+        // Character modal function
+        window.showCharacterModal = function(character) {
+            if (characterData[character]) {
+                openCharacterModal(character);
             }
         };
 
@@ -2560,19 +3173,86 @@
             pauseGameBtn.addEventListener('click', togglePauseGame);
             resetGameBtn.addEventListener('click', resetGame);
             
-            // Set up keyboard controls
-            document.addEventListener('keydown', (e) => {
-                if (gameState.isRunning && !gameState.isPaused) {
-                    keys[e.key] = true;
-                }
-            });
+            // Set up mobile controls
+            if (leftBtn && rightBtn) {
+                // Touch events for mobile controls
+                leftBtn.addEventListener('touchstart', (e) => {
+                    e.preventDefault();
+                    isMovingLeft = true;
+                });
+                
+                leftBtn.addEventListener('touchend', (e) => {
+                    e.preventDefault();
+                    isMovingLeft = false;
+                });
+                
+                rightBtn.addEventListener('touchstart', (e) => {
+                    e.preventDefault();
+                    isMovingRight = true;
+                });
+                
+                rightBtn.addEventListener('touchend', (e) => {
+                    e.preventDefault();
+                    isMovingRight = false;
+                });
+                
+                // Mouse events for testing
+                leftBtn.addEventListener('mousedown', () => {
+                    isMovingLeft = true;
+                });
+                
+                leftBtn.addEventListener('mouseup', () => {
+                    isMovingLeft = false;
+                });
+                
+                leftBtn.addEventListener('mouseleave', () => {
+                    isMovingLeft = false;
+                });
+                
+                rightBtn.addEventListener('mousedown', () => {
+                    isMovingRight = true;
+                });
+                
+                rightBtn.addEventListener('mouseup', () => {
+                    isMovingRight = false;
+                });
+                
+                rightBtn.addEventListener('mouseleave', () => {
+                    isMovingRight = false;
+                });
+            }
             
-            document.addEventListener('keyup', (e) => {
-                keys[e.key] = false;
-            });
+            // Touch events for direct canvas interaction
+            canvas.addEventListener('touchstart', handleTouchStart);
+            canvas.addEventListener('touchmove', handleTouchMove);
             
             // Initial render
             renderGame();
+        }
+
+        function handleTouchStart(e) {
+            if (!gameState.isRunning || gameState.isPaused) return;
+            
+            const touch = e.touches[0];
+            touchStartX = touch.clientX;
+        }
+
+        function handleTouchMove(e) {
+            if (!gameState.isRunning || gameState.isPaused) return;
+            
+            e.preventDefault();
+            const touch = e.touches[0];
+            const touchX = touch.clientX;
+            const deltaX = touchX - touchStartX;
+            
+            // Move Pooh based on touch movement
+            pooh.x += deltaX * 0.5;
+            
+            // Constrain Pooh to canvas boundaries
+            if (pooh.x < 0) pooh.x = 0;
+            if (pooh.x > canvas.width - pooh.width) pooh.x = canvas.width - pooh.width;
+            
+            touchStartX = touchX;
         }
 
         function startGame() {
@@ -2590,7 +3270,7 @@
                 pauseGameBtn.disabled = false;
                 resetGameBtn.disabled = false;
                 
-                gameMessage.textContent = "Game started! Use arrow keys to move Pooh!";
+                gameMessage.textContent = "Game started! Use arrow keys or touch to move Pooh!";
                 
                 gameInterval = setInterval(gameLoop, 1000 / 60);
             }
@@ -2635,11 +3315,11 @@
         }
 
         function updateGame() {
-            // Move Pooh
-            if (keys.ArrowLeft && pooh.x > 0) {
+            // Move Pooh based on keyboard or mobile controls
+            if ((keys.ArrowLeft || isMovingLeft) && pooh.x > 0) {
                 pooh.x -= pooh.speed;
             }
-            if (keys.ArrowRight && pooh.x < canvas.width - pooh.width) {
+            if ((keys.ArrowRight || isMovingRight) && pooh.x < canvas.width - pooh.width) {
                 pooh.x += pooh.speed;
             }
             
