@@ -6,11 +6,42 @@ document.addEventListener('DOMContentLoaded', function() {
   initHoneyGame();
 });
 
+function drawRoundedRect(ctx, x, y, width, height, radius = 0) {
+  // Build the path on Path2D when available for consistent fill/stroke; otherwise draw on the context
+  const usePath2D = typeof Path2D !== 'undefined';
+  const path = usePath2D ? new Path2D() : ctx;
+  const r = Math.max(0, Math.min(radius, width / 2, height / 2));
+
+  if (!usePath2D) ctx.beginPath();
+
+  if (typeof path.roundRect === 'function') {
+    path.roundRect(x, y, width, height, r);
+  } else {
+    path.moveTo(x + r, y);
+    path.lineTo(x + width - r, y);
+    path.quadraticCurveTo(x + width, y, x + width, y + r);
+    path.lineTo(x + width, y + height - r);
+    path.quadraticCurveTo(x + width, y + height, x + width - r, y + height);
+    path.lineTo(x + r, y + height);
+    path.quadraticCurveTo(x, y + height, x, y + height - r);
+    path.lineTo(x, y + r);
+    path.quadraticCurveTo(x, y, x + r, y);
+  }
+
+  if (usePath2D) {
+    path.closePath();
+    return path;
+  }
+
+  ctx.closePath();
+  return null;
+}
+
 // Tower Defense Game Visuals
 function initDefenseGame() {
   const canvas = document.getElementById('defense-game');
   if (!canvas) return;
-  
+
   const ctx = canvas.getContext('2d');
   const width = canvas.width;
   const height = canvas.height;
@@ -20,15 +51,19 @@ function initDefenseGame() {
     ctx.save();
     
     // Path background
-    ctx.fillStyle = '#FFF0C2';
-    ctx.beginPath();
-    ctx.roundRect(50, 150, width - 100, 100, 20);
-    ctx.fill();
-    
     // Path border
     ctx.strokeStyle = '#8B4513';
     ctx.lineWidth = 4;
-    ctx.stroke();
+
+    ctx.fillStyle = '#FFF0C2';
+    const honeyPath = drawRoundedRect(ctx, 50, 150, width - 100, 100, 20);
+    if (honeyPath) {
+      ctx.fill(honeyPath);
+      ctx.stroke(honeyPath);
+    } else {
+      ctx.fill();
+      ctx.stroke();
+    }
     
     // Honey droplets
     for (let i = 0; i < 8; i++) {
