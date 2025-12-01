@@ -1302,10 +1302,20 @@ class HoneyGame {
 document.addEventListener('DOMContentLoaded', () => {
   const defenseGame = new DefenseGame();
   const honeyGame = new HoneyGame();
-  
+
   // Expose to global scope for debugging
   window.defenseGame = defenseGame;
   window.honeyGame = honeyGame;
+
+  const speedDisplay = document.getElementById('game-speed');
+  if (speedDisplay && defenseGame) {
+    const updateSpeedDisplay = () => {
+      const speed = defenseGame.state.gameSpeed || 1;
+      speedDisplay.textContent = `${Number(speed.toFixed(1)).toString()}x`;
+      requestAnimationFrame(updateSpeedDisplay);
+    };
+    updateSpeedDisplay();
+  }
   
   // Add CSS for canvas styling
   const style = document.createElement('style');
