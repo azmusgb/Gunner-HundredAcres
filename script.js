@@ -130,10 +130,15 @@ function setupButtons() {
     const scrollTopFab = document.getElementById('scrollTopFab');
     const scrollRsvpFab = document.getElementById('scrollRsvpFab');
     const rsvpSection = document.getElementById('rsvp');
+    const storybookCover = document.getElementById('storybookCover');
+    const mainContent = document.getElementById('mainContent');
 
     if (openBookBtn) {
         openBookBtn.addEventListener('click', () => {
-            document.getElementById('mainContent')?.scrollIntoView({ behavior: 'smooth' });
+            storybookCover?.classList.add('closed');
+            storybookCover?.setAttribute('aria-hidden', 'true');
+            mainContent?.scrollIntoView({ behavior: 'smooth' });
+            if (mainContent) mainContent.focus({ preventScroll: true });
         });
     }
 
