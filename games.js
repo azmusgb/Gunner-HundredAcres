@@ -11,8 +11,15 @@ function setupCanvas(canvas) {
   const ctx = canvas.getContext('2d');
   const dpr = window.devicePixelRatio || 1;
 
+  // Prefer the rendered size, but fall back to the element's intrinsic size when hidden
+  const rect = canvas.getBoundingClientRect();
+  const fallbackWidth = canvas.width || Number(canvas.getAttribute('width')) || 800;
+  const fallbackHeight = canvas.height || Number(canvas.getAttribute('height')) || 400;
+
+  const width = rect.width || fallbackWidth;
+  const height = rect.height || fallbackHeight;
+
   // Match the backing resolution to the rendered size for crisp edges
-  const { width, height } = canvas.getBoundingClientRect();
   canvas.width = width * dpr;
   canvas.height = height * dpr;
   ctx.scale(dpr, dpr);

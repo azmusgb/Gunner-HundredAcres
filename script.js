@@ -13,6 +13,7 @@ class HundredAcreApp {
         this.setupObservers();
         this.initPreferences();
         this.initRSVP();
+        this.initGameControls();
         this.bindGlobals();
         this.startLoading();
 
@@ -83,7 +84,9 @@ class HundredAcreApp {
             catchOverlay: document.getElementById('catch-overlay'),
             catchCountdown: document.getElementById('catch-countdown'),
             catchHint: document.getElementById('catch-hint'),
+            catchStatus: document.getElementById('catch-status'),
             catchHighScore: document.getElementById('catch-high-score'),
+            catchHighScoreDisplay: document.getElementById('catch-high-score-display'),
 
             mobileControls: document.getElementById('mobileControls'),
             mobileLeftBtn: document.getElementById('mobileLeftBtn'),
@@ -96,6 +99,7 @@ class HundredAcreApp {
             defenseWaveStatus: document.getElementById('defense-wave-status'),
             defenseStartBtn: document.getElementById('start-defense'),
             defenseUpgradeBtn: document.getElementById('upgrade-tower'),
+            defenseOverlay: document.getElementById('defense-overlay'),
             towerOptions: document.querySelectorAll('.tower-option'),
             defenseHighScore: document.getElementById('defense-high-score')
         };
@@ -104,6 +108,127 @@ class HundredAcreApp {
         this.el.sections.forEach(sec => {
             if (sec && sec.id) this.sectionById[sec.id] = sec;
         });
+
+        this.catchState = {
+            timeRemaining: 60,
+            score: 0,
+            highScore: 0,
+            running: false,
+            timerId: null
+        };
+    }
+
+    initGameControls() {
+        const {
+            defenseStartBtn,
+            defenseOverlay,
+            defenseAlert,
+            defenseWaveStatus,
+            catchStartBtn,
+            catchPauseBtn,
+            catchOverlay,
+            catchCountdown,
+            catchHint,
+            catchStatus
+        } = this.el;
+
+        if (defenseStartBtn) {
+            defenseStartBtn.addEventListener('click', () => {
+                if (defenseOverlay) defenseOverlay.classList.add('is-hidden');
+                if (defenseAlert) defenseAlert.textContent = 'Bees incoming! Defend the honey.';
+                if (defenseWaveStatus) defenseWaveStatus.textContent = 'Wave active';
+            });
+        }
+
+        if (defenseOverlay) {
+            defenseOverlay.classList.add('is-hidden');
+        }
+
+        if (catchStartBtn) {
+            catchStartBtn.addEventListener('click', () => this.startCatchGame());
+        }
+
+        if (catchPauseBtn) {
+            catchPauseBtn.addEventListener('click', () => this.pauseCatchGame());
+        }
+
+        if (catchOverlay) {
+            // Show the canvas art as soon as the section is visible
+            catchOverlay.classList.add('is-hidden');
+        }
+
+        if (catchCountdown) catchCountdown.textContent = 'Ready When You Are';
+        if (catchHint) catchHint.textContent = 'Press start to catch honey for 60 seconds!';
+        if (catchStatus) catchStatus.textContent = 'Ready to Start';
+        this.updateCatchUI();
+    }
+
+    startCatchGame() {
+        const { catchOverlay, catchHint, catchCountdown, catchStatus } = this.el;
+        if (this.catchState.running) return;
+
+        this.catchState.running = true;
+        this.catchState.timeRemaining = 60;
+        this.catchState.score = 0;
+
+        if (catchOverlay) catchOverlay.classList.add('is-hidden');
+        if (catchHint) catchHint.textContent = 'Catch honey pots and avoid rocks!';
+        if (catchCountdown) catchCountdown.textContent = 'Go!';
+        if (catchStatus) catchStatus.textContent = 'In Progress';
+
+        this.updateCatchUI();
+
+        this.catchState.timerId = setInterval(() => {
+            if (!this.catchState.running) return;
+            this.catchState.timeRemaining -= 1;
+            if (this.catchState.timeRemaining <= 0) {
+                this.finishCatchGame();
+            } else {
+                this.updateCatchUI();
+            }
+        }, 1000);
+    }
+
+    pauseCatchGame() {
+        const { catchOverlay, catchCountdown, catchHint, catchStatus } = this.el;
+        if (!this.catchState.running) return;
+
+        this.catchState.running = false;
+        if (this.catchState.timerId) clearInterval(this.catchState.timerId);
+        this.catchState.timerId = null;
+
+        if (catchOverlay) catchOverlay.classList.remove('is-hidden');
+        if (catchCountdown) catchCountdown.textContent = 'Paused';
+        if (catchHint) catchHint.textContent = 'Press start to resume your honey hunt.';
+        if (catchStatus) catchStatus.textContent = 'Paused';
+    }
+
+    finishCatchGame() {
+        const { catchOverlay, catchCountdown, catchHint, catchStatus } = this.el;
+        this.catchState.running = false;
+        if (this.catchState.timerId) clearInterval(this.catchState.timerId);
+        this.catchState.timerId = null;
+
+        const newHighScore = Math.max(this.catchState.score, this.catchState.highScore);
+        if (newHighScore !== this.catchState.highScore) {
+            this.catchState.highScore = newHighScore;
+        }
+        this.updateCatchUI();
+
+        if (catchOverlay) catchOverlay.classList.remove('is-hidden');
+        if (catchCountdown) catchCountdown.textContent = "Time's Up";
+        if (catchHint) catchHint.textContent = 'Great job! Press start to try again.';
+        if (catchStatus) catchStatus.textContent = 'Finished';
+    }
+
+    updateCatchUI() {
+        const { catchScore, catchTime, catchHighScore, catchHighScoreDisplay } = this.el;
+        if (catchScore) catchScore.textContent = this.catchState.score.toString();
+        if (catchTime) catchTime.textContent = `${this.catchState.timeRemaining}s`;
+
+        const highScoreText = `${this.catchState.highScore} points`;
+        if (catchHighScore) catchHighScore.textContent = this.catchState.highScore.toString();
+        if (catchHighScoreDisplay) catchHighScoreDisplay.textContent = highScoreText;
     }
 
     setupCoreUI() {
