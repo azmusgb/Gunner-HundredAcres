@@ -519,34 +519,49 @@ function setupMotionToggle() {
         document.body.classList.toggle('reduce-motion', reduced);
         localStorage.setItem('reduceMotion', reduced ? 'true' : 'false');
         
-        // Update the button's aria-label and aria-pressed
-        motionToggle.setAttribute('aria-label', reduced ? 'Enable animations' : 'Reduce motion');
-        motionToggle.setAttribute('aria-pressed', reduced ? 'true' : 'false');
-        
-        // Optionally change the icon
+        // Update button visual state
         const icon = motionToggle.querySelector('i');
         if (icon) {
-            icon.className = reduced ? 'fas fa-stop-circle' : 'fas fa-universal-access';
+            if (reduced) {
+                icon.className = 'fas fa-universal-access';
+                motionToggle.setAttribute('aria-label', 'Enable animations');
+            } else {
+                icon.className = 'fas fa-running';
+                motionToggle.setAttribute('aria-label', 'Reduce motion');
+            }
         }
+        
+        // Update aria-pressed state
+        motionToggle.setAttribute('aria-pressed', reduced ? 'true' : 'false');
+        
+        // Provide visual feedback
+        motionToggle.classList.add('active');
+        setTimeout(() => motionToggle.classList.remove('active'), 300);
     };
 
+    // Check for system preference
     const prefersReducedMotion = window.matchMedia('(prefers-reduced-motion: reduce)').matches;
+    
+    // Check for stored preference
     const stored = localStorage.getItem('reduceMotion');
-    let reduced = false;
+    let useReducedMotion = false;
     
     if (stored !== null) {
-        reduced = stored === 'true';
+        useReducedMotion = stored === 'true';
     } else {
-        reduced = prefersReducedMotion;
+        useReducedMotion = prefersReducedMotion;
     }
     
-    applyPreference(reduced);
-
+    // Apply the preference
+    applyPreference(useReducedMotion);
+    
+    // Add click event listener
     motionToggle.addEventListener('click', () => {
         const reduced = !document.body.classList.contains('reduce-motion');
         applyPreference(reduced);
     });
 }
+
 function setupMusicToggle() {
     const musicBtn = document.getElementById('musicToggle');
     const music = document.getElementById('bgMusic');
