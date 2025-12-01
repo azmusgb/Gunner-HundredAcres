@@ -71,6 +71,7 @@ class HundredAcreApp {
 
             gameInstructionModal: document.getElementById('gameInstructionModal'),
             gameInstructionTitle: document.getElementById('gameInstructionTitle'),
+            gameInstructionQuote: document.getElementById('modalCharacterQuote'),
             gameInstructionList: document.getElementById('gameInstructionList'),
             gameInstructionClose: document.getElementById('closeGameModal'),
 
@@ -109,7 +110,143 @@ class HundredAcreApp {
     }
 
     setupCoreUI() {
-        // ... (same as before) ...
+        // Open book button
+        if (this.el.openBookBtn) {
+            this.el.openBookBtn.addEventListener('click', (e) => {
+                e.preventDefault();
+                this.el.storybookCover.classList.add('hidden');
+                this.el.mainContent.classList.remove('hidden');
+                
+                // Scroll to top of content
+                setTimeout(() => {
+                    window.scrollTo({
+                        top: 0,
+                        behavior: 'smooth'
+                    });
+                    this.el.mainContent.focus();
+                }, 100);
+                
+                // Trigger animation for main content
+                setTimeout(() => {
+                    const sections = document.querySelectorAll('.content-section');
+                    sections.forEach(section => {
+                        section.classList.add('scroll-animate');
+                    });
+                }, 500);
+            });
+        }
+
+        // Navigation toggle
+        if (this.el.navToggle) {
+            this.el.navToggle.addEventListener('click', () => {
+                const isExpanded = this.el.navToggle.getAttribute('aria-expanded') === 'true';
+                this.el.navToggle.setAttribute('aria-expanded', !isExpanded);
+                this.el.navMenu.classList.toggle('nav-menu--open');
+                this.el.navMenu.setAttribute('aria-hidden', isExpanded);
+                document.body.classList.toggle('nav-open');
+            });
+        }
+
+        // Navigation items
+        if (this.el.navItems) {
+            this.el.navItems.forEach(item => {
+                item.addEventListener('click', (e) => {
+                    e.preventDefault();
+                    const href = item.getAttribute('href');
+                    if (href && href.startsWith('#')) {
+                        const targetId = href.substring(1);
+                        const targetSection = document.getElementById(targetId);
+                        if (targetSection) {
+                            this.scrollToSection(targetSection);
+                            this.closeNavMenu();
+                        }
+                    }
+                });
+            });
+        }
+
+        // Persistent RSVP button
+        if (this.el.persistentRsvpBtn) {
+            this.el.persistentRsvpBtn.addEventListener('click', () => {
+                const rsvpSection = document.getElementById('rsvp');
+                if (rsvpSection) {
+                    this.scrollToSection(rsvpSection);
+                }
+            });
+        }
+
+        // Scroll to top FAB
+        if (this.el.scrollTopFab) {
+            this.el.scrollTopFab.addEventListener('click', () => {
+                window.scrollTo({
+                    top: 0,
+                    behavior: 'smooth'
+                });
+            });
+        }
+
+        // Scroll to RSVP FAB
+        if (this.el.scrollRsvpFab) {
+            this.el.scrollRsvpFab.addEventListener('click', () => {
+                const rsvpSection = document.getElementById('rsvp');
+                if (rsvpSection) {
+                    this.scrollToSection(rsvpSection);
+                }
+            });
+        }
+
+        // Music toggle
+        if (this.el.musicToggle) {
+            this.el.musicToggle.addEventListener('click', () => this.toggleMusic());
+        }
+
+        // Motion toggle
+        if (this.el.motionToggle) {
+            this.el.motionToggle.addEventListener('click', () => this.toggleMotion());
+        }
+
+        // Close character modal
+        if (this.el.characterModalClose) {
+            this.el.characterModalClose.addEventListener('click', () => this.closeCharacterModal());
+        }
+
+        // Close game modal
+        if (this.el.gameInstructionClose) {
+            this.el.gameInstructionClose.addEventListener('click', () => this.closeGameInstructions());
+        }
+
+        // Close modals on escape key
+        document.addEventListener('keydown', (e) => {
+            if (e.key === 'Escape') {
+                this.closeCharacterModal();
+                this.closeGameInstructions();
+            }
+        });
+
+        // Close modals on background click
+        document.addEventListener('click', (e) => {
+            if (this.el.characterModal && !this.el.characterModal.contains(e.target) && 
+                e.target !== this.el.characterModal && this.el.characterModal.style.display === 'flex') {
+                this.closeCharacterModal();
+            }
+            if (this.el.gameInstructionModal && !this.el.gameInstructionModal.contains(e.target) && 
+                e.target !== this.el.gameInstructionModal && this.el.gameInstructionModal.style.display === 'flex') {
+                this.closeGameInstructions();
+            }
+        });
+
+        // Window resize handling
+        window.addEventListener('resize', this.throttle(() => {
+            if (this.honeyGame) this.honeyGame.handleResize();
+            if (this.defenseGame) this.defenseGame.handleResize();
+        }, 250));
+
+        // Scroll events
+        window.addEventListener('scroll', this.throttle(() => {
+            this.updateReadingProgress();
+            this.updateFABs();
+            this.updatePersistentRSVP();
+        }, 100));
     }
 
     closeNavMenu() {
@@ -224,12 +361,29 @@ class HundredAcreApp {
         if (!ls) return;
         setTimeout(() => {
             ls.classList.add('hidden');
-            ls.style.display = 'none';
+            setTimeout(() => {
+                ls.style.display = 'none';
+            }, 800);
         }, 1800);
     }
 
     initPreferences() {
-        // ... (same as before) ...
+        // Initialize music preference
+        const musicPref = localStorage.getItem('hundredAcreMusic');
+        if (musicPref === 'on') {
+            this.setMusic(true);
+        } else if (musicPref === 'off') {
+            this.setMusic(false);
+        }
+
+        // Initialize motion preference
+        const motionPref = localStorage.getItem('hundredAcreMotion');
+        if (motionPref === 'reduced') {
+            document.body.classList.add('reduce-motion');
+            this.setMotion(false);
+        } else {
+            this.setMotion(true);
+        }
     }
 
     isTextInput(el) {
@@ -250,7 +404,8 @@ class HundredAcreApp {
         if (!bgMusic || !musicToggle) return;
 
         if (on) {
-            bgMusic.play().catch(() => {});
+            bgMusic.volume = 0.3;
+            bgMusic.play().catch(e => console.log('Audio play failed:', e));
             musicToggle.classList.add('toggle--active');
             musicToggle.setAttribute('aria-pressed', 'true');
             localStorage.setItem('hundredAcreMusic', 'on');
@@ -287,11 +442,93 @@ class HundredAcreApp {
     }
 
     initRSVP() {
-        // ... (same as before) ...
+        // Load existing RSVP count
+        const rsvpData = localStorage.getItem('babyGunnerRSVP');
+        if (rsvpData) {
+            try {
+                const data = JSON.parse(rsvpData);
+                if (this.el.rsvpCount) {
+                    this.el.rsvpCount.textContent = data.count || 1;
+                }
+            } catch (e) {
+                console.log('Error parsing RSVP data:', e);
+            }
+        }
+
+        // Setup form submission
+        if (this.el.rsvpForm) {
+            this.el.rsvpForm.addEventListener('submit', (e) => this.handleRSVPSubmit(e));
+        }
     }
 
     handleRSVPSubmit(e) {
-        // ... (same as before) ...
+        e.preventDefault();
+        
+        const form = e.target;
+        const formData = new FormData(form);
+        const name = formData.get('guestName');
+        const count = formData.get('guestCount');
+        const note = formData.get('guestNote');
+
+        // Validation
+        if (!name || name.length < 2) {
+            this.showFormStatus('Please enter your name (minimum 2 characters)', 'error');
+            return;
+        }
+
+        if (!count || count < 1 || count > 5) {
+            this.showFormStatus('Please select 1-5 guests', 'error');
+            return;
+        }
+
+        // Simulate successful submission
+        this.showFormStatus('Thank you for your RSVP! We look forward to celebrating with you.', 'success');
+
+        // Update count
+        const currentCount = parseInt(this.el.rsvpCount.textContent) || 0;
+        const newCount = currentCount + parseInt(count);
+        this.el.rsvpCount.textContent = newCount;
+
+        // Save to localStorage
+        const rsvpData = {
+            name: name,
+            count: parseInt(count),
+            note: note,
+            timestamp: new Date().toISOString()
+        };
+        localStorage.setItem('babyGunnerRSVP', JSON.stringify(rsvpData));
+
+        // Reset form
+        form.reset();
+
+        // Show edit option
+        setTimeout(() => {
+            this.el.rsvpStatus.innerHTML = `
+                Thank you for your RSVP! We look forward to celebrating with you.<br>
+                <button onclick="editRSVP()" class="edit-rsvp-btn" style="margin-top: 10px; background: transparent; border: none; color: var(--honey-gold); text-decoration: underline; cursor: pointer;">
+                    Need to make changes?
+                </button>
+            `;
+        }, 2000);
+    }
+
+    showFormStatus(message, type) {
+        if (!this.el.rsvpStatus) return;
+        
+        this.el.rsvpStatus.textContent = message;
+        this.el.rsvpStatus.className = 'form-status';
+        
+        switch(type) {
+            case 'success':
+                this.el.rsvpStatus.classList.add('form-status--success');
+                break;
+            case 'error':
+                this.el.rsvpStatus.classList.add('form-status--error');
+                break;
+            case 'info':
+                this.el.rsvpStatus.classList.add('form-status--info');
+                break;
+        }
     }
 
     editRSVP() {
@@ -304,53 +541,53 @@ class HundredAcreApp {
     }
 
     openCharacterModal(character) {
-    const { characterModal, characterModalIcon, characterModalTitle, 
-            characterModalQuote, characterModalBio } = this.el;
-    
-    if (!characterModal) return;
+        const { characterModal, characterModalIcon, characterModalTitle, 
+                characterModalQuote, characterModalBio } = this.el;
+        
+        if (!characterModal) return;
 
-    const characterData = {
-        pooh: {
-            icon: `<img src="Images/Characters/honey-bear.png" alt="Winnie the Pooh" style="width: 80px; height: auto;">`,
-            name: "Winnie the Pooh",
-            quote: "\"Sometimes the smallest things take up the most room in your heart.\"",
-            bio: "As Honey Supervisor, Pooh is making sure every jar is filled to the brim with the sweetest honey for our celebration. He's also in charge of the snack table (for quality control purposes)."
-        },
-        piglet: {
-            icon: `<img src="Images/Characters/piglet.png" alt="Piglet" style="width: 80px; height: auto;">`,
-            name: "Piglet",
-            quote: "\"Even the littlest friend can bring the greatest joy.\"",
-            bio: "Our Cozy Coordinator, Piglet is making sure every blanket is soft, every hug is available, and that no one feels too small at our big celebration."
-        },
-        tigger: {
-            icon: `<img src="Images/Characters/tigger.png" alt="Tigger" style="width: 80px; height: auto;">`,
-            name: "Tigger",
-            quote: "\"New babies are what Tiggers like best!\"",
-            bio: "As Bounce Director, Tigger is planning all the fun activities and making sure there's plenty of bounce in our step. He's also testing all the rocking chairs for optimal bounce."
-        },
-        eeyore: {
-            icon: `<img src="Images/Characters/eeyore.png" alt="Eeyore" style="width: 80px; height: auto;">`,
-            name: "Eeyore",
-            quote: "\"Not that I'm complaining, but it will be rather nice to have someone new around.\"",
-            bio: "Our Photo Spot Curator, Eeyore has found the perfect spot for pictures (with just the right amount of shade) and is making sure every memory is properly documented."
-        }
-    };
+        const characterData = {
+            pooh: {
+                icon: `<img src="Images/Characters/honey-bear.png" alt="Winnie the Pooh" style="width: 80px; height: auto;">`,
+                name: "Winnie the Pooh",
+                quote: "\"Sometimes the smallest things take up the most room in your heart.\"",
+                bio: "As Honey Supervisor, Pooh is making sure every jar is filled to the brim with the sweetest honey for our celebration. He's also in charge of the snack table (for quality control purposes)."
+            },
+            piglet: {
+                icon: `<img src="Images/Characters/piglet.png" alt="Piglet" style="width: 80px; height: auto;">`,
+                name: "Piglet",
+                quote: "\"Even the littlest friend can bring the greatest joy.\"",
+                bio: "Our Cozy Coordinator, Piglet is making sure every blanket is soft, every hug is available, and that no one feels too small at our big celebration."
+            },
+            tigger: {
+                icon: `<img src="Images/Characters/tigger.png" alt="Tigger" style="width: 80px; height: auto;">`,
+                name: "Tigger",
+                quote: "\"New babies are what Tiggers like best!\"",
+                bio: "As Bounce Director, Tigger is planning all the fun activities and making sure there's plenty of bounce in our step. He's also testing all the rocking chairs for optimal bounce."
+            },
+            eeyore: {
+                icon: `<img src="Images/Characters/eeyore.png" alt="Eeyore" style="width: 80px; height: auto;">`,
+                name: "Eeyore",
+                quote: "\"Not that I'm complaining, but it will be rather nice to have someone new around.\"",
+                bio: "Our Photo Spot Curator, Eeyore has found the perfect spot for pictures (with just the right amount of shade) and is making sure every memory is properly documented."
+            }
+        };
 
-    const data = characterData[character];
-    if (!data) return;
+        const data = characterData[character];
+        if (!data) return;
 
-    characterModalIcon.innerHTML = data.icon;
-    characterModalTitle.textContent = data.name;
-    characterModalQuote.textContent = data.quote;
-    characterModalBio.textContent = data.bio;
-    
-    characterModal.style.display = 'flex';
-    characterModal.setAttribute('aria-hidden', 'false');
-    
-    // Focus trap for accessibility
-    const closeBtn = this.el.characterModalClose;
-    closeBtn.focus();
-}
+        characterModalIcon.innerHTML = data.icon;
+        characterModalTitle.textContent = data.name;
+        characterModalQuote.textContent = data.quote;
+        characterModalBio.textContent = data.bio;
+        
+        characterModal.style.display = 'flex';
+        characterModal.setAttribute('aria-hidden', 'false');
+        
+        // Focus trap for accessibility
+        const closeBtn = this.el.characterModalClose;
+        setTimeout(() => closeBtn.focus(), 100);
+    }
 
     closeCharacterModal() {
         const { characterModal } = this.el;
@@ -360,7 +597,41 @@ class HundredAcreApp {
     }
 
     openGameInstructions(type) {
-        // ... (same as before) ...
+        const m = this.el.gameInstructionModal;
+        if (!m) return;
+
+        let title = '';
+        let instructions = '';
+
+        if (type === 'defense') {
+            title = 'Honey Hive Defense';
+            instructions = `
+                <li>Place friends along the honey path to stop the bees</li>
+                <li>Each friend has different abilities and costs</li>
+                <li>Click on a placed friend to upgrade them</li>
+                <li>Boss bees appear every 3 waves - they're tougher!</li>
+                <li>Don't let too many bees reach the end or you'll lose lives</li>
+                <li>Press 1-5 to quickly select different friends</li>
+            `;
+        } else if (type === 'catch') {
+            title = 'Honey Pot Catch';
+            instructions = `
+                <li>Move Pooh left and right with arrow keys or tap the sides</li>
+                <li>Catch honey pots for points</li>
+                <li>Golden pots are worth 50 points and add extra time!</li>
+                <li>Avoid the bouncing rocks - they cost you lives</li>
+                <li>You have 60 seconds to get as many points as possible</li>
+                <li>Press Space or Enter to start/pause the game</li>
+            `;
+        }
+
+        this.el.gameInstructionTitle.textContent = title;
+        this.el.gameInstructionList.innerHTML = instructions;
+        
+        m.style.display = 'flex';
+        m.setAttribute('aria-hidden', 'false');
+        
+        setTimeout(() => this.el.gameInstructionClose.focus(), 100);
     }
 
     closeGameInstructions() {
@@ -371,10 +642,44 @@ class HundredAcreApp {
     }
 
     playWoodlandSound(event) {
-        // ... (same as before) ...
+        event.stopPropagation();
+        
+        // Create audio context for sound effects
+        try {
+            const audioContext = new (window.AudioContext || window.webkitAudioContext)();
+            const oscillator = audioContext.createOscillator();
+            const gainNode = audioContext.createGain();
+            
+            oscillator.connect(gainNode);
+            gainNode.connect(audioContext.destination);
+            
+            oscillator.frequency.setValueAtTime(440, audioContext.currentTime);
+            oscillator.frequency.exponentialRampToValueAtTime(880, audioContext.currentTime + 0.1);
+            
+            gainNode.gain.setValueAtTime(0.1, audioContext.currentTime);
+            gainNode.gain.exponentialRampToValueAtTime(0.01, audioContext.currentTime + 0.3);
+            
+            oscillator.start();
+            oscillator.stop(audioContext.currentTime + 0.3);
+            
+            // Visual feedback
+            const button = event.currentTarget;
+            button.style.transform = 'scale(0.95)';
+            setTimeout(() => {
+                button.style.transform = '';
+            }, 100);
+        } catch (e) {
+            console.log('Sound effect failed:', e);
+        }
     }
 
     initGames() {
+        // Check if we're on mobile
+        const isMobile = /iPhone|iPad|iPod|Android/i.test(navigator.userAgent);
+        if (isMobile && this.el.mobileControls) {
+            this.el.mobileControls.style.display = 'block';
+        }
+
         if (this.el.honeyCanvas) {
             this.honeyGame = new EnhancedVisualsHoneyCatchGame(this.el.honeyCanvas, {
                 scoreEl: this.el.catchScore,
@@ -407,36 +712,20 @@ class HundredAcreApp {
     }
 
     bindGlobals() {
-    const self = this;
-    window.showCharacterModal = function (character) {
-        self.openCharacterModal(character);
-    };
-    window.showGameInstructions = function (type) {
-        self.openGameInstructions(type);
-    };
-    window.playWoodlandSound = function (event) {
-        self.playWoodlandSound(event);
-    };
-    window.editRSVP = function () {
-        self.editRSVP();
-    };
-    
-    // Add close modal handlers
-    if (this.el.characterModalClose) {
-        this.el.characterModalClose.addEventListener('click', () => this.closeCharacterModal());
+        const self = this;
+        window.showCharacterModal = function (character) {
+            self.openCharacterModal(character);
+        };
+        window.showGameInstructions = function (type) {
+            self.openGameInstructions(type);
+        };
+        window.playWoodlandSound = function (event) {
+            self.playWoodlandSound(event);
+        };
+        window.editRSVP = function () {
+            self.editRSVP();
+        };
     }
-    if (this.el.gameInstructionClose) {
-        this.el.gameInstructionClose.addEventListener('click', () => this.closeGameInstructions());
-    }
-    
-    // Close modals on escape key
-    document.addEventListener('keydown', (e) => {
-        if (e.key === 'Escape') {
-            this.closeCharacterModal();
-            this.closeGameInstructions();
-        }
-    });
-}
 }
 
 /* ========= ENHANCED VISUALS HONEY CATCH GAME ========= */
@@ -447,8 +736,8 @@ class EnhancedVisualsHoneyCatchGame {
         this.ctx = canvas.getContext('2d');
         this.dom = dom || {};
 
-        this.width = canvas.clientWidth || 320;
-        this.height = canvas.clientHeight || 220;
+        this.width = canvas.width || 520;
+        this.height = canvas.height || 400;
 
         this.player = null;
         this.pots = [];
@@ -587,8 +876,8 @@ class EnhancedVisualsHoneyCatchGame {
 
     handleResize() {
         const rect = this.canvas.getBoundingClientRect();
-        this.width = rect.width || 320;
-        this.height = rect.height || 220;
+        this.width = rect.width || 520;
+        this.height = rect.height || 400;
         this.canvas.width = this.width;
         this.canvas.height = this.height;
 
@@ -627,6 +916,8 @@ class EnhancedVisualsHoneyCatchGame {
         this.gameOver = false;
         this.isCountingDown = false;
         this.countdown = 3;
+        this.isRunning = false;
+        this.isPaused = false;
     }
 
     startNewGame() {
@@ -935,6 +1226,7 @@ class EnhancedVisualsHoneyCatchGame {
         if (this.dom.pauseBtn) this.dom.pauseBtn.textContent = 'Pause';
         if (this.score > parseInt(localStorage.getItem('honeyCatchHighScore') || '0')) {
             localStorage.setItem('honeyCatchHighScore', this.score.toString());
+            this.updateHighScore();
         }
         this.updateOverlay(title, hint);
     }
@@ -1067,7 +1359,7 @@ class EnhancedVisualsHoneyCatchGame {
         // Ears
         ctx.beginPath();
         ctx.arc(-p.width * 0.18, -p.height * 0.4, p.width * 0.08, 0, Math.PI * 2);
-        ctx.arc(p.width * 0.18, -p.height * 0.4, p.width * 0.08, 0, Math.PI * 2);
+            ctx.arc(p.width * 0.18, -p.height * 0.4, p.width * 0.08, 0, Math.PI * 2);
         ctx.fill();
 
         // Shirt
@@ -1342,7 +1634,7 @@ class EnhancedVisualsHoneyCatchGame {
 
     loop(timestamp) {
         const t = timestamp || 0;
-        const dt = this.lastTime ? (t - this.lastTime) / 1000 : 0;
+        const dt = this.lastTime ? (t - this.lastTime) / 1000 : 0.016;
         this.lastTime = t;
 
         this.update(dt);
@@ -1370,8 +1662,8 @@ class EnhancedVisualsHoneyDefenseGame {
         this.ctx = canvas.getContext('2d');
         this.dom = dom || {};
 
-        this.width = canvas.clientWidth || 320;
-        this.height = canvas.clientHeight || 220;
+        this.width = canvas.width || 520;
+        this.height = canvas.height || 400;
 
         this.path = [];
         this.bees = [];
@@ -1600,8 +1892,8 @@ class EnhancedVisualsHoneyDefenseGame {
 
     handleResize() {
         const rect = this.canvas.getBoundingClientRect();
-        this.width = rect.width || 320;
-        this.height = rect.height || 220;
+        this.width = rect.width || 520;
+        this.height = rect.height || 400;
         this.canvas.width = this.width;
         this.canvas.height = this.height;
         this.createPath();
@@ -2419,7 +2711,7 @@ class EnhancedVisualsHoneyDefenseGame {
 
     loop(timestamp) {
         const t = timestamp || 0;
-        const dt = this.lastTime ? (t - this.lastTime) / 1000 : 0;
+        const dt = this.lastTime ? (t - this.lastTime) / 1000 : 0.016;
         this.lastTime = t;
 
         this.update(dt);
