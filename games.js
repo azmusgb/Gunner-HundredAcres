@@ -126,6 +126,8 @@ class DefenseGame {
     this.setupProjectiles();
     this.setupUI();
     this.bindEvents();
+    this.bindHud();
+    this.startGameLoop();
   }
 
   setupCanvas() {
@@ -156,7 +158,8 @@ class DefenseGame {
       wave: 1,
       placingTower: null,
       selectedTower: null,
-      gameSpeed: 1
+      gameSpeed: 1,
+      paused: false
     };
   }
 
@@ -272,6 +275,37 @@ class DefenseGame {
       if (e.key === '+') this.state.gameSpeed = Math.min(3, this.state.gameSpeed + 0.5);
       if (e.key === '-') this.state.gameSpeed = Math.max(0.5, this.state.gameSpeed - 0.5);
     });
+  }
+
+  bindHud() {
+    this.hud = {
+      wave: document.getElementById('defense-wave'),
+      health: document.getElementById('defense-health'),
+      money: document.getElementById('defense-money'),
+      score: document.getElementById('defense-score'),
+      speed: document.getElementById('game-speed'),
+      toggle: document.getElementById('defense-toggle')
+    };
+  }
+
+  startGameLoop() {
+    let lastTime = 0;
+
+    const loop = (time) => {
+      const delta = time - lastTime;
+      lastTime = time;
+
+      if (!this.state.paused && this.state.health > 0) {
+        this.update(delta);
+      }
+
+      this.draw();
+      this.updateHud();
+
+      requestAnimationFrame(loop);
+    };
+
+    requestAnimationFrame(loop);
   }
 
   handleMouseDown(e) {
@@ -480,10 +514,14 @@ class DefenseGame {
     
     // Draw particles
     this.particleSystem.draw();
-    
+
     // Draw placing preview
     if (this.state.placingTower) {
       this.drawTowerPlacementPreview();
+    }
+
+    if (this.state.paused) {
+      this.drawPauseOverlay();
     }
   }
 
@@ -727,6 +765,20 @@ class DefenseGame {
 
   togglePause() {
     this.state.paused = !this.state.paused;
+    return this.state.paused;
+  }
+
+  drawPauseOverlay() {
+    this.ctx.fillStyle = 'rgba(0, 0, 0, 0.55)';
+    this.ctx.fillRect(0, 0, this.width, this.height);
+
+    this.ctx.fillStyle = '#FFC42B';
+    this.ctx.font = 'bold 32px Arial';
+    this.ctx.textAlign = 'center';
+    this.ctx.fillText('Paused', this.width / 2, this.height / 2);
+    this.ctx.font = '16px Arial';
+    this.ctx.fillStyle = '#FFF';
+    this.ctx.fillText('Resume to keep defending the hive', this.width / 2, this.height / 2 + 30);
   }
 
   resetGame() {
@@ -734,6 +786,24 @@ class DefenseGame {
     this.setupTowers();
     this.setupBees();
     this.setupProjectiles();
+    if (this.hud?.toggle) this.hud.toggle.textContent = 'Pause';
+  }
+
+  updateHud() {
+    if (!this.hud) return;
+
+    if (this.hud.wave) this.hud.wave.textContent = this.state.wave;
+    if (this.hud.health) this.hud.health.textContent = Math.max(0, Math.round(this.state.health));
+    if (this.hud.money) this.hud.money.textContent = `$${Math.max(0, Math.round(this.state.money))}`;
+    if (this.hud.score) this.hud.score.textContent = this.state.score;
+    if (this.hud.speed) this.hud.speed.textContent = `${Number(this.state.gameSpeed.toFixed(1))}x`;
+  }
+
+  changeSpeed(delta) {
+    const nextSpeed = Math.min(3, Math.max(0.5, this.state.gameSpeed + delta));
+    this.state.gameSpeed = nextSpeed;
+    if (this.hud?.speed) this.hud.speed.textContent = `${Number(nextSpeed.toFixed(1))}x`;
+    return nextSpeed;
   }
 }
 
@@ -783,7 +853,8 @@ class HoneyGame {
       time: 60,
       combo: 0,
       multiplier: 1,
-      gameActive: true
+      gameActive: true,
+      paused: false
     };
 
     this.pooh = {
@@ -968,7 +1039,7 @@ class HoneyGame {
   }
 
   update(delta) {
-    if (!this.state.gameActive) return;
+    if (!this.state.gameActive || this.state.paused) return;
     
     // Update timer
     this.state.time -= delta / 1000;
@@ -1294,7 +1365,9 @@ class HoneyGame {
       this.ctx.fillText(`${this.state.combo}x COMBO!`, this.width / 2 - 60, 50);
       this.ctx.fillText(`x${this.state.multiplier}`, this.width / 2 - 20, 80);
     }
-    
+
+    this.updateHud();
+
     // Controls hint
     this.ctx.fillStyle = 'rgba(255, 255, 255, 0.7)';
     this.ctx.font = '12px Arial';
@@ -1344,6 +1417,19 @@ class HoneyGame {
     };
   }
 
+  drawPauseOverlay() {
+    this.ctx.fillStyle = 'rgba(0, 0, 0, 0.5)';
+    this.ctx.fillRect(0, 0, this.width, this.height);
+
+    this.ctx.fillStyle = '#FFC42B';
+    this.ctx.font = 'bold 32px Arial';
+    this.ctx.textAlign = 'center';
+    this.ctx.fillText('Paused', this.width / 2, this.height / 2);
+    this.ctx.font = '16px Arial';
+    this.ctx.fillStyle = '#FFF';
+    this.ctx.fillText('Tap start to continue', this.width / 2, this.height / 2 + 28);
+  }
+
   startGameLoop() {
     let lastTime = 0;
     
@@ -1366,6 +1452,36 @@ class HoneyGame {
     this.setupObjects();
     this.canvas.style.cursor = 'default';
     this.canvas.onclick = null;
+    this.updateHud();
+  }
+
+  startGame() {
+    this.resetGame();
+    this.state.gameActive = true;
+    this.state.paused = false;
+  }
+
+  togglePause() {
+    if (!this.state.gameActive) return true;
+
+    this.state.paused = !this.state.paused;
+    return this.state.paused;
+  }
+
+  updateHud() {
+    if (!this.hud) {
+      this.hud = {
+        score: document.getElementById('honey-score'),
+        time: document.getElementById('honey-time'),
+        lives: document.getElementById('honey-lives'),
+        combo: document.getElementById('honey-combo')
+      };
+    }
+
+    this.hud.score && (this.hud.score.textContent = Math.round(this.state.score));
+    this.hud.time && (this.hud.time.textContent = `${Math.max(0, Math.ceil(this.state.time))}s`);
+    this.hud.lives && (this.hud.lives.textContent = Math.max(0, this.state.lives));
+    this.hud.combo && (this.hud.combo.textContent = `${Math.max(1, this.state.multiplier)}x`);
   }
 }
 
