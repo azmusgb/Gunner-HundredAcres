@@ -1304,16 +1304,25 @@ class Button extends UIElement {
 }
 
 class Label extends UIElement {
-    constructor(x, y, text = '', fontSize = 16) {
+    constructor(x, y, text = '', fontSize = 16, measureCtx = null) {
         super(x, y, 0, 0);
         this.text = text;
         this.style.fontSize = fontSize;
         this.style.textAlign = 'left';
         this.style.color = '#ffffff';
-        this.calculateSize(ctx);
+        this.measureCtx = measureCtx || Label.getMeasureContext();
+        this.calculateSize();
     }
-    
-    calculateSize(ctx) {
+
+    static getMeasureContext() {
+        if (!Label.measureCanvas) {
+            Label.measureCanvas = document.createElement('canvas');
+            Label.measureCtx = Label.measureCanvas.getContext('2d');
+        }
+        return Label.measureCtx;
+    }
+
+    calculateSize(ctx = this.measureCtx) {
         ctx.save();
         ctx.font = `${this.style.fontSize}px ${this.style.fontFamily}`;
         const metrics = ctx.measureText(this.text);
@@ -2340,10 +2349,16 @@ class AmazingGameEngine {
     
     // Utility methods
     loadImage(url) {
-        return new Promise((resolve, reject) => {
+        return new Promise((resolve) => {
             const img = new Image();
             img.onload = () => resolve(img);
-            img.onerror = reject;
+            img.onerror = (error) => {
+                console.error(`Failed to load image ${url}:`, error);
+                const fallback = document.createElement('canvas');
+                fallback.width = 1;
+                fallback.height = 1;
+                resolve(fallback);
+            };
             img.src = url;
         });
     }
