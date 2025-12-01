@@ -748,6 +748,7 @@ class HoneyGame {
     this.setupPhysics();
     this.setupObjects();
     this.bindEvents();
+    this.initMobileControls();
     this.startGameLoop();
   }
 
@@ -758,8 +759,8 @@ class HoneyGame {
     this.canvas.width = rect.width * dpr;
     this.canvas.height = rect.height * dpr;
     this.ctx = this.canvas.getContext('2d');
-    this.ctx.scale(dpr, dpr);
-    
+    this.ctx.setTransform(dpr, 0, 0, dpr, 0, 0);
+
     this.width = rect.width;
     this.height = rect.height;
     
@@ -784,7 +785,7 @@ class HoneyGame {
       multiplier: 1,
       gameActive: true
     };
-    
+
     this.pooh = {
       x: this.width / 2,
       y: this.height - 60,
@@ -794,6 +795,8 @@ class HoneyGame {
       speed: 8,
       jumping: false
     };
+
+    this.activeDirection = 0;
   }
 
   setupPhysics() {
@@ -843,6 +846,7 @@ class HoneyGame {
     
     // Touch/mouse controls
     this.canvas.addEventListener('touchstart', this.handleTouch.bind(this));
+    this.canvas.addEventListener('touchmove', this.handleTouch.bind(this));
     this.canvas.addEventListener('mousedown', this.handleClick.bind(this));
     
     // Mouse movement for desktop
@@ -855,6 +859,8 @@ class HoneyGame {
       // Smooth follow
       this.pooh.x += (targetX - this.pooh.x) * 0.1;
     });
+
+    window.addEventListener('resize', () => this.handleResize());
   }
 
   handleTouch(e) {
@@ -869,6 +875,67 @@ class HoneyGame {
     if (!this.pooh.jumping) {
       this.pooh.velocity.y = -15;
       this.pooh.jumping = true;
+    }
+  }
+
+  handleResize() {
+    const dpr = window.devicePixelRatio || 1;
+    const rect = this.canvas.getBoundingClientRect();
+
+    this.canvas.width = rect.width * dpr;
+    this.canvas.height = rect.height * dpr;
+    this.ctx.setTransform(dpr, 0, 0, dpr, 0, 0);
+
+    this.width = rect.width;
+    this.height = rect.height;
+    this.createParallaxLayers();
+
+    this.pooh.y = Math.min(this.pooh.y, this.height - this.pooh.height / 2);
+  }
+
+  initMobileControls() {
+    const leftBtn = document.getElementById('mobile-move-left');
+    const rightBtn = document.getElementById('mobile-move-right');
+    const jumpBtn = document.getElementById('mobile-jump');
+
+    const setDirection = (dir) => {
+      this.activeDirection = dir;
+      this.pooh.velocity.x = dir * this.pooh.speed;
+    };
+
+    const stopDirection = () => {
+      this.activeDirection = 0;
+      this.pooh.velocity.x = 0;
+    };
+
+    if (leftBtn) {
+      ['pointerdown', 'touchstart', 'mousedown'].forEach(evt =>
+        leftBtn.addEventListener(evt, (e) => { e.preventDefault(); setDirection(-1); })
+      );
+      ['pointerup', 'touchend', 'mouseleave', 'pointercancel'].forEach(evt =>
+        leftBtn.addEventListener(evt, stopDirection)
+      );
+    }
+
+    if (rightBtn) {
+      ['pointerdown', 'touchstart', 'mousedown'].forEach(evt =>
+        rightBtn.addEventListener(evt, (e) => { e.preventDefault(); setDirection(1); })
+      );
+      ['pointerup', 'touchend', 'mouseleave', 'pointercancel'].forEach(evt =>
+        rightBtn.addEventListener(evt, stopDirection)
+      );
+    }
+
+    if (jumpBtn) {
+      ['pointerdown', 'touchstart', 'mousedown'].forEach(evt =>
+        jumpBtn.addEventListener(evt, (e) => {
+          e.preventDefault();
+          if (!this.pooh.jumping) {
+            this.pooh.velocity.y = -15;
+            this.pooh.jumping = true;
+          }
+        })
+      );
     }
   }
 
@@ -929,6 +996,10 @@ class HoneyGame {
   }
 
   updatePooh(delta) {
+    if (this.activeDirection !== 0) {
+      this.pooh.velocity.x = this.pooh.speed * this.activeDirection;
+    }
+
     // Apply physics
     this.pooh.velocity.y += this.gravity;
     this.pooh.x += this.pooh.velocity.x;
