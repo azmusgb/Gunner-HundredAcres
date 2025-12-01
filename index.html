@@ -611,68 +611,101 @@
                                 <div class="game-container">
                                     <h2 class="game-title">🐝 Honey Defense</h2>
                                     <p>Place towers to defend the hive from bees! Click towers to see their range.</p>
-                                    <div class="game-hud">
-                                        <div class="hud-item">
-                                            <span class="hud-label">Wave</span>
-                                            <span id="defense-wave">1</span>
-                                        </div>
-                                        <div class="hud-item">
-                                            <span class="hud-label">Health</span>
-                                            <span id="defense-health">100</span>
-                                        </div>
-                                        <div class="hud-item">
-                                            <span class="hud-label">Honey</span>
-                                            <span id="defense-money">500</span>
-                                        </div>
-                                        <div class="hud-item">
-                                            <span class="hud-label">Score</span>
-                                            <span id="defense-score">0</span>
-                                        </div>
-                                    </div>
                                     <canvas id="defense-game" width="800" height="500"></canvas>
                                     <div class="game-controls">
-                                        <button id="defense-reset">Reset</button>
-                                        <button id="defense-toggle">Pause</button>
-                                        <div class="speed-control" aria-live="polite">
-                                            <span class="hud-label">Speed</span>
-                                            <button type="button" class="speed-btn" data-speed="-0.5">-</button>
-                                            <span id="game-speed" class="speed-display">1x</span>
-                                            <button type="button" class="speed-btn" data-speed="0.5">+</button>
-                                        </div>
+                                        <button onclick="window.defenseGame.resetGame()">Reset Game</button>
+                                        <button onclick="window.defenseGame.togglePause()">Pause/Resume</button>
+                                        <span>Speed: <button onclick="window.defenseGame.state.gameSpeed = Math.max(0.5, window.defenseGame.state.gameSpeed - 0.5)">-</button>
+                                        <span id="game-speed">1x</span>
+                                        <button onclick="window.defenseGame.state.gameSpeed = Math.min(3, window.defenseGame.state.gameSpeed + 0.5)">+</button></span>
                                     </div>
                                 </div>
 
                                 <div class="game-container">
                                     <h2 class="game-title">🍯 Honey Catch</h2>
                                     <p>Move Pooh to catch honey pots, avoid rocks! Use arrow keys or click to move.</p>
-                                    <div class="game-hud">
-                                        <div class="hud-item">
-                                            <span class="hud-label">Score</span>
-                                            <span id="honey-score">0</span>
-                                        </div>
-                                        <div class="hud-item">
-                                            <span class="hud-label">Time</span>
-                                            <span id="honey-time">60s</span>
-                                        </div>
-                                        <div class="hud-item">
-                                            <span class="hud-label">Lives</span>
-                                            <span id="honey-lives">3</span>
-                                        </div>
-                                        <div class="hud-item">
-                                            <span class="hud-label">Combo</span>
-                                            <span id="honey-combo">0x</span>
-                                        </div>
-                                    </div>
                                     <canvas id="honey-game" width="800" height="500"></canvas>
-                                    <div class="game-controls">
-                                        <button id="honey-start">Start / Restart</button>
-                                        <button id="honey-toggle">Pause</button>
-                                    </div>
                                     <div class="game-instructions">
                                         <p>🎮 Controls: Arrow Keys to move | Space to jump | Click/Tap to move Pooh</p>
                                     </div>
                                 </div>
                             </div>
+
+                            <style>
+                            .game-section {
+                              display: grid;
+                              grid-template-columns: 1fr 1fr;
+                              gap: 30px;
+                              padding: 20px;
+                              background: linear-gradient(135deg, #0a3d62 0%, #1a5f7a 100%);
+                              border-radius: 20px;
+                            }
+
+                            .game-container {
+                              background: rgba(255, 255, 255, 0.1);
+                              backdrop-filter: blur(10px);
+                              border-radius: 15px;
+                              padding: 20px;
+                              border: 1px solid rgba(255, 255, 255, 0.2);
+                            }
+
+                            .game-title {
+                              color: #FFC42B;
+                              font-size: 2em;
+                              margin-bottom: 10px;
+                              text-align: center;
+                            }
+
+                            .game-section canvas {
+                              width: 100%;
+                              height: 500px;
+                              background: transparent;
+                              border: 3px solid #FFC42B;
+                            }
+
+                            .legacy-canvas {
+                              display: none;
+                            }
+
+                            .game-controls {
+                              display: flex;
+                              gap: 10px;
+                              margin-top: 15px;
+                              justify-content: center;
+                              flex-wrap: wrap;
+                            }
+
+                            .game-section button {
+                              background: #FFC42B;
+                              color: #0a3d62;
+                              border: none;
+                              padding: 10px 20px;
+                              border-radius: 25px;
+                              cursor: pointer;
+                              font-weight: bold;
+                              transition: all 0.3s;
+                            }
+
+                            .game-section button:hover {
+                              background: #FFD166;
+                              transform: translateY(-2px);
+                              box-shadow: 0 5px 15px rgba(255, 196, 43, 0.4);
+                            }
+
+                            .game-instructions {
+                              text-align: center;
+                              margin-top: 15px;
+                              color: white;
+                              font-size: 0.9em;
+                              opacity: 0.9;
+                            }
+
+                            @media (max-width: 1024px) {
+                              .game-section {
+                                grid-template-columns: 1fr;
+                              }
+                            }
+                            </style>
 
                             <!-- Game Navigation -->
                             <nav class="game-navigation" aria-label="Game selection">

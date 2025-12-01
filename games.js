@@ -1423,42 +1423,15 @@ document.addEventListener('DOMContentLoaded', () => {
   window.defenseGame = defenseGame;
   window.honeyGame = honeyGame;
 
-  const speedButtons = document.querySelectorAll('.speed-btn');
-  speedButtons.forEach(btn => {
-    btn.addEventListener('click', () => {
-      const delta = Number(btn.dataset.speed || 0);
-      defenseGame?.changeSpeed(delta);
-    });
-  });
-
-  const pauseDefenseBtn = document.getElementById('defense-toggle');
-  pauseDefenseBtn?.addEventListener('click', () => {
-    const paused = defenseGame?.togglePause();
-    if (pauseDefenseBtn && typeof paused === 'boolean') {
-      pauseDefenseBtn.textContent = paused ? 'Resume' : 'Pause';
-    }
-  });
-
-  const resetDefenseBtn = document.getElementById('defense-reset');
-  resetDefenseBtn?.addEventListener('click', () => {
-    defenseGame?.resetGame();
-    if (pauseDefenseBtn) pauseDefenseBtn.textContent = 'Pause';
-  });
-
-  const startHoneyBtn = document.getElementById('honey-start');
-  const pauseHoneyBtn = document.getElementById('honey-toggle');
-
-  startHoneyBtn?.addEventListener('click', () => {
-    honeyGame?.startGame();
-    if (pauseHoneyBtn) pauseHoneyBtn.textContent = 'Pause';
-  });
-
-  pauseHoneyBtn?.addEventListener('click', () => {
-    const paused = honeyGame?.togglePause();
-    if (pauseHoneyBtn && typeof paused === 'boolean') {
-      pauseHoneyBtn.textContent = paused ? 'Resume' : 'Pause';
-    }
-  });
+  const speedDisplay = document.getElementById('game-speed');
+  if (speedDisplay && defenseGame) {
+    const updateSpeedDisplay = () => {
+      const speed = defenseGame.state.gameSpeed || 1;
+      speedDisplay.textContent = `${Number(speed.toFixed(1)).toString()}x`;
+      requestAnimationFrame(updateSpeedDisplay);
+    };
+    updateSpeedDisplay();
+  }
   
   // Add CSS for canvas styling
   const style = document.createElement('style');
