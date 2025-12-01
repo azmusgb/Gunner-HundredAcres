@@ -1,4 +1,4 @@
-// script.js – Hundred Acre Celebration full wiring (UI + games)
+// script.js – Hundred Acre Celebration full wiring (UI + games, refined)
 
 /* ========= PAGE APP ========= */
 
@@ -19,7 +19,6 @@ class HundredAcreApp {
         this.bindGlobals();
         this.startLoading();
 
-        // Initial scroll-based updates
         setTimeout(() => {
             this.updateReadingProgress();
             this.updateFABs();
@@ -30,36 +29,30 @@ class HundredAcreApp {
     cacheElements() {
         this.el = {
             body: document.body,
-            // chrome
             loadingScreen: document.getElementById('loadingScreen'),
             readingProgress: document.getElementById('readingProgress'),
             mainContent: document.getElementById('mainContent'),
             storybookCover: document.getElementById('storybookCover'),
             openBookBtn: document.getElementById('openBookBtn'),
 
-            // nav
             navToggle: document.getElementById('navToggle'),
             navMenu: document.getElementById('navMenu'),
             navItems: document.querySelectorAll('.nav-item'),
 
-            // CTA / FABs
             persistentRsvpBtn: document.getElementById('persistentRsvpBtn'),
             scrollTopFab: document.getElementById('scrollTopFab'),
             scrollRsvpFab: document.getElementById('scrollRsvpFab'),
 
-            // music / motion
             musicToggle: document.getElementById('musicToggle'),
             motionToggle: document.getElementById('motionToggle'),
             bgMusic: document.getElementById('bgMusic'),
 
-            // RSVP
             rsvpSection: document.getElementById('section2'),
             rsvpForm: document.getElementById('rsvpForm'),
             rsvpStatus: document.getElementById('rsvpStatus'),
             rsvpCount: document.getElementById('rsvpCount'),
             rsvpAnchor: document.getElementById('rsvp'),
 
-            // sections for scroll tracking
             sections: [
                 document.getElementById('section1'),
                 document.getElementById('section2'),
@@ -69,7 +62,6 @@ class HundredAcreApp {
                 document.getElementById('games')
             ],
 
-            // character modal
             characterModal: document.getElementById('characterModal'),
             characterModalIcon: document.getElementById('modalCharacterIcon'),
             characterModalTitle: document.getElementById('characterModalTitle'),
@@ -77,17 +69,14 @@ class HundredAcreApp {
             characterModalBio: document.getElementById('modalCharacterBio'),
             characterModalClose: document.getElementById('closeCharacterModal'),
 
-            // game instruction modal
             gameInstructionModal: document.getElementById('gameInstructionModal'),
             gameInstructionTitle: document.getElementById('gameInstructionTitle'),
             gameInstructionList: document.getElementById('gameInstructionList'),
             gameInstructionClose: document.getElementById('closeGameModal'),
 
-            // games – canvases
             honeyCanvas: document.getElementById('honey-game'),
             defenseCanvas: document.getElementById('defense-game'),
 
-            // games – honey catch DOM
             catchScore: document.getElementById('score-count'),
             catchTime: document.getElementById('time-count'),
             catchLives: document.getElementById('catch-lives'),
@@ -97,12 +86,10 @@ class HundredAcreApp {
             catchCountdown: document.getElementById('catch-countdown'),
             catchHint: document.getElementById('catch-hint'),
 
-            // mobile controls for catch
             mobileControls: document.getElementById('mobileControls'),
             mobileLeftBtn: document.getElementById('mobileLeftBtn'),
             mobileRightBtn: document.getElementById('mobileRightBtn'),
 
-            // games – defense DOM
             defenseHoney: document.getElementById('honey-count'),
             defenseLives: document.getElementById('lives-count'),
             defenseWave: document.getElementById('wave-count'),
@@ -135,7 +122,6 @@ class HundredAcreApp {
             rsvpAnchor
         } = this.el;
 
-        // storybook open
         if (openBookBtn && storybookCover && mainContent) {
             openBookBtn.addEventListener('click', () => {
                 storybookCover.classList.add('closed');
@@ -151,7 +137,6 @@ class HundredAcreApp {
             });
         }
 
-        // nav toggle
         if (navToggle && navMenu) {
             navToggle.addEventListener('click', () => {
                 const isOpen = navMenu.classList.toggle('nav-menu--open');
@@ -161,12 +146,11 @@ class HundredAcreApp {
             });
         }
 
-        // nav items smooth scroll & active state
         if (navItems) {
             navItems.forEach(item => {
                 item.addEventListener('click', (e) => {
                     e.preventDefault();
-                    const hash = item.getAttribute('href'); // "#section1"
+                    const hash = item.getAttribute('href');
                     if (!hash) return;
                     const id = hash.replace('#', '');
                     const section = this.sectionById[id];
@@ -174,7 +158,6 @@ class HundredAcreApp {
                         this.scrollToSection(section);
                         this.setActiveNavItem(item);
                     }
-                    // close nav on mobile
                     if (this.el.navMenu && this.el.navMenu.classList.contains('nav-menu--open')) {
                         this.closeNavMenu();
                     }
@@ -182,29 +165,21 @@ class HundredAcreApp {
             });
         }
 
-        // FABs
         scrollTopFab && scrollTopFab.addEventListener('click', () => {
             window.scrollTo({ top: 0, behavior: 'smooth' });
         });
 
         scrollRsvpFab && scrollRsvpFab.addEventListener('click', () => {
-            if (rsvpAnchor) {
-                rsvpAnchor.scrollIntoView({ behavior: 'smooth' });
-            }
+            if (rsvpAnchor) rsvpAnchor.scrollIntoView({ behavior: 'smooth' });
         });
 
-        // persistent RSVP button
         persistentRsvpBtn && persistentRsvpBtn.addEventListener('click', () => {
-            if (rsvpAnchor) {
-                rsvpAnchor.scrollIntoView({ behavior: 'smooth' });
-            }
+            if (rsvpAnchor) rsvpAnchor.scrollIntoView({ behavior: 'smooth' });
         });
 
-        // music & motion toggles
         musicToggle && musicToggle.addEventListener('click', () => this.toggleMusic());
         motionToggle && motionToggle.addEventListener('click', () => this.toggleMotion());
 
-        // scroll & resize
         const onScroll = this.throttle(() => {
             this.updateReadingProgress();
             this.updateFABs();
@@ -218,14 +193,10 @@ class HundredAcreApp {
             this.defenseGame && this.defenseGame.handleResize();
         });
 
-        // Mobile controls visibility
         if ('ontouchstart' in window || navigator.maxTouchPoints > 0) {
-            if (this.el.mobileControls) {
-                this.el.mobileControls.style.display = 'block';
-            }
+            if (this.el.mobileControls) this.el.mobileControls.style.display = 'block';
         }
 
-        // RSVP form
         if (this.el.rsvpForm) {
             this.el.rsvpForm.addEventListener('submit', (e) => this.handleRSVPSubmit(e));
         }
@@ -252,21 +223,16 @@ class HundredAcreApp {
         const scrollTop = window.pageYOffset || document.documentElement.scrollTop;
         const targetY = rect.top + scrollTop - offset;
 
-        window.scrollTo({
-            top: targetY,
-            behavior: 'smooth'
-        });
+        window.scrollTo({ top: targetY, behavior: 'smooth' });
     }
 
     setupObservers() {
-        // intersection for nav active & scroll reveals
         const options = { threshold: 0.25 };
         const observer = new IntersectionObserver((entries) => {
             entries.forEach(entry => {
                 const sec = entry.target;
                 if (entry.isIntersecting) {
                     sec.classList.add('section-visible');
-                    // nav active
                     if (sec.id && this.el.navItems) {
                         this.el.navItems.forEach(item => {
                             const href = item.getAttribute('href');
@@ -278,9 +244,7 @@ class HundredAcreApp {
             });
         }, options);
 
-        this.el.sections.forEach(sec => {
-            if (sec) observer.observe(sec);
-        });
+        this.el.sections.forEach(sec => sec && observer.observe(sec));
     }
 
     updateReadingProgress() {
@@ -319,11 +283,8 @@ class HundredAcreApp {
         if (!btn || !sec) return;
         const rect = sec.getBoundingClientRect();
         const inViewport = rect.top < window.innerHeight && rect.bottom > 0;
-        if (inViewport) {
-            btn.classList.add('hidden');
-        } else {
-            btn.classList.remove('hidden');
-        }
+        if (inViewport) btn.classList.add('hidden');
+        else btn.classList.remove('hidden');
     }
 
     throttle(fn, limit) {
@@ -377,7 +338,6 @@ class HundredAcreApp {
             console.warn('Pref init failed', e);
         }
 
-        // keyboard shortcut: space toggles music (when not typing)
         document.addEventListener('keydown', (e) => {
             if (e.key === ' ' && !this.isTextInput(e.target)) {
                 e.preventDefault();
@@ -500,7 +460,6 @@ class HundredAcreApp {
     }
 
     editRSVP() {
-        // simple "clear" helper
         localStorage.removeItem('babyGunnerRSVP');
         if (this.el.rsvpCount) this.el.rsvpCount.textContent = '0';
         if (this.el.rsvpStatus) {
@@ -559,7 +518,6 @@ class HundredAcreApp {
         characterModal.style.display = 'flex';
         characterModal.setAttribute('aria-hidden', 'false');
 
-        // close handlers
         if (this.el.characterModalClose) {
             this.el.characterModalClose.onclick = () => this.closeCharacterModal();
         }
@@ -590,21 +548,21 @@ class HundredAcreApp {
             catch: {
                 title: 'Honey Pot Catch – How to Play',
                 items: [
-                    'Tap left/right side of the game area or use ◀ ▶ arrow keys to move Pooh.',
+                    'Use ◀ ▶ arrow keys OR tap left/right side of the game area to move Pooh.',
                     'Catch falling honey pots to earn points.',
                     'Missing a pot costs you one heart.',
                     'You start with 3 hearts – keep them as long as you can.',
-                    'The game runs for a calm 60 seconds. Aim for your best score.'
+                    'Press Start Game (or Space/Enter) to begin a calm 60-second round.'
                 ]
             },
             defense: {
                 title: 'Honey Hive Defense – How to Play',
                 items: [
-                    'Select a friend (tower) by tapping the character row above the game.',
-                    'Each friend has a honey cost and a gentle play style.',
-                    'Tap the honey path to place a friend there, if you have enough honey.',
-                    'Friends automatically shoo away bees as they follow the path.',
-                    'Try to keep your lives above zero as waves become a bit busier.'
+                    'Press Start Wave to begin.',
+                    'Select a friend (tower) from the row above the game.',
+                    'Click near the honey path to place your friend.',
+                    'Friends gently shoo bees that come within their range.',
+                    'Use honey to place and upgrade towers; try to keep your lives above zero.'
                 ]
             }
         };
@@ -681,7 +639,6 @@ class HundredAcreApp {
     /* ------- Games ------- */
 
     initGames() {
-        // Honey Catch
         if (this.el.honeyCanvas) {
             this.honeyGame = new HoneyCatchGame(this.el.honeyCanvas, {
                 scoreEl: this.el.catchScore,
@@ -697,7 +654,6 @@ class HundredAcreApp {
             });
         }
 
-        // Defense
         if (this.el.defenseCanvas) {
             this.defenseGame = new HoneyDefenseGame(this.el.defenseCanvas, {
                 honeyEl: this.el.defenseHoney,
@@ -766,30 +722,34 @@ class HoneyCatchGame {
         this.handleResize();
         this.resetGame();
         this.initControls();
+        this.updateOverlay('Ready when you are.', 'Press Start Game to begin.');
         requestAnimationFrame((t) => this.loop(t));
         this.updateUI();
     }
 
     initControls() {
-        // keyboard
         window.addEventListener('keydown', (e) => {
             this.keyState[e.key] = true;
-            if (this.gameOver && (e.key === ' ' || e.key === 'Enter')) {
+
+            if ((e.key === ' ' || e.key === 'Enter') && !this.isTextInput(e.target)) {
                 e.preventDefault();
-                this.startNewGame();
+                if (!this.isRunning || this.gameOver) {
+                    this.startNewGame();
+                } else {
+                    this.togglePause();
+                }
             }
         });
+
         window.addEventListener('keyup', (e) => {
             this.keyState[e.key] = false;
         });
 
-        // pointer
         this.canvas.addEventListener('pointerdown', (e) => this.onPointerDown(e));
         this.canvas.addEventListener('pointermove', (e) => this.onPointerMove(e));
         this.canvas.addEventListener('pointerup', () => (this.pointerActive = false));
         this.canvas.addEventListener('pointerleave', () => (this.pointerActive = false));
 
-        // buttons
         if (this.dom.startBtn) {
             this.dom.startBtn.addEventListener('click', () => this.startNewGame());
         }
@@ -797,17 +757,18 @@ class HoneyCatchGame {
             this.dom.pauseBtn.addEventListener('click', () => this.togglePause());
         }
 
-        // mobile controls
         if (this.dom.mobileLeftBtn) {
-            this.dom.mobileLeftBtn.addEventListener('click', () => {
-                this.nudge(-1);
-            });
+            this.dom.mobileLeftBtn.addEventListener('click', () => this.nudge(-1));
         }
         if (this.dom.mobileRightBtn) {
-            this.dom.mobileRightBtn.addEventListener('click', () => {
-                this.nudge(1);
-            });
+            this.dom.mobileRightBtn.addEventListener('click', () => this.nudge(1));
         }
+    }
+
+    isTextInput(el) {
+        if (!el || !el.tagName) return false;
+        const tag = el.tagName.toLowerCase();
+        return tag === 'input' || tag === 'textarea' || el.isContentEditable;
     }
 
     onPointerDown(e) {
@@ -815,7 +776,7 @@ class HoneyCatchGame {
         const x = e.clientX - rect.left;
 
         if (!this.isRunning || this.gameOver) {
-            this.startNewGame();
+            // canvas tap alone does NOT restart; use Start button
             return;
         }
 
@@ -866,6 +827,7 @@ class HoneyCatchGame {
         this.isRunning = true;
         this.isPaused = false;
         this.updateOverlay('Game started!', 'Catch as many pots as you can.');
+        if (this.dom.pauseBtn) this.dom.pauseBtn.textContent = 'Pause';
         this.updateUI();
     }
 
@@ -877,12 +839,11 @@ class HoneyCatchGame {
         }
         this.updateOverlay(
             this.isPaused ? 'Paused' : '',
-            this.isPaused ? 'Tap Resume to continue.' : ''
+            this.isPaused ? 'Tap Resume or press Space/Enter to continue.' : ''
         );
     }
 
     nudge(dir) {
-        // small left/right bump
         if (!this.player) return;
         const step = this.width * 0.08;
         this.player.x += dir * step;
@@ -899,21 +860,18 @@ class HoneyCatchGame {
     update(dt) {
         if (!this.isRunning || this.isPaused || this.gameOver) return;
 
-        // time
         this.remaining -= dt;
         if (this.remaining <= 0) {
             this.remaining = 0;
-            this.endGame('Time’s up!', 'Press Start to try another gentle round.');
+            this.endGame('Time’s up!', 'Press Start Game for another gentle round.');
         }
 
-        // movement
         const left = this.keyState['ArrowLeft'] || this.keyState['a'] || this.keyState['A'];
         const right = this.keyState['ArrowRight'] || this.keyState['d'] || this.keyState['D'];
         if (left) this.player.x -= this.player.speed * dt;
         if (right) this.player.x += this.player.speed * dt;
         this.player.x = Math.max(0, Math.min(this.width - this.player.width, this.player.x));
 
-        // spawn
         this.lastSpawn += dt * 1000;
         if (this.lastSpawn > this.spawnInterval) {
             this.spawnPot();
@@ -921,7 +879,6 @@ class HoneyCatchGame {
             this.spawnInterval = Math.max(350, this.spawnInterval - 5);
         }
 
-        // pots
         for (let i = this.pots.length - 1; i >= 0; i--) {
             const p = this.pots[i];
             p.y += p.speed * dt;
@@ -936,7 +893,7 @@ class HoneyCatchGame {
                 this.lives -= 1;
                 this.pots.splice(i, 1);
                 if (this.lives <= 0) {
-                    this.endGame('Pooh ran out of honey pots!', 'Press Start to play again.');
+                    this.endGame('Pooh ran out of honey pots!', 'Press Start Game to try again.');
                 }
             }
         }
@@ -948,9 +905,7 @@ class HoneyCatchGame {
         this.gameOver = true;
         this.isRunning = false;
         this.isPaused = false;
-        if (this.dom.pauseBtn) {
-            this.dom.pauseBtn.textContent = 'Pause';
-        }
+        if (this.dom.pauseBtn) this.dom.pauseBtn.textContent = 'Pause';
         this.updateOverlay(title, hint);
     }
 
@@ -973,12 +928,12 @@ class HoneyCatchGame {
         grad.addColorStop(0, '#B0D0E3');
         grad.addColorStop(1, '#FFF7EC');
         ctx.fillStyle = grad;
+        ctx.fillRect(0, 0, skyH, skyH);
         ctx.fillRect(0, 0, this.width, skyH);
 
         ctx.fillStyle = '#D7C39B';
         ctx.fillRect(0, skyH, this.width, this.height - skyH);
 
-        // simple tree
         ctx.fillStyle = '#8B5A2B';
         ctx.fillRect(this.width * 0.05, skyH - 60, 24, 80);
         ctx.beginPath();
@@ -993,26 +948,25 @@ class HoneyCatchGame {
         ctx.save();
         ctx.translate(p.x + p.width / 2, p.y + p.height / 2);
 
-        // body
         ctx.fillStyle = '#FFC42B';
         ctx.beginPath();
         ctx.ellipse(0, 8, p.width * 0.4, p.height * 0.45, 0, 0, Math.PI * 2);
         ctx.fill();
-        // head
+
         ctx.beginPath();
         ctx.ellipse(0, -p.height * 0.25, p.width * 0.23, p.height * 0.25, 0, 0, Math.PI * 2);
         ctx.fill();
-        // ears
+
         ctx.beginPath();
         ctx.arc(-p.width * 0.18, -p.height * 0.4, p.width * 0.08, 0, Math.PI * 2);
         ctx.arc(p.width * 0.18, -p.height * 0.4, p.width * 0.08, 0, Math.PI * 2);
         ctx.fill();
-        // shirt
+
         ctx.fillStyle = '#D62E2E';
         ctx.beginPath();
         ctx.ellipse(0, 12, p.width * 0.45, p.height * 0.27, 0, 0, Math.PI * 2);
         ctx.fill();
-        // eyes
+
         ctx.fillStyle = '#2f1a0e';
         ctx.beginPath();
         ctx.arc(-p.width * 0.06, -p.height * 0.27, p.width * 0.025, 0, Math.PI * 2);
@@ -1131,7 +1085,7 @@ class HoneyDefenseGame {
         this.initControls();
         requestAnimationFrame((t) => this.loop(t));
         this.updateHUD();
-        this.setAlert('The honey path is peaceful. Prepare your friends.');
+        this.setAlert('The honey path is peaceful. Press Start Wave when ready.');
     }
 
     initControls() {
@@ -1139,9 +1093,7 @@ class HoneyDefenseGame {
 
         if (startBtn) {
             startBtn.addEventListener('click', () => {
-                if (!this.isRunning || this.gameOver) {
-                    this.startGame();
-                }
+                this.startGame();
             });
         }
 
@@ -1169,24 +1121,32 @@ class HoneyDefenseGame {
             const x = e.clientX - rect.left;
             const y = e.clientY - rect.top;
 
-            if (this.gameOver) {
-                this.startGame();
+            if (!this.isRunning) {
+                this.setAlert('Press Start Wave first, then place friends along the path.');
                 return;
             }
-
-            if (!this.isRunning) {
-                this.startGame();
+            if (this.gameOver) {
+                this.setAlert('Wave finished. Press Start Wave to play again.');
+                return;
             }
 
             this.tryPlaceTower(x, y);
         });
 
         window.addEventListener('keydown', (e) => {
-            if (this.gameOver && (e.key === ' ' || e.key === 'Enter')) {
+            if ((e.key === ' ' || e.key === 'Enter') && !this.isTextInput(e.target)) {
                 e.preventDefault();
-                this.startGame();
+                if (!this.isRunning || this.gameOver) {
+                    this.startGame();
+                }
             }
         });
+    }
+
+    isTextInput(el) {
+        if (!el || !el.tagName) return false;
+        const tag = el.tagName.toLowerCase();
+        return tag === 'input' || tag === 'textarea' || el.isContentEditable;
     }
 
     handleResize() {
@@ -1251,14 +1211,14 @@ class HoneyDefenseGame {
     spawnBee() {
         this.bees.push({
             t: 0,
-            speed: 0.18 + Math.random() * 0.06,
+            speed: 0.16 + Math.random() * 0.05,
             reward: 6
         });
         this.totalSpawned += 1;
 
         if (this.totalSpawned % 10 === 0) {
             this.wave += 1;
-            this.spawnInterval = Math.max(650, this.spawnInterval - 70);
+            this.spawnInterval = Math.max(750, this.spawnInterval - 80);
             this.setAlert(`Wave ${this.wave} is waking up.`);
             this.updateWaveStatus(`Wave ${this.wave} in progress`);
         }
@@ -1325,14 +1285,12 @@ class HoneyDefenseGame {
     update(dt) {
         if (!this.isRunning || this.gameOver) return;
 
-        // spawn bees
         this.lastSpawn += dt * 1000;
         if (this.lastSpawn > this.spawnInterval) {
             this.spawnBee();
             this.lastSpawn = 0;
         }
 
-        // move bees
         for (let i = this.bees.length - 1; i >= 0; i--) {
             const bee = this.bees[i];
             bee.t += bee.speed * dt;
@@ -1346,7 +1304,6 @@ class HoneyDefenseGame {
             }
         }
 
-        // towers tag bees
         this.towers.forEach(t => {
             t.fireCooldown -= dt;
             if (t.fireCooldown <= 0) {
@@ -1381,7 +1338,7 @@ class HoneyDefenseGame {
         this.gameOver = true;
         this.isRunning = false;
         this.setAlert('The bees reached the meadow – but the honey will be safe again soon.');
-        this.updateWaveStatus('Tap or press Space/Enter to start a new round.');
+        this.updateWaveStatus('Press Start Wave (or Space/Enter) to start a new round.');
     }
 
     updateHUD() {
@@ -1412,7 +1369,6 @@ class HoneyDefenseGame {
         ctx.fillStyle = grad;
         ctx.fillRect(0, 0, this.width, this.height);
 
-        // path
         ctx.strokeStyle = '#E6B86A';
         ctx.lineWidth = Math.max(14, this.height * 0.08);
         ctx.lineCap = 'round';
@@ -1436,19 +1392,16 @@ class HoneyDefenseGame {
     drawTowers() {
         const ctx = this.ctx;
         this.towers.forEach(t => {
-            // range
             ctx.beginPath();
             ctx.arc(t.x, t.y, t.range, 0, Math.PI * 2);
             ctx.fillStyle = 'rgba(176, 208, 227, 0.16)';
             ctx.fill();
 
-            // base
             ctx.fillStyle = '#9CAD90';
             ctx.beginPath();
             ctx.ellipse(t.x, t.y, 14, 18, 0, 0, Math.PI * 2);
             ctx.fill();
 
-            // roof
             ctx.beginPath();
             ctx.moveTo(t.x - 16, t.y - 10);
             ctx.lineTo(t.x, t.y - 26);
@@ -1457,7 +1410,6 @@ class HoneyDefenseGame {
             ctx.fillStyle = '#D62E2E';
             ctx.fill();
 
-            // flag
             ctx.beginPath();
             ctx.moveTo(t.x, t.y - 26);
             ctx.lineTo(t.x, t.y - 36);
