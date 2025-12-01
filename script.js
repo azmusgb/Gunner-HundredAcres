@@ -130,10 +130,52 @@ function setupButtons() {
     const scrollTopFab = document.getElementById('scrollTopFab');
     const scrollRsvpFab = document.getElementById('scrollRsvpFab');
     const rsvpSection = document.getElementById('rsvp');
+    const storybookCover = document.getElementById('storybookCover');
+    const mainContent = document.getElementById('mainContent');
 
-    if (openBookBtn) {
+    if (openBookBtn && storybookCover) {
+        let hideTimeout;
+
+        const hideCover = () => {
+            if (hideTimeout) {
+                clearTimeout(hideTimeout);
+                hideTimeout = undefined;
+            }
+            if (!storybookCover.hasAttribute('hidden')) {
+                storybookCover.setAttribute('hidden', '');
+            }
+        };
+
+        const isReducedMotion = () =>
+            window.matchMedia('(prefers-reduced-motion: reduce)').matches ||
+            document.body.classList.contains('reduce-motion');
+
+        const closeCover = () => {
+            if (hideTimeout) {
+                clearTimeout(hideTimeout);
+            }
+            storybookCover.classList.add('closed');
+            storybookCover.setAttribute('aria-hidden', 'true');
+
+            storybookCover.addEventListener(
+                'transitionend',
+                (event) => {
+                    if (event.target === storybookCover && event.propertyName === 'transform') {
+                        hideCover();
+                    }
+                },
+                { once: true }
+            );
+
+            hideTimeout = window.setTimeout(hideCover, isReducedMotion() ? 0 : 1400);
+        };
+
         openBookBtn.addEventListener('click', () => {
-            document.getElementById('mainContent')?.scrollIntoView({ behavior: 'smooth' });
+            closeCover();
+
+            const behavior = isReducedMotion() ? 'auto' : 'smooth';
+            mainContent?.scrollIntoView({ behavior });
+            if (mainContent) mainContent.focus({ preventScroll: true });
         });
     }
 
