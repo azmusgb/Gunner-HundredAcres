@@ -510,6 +510,9 @@
         const startBtn = document.getElementById('start-defense');
         const upgradeBtn = document.getElementById('upgrade-tower');
         const towerOptions = document.querySelectorAll('.tower-option');
+        const waveProgress = document.getElementById('wave-progress');
+        const defenseStatus = document.getElementById('defense-status');
+        const defenseOverlay = document.getElementById('defense-overlay');
 
         let honey = 100;
         let lives = 10;
@@ -522,6 +525,9 @@
         let lastSpawnTime = 0;
         let lastFrameTime = performance.now();
         let running = true;
+        let totalWaveEnemies = 0;
+        let spawnedThisWave = 0;
+        let handledThisWave = 0;
 
         const towerTypes = {
             pooh: { cost: 20, damage: 10, range: 100, fireRate: 900, color: '#FFB347', key: 'pooh' },
@@ -550,6 +556,15 @@
             if (honeySpan) honeySpan.textContent = honey;
             if (livesSpan) livesSpan.textContent = lives;
             if (waveSpan) waveSpan.textContent = wave;
+        }
+
+        function setDefenseStatus(message) {
+            if (defenseStatus) defenseStatus.textContent = message;
+        }
+
+        function updateWaveProgress() {
+            const percent = totalWaveEnemies ? Math.min(100, (handledThisWave / totalWaveEnemies) * 100) : 0;
+            if (waveProgress) waveProgress.style.width = `${percent}%`;
         }
 
         syncStats();
@@ -709,7 +724,9 @@
                     if (enemy.pathIndex >= path.length) {
                         // Reached honey pot
                         lives--;
+                        handledThisWave++;
                         syncStats();
+                        updateWaveProgress();
                         enemies.splice(idx, 1);
                         return;
                     }
@@ -763,6 +780,8 @@
                     p.target.health -= p.damage;
                     if (p.target.health <= 0) {
                         honey += p.target.points;
+                        handledThisWave++;
+                        updateWaveProgress();
                         syncStats();
                         enemies.splice(enemies.indexOf(p.target), 1);
                     }
@@ -776,8 +795,14 @@
             // Spawn enemies during wave
             if (isWaveActive) {
                 const now = performance.now();
-                const maxEnemies = 5 + wave * 2;
-                if (now - lastSpawnTime > 900 && enemies.length < maxEnemies) {
+                if (!totalWaveEnemies) {
+                    totalWaveEnemies = 6 + wave * 2;
+                    spawnedThisWave = 0;
+                    handledThisWave = 0;
+                    updateWaveProgress();
+                }
+
+                if (now - lastSpawnTime > 900 && enemies.length < 6 && spawnedThisWave < totalWaveEnemies) {
                     lastSpawnTime = now;
                     const keys = Object.keys(enemyTypes);
                     const typeKey = keys[Math.floor(Math.random() * keys.length)];
@@ -794,14 +819,22 @@
                         points: spec.points,
                         char: spec.char
                     });
+
+                    spawnedThisWave++;
+                    updateWaveProgress();
                 }
 
-                if (enemies.length === 0 && now - lastSpawnTime > 2600) {
-                    // Wave finished
+                if (handledThisWave >= totalWaveEnemies && enemies.length === 0) {
                     isWaveActive = false;
                     wave++;
                     honey += 35;
+                    totalWaveEnemies = 0;
+                    spawnedThisWave = 0;
+                    handledThisWave = 0;
                     syncStats();
+                    updateWaveProgress();
+                    setDefenseStatus('Wave cleared! Take a breath and upgrade if you like.');
+                    if (defenseOverlay) defenseOverlay.textContent = 'Calm moment—prepare for the next wave.';
                 }
             }
 
@@ -841,7 +874,13 @@
             projectiles = [];
             isWaveActive = false;
             running = true;
+            totalWaveEnemies = 0;
+            spawnedThisWave = 0;
+            handledThisWave = 0;
             syncStats();
+            updateWaveProgress();
+            setDefenseStatus('Waiting to begin—choose a friend to guard the path.');
+            if (defenseOverlay) defenseOverlay.textContent = 'Wave ready! Place a friend and press Start.';
         }
 
         // Place tower
@@ -907,6 +946,12 @@
                 if (isWaveActive) return;
                 isWaveActive = true;
                 lastSpawnTime = performance.now();
+                totalWaveEnemies = 6 + wave * 2;
+                spawnedThisWave = 0;
+                handledThisWave = 0;
+                setDefenseStatus('Wave starting—friends are on the way!');
+                if (defenseOverlay) defenseOverlay.textContent = 'Wave in motion—keep the honey safe!';
+                updateWaveProgress();
             });
         }
 
@@ -939,6 +984,11 @@
         const livesSpan = document.getElementById('catch-lives');
         const startBtn = document.getElementById('start-catch');
         const pauseBtn = document.getElementById('pause-catch');
+        const timeProgress = document.getElementById('time-progress');
+        const catchStatus = document.getElementById('catch-status');
+        const catchOverlay = document.getElementById('catch-overlay');
+        const touchLeft = document.getElementById('catch-left');
+        const touchRight = document.getElementById('catch-right');
 
         let score = 0;
         let timeLeft = 60;
@@ -949,14 +999,26 @@
         let timerInterval = null;
         let lastFrameTime = performance.now();
         let poohX = canvas.width / 2;
+        const totalTime = 60;
+        let touchInterval = null;
 
         function syncStats() {
             if (scoreSpan) scoreSpan.textContent = score;
             if (timeSpan) timeSpan.textContent = timeLeft;
             if (livesSpan) livesSpan.textContent = lives;
+            updateTimeProgress();
         }
 
         syncStats();
+
+        function setCatchStatus(message) {
+            if (catchStatus) catchStatus.textContent = message;
+        }
+
+        function updateTimeProgress() {
+            const percent = Math.max(0, Math.min(100, (timeLeft / totalTime) * 100));
+            if (timeProgress) timeProgress.style.width = `${percent}%`;
+        }
 
         function drawBackground() {
             ctx.fillStyle = '#B3E5FC';
@@ -1148,6 +1210,8 @@
             poohX = canvas.width / 2;
             gameRunning = true;
             syncStats();
+            setCatchStatus('Catching honey pots—avoid the bees!');
+            if (catchOverlay) catchOverlay.textContent = 'Keep moving gently to gather honey. Good luck!';
 
             clearInterval(timerInterval);
             timerInterval = setInterval(() => {
@@ -1168,8 +1232,12 @@
             setTimeout(() => {
                 if (timeExpired) {
                     alert(`Time's up! You collected ${score} honey points!`);
+                    setCatchStatus(`Finished! Final score: ${score}.`);
+                    if (catchOverlay) catchOverlay.textContent = 'Take a breather, then start again whenever you like.';
                 } else {
                     alert(`Oh bother! The bees won this time. Final score: ${score}`);
+                    setCatchStatus('Bees bumped Pooh—try again for a higher score.');
+                    if (catchOverlay) catchOverlay.textContent = 'Restart to keep the honey pots flowing!';
                 }
             }, 20);
         }
@@ -1187,10 +1255,12 @@
                         }
                     }, 1000);
                 }
+                setCatchStatus('Resumed—keep scooping honey!');
             } else if (gameRunning) {
                 gameRunning = false;
                 clearInterval(timerInterval);
                 timerInterval = null;
+                setCatchStatus('Paused—take a moment, then continue.');
             }
         }
 
@@ -1207,6 +1277,36 @@
                 poohX = Math.min(canvas.width - 40, poohX + step);
             }
         });
+
+        function movePooh(direction) {
+            const step = 18;
+            if (!gameRunning) return;
+            if (direction === 'left') {
+                poohX = Math.max(40, poohX - step);
+            } else if (direction === 'right') {
+                poohX = Math.min(canvas.width - 40, poohX + step);
+            }
+        }
+
+        function bindTouchControl(btn, direction) {
+            if (!btn) return;
+            const startMove = () => {
+                movePooh(direction);
+                clearInterval(touchInterval);
+                touchInterval = setInterval(() => movePooh(direction), 90);
+            };
+            const stopMove = () => {
+                clearInterval(touchInterval);
+                touchInterval = null;
+            };
+            btn.addEventListener('pointerdown', startMove);
+            btn.addEventListener('pointerup', stopMove);
+            btn.addEventListener('pointerleave', stopMove);
+            btn.addEventListener('pointercancel', stopMove);
+        }
+
+        bindTouchControl(touchLeft, 'left');
+        bindTouchControl(touchRight, 'right');
     }
 
     // ========================================================================
