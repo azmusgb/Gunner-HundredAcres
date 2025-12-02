@@ -2194,88 +2194,125 @@
         }
 
         // Honey Hunt Game
-        (function initHoneyHuntGame() {
-            const canvas = document.getElementById('honeyCanvas');
-            const overlay = document.getElementById('catch-overlay');
-            const countdownEl = document.getElementById('catch-countdown');
-            const hintEl = document.getElementById('catch-hint');
-            const statusEl = document.getElementById('catch-status');
+        class HoneyHuntGame {
+            constructor() {
+                this.canvas = document.getElementById('honeyCanvas');
+                this.overlay = document.getElementById('catch-overlay');
+                this.countdownEl = document.getElementById('catch-countdown');
+                this.hintEl = document.getElementById('catch-hint');
+                this.statusEl = document.getElementById('catch-status');
 
-            const scoreEl = document.getElementById('honey-score');
-            const timeEl = document.getElementById('honey-time');
-            const livesEl = document.getElementById('honey-lives');
-            const comboEl = document.getElementById('honey-combo');
-            const highScoreDisplay = document.getElementById('catch-high-score-display');
-            const cardHighScoreText = document.getElementById('card-high-score-text');
+                this.scoreEl = document.getElementById('honey-score');
+                this.timeEl = document.getElementById('honey-time');
+                this.livesEl = document.getElementById('honey-lives');
+                this.comboEl = document.getElementById('honey-combo');
+                this.highScoreDisplay = document.getElementById('catch-high-score-display');
+                this.cardHighScoreText = document.getElementById('card-high-score-text');
 
-            const startBtn = document.getElementById('start-catch');
-            const pauseBtn = document.getElementById('pause-catch');
-            const mobileLeftBtn = document.getElementById('mobileLeftBtn');
-            const mobileRightBtn = document.getElementById('mobileRightBtn');
-            const playCardButtons = document.querySelectorAll('[data-action="play-honey-game"]');
+                this.startBtn = document.getElementById('start-catch');
+                this.pauseBtn = document.getElementById('pause-catch');
+                this.mobileLeftBtn = document.getElementById('mobileLeftBtn');
+                this.mobileRightBtn = document.getElementById('mobileRightBtn');
+                this.playCardButtons = document.querySelectorAll('[data-action="play-honey-game"]');
 
-            if (!canvas || !overlay || !startBtn || !pauseBtn || !scoreEl || !timeEl || !livesEl || !comboEl || !highScoreDisplay) {
-                return;
+                const required = [
+                    this.canvas,
+                    this.overlay,
+                    this.startBtn,
+                    this.pauseBtn,
+                    this.scoreEl,
+                    this.timeEl,
+                    this.livesEl,
+                    this.comboEl,
+                    this.highScoreDisplay
+                ];
+
+                if (required.some(el => !el)) return;
+
+                this.ctx = this.canvas.getContext('2d');
+                if (!this.ctx) return;
+
+                this.width = 0;
+                this.height = 0;
+                this.player = null;
+                this.honeys = [];
+                this.bees = [];
+
+                this.state = {
+                    status: 'idle',
+                    time: 60,
+                    score: 0,
+                    lives: 3,
+                    combo: 1,
+                    spawnHoneyTimer: 0,
+                    spawnBeeTimer: 0,
+                    lastFrameTime: 0,
+                    moveLeft: false,
+                    moveRight: false
+                };
+
+                this.rafId = null;
+
+                this.highScore = parseInt(localStorage.getItem('honeyHighScore') || '0', 10);
+                this.updateHighScoreDisplay();
+
+                this.gameLoop = this.gameLoop.bind(this);
+                this.resizeCanvas = this.resizeCanvas.bind(this);
+
+                this.setOverlayCopy({
+                    countdown: 'Tap Start to begin!',
+                    hint: 'Move Pooh to catch honey pots and dodge bees.',
+                    status: 'Use keyboard arrows or the touch buttons below.'
+                });
+
+                this.resizeCanvas();
+                window.addEventListener('resize', this.resizeCanvas);
+                this.bindControls();
+                this.updateHUD();
             }
 
-            const ctx = canvas.getContext('2d');
-            if (!ctx) return;
-
-            let gameWidth = 0;
-            let gameHeight = 0;
-
-            let player = null;
-            let honeys = [];
-            let bees = [];
-            let gameState = 'idle'; // idle | running | paused | ended
-            let lastFrameTime = 0;
-            let honeyTime = 60;
-            let honeyScore = 0;
-            let honeyLives = 3;
-            let honeyCombo = 1;
-            let spawnHoneyTimer = 0;
-            let spawnBeeTimer = 0;
-            let moveLeft = false;
-            let moveRight = false;
-
-            let storedHigh = parseInt(localStorage.getItem('honeyHighScore') || '0', 10);
-            if (highScoreDisplay) {
-                highScoreDisplay.textContent = storedHigh + ' points';
-            }
-            if (cardHighScoreText) {
-                cardHighScoreText.textContent = 'High Score: ' + storedHigh;
+            setOverlayCopy({ countdown, hint, status }) {
+                if (this.countdownEl && countdown !== undefined) this.countdownEl.textContent = countdown;
+                if (this.hintEl && hint !== undefined) this.hintEl.textContent = hint;
+                if (this.statusEl && status !== undefined) this.statusEl.textContent = status;
             }
 
-            function resizeCanvas() {
-                const parent = canvas.parentElement;
+            updateHighScoreDisplay() {
+                if (this.highScoreDisplay) this.highScoreDisplay.textContent = `${this.highScore} points`;
+                if (this.cardHighScoreText) this.cardHighScoreText.textContent = `High Score: ${this.highScore}`;
+            }
+
+            resizeCanvas() {
+                const parent = this.canvas.parentElement;
                 if (!parent) return;
+
                 const rect = parent.getBoundingClientRect();
                 const dpr = window.devicePixelRatio || 1;
 
-                canvas.width = rect.width * dpr;
-                canvas.height = rect.height * dpr;
-                ctx.setTransform(dpr, 0, 0, dpr, 0, 0);
+                this.canvas.width = rect.width * dpr;
+                this.canvas.height = rect.height * dpr;
+                this.ctx.setTransform(dpr, 0, 0, dpr, 0, 0);
 
-                gameWidth = rect.width;
-                gameHeight = rect.height;
+                const prevWidth = this.width || rect.width;
+                this.width = rect.width;
+                this.height = rect.height;
 
-                if (!player) {
-                    player = {
+                if (!this.player) {
+                    this.player = {
                         width: 60,
                         height: 40,
-                        x: gameWidth / 2 - 30,
-                        y: gameHeight - 70,
+                        x: this.width / 2 - 30,
+                        y: this.height - 70,
                         speed: 320
                     };
+                } else {
+                    const ratio = this.width / prevWidth;
+                    this.player.x = Math.min(this.width - this.player.width, this.player.x * ratio);
+                    this.player.y = this.height - 70;
                 }
             }
 
-            resizeCanvas();
-            window.addEventListener('resize', function() {
-                resizeCanvas();
-            });
-
-            function rectsIntersect(a, b) {
+            rectsIntersect(a, b) {
                 return !(
                     a.x > b.x + b.width ||
                     a.x + a.width < b.x ||
@@ -2284,435 +2321,408 @@
                 );
             }
 
-            function spawnHoney() {
+            fillRoundedRect(x, y, width, height, radius) {
+                const r = Math.min(radius, width / 2, height / 2);
+                this.ctx.beginPath();
+                this.ctx.moveTo(x + r, y);
+                this.ctx.lineTo(x + width - r, y);
+                this.ctx.quadraticCurveTo(x + width, y, x + width, y + r);
+                this.ctx.lineTo(x + width, y + height - r);
+                this.ctx.quadraticCurveTo(x + width, y + height, x + width - r, y + height);
+                this.ctx.lineTo(x + r, y + height);
+                this.ctx.quadraticCurveTo(x, y + height, x, y + height - r);
+                this.ctx.lineTo(x, y + r);
+                this.ctx.quadraticCurveTo(x, y, x + r, y);
+                this.ctx.closePath();
+                this.ctx.fill();
+            }
+
+            spawnHoney() {
                 const width = 26;
-                const x = Math.random() * (gameWidth - width - 20) + 10;
+                const x = Math.random() * (this.width - width - 20) + 10;
                 const speed = 140 + Math.random() * 80;
-                honeys.push({
-                    x,
-                    y: -30,
-                    width,
-                    height: width,
-                    speed
-                });
+                this.honeys.push({ x, y: -30, width, height: width, speed });
             }
 
-            function spawnBee() {
+            spawnBee() {
                 const width = 26;
-                const x = Math.random() * (gameWidth - width - 20) + 10;
+                const x = Math.random() * (this.width - width - 20) + 10;
                 const speed = 160 + Math.random() * 90;
-                bees.push({
-                    x,
-                    y: -30,
-                    width,
-                    height: width,
-                    speed
-                });
+                this.bees.push({ x, y: -30, width, height: width, speed });
             }
 
-            function updateHUD() {
-                if (scoreEl) scoreEl.textContent = Math.round(honeyScore).toString();
-                if (timeEl) timeEl.textContent = Math.max(0, Math.ceil(honeyTime)) + 's';
-                if (livesEl) livesEl.textContent = honeyLives.toString();
-                if (comboEl) {
-                    const comboText = honeyCombo.toFixed(1).replace(/\.0$/, '');
-                    comboEl.textContent = comboText + 'x';
+            updateHUD() {
+                if (this.scoreEl) this.scoreEl.textContent = Math.round(this.state.score).toString();
+                if (this.timeEl) this.timeEl.textContent = `${Math.max(0, Math.ceil(this.state.time))}s`;
+                if (this.livesEl) this.livesEl.textContent = this.state.lives.toString();
+                if (this.comboEl) {
+                    const comboText = this.state.combo.toFixed(1).replace(/\.0$/, '');
+                    this.comboEl.textContent = `${comboText}x`;
                 }
             }
 
-            function drawGame() {
-                if (!player) return;
-                ctx.clearRect(0, 0, gameWidth, gameHeight);
+            drawGame() {
+                this.ctx.clearRect(0, 0, this.width, this.height);
 
-                // Background sky -> meadow
-                const gradient = ctx.createLinearGradient(0, 0, 0, gameHeight);
-                gradient.addColorStop(0, '#87CEEB');
-                gradient.addColorStop(0.6, '#98FB98');
-                gradient.addColorStop(1, '#66BB6A');
-                ctx.fillStyle = gradient;
-                ctx.fillRect(0, 0, gameWidth, gameHeight);
+                // background
+                const gradient = this.ctx.createLinearGradient(0, 0, 0, this.height);
+                gradient.addColorStop(0, '#FFF7E6');
+                gradient.addColorStop(1, '#FFE0B2');
+                this.ctx.fillStyle = gradient;
+                this.ctx.fillRect(0, 0, this.width, this.height);
 
-                // Ground band
-                ctx.fillStyle = 'rgba(46,139,87,0.9)';
-                ctx.fillRect(0, gameHeight - 40, gameWidth, 40);
+                // ground
+                this.ctx.fillStyle = '#D7CCC8';
+                this.ctx.fillRect(0, this.height - 24, this.width, 30);
+                this.ctx.fillStyle = '#8D6E63';
+                this.ctx.fillRect(0, this.height - 16, this.width, 16);
 
-                // Player (Pooh) as a simple rectangle + emoji
-                ctx.fillStyle = '#8B4513';
-                ctx.fillRect(player.x, player.y, player.width, player.height);
-                ctx.font = '24px "Patrick Hand", sans-serif';
-                ctx.textBaseline = 'middle';
-                ctx.textAlign = 'center';
-                ctx.fillStyle = '#FFE082';
-                ctx.fillText('🐻', player.x + player.width / 2, player.y + player.height / 2);
+                // player
+                const p = this.player;
+                this.ctx.fillStyle = '#FFC107';
+                this.fillRoundedRect(p.x, p.y, p.width, p.height, 10);
+                this.ctx.fillStyle = '#6D4C41';
+                this.ctx.fillRect(p.x + 18, p.y + 8, p.width - 36, 10);
+                this.ctx.fillStyle = '#FFA000';
+                this.ctx.fillRect(p.x + 6, p.y + 26, p.width - 12, 8);
 
-                // Honeys
-                honeys.forEach(h => {
-                    const centerX = h.x + h.width / 2;
-                    const centerY = h.y + h.height / 2;
-                    ctx.beginPath();
-                    ctx.fillStyle = '#FFC107';
-                    ctx.arc(centerX, centerY, h.width / 2, 0, Math.PI * 2);
-                    ctx.fill();
-                    // jar top
-                    ctx.fillStyle = '#6D4C41';
-                    ctx.fillRect(h.x + h.width * 0.2, h.y - 4, h.width * 0.6, 6);
+                // honeys
+                this.honeys.forEach(h => {
+                    this.ctx.fillStyle = '#FFB300';
+                    this.fillRoundedRect(h.x, h.y, h.width, h.height, 6);
+                    this.ctx.fillStyle = '#FFE082';
+                    this.ctx.fillRect(h.x + h.width * 0.2, h.y + 2, h.width * 0.6, 6);
+                    this.ctx.fillStyle = '#6D4C41';
+                    this.ctx.fillRect(h.x + h.width * 0.2, h.y - 4, h.width * 0.6, 6);
                 });
 
-                // Bees
-                bees.forEach(b => {
+                // bees
+                this.bees.forEach(b => {
                     const centerX = b.x + b.width / 2;
                     const centerY = b.y + b.height / 2;
                     const r = b.width / 2;
 
-                    // body
-                    ctx.beginPath();
-                    ctx.fillStyle = '#FFEB3B';
-                    ctx.ellipse(centerX, centerY, r, r * 0.7, 0, 0, Math.PI * 2);
-                    ctx.fill();
+                    this.ctx.beginPath();
+                    this.ctx.fillStyle = '#FFEB3B';
+                    this.ctx.ellipse(centerX, centerY, r, r * 0.7, 0, 0, Math.PI * 2);
+                    this.ctx.fill();
 
-                    // stripes
-                    ctx.strokeStyle = '#212121';
-                    ctx.lineWidth = 3;
-                    ctx.beginPath();
-                    ctx.moveTo(centerX - r, centerY - r * 0.3);
-                    ctx.lineTo(centerX + r, centerY - r * 0.3);
-                    ctx.moveTo(centerX - r, centerY);
-                    ctx.lineTo(centerX + r, centerY);
-                    ctx.moveTo(centerX - r, centerY + r * 0.3);
-                    ctx.lineTo(centerX + r, centerY + r * 0.3);
-                    ctx.stroke();
+                    this.ctx.strokeStyle = '#212121';
+                    this.ctx.lineWidth = 3;
+                    this.ctx.beginPath();
+                    this.ctx.moveTo(centerX - r, centerY - r * 0.3);
+                    this.ctx.lineTo(centerX + r, centerY - r * 0.3);
+                    this.ctx.moveTo(centerX - r, centerY);
+                    this.ctx.lineTo(centerX + r, centerY);
+                    this.ctx.moveTo(centerX - r, centerY + r * 0.3);
+                    this.ctx.lineTo(centerX + r, centerY + r * 0.3);
+                    this.ctx.stroke();
 
-                    // wings
-                    ctx.fillStyle = 'rgba(255,255,255,0.8)';
-                    ctx.beginPath();
-                    ctx.ellipse(centerX - r * 0.4, centerY - r * 0.9, r * 0.4, r * 0.6, -0.3, 0, Math.PI * 2);
-                    ctx.fill();
-                    ctx.beginPath();
-                    ctx.ellipse(centerX + r * 0.4, centerY - r * 0.9, r * 0.4, r * 0.6, 0.3, 0, Math.PI * 2);
-                    ctx.fill();
+                    this.ctx.fillStyle = 'rgba(255,255,255,0.8)';
+                    this.ctx.beginPath();
+                    this.ctx.ellipse(centerX - r * 0.4, centerY - r * 0.9, r * 0.4, r * 0.6, -0.3, 0, Math.PI * 2);
+                    this.ctx.fill();
+                    this.ctx.beginPath();
+                    this.ctx.ellipse(centerX + r * 0.4, centerY - r * 0.9, r * 0.4, r * 0.6, 0.3, 0, Math.PI * 2);
+                    this.ctx.fill();
                 });
             }
 
-            function updateGame(delta) {
-                if (!player) return;
+            updateGame(delta) {
+                this.state.time = Math.max(0, this.state.time - delta);
 
-                honeyTime -= delta;
-                if (honeyTime < 0) honeyTime = 0;
+                const distance = this.player.speed * delta;
+                if (this.state.moveLeft) this.player.x -= distance;
+                if (this.state.moveRight) this.player.x += distance;
+                this.player.x = Math.max(0, Math.min(this.width - this.player.width, this.player.x));
 
-                // Movement
-                const distance = player.speed * delta;
-                if (moveLeft) {
-                    player.x -= distance;
+                this.state.spawnHoneyTimer += delta;
+                this.state.spawnBeeTimer += delta;
+                if (this.state.spawnHoneyTimer > 0.9) {
+                    this.spawnHoney();
+                    this.state.spawnHoneyTimer = 0;
                 }
-                if (moveRight) {
-                    player.x += distance;
-                }
-                if (player.x < 0) player.x = 0;
-                if (player.x + player.width > gameWidth) {
-                    player.x = gameWidth - player.width;
-                }
-
-                // Spawning
-                spawnHoneyTimer += delta;
-                spawnBeeTimer += delta;
-                if (spawnHoneyTimer > 0.9) {
-                    spawnHoney();
-                    spawnHoneyTimer = 0;
-                }
-                if (spawnBeeTimer > 1.6) {
-                    spawnBee();
-                    spawnBeeTimer = 0;
+                if (this.state.spawnBeeTimer > 1.6) {
+                    this.spawnBee();
+                    this.state.spawnBeeTimer = 0;
                 }
 
-                // Update positions
-                honeys.forEach(h => {
-                    h.y += h.speed * delta;
-                });
-                bees.forEach(b => {
-                    b.y += b.speed * delta;
-                });
+                this.honeys.forEach(h => { h.y += h.speed * delta; });
+                this.bees.forEach(b => { b.y += b.speed * delta; });
 
-                // Collisions
                 const playerRect = {
-                    x: player.x,
-                    y: player.y,
-                    width: player.width,
-                    height: player.height
+                    x: this.player.x,
+                    y: this.player.y,
+                    width: this.player.width,
+                    height: this.player.height
                 };
 
-                honeys = honeys.filter(h => {
-                    if (h.y > gameHeight + 40) {
-                        // Missed honey: no penalty, just disappears
-                        return false;
-                    }
-                    if (rectsIntersect(playerRect, h)) {
-                        const gained = 10 * honeyCombo;
-                        honeyScore += gained;
-                        honeyCombo = Math.min(honeyCombo + 0.25, 5);
+                this.honeys = this.honeys.filter(h => {
+                    if (h.y > this.height + 40) return false;
+                    if (this.rectsIntersect(playerRect, h)) {
+                        const gained = 10 * this.state.combo;
+                        this.state.score += gained;
+                        this.state.combo = Math.min(this.state.combo + 0.25, 5);
                         return false;
                     }
                     return true;
                 });
 
-                bees = bees.filter(b => {
-                    if (b.y > gameHeight + 40) {
-                        return false;
-                    }
-                    if (rectsIntersect(playerRect, b)) {
-                        honeyLives -= 1;
-                        honeyCombo = 1;
+                this.bees = this.bees.filter(b => {
+                    if (b.y > this.height + 40) return false;
+                    if (this.rectsIntersect(playerRect, b)) {
+                        this.state.lives -= 1;
+                        this.state.combo = 1;
                         return false;
                     }
                     return true;
                 });
 
-                updateHUD();
+                this.updateHUD();
             }
 
-            function endGame(reason) {
-                if (gameState === 'ended' || gameState === 'idle') return;
-                gameState = 'ended';
+            endGame(reason) {
+                if (this.state.status === 'ended' || this.state.status === 'idle') return;
+                this.state.status = 'ended';
+                this.updateHUD();
 
-                updateHUD();
-
-                const finalScore = Math.round(honeyScore);
-                if (countdownEl) countdownEl.textContent = 'Game Over';
-                if (hintEl) {
-                    hintEl.textContent = reason === 'time'
+                const finalScore = Math.round(this.state.score);
+                this.setOverlayCopy({
+                    countdown: 'Game Over',
+                    hint: reason === 'time'
                         ? 'Time is up! That was a very fine honey hunt.'
-                        : 'The bees were very, very busy today.';
-                }
-                if (statusEl) statusEl.textContent = 'Final score: ' + finalScore + ' points';
-                if (overlay) overlay.style.display = 'flex';
+                        : 'The bees were very, very busy today.',
+                    status: `Final score: ${finalScore} points`
+                });
+                if (this.overlay) this.overlay.style.display = 'flex';
 
-                // Save high score
-                if (finalScore > storedHigh) {
-                    storedHigh = finalScore;
-                    localStorage.setItem('honeyHighScore', String(storedHigh));
-                    if (highScoreDisplay) {
-                        highScoreDisplay.textContent = finalScore + ' points (New High Score!)';
-                    }
-                    if (cardHighScoreText) {
-                        cardHighScoreText.textContent = 'High Score: ' + finalScore + ' (New!)';
-                    }
+                if (finalScore > this.highScore) {
+                    this.highScore = finalScore;
+                    localStorage.setItem('honeyHighScore', String(this.highScore));
+                    if (this.highScoreDisplay) this.highScoreDisplay.textContent = `${finalScore} points (New High Score!)`;
+                    if (this.cardHighScoreText) this.cardHighScoreText.textContent = `High Score: ${finalScore} (New!)`;
                 } else {
-                    if (highScoreDisplay) {
-                        highScoreDisplay.textContent = storedHigh + ' points';
-                    }
+                    this.updateHighScoreDisplay();
                 }
 
-                // Update buttons
-                if (startBtn) {
-                    const span = startBtn.querySelector('span');
-                    if (span) span.textContent = 'Play Again';
-                }
-                if (pauseBtn) {
-                    pauseBtn.disabled = true;
-                    const span = pauseBtn.querySelector('span');
-                    const icon = pauseBtn.querySelector('i');
-                    if (span) span.textContent = 'Pause';
-                    if (icon) icon.className = 'fas fa-pause';
-                }
+                this.rafId = null;
+
+                this.updateButtonStates({
+                    startLabel: 'Play Again',
+                    pauseDisabled: true,
+                    pauseLabel: 'Pause',
+                    pauseIcon: 'fas fa-pause'
+                });
             }
 
-            function gameLoop(timestamp) {
-                if (gameState !== 'running') return;
-                if (!lastFrameTime) lastFrameTime = timestamp;
-                const delta = (timestamp - lastFrameTime) / 1000;
-                lastFrameTime = timestamp;
+            gameLoop(timestamp) {
+                if (this.state.status !== 'running') return;
+                if (!this.state.lastFrameTime) this.state.lastFrameTime = timestamp;
+                const delta = (timestamp - this.state.lastFrameTime) / 1000;
+                this.state.lastFrameTime = timestamp;
 
-                updateGame(delta);
-                drawGame();
+                this.updateGame(delta);
+                this.drawGame();
 
-                if (honeyTime <= 0) {
-                    endGame('time');
+                if (this.state.time <= 0) {
+                    this.endGame('time');
                     return;
                 }
-                if (honeyLives <= 0) {
-                    endGame('lives');
+                if (this.state.lives <= 0) {
+                    this.endGame('lives');
                     return;
                 }
 
-                requestAnimationFrame(gameLoop);
+                this.rafId = requestAnimationFrame(this.gameLoop);
             }
 
-            function resetState() {
-                honeys = [];
-                bees = [];
-                honeyTime = 60;
-                honeyScore = 0;
-                honeyLives = 3;
-                honeyCombo = 1;
-                spawnHoneyTimer = 0;
-                spawnBeeTimer = 0;
-                lastFrameTime = 0;
-                if (player) {
-                    player.x = gameWidth / 2 - player.width / 2;
-                    player.y = gameHeight - 70;
+            resetState() {
+                this.honeys = [];
+                this.bees = [];
+                this.state.time = 60;
+                this.state.score = 0;
+                this.state.lives = 3;
+                this.state.combo = 1;
+                this.state.spawnHoneyTimer = 0;
+                this.state.spawnBeeTimer = 0;
+                this.state.lastFrameTime = 0;
+                if (this.player) {
+                    this.player.x = this.width / 2 - this.player.width / 2;
+                    this.player.y = this.height - 70;
                 }
-                updateHUD();
+                this.updateHUD();
             }
 
-            function startGame() {
-                resetState();
-                gameState = 'running';
-                if (overlay) overlay.style.display = 'none';
-
-                if (statusEl) statusEl.textContent = 'Catch honey, dodge bees, build your combo!';
-                if (countdownEl) countdownEl.textContent = '';
-                if (hintEl) hintEl.textContent = 'Use arrows/A-D or touch buttons to move.';
-
-                if (startBtn) {
-                    const span = startBtn.querySelector('span');
-                    const icon = startBtn.querySelector('i');
-                    if (span) span.textContent = 'Restart Hunt';
-                    if (icon) icon.className = 'fas fa-redo';
+            startGame() {
+                const wasRunning = this.state.status === 'running';
+                if (wasRunning && this.rafId) {
+                    cancelAnimationFrame(this.rafId);
+                    this.rafId = null;
                 }
+                this.resetState();
+                this.state.status = 'running';
+                if (this.overlay) this.overlay.style.display = 'none';
 
-                if (pauseBtn) {
-                    pauseBtn.disabled = false;
-                    const span = pauseBtn.querySelector('span');
-                    const icon = pauseBtn.querySelector('i');
-                    if (span) span.textContent = 'Pause';
-                    if (icon) icon.className = 'fas fa-pause';
-                }
+                this.setOverlayCopy({
+                    countdown: '',
+                    hint: 'Use arrows/A-D or touch buttons to move.',
+                    status: 'Catch honey, dodge bees, build your combo!'
+                });
 
-                requestAnimationFrame(gameLoop);
+                this.updateButtonStates({
+                    startLabel: 'Restart Hunt',
+                    startIcon: 'fas fa-redo',
+                    pauseDisabled: false,
+                    pauseLabel: 'Pause',
+                    pauseIcon: 'fas fa-pause'
+                });
+
+                this.rafId = requestAnimationFrame(this.gameLoop);
             }
 
-            function togglePause() {
-                if (gameState === 'running') {
-                    gameState = 'paused';
-                    if (overlay) overlay.style.display = 'flex';
-                    if (countdownEl) countdownEl.textContent = 'Game Paused';
-                    if (hintEl) hintEl.textContent = 'Tap Resume or press Pause again to continue.';
-                    if (statusEl) statusEl.textContent = 'Your honey hunt is waiting.';
-
-                    if (pauseBtn) {
-                        const span = pauseBtn.querySelector('span');
-                        const icon = pauseBtn.querySelector('i');
-                        if (span) span.textContent = 'Resume';
-                        if (icon) icon.className = 'fas fa-play';
-                    }
-                } else if (gameState === 'paused') {
-                    gameState = 'running';
-                    if (overlay) overlay.style.display = 'none';
-                    lastFrameTime = 0; // reset to avoid big delta on resume
-
-                    if (pauseBtn) {
-                        const span = pauseBtn.querySelector('span');
-                        const icon = pauseBtn.querySelector('i');
-                        if (span) span.textContent = 'Pause';
-                        if (icon) icon.className = 'fas fa-pause';
-                    }
-
-                    requestAnimationFrame(gameLoop);
+            togglePause() {
+                if (this.state.status === 'running') {
+                    this.state.status = 'paused';
+                    if (this.overlay) this.overlay.style.display = 'flex';
+                    this.setOverlayCopy({
+                        countdown: 'Game Paused',
+                        hint: 'Tap Resume or press Pause again to continue.',
+                        status: 'Your honey hunt is waiting.'
+                    });
+                    this.updateButtonStates({
+                        pauseLabel: 'Resume',
+                        pauseIcon: 'fas fa-play'
+                    });
+                    this.rafId = null;
+                } else if (this.state.status === 'paused') {
+                    this.state.status = 'running';
+                    if (this.overlay) this.overlay.style.display = 'none';
+                    this.state.lastFrameTime = 0;
+                    this.updateButtonStates({
+                        pauseLabel: 'Pause',
+                        pauseIcon: 'fas fa-pause'
+                    });
+                    this.rafId = requestAnimationFrame(this.gameLoop);
                 }
             }
 
-            // Keyboard controls
-            window.addEventListener('keydown', function(e) {
-                if (gameState !== 'running') return;
-                if (e.key === 'ArrowLeft' || e.key === 'a' || e.key === 'A') {
-                    moveLeft = true;
+            updateButtonStates({ startLabel, startIcon = 'fas fa-play', pauseDisabled, pauseLabel, pauseIcon = 'fas fa-pause' }) {
+                if (this.startBtn) {
+                    const span = this.startBtn.querySelector('span');
+                    const icon = this.startBtn.querySelector('i');
+                    if (span && startLabel) span.textContent = startLabel;
+                    if (icon && startIcon) icon.className = startIcon;
+                }
+
+                if (this.pauseBtn) {
+                    const span = this.pauseBtn.querySelector('span');
+                    const icon = this.pauseBtn.querySelector('i');
+                    if (pauseDisabled !== undefined) this.pauseBtn.disabled = pauseDisabled;
+                    if (span && pauseLabel) span.textContent = pauseLabel;
+                    if (icon && pauseIcon) icon.className = pauseIcon;
+                }
+            }
+
+            bindControls() {
+                window.addEventListener('keydown', (e) => this.handleKeyDown(e));
+                window.addEventListener('keyup', (e) => this.handleKeyUp(e));
+                this.bindDirectionalButton(this.mobileLeftBtn, 'left');
+                this.bindDirectionalButton(this.mobileRightBtn, 'right');
+                this.bindSwipeControls();
+
+                if (this.startBtn) {
+                    this.startBtn.addEventListener('click', () => this.startGame());
+                }
+
+                if (this.pauseBtn) {
+                    this.pauseBtn.addEventListener('click', () => {
+                        if (!this.pauseBtn.disabled && (this.state.status === 'running' || this.state.status === 'paused')) {
+                            this.togglePause();
+                        }
+                    });
+                }
+
+                this.playCardButtons.forEach(btn => {
+                    btn.addEventListener('click', () => {
+                        smoothScrollTo('#honeyGameArea');
+                        if (this.state.status === 'idle' || this.state.status === 'ended') {
+                            setTimeout(() => this.startGame(), 400);
+                        }
+                    });
+                });
+            }
+
+            handleKeyDown(e) {
+                if (this.state.status !== 'running') return;
+                if (e.key === 'ArrowLeft' || e.key.toLowerCase() === 'a') {
+                    this.state.moveLeft = true;
                     e.preventDefault();
-                } else if (e.key === 'ArrowRight' || e.key === 'd' || e.key === 'D') {
-                    moveRight = true;
+                } else if (e.key === 'ArrowRight' || e.key.toLowerCase() === 'd') {
+                    this.state.moveRight = true;
                     e.preventDefault();
                 }
-            });
+            }
 
-            window.addEventListener('keyup', function(e) {
-                if (e.key === 'ArrowLeft' || e.key === 'a' || e.key === 'A') {
-                    moveLeft = false;
-                } else if (e.key === 'ArrowRight' || e.key === 'd' || e.key === 'D') {
-                    moveRight = false;
+            handleKeyUp(e) {
+                if (e.key === 'ArrowLeft' || e.key.toLowerCase() === 'a') {
+                    this.state.moveLeft = false;
+                } else if (e.key === 'ArrowRight' || e.key.toLowerCase() === 'd') {
+                    this.state.moveRight = false;
                 }
-            });
+            }
 
-            // Pointer / touch controls on buttons
-            function bindDirectionalButton(btn, direction) {
+            bindDirectionalButton(btn, direction) {
                 if (!btn) return;
-                btn.addEventListener('pointerdown', function() {
-                    if (gameState !== 'running') return;
+                btn.addEventListener('pointerdown', () => {
+                    if (this.state.status !== 'running') return;
                     if (direction === 'left') {
-                        moveLeft = true;
-                        moveRight = false;
+                        this.state.moveLeft = true;
+                        this.state.moveRight = false;
                     } else {
-                        moveRight = true;
-                        moveLeft = false;
+                        this.state.moveRight = true;
+                        this.state.moveLeft = false;
                     }
                 });
-                const stop = function() {
+                const stop = () => {
                     if (direction === 'left') {
-                        moveLeft = false;
+                        this.state.moveLeft = false;
                     } else {
-                        moveRight = false;
+                        this.state.moveRight = false;
                     }
                 };
                 btn.addEventListener('pointerup', stop);
                 btn.addEventListener('pointerleave', stop);
             }
 
-            bindDirectionalButton(mobileLeftBtn, 'left');
-            bindDirectionalButton(mobileRightBtn, 'right');
+            bindSwipeControls() {
+                let touchStartX = null;
+                this.canvas.addEventListener('touchstart', (e) => {
+                    if (!e.touches || e.touches.length === 0) return;
+                    touchStartX = e.touches[0].clientX;
+                }, { passive: true });
 
-            // Swipe controls on canvas (horizontal)
-            let touchStartX = null;
-            canvas.addEventListener('touchstart', function(e) {
-                if (!e.touches || e.touches.length === 0) return;
-                touchStartX = e.touches[0].clientX;
-            }, { passive: true });
+                this.canvas.addEventListener('touchmove', (e) => {
+                    if (this.state.status !== 'running') return;
+                    if (!e.touches || e.touches.length === 0) return;
+                    if (!this.player) return;
 
-            canvas.addEventListener('touchmove', function(e) {
-                if (gameState !== 'running') return;
-                if (!e.touches || e.touches.length === 0) return;
-                if (!player) return;
-
-                const touchX = e.touches[0].clientX;
-                if (touchStartX === null) {
-                    touchStartX = touchX;
-                }
-                const diff = touchX - touchStartX;
-                player.x += diff * 0.6; // scale factor to slow movement
-                touchStartX = touchX;
-
-                if (player.x < 0) player.x = 0;
-                if (player.x + player.width > gameWidth) {
-                    player.x = gameWidth - player.width;
-                }
-            }, { passive: true });
-
-            canvas.addEventListener('touchend', function() {
-                touchStartX = null;
-            });
-
-            // Start / Pause buttons
-            startBtn.addEventListener('click', function() {
-                if (gameState === 'running') {
-                    // restart
-                    startGame();
-                } else if (gameState === 'paused' || gameState === 'ended' || gameState === 'idle') {
-                    startGame();
-                }
-            });
-
-            pauseBtn.addEventListener('click', function() {
-                if (pauseBtn.disabled) return;
-                if (gameState === 'running' || gameState === 'paused') {
-                    togglePause();
-                }
-            });
-
-            // Card "Play Honey Hunt" button scroll + start
-            playCardButtons.forEach(btn => {
-                btn.addEventListener('click', function() {
-                    smoothScrollTo('#honeyGameArea');
-                    if (gameState === 'idle' || gameState === 'ended') {
-                        setTimeout(startGame, 400);
+                    const touchX = e.touches[0].clientX;
+                    if (touchStartX === null) {
+                        touchStartX = touchX;
                     }
+                    const diff = touchX - touchStartX;
+                    this.player.x = Math.max(0, Math.min(this.width - this.player.width, this.player.x + diff * 0.6));
+                    touchStartX = touchX;
+                }, { passive: true });
+
+                this.canvas.addEventListener('touchend', () => {
+                    touchStartX = null;
                 });
-            });
+            }
+        }
+
+        (function initHoneyHuntGame() {
+            window.honeyGame = new HoneyHuntGame();
         })();
     </script>
 </body>
