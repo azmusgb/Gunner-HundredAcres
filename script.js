@@ -11,6 +11,7 @@ class HundredAcreApp {
         this.cacheElements();
         this.setupCoreUI();
         this.setupObservers();
+        this.updateCurrentYear();
         this.initPreferences();
         this.initRSVP();
         this.initGameControls();
@@ -33,6 +34,7 @@ class HundredAcreApp {
             mainContent: document.getElementById('mainContent'),
             storybookCover: document.getElementById('cover'),
             openBookBtn: document.querySelector('.open-book-btn'),
+            currentYear: document.getElementById('currentYear'),
 
             navToggle: document.querySelector('.nav-toggle'),
             navMenu: document.querySelector('.nav-menu'),
@@ -637,6 +639,12 @@ class HundredAcreApp {
                 ls.style.display = 'none';
             }, 800);
         }, 1800);
+    }
+
+    updateCurrentYear() {
+        if (this.el.currentYear) {
+            this.el.currentYear.textContent = new Date().getFullYear();
+        }
     }
 
     initPreferences() {
