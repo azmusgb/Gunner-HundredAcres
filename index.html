@@ -15,7 +15,6 @@
     <meta property="og:type" content="website">
     <meta property="og:title" content="Baby Gunner's Hundred Acre Wood Celebration">
     <meta property="og:description" content="Join us in celebrating Baby Gunner's first adventure in the Hundred Acre Wood!">
-    <meta property="og:image" content="https://example.com/celebration-preview.jpg">
     
     <!-- Twitter -->
     <meta name="twitter:card" content="summary_large_image">
@@ -24,8 +23,6 @@
     
     <!-- Favicon -->
     <link rel="icon" type="image/x-icon" href="favicon.ico">
-    <link rel="apple-touch-icon" href="apple-touch-icon.png">
-    <link rel="manifest" href="manifest.json">
     
     <!-- Fonts -->
     <link rel="preconnect" href="https://fonts.googleapis.com">
@@ -40,11 +37,6 @@
     
     <!-- JavaScript (will be deferred) -->
     <script src="script.js" defer></script>
-    
-    <!-- PWA Support -->
-    <meta name="apple-mobile-web-app-capable" content="yes">
-    <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
-    <meta name="mobile-web-app-capable" content="yes">
 </head>
 <body>
     <!-- Skip Link for Accessibility -->
@@ -108,7 +100,7 @@
                 </button>
             </div>
 
-            <ul class="nav-menu" id="primaryNavigation" role="menubar" aria-hidden="true">
+            <ul class="nav-menu" id="primaryNavigation" role="menubar">
                 <li role="none">
                     <a href="#story" class="nav-item" role="menuitem">
                         <i class="fas fa-book-open" aria-hidden="true"></i> Our Story
@@ -402,7 +394,7 @@
                     </div>
                 </section>
 
-                <!-- Games Section -->
+                <!-- Games Section - Fixed Version -->
                 <section id="games" class="content-section" aria-labelledby="games-title">
                     <div class="content-section-inner">
                         <div class="section-number" aria-hidden="true">4</div>
@@ -646,7 +638,7 @@
                         </div>
 
                         <!-- Game Details Area -->
-                        <div class="game-details-area" id="gameDetails" hidden>
+                        <div class="game-details-area" id="gameDetails" style="display: none;">
                             <div class="details-header">
                                 <h3 class="details-title">
                                     <span class="details-game-icon" aria-hidden="true">🍯</span>
@@ -779,7 +771,7 @@
                         </div>
 
                         <!-- Fullscreen Game Container -->
-                        <div class="fullscreen-game-container" id="fullscreenGame" hidden>
+                        <div class="fullscreen-game-container" id="fullscreenGame" style="display: none;">
                             <div class="fullscreen-header">
                                 <div class="game-info">
                                     <span class="game-icon" aria-hidden="true">🍯</span>
@@ -804,7 +796,7 @@
                             
                             <div class="fullscreen-game-area">
                                 <canvas id="fullscreenCanvas" width="800" height="600" role="application" aria-label="Honey Hunt Adventure game"></canvas>
-                                <div class="fullscreen-overlay" id="fullscreenOverlay">
+                                <div class="fullscreen-overlay" id="fullscreenOverlay" style="display: flex;">
                                     <div class="overlay-content">
                                         <h2>Get Ready!</h2>
                                         <p>Game starting in <span id="countdown">3</span></p>
@@ -969,7 +961,7 @@
                                     </div>
                                 </button>
                                 
-                                <div class="form-status" role="alert" aria-live="polite" hidden></div>
+                                <div class="form-status" role="alert" aria-live="polite" style="display: none;"></div>
                             </form>
                         </div>
                     </div>
@@ -979,7 +971,7 @@
     </main>
 
     <!-- Character Modal -->
-    <div class="character-modal" id="characterModal" aria-hidden="true" role="dialog" aria-modal="true" aria-labelledby="modal-character-name" hidden>
+    <div class="character-modal" id="characterModal" aria-hidden="true" role="dialog" aria-modal="true" aria-labelledby="modal-character-name" style="display: none;">
         <div class="modal-content">
             <button class="close-modal" aria-label="Close character details">
                 <i class="fas fa-times" aria-hidden="true"></i>
@@ -1018,7 +1010,7 @@
     </div>
 
     <!-- Fullscreen Game Modal -->
-    <div class="game-fullscreen" id="gameFullscreen" hidden>
+    <div class="game-fullscreen" id="gameFullscreen" style="display: none;">
         <div class="game-fullscreen__backdrop"></div>
         <div class="game-fullscreen__content">
             <div class="game-fullscreen__header">
@@ -1059,41 +1051,50 @@
         </div>
     </footer>
 
-    <!-- Accessibility Menu (Hidden until activated) -->
-    <div class="accessibility-menu" id="accessibilityMenu" hidden>
-        <div class="accessibility-menu__header">
-            <h3>Accessibility Options</h3>
-            <button class="accessibility-menu__close" aria-label="Close accessibility menu">
-                <i class="fas fa-times" aria-hidden="true"></i>
-            </button>
-        </div>
-        <div class="accessibility-menu__content">
-            <div class="accessibility-option">
-                <label>
-                    <input type="checkbox" id="reduceMotion">
-                    <span>Reduce Motion</span>
-                </label>
-            </div>
-            <div class="accessibility-option">
-                <label>
-                    <input type="checkbox" id="highContrast">
-                    <span>High Contrast</span>
-                </label>
-            </div>
-            <div class="accessibility-option">
-                <label>
-                    <input type="checkbox" id="largeText">
-                    <span>Large Text</span>
-                </label>
-            </div>
-        </div>
-    </div>
+    <!-- Simple JavaScript to handle loading screen -->
+    <script>
+        // Hide loading screen when page loads
+        window.addEventListener('load', function() {
+            setTimeout(function() {
+                const loadingScreen = document.getElementById('loadingScreen');
+                if (loadingScreen) {
+                    loadingScreen.style.opacity = '0';
+                    loadingScreen.style.visibility = 'hidden';
+                    loadingScreen.style.pointerEvents = 'none';
+                    
+                    // Show storybook shell
+                    const storybookShell = document.querySelector('.storybook-shell');
+                    if (storybookShell) {
+                        storybookShell.style.opacity = '1';
+                    }
+                }
+            }, 1500); // Show loading screen for 1.5 seconds
+        });
 
-    <!-- Loading Spinner Template (Hidden) -->
-    <template id="loadingSpinnerTemplate">
-        <div class="loading-spinner" role="status" aria-label="Loading">
-            <div class="spinner-circle"></div>
-        </div>
-    </template>
+        // Set current year in footer
+        document.getElementById('currentYear').textContent = new Date().getFullYear();
+
+        // Simple theme toggle
+        const themeToggle = document.querySelector('.theme-toggle');
+        if (themeToggle) {
+            themeToggle.addEventListener('click', function() {
+                const isDark = document.body.getAttribute('data-theme') === 'dark';
+                document.body.setAttribute('data-theme', isDark ? 'light' : 'dark');
+                this.setAttribute('aria-pressed', !isDark);
+                this.querySelector('i').className = isDark ? 'fas fa-moon' : 'fas fa-sun';
+            });
+        }
+
+        // Simple mobile menu toggle
+        const navToggle = document.querySelector('.nav-toggle');
+        const navMenu = document.getElementById('primaryNavigation');
+        if (navToggle && navMenu) {
+            navToggle.addEventListener('click', function() {
+                const isExpanded = this.getAttribute('aria-expanded') === 'true';
+                this.setAttribute('aria-expanded', !isExpanded);
+                navMenu.classList.toggle('nav-menu--open');
+            });
+        }
+    </script>
 </body>
 </html>
