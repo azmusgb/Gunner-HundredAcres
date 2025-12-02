@@ -149,10 +149,6 @@ const pageTitles = {
 };
 
 let audioContext;
-let poohSpriteReady = false;
-const poohSprite = new Image();
-poohSprite.src = 'Images/Characters/honey-bear.png';
-poohSprite.onload = () => { poohSpriteReady = true; };
 
 function getAudioContext() {
   if (audioContext) return audioContext;
