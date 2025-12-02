@@ -1,1713 +1,197 @@
-// script.js – Hundred Acre Celebration (Enhanced Visuals Edition)
-
-/* ========= PAGE APP ========= */
-
-class HundredAcreApp {
-    constructor() {
-        this.init();
-    }
-
-    init() {
-        this.cacheElements();
-        this.setupCoreUI();
-        this.setupObservers();
-        this.updateCurrentYear();
-        this.initPreferences();
-        this.initRSVP();
-        this.initGameControls();
-        this.setupFullscreenGames();
-        this.bindGlobals();
-        this.startLoading();
-
-        setTimeout(() => {
-            this.updateReadingProgress();
-            this.updateFABs();
-            this.updatePersistentRSVP();
-        }, 400);
-    }
-
-    cacheElements() {
-        this.el = {
-            body: document.body,
-            loadingScreen: document.getElementById('loadingScreen'),
-            readingProgress: document.querySelector('.reading-progress'),
-            mainContent: document.getElementById('mainContent'),
-            storybookCover: document.getElementById('cover'),
-            openBookBtn: document.querySelector('.open-book-btn'),
-            currentYear: document.getElementById('currentYear'),
-
-            navToggle: document.querySelector('.nav-toggle'),
-            navMenu: document.querySelector('.nav-menu'),
-            navItems: document.querySelectorAll('.nav-item'),
-            themeToggle: document.querySelector('.theme-toggle'),
-            themeIcon: document.querySelector('.theme-toggle i'),
-
-            persistentRsvpBtn: document.querySelector('.persistent-rsvp'),
-            scrollTopFab: document.querySelector('.fab[aria-label="Scroll to Top"]'),
-            scrollRsvpFab: document.querySelector('.fab[aria-label="Share Celebration"]'),
-
-            musicToggle: document.querySelector('.music-controls .music-btn'),
-            motionToggle: document.querySelector('.music-controls .accessibility-btn'),
-            bgMusic: document.getElementById('bgMusic'),
-
-            rsvpSection: document.getElementById('rsvp'),
-            rsvpForm: document.getElementById('rsvpForm'),
-            rsvpStatus: document.querySelector('.form-status'),
-            rsvpCount: document.getElementById('rsvp-count'),
-            rsvpAnchor: document.getElementById('rsvp'),
-
-            sections: Array.from(document.querySelectorAll('.content-section')),
-
-            characterModal: document.getElementById('characterModal'),
-            characterModalIcon: document.querySelector('#characterModal .modal-character-icon i'),
-            characterModalTitle: document.querySelector('#characterModal .modal-character-name'),
-            characterModalQuote: document.querySelector('#characterModal .modal-character-quote'),
-            characterModalBio: document.querySelector('#characterModal .modal-character-bio'),
-            characterModalClose: document.querySelector('#characterModal .close-modal'),
-
-            gameInstructionModal: document.getElementById('gameInstructionModal'),
-            gameInstructionTitle: document.getElementById('gameInstructionTitle'),
-            gameInstructionQuote: document.getElementById('modalCharacterQuote'),
-            gameInstructionList: document.getElementById('gameInstructionList'),
-            gameInstructionClose: document.getElementById('closeGameModal'),
-
-            gameFullscreen: document.getElementById('gameFullscreen'),
-            gameFullscreenBody: document.querySelector('#gameFullscreen .game-fullscreen__body'),
-            gameFullscreenTitle: document.querySelector('#gameFullscreen .game-fullscreen__title'),
-            gameFullscreenBackdrop: document.querySelector('#gameFullscreen .game-fullscreen__backdrop'),
-            gameFullscreenClose: document.querySelector('#gameFullscreen .game-fullscreen__close'),
-
-            honeyCanvas: document.getElementById('honey-game'),
-
-            catchScore: document.getElementById('score-count'),
-            catchTime: document.getElementById('time-count'),
-            catchLives: document.getElementById('catch-lives'),
-            catchStartBtn: document.getElementById('start-catch'),
-            catchPauseBtn: document.getElementById('pause-catch'),
-            catchOverlay: document.getElementById('catch-overlay'),
-            catchCountdown: document.getElementById('catch-countdown'),
-            catchHint: document.getElementById('catch-hint'),
-            catchStatus: document.getElementById('catch-status'),
-            catchHighScore: document.getElementById('catch-high-score'),
-            catchHighScoreDisplay: document.getElementById('catch-high-score-display'),
-
-            mobileControls: document.querySelector('.mobile-controls-panel'),
-            mobileLeftBtn: document.getElementById('mobileLeftBtn'),
-            mobileRightBtn: document.getElementById('mobileRightBtn')
-        };
-
-        this.sectionById = {};
-        this.el.sections.forEach(sec => {
-            if (sec && sec.id) this.sectionById[sec.id] = sec;
-        });
-
-        this.focusTrapCleanup = null;
-
-        this.catchState = {
-            timeRemaining: 60,
-            score: 0,
-            highScore: 0,
-            running: false,
-            timerId: null
-        };
-
-        this.fullscreenState = {
-            active: false,
-            placeholder: null,
-            content: null
-        };
-    }
-
-    initGameControls() {
-        const {
-            catchStartBtn,
-            catchPauseBtn,
-            catchOverlay,
-            catchCountdown,
-            catchHint,
-            catchStatus
-        } = this.el;
-
-        if (catchStartBtn) {
-            catchStartBtn.addEventListener('click', () => this.startCatchGame());
-        }
-
-        if (catchPauseBtn) {
-            catchPauseBtn.addEventListener('click', () => this.pauseCatchGame());
-        }
-
-        if (catchOverlay) {
-            // Show the canvas art as soon as the section is visible
-            catchOverlay.classList.add('is-hidden');
-        }
-
-        if (catchCountdown) catchCountdown.textContent = 'Ready When You Are';
-        if (catchHint) catchHint.textContent = 'Press start to catch honey for 60 seconds!';
-        if (catchStatus) catchStatus.textContent = 'Ready to Start';
-        this.updateCatchUI();
-    }
-
-    setupFullscreenGames() {
-        this.fullscreenTriggers = document.querySelectorAll('.game-fullscreen-trigger');
-
-        this.fullscreenTriggers.forEach(trigger => {
-            trigger.addEventListener('click', () => this.openGameFullscreen(trigger));
-        });
-
-        if (this.el.gameFullscreenBackdrop) {
-            this.el.gameFullscreenBackdrop.addEventListener('click', () => this.closeGameFullscreen());
-        }
-
-        if (this.el.gameFullscreenClose) {
-            this.el.gameFullscreenClose.addEventListener('click', () => this.closeGameFullscreen());
-        }
-
-        this.el.gameFullscreen?.setAttribute('aria-hidden', 'true');
-
-        document.addEventListener('keydown', (evt) => {
-            if (evt.key === 'Escape' && this.fullscreenState.active) {
-                this.closeGameFullscreen();
-            }
-        });
-    }
-
-    openGameFullscreen(trigger) {
-        const targetId = typeof trigger === 'string' ? trigger : trigger?.dataset?.fullscreenTarget;
-        if (!targetId || this.fullscreenState.active) return;
-
-        const target = document.getElementById(targetId);
-        if (!target || !this.el.gameFullscreenBody) return;
-
-        this.fullscreenState.placeholder = document.createComment('game-fullscreen-placeholder');
-        target.parentNode?.insertBefore(this.fullscreenState.placeholder, target);
-
-        this.el.gameFullscreenBody.appendChild(target);
-        this.fullscreenState.content = target;
-        this.fullscreenState.active = true;
-
-        const title = trigger?.dataset?.fullscreenTitle || target.dataset?.gameTitle || 'Full Screen Play';
-        if (this.el.gameFullscreenTitle) this.el.gameFullscreenTitle.textContent = title;
-
-        document.body.classList.add('game-fullscreen-open');
-        this.el.gameFullscreen?.setAttribute('aria-hidden', 'false');
-
-        requestAnimationFrame(() => {
-            this.el.gameFullscreen?.classList.add('is-visible');
-            window.honeyGame?.handleResize?.();
-            this.el.gameFullscreenClose?.focus({ preventScroll: true });
-            this.enableFocusTrap(this.el.gameFullscreen);
-        });
-    }
-
-    closeGameFullscreen() {
-        if (!this.fullscreenState.active) return;
-
-        if (this.fullscreenState.placeholder && this.fullscreenState.placeholder.parentNode && this.fullscreenState.content) {
-            this.fullscreenState.placeholder.parentNode.insertBefore(this.fullscreenState.content, this.fullscreenState.placeholder);
-            this.fullscreenState.placeholder.remove();
-        }
-
-        this.fullscreenState = { active: false, placeholder: null, content: null };
-
-        document.body.classList.remove('game-fullscreen-open');
-        this.el.gameFullscreen?.classList.remove('is-visible');
-        this.el.gameFullscreen?.setAttribute('aria-hidden', 'true');
-        this.clearFocusTrap();
-
-        window.honeyGame?.handleResize?.();
-    }
-
-    startCatchGame() {
-        const { catchOverlay, catchHint, catchCountdown, catchStatus } = this.el;
-        if (this.catchState.running) return;
-
-        this.catchState.running = true;
-        this.catchState.timeRemaining = 60;
-        this.catchState.score = 0;
-
-        if (catchOverlay) catchOverlay.classList.add('is-hidden');
-        if (catchHint) catchHint.textContent = 'Catch honey pots and avoid rocks!';
-        if (catchCountdown) catchCountdown.textContent = 'Go!';
-        if (catchStatus) catchStatus.textContent = 'In Progress';
-
-        this.updateCatchUI();
-
-        this.catchState.timerId = setInterval(() => {
-            if (!this.catchState.running) return;
-            this.catchState.timeRemaining -= 1;
-            if (this.catchState.timeRemaining <= 0) {
-                this.finishCatchGame();
-            } else {
-                this.updateCatchUI();
-            }
-        }, 1000);
-    }
-
-    pauseCatchGame() {
-        const { catchOverlay, catchCountdown, catchHint, catchStatus } = this.el;
-        if (!this.catchState.running) return;
-
-        this.catchState.running = false;
-        if (this.catchState.timerId) clearInterval(this.catchState.timerId);
-        this.catchState.timerId = null;
-
-        if (catchOverlay) catchOverlay.classList.remove('is-hidden');
-        if (catchCountdown) catchCountdown.textContent = 'Paused';
-        if (catchHint) catchHint.textContent = 'Press start to resume your honey hunt.';
-        if (catchStatus) catchStatus.textContent = 'Paused';
-    }
-
-    finishCatchGame() {
-        const { catchOverlay, catchCountdown, catchHint, catchStatus } = this.el;
-        this.catchState.running = false;
-        if (this.catchState.timerId) clearInterval(this.catchState.timerId);
-        this.catchState.timerId = null;
-
-        const newHighScore = Math.max(this.catchState.score, this.catchState.highScore);
-        if (newHighScore !== this.catchState.highScore) {
-            this.catchState.highScore = newHighScore;
-        }
-        this.updateCatchUI();
-
-        if (catchOverlay) catchOverlay.classList.remove('is-hidden');
-        if (catchCountdown) catchCountdown.textContent = "Time's Up";
-        if (catchHint) catchHint.textContent = 'Great job! Press start to try again.';
-        if (catchStatus) catchStatus.textContent = 'Finished';
-    }
-
-    updateCatchUI() {
-        const { catchScore, catchTime, catchHighScore, catchHighScoreDisplay } = this.el;
-        if (catchScore) catchScore.textContent = this.catchState.score.toString();
-        if (catchTime) catchTime.textContent = `${this.catchState.timeRemaining}s`;
-
-        const highScoreText = `${this.catchState.highScore} points`;
-        if (catchHighScore) catchHighScore.textContent = this.catchState.highScore.toString();
-        if (catchHighScoreDisplay) catchHighScoreDisplay.textContent = highScoreText;
-    }
-
-    setupCoreUI() {
-        // Open book button
-        if (this.el.openBookBtn) {
-            this.el.openBookBtn.addEventListener('click', (e) => {
-                e.preventDefault();
-                this.el.storybookCover.classList.add('hidden');
-                this.el.mainContent.classList.remove('hidden');
-                
-                // Scroll to top of content
-                setTimeout(() => {
-                    window.scrollTo({
-                        top: 0,
-                        behavior: 'smooth'
-                    });
-                    this.el.mainContent.focus();
-                }, 100);
-                
-                // Trigger animation for main content
-                setTimeout(() => {
-                    const sections = document.querySelectorAll('.content-section');
-                    sections.forEach(section => {
-                        section.classList.add('scroll-animate');
-                    });
-                }, 500);
-            });
-        }
-
-        // Navigation toggle
-        if (this.el.navToggle) {
-            this.el.navToggle.addEventListener('click', () => {
-                const isExpanded = this.el.navToggle.getAttribute('aria-expanded') === 'true';
-                const nextState = !isExpanded;
-                this.el.navToggle.setAttribute('aria-expanded', nextState);
-                this.el.navMenu.classList.toggle('nav-menu--open');
-                this.el.navMenu.setAttribute('aria-hidden', !nextState);
-                document.body.classList.toggle('nav-open', nextState);
-
-                if (nextState) {
-                    this.enableFocusTrap(this.el.navMenu);
-                    this.el.mainContent?.setAttribute('aria-hidden', 'true');
-                } else {
-                    this.clearFocusTrap();
-                    this.el.mainContent?.removeAttribute('aria-hidden');
-                }
-            });
-        }
-
-        if (this.el.themeToggle) {
-            this.el.themeToggle.addEventListener('click', () => {
-                const currentTheme = document.documentElement.getAttribute('data-theme') || 'light';
-                const nextTheme = currentTheme === 'dark' ? 'light' : 'dark';
-                this.setTheme(nextTheme, true);
-            });
-        }
-
-        // Navigation items
-        if (this.el.navItems) {
-            this.el.navItems.forEach(item => {
-                item.addEventListener('click', (e) => {
-                    e.preventDefault();
-                    const href = item.getAttribute('href');
-                    if (href && href.startsWith('#')) {
-                        const targetId = href.substring(1);
-                        const targetSection = document.getElementById(targetId);
-                        if (targetSection) {
-                            this.scrollToSection(targetSection);
-                            this.closeNavMenu();
-                        }
-                    }
-                });
-            });
-        }
-
-        // Persistent RSVP button
-        if (this.el.persistentRsvpBtn) {
-            this.el.persistentRsvpBtn.addEventListener('click', () => {
-                const rsvpSection = document.getElementById('rsvp');
-                if (rsvpSection) {
-                    this.scrollToSection(rsvpSection);
-                }
-            });
-        }
-
-        // Scroll to top FAB
-        if (this.el.scrollTopFab) {
-            this.el.scrollTopFab.addEventListener('click', () => {
-                window.scrollTo({
-                    top: 0,
-                    behavior: 'smooth'
-                });
-            });
-        }
-
-        // Scroll to RSVP FAB
-        if (this.el.scrollRsvpFab) {
-            this.el.scrollRsvpFab.addEventListener('click', () => {
-                const rsvpSection = document.getElementById('rsvp');
-                if (rsvpSection) {
-                    this.scrollToSection(rsvpSection);
-                }
-            });
-        }
-
-        // Music toggle
-        if (this.el.musicToggle) {
-            this.el.musicToggle.addEventListener('click', () => this.toggleMusic());
-        }
-
-        // Motion toggle
-        if (this.el.motionToggle) {
-            this.el.motionToggle.addEventListener('click', () => this.toggleMotion());
-        }
-
-        // Close character modal
-        if (this.el.characterModalClose) {
-            this.el.characterModalClose.addEventListener('click', () => this.closeCharacterModal());
-        }
-
-        // Close game modal
-        if (this.el.gameInstructionClose) {
-            this.el.gameInstructionClose.addEventListener('click', () => this.closeGameInstructions());
-        }
-
-        // Close modals on escape key
-        document.addEventListener('keydown', (e) => {
-            if (e.key === 'Escape') {
-                this.closeCharacterModal();
-                this.closeGameInstructions();
-            }
-        });
-
-        // Close modals on background click
-        document.addEventListener('click', (e) => {
-            if (this.el.characterModal && !this.el.characterModal.contains(e.target) && 
-                e.target !== this.el.characterModal && this.el.characterModal.style.display === 'flex') {
-                this.closeCharacterModal();
-            }
-            if (this.el.gameInstructionModal && !this.el.gameInstructionModal.contains(e.target) && 
-                e.target !== this.el.gameInstructionModal && this.el.gameInstructionModal.style.display === 'flex') {
-                this.closeGameInstructions();
-            }
-        });
-
-        // Window resize handling
-        window.addEventListener('resize', this.throttle(() => {
-        }, 250));
-
-        // Scroll events
-        window.addEventListener('scroll', this.throttle(() => {
-            this.updateReadingProgress();
-            this.updateFABs();
-            this.updatePersistentRSVP();
-        }, 100));
-    }
-
-    closeNavMenu() {
-        if (!this.el.navMenu || !this.el.navToggle) return;
-        this.el.navMenu.classList.remove('nav-menu--open');
-        this.el.navMenu.setAttribute('aria-hidden', 'true');
-        this.el.navToggle.setAttribute('aria-expanded', 'false');
-        document.body.classList.remove('nav-open');
-        this.clearFocusTrap();
-        this.el.mainContent?.removeAttribute('aria-hidden');
-    }
-
-    setActiveNavItem(activeItem) {
-        if (!this.el.navItems) return;
-        this.el.navItems.forEach(item => {
-            item.classList.toggle('active', item === activeItem);
-        });
-    }
-
-    scrollToSection(section) {
-        const offset = 80;
-        const rect = section.getBoundingClientRect();
-        const scrollTop = window.pageYOffset || document.documentElement.scrollTop;
-        const targetY = rect.top + scrollTop - offset;
-
-        window.scrollTo({ top: targetY, behavior: 'smooth' });
-    }
-
-    setupObservers() {
-        const options = { threshold: 0.25 };
-        const observer = new IntersectionObserver((entries) => {
-            entries.forEach(entry => {
-                const sec = entry.target;
-                if (entry.isIntersecting) {
-                    sec.classList.add('section-visible', 'scroll-animate');
-                    if (sec.id && this.el.navItems) {
-                        this.el.navItems.forEach(item => {
-                            const href = item.getAttribute('href');
-                            const id = href ? href.replace('#', '') : '';
-                            item.classList.toggle('active', id === sec.id);
-                        });
-                    }
-                }
-            });
-        }, options);
-
-        this.el.sections.forEach(sec => sec && observer.observe(sec));
-    }
-
-    updateReadingProgress() {
-        const bar = this.el.readingProgress;
-        if (!bar) return;
-        const scrollTop = window.pageYOffset || document.documentElement.scrollTop;
-        const docHeight = document.documentElement.scrollHeight - document.documentElement.clientHeight;
-        const pct = docHeight > 0 ? (scrollTop / docHeight) * 100 : 0;
-        bar.style.width = `${pct}%`;
-        bar.setAttribute('aria-valuenow', String(Math.round(pct)));
-    }
-
-    updateFABs() {
-        const { scrollTopFab, scrollRsvpFab, rsvpAnchor } = this.el;
-        const scrollY = window.pageYOffset || document.documentElement.scrollTop;
-
-        if (scrollTopFab) {
-            scrollTopFab.classList.toggle('fab--visible', scrollY > 400);
-        }
-
-        if (!scrollRsvpFab || !rsvpAnchor) return;
-
-        const rect = rsvpAnchor.getBoundingClientRect();
-        const inView = rect.top < window.innerHeight && rect.bottom > 0;
-
-        if (inView) {
-            scrollRsvpFab.classList.remove('fab--visible');
-        } else {
-            scrollRsvpFab.classList.toggle('fab--visible', scrollY > 600);
-        }
-    }
-
-    toggleMobileControlsPanel() {
-        const panel = this.el.mobileControls;
-        if (!panel) return;
-
-        panel.classList.toggle('is-collapsed');
-
-        const toggleIcon = panel.querySelector('.toggle-icon');
-        if (toggleIcon) {
-            toggleIcon.textContent = panel.classList.contains('is-collapsed') ? '▲' : '▼';
-        }
-    }
-
-    updatePersistentRSVP() {
-        const btn = this.el.persistentRsvpBtn;
-        const sec = this.el.rsvpSection;
-        if (!btn || !sec) return;
-        const rect = sec.getBoundingClientRect();
-        const inViewport = rect.top < window.innerHeight && rect.bottom > 0;
-        if (inViewport) btn.classList.add('hidden');
-        else btn.classList.remove('hidden');
-    }
-
-    enableFocusTrap(container) {
-        if (!container) return;
-        if (this.focusTrapCleanup) this.focusTrapCleanup();
-
-        const focusable = Array.from(
-            container.querySelectorAll('a, button, input, select, textarea, [tabindex]:not([tabindex="-1"])')
-        ).filter(el => !el.hasAttribute('disabled') && !el.getAttribute('aria-hidden'));
-
-        if (!focusable.length) return;
-
-        const first = focusable[0];
-        const last = focusable[focusable.length - 1];
-
-        const handleKeydown = (e) => {
-            if (e.key !== 'Tab') return;
-            if (e.shiftKey && document.activeElement === first) {
-                e.preventDefault();
-                last.focus();
-            } else if (!e.shiftKey && document.activeElement === last) {
-                e.preventDefault();
-                first.focus();
-            }
-        };
-
-        document.addEventListener('keydown', handleKeydown, true);
-        first.focus({ preventScroll: true });
-
-        this.focusTrapCleanup = () => {
-            document.removeEventListener('keydown', handleKeydown, true);
-            this.focusTrapCleanup = null;
-        };
-    }
-
-    clearFocusTrap() {
-        if (this.focusTrapCleanup) {
-            this.focusTrapCleanup();
-        }
-    }
-
-    throttle(fn, limit) {
-        let inThrottle = false;
-        let lastFn;
-        let lastTime;
-        return (...args) => {
-            const context = this;
-            if (!inThrottle) {
-                fn.apply(context, args);
-                lastTime = Date.now();
-                inThrottle = true;
-            } else {
-                clearTimeout(lastFn);
-                lastFn = setTimeout(() => {
-                    if (Date.now() - lastTime >= limit) {
-                        fn.apply(context, args);
-                        lastTime = Date.now();
-                    }
-                }, Math.max(limit - (Date.now() - lastTime), 0));
-            }
-        };
-    }
-
-    startLoading() {
-        const ls = this.el.loadingScreen;
-        if (!ls) return;
-        setTimeout(() => {
-            ls.classList.add('hidden');
-            setTimeout(() => {
-                ls.style.display = 'none';
-            }, 800);
-        }, 1800);
-    }
-
-    updateCurrentYear() {
-        if (this.el.currentYear) {
-            this.el.currentYear.textContent = new Date().getFullYear();
-        }
-    }
-
-    initPreferences() {
-        // Initialize music preference
-        const musicPref = localStorage.getItem('hundredAcreMusic');
-        if (musicPref === 'on') {
-            this.setMusic(true);
-        } else if (musicPref === 'off') {
-            this.setMusic(false);
-        }
-
-        // Initialize motion preference
-        const motionPref = localStorage.getItem('hundredAcreMotion');
-        if (motionPref === 'reduced') {
-            document.body.classList.add('reduce-motion');
-            this.setMotion(false);
-        } else {
-            this.setMotion(true);
-        }
-
-        const storedTheme = localStorage.getItem('hundredAcreTheme');
-        const prefersDark = window.matchMedia && window.matchMedia('(prefers-color-scheme: dark)').matches;
-        const initialTheme = storedTheme || (prefersDark ? 'dark' : 'light');
-        this.setTheme(initialTheme, false);
-    }
-
-    isTextInput(el) {
-        if (!el || !el.tagName) return false;
-        const tag = el.tagName.toLowerCase();
-        return tag === 'input' || tag === 'textarea' || el.isContentEditable;
-    }
-
-    toggleMusic() {
-        const bg = this.el.bgMusic;
-        if (!bg) return;
-        const isPlaying = !bg.paused;
-        this.setMusic(!isPlaying);
-    }
-
-    setMusic(on) {
-        const { bgMusic, musicToggle } = this.el;
-        if (!bgMusic || !musicToggle) return;
-
-        if (on) {
-            bgMusic.volume = 0.3;
-            bgMusic.play().catch(e => console.log('Audio play failed:', e));
-            musicToggle.classList.add('toggle--active');
-            musicToggle.setAttribute('aria-pressed', 'true');
-            localStorage.setItem('hundredAcreMusic', 'on');
-        } else {
-            bgMusic.pause();
-            musicToggle.classList.remove('toggle--active');
-            musicToggle.setAttribute('aria-pressed', 'false');
-            localStorage.setItem('hundredAcreMusic', 'off');
-        }
-    }
-
-    toggleMotion() {
-        const reduced = document.body.classList.toggle('reduce-motion');
-        this.setMotion(!reduced);
-    }
-
-    setMotion(on) {
-        const { motionToggle } = this.el;
-        if (!motionToggle) return;
-
-        if (on) {
-            motionToggle.classList.remove('toggle--active');
-            motionToggle.setAttribute('aria-pressed', 'false');
-            const lbl = motionToggle.querySelector('.sr-only');
-            if (lbl) lbl.textContent = 'Reduce motion';
-            localStorage.setItem('hundredAcreMotion', 'full');
-        } else {
-            motionToggle.classList.add('toggle--active');
-            motionToggle.setAttribute('aria-pressed', 'true');
-            const lbl = motionToggle.querySelector('.sr-only');
-            if (lbl) lbl.textContent = 'Motion reduced';
-            localStorage.setItem('hundredAcreMotion', 'reduced');
-        }
-    }
-
-    setTheme(theme, persist = false) {
-        const clampedTheme = theme === 'dark' ? 'dark' : 'light';
-        document.documentElement.setAttribute('data-theme', clampedTheme);
-
-        if (persist) {
-            localStorage.setItem('hundredAcreTheme', clampedTheme);
-        }
-
-        if (this.el.themeToggle) {
-            this.el.themeToggle.setAttribute('aria-pressed', clampedTheme === 'dark');
-            const label = this.el.themeToggle.querySelector('.sr-only');
-            if (label) label.textContent = clampedTheme === 'dark' ? 'Enable light theme' : 'Enable dark theme';
-        }
-
-        if (this.el.themeIcon) {
-            this.el.themeIcon.classList.toggle('fa-sun', clampedTheme === 'dark');
-            this.el.themeIcon.classList.toggle('fa-moon', clampedTheme !== 'dark');
-        }
-    }
-
-    initRSVP() {
-        // Load existing RSVP count
-        const rsvpData = localStorage.getItem('babyGunnerRSVP');
-        if (rsvpData) {
-            try {
-                const data = JSON.parse(rsvpData);
-                if (this.el.rsvpCount) {
-                    this.el.rsvpCount.textContent = data.count || 1;
-                }
-            } catch (e) {
-                console.log('Error parsing RSVP data:', e);
-            }
-        }
-
-        // Setup form submission
-        if (this.el.rsvpForm) {
-            this.el.rsvpForm.addEventListener('submit', (e) => this.handleRSVPSubmit(e));
-        }
-    }
-
-    handleRSVPSubmit(e) {
-        e.preventDefault();
-        
-        const form = e.target;
-        const formData = new FormData(form);
-        const name = (formData.get('guestName') || '').toString().trim();
-        const count = formData.get('partySize');
-        const email = (formData.get('guestEmail') || '').toString().trim();
-        const attendance = formData.get('attendance');
-        const note = (formData.get('guestMessage') || '').toString().trim();
-
-        // Validation
-        if (!name || name.length < 2) {
-            this.showFormStatus('Please enter your name (minimum 2 characters)', 'error');
-            return;
-        }
-
-        const emailPattern = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
-        if (!emailPattern.test(email)) {
-            this.showFormStatus('Please enter a valid email address', 'error');
-            return;
-        }
-
-        const countValue = parseInt(count, 10);
-        if (!countValue || countValue < 1 || countValue > 6) {
-            this.showFormStatus('Please select 1-6 guests', 'error');
-            return;
-        }
-
-        if (!attendance) {
-            this.showFormStatus('Please let us know if you can attend', 'error');
-            return;
-        }
-
-        // Simulate successful submission
-        this.showFormStatus('Thank you for your RSVP! We look forward to celebrating with you.', 'success');
-
-        // Update count
-        const currentCount = parseInt(this.el.rsvpCount.textContent) || 0;
-        const newCount = currentCount + countValue;
-        this.el.rsvpCount.textContent = newCount;
-
-        // Save to localStorage
-        const rsvpData = {
-            name: name,
-            count: countValue,
-            note: note,
-            attendance,
-            email,
-            timestamp: new Date().toISOString()
-        };
-        localStorage.setItem('babyGunnerRSVP', JSON.stringify(rsvpData));
-
-        // Reset form
-        form.reset();
-
-        // Show edit option
-        setTimeout(() => {
-            this.el.rsvpStatus.innerHTML = `
-                Thank you for your RSVP! We look forward to celebrating with you.<br>
-                <button onclick="editRSVP()" class="edit-rsvp-btn" style="margin-top: 10px; background: transparent; border: none; color: var(--honey-gold); text-decoration: underline; cursor: pointer;">
-                    Need to make changes?
-                </button>
-            `;
-        }, 2000);
-    }
-
-    showFormStatus(message, type) {
-        if (!this.el.rsvpStatus) return;
-
-        this.el.rsvpStatus.textContent = message;
-        this.el.rsvpStatus.className = 'form-status';
-        this.el.rsvpStatus.style.display = 'block';
-
-        switch(type) {
-            case 'success':
-                this.el.rsvpStatus.classList.add('form-status--success');
-                break;
-            case 'error':
-                this.el.rsvpStatus.classList.add('form-status--error');
-                break;
-            case 'info':
-                this.el.rsvpStatus.classList.add('form-status--info');
-                break;
-        }
-    }
-
-    editRSVP() {
-        localStorage.removeItem('babyGunnerRSVP');
-        if (this.el.rsvpCount) this.el.rsvpCount.textContent = '0';
-        if (this.el.rsvpStatus) {
-            this.el.rsvpStatus.textContent = 'You can submit a new RSVP anytime.';
-            this.el.rsvpStatus.className = 'form-status form-status--info';
-        }
-    }
-
-    openCharacterModal(character) {
-        const { characterModal, characterModalIcon, characterModalTitle, 
-                characterModalQuote, characterModalBio } = this.el;
-        
-        if (!characterModal) return;
-
-        const characterData = {
-            pooh: {
-                icon: `<img src="Images/Characters/honey-bear.png" alt="Winnie the Pooh" style="width: 80px; height: auto;">`,
-                name: "Winnie the Pooh",
-                quote: "\"Sometimes the smallest things take up the most room in your heart.\"",
-                bio: "As Honey Supervisor, Pooh is making sure every jar is filled to the brim with the sweetest honey for our celebration. He's also in charge of the snack table (for quality control purposes)."
-            },
-            piglet: {
-                icon: `<img src="Images/Characters/piglet.png" alt="Piglet" style="width: 80px; height: auto;">`,
-                name: "Piglet",
-                quote: "\"Even the littlest friend can bring the greatest joy.\"",
-                bio: "Our Cozy Coordinator, Piglet is making sure every blanket is soft, every hug is available, and that no one feels too small at our big celebration."
-            },
-            tigger: {
-                icon: `<img src="Images/Characters/tigger.png" alt="Tigger" style="width: 80px; height: auto;">`,
-                name: "Tigger",
-                quote: "\"New babies are what Tiggers like best!\"",
-                bio: "As Bounce Director, Tigger is planning all the fun activities and making sure there's plenty of bounce in our step. He's also testing all the rocking chairs for optimal bounce."
-            },
-            eeyore: {
-                icon: `<img src="Images/Characters/eeyore.png" alt="Eeyore" style="width: 80px; height: auto;">`,
-                name: "Eeyore",
-                quote: "\"Not that I'm complaining, but it will be rather nice to have someone new around.\"",
-                bio: "Our Photo Spot Curator, Eeyore has found the perfect spot for pictures (with just the right amount of shade) and is making sure every memory is properly documented."
-            }
-        };
-
-        const data = characterData[character];
-        if (!data) return;
-
-        characterModalIcon.innerHTML = data.icon;
-        characterModalTitle.textContent = data.name;
-        characterModalQuote.textContent = data.quote;
-        characterModalBio.textContent = data.bio;
-
-        characterModal.style.display = 'flex';
-        characterModal.setAttribute('aria-hidden', 'false');
-
-        // Focus trap for accessibility
-        const closeBtn = this.el.characterModalClose;
-        setTimeout(() => closeBtn.focus(), 100);
-        this.enableFocusTrap(characterModal);
-        this.el.mainContent?.setAttribute('aria-hidden', 'true');
-    }
-
-    closeCharacterModal() {
-        const { characterModal } = this.el;
-        if (!characterModal) return;
-        characterModal.style.display = 'none';
-        characterModal.setAttribute('aria-hidden', 'true');
-        this.clearFocusTrap();
-        this.el.mainContent?.removeAttribute('aria-hidden');
-    }
-
-    openGameInstructions(type) {
-        const m = this.el.gameInstructionModal;
-        if (!m) return;
-
-        const title = 'Honey Pot Catch';
-        const instructions = `
-            <li>Move Pooh left and right with arrow keys or tap the sides</li>
-            <li>Catch honey pots for points</li>
-            <li>Golden pots are worth 50 points and add extra time!</li>
-            <li>Avoid the bouncing rocks - they cost you lives</li>
-            <li>You have 60 seconds to get as many points as possible</li>
-            <li>Press Space or Enter to start/pause the game</li>
-        `;
-
-        this.el.gameInstructionTitle.textContent = title;
-        this.el.gameInstructionList.innerHTML = instructions;
-        
-        m.style.display = 'flex';
-        m.setAttribute('aria-hidden', 'false');
-        
-        setTimeout(() => this.el.gameInstructionClose.focus(), 100);
-    }
-
-    closeGameInstructions() {
-        const m = this.el.gameInstructionModal;
-        if (!m) return;
-        m.style.display = 'none';
-        m.setAttribute('aria-hidden', 'true');
-    }
-
-    playWoodlandSound(event) {
-        event.stopPropagation();
-        
-        // Create audio context for sound effects
-        try {
-            const audioContext = new (window.AudioContext || window.webkitAudioContext)();
-            const oscillator = audioContext.createOscillator();
-            const gainNode = audioContext.createGain();
-            
-            oscillator.connect(gainNode);
-            gainNode.connect(audioContext.destination);
-            
-            oscillator.frequency.setValueAtTime(440, audioContext.currentTime);
-            oscillator.frequency.exponentialRampToValueAtTime(880, audioContext.currentTime + 0.1);
-            
-            gainNode.gain.setValueAtTime(0.1, audioContext.currentTime);
-            gainNode.gain.exponentialRampToValueAtTime(0.01, audioContext.currentTime + 0.3);
-            
-            oscillator.start();
-            oscillator.stop(audioContext.currentTime + 0.3);
-            
-            // Visual feedback
-            const button = event.currentTarget;
-            button.style.transform = 'scale(0.95)';
-            setTimeout(() => {
-                button.style.transform = '';
-            }, 100);
-        } catch (e) {
-            console.log('Sound effect failed:', e);
-        }
-    }
-
-    bindGlobals() {
-        const self = this;
-        window.showCharacterModal = function (character) {
-            self.openCharacterModal(character);
-        };
-        window.showGameInstructions = function (type) {
-            self.openGameInstructions(type);
-        };
-        window.playWoodlandSound = function (event) {
-            self.playWoodlandSound(event);
-        };
-        window.toggleMobileControls = function () {
-            self.toggleMobileControlsPanel();
-        };
-        window.editRSVP = function () {
-            self.editRSVP();
-        };
-    }
+const prompts = [
+  'Share the coziest lullaby you know for Pooh to hum.',
+  'Offer a bit of advice for rainy days in the Wood.',
+  'What tradition should Gunner try every spring?',
+  'Write a hope for the adventures he will take.',
+  'Share a tiny act of kindness he can give a friend.'
+];
+
+const state = {
+  score: 0,
+  best: Number(localStorage.getItem('honeyBest') || 0),
+  time: 45,
+  lives: 3,
+  playing: false,
+  player: { x: 320 },
+  drops: [],
+  bees: [],
+  timerId: null,
+};
+
+const canvas = document.getElementById('honeyCanvas');
+const ctx = canvas.getContext('2d');
+const loader = document.getElementById('loader');
+
+const scoreEl = document.getElementById('score');
+const timerEl = document.getElementById('timer');
+const livesEl = document.getElementById('lives');
+const bestEl = document.getElementById('best');
+const guestCount = document.getElementById('guestCount');
+const formStatus = document.getElementById('formStatus');
+
+const promptBtn = document.getElementById('promptButton');
+const promptText = document.getElementById('promptText');
+const playBtn = document.getElementById('startGame');
+const leftBtn = document.getElementById('leftBtn');
+const rightBtn = document.getElementById('rightBtn');
+const chime = document.getElementById('chime');
+const chimeToggle = document.getElementById('playChime');
+
+function hideLoader() {
+  loader.classList.add('is-hidden');
+  setTimeout(() => loader.remove(), 400);
 }
 
-/* ========= BOOTSTRAP ========= */
-
 document.addEventListener('DOMContentLoaded', () => {
-    new HundredAcreApp();
+  setTimeout(hideLoader, 650);
+  bestEl.textContent = state.best;
+  timerEl.textContent = `${state.time}s`;
 });
 
+window.addEventListener('scroll', () => {
+  document.querySelectorAll('.panel, .card, .experience, .detail').forEach(el => {
+    const rect = el.getBoundingClientRect();
+    if (rect.top < window.innerHeight - 40) {
+      el.style.transition = 'transform 0.4s ease, opacity 0.4s';
+      el.style.transform = 'translateY(0)';
+      el.style.opacity = '1';
+    }
+  });
+});
 
-// Migrated inline script from index.html
-document.addEventListener('DOMContentLoaded', () => {
-            // Helper: smooth scroll
-            function smoothScrollTo(targetId) {
-                const targetElement = document.querySelector(targetId);
-                if (!targetElement) return;
-                const offset = 80;
-                const top = targetElement.getBoundingClientRect().top + window.scrollY - offset;
-                window.scrollTo({
-                    top,
-                    behavior: 'smooth'
-                });
-            }
-    
-            // Loading Screen
-            window.addEventListener('load', function() {
-                setTimeout(function() {
-                    const loadingScreen = document.getElementById('loadingScreen');
-                    if (loadingScreen) loadingScreen.style.display = 'none';
-                }, 2000);
-            });
-    
-            // Navigation Smooth Scroll for anchor links
-            document.querySelectorAll('a[href^="#"]').forEach(anchor => {
-                anchor.addEventListener('click', function(e) {
-                    const targetId = this.getAttribute('href');
-                    if (!targetId || targetId === '#') return;
-                    e.preventDefault();
-                    smoothScrollTo(targetId);
-                });
-            });
-    
-            // Reading Progress Bar
-            const progressBar = document.querySelector('.reading-progress');
-            window.addEventListener('scroll', function() {
-                const winScroll = document.body.scrollTop || document.documentElement.scrollTop;
-                const height = document.documentElement.scrollHeight - document.documentElement.clientHeight;
-                const scrolled = height > 0 ? (winScroll / height) * 100 : 0;
-                if (progressBar) {
-                    progressBar.style.width = scrolled + '%';
-                    progressBar.setAttribute('aria-valuenow', scrolled.toFixed(0));
-                }
-            });
-    
-            // Scroll to Top Button
-            const scrollTopBtn = document.querySelector('.fab.fab--visible');
-            if (scrollTopBtn) {
-                scrollTopBtn.addEventListener('click', function() {
-                    window.scrollTo({
-                        top: 0,
-                        behavior: 'smooth'
-                    });
-                });
-            }
-    
-            // Persistent RSVP button scroll
-            const persistentRsvpBtn = document.querySelector('.persistent-rsvp');
-            if (persistentRsvpBtn) {
-                persistentRsvpBtn.addEventListener('click', function() {
-                    smoothScrollTo('#rsvp');
-                });
-            }
-    
-            // Music Control (UI only)
-            const musicBtn = document.querySelector('.music-btn');
-            if (musicBtn) {
-                musicBtn.addEventListener('click', function() {
-                    const isPressed = this.getAttribute('aria-pressed') === 'true';
-                    this.setAttribute('aria-pressed', (!isPressed).toString());
-                    this.setAttribute('aria-label', !isPressed ? 'Mute background music' : 'Play background music');
-                    this.innerHTML = `<i class="fas fa-${!isPressed ? 'volume-mute' : 'music'}"></i>`;
-                    // Hook real audio here if desired.
-                });
-            }
-    
-            // Share Button (Web Share API + fallback)
-            const shareFab = document.querySelector('.fab[aria-label="Share Celebration"]');
-            if (shareFab) {
-                shareFab.addEventListener('click', function() {
-                    const shareData = {
-                        title: "Baby Gunner's Hundred Acre Wood Celebration",
-                        text: "Join us in celebrating Baby Gunner's first adventure in the Hundred Acre Wood!",
-                        url: window.location.href
-                    };
-                    if (navigator.share) {
-                        navigator.share(shareData).catch(() => {});
-                    } else {
-                        alert('Share this celebration with your friends! Copy the link:\n\n' + window.location.href);
-                    }
-                });
-            }
-    
-            // Character Modal
-            (function initCharacterModal() {
-                const modal = document.getElementById('characterModal');
-                if (!modal) return;
-    
-                const closeBtn = modal.querySelector('.close-modal');
-                const modalName = document.getElementById('modalCharacterName');
-                const modalQuote = document.getElementById('modalCharacterQuote');
-                const modalIcon = document.getElementById('modalCharacterIcon');
-                let lastFocusedElement = null;
-    
-                function openModalFromButton(btn) {
-                    const nameEl = btn.querySelector('.character-name');
-                    const quoteEl = btn.querySelector('.character-quote');
-                    const iconEl = btn.querySelector('.character-illustration span');
-    
-                    if (nameEl && modalName) modalName.textContent = nameEl.textContent.trim();
-                    if (quoteEl && modalQuote) modalQuote.textContent = quoteEl.textContent.trim();
-                    if (iconEl && modalIcon) modalIcon.textContent = iconEl.textContent.trim() || '🍯';
-    
-                    lastFocusedElement = btn;
-                    modal.style.display = 'flex';
-                    modal.setAttribute('aria-hidden', 'false');
-                    if (closeBtn) closeBtn.focus();
-                }
-    
-                function closeModal() {
-                    modal.style.display = 'none';
-                    modal.setAttribute('aria-hidden', 'true');
-                    if (lastFocusedElement) lastFocusedElement.focus();
-                }
-    
-                document.querySelectorAll('.character-spotlight').forEach(btn => {
-                    btn.addEventListener('click', function() {
-                        openModalFromButton(this);
-                    });
-                });
-    
-                if (closeBtn) {
-                    closeBtn.addEventListener('click', closeModal);
-                }
-    
-                modal.addEventListener('click', function(e) {
-                    if (e.target === modal) {
-                        closeModal();
-                    }
-                });
-    
-                document.addEventListener('keydown', function(e) {
-                    if (e.key === 'Escape' && modal.style.display === 'flex') {
-                        closeModal();
-                    }
-                });
-            })();
-    
-            // RSVP Form
-            (function initRsvpForm() {
-                const form = document.getElementById('rsvpForm');
-                if (!form) return;
-                const formStatus = form.querySelector('.form-status');
-                const rsvpCountEl = document.getElementById('rsvp-count');
-    
-                form.addEventListener('submit', function(e) {
-                    e.preventDefault();
-    
-                    const name = form.querySelector('#guestName');
-                    const email = form.querySelector('#guestEmail');
-                    const partySize = form.querySelector('#partySize');
-                    const attendance = form.querySelector('input[name="attendance"]:checked');
-    
-                    if (!name.value.trim() || !email.value.trim() || !partySize.value || !attendance) {
-                        if (formStatus) {
-                            formStatus.style.display = 'block';
-                            formStatus.textContent = 'Please fill in all required fields before sending your RSVP.';
-                            formStatus.className = 'form-status error';
-                        }
-                        return;
-                    }
-    
-                    // Basic RSVP success path
-                    if (formStatus) {
-                        formStatus.style.display = 'block';
-                        formStatus.textContent = 'Thank you for your RSVP! We look forward to celebrating with you.';
-                        formStatus.className = 'form-status success';
-                    }
-    
-                    // Only increment count if yes or maybe
-                    if ((attendance.value === 'yes' || attendance.value === 'maybe') && rsvpCountEl) {
-                        const current = parseInt(rsvpCountEl.textContent, 10) || 0;
-                        rsvpCountEl.textContent = String(current + 1);
-                    }
-    
-                    // Reset form after a short delay
-                    setTimeout(() => {
-                        form.reset();
-                    }, 2500);
-                });
-            })();
-    
-            // Footer year
-            const yearEl = document.getElementById('currentYear');
-            if (yearEl) {
-                yearEl.textContent = new Date().getFullYear();
-            }
-    
-            // Honey Hunt Game
-            class HoneyHuntGame {
-                constructor() {
-                    this.canvas = document.getElementById('honeyCanvas');
-                    this.overlay = document.getElementById('catch-overlay');
-                    this.countdownEl = document.getElementById('catch-countdown');
-                    this.hintEl = document.getElementById('catch-hint');
-                    this.statusEl = document.getElementById('catch-status');
-    
-                    this.scoreEl = document.getElementById('honey-score');
-                    this.timeEl = document.getElementById('honey-time');
-                    this.livesEl = document.getElementById('honey-lives');
-                    this.comboEl = document.getElementById('honey-combo');
-                    this.highScoreDisplay = document.getElementById('catch-high-score-display');
-                    this.cardHighScoreText = document.getElementById('card-high-score-text');
-    
-                    this.startBtn = document.getElementById('start-catch');
-                    this.pauseBtn = document.getElementById('pause-catch');
-                    this.mobileLeftBtn = document.getElementById('mobileLeftBtn');
-                    this.mobileRightBtn = document.getElementById('mobileRightBtn');
-                    this.playCardButtons = document.querySelectorAll('[data-action="play-honey-game"]');
-    
-                    const required = [
-                        this.canvas,
-                        this.overlay,
-                        this.startBtn,
-                        this.pauseBtn,
-                        this.scoreEl,
-                        this.timeEl,
-                        this.livesEl,
-                        this.comboEl,
-                        this.highScoreDisplay
-                    ];
-    
-                    if (required.some(el => !el)) return;
-    
-                    this.ctx = this.canvas.getContext('2d');
-                    if (!this.ctx) return;
-    
-                    this.width = 0;
-                    this.height = 0;
-                    this.player = null;
-                    this.honeys = [];
-                    this.bees = [];
-    
-                    this.state = {
-                        status: 'idle',
-                        time: 60,
-                        score: 0,
-                        lives: 3,
-                        combo: 1,
-                        spawnHoneyTimer: 0,
-                        spawnBeeTimer: 0,
-                        lastFrameTime: 0,
-                        moveLeft: false,
-                        moveRight: false
-                    };
-    
-                    this.rafId = null;
-    
-                    this.highScore = parseInt(localStorage.getItem('honeyHighScore') || '0', 10);
-                    this.updateHighScoreDisplay();
-    
-                    this.gameLoop = this.gameLoop.bind(this);
-                    this.resizeCanvas = this.resizeCanvas.bind(this);
-    
-                    this.setOverlayCopy({
-                        countdown: 'Tap Start to begin!',
-                        hint: 'Move Pooh to catch honey pots and dodge bees.',
-                        status: 'Use keyboard arrows or the touch buttons below.'
-                    });
-    
-                    this.resizeCanvas();
-                    window.addEventListener('resize', this.resizeCanvas);
-                    this.bindControls();
-                    this.updateHUD();
-                }
-    
-                setOverlayCopy({ countdown, hint, status }) {
-                    if (this.countdownEl && countdown !== undefined) this.countdownEl.textContent = countdown;
-                    if (this.hintEl && hint !== undefined) this.hintEl.textContent = hint;
-                    if (this.statusEl && status !== undefined) this.statusEl.textContent = status;
-                }
-    
-                updateHighScoreDisplay() {
-                    if (this.highScoreDisplay) this.highScoreDisplay.textContent = `${this.highScore} points`;
-                    if (this.cardHighScoreText) this.cardHighScoreText.textContent = `High Score: ${this.highScore}`;
-                }
-    
-                resizeCanvas() {
-                    const parent = this.canvas.parentElement;
-                    if (!parent) return;
-    
-                    const rect = parent.getBoundingClientRect();
-                    const dpr = window.devicePixelRatio || 1;
-    
-                    this.canvas.width = rect.width * dpr;
-                    this.canvas.height = rect.height * dpr;
-                    this.ctx.setTransform(dpr, 0, 0, dpr, 0, 0);
-    
-                    const prevWidth = this.width || rect.width;
-                    this.width = rect.width;
-                    this.height = rect.height;
-    
-                    if (!this.player) {
-                        this.player = {
-                            width: 60,
-                            height: 40,
-                            x: this.width / 2 - 30,
-                            y: this.height - 70,
-                            speed: 320
-                        };
-                    } else {
-                        const ratio = this.width / prevWidth;
-                        this.player.x = Math.min(this.width - this.player.width, this.player.x * ratio);
-                        this.player.y = this.height - 70;
-                    }
-                }
-    
-                rectsIntersect(a, b) {
-                    return !(
-                        a.x > b.x + b.width ||
-                        a.x + a.width < b.x ||
-                        a.y > b.y + b.height ||
-                        a.y + a.height < b.y
-                    );
-                }
-    
-                fillRoundedRect(x, y, width, height, radius) {
-                    const r = Math.min(radius, width / 2, height / 2);
-                    this.ctx.beginPath();
-                    this.ctx.moveTo(x + r, y);
-                    this.ctx.lineTo(x + width - r, y);
-                    this.ctx.quadraticCurveTo(x + width, y, x + width, y + r);
-                    this.ctx.lineTo(x + width, y + height - r);
-                    this.ctx.quadraticCurveTo(x + width, y + height, x + width - r, y + height);
-                    this.ctx.lineTo(x + r, y + height);
-                    this.ctx.quadraticCurveTo(x, y + height, x, y + height - r);
-                    this.ctx.lineTo(x, y + r);
-                    this.ctx.quadraticCurveTo(x, y, x + r, y);
-                    this.ctx.closePath();
-                    this.ctx.fill();
-                }
-    
-                spawnHoney() {
-                    const width = 26;
-                    const x = Math.random() * (this.width - width - 20) + 10;
-                    const speed = 140 + Math.random() * 80;
-                    this.honeys.push({ x, y: -30, width, height: width, speed });
-                }
-    
-                spawnBee() {
-                    const width = 26;
-                    const x = Math.random() * (this.width - width - 20) + 10;
-                    const speed = 160 + Math.random() * 90;
-                    this.bees.push({ x, y: -30, width, height: width, speed });
-                }
-    
-                updateHUD() {
-                    if (this.scoreEl) this.scoreEl.textContent = Math.round(this.state.score).toString();
-                    if (this.timeEl) this.timeEl.textContent = `${Math.max(0, Math.ceil(this.state.time))}s`;
-                    if (this.livesEl) this.livesEl.textContent = this.state.lives.toString();
-                    if (this.comboEl) {
-                        const comboText = this.state.combo.toFixed(1).replace(/\.0$/, '');
-                        this.comboEl.textContent = `${comboText}x`;
-                    }
-                }
-    
-                drawGame() {
-                    this.ctx.clearRect(0, 0, this.width, this.height);
-    
-                    // background
-                    const gradient = this.ctx.createLinearGradient(0, 0, 0, this.height);
-                    gradient.addColorStop(0, '#FFF7E6');
-                    gradient.addColorStop(1, '#FFE0B2');
-                    this.ctx.fillStyle = gradient;
-                    this.ctx.fillRect(0, 0, this.width, this.height);
-    
-                    // ground
-                    this.ctx.fillStyle = '#D7CCC8';
-                    this.ctx.fillRect(0, this.height - 24, this.width, 30);
-                    this.ctx.fillStyle = '#8D6E63';
-                    this.ctx.fillRect(0, this.height - 16, this.width, 16);
-    
-                    // player
-                    const p = this.player;
-                    this.ctx.fillStyle = '#FFC107';
-                    this.fillRoundedRect(p.x, p.y, p.width, p.height, 10);
-                    this.ctx.fillStyle = '#6D4C41';
-                    this.ctx.fillRect(p.x + 18, p.y + 8, p.width - 36, 10);
-                    this.ctx.fillStyle = '#FFA000';
-                    this.ctx.fillRect(p.x + 6, p.y + 26, p.width - 12, 8);
-    
-                    // honeys
-                    this.honeys.forEach(h => {
-                        this.ctx.fillStyle = '#FFB300';
-                        this.fillRoundedRect(h.x, h.y, h.width, h.height, 6);
-                        this.ctx.fillStyle = '#FFE082';
-                        this.ctx.fillRect(h.x + h.width * 0.2, h.y + 2, h.width * 0.6, 6);
-                        this.ctx.fillStyle = '#6D4C41';
-                        this.ctx.fillRect(h.x + h.width * 0.2, h.y - 4, h.width * 0.6, 6);
-                    });
-    
-                    // bees
-                    this.bees.forEach(b => {
-                        const centerX = b.x + b.width / 2;
-                        const centerY = b.y + b.height / 2;
-                        const r = b.width / 2;
-    
-                        this.ctx.beginPath();
-                        this.ctx.fillStyle = '#FFEB3B';
-                        this.ctx.ellipse(centerX, centerY, r, r * 0.7, 0, 0, Math.PI * 2);
-                        this.ctx.fill();
-    
-                        this.ctx.strokeStyle = '#212121';
-                        this.ctx.lineWidth = 3;
-                        this.ctx.beginPath();
-                        this.ctx.moveTo(centerX - r, centerY - r * 0.3);
-                        this.ctx.lineTo(centerX + r, centerY - r * 0.3);
-                        this.ctx.moveTo(centerX - r, centerY);
-                        this.ctx.lineTo(centerX + r, centerY);
-                        this.ctx.moveTo(centerX - r, centerY + r * 0.3);
-                        this.ctx.lineTo(centerX + r, centerY + r * 0.3);
-                        this.ctx.stroke();
-    
-                        this.ctx.fillStyle = 'rgba(255,255,255,0.8)';
-                        this.ctx.beginPath();
-                        this.ctx.ellipse(centerX - r * 0.4, centerY - r * 0.9, r * 0.4, r * 0.6, -0.3, 0, Math.PI * 2);
-                        this.ctx.fill();
-                        this.ctx.beginPath();
-                        this.ctx.ellipse(centerX + r * 0.4, centerY - r * 0.9, r * 0.4, r * 0.6, 0.3, 0, Math.PI * 2);
-                        this.ctx.fill();
-                    });
-                }
-    
-                updateGame(delta) {
-                    this.state.time = Math.max(0, this.state.time - delta);
-    
-                    const distance = this.player.speed * delta;
-                    if (this.state.moveLeft) this.player.x -= distance;
-                    if (this.state.moveRight) this.player.x += distance;
-                    this.player.x = Math.max(0, Math.min(this.width - this.player.width, this.player.x));
-    
-                    this.state.spawnHoneyTimer += delta;
-                    this.state.spawnBeeTimer += delta;
-                    if (this.state.spawnHoneyTimer > 0.9) {
-                        this.spawnHoney();
-                        this.state.spawnHoneyTimer = 0;
-                    }
-                    if (this.state.spawnBeeTimer > 1.6) {
-                        this.spawnBee();
-                        this.state.spawnBeeTimer = 0;
-                    }
-    
-                    this.honeys.forEach(h => { h.y += h.speed * delta; });
-                    this.bees.forEach(b => { b.y += b.speed * delta; });
-    
-                    const playerRect = {
-                        x: this.player.x,
-                        y: this.player.y,
-                        width: this.player.width,
-                        height: this.player.height
-                    };
-    
-                    this.honeys = this.honeys.filter(h => {
-                        if (h.y > this.height + 40) return false;
-                        if (this.rectsIntersect(playerRect, h)) {
-                            const gained = 10 * this.state.combo;
-                            this.state.score += gained;
-                            this.state.combo = Math.min(this.state.combo + 0.25, 5);
-                            return false;
-                        }
-                        return true;
-                    });
-    
-                    this.bees = this.bees.filter(b => {
-                        if (b.y > this.height + 40) return false;
-                        if (this.rectsIntersect(playerRect, b)) {
-                            this.state.lives -= 1;
-                            this.state.combo = 1;
-                            return false;
-                        }
-                        return true;
-                    });
-    
-                    this.updateHUD();
-                }
-    
-                endGame(reason) {
-                    if (this.state.status === 'ended' || this.state.status === 'idle') return;
-                    this.state.status = 'ended';
-                    this.updateHUD();
-    
-                    const finalScore = Math.round(this.state.score);
-                    this.setOverlayCopy({
-                        countdown: 'Game Over',
-                        hint: reason === 'time'
-                            ? 'Time is up! That was a very fine honey hunt.'
-                            : 'The bees were very, very busy today.',
-                        status: `Final score: ${finalScore} points`
-                    });
-                    if (this.overlay) this.overlay.style.display = 'flex';
-    
-                    if (finalScore > this.highScore) {
-                        this.highScore = finalScore;
-                        localStorage.setItem('honeyHighScore', String(this.highScore));
-                        if (this.highScoreDisplay) this.highScoreDisplay.textContent = `${finalScore} points (New High Score!)`;
-                        if (this.cardHighScoreText) this.cardHighScoreText.textContent = `High Score: ${finalScore} (New!)`;
-                    } else {
-                        this.updateHighScoreDisplay();
-                    }
-    
-                    this.rafId = null;
-    
-                    this.updateButtonStates({
-                        startLabel: 'Play Again',
-                        pauseDisabled: true,
-                        pauseLabel: 'Pause',
-                        pauseIcon: 'fas fa-pause'
-                    });
-                }
-    
-                gameLoop(timestamp) {
-                    if (this.state.status !== 'running') return;
-                    if (!this.state.lastFrameTime) this.state.lastFrameTime = timestamp;
-                    const delta = (timestamp - this.state.lastFrameTime) / 1000;
-                    this.state.lastFrameTime = timestamp;
-    
-                    this.updateGame(delta);
-                    this.drawGame();
-    
-                    if (this.state.time <= 0) {
-                        this.endGame('time');
-                        return;
-                    }
-                    if (this.state.lives <= 0) {
-                        this.endGame('lives');
-                        return;
-                    }
-    
-                    this.rafId = requestAnimationFrame(this.gameLoop);
-                }
-    
-                resetState() {
-                    this.honeys = [];
-                    this.bees = [];
-                    this.state.time = 60;
-                    this.state.score = 0;
-                    this.state.lives = 3;
-                    this.state.combo = 1;
-                    this.state.spawnHoneyTimer = 0;
-                    this.state.spawnBeeTimer = 0;
-                    this.state.lastFrameTime = 0;
-                    if (this.player) {
-                        this.player.x = this.width / 2 - this.player.width / 2;
-                        this.player.y = this.height - 70;
-                    }
-                    this.updateHUD();
-                }
-    
-                startGame() {
-                    const wasRunning = this.state.status === 'running';
-                    if (wasRunning && this.rafId) {
-                        cancelAnimationFrame(this.rafId);
-                        this.rafId = null;
-                    }
-                    this.resetState();
-                    this.state.status = 'running';
-                    if (this.overlay) this.overlay.style.display = 'none';
-    
-                    this.setOverlayCopy({
-                        countdown: '',
-                        hint: 'Use arrows/A-D or touch buttons to move.',
-                        status: 'Catch honey, dodge bees, build your combo!'
-                    });
-    
-                    this.updateButtonStates({
-                        startLabel: 'Restart Hunt',
-                        startIcon: 'fas fa-redo',
-                        pauseDisabled: false,
-                        pauseLabel: 'Pause',
-                        pauseIcon: 'fas fa-pause'
-                    });
-    
-                    this.rafId = requestAnimationFrame(this.gameLoop);
-                }
-    
-                togglePause() {
-                    if (this.state.status === 'running') {
-                        this.state.status = 'paused';
-                        if (this.overlay) this.overlay.style.display = 'flex';
-                        this.setOverlayCopy({
-                            countdown: 'Game Paused',
-                            hint: 'Tap Resume or press Pause again to continue.',
-                            status: 'Your honey hunt is waiting.'
-                        });
-                        this.updateButtonStates({
-                            pauseLabel: 'Resume',
-                            pauseIcon: 'fas fa-play'
-                        });
-                        this.rafId = null;
-                    } else if (this.state.status === 'paused') {
-                        this.state.status = 'running';
-                        if (this.overlay) this.overlay.style.display = 'none';
-                        this.state.lastFrameTime = 0;
-                        this.updateButtonStates({
-                            pauseLabel: 'Pause',
-                            pauseIcon: 'fas fa-pause'
-                        });
-                        this.rafId = requestAnimationFrame(this.gameLoop);
-                    }
-                }
-    
-                updateButtonStates({ startLabel, startIcon = 'fas fa-play', pauseDisabled, pauseLabel, pauseIcon = 'fas fa-pause' }) {
-                    if (this.startBtn) {
-                        const span = this.startBtn.querySelector('span');
-                        const icon = this.startBtn.querySelector('i');
-                        if (span && startLabel) span.textContent = startLabel;
-                        if (icon && startIcon) icon.className = startIcon;
-                    }
-    
-                    if (this.pauseBtn) {
-                        const span = this.pauseBtn.querySelector('span');
-                        const icon = this.pauseBtn.querySelector('i');
-                        if (pauseDisabled !== undefined) this.pauseBtn.disabled = pauseDisabled;
-                        if (span && pauseLabel) span.textContent = pauseLabel;
-                        if (icon && pauseIcon) icon.className = pauseIcon;
-                    }
-                }
-    
-                bindControls() {
-                    window.addEventListener('keydown', (e) => this.handleKeyDown(e));
-                    window.addEventListener('keyup', (e) => this.handleKeyUp(e));
-                    this.bindDirectionalButton(this.mobileLeftBtn, 'left');
-                    this.bindDirectionalButton(this.mobileRightBtn, 'right');
-                    this.bindSwipeControls();
-    
-                    if (this.startBtn) {
-                        this.startBtn.addEventListener('click', () => this.startGame());
-                    }
-    
-                    if (this.pauseBtn) {
-                        this.pauseBtn.addEventListener('click', () => {
-                            if (!this.pauseBtn.disabled && (this.state.status === 'running' || this.state.status === 'paused')) {
-                                this.togglePause();
-                            }
-                        });
-                    }
-    
-                    this.playCardButtons.forEach(btn => {
-                        btn.addEventListener('click', () => {
-                            smoothScrollTo('#honeyGameArea');
-                            if (this.state.status === 'idle' || this.state.status === 'ended') {
-                                setTimeout(() => this.startGame(), 400);
-                            }
-                        });
-                    });
-                }
-    
-                handleKeyDown(e) {
-                    if (this.state.status !== 'running') return;
-                    if (e.key === 'ArrowLeft' || e.key.toLowerCase() === 'a') {
-                        this.state.moveLeft = true;
-                        e.preventDefault();
-                    } else if (e.key === 'ArrowRight' || e.key.toLowerCase() === 'd') {
-                        this.state.moveRight = true;
-                        e.preventDefault();
-                    }
-                }
-    
-                handleKeyUp(e) {
-                    if (e.key === 'ArrowLeft' || e.key.toLowerCase() === 'a') {
-                        this.state.moveLeft = false;
-                    } else if (e.key === 'ArrowRight' || e.key.toLowerCase() === 'd') {
-                        this.state.moveRight = false;
-                    }
-                }
-    
-                bindDirectionalButton(btn, direction) {
-                    if (!btn) return;
-                    btn.addEventListener('pointerdown', () => {
-                        if (this.state.status !== 'running') return;
-                        if (direction === 'left') {
-                            this.state.moveLeft = true;
-                            this.state.moveRight = false;
-                        } else {
-                            this.state.moveRight = true;
-                            this.state.moveLeft = false;
-                        }
-                    });
-                    const stop = () => {
-                        if (direction === 'left') {
-                            this.state.moveLeft = false;
-                        } else {
-                            this.state.moveRight = false;
-                        }
-                    };
-                    btn.addEventListener('pointerup', stop);
-                    btn.addEventListener('pointerleave', stop);
-                }
-    
-                bindSwipeControls() {
-                    let touchStartX = null;
-                    this.canvas.addEventListener('touchstart', (e) => {
-                        if (!e.touches || e.touches.length === 0) return;
-                        touchStartX = e.touches[0].clientX;
-                    }, { passive: true });
-    
-                    this.canvas.addEventListener('touchmove', (e) => {
-                        if (this.state.status !== 'running') return;
-                        if (!e.touches || e.touches.length === 0) return;
-                        if (!this.player) return;
-    
-                        const touchX = e.touches[0].clientX;
-                        if (touchStartX === null) {
-                            touchStartX = touchX;
-                        }
-                        const diff = touchX - touchStartX;
-                        this.player.x = Math.max(0, Math.min(this.width - this.player.width, this.player.x + diff * 0.6));
-                        touchStartX = touchX;
-                    }, { passive: true });
-    
-                    this.canvas.addEventListener('touchend', () => {
-                        touchStartX = null;
-                    });
-                }
-            }
-    
-            (function initHoneyHuntGame() {
-                window.honeyGame = new HoneyHuntGame();
-            })();
-        
+promptBtn.addEventListener('click', () => {
+  const next = prompts[Math.floor(Math.random() * prompts.length)];
+  promptText.textContent = `“${next}”`;
+});
+
+chimeToggle.addEventListener('click', () => {
+  chime.currentTime = 0;
+  chime.play();
+});
+
+function resetGame() {
+  state.score = 0;
+  state.time = 45;
+  state.lives = 3;
+  state.drops = [];
+  state.bees = [];
+  state.player.x = canvas.width / 2 - 30;
+  updateHud();
+}
+
+function startGame() {
+  resetGame();
+  state.playing = true;
+  spawn();
+  state.timerId = setInterval(() => {
+    state.time -= 1;
+    if (state.time <= 0 || state.lives <= 0) {
+      endGame();
+    }
+    updateHud();
+  }, 1000);
+  loop();
+}
+
+function endGame() {
+  state.playing = false;
+  clearInterval(state.timerId);
+  state.best = Math.max(state.best, state.score);
+  localStorage.setItem('honeyBest', state.best);
+  bestEl.textContent = state.best;
+  formStatus.textContent = `Great hunting! Final score: ${state.score}. Tap start to play again.`;
+}
+
+function spawn() {
+  state.drops.push({ x: Math.random() * (canvas.width - 24), y: -20, speed: 2 + Math.random() * 2 });
+  if (Math.random() > 0.6) state.bees.push({ x: Math.random() * (canvas.width - 18), y: -30, speed: 2.2 + Math.random() * 2 });
+  if (state.playing) setTimeout(spawn, 900);
+}
+
+function movePlayer(dir) {
+  state.player.x = Math.max(6, Math.min(canvas.width - 66, state.player.x + dir));
+}
+
+function handleInput(e) {
+  if (!state.playing) return;
+  if (e.key === 'ArrowLeft' || e.key === 'a') movePlayer(-16);
+  if (e.key === 'ArrowRight' || e.key === 'd') movePlayer(16);
+}
+
+document.addEventListener('keydown', handleInput);
+leftBtn.addEventListener('pointerdown', () => movePlayer(-26));
+rightBtn.addEventListener('pointerdown', () => movePlayer(26));
+playBtn.addEventListener('click', startGame);
+
+function loop() {
+  if (!state.playing) return;
+  ctx.clearRect(0, 0, canvas.width, canvas.height);
+  drawGround();
+  drawPlayer();
+  updateDrops();
+  updateBees();
+  requestAnimationFrame(loop);
+}
+
+function drawGround() {
+  ctx.fillStyle = '#d5e5c7';
+  ctx.fillRect(0, canvas.height - 24, canvas.width, 24);
+  ctx.fillStyle = '#c59b2f';
+  ctx.fillRect(0, canvas.height - 18, canvas.width, 18);
+}
+
+function drawPlayer() {
+  ctx.fillStyle = '#f7c948';
+  ctx.fillRect(state.player.x, canvas.height - 70, 60, 40);
+  ctx.fillStyle = '#184e35';
+  ctx.fillRect(state.player.x + 18, canvas.height - 52, 24, 12);
+}
+
+function updateDrops() {
+  ctx.fillStyle = '#f7c948';
+  state.drops.forEach((d, i) => {
+    d.y += d.speed;
+    ctx.beginPath();
+    ctx.arc(d.x, d.y, 10, 0, Math.PI * 2);
+    ctx.fill();
+    if (d.y > canvas.height - 70 && d.x > state.player.x && d.x < state.player.x + 60) {
+      state.score += 5;
+      state.drops.splice(i, 1);
+      updateHud();
+    }
+    if (d.y > canvas.height) state.drops.splice(i, 1);
+  });
+}
+
+function updateBees() {
+  ctx.fillStyle = '#f0a500';
+  state.bees.forEach((b, i) => {
+    b.y += b.speed;
+    ctx.beginPath();
+    ctx.rect(b.x, b.y, 16, 12);
+    ctx.fill();
+    if (b.y > canvas.height - 70 && b.x > state.player.x - 8 && b.x < state.player.x + 60) {
+      state.lives -= 1;
+      state.bees.splice(i, 1);
+      updateHud();
+      if (state.lives <= 0) endGame();
+    }
+    if (b.y > canvas.height) state.bees.splice(i, 1);
+  });
+}
+
+function updateHud() {
+  scoreEl.textContent = state.score;
+  timerEl.textContent = `${state.time}s`;
+  livesEl.textContent = state.lives;
+}
+
+const form = document.getElementById('rsvpForm');
+form.addEventListener('submit', (e) => {
+  e.preventDefault();
+  const count = Number(document.getElementById('guests').value || 1);
+  const existing = parseInt(guestCount.textContent) || 0;
+  guestCount.textContent = `${existing + count} friends`;
+  formStatus.textContent = 'Your spot is saved! Check your inbox for a cozy confirmation.';
+  form.reset();
 });
