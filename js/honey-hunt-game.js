@@ -93,6 +93,7 @@
     difficulty: 'normal',
     soundEnabled: true,
     effectsEnabled: true,
+    defaultTimer: 60,
     
     // Input
     keys: {
@@ -118,6 +119,11 @@
   let startBtn, pauseBtn, resetBtn, arcadeBtn, soundToggle, effectsToggle;
   let difficultySelect, leftBtn, rightBtn, dropBtn;
   let gameOverlay, gameMessage;
+  let audioSystem;
+
+  function getElementByIds(ids) {
+    return ids.map(id => document.getElementById(id)).find(Boolean) || null;
+  }
 
   // =========== AUDIO SYSTEM ===========
   class AudioSystem {
@@ -666,12 +672,9 @@
 
   // =========== GAME FUNCTIONS ===========
   function initGame() {
-    // Get DOM elements
-    canvas = document.getElementById('honeyCanvas');
-    if (!canvas) {
-      console.error('Canvas element not found!');
-      return;
-    }
+    // Get DOM elements (support fullscreen and embedded variants)
+    canvas = getElementByIds(['honeyCanvas', 'honey-game']);
+    if (!canvas) return; // Page doesn't include the game
     
     ctx = canvas.getContext('2d');
     if (!ctx) {
@@ -680,19 +683,19 @@
     }
     
     // Get UI elements
-    scoreEl = document.getElementById('scoreValue');
-    timerEl = document.getElementById('timeValue');
-    livesEl = document.getElementById('livesValue');
-    bestEl = document.getElementById('bestValue');
-    comboEl = document.getElementById('comboValue');
-    statusEl = document.getElementById('statusText');
+    scoreEl = getElementByIds(['scoreValue', 'score']);
+    timerEl = getElementByIds(['timeValue', 'timer']);
+    livesEl = getElementByIds(['livesValue', 'lives']);
+    bestEl = getElementByIds(['bestValue', 'best']);
+    comboEl = getElementByIds(['comboValue']);
+    statusEl = getElementByIds(['statusText']);
     gameOverlay = document.querySelector('.canvas-overlay');
     gameMessage = document.getElementById('gameMessage');
-    
+
     // Get buttons
-    startBtn = document.getElementById('startBtn');
-    pauseBtn = document.getElementById('pauseBtn');
-    resetBtn = document.getElementById('resetBtn');
+    startBtn = getElementByIds(['startBtn', 'startGame']);
+    pauseBtn = getElementByIds(['pauseBtn', 'pauseGame']);
+    resetBtn = getElementByIds(['resetBtn', 'resetGame']);
     arcadeBtn = document.getElementById('arcadeModeBtn');
     soundToggle = document.getElementById('soundToggle');
     effectsToggle = document.getElementById('streakSoundToggle');
@@ -700,10 +703,19 @@
     leftBtn = document.getElementById('leftBtn');
     rightBtn = document.getElementById('rightBtn');
     dropBtn = document.getElementById('dropBtn');
-    
-    // Initialize audio system
-    window.audioSystem = new AudioSystem();
-    
+
+    // Initialize audio system (store locally and on window for debugging)
+    audioSystem = new AudioSystem();
+    window.audioSystem = audioSystem;
+
+    // Respect any timer hint in the DOM (e.g., 45s embedded mode)
+    const initialTimerText = timerEl?.textContent;
+    const hintedSeconds = initialTimerText ? parseInt(initialTimerText.replace(/\D/g, ''), 10) : NaN;
+    if (!Number.isNaN(hintedSeconds) && hintedSeconds > 0) {
+      gameState.timer = hintedSeconds;
+      gameState.defaultTimer = hintedSeconds;
+    }
+
     // Load best score
     loadBestScore();
     
@@ -737,10 +749,10 @@
   }
 
   function resizeCanvas() {
-    const container = document.getElementById('canvasContainer');
-    if (!container) return;
-    
-    const rect = container.getBoundingClientRect();
+    const container = document.getElementById('canvasContainer') || canvas.parentElement;
+    const rect = container?.getBoundingClientRect();
+    if (!rect) return;
+
     gameState.width = Math.floor(rect.width);
     gameState.height = Math.floor(rect.height);
     
@@ -799,14 +811,14 @@
       const minutes = Math.floor(seconds / 60);
       const remainingSeconds = seconds % 60;
       timerEl.textContent = `${minutes}:${remainingSeconds.toString().padStart(2, '0')}`;
-      
+
       // Warning colors
       if (seconds < 10 && !gameState.arcadeMode) {
         timerEl.style.color = COLORS.ui.danger;
-        timerEl.parentElement.parentElement.style.borderColor = COLORS.ui.danger;
+        timerEl.parentElement?.parentElement?.style.setProperty('border-color', COLORS.ui.danger);
       } else {
         timerEl.style.color = '';
-        timerEl.parentElement.parentElement.style.borderColor = '';
+        timerEl.parentElement?.parentElement?.style.removeProperty('border-color');
       }
     }
     
@@ -832,22 +844,22 @@
   }
 
   function updateStatus(message, duration = 3000) {
-    if (statusEl) {
-      statusEl.textContent = message;
-      
-      if (duration > 0) {
-        setTimeout(() => {
-          if (statusEl.textContent === message) {
-            if (gameState.running && !gameState.paused) {
-              statusEl.textContent = `Catch honey! Avoid leaves! Level ${gameState.level}`;
-            } else if (gameState.paused) {
-              statusEl.textContent = 'Game Paused';
-            } else {
-              statusEl.textContent = "Press 'Start Hunt' to begin!";
-            }
+    if (!statusEl) return;
+
+    statusEl.textContent = message;
+
+    if (duration > 0) {
+      setTimeout(() => {
+        if (statusEl.textContent === message) {
+          if (gameState.running && !gameState.paused) {
+            statusEl.textContent = `Catch honey! Avoid leaves! Level ${gameState.level}`;
+          } else if (gameState.paused) {
+            statusEl.textContent = 'Game Paused';
+          } else {
+            statusEl.textContent = "Press 'Start Hunt' to begin!";
           }
-        }, duration);
-      }
+        }
+      }, duration);
     }
   }
 
@@ -1250,7 +1262,7 @@
     gameState.paused = false;
     gameState.score = 0;
     gameState.lives = DIFFICULTY_SETTINGS[gameState.difficulty].lives;
-    gameState.timer = gameState.arcadeMode ? 0 : 60;
+    gameState.timer = gameState.arcadeMode ? 0 : gameState.defaultTimer;
     gameState.level = 1;
     gameState.multiplier = 1;
     gameState.streak = 0;
@@ -1324,7 +1336,7 @@
     // Reset to initial state
     gameState.score = 0;
     gameState.lives = DIFFICULTY_SETTINGS[gameState.difficulty].lives;
-    gameState.timer = 60;
+    gameState.timer = gameState.defaultTimer;
     gameState.level = 1;
     gameState.multiplier = 1;
     gameState.streak = 0;
