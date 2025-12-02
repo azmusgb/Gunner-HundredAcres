@@ -44,9 +44,6 @@
     <!-- JavaScript (will be deferred) -->
     <script src="games.js" defer></script>
     <script src="script.js" defer></script>
-    
-    <!-- Preload critical resources -->
-    <link rel="preload" href="https://fonts.googleapis.com/css2?family=Playfair+Display:wght@400;500;600;700&family=Lato:wght@300;400;700&display=swap" as="style">
 </head>
 <body>
     <!-- Skip Link for Accessibility -->
@@ -414,7 +411,7 @@
                     </div>
                 </section>
 
-                <!-- Games Section - Enhanced Version -->
+                <!-- Games Section -->
                 <section id="games" class="content-section" aria-labelledby="games-title">
                     <div class="content-section-inner">
                         <div class="section-number" aria-hidden="true">4</div>
@@ -734,3 +731,463 @@
 
                                 <div class="game-surface">
                                     <canvas id="defense-game" aria-label="Tower defense playfield"></canvas>
+                                    <div class="game-overlay" id="defense-overlay">
+                                        <div class="overlay-inner">
+                                            <p id="defense-alert">Tap start to begin defending the meadow.</p>
+                                            <p id="defense-wave-status">Wave ready</p>
+                                        </div>
+                                    </div>
+                                </div>
+
+                                <div class="play-controls">
+                                    <button class="magical-btn" id="start-defense" aria-label="Start defense game">
+                                        <i class="fas fa-shield-alt" aria-hidden="true"></i>
+                                        <span>Start Defense</span>
+                                    </button>
+                                    <button class="ghost-btn" id="upgrade-tower" aria-label="Upgrade tower">
+                                        <i class="fas fa-level-up-alt" aria-hidden="true"></i>
+                                        <span>Upgrade</span>
+                                    </button>
+                                    <div class="tower-options" aria-label="Tower quick select">
+                                        <button class="tower-option" data-type="rapid">Rapid</button>
+                                        <button class="tower-option" data-type="frost">Frost</button>
+                                        <button class="tower-option" data-type="splash">Splash</button>
+                                    </div>
+                                </div>
+
+                                <p class="tiny-text">Performance meter: <span id="game-speed">1.0x</span></p>
+                            </div>
+                        </div>
+
+                        <!-- Game Details Area -->
+                        <div class="game-details-area" id="gameDetails" style="display: none;">
+                            <div class="details-header">
+                                <h3 class="details-title">
+                                    <span class="details-game-icon" aria-hidden="true">🍯</span>
+                                    <span class="details-game-name">Honey Hunt Adventure</span>
+                                </h3>
+                                <button class="close-details" aria-label="Close game details">
+                                    <i class="fas fa-times" aria-hidden="true"></i>
+                                </button>
+                            </div>
+                            
+                            <div class="details-content">
+                                <div class="details-main">
+                                    <div class="details-image">
+                                        <div class="game-preview">
+                                            <canvas id="gamePreview" width="600" height="300" role="img" aria-label="Preview of Honey Hunt Adventure game"></canvas>
+                                            <div class="preview-overlay">
+                                                <button class="btn-play-preview" data-game="honey-hunt" aria-label="Try Honey Hunt Adventure now">
+                                                    <i class="fas fa-play-circle" aria-hidden="true"></i>
+                                                    <span>Try Now</span>
+                                                </button>
+                                            </div>
+                                        </div>
+                                    </div>
+                                    
+                                    <div class="details-info">
+                                        <h4>How to Play</h4>
+                                        <ul class="instructions-list">
+                                            <li>Use arrow keys or touch controls to move Pooh</li>
+                                            <li>Collect all honey pots to complete each level</li>
+                                            <li>Avoid bees - they'll slow you down!</li>
+                                            <li>Find hidden honeycombs for bonus points</li>
+                                        </ul>
+                                        
+                                        <div class="mobile-specific">
+                                            <h5><i class="fas fa-mobile-alt" aria-hidden="true"></i> Mobile Controls</h5>
+                                            <p>On touch devices, use the on-screen joystick or tap to move Pooh around.</p>
+                                        </div>
+                                    </div>
+                                </div>
+                                
+                                <div class="details-footer">
+                                    <div class="powerups-section">
+                                        <h5>Power-ups</h5>
+                                        <div class="powerups-grid">
+                                            <div class="powerup">
+                                                <div class="powerup-icon" aria-hidden="true">🍯</div>
+                                                <div class="powerup-info">
+                                                    <div class="powerup-name">Honey Speed</div>
+                                                    <div class="powerup-desc">Move faster for 10 seconds</div>
+                                                </div>
+                                            </div>
+                                            <div class="powerup">
+                                                <div class="powerup-icon" aria-hidden="true">🛡️</div>
+                                                <div class="powerup-info">
+                                                    <div class="powerup-name">Bee Shield</div>
+                                                    <div class="powerup-desc">Protection from bees</div>
+                                                </div>
+                                            </div>
+                                            <div class="powerup">
+                                                <div class="powerup-icon" aria-hidden="true">⭐</div>
+                                                <div class="powerup-info">
+                                                    <div class="powerup-name">Star Power</div>
+                                                    <div class="powerup-desc">Collect all honey on screen</div>
+                                                </div>
+                                            </div>
+                                        </div>
+                                    </div>
+                                    
+                                    <div class="game-actions">
+                                        <button class="btn-leaderboard" aria-label="View leaderboard">
+                                            <i class="fas fa-chart-line" aria-hidden="true"></i>
+                                            <span>View Leaderboard</span>
+                                        </button>
+                                        <button class="btn-share-score" aria-label="Share your score">
+                                            <i class="fas fa-share-alt" aria-hidden="true"></i>
+                                            <span>Share Score</span>
+                                        </button>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+
+                        <!-- Mobile Game Controls Panel -->
+                        <div class="mobile-game-controls">
+                            <div class="controls-header">
+                                <h4><i class="fas fa-gamepad" aria-hidden="true"></i> Mobile Controls</h4>
+                                <button class="toggle-controls" aria-label="Toggle mobile controls">
+                                    <i class="fas fa-chevron-up" aria-hidden="true"></i>
+                                </button>
+                            </div>
+                            
+                            <div class="controls-content">
+                                <!-- D-pad Controls -->
+                                <div class="d-pad-container">
+                                    <div class="d-pad">
+                                        <button class="dpad-btn up" data-action="up" aria-label="Move up">
+                                            <i class="fas fa-chevron-up" aria-hidden="true"></i>
+                                        </button>
+                                        <button class="dpad-btn left" data-action="left" aria-label="Move left">
+                                            <i class="fas fa-chevron-left" aria-hidden="true"></i>
+                                        </button>
+                                        <button class="dpad-btn center" data-action="action" aria-label="Action button">
+                                            <i class="fas fa-circle" aria-hidden="true"></i>
+                                        </button>
+                                        <button class="dpad-btn right" data-action="right" aria-label="Move right">
+                                            <i class="fas fa-chevron-right" aria-hidden="true"></i>
+                                        </button>
+                                        <button class="dpad-btn down" data-action="down" aria-label="Move down">
+                                            <i class="fas fa-chevron-down" aria-hidden="true"></i>
+                                        </button>
+                                    </div>
+                                    
+                                    <div class="action-buttons">
+                                        <button class="action-btn primary" data-action="jump" aria-label="Jump">
+                                            <i class="fas fa-arrow-up" aria-hidden="true"></i>
+                                            <span>Jump</span>
+                                        </button>
+                                        <button class="action-btn secondary" data-action="action" aria-label="Power action">
+                                            <i class="fas fa-bolt" aria-hidden="true"></i>
+                                            <span>Power</span>
+                                        </button>
+                                    </div>
+                                </div>
+                                
+                                <!-- Touch Instructions -->
+                                <div class="touch-instructions">
+                                    <p><i class="fas fa-hand-point-up" aria-hidden="true"></i> Tip: You can also touch and drag on the game screen to move characters.</p>
+                                </div>
+                            </div>
+                        </div>
+
+                        <!-- Fullscreen Game Container -->
+                        <div class="fullscreen-game-container" id="fullscreenGame" style="display: none;">
+                            <div class="fullscreen-header">
+                                <div class="game-info">
+                                    <span class="game-icon" aria-hidden="true">🍯</span>
+                                    <div>
+                                        <h3 class="game-title-fullscreen">Honey Hunt Adventure</h3>
+                                        <p class="game-stats-fullscreen">Score: <span id="currentScore">0</span> | Lives: <span id="currentLives">3</span></p>
+                                    </div>
+                                </div>
+                                
+                                <div class="fullscreen-controls">
+                                    <button class="btn-pause" aria-label="Pause game">
+                                        <i class="fas fa-pause" aria-hidden="true"></i>
+                                    </button>
+                                    <button class="btn-sound" aria-label="Toggle sound">
+                                        <i class="fas fa-volume-up" aria-hidden="true"></i>
+                                    </button>
+                                    <button class="btn-exit-fullscreen" aria-label="Exit fullscreen">
+                                        <i class="fas fa-compress" aria-hidden="true"></i>
+                                    </button>
+                                </div>
+                            </div>
+                            
+                            <div class="fullscreen-game-area">
+                                <canvas id="fullscreenCanvas" width="800" height="600" role="application" aria-label="Honey Hunt Adventure game"></canvas>
+                                <div class="fullscreen-overlay" id="fullscreenOverlay" style="display: flex;">
+                                    <div class="overlay-content">
+                                        <h2>Get Ready!</h2>
+                                        <p>Game starting in <span id="countdown">3</span></p>
+                                        <div class="overlay-instructions">
+                                            <p><strong>Controls:</strong> Use arrow keys or touch controls to move</p>
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+                            
+                            <div class="fullscreen-footer">
+                                <div class="game-time">
+                                    <i class="fas fa-clock" aria-hidden="true"></i>
+                                    <span>Time: <span id="gameTimer">00:00</span></span>
+                                </div>
+                                <div class="game-progress">
+                                    <div class="progress-bar">
+                                        <div class="progress-fill" style="width: 0%" aria-valuemin="0" aria-valuemax="100" aria-valuenow="0" role="progressbar"></div>
+                                    </div>
+                                    <span>Level <span id="currentLevel">1</span>/10</span>
+                                </div>
+                            </div>
+                        </div>
+
+                        <!-- Games Help Section -->
+                        <div class="games-help">
+                            <details class="help-accordion">
+                                <summary>
+                                    <i class="fas fa-question-circle" aria-hidden="true"></i>
+                                    <span>Need Help?</span>
+                                    <span class="summary-arrow" aria-hidden="true"></span>
+                                </summary>
+                                <div class="help-content">
+                                    <div class="help-item">
+                                        <h5><i class="fas fa-mobile-alt" aria-hidden="true"></i> Mobile Play</h5>
+                                        <p>All games are optimized for touch screens. Use the mobile controls panel or touch directly on the game screen.</p>
+                                    </div>
+                                    <div class="help-item">
+                                        <h5><i class="fas fa-expand-arrows-alt" aria-hidden="true"></i> Fullscreen Mode</h5>
+                                        <p>For the best experience, use fullscreen mode on mobile devices by tapping the "Play Fullscreen" button.</p>
+                                    </div>
+                                    <div class="help-item">
+                                        <h5><i class="fas fa-save" aria-hidden="true"></i> Save Progress</h5>
+                                        <p>Your high scores are automatically saved. You can continue where you left off anytime.</p>
+                                    </div>
+                                </div>
+                            </details>
+                        </div>
+                    </div>
+                </section>
+
+                <!-- RSVP Section -->
+                <section id="rsvp" class="content-section" aria-labelledby="rsvp-title">
+                    <div class="content-section-inner">
+                        <div class="section-number" aria-hidden="true">5</div>
+                        
+                        <div class="rsvp-form">
+                            <div class="section-header">
+                                <h2 id="rsvp-title" class="story-title">
+                                    <i class="fas fa-feather-alt" aria-hidden="true"></i>
+                                    RSVP to the Adventure
+                                </h2>
+                                <p class="story-intro">Let us know if you can join our woodland celebration</p>
+                            </div>
+                            
+                            <div class="rsvp-count" role="status" aria-live="polite">
+                                <i class="fas fa-users" aria-hidden="true"></i>
+                                <span id="rsvp-count">42</span> friends are already joining the adventure!
+                            </div>
+                            
+                            <form class="storybook-form" id="rsvpForm" aria-labelledby="rsvp-title" novalidate>
+                                <div class="form-grid">
+                                    <div class="form-field">
+                                        <label for="guestName" class="field-label">
+                                            <i class="fas fa-user" aria-hidden="true"></i>
+                                            Your Name
+                                        </label>
+                                        <input type="text" id="guestName" name="guestName" required 
+                                               placeholder="Christopher Robin" aria-required="true">
+                                        <div class="field-hint">Please include your full name</div>
+                                    </div>
+                                    
+                                    <div class="form-field">
+                                        <label for="guestEmail" class="field-label">
+                                            <i class="fas fa-envelope" aria-hidden="true"></i>
+                                            Email Address
+                                        </label>
+                                        <input type="email" id="guestEmail" name="guestEmail" required 
+                                               placeholder="christopher@hundredacrewood.com" aria-required="true">
+                                        <div class="field-hint">We'll send confirmation here</div>
+                                    </div>
+                                </div>
+                                
+                                <div class="form-field">
+                                    <label for="partySize" class="field-label">
+                                        <i class="fas fa-users" aria-hidden="true"></i>
+                                        How Many in Your Party?
+                                    </label>
+                                    <select id="partySize" name="partySize" required aria-required="true">
+                                        <option value="" selected disabled>Select number of guests</option>
+                                        <option value="1">Just me (1)</option>
+                                        <option value="2">Me + 1 (2)</option>
+                                        <option value="3">Me + 2 (3)</option>
+                                        <option value="4">Me + 3 (4)</option>
+                                        <option value="5">Me + 4 (5)</option>
+                                        <option value="6">Me + 5 (6)</option>
+                                        <option value="7">Me + 6 (7)</option>
+                                        <option value="8">Me + 7 (8)</option>
+                                    </select>
+                                    <div class="field-hint">Include yourself in the count</div>
+                                </div>
+                                
+                                <fieldset class="form-field">
+                                    <legend class="field-label">
+                                        <i class="fas fa-calendar-check" aria-hidden="true"></i>
+                                        Will you attend?
+                                    </legend>
+                                    <div class="attendance-options" role="radiogroup">
+                                        <label class="radio-option">
+                                            <input type="radio" name="attendance" value="yes" required aria-required="true">
+                                            <span>Yes, I'll be there with bells on!</span>
+                                        </label>
+                                        <label class="radio-option">
+                                            <input type="radio" name="attendance" value="maybe">
+                                            <span>Maybe - I'll do my best to make it</span>
+                                        </label>
+                                        <label class="radio-option">
+                                            <input type="radio" name="attendance" value="no">
+                                            <span>Unfortunately, I can't make it</span>
+                                        </label>
+                                    </div>
+                                </fieldset>
+                                
+                                <div class="form-field">
+                                    <label for="guestMessage" class="field-label">
+                                        <i class="fas fa-comment-alt" aria-hidden="true"></i>
+                                        Message for Baby Gunner
+                                    </label>
+                                    <textarea id="guestMessage" name="guestMessage" 
+                                              placeholder="Share a wish, memory, or piece of advice for Baby Gunner's adventure book..." 
+                                              aria-describedby="guestMessageHint"></textarea>
+                                    <div class="field-hint" id="guestMessageHint">This will be added to Gunner's memory book</div>
+                                </div>
+                                
+                                <div class="form-field">
+                                    <label for="dietaryNeeds" class="field-label">
+                                        <i class="fas fa-utensils" aria-hidden="true"></i>
+                                        Dietary Requirements
+                                    </label>
+                                    <input type="text" id="dietaryNeeds" name="dietaryNeeds" 
+                                           placeholder="e.g., vegetarian, allergies, preferences"
+                                           aria-describedby="dietaryNeedsHint">
+                                    <div class="field-hint" id="dietaryNeedsHint">Let us know so we can prepare accordingly</div>
+                                </div>
+                                
+                                <button type="submit" class="magical-btn" aria-label="Send RSVP">
+                                    <i class="fas fa-paper-plane" aria-hidden="true"></i>
+                                    <span>Send RSVP</span>
+                                    <div class="btn-sparkles" aria-hidden="true">
+                                        <div class="sparkle" style="top: 20%; left: 30%;" aria-hidden="true"></div>
+                                        <div class="sparkle" style="top: 60%; right: 40%; animation-delay: 0.5s;" aria-hidden="true"></div>
+                                    </div>
+                                </button>
+                                
+                                <div class="form-status" role="alert" aria-live="polite" style="display: none;"></div>
+                            </form>
+                        </div>
+                    </div>
+                </section>
+            </div>
+        </div>
+    </main>
+
+    <!-- Character Modal -->
+    <div class="character-modal" id="characterModal" aria-hidden="true" role="dialog" aria-modal="true" aria-labelledby="modal-character-name" style="display: none;">
+        <div class="modal-content">
+            <button class="close-modal" aria-label="Close character details">
+                <i class="fas fa-times" aria-hidden="true"></i>
+            </button>
+            
+            <div class="modal-character">
+                <div class="modal-character-icon">
+                    <i class="fas fa-bear" aria-hidden="true"></i>
+                </div>
+                <h2 id="modal-character-name" class="modal-character-name">Winnie the Pooh</h2>
+            </div>
+            
+            <blockquote class="modal-character-quote">
+                "Sometimes the smallest things take up the most room in your heart."
+            </blockquote>
+            
+            <div class="modal-character-bio">
+                <p>
+                    Winnie-the-Pooh, or Pooh for short, is an anthropomorphic, honey-loving teddy bear. 
+                    He is a loyal friend to Christopher Robin and the other animals in the Hundred Acre Wood.
+                </p>
+                <p>
+                    While he may not be the smartest or most graceful bear, Pooh has a heart of gold and 
+                    often stumbles upon wisdom in his simple, honey-focused way of life.
+                </p>
+            </div>
+            
+            <ul class="modal-character-list">
+                <li>Loves honey more than anything</li>
+                <li>Best friends with Piglet</li>
+                <li>Lives in a house under the name "Mr. Sanders"</li>
+                <li>Known for his thoughtful "Oh, bother" moments</li>
+                <li>Has a little red shirt that he always wears</li>
+            </ul>
+        </div>
+    </div>
+
+    <!-- Fullscreen Game Modal -->
+    <div class="game-fullscreen" id="gameFullscreen" style="display: none;">
+        <div class="game-fullscreen__backdrop"></div>
+        <div class="game-fullscreen__content">
+            <div class="game-fullscreen__header">
+                <div>
+                    <div class="game-fullscreen__eyebrow">Active Game</div>
+                    <h2 class="game-fullscreen__title">Honey Hunt Adventure</h2>
+                </div>
+                <button class="game-fullscreen__close" aria-label="Exit fullscreen">
+                    <i class="fas fa-times" aria-hidden="true"></i>
+                </button>
+            </div>
+            <div class="game-fullscreen__body">
+                <!-- Game content will be dynamically inserted here -->
+            </div>
+        </div>
+    </div>
+
+    <!-- Footer -->
+    <footer class="footer" role="contentinfo">
+        <p>
+            And so our story continues, with new adventures waiting around every corner...
+        </p>
+        <p>
+            Thank you for being part of Baby Gunner's magical first year in the Hundred Acre Wood.
+        </p>
+        <div class="footer-credits">
+            <p>
+                Made with <i class="fas fa-heart" aria-hidden="true"></i> 
+                <span class="sr-only">love</span> by family & friends<br>
+                Inspired by A.A. Milne's wonderful world<br>
+                © <span id="currentYear">2024</span> Baby Gunner's Celebration
+            </p>
+        </div>
+        <div class="footer-sparkles" aria-hidden="true">
+            <div class="sparkle" style="bottom: 20%; left: 30%;" aria-hidden="true"></div>
+            <div class="sparkle" style="bottom: 40%; right: 40%; animation-delay: 1s;" aria-hidden="true"></div>
+            <div class="sparkle" style="bottom: 60%; left: 60%; animation-delay: 2s;" aria-hidden="true"></div>
+        </div>
+    </footer>
+
+    <!-- Accessiblity Panel (Hidden by default) -->
+    <div class="accessibility-panel" id="accessibilityPanel" style="display: none;">
+        <h3><i class="fas fa-universal-access"></i> Accessibility Options</h3>
+        <div class="accessibility-options">
+            <label>
+                <input type="checkbox" id="highContrast"> High Contrast Mode
+            </label>
+            <label>
+                <input type="checkbox" id="reducedMotion"> Reduced Motion
+            </label>
+            <label>
+                <input type="range" id="fontSize" min="100" max="150" value="100"> Text Size
+            </label>
+        </div>
+    </div>
+
+</body>
+</html>
