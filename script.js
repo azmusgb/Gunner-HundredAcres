@@ -78,7 +78,6 @@ class HundredAcreApp {
             gameFullscreenClose: document.querySelector('#gameFullscreen .game-fullscreen__close'),
 
             honeyCanvas: document.getElementById('honey-game'),
-            defenseCanvas: document.getElementById('defense-game'),
 
             catchScore: document.getElementById('score-count'),
             catchTime: document.getElementById('time-count'),
@@ -94,18 +93,7 @@ class HundredAcreApp {
 
             mobileControls: document.querySelector('.mobile-controls-panel'),
             mobileLeftBtn: document.getElementById('mobileLeftBtn'),
-            mobileRightBtn: document.getElementById('mobileRightBtn'),
-
-            defenseHoney: document.getElementById('honey-count'),
-            defenseLives: document.getElementById('lives-count'),
-            defenseWave: document.getElementById('wave-count'),
-            defenseAlert: document.getElementById('defense-alert'),
-            defenseWaveStatus: document.getElementById('defense-wave-status'),
-            defenseStartBtn: document.getElementById('start-defense'),
-            defenseUpgradeBtn: document.getElementById('upgrade-tower'),
-            defenseOverlay: document.getElementById('defense-overlay'),
-            towerOptions: document.querySelectorAll('.tower-option'),
-            defenseHighScore: document.getElementById('defense-high-score')
+            mobileRightBtn: document.getElementById('mobileRightBtn')
         };
 
         this.sectionById = {};
@@ -132,10 +120,6 @@ class HundredAcreApp {
 
     initGameControls() {
         const {
-            defenseStartBtn,
-            defenseOverlay,
-            defenseAlert,
-            defenseWaveStatus,
             catchStartBtn,
             catchPauseBtn,
             catchOverlay,
@@ -143,18 +127,6 @@ class HundredAcreApp {
             catchHint,
             catchStatus
         } = this.el;
-
-        if (defenseStartBtn) {
-            defenseStartBtn.addEventListener('click', () => {
-                if (defenseOverlay) defenseOverlay.classList.add('is-hidden');
-                if (defenseAlert) defenseAlert.textContent = 'Bees incoming! Defend the honey.';
-                if (defenseWaveStatus) defenseWaveStatus.textContent = 'Wave active';
-            });
-        }
-
-        if (defenseOverlay) {
-            defenseOverlay.classList.add('is-hidden');
-        }
 
         if (catchStartBtn) {
             catchStartBtn.addEventListener('click', () => this.startCatchGame());
@@ -221,7 +193,6 @@ class HundredAcreApp {
 
         requestAnimationFrame(() => {
             this.el.gameFullscreen?.classList.add('is-visible');
-            window.defenseGame?.handleResize?.();
             window.honeyGame?.handleResize?.();
             this.el.gameFullscreenClose?.focus({ preventScroll: true });
             this.enableFocusTrap(this.el.gameFullscreen);
@@ -243,7 +214,6 @@ class HundredAcreApp {
         this.el.gameFullscreen?.setAttribute('aria-hidden', 'true');
         this.clearFocusTrap();
 
-        window.defenseGame?.handleResize?.();
         window.honeyGame?.handleResize?.();
     }
 
@@ -926,30 +896,15 @@ class HundredAcreApp {
         const m = this.el.gameInstructionModal;
         if (!m) return;
 
-        let title = '';
-        let instructions = '';
-
-        if (type === 'defense') {
-            title = 'Honey Hive Defense';
-            instructions = `
-                <li>Place friends along the honey path to stop the bees</li>
-                <li>Each friend has different abilities and costs</li>
-                <li>Click on a placed friend to upgrade them</li>
-                <li>Boss bees appear every 3 waves - they're tougher!</li>
-                <li>Don't let too many bees reach the end or you'll lose lives</li>
-                <li>Press 1-5 to quickly select different friends</li>
-            `;
-        } else if (type === 'catch') {
-            title = 'Honey Pot Catch';
-            instructions = `
-                <li>Move Pooh left and right with arrow keys or tap the sides</li>
-                <li>Catch honey pots for points</li>
-                <li>Golden pots are worth 50 points and add extra time!</li>
-                <li>Avoid the bouncing rocks - they cost you lives</li>
-                <li>You have 60 seconds to get as many points as possible</li>
-                <li>Press Space or Enter to start/pause the game</li>
-            `;
-        }
+        const title = 'Honey Pot Catch';
+        const instructions = `
+            <li>Move Pooh left and right with arrow keys or tap the sides</li>
+            <li>Catch honey pots for points</li>
+            <li>Golden pots are worth 50 points and add extra time!</li>
+            <li>Avoid the bouncing rocks - they cost you lives</li>
+            <li>You have 60 seconds to get as many points as possible</li>
+            <li>Press Space or Enter to start/pause the game</li>
+        `;
 
         this.el.gameInstructionTitle.textContent = title;
         this.el.gameInstructionList.innerHTML = instructions;
