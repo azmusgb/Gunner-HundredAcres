@@ -55,6 +55,8 @@ const state = {
   player: { x: 320 },
   drops: [],
   bees: [],
+  particles: [],
+  hitFlash: 0,
   timerId: null,
 };
 
@@ -67,6 +69,7 @@ const scoreEl = document.getElementById('score');
 const timerEl = document.getElementById('timer');
 const livesEl = document.getElementById('lives');
 const bestEl = document.getElementById('best');
+const comboEl = document.getElementById('combo');
 const guestCount = document.getElementById('guestCount');
 const formStatus = document.getElementById('formStatus');
 
@@ -136,6 +139,13 @@ promptBtn.addEventListener('click', () => {
   promptText.textContent = `“${next}”`;
 });
 
+pathSteps.forEach(step => {
+  step.addEventListener('click', () => {
+    const target = document.getElementById(step.dataset.target);
+    if (target) target.scrollIntoView({ behavior: 'smooth' });
+  });
+});
+
 chimeToggle.addEventListener('click', () => {
   chime.currentTime = 0;
   chime.play();
@@ -145,8 +155,12 @@ function resetGame() {
   state.score = 0;
   state.time = 45;
   state.lives = 3;
+  state.combo = 1;
+  state.comboTime = 0;
   state.drops = [];
   state.bees = [];
+  state.particles = [];
+  state.hitFlash = 0;
   state.player.x = canvas.width / 2 - 30;
   state.paused = false;
   updateHud();
@@ -238,6 +252,9 @@ function loop() {
   drawPlayer();
   updateDrops();
   updateBees();
+  drawParticles();
+  renderHitFlash();
+  decayCombo();
   requestAnimationFrame(loop);
 }
 
@@ -249,10 +266,25 @@ function drawGround() {
 }
 
 function drawPlayer() {
+  const x = state.player.x;
+  const y = canvas.height - 70;
   ctx.fillStyle = '#f7c948';
-  ctx.fillRect(state.player.x, canvas.height - 70, 60, 40);
+  ctx.beginPath();
+  ctx.moveTo(x + 10, y);
+  ctx.lineTo(x + 50, y);
+  ctx.quadraticCurveTo(x + 58, y + 4, x + 58, y + 14);
+  ctx.lineTo(x + 58, y + 38);
+  ctx.quadraticCurveTo(x + 58, y + 46, x + 50, y + 48);
+  ctx.lineTo(x + 10, y + 48);
+  ctx.quadraticCurveTo(x + 2, y + 46, x + 2, y + 38);
+  ctx.lineTo(x + 2, y + 14);
+  ctx.quadraticCurveTo(x + 2, y + 4, x + 10, y);
+  ctx.closePath();
+  ctx.fill();
+  ctx.fillStyle = '#fff8e6';
+  ctx.fillRect(x + 10, y + 18, 40, 16);
   ctx.fillStyle = '#184e35';
-  ctx.fillRect(state.player.x + 18, canvas.height - 52, 24, 12);
+  ctx.fillRect(x + 16, y - 6, 28, 10);
 }
 
 function updateDrops() {
@@ -263,9 +295,14 @@ function updateDrops() {
     ctx.arc(d.x, d.y, 10, 0, Math.PI * 2);
     ctx.fill();
     if (d.y > canvas.height - 70 && d.x > state.player.x && d.x < state.player.x + 60) {
-      state.score += 5;
+      state.score += 5 + state.combo;
+      state.combo = Math.min(state.combo + 1, 12);
+      state.comboTime = performance.now();
       state.drops.splice(i, 1);
       updateHud();
+      spawnParticles(d.x, d.y, '#f7c948');
+      if (state.combo >= 6) gameStatus.textContent = 'Golden streak! Keep bouncing!';
+      else if (state.combo >= 3) gameStatus.textContent = 'Combo is glowing — keep it up!';
     }
     if (d.y > canvas.height) state.drops.splice(i, 1);
   });
@@ -280,8 +317,13 @@ function updateBees() {
     ctx.fill();
     if (b.y > canvas.height - 70 && b.x > state.player.x - 8 && b.x < state.player.x + 60) {
       state.lives -= 1;
+      state.combo = 1;
+      state.comboTime = 0;
+      state.hitFlash = 10;
       state.bees.splice(i, 1);
       updateHud();
+      spawnParticles(b.x, b.y, '#b23b2f');
+      gameStatus.textContent = 'Ouch! Bees stole a jar — shake it off!';
       if (state.lives <= 0) endGame();
     }
     if (b.y > canvas.height) state.bees.splice(i, 1);
@@ -292,6 +334,41 @@ function updateHud() {
   scoreEl.textContent = state.score;
   timerEl.textContent = `${state.time}s`;
   livesEl.textContent = state.lives;
+  comboEl.textContent = `x${state.combo}`;
+}
+
+function spawnParticles(x, y, color) {
+  for (let i = 0; i < 8; i += 1) {
+    state.particles.push({ x, y, life: 22, color, dx: (Math.random() - 0.5) * 3, dy: -1 - Math.random() * 1.5 });
+  }
+}
+
+function drawParticles() {
+  state.particles.forEach((p, idx) => {
+    p.x += p.dx;
+    p.y += p.dy;
+    p.life -= 1;
+    ctx.fillStyle = `${p.color}cc`;
+    ctx.beginPath();
+    ctx.arc(p.x, p.y, Math.max(1, p.life / 8), 0, Math.PI * 2);
+    ctx.fill();
+    if (p.life <= 0) state.particles.splice(idx, 1);
+  });
+}
+
+function renderHitFlash() {
+  if (state.hitFlash <= 0) return;
+  ctx.fillStyle = `rgba(178, 59, 47, ${state.hitFlash / 24})`;
+  ctx.fillRect(0, 0, canvas.width, canvas.height);
+  state.hitFlash -= 1;
+}
+
+function decayCombo() {
+  if (state.combo > 1 && performance.now() - state.comboTime > 3400) {
+    state.combo = 1;
+    updateHud();
+    gameStatus.textContent = 'Streak cooled — grab more honey!';
+  }
 }
 
 const form = document.getElementById('rsvpForm');
