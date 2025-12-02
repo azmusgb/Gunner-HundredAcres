@@ -179,6 +179,7 @@ class DefenseGame {
       money: 500,
       wave: 1,
       placingTower: null,
+      previewPosition: null,
       selectedTower: null,
       gameSpeed: 1,
       paused: false
@@ -348,6 +349,19 @@ class DefenseGame {
     });
   }
 
+  handleMouseMove(e) {
+    if (!this.state.placingTower) {
+      this.state.previewPosition = null;
+      return;
+    }
+
+    const rect = this.canvas.getBoundingClientRect();
+    this.state.previewPosition = {
+      x: e.clientX - rect.left,
+      y: e.clientY - rect.top
+    };
+  }
+
   handleClick(e) {
     const rect = this.canvas.getBoundingClientRect();
     const x = e.clientX - rect.left;
@@ -394,7 +408,8 @@ class DefenseGame {
       
       this.state.money -= towerType.cost;
       this.state.placingTower = null;
-      
+      this.state.previewPosition = null;
+
       // Particle effect
       this.particleSystem.emit(x, y, 30, {
         color: towerType.color,
@@ -764,24 +779,25 @@ class DefenseGame {
   }
 
   drawTowerPlacementPreview() {
-    const rect = this.canvas.getBoundingClientRect();
     const towerType = this.ui.towerButtons.find(b => b.type === this.state.placingTower);
-    
-    if (!towerType) return;
-    
+
+    if (!towerType || !this.state.previewPosition) return;
+
+    const { x, y } = this.state.previewPosition;
+
     // Draw range preview
     this.ctx.strokeStyle = towerType.color + '40';
     this.ctx.lineWidth = 2;
     this.ctx.setLineDash([5, 5]);
     this.ctx.beginPath();
-    this.ctx.arc(event.clientX - rect.left, event.clientY - rect.top, 120, 0, Math.PI * 2);
+    this.ctx.arc(x, y, 120, 0, Math.PI * 2);
     this.ctx.stroke();
     this.ctx.setLineDash([]);
-    
+
     // Draw tower preview
     this.ctx.fillStyle = towerType.color + '80';
     this.ctx.beginPath();
-    this.ctx.arc(event.clientX - rect.left, event.clientY - rect.top, 20, 0, Math.PI * 2);
+    this.ctx.arc(x, y, 20, 0, Math.PI * 2);
     this.ctx.fill();
   }
 
