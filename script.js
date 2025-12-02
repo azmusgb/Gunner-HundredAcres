@@ -72,6 +72,7 @@ const bestEl = document.getElementById('best');
 const comboEl = document.getElementById('combo');
 const guestCount = document.getElementById('guestCount');
 const formStatus = document.getElementById('formStatus');
+const pathSteps = document.querySelectorAll('.path__step');
 
 const promptBtn = document.getElementById('promptButton');
 const promptText = document.getElementById('promptText');
