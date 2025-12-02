@@ -37,6 +37,8 @@ class HundredAcreApp {
             navToggle: document.querySelector('.nav-toggle'),
             navMenu: document.querySelector('.nav-menu'),
             navItems: document.querySelectorAll('.nav-item'),
+            themeToggle: document.querySelector('.theme-toggle'),
+            themeIcon: document.querySelector('.theme-toggle i'),
 
             persistentRsvpBtn: document.querySelector('.persistent-rsvp'),
             scrollTopFab: document.querySelector('.fab[aria-label="Scroll to Top"]'),
@@ -108,6 +110,8 @@ class HundredAcreApp {
         this.el.sections.forEach(sec => {
             if (sec && sec.id) this.sectionById[sec.id] = sec;
         });
+
+        this.focusTrapCleanup = null;
 
         this.catchState = {
             timeRemaining: 60,
@@ -218,6 +222,7 @@ class HundredAcreApp {
             window.defenseGame?.handleResize?.();
             window.honeyGame?.handleResize?.();
             this.el.gameFullscreenClose?.focus({ preventScroll: true });
+            this.enableFocusTrap(this.el.gameFullscreen);
         });
     }
 
@@ -234,6 +239,7 @@ class HundredAcreApp {
         document.body.classList.remove('game-fullscreen-open');
         this.el.gameFullscreen?.classList.remove('is-visible');
         this.el.gameFullscreen?.setAttribute('aria-hidden', 'true');
+        this.clearFocusTrap();
 
         window.defenseGame?.handleResize?.();
         window.honeyGame?.handleResize?.();
@@ -338,10 +344,27 @@ class HundredAcreApp {
         if (this.el.navToggle) {
             this.el.navToggle.addEventListener('click', () => {
                 const isExpanded = this.el.navToggle.getAttribute('aria-expanded') === 'true';
-                this.el.navToggle.setAttribute('aria-expanded', !isExpanded);
+                const nextState = !isExpanded;
+                this.el.navToggle.setAttribute('aria-expanded', nextState);
                 this.el.navMenu.classList.toggle('nav-menu--open');
-                this.el.navMenu.setAttribute('aria-hidden', isExpanded);
-                document.body.classList.toggle('nav-open');
+                this.el.navMenu.setAttribute('aria-hidden', !nextState);
+                document.body.classList.toggle('nav-open', nextState);
+
+                if (nextState) {
+                    this.enableFocusTrap(this.el.navMenu);
+                    this.el.mainContent?.setAttribute('aria-hidden', 'true');
+                } else {
+                    this.clearFocusTrap();
+                    this.el.mainContent?.removeAttribute('aria-hidden');
+                }
+            });
+        }
+
+        if (this.el.themeToggle) {
+            this.el.themeToggle.addEventListener('click', () => {
+                const currentTheme = document.documentElement.getAttribute('data-theme') || 'light';
+                const nextTheme = currentTheme === 'dark' ? 'light' : 'dark';
+                this.setTheme(nextTheme, true);
             });
         }
 
@@ -451,6 +474,8 @@ class HundredAcreApp {
         this.el.navMenu.setAttribute('aria-hidden', 'true');
         this.el.navToggle.setAttribute('aria-expanded', 'false');
         document.body.classList.remove('nav-open');
+        this.clearFocusTrap();
+        this.el.mainContent?.removeAttribute('aria-hidden');
     }
 
     setActiveNavItem(activeItem) {
@@ -542,6 +567,45 @@ class HundredAcreApp {
         else btn.classList.remove('hidden');
     }
 
+    enableFocusTrap(container) {
+        if (!container) return;
+        if (this.focusTrapCleanup) this.focusTrapCleanup();
+
+        const focusable = Array.from(
+            container.querySelectorAll('a, button, input, select, textarea, [tabindex]:not([tabindex="-1"])')
+        ).filter(el => !el.hasAttribute('disabled') && !el.getAttribute('aria-hidden'));
+
+        if (!focusable.length) return;
+
+        const first = focusable[0];
+        const last = focusable[focusable.length - 1];
+
+        const handleKeydown = (e) => {
+            if (e.key !== 'Tab') return;
+            if (e.shiftKey && document.activeElement === first) {
+                e.preventDefault();
+                last.focus();
+            } else if (!e.shiftKey && document.activeElement === last) {
+                e.preventDefault();
+                first.focus();
+            }
+        };
+
+        document.addEventListener('keydown', handleKeydown, true);
+        first.focus({ preventScroll: true });
+
+        this.focusTrapCleanup = () => {
+            document.removeEventListener('keydown', handleKeydown, true);
+            this.focusTrapCleanup = null;
+        };
+    }
+
+    clearFocusTrap() {
+        if (this.focusTrapCleanup) {
+            this.focusTrapCleanup();
+        }
+    }
+
     throttle(fn, limit) {
         let inThrottle = false;
         let lastFn;
@@ -592,6 +656,11 @@ class HundredAcreApp {
         } else {
             this.setMotion(true);
         }
+
+        const storedTheme = localStorage.getItem('hundredAcreTheme');
+        const prefersDark = window.matchMedia && window.matchMedia('(prefers-color-scheme: dark)').matches;
+        const initialTheme = storedTheme || (prefersDark ? 'dark' : 'light');
+        this.setTheme(initialTheme, false);
     }
 
     isTextInput(el) {
@@ -649,6 +718,26 @@ class HundredAcreApp {
         }
     }
 
+    setTheme(theme, persist = false) {
+        const clampedTheme = theme === 'dark' ? 'dark' : 'light';
+        document.documentElement.setAttribute('data-theme', clampedTheme);
+
+        if (persist) {
+            localStorage.setItem('hundredAcreTheme', clampedTheme);
+        }
+
+        if (this.el.themeToggle) {
+            this.el.themeToggle.setAttribute('aria-pressed', clampedTheme === 'dark');
+            const label = this.el.themeToggle.querySelector('.sr-only');
+            if (label) label.textContent = clampedTheme === 'dark' ? 'Enable light theme' : 'Enable dark theme';
+        }
+
+        if (this.el.themeIcon) {
+            this.el.themeIcon.classList.toggle('fa-sun', clampedTheme === 'dark');
+            this.el.themeIcon.classList.toggle('fa-moon', clampedTheme !== 'dark');
+        }
+    }
+
     initRSVP() {
         // Load existing RSVP count
         const rsvpData = localStorage.getItem('babyGunnerRSVP');
@@ -674,9 +763,11 @@ class HundredAcreApp {
         
         const form = e.target;
         const formData = new FormData(form);
-        const name = formData.get('guestName');
+        const name = (formData.get('guestName') || '').toString().trim();
         const count = formData.get('partySize');
-        const note = formData.get('guestNote');
+        const email = (formData.get('guestEmail') || '').toString().trim();
+        const attendance = formData.get('attendance');
+        const note = (formData.get('guestMessage') || '').toString().trim();
 
         // Validation
         if (!name || name.length < 2) {
@@ -684,8 +775,20 @@ class HundredAcreApp {
             return;
         }
 
-        if (!count || count < 1 || count > 6) {
+        const emailPattern = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+        if (!emailPattern.test(email)) {
+            this.showFormStatus('Please enter a valid email address', 'error');
+            return;
+        }
+
+        const countValue = parseInt(count, 10);
+        if (!countValue || countValue < 1 || countValue > 6) {
             this.showFormStatus('Please select 1-6 guests', 'error');
+            return;
+        }
+
+        if (!attendance) {
+            this.showFormStatus('Please let us know if you can attend', 'error');
             return;
         }
 
@@ -694,14 +797,16 @@ class HundredAcreApp {
 
         // Update count
         const currentCount = parseInt(this.el.rsvpCount.textContent) || 0;
-        const newCount = currentCount + parseInt(count);
+        const newCount = currentCount + countValue;
         this.el.rsvpCount.textContent = newCount;
 
         // Save to localStorage
         const rsvpData = {
             name: name,
-            count: parseInt(count),
+            count: countValue,
             note: note,
+            attendance,
+            email,
             timestamp: new Date().toISOString()
         };
         localStorage.setItem('babyGunnerRSVP', JSON.stringify(rsvpData));
@@ -722,10 +827,11 @@ class HundredAcreApp {
 
     showFormStatus(message, type) {
         if (!this.el.rsvpStatus) return;
-        
+
         this.el.rsvpStatus.textContent = message;
         this.el.rsvpStatus.className = 'form-status';
-        
+        this.el.rsvpStatus.style.display = 'block';
+
         switch(type) {
             case 'success':
                 this.el.rsvpStatus.classList.add('form-status--success');
@@ -788,13 +894,15 @@ class HundredAcreApp {
         characterModalTitle.textContent = data.name;
         characterModalQuote.textContent = data.quote;
         characterModalBio.textContent = data.bio;
-        
+
         characterModal.style.display = 'flex';
         characterModal.setAttribute('aria-hidden', 'false');
-        
+
         // Focus trap for accessibility
         const closeBtn = this.el.characterModalClose;
         setTimeout(() => closeBtn.focus(), 100);
+        this.enableFocusTrap(characterModal);
+        this.el.mainContent?.setAttribute('aria-hidden', 'true');
     }
 
     closeCharacterModal() {
@@ -802,6 +910,8 @@ class HundredAcreApp {
         if (!characterModal) return;
         characterModal.style.display = 'none';
         characterModal.setAttribute('aria-hidden', 'true');
+        this.clearFocusTrap();
+        this.el.mainContent?.removeAttribute('aria-hidden');
     }
 
     openGameInstructions(type) {
