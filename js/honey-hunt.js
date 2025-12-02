@@ -1,7 +1,9 @@
+// honey-hunt.js – Honey Hunt mini-game (shared by index.html + honey-hunt.html)
+
 (() => {
   const canvas = document.getElementById('honeyCanvas');
   const container = document.getElementById('canvasContainer');
-  if (!canvas || !container) return;
+  if (!canvas || !container) return; // Game not present on this page
 
   const ctx = canvas.getContext('2d');
 
@@ -21,16 +23,17 @@
   const pauseBtn = document.getElementById('pauseBtn');
   const resetBtn = document.getElementById('resetBtn');
   const difficultySelect = document.getElementById('difficultySelect');
-  const streakSoundToggle = document.getElementById('streakSoundToggle');
+  const streakSoundToggle = document.getElementById('streakSoundToggle'); // future use
   const arcadeModeBtn = document.getElementById('arcadeModeBtn');
 
+  // Touch controls (mobile)
   const leftBtn = document.getElementById('leftBtn');
   const rightBtn = document.getElementById('rightBtn');
   const dropBtn = document.getElementById('dropBtn');
 
   const bearBadge = document.getElementById('bearBadge');
 
-  // Game state
+  // Canvas + game state
   let width = 400;
   let height = 300;
   let lastTime = 0;
@@ -57,35 +60,43 @@
   };
 
   const DIFFICULTY_SETTINGS = {
-    easy: { dropRate: 0.9, leafRate: 0.25, dropSpeed: [60, 90], leafSpeed: [80, 110] },
-    normal: { dropRate: 1.1, leafRate: 0.35, dropSpeed: [80, 120], leafSpeed: [100, 140] },
-    hard: { dropRate: 1.5, leafRate: 0.55, dropSpeed: [110, 150], leafSpeed: [130, 180] }
+    easy:   { dropRate: 0.9,  leafRate: 0.25, dropSpeed: [60, 90],   leafSpeed: [80, 110] },
+    normal: { dropRate: 1.1,  leafRate: 0.35, dropSpeed: [80, 120],  leafSpeed: [100, 140] },
+    hard:   { dropRate: 1.5,  leafRate: 0.55, dropSpeed: [110, 150], leafSpeed: [130, 180] }
   };
 
   function rand(min, max) {
     return Math.random() * (max - min) + min;
   }
 
+  /* ========= RESIZE & PLAYER ========= */
+
   function resizeCanvas() {
     const rect = container.getBoundingClientRect();
-    const targetWidth = rect.width;
-    const targetHeight = targetWidth * 0.75; // 4:3
-    canvas.width = targetWidth * 2;
+    const targetWidth = Math.max(rect.width, 200);  // guard for tiny layouts
+    const targetHeight = targetWidth * 0.75;        // maintain 4:3 ratio
+
+    canvas.width = targetWidth * 2;   // high-res rendering
     canvas.height = targetHeight * 2;
     canvas.style.height = `${targetHeight}px`;
+
     width = canvas.width;
     height = canvas.height;
+
     if (state.player) {
       state.player.y = height - state.player.height - 24;
     }
   }
 
   function resetPlayer() {
+    const w = width * 0.12;
+    const h = height * 0.12;
+
     state.player = {
-      width: width * 0.12,
-      height: height * 0.12,
-      x: width / 2 - (width * 0.12) / 2,
-      y: height - height * 0.12 - 24,
+      width: w,
+      height: h,
+      x: width / 2 - w / 2,
+      y: height - h - 24,
       speed: width * 0.35
     };
   }
@@ -102,15 +113,18 @@
     updateHUD();
   }
 
+  /* ========= BEST SCORE ========= */
+
   function loadBestScore() {
     try {
       const stored = localStorage.getItem('honey_best_score');
       if (stored) {
         state.best = parseInt(stored, 10) || 0;
       }
-    } catch (e) {
+    } catch {
       state.best = 0;
     }
+
     if (bestEl) bestEl.textContent = state.best.toString();
     if (bestLabelEl) bestLabelEl.textContent = `Best: ${state.best} pts`;
   }
@@ -120,7 +134,7 @@
       state.best = state.score;
       try {
         localStorage.setItem('honey_best_score', String(state.best));
-      } catch (e) {
+      } catch {
         // ignore storage errors
       }
       if (bestEl) bestEl.textContent = state.best.toString();
@@ -128,12 +142,16 @@
     }
   }
 
+  /* ========= HUD & STATUS ========= */
+
   function updateHUD() {
     if (scoreEl) scoreEl.textContent = state.score.toString();
+
     if (timeEl) {
       const t = state.arcadeMode ? '∞' : `${Math.max(0, Math.floor(state.timer))}s`;
       timeEl.textContent = t;
     }
+
     if (livesEl) livesEl.textContent = state.lives.toString();
     if (comboEl) comboEl.textContent = `x${state.combo}`;
   }
@@ -141,12 +159,33 @@
   function setStatus(message, tone = 'neutral') {
     if (!statusTextEl || !statusBarEl) return;
     statusTextEl.textContent = message;
-    statusBarEl.dataset.tone = tone;
+    statusBarEl.dataset.tone = tone; // CSS uses [data-tone]
   }
+
+  function pulseCombo() {
+    if (!comboPillEl) return;
+    comboPillEl.classList.remove('combo-pulse');
+    // force reflow
+    void comboPillEl.offsetWidth;
+    comboPillEl.classList.add('combo-pulse');
+  }
+
+  function flashStatus() {
+    if (!statusBarEl) return;
+    statusBarEl.style.transition = 'background 0.18s ease';
+    const original = statusBarEl.style.background;
+    statusBarEl.style.background = 'rgba(214,46,46,0.16)';
+    setTimeout(() => {
+      statusBarEl.style.background = original || '';
+    }, 160);
+  }
+
+  /* ========= OBJECT SPAWNING ========= */
 
   function spawnDrop() {
     const s = DIFFICULTY_SETTINGS[state.difficulty] || DIFFICULTY_SETTINGS.normal;
     const size = rand(height * 0.04, height * 0.06);
+
     state.drops.push({
       x: rand(size, width - size),
       y: -size,
@@ -160,6 +199,7 @@
   function spawnLeaf() {
     const s = DIFFICULTY_SETTINGS[state.difficulty] || DIFFICULTY_SETTINGS.normal;
     const size = rand(height * 0.04, height * 0.06);
+
     state.leaves.push({
       x: rand(size, width - size),
       y: -size,
@@ -170,22 +210,28 @@
     });
   }
 
+  /* ========= GAME LOGIC ========= */
+
   function movePlayer(dt) {
     if (!state.player) return;
     let dir = 0;
     if (state.keys.left) dir -= 1;
     if (state.keys.right) dir += 1;
+
     if (dir !== 0) {
       state.player.x += dir * state.player.speed * dt;
       const margin = state.player.width * 0.5;
-      state.player.x = Math.max(margin, Math.min(width - margin - state.player.width, state.player.x));
+      state.player.x = Math.max(
+        margin,
+        Math.min(width - margin - state.player.width, state.player.x)
+      );
     }
   }
 
   function updateObjects(dt) {
     const s = DIFFICULTY_SETTINGS[state.difficulty] || DIFFICULTY_SETTINGS.normal;
 
-    // spawn logic: probability per second
+    // spawn logic (probability per second)
     if (Math.random() < s.dropRate * dt) spawnDrop();
     if (Math.random() < s.leafRate * dt) spawnLeaf();
 
@@ -210,7 +256,7 @@
     const px = p.x + p.width / 2;
     const py = p.y + p.height / 2;
 
-    // honey
+    // honey jars
     for (let i = state.drops.length - 1; i >= 0; i--) {
       const d = state.drops[i];
       const dx = (d.x - px) / (p.width * 0.6);
@@ -252,28 +298,12 @@
     state.comboTimer = 0;
     updateHUD();
     flashStatus();
+
     if (state.lives <= 0 && !state.arcadeMode) {
       endGame("Pooh took one tumble too many. Round over.", "end");
     } else {
       setStatus("Whoops! Leaves are not for catching.", "warn");
     }
-  }
-
-  function pulseCombo() {
-    if (!comboPillEl) return;
-    comboPillEl.classList.remove('combo-pulse');
-    void comboPillEl.offsetWidth;
-    comboPillEl.classList.add('combo-pulse');
-  }
-
-  function flashStatus() {
-    if (!statusBarEl) return;
-    statusBarEl.style.transition = 'background 0.18s ease';
-    const old = window.getComputedStyle(statusBarEl).backgroundColor;
-    statusBarEl.style.background = 'rgba(214,46,46,0.16)';
-    setTimeout(() => {
-      statusBarEl.style.background = '';
-    }, 160);
   }
 
   function updateTimer(dt) {
@@ -286,6 +316,7 @@
         return;
       }
     }
+
     if (state.combo > 1) {
       state.comboTimer -= dt;
       if (state.comboTimer <= 0) {
@@ -295,6 +326,8 @@
       }
     }
   }
+
+  /* ========= DRAWING ========= */
 
   function drawBackground() {
     ctx.clearRect(0, 0, width, height);
@@ -311,7 +344,7 @@
     ctx.fillStyle = "rgba(255,255,255,0.9)";
     const clouds = [
       { x: width * 0.18, y: height * 0.14, r: 32 },
-      { x: width * 0.3, y: height * 0.1, r: 24 },
+      { x: width * 0.3,  y: height * 0.10, r: 24 },
       { x: width * 0.75, y: height * 0.16, r: 28 }
     ];
     clouds.forEach(c => {
@@ -330,6 +363,7 @@
   function drawPlayer() {
     const p = state.player;
     if (!p) return;
+
     const x = p.x;
     const y = p.y;
     const w = p.width;
@@ -391,6 +425,8 @@
       ctx.rect(jx, jy, jarW, jarH);
     }
     ctx.fill();
+
+    // honey on top
     ctx.fillStyle = "#f0c96e";
     ctx.fillRect(jx, jy, jarW, jarH * 0.26);
   }
@@ -430,8 +466,11 @@
     drawPlayer();
   }
 
+  /* ========= LOOP & LIFECYCLE ========= */
+
   function gameLoop(timestamp) {
     if (!state.running) return;
+
     const dt = lastTime ? (timestamp - lastTime) / 1000 : 0;
     lastTime = timestamp;
 
@@ -455,7 +494,9 @@
     state.running = true;
     state.paused = false;
     lastTime = 0;
+
     setStatus("Catch the honey, dodge the leaves. Short and sweet!", "start");
+
     if (frameRequest) cancelAnimationFrame(frameRequest);
     frameRequest = requestAnimationFrame(gameLoop);
   }
@@ -463,6 +504,7 @@
   function pauseGame() {
     if (!state.running) return;
     state.paused = !state.paused;
+
     setStatus(
       state.paused
         ? "Game paused. Pooh is catching his breath."
@@ -474,7 +516,8 @@
   function resetGame() {
     state.running = false;
     state.paused = false;
-    cancelAnimationFrame(frameRequest);
+    if (frameRequest) cancelAnimationFrame(frameRequest);
+
     resetPlayer();
     resetGameValues();
     drawBackground();
@@ -485,18 +528,21 @@
   function endGame(message, tone) {
     state.running = false;
     state.paused = false;
-    cancelAnimationFrame(frameRequest);
+    if (frameRequest) cancelAnimationFrame(frameRequest);
     saveBestScore();
     setStatus(message, tone);
   }
 
   function handleArcadeToggle() {
     state.arcadeMode = !state.arcadeMode;
+
     if (arcadeModeBtn) {
       arcadeModeBtn.classList.toggle('btn--primary', state.arcadeMode);
       arcadeModeBtn.classList.toggle('btn--ghost', !state.arcadeMode);
     }
+
     resetGame();
+
     if (!state.arcadeMode) {
       setStatus("Arcade Mode off. Back to cozy story rounds.", "neutral");
     } else {
@@ -512,6 +558,8 @@
       setStatus(`Difficulty set to ${value}.`, "neutral");
     }
   }
+
+  /* ========= INPUT HANDLERS ========= */
 
   function onKeyDown(e) {
     if (e.key === 'ArrowLeft' || e.key === 'a' || e.key === 'A') {
@@ -543,6 +591,7 @@
     if (difficultySelect) difficultySelect.addEventListener('change', handleDifficultyChange);
     if (arcadeModeBtn) arcadeModeBtn.addEventListener('click', handleArcadeToggle);
 
+    // Touch controls (mobile)
     if (leftBtn) {
       leftBtn.addEventListener('touchstart', (e) => {
         e.preventDefault();
@@ -584,6 +633,8 @@
       }
     });
   }
+
+  /* ========= INIT ========= */
 
   function init() {
     resizeCanvas();
