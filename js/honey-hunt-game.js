@@ -125,10 +125,6 @@
     return ids.map(id => document.getElementById(id)).find(Boolean) || null;
   }
 
-  function getElementByIds(ids) {
-    return ids.map(id => document.getElementById(id)).find(Boolean) || null;
-  }
-
   // =========== AUDIO SYSTEM ===========
   class AudioSystem {
     constructor() {
