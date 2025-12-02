@@ -69,7 +69,9 @@ const scoreEl = document.getElementById('score');
 const timerEl = document.getElementById('timer');
 const livesEl = document.getElementById('lives');
 const bestEl = document.getElementById('best');
-const comboEl = document.getElementById('combo');
+const comboEl = document.getElementById('comboCount');
+const comboDisplay = document.getElementById('comboDisplay');
+const comboStreak = document.getElementById('comboStreak');
 const guestCount = document.getElementById('guestCount');
 const formStatus = document.getElementById('formStatus');
 const pathSteps = document.querySelectorAll('.path__step');
@@ -177,6 +179,7 @@ function resetGame() {
   state.player.x = canvas.width / 2 - 30;
   state.paused = false;
   updateHud();
+  updateComboDisplay();
 }
 
 function startGame() {
@@ -200,8 +203,11 @@ function endGame() {
   finalScoreEl.textContent = state.score;
   highScoreBadge.style.display = state.score > previousBest ? 'block' : 'none';
   sharePrompt.textContent = `I scored ${state.score} honey pots at Gunner's shower! Can you beat it?`;
+  state.combo = 1;
+  updateHud();
   gameOverOverlay.classList.add('is-visible');
   gameStatus.textContent = 'Round complete — ready for another hunt?';
+  updateComboDisplay();
 }
 
 function spawn() {
@@ -313,6 +319,7 @@ function updateDrops() {
       state.comboTime = performance.now();
       state.drops.splice(i, 1);
       updateHud();
+      updateComboDisplay();
       spawnParticles(d.x, d.y, '#f7c948');
       if (state.combo >= 6) gameStatus.textContent = 'Golden streak! Keep bouncing!';
       else if (state.combo >= 3) gameStatus.textContent = 'Combo is glowing — keep it up!';
@@ -335,6 +342,7 @@ function updateBees() {
       state.hitFlash = 10;
       state.bees.splice(i, 1);
       updateHud();
+      updateComboDisplay();
       spawnParticles(b.x, b.y, '#b23b2f');
       gameStatus.textContent = 'Ouch! Bees stole a jar — shake it off!';
       if (state.lives <= 0) endGame();
@@ -348,6 +356,19 @@ function updateHud() {
   timerEl.textContent = `${state.time}s`;
   livesEl.textContent = state.lives;
   comboEl.textContent = `x${state.combo}`;
+}
+
+function updateComboDisplay() {
+  if (!comboDisplay) return;
+  if (state.combo > 1) {
+    comboDisplay.style.display = 'flex';
+    comboStreak.textContent = `x${state.combo}`;
+    comboDisplay.classList.remove('pop');
+    void comboDisplay.offsetWidth;
+    comboDisplay.classList.add('pop');
+  } else {
+    comboDisplay.style.display = 'none';
+  }
 }
 
 function spawnParticles(x, y, color) {
@@ -380,6 +401,7 @@ function decayCombo() {
   if (state.combo > 1 && performance.now() - state.comboTime > 3400) {
     state.combo = 1;
     updateHud();
+    updateComboDisplay();
     gameStatus.textContent = 'Streak cooled — grab more honey!';
   }
 }
