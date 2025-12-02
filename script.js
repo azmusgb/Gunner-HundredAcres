@@ -444,6 +444,18 @@ class HundredAcreApp {
         }
     }
 
+    toggleMobileControlsPanel() {
+        const panel = this.el.mobileControls;
+        if (!panel) return;
+
+        panel.classList.toggle('is-collapsed');
+
+        const toggleIcon = panel.querySelector('.toggle-icon');
+        if (toggleIcon) {
+            toggleIcon.textContent = panel.classList.contains('is-collapsed') ? '▲' : '▼';
+        }
+    }
+
     updatePersistentRSVP() {
         const btn = this.el.persistentRsvpBtn;
         const sec = this.el.rsvpSection;
@@ -803,6 +815,9 @@ class HundredAcreApp {
         };
         window.playWoodlandSound = function (event) {
             self.playWoodlandSound(event);
+        };
+        window.toggleMobileControls = function () {
+            self.toggleMobileControlsPanel();
         };
         window.editRSVP = function () {
             self.editRSVP();

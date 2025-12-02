@@ -88,6 +88,9 @@
   --z-navigation: 50;
   --z-modal: 100;
   --z-loading: 999;
+
+  /* Safe area for modern phones */
+  --safe-area-bottom: env(safe-area-inset-bottom, 0px);
 }
 
 /* =====================
@@ -763,7 +766,7 @@ input, select, textarea {
 ===================== */
 .music-controls {
   position: fixed;
-  bottom: var(--space-xl);
+  bottom: calc(var(--space-xl) + var(--safe-area-bottom));
   right: var(--space-xl);
   display: flex;
   flex-direction: column;
@@ -826,7 +829,7 @@ input, select, textarea {
 ===================== */
 .fab-container {
   position: fixed;
-  bottom: var(--space-xl);
+  bottom: calc(var(--space-xl) + var(--safe-area-bottom));
   left: var(--space-xl);
   display: flex;
   flex-direction: column;
@@ -885,7 +888,7 @@ input, select, textarea {
 .persistent-rsvp {
   position: fixed;
   right: var(--space-xl);
-  bottom: calc(var(--space-xl) + 120px);
+  bottom: calc(var(--space-xl) + 120px + var(--safe-area-bottom));
   display: inline-flex;
   align-items: center;
   gap: var(--space-sm);
@@ -2183,6 +2186,9 @@ select {
   width: 100%;
   height: 400px;
   overflow: hidden;
+  touch-action: none;
+  -webkit-user-select: none;
+  user-select: none;
 }
 
 .game-canvas-container canvas {
@@ -2197,6 +2203,9 @@ select {
   transform: translateZ(0);
   backface-visibility: hidden;
   perspective: 1000;
+  touch-action: none;
+  -webkit-user-select: none;
+  user-select: none;
 }
 
 .canvas-overlay {
@@ -2545,6 +2554,7 @@ select {
 
 .mobile-controls-content {
   padding: var(--space-lg);
+  transition: opacity var(--transition-medium), max-height var(--transition-medium), padding var(--transition-medium);
 }
 
 .mobile-controls-grid {
@@ -2569,6 +2579,9 @@ select {
   color: var(--wood-brown);
   font-weight: 600;
   min-height: 80px;
+  touch-action: manipulation;
+  -webkit-user-select: none;
+  user-select: none;
 }
 
 .mobile-control-btn:active {
@@ -2594,6 +2607,19 @@ select {
   background: rgba(255, 196, 43, 0.1);
   border-radius: var(--radius-md);
   border: 2px dashed var(--honey-yellow);
+}
+
+.mobile-controls-panel.is-collapsed .mobile-controls-content {
+  max-height: 0;
+  opacity: 0;
+  padding-top: 0;
+  padding-bottom: 0;
+  pointer-events: none;
+  transition: opacity var(--transition-medium), max-height var(--transition-medium), padding var(--transition-medium);
+}
+
+.mobile-controls-panel.is-collapsed .controls-toggle .toggle-icon {
+  transform: rotate(-180deg);
 }
 
 .tip-icon {
@@ -3290,6 +3316,26 @@ select {
   
   .game-navigation {
     top: 70px;
+  }
+
+  .game-area-header {
+    flex-direction: column;
+    align-items: flex-start;
+    gap: var(--space-sm);
+  }
+
+  .area-info {
+    width: 100%;
+    justify-content: flex-start;
+  }
+
+  .game-quick-info {
+    flex-direction: column;
+    align-items: flex-start;
+  }
+
+  .game-stats-grid {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
   }
   
   .game-nav-container {

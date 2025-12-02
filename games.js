@@ -118,7 +118,11 @@ class DefenseGame {
   constructor() {
     this.canvas = document.getElementById('defense-game');
     if (!this.canvas) return;
-    
+
+    this.canvas.style.touchAction = 'none';
+    this.canvas.style.userSelect = 'none';
+    this.canvas.style.webkitUserSelect = 'none';
+
     this.setupCanvas();
     this.setupGameState();
     this.setupTowers();
@@ -128,6 +132,8 @@ class DefenseGame {
     this.bindEvents();
     this.bindHud();
     this.startGameLoop();
+
+    window.addEventListener('resize', () => this.handleResize());
   }
 
   setupCanvas() {
@@ -148,6 +154,22 @@ class DefenseGame {
     this.bgCanvas.height = this.canvas.height;
     this.bgCtx = this.bgCanvas.getContext('2d');
     this.bgCtx.scale(dpr, dpr);
+  }
+
+  handleResize() {
+    const dpr = window.devicePixelRatio || 1;
+    const rect = this.canvas.getBoundingClientRect();
+
+    this.canvas.width = rect.width * dpr;
+    this.canvas.height = rect.height * dpr;
+    this.ctx.setTransform(dpr, 0, 0, dpr, 0, 0);
+
+    this.width = rect.width;
+    this.height = rect.height;
+
+    this.bgCanvas.width = this.canvas.width;
+    this.bgCanvas.height = this.canvas.height;
+    this.bgCtx.setTransform(dpr, 0, 0, dpr, 0, 0);
   }
 
   setupGameState() {
@@ -812,7 +834,11 @@ class HoneyGame {
   constructor() {
     this.canvas = document.getElementById('honey-game');
     if (!this.canvas) return;
-    
+
+    this.canvas.style.touchAction = 'none';
+    this.canvas.style.userSelect = 'none';
+    this.canvas.style.webkitUserSelect = 'none';
+
     this.setupCanvas();
     this.setupGameState();
     this.setupPhysics();
