@@ -2,11 +2,11 @@
 <html lang="en" data-theme="light">
 <head>
     <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=5.0, user-scalable=yes">
+    <meta name="viewport" content="width=device-width, initial-scale=5.0, user-scalable=yes">
     <title>Baby Gunner's Hundred Acre Wood Celebration</title>
     
     <!-- Meta Tags -->
-    <meta name="description" content="Join us in celebrating Baby Gunner's first adventure in the Hundred Acre Wood! A storybook-themed celebration with interactive games and magical moments.">
+    <meta name="description" content="Join us in celebrating Baby Gunner's first adventure in the Hundred Acre Wood! A storybook-themed celebration with an interactive honey catch game and magical moments.">
     <meta name="keywords" content="baby celebration, first birthday, Hundred Acre Wood, Winnie the Pooh, storybook theme, baby shower, baby Gunner">
     <meta name="author" content="The Celebration Crew">
     <meta name="theme-color" content="#ffb347">
@@ -94,6 +94,10 @@
             position: relative;
         }
 
+        .content-section-inner {
+            position: relative;
+        }
+
         .section-number {
             position: absolute;
             top: -20px;
@@ -133,6 +137,13 @@
             opacity: 0.8;
             max-width: 800px;
             margin: 0 auto;
+        }
+
+        .story-text {
+            margin-bottom: 16px;
+            line-height: 1.7;
+            font-size: 1rem;
+            color: var(--dark-brown);
         }
 
         /* Games Section Styles */
@@ -230,6 +241,10 @@
             border-radius: 20px;
             font-size: 0.9rem;
             font-weight: bold;
+        }
+
+        .game-character-icon {
+            font-size: 1.6rem;
         }
 
         .game-rating {
@@ -370,54 +385,12 @@
             border: 1px solid rgba(255, 179, 71, 0.35);
         }
 
-        .game-section-actions {
-            display: flex;
-            flex-wrap: wrap;
-            gap: 10px;
-            align-items: center;
-            justify-content: space-between;
-            margin-top: 16px;
-        }
-
-        .pill-group {
-            display: flex;
-            gap: 8px;
-            flex-wrap: wrap;
-        }
-
-        .pill {
-            padding: 8px 12px;
-            border-radius: 20px;
-            border: 1px solid rgba(93, 64, 55, 0.2);
-            background: white;
-            color: var(--primary-brown);
-            display: inline-flex;
-            align-items: center;
-            gap: 8px;
-            font-weight: 600;
-            box-shadow: var(--shadow);
-        }
-
-        .pill .dot {
-            width: 10px;
-            height: 10px;
-            border-radius: 50%;
-            background: var(--primary-gold);
-            box-shadow: 0 0 0 4px rgba(255, 179, 71, 0.2);
-        }
-
         /* Live Play Area */
         .games-play-area {
             display: grid;
             grid-template-columns: 1fr;
             gap: 30px;
-            margin: 40px 0;
-        }
-
-        @media (min-width: 992px) {
-            .games-play-area {
-                grid-template-columns: 1fr 1fr;
-            }
+            margin: 40px 0 10px 0;
         }
 
         .play-column {
@@ -500,6 +473,7 @@
             align-items: center;
             justify-content: center;
             color: white;
+            text-align: center;
         }
 
         .overlay-inner {
@@ -529,6 +503,7 @@
             gap: 15px;
             align-items: center;
             margin-top: 20px;
+            flex-wrap: wrap;
         }
 
         .magical-btn {
@@ -551,6 +526,12 @@
             box-shadow: 0 6px 20px rgba(255, 179, 71, 0.6);
         }
 
+        .magical-btn:disabled {
+            opacity: 0.7;
+            cursor: not-allowed;
+            box-shadow: none;
+        }
+
         .ghost-btn {
             background: transparent;
             color: var(--primary-green);
@@ -564,9 +545,14 @@
             transition: var(--transition);
         }
 
-        .ghost-btn:hover {
+        .ghost-btn:hover:not(:disabled) {
             background: var(--primary-green);
             color: white;
+        }
+
+        .ghost-btn:disabled {
+            opacity: 0.7;
+            cursor: not-allowed;
         }
 
         .hud-badge {
@@ -578,6 +564,7 @@
             display: flex;
             align-items: center;
             gap: 8px;
+            font-size: 0.9rem;
         }
 
         .mobile-controls-panel {
@@ -761,6 +748,12 @@
             .storybook-heading {
                 font-size: 2rem;
             }
+
+            .storybook-shell {
+                margin-top: 70px;
+                padding: 16px;
+                border-radius: 0;
+            }
         }
 
         /* Loading Screen */
@@ -841,34 +834,6 @@
             clip: rect(0,0,0,0);
             white-space: nowrap;
             border: 0;
-        }
-
-        /* Game Canvas Placeholders */
-        #honey-game, #gamePreview, #fullscreenCanvas {
-            background: linear-gradient(135deg, #87CEEB 0%, #98FB98 100%);
-            display: flex;
-            align-items: center;
-            justify-content: center;
-            color: var(--primary-brown);
-            font-family: 'Playfair Display', serif;
-        }
-
-        #honey-game::before {
-            content: "🎯 Honey Hunt Game Area";
-            font-size: 1.5rem;
-            text-align: center;
-        }
-
-        #gamePreview::before {
-            content: "🎮 Game Preview";
-            font-size: 1.5rem;
-            text-align: center;
-        }
-
-        #fullscreenCanvas::before {
-            content: "🕹️ Fullscreen Game";
-            font-size: 1.5rem;
-            text-align: center;
         }
 
         /* Character Cards */
@@ -1122,7 +1087,7 @@
             border: 1px solid #f5c6cb;
         }
 
-        /* Modal */
+        /* Character Modal */
         .character-modal {
             position: fixed;
             top: 0;
@@ -1196,26 +1161,8 @@
 
         .modal-character-bio {
             line-height: 1.6;
-            margin-bottom: 20px;
+            margin-bottom: 10px;
             color: var(--dark-brown);
-        }
-
-        .modal-character-list {
-            list-style: none;
-            padding: 0;
-        }
-
-        .modal-character-list li {
-            padding: 10px 0;
-            border-bottom: 1px dashed #ddd;
-            padding-left: 30px;
-            position: relative;
-        }
-
-        .modal-character-list li:before {
-            content: "🍯";
-            position: absolute;
-            left: 0;
         }
 
         /* FAB Container */
@@ -1264,7 +1211,7 @@
             gap: 10px;
         }
 
-        .music-btn, .accessibility-btn {
+        .music-btn {
             width: 50px;
             height: 50px;
             border-radius: 50%;
@@ -1280,7 +1227,7 @@
             justify-content: center;
         }
 
-        .music-btn:hover, .accessibility-btn:hover {
+        .music-btn:hover {
             background: var(--primary-gold);
             color: white;
         }
@@ -1302,7 +1249,6 @@
             transition: width 0.3s ease;
         }
 
-        /* Persistent RSVP */
         .persistent-rsvp {
             position: fixed;
             bottom: 30px;
@@ -1423,7 +1369,7 @@
     </nav>
 
     <!-- Reading Progress Bar -->
-    <div class="reading-progress"></div>
+    <div class="reading-progress" role="progressbar" aria-valuemin="0" aria-valuemax="100" aria-valuenow="0"></div>
 
     <!-- Storybook Cover -->
     <section class="storybook-cover" id="cover">
@@ -1438,7 +1384,7 @@
 
     <!-- Music Controls -->
     <div class="music-controls">
-        <button class="music-btn" aria-label="Toggle background music">
+        <button class="music-btn" aria-label="Play background music" aria-pressed="false">
             <i class="fas fa-music"></i>
         </button>
     </div>
@@ -1512,9 +1458,9 @@
                         <div class="characters-grid">
                             <!-- Character 1 -->
                             <article class="character-card">
-                                <button class="character-spotlight">
+                                <button class="character-spotlight" type="button">
                                     <div class="character-illustration">
-                                        <i class="fas fa-bear"></i>
+                                        <span>🐻</span>
                                     </div>
                                     <div class="character-spotlight-content">
                                         <blockquote class="character-quote">
@@ -1528,9 +1474,9 @@
 
                             <!-- Character 2 -->
                             <article class="character-card">
-                                <button class="character-spotlight">
+                                <button class="character-spotlight" type="button">
                                     <div class="character-illustration">
-                                        <i class="fas fa-piggy-bank"></i>
+                                        <span>🐷</span>
                                     </div>
                                     <div class="character-spotlight-content">
                                         <blockquote class="character-quote">
@@ -1544,9 +1490,9 @@
 
                             <!-- Character 3 -->
                             <article class="character-card">
-                                <button class="character-spotlight">
+                                <button class="character-spotlight" type="button">
                                     <div class="character-illustration">
-                                        <i class="fas fa-paw"></i>
+                                        <span>🐯</span>
                                     </div>
                                     <div class="character-spotlight-content">
                                         <blockquote class="character-quote">
@@ -1560,9 +1506,9 @@
 
                             <!-- Character 4 -->
                             <article class="character-card">
-                                <button class="character-spotlight">
+                                <button class="character-spotlight" type="button">
                                     <div class="character-illustration">
-                                        <i class="fas fa-horse"></i>
+                                        <span>🐴</span>
                                     </div>
                                     <div class="character-spotlight-content">
                                         <blockquote class="character-quote">
@@ -1659,22 +1605,50 @@
                         <div class="section-header">
                             <h2 class="story-title">
                                 <i class="fas fa-gamepad"></i>
-                                Woodland Games
+                                Woodland Game: Honey Hunt
                             </h2>
-                            <p class="story-intro">Join the adventure with these fun interactive games for all ages</p>
+                            <p class="story-intro">Help Pooh collect as many honey pots as you can while dodging those very busy bees.</p>
                         </div>
 
-                       
+                        <!-- Stats Banner -->
+                        <div class="game-stats-banner" aria-hidden="true">
+                            <div class="stat-item">
+                                <strong>60s</strong>
+                                <div class="stat-label">
+                                    <span>Quick Play</span>
+                                    <small>Perfect party-length game</small>
+                                </div>
+                            </div>
+                            <div class="stat-item">
+                                <strong>3</strong>
+                                <div class="stat-label">
+                                    <span>Honey Jars</span>
+                                    <small>Lose them to the bees!</small>
+                                </div>
+                            </div>
+                            <div class="stat-item">
+                                <strong>5x</strong>
+                                <div class="stat-label">
+                                    <span>Combo Cap</span>
+                                    <small>Chain catches for big scores</small>
+                                </div>
+                            </div>
+                            <div class="stat-item">
+                                <strong>Touch</strong>
+                                <div class="stat-label">
+                                    <span>Phone Friendly</span>
+                                    <small>Buttons & swipe controls</small>
+                                </div>
+                            </div>
+                        </div>
 
-                        
-
-                        <!-- Games Grid -->
+                        <!-- Games Grid (single game) -->
                         <div class="games-grid">
                             <!-- Game 1: Honey Hunt -->
                             <article class="game-card featured">
                                 <div class="game-card-header">
                                     <div class="game-badge">Most Popular</div>
-                                    <div class="game-character-icon">🐻</div>
+                                    <div class="game-character-icon" aria-hidden="true">🐻🍯</div>
                                     <div class="game-rating">
                                         <i class="fas fa-star"></i>
                                         <span>4.8</span>
@@ -1685,7 +1659,8 @@
                                     <div class="game-icon-large">🍯</div>
                                     <h3 class="game-title">Honey Hunt Adventure</h3>
                                     <p class="game-description">
-                                        Help Winnie the Pooh collect honey pots while avoiding bees in the Hundred Acre Wood.
+                                        Move Pooh across the meadow to catch falling honey pots and dodge buzzing bees. 
+                                        Chain catches together to build your honey combo and climb the high-score board.
                                     </p>
 
                                     <div class="game-tags">
@@ -1697,7 +1672,7 @@
                                     <div class="game-stats">
                                         <div class="stat">
                                             <i class="fas fa-signal"></i>
-                                            <span>Easy</span>
+                                            <span>Easy to Learn</span>
                                         </div>
                                         <div class="stat">
                                             <i class="fas fa-user"></i>
@@ -1705,18 +1680,18 @@
                                         </div>
                                         <div class="stat">
                                             <i class="fas fa-clock"></i>
-                                            <span>5 min</span>
+                                            <span>60s Rounds</span>
                                         </div>
                                     </div>
 
                                     <div class="game-controls">
-                                        <button class="btn-play-game">
+                                        <button class="btn-play-game" type="button" data-action="play-honey-game">
                                             <i class="fas fa-play"></i>
-                                            <span>Play Game</span>
+                                            <span>Play Honey Hunt</span>
                                         </button>
-                                        <button class="btn-secondary">
+                                        <button class="btn-secondary" type="button">
                                             <i class="fas fa-book-open"></i>
-                                            <span>Rules</span>
+                                            <span>How to Play</span>
                                         </button>
                                     </div>
                                 </div>
@@ -1724,84 +1699,60 @@
                                 <div class="game-card-footer">
                                     <div class="high-score">
                                         <i class="fas fa-crown"></i>
-                                        <span>High Score: 1,250</span>
+                                        <span id="card-high-score-text">High Score: 0</span>
                                     </div>
                                     <div class="game-meta">
-                                        <span><i class="fas fa-user-friends"></i> Family mode</span>
-                                        <span><i class="fas fa-bolt"></i> 5 min session</span>
+                                        <span><i class="fas fa-mobile-alt"></i> Optimized for phones</span>
+                                        <span><i class="fas fa-child"></i> Kid + grown-up friendly</span>
                                     </div>
                                 </div>
                             </article>
+                        </div>
 
-                            <!-- Game 2: Tower Defense -->
-                            <article class="game-card">
-                                <div class="game-card-header">
-                                    <div class="game-badge">Strategy</div>
-                                    <div class="game-character-icon">🐘</div>
-                                    <div class="game-rating">
-                                        <i class="fas fa-star"></i>
-                                        <span>4.5</span>
-                                    </div>
-                                </div>
-                                
-                                <div class="game-card-body">
-                                    <div class="game-icon-large">🏰</div>
-                                    <h3 class="game-title">Heffalump Defense</h3>
-                                    <p class="game-description">
-                                        Defend the Hundred Acre Wood from Heffalump invasions with strategic tower placement.
-                                    </p>
-
-                                    <div class="game-tags">
-                                        <span class="tag">Strategy</span>
-                                        <span class="tag">Waves</span>
-                                        <span class="tag">Controller Ready</span>
-                                    </div>
-
-                                    <div class="game-stats">
-                                        <div class="stat">
-                                            <i class="fas fa-signal"></i>
-                                            <span>Medium</span>
+                        <!-- Live Game Area -->
+                        <div class="games-play-area" id="honeyGameArea">
+                            <div class="play-column">
+                                <div class="play-header">
+                                    <p class="eyebrow">Interactive Mini Game</p>
+                                    <h3>Honey Hunt Adventure</h3>
+                                    <p class="tiny-text">Use arrow keys (or A/D) on desktop, or the touch buttons on mobile, to move Pooh and collect honey.</p>
+                                    <div class="play-hud">
+                                        <div>
+                                            <strong id="honey-score">0</strong>
+                                            <span>Score</span>
                                         </div>
-                                        <div class="stat">
-                                            <i class="fas fa-user"></i>
-                                            <span>1 Player</span>
+                                        <div>
+                                            <strong id="honey-time">60s</strong>
+                                            <span>Time</span>
                                         </div>
-                                        <div class="stat">
-                                            <i class="fas fa-wave-square"></i>
-                                            <span>10 Waves</span>
+                                        <div>
+                                            <strong id="honey-lives">3</strong>
+                                            <span>Honey Jars</span>
                                         </div>
-                                    </div>
-
-                                    <div class="game-controls">
-                                        <button class="btn-play-game">
-                                            <i class="fas fa-play"></i>
-                                            <span>Play Game</span>
-                                        </button>
-                                        <button class="btn-secondary">
-                                            <i class="fas fa-lightbulb"></i>
-                                            <span>Strategy Tips</span>
-                                        </button>
+                                        <div>
+                                            <strong id="honey-combo">1x</strong>
+                                            <span>Combo</span>
+                                        </div>
                                     </div>
                                 </div>
 
-                                <div class="game-card-footer">
-                                    <div class="high-score">
-                                        <i class="fas fa-crown"></i>
-                                        <span>High Score: 8,450</span>
-                                    </div>
-                                    <div class="game-meta">
-                                        <span><i class="fas fa-bullseye"></i> 10 wave sprint</span>
-                                        <span><i class="fas fa-users"></i> Solo focus</span>
+                                <div class="game-surface">
+                                    <canvas id="honeyCanvas" aria-label="Honey Hunt game area" role="img"></canvas>
+                                    <div class="game-overlay" id="catch-overlay">
+                                        <div class="overlay-inner">
+                                            <div id="catch-countdown">Tap Start to begin!</div>
+                                            <div id="catch-hint">Move Pooh to catch honey pots and dodge bees.</div>
+                                            <div id="catch-status">Use keyboard arrows or the touch buttons below.</div>
+                                        </div>
                                     </div>
                                 </div>
-                            </article>
 
                                 <div class="play-controls">
-                                    <button class="magical-btn" id="start-catch">
+                                    <button class="magical-btn" id="start-catch" type="button">
                                         <i class="fas fa-play"></i>
                                         <span>Start Hunt</span>
                                     </button>
-                                    <button class="ghost-btn" id="pause-catch">
+                                    <button class="ghost-btn" id="pause-catch" type="button" disabled>
                                         <i class="fas fa-pause"></i>
                                         <span>Pause</span>
                                     </button>
@@ -1811,22 +1762,23 @@
                                     </div>
                                 </div>
 
-                                <div class="mobile-controls-panel">
+                                <div class="mobile-controls-panel" aria-label="Honey Hunt touch controls">
                                     <p class="eyebrow">Touch Controls</p>
                                     <div class="touch-buttons">
-                                        <button class="ghost-btn" id="mobileLeftBtn">
+                                        <button class="ghost-btn" id="mobileLeftBtn" type="button">
                                             <i class="fas fa-chevron-left"></i>
                                             <span>Left</span>
                                         </button>
-                                        <button class="ghost-btn" id="mobileRightBtn">
+                                        <button class="ghost-btn" id="mobileRightBtn" type="button">
                                             <i class="fas fa-chevron-right"></i>
                                             <span>Right</span>
                                         </button>
                                     </div>
-                                    <p class="tiny-text">Use touch or the buttons to dodge bees and grab honey.</p>
+                                    <p class="tiny-text">
+                                        Hold the buttons or swipe on the game area to move. Catch honey pots for points, avoid bees to protect your honey jars.
+                                    </p>
                                 </div>
                             </div>
-
                         </div>
                     </div>
                 </section>
@@ -1850,7 +1802,7 @@
                                 <span id="rsvp-count">42</span> friends are already joining the adventure!
                             </div>
                             
-                            <form class="storybook-form" id="rsvpForm">
+                            <form class="storybook-form" id="rsvpForm" novalidate>
                                 <div class="form-grid">
                                     <div class="form-field">
                                         <label for="guestName" class="field-label">
@@ -1858,7 +1810,7 @@
                                             Your Name
                                         </label>
                                         <input type="text" id="guestName" name="guestName" required 
-                                               placeholder="Christopher Robin">
+                                               placeholder="Christopher Robin" autocomplete="name">
                                         <div class="field-hint">Please include your full name</div>
                                     </div>
                                     
@@ -1868,7 +1820,7 @@
                                             Email Address
                                         </label>
                                         <input type="email" id="guestEmail" name="guestEmail" required 
-                                               placeholder="christopher@hundredacrewood.com">
+                                               placeholder="christopher@hundredacrewood.com" autocomplete="email">
                                         <div class="field-hint">We'll send confirmation here</div>
                                     </div>
                                 </div>
@@ -1947,6 +1899,25 @@
         </div>
     </main>
 
+    <!-- Character Modal -->
+    <div class="character-modal" id="characterModal" aria-hidden="true" role="dialog" aria-modal="true">
+        <div class="modal-content">
+            <button class="close-modal" type="button" aria-label="Close character details">&times;</button>
+            <div class="modal-character">
+                <div class="modal-character-icon" id="modalCharacterIcon">🐻</div>
+                <h3 class="modal-character-name" id="modalCharacterName">Winnie the Pooh</h3>
+            </div>
+            <p class="modal-character-quote" id="modalCharacterQuote">
+                "A little consideration, a little thought for others, makes all the difference."
+            </p>
+            <p class="modal-character-bio" id="modalCharacterBio">
+                Pooh and his friends are here to help us celebrate Baby Gunner's first year with kindness, curiosity, 
+                and plenty of honey-sweet memories. At the party, each character represents a different kind of friend 
+                we’re grateful to have in Gunner’s life.
+            </p>
+        </div>
+    </div>
+
     <!-- Footer -->
     <footer class="footer">
         <p>
@@ -1966,183 +1937,722 @@
 
     <!-- JavaScript -->
     <script>
+        // Helper: smooth scroll
+        function smoothScrollTo(targetId) {
+            const targetElement = document.querySelector(targetId);
+            if (!targetElement) return;
+            const offset = 80;
+            const top = targetElement.getBoundingClientRect().top + window.scrollY - offset;
+            window.scrollTo({
+                top,
+                behavior: 'smooth'
+            });
+        }
+
         // Loading Screen
         window.addEventListener('load', function() {
             setTimeout(function() {
-                document.getElementById('loadingScreen').style.display = 'none';
+                const loadingScreen = document.getElementById('loadingScreen');
+                if (loadingScreen) loadingScreen.style.display = 'none';
             }, 2000);
         });
 
-        // Navigation Smooth Scroll
+        // Navigation Smooth Scroll for anchor links
         document.querySelectorAll('a[href^="#"]').forEach(anchor => {
             anchor.addEventListener('click', function(e) {
-                e.preventDefault();
                 const targetId = this.getAttribute('href');
-                if(targetId === '#') return;
-                
-                const targetElement = document.querySelector(targetId);
-                if(targetElement) {
-                    window.scrollTo({
-                        top: targetElement.offsetTop - 80,
-                        behavior: 'smooth'
-                    });
-                }
+                if (!targetId || targetId === '#') return;
+                e.preventDefault();
+                smoothScrollTo(targetId);
             });
         });
 
         // Reading Progress Bar
+        const progressBar = document.querySelector('.reading-progress');
         window.addEventListener('scroll', function() {
             const winScroll = document.body.scrollTop || document.documentElement.scrollTop;
             const height = document.documentElement.scrollHeight - document.documentElement.clientHeight;
-            const scrolled = (winScroll / height) * 100;
-            document.querySelector('.reading-progress').style.width = scrolled + '%';
-            document.querySelector('.reading-progress').setAttribute('aria-valuenow', scrolled);
+            const scrolled = height > 0 ? (winScroll / height) * 100 : 0;
+            if (progressBar) {
+                progressBar.style.width = scrolled + '%';
+                progressBar.setAttribute('aria-valuenow', scrolled.toFixed(0));
+            }
         });
 
         // Scroll to Top Button
         const scrollTopBtn = document.querySelector('.fab.fab--visible');
-        scrollTopBtn.addEventListener('click', function() {
-            window.scrollTo({
-                top: 0,
-                behavior: 'smooth'
+        if (scrollTopBtn) {
+            scrollTopBtn.addEventListener('click', function() {
+                window.scrollTo({
+                    top: 0,
+                    behavior: 'smooth'
+                });
             });
-        });
-
-        // Game Controls - Honey Hunt
-        let honeyScore = 0;
-        let honeyLives = 3;
-        let honeyTime = 60;
-        let honeyCombo = 1;
-        let gameInterval;
-        let isGameRunning = false;
-
-        document.getElementById('start-catch').addEventListener('click', function() {
-            if(!isGameRunning) {
-                isGameRunning = true;
-                document.getElementById('catch-overlay').style.display = 'none';
-                
-                // Reset game state
-                honeyScore = 0;
-                honeyLives = 3;
-                honeyTime = 60;
-                honeyCombo = 1;
-                
-                updateHUD();
-                
-                // Start game timer
-                gameInterval = setInterval(function() {
-                    honeyTime--;
-                    updateHUD();
-                    
-                    if(honeyTime <= 0) {
-                        endGame();
-                    }
-                }, 1000);
-            }
-        });
-
-        document.getElementById('pause-catch').addEventListener('click', function() {
-            if(isGameRunning) {
-                isGameRunning = false;
-                clearInterval(gameInterval);
-                document.getElementById('catch-status').textContent = 'Game Paused';
-                document.getElementById('catch-overlay').style.display = 'flex';
-            }
-        });
-
-        function updateHUD() {
-            document.getElementById('honey-score').textContent = honeyScore;
-            document.getElementById('honey-time').textContent = honeyTime + 's';
-            document.getElementById('honey-lives').textContent = honeyLives;
-            document.getElementById('honey-combo').textContent = honeyCombo + 'x';
         }
 
-        function endGame() {
-            clearInterval(gameInterval);
-            isGameRunning = false;
-            document.getElementById('catch-status').textContent = 'Game Over! Final Score: ' + honeyScore;
-            document.getElementById('catch-overlay').style.display = 'flex';
-            
-            // Update high score display
-            const currentHighScore = parseInt(document.getElementById('catch-high-score-display').textContent.split(' ')[0]);
-            if(honeyScore > currentHighScore) {
-                document.getElementById('catch-high-score-display').textContent = honeyScore + ' points (New High Score!)';
-            }
+        // Persistent RSVP button scroll
+        const persistentRsvpBtn = document.querySelector('.persistent-rsvp');
+        if (persistentRsvpBtn) {
+            persistentRsvpBtn.addEventListener('click', function() {
+                smoothScrollTo('#rsvp');
+            });
         }
 
-        // Mobile Controls
-        document.getElementById('mobileLeftBtn').addEventListener('click', function() {
-            if(isGameRunning) {
-                honeyScore += 10 * honeyCombo;
-                honeyCombo = Math.min(honeyCombo + 0.1, 5);
-                updateHUD();
-            }
-        });
+        // Music Control (UI only)
+        const musicBtn = document.querySelector('.music-btn');
+        if (musicBtn) {
+            musicBtn.addEventListener('click', function() {
+                const isPressed = this.getAttribute('aria-pressed') === 'true';
+                this.setAttribute('aria-pressed', (!isPressed).toString());
+                this.setAttribute('aria-label', !isPressed ? 'Mute background music' : 'Play background music');
+                this.innerHTML = `<i class="fas fa-${!isPressed ? 'volume-mute' : 'music'}"></i>`;
+                // Hook real audio here if desired.
+            });
+        }
 
-        document.getElementById('mobileRightBtn').addEventListener('click', function() {
-            if(isGameRunning) {
-                honeyScore += 10 * honeyCombo;
-                honeyCombo = Math.min(honeyCombo + 0.1, 5);
-                updateHUD();
-            }
-        });
-
-        // RSVP Form
-        document.getElementById('rsvpForm').addEventListener('submit', function(e) {
-            e.preventDefault();
-            
-            const formStatus = document.querySelector('.form-status');
-            formStatus.style.display = 'block';
-            formStatus.textContent = 'Thank you for your RSVP! We look forward to celebrating with you.';
-            formStatus.className = 'form-status success';
-            
-            // Update RSVP count
-            const rsvpCount = document.getElementById('rsvp-count');
-            rsvpCount.textContent = parseInt(rsvpCount.textContent) + 1;
-            
-            // Reset form
-            setTimeout(() => {
-                this.reset();
-            }, 3000);
-        });
+        // Share Button (Web Share API + fallback)
+        const shareFab = document.querySelector('.fab[aria-label="Share Celebration"]');
+        if (shareFab) {
+            shareFab.addEventListener('click', function() {
+                const shareData = {
+                    title: "Baby Gunner's Hundred Acre Wood Celebration",
+                    text: "Join us in celebrating Baby Gunner's first adventure in the Hundred Acre Wood!",
+                    url: window.location.href
+                };
+                if (navigator.share) {
+                    navigator.share(shareData).catch(() => {});
+                } else {
+                    alert('Share this celebration with your friends! Copy the link:\n\n' + window.location.href);
+                }
+            });
+        }
 
         // Character Modal
-        document.querySelectorAll('.character-spotlight').forEach(btn => {
-            btn.addEventListener('click', function() {
-                const characterName = this.querySelector('.character-name').textContent;
-                const characterQuote = this.querySelector('.character-quote').textContent;
-                
-                // In a real implementation, this would open a modal
-                alert(`Character: ${characterName}\n\n${characterQuote}\n\nClick "OK" to learn more about ${characterName}!`);
-            });
-        });
+        (function initCharacterModal() {
+            const modal = document.getElementById('characterModal');
+            if (!modal) return;
 
-        // Set current year in footer
-        document.getElementById('currentYear').textContent = new Date().getFullYear();
+            const closeBtn = modal.querySelector('.close-modal');
+            const modalName = document.getElementById('modalCharacterName');
+            const modalQuote = document.getElementById('modalCharacterQuote');
+            const modalIcon = document.getElementById('modalCharacterIcon');
+            let lastFocusedElement = null;
 
-        // Music Control
-        const musicBtn = document.querySelector('.music-btn');
-        musicBtn.addEventListener('click', function() {
-            const isPressed = this.getAttribute('aria-pressed') === 'true';
-            this.setAttribute('aria-pressed', !isPressed);
-            this.innerHTML = `<i class="fas fa-${!isPressed ? 'volume-mute' : 'music'}"></i>`;
-            // In a real implementation, this would toggle background music
-        });
+            function openModalFromButton(btn) {
+                const nameEl = btn.querySelector('.character-name');
+                const quoteEl = btn.querySelector('.character-quote');
+                const iconEl = btn.querySelector('.character-illustration span');
 
-        // Share Button
-        document.querySelector('.fab[aria-label="Share Celebration"]').addEventListener('click', function() {
-            if(navigator.share) {
-                navigator.share({
-                    title: 'Baby Gunner\'s Hundred Acre Wood Celebration',
-                    text: 'Join us in celebrating Baby Gunner\'s first adventure in the Hundred Acre Wood!',
-                    url: window.location.href
-                });
-            } else {
-                // Fallback for browsers that don't support Web Share API
-                alert('Share this celebration with your friends! Copy the link: ' + window.location.href);
+                if (nameEl && modalName) modalName.textContent = nameEl.textContent.trim();
+                if (quoteEl && modalQuote) modalQuote.textContent = quoteEl.textContent.trim();
+                if (iconEl && modalIcon) modalIcon.textContent = iconEl.textContent.trim() || '🍯';
+
+                lastFocusedElement = btn;
+                modal.style.display = 'flex';
+                modal.setAttribute('aria-hidden', 'false');
+                if (closeBtn) closeBtn.focus();
             }
-        });
+
+            function closeModal() {
+                modal.style.display = 'none';
+                modal.setAttribute('aria-hidden', 'true');
+                if (lastFocusedElement) lastFocusedElement.focus();
+            }
+
+            document.querySelectorAll('.character-spotlight').forEach(btn => {
+                btn.addEventListener('click', function() {
+                    openModalFromButton(this);
+                });
+            });
+
+            if (closeBtn) {
+                closeBtn.addEventListener('click', closeModal);
+            }
+
+            modal.addEventListener('click', function(e) {
+                if (e.target === modal) {
+                    closeModal();
+                }
+            });
+
+            document.addEventListener('keydown', function(e) {
+                if (e.key === 'Escape' && modal.style.display === 'flex') {
+                    closeModal();
+                }
+            });
+        })();
+
+        // RSVP Form
+        (function initRsvpForm() {
+            const form = document.getElementById('rsvpForm');
+            if (!form) return;
+            const formStatus = form.querySelector('.form-status');
+            const rsvpCountEl = document.getElementById('rsvp-count');
+
+            form.addEventListener('submit', function(e) {
+                e.preventDefault();
+
+                const name = form.querySelector('#guestName');
+                const email = form.querySelector('#guestEmail');
+                const partySize = form.querySelector('#partySize');
+                const attendance = form.querySelector('input[name="attendance"]:checked');
+
+                if (!name.value.trim() || !email.value.trim() || !partySize.value || !attendance) {
+                    if (formStatus) {
+                        formStatus.style.display = 'block';
+                        formStatus.textContent = 'Please fill in all required fields before sending your RSVP.';
+                        formStatus.className = 'form-status error';
+                    }
+                    return;
+                }
+
+                // Basic RSVP success path
+                if (formStatus) {
+                    formStatus.style.display = 'block';
+                    formStatus.textContent = 'Thank you for your RSVP! We look forward to celebrating with you.';
+                    formStatus.className = 'form-status success';
+                }
+
+                // Only increment count if yes or maybe
+                if ((attendance.value === 'yes' || attendance.value === 'maybe') && rsvpCountEl) {
+                    const current = parseInt(rsvpCountEl.textContent, 10) || 0;
+                    rsvpCountEl.textContent = String(current + 1);
+                }
+
+                // Reset form after a short delay
+                setTimeout(() => {
+                    form.reset();
+                }, 2500);
+            });
+        })();
+
+        // Footer year
+        const yearEl = document.getElementById('currentYear');
+        if (yearEl) {
+            yearEl.textContent = new Date().getFullYear();
+        }
+
+        // Honey Hunt Game
+        (function initHoneyHuntGame() {
+            const canvas = document.getElementById('honeyCanvas');
+            const overlay = document.getElementById('catch-overlay');
+            const countdownEl = document.getElementById('catch-countdown');
+            const hintEl = document.getElementById('catch-hint');
+            const statusEl = document.getElementById('catch-status');
+
+            const scoreEl = document.getElementById('honey-score');
+            const timeEl = document.getElementById('honey-time');
+            const livesEl = document.getElementById('honey-lives');
+            const comboEl = document.getElementById('honey-combo');
+            const highScoreDisplay = document.getElementById('catch-high-score-display');
+            const cardHighScoreText = document.getElementById('card-high-score-text');
+
+            const startBtn = document.getElementById('start-catch');
+            const pauseBtn = document.getElementById('pause-catch');
+            const mobileLeftBtn = document.getElementById('mobileLeftBtn');
+            const mobileRightBtn = document.getElementById('mobileRightBtn');
+            const playCardButtons = document.querySelectorAll('[data-action="play-honey-game"]');
+
+            if (!canvas || !overlay || !startBtn || !pauseBtn || !scoreEl || !timeEl || !livesEl || !comboEl || !highScoreDisplay) {
+                return;
+            }
+
+            const ctx = canvas.getContext('2d');
+            if (!ctx) return;
+
+            let gameWidth = 0;
+            let gameHeight = 0;
+
+            let player = null;
+            let honeys = [];
+            let bees = [];
+            let gameState = 'idle'; // idle | running | paused | ended
+            let lastFrameTime = 0;
+            let honeyTime = 60;
+            let honeyScore = 0;
+            let honeyLives = 3;
+            let honeyCombo = 1;
+            let spawnHoneyTimer = 0;
+            let spawnBeeTimer = 0;
+            let moveLeft = false;
+            let moveRight = false;
+
+            let storedHigh = parseInt(localStorage.getItem('honeyHighScore') || '0', 10);
+            if (highScoreDisplay) {
+                highScoreDisplay.textContent = storedHigh + ' points';
+            }
+            if (cardHighScoreText) {
+                cardHighScoreText.textContent = 'High Score: ' + storedHigh;
+            }
+
+            function resizeCanvas() {
+                const parent = canvas.parentElement;
+                if (!parent) return;
+                const rect = parent.getBoundingClientRect();
+                const dpr = window.devicePixelRatio || 1;
+
+                canvas.width = rect.width * dpr;
+                canvas.height = rect.height * dpr;
+                ctx.setTransform(dpr, 0, 0, dpr, 0, 0);
+
+                gameWidth = rect.width;
+                gameHeight = rect.height;
+
+                if (!player) {
+                    player = {
+                        width: 60,
+                        height: 40,
+                        x: gameWidth / 2 - 30,
+                        y: gameHeight - 70,
+                        speed: 320
+                    };
+                }
+            }
+
+            resizeCanvas();
+            window.addEventListener('resize', function() {
+                resizeCanvas();
+            });
+
+            function rectsIntersect(a, b) {
+                return !(
+                    a.x > b.x + b.width ||
+                    a.x + a.width < b.x ||
+                    a.y > b.y + b.height ||
+                    a.y + a.height < b.y
+                );
+            }
+
+            function spawnHoney() {
+                const width = 26;
+                const x = Math.random() * (gameWidth - width - 20) + 10;
+                const speed = 140 + Math.random() * 80;
+                honeys.push({
+                    x,
+                    y: -30,
+                    width,
+                    height: width,
+                    speed
+                });
+            }
+
+            function spawnBee() {
+                const width = 26;
+                const x = Math.random() * (gameWidth - width - 20) + 10;
+                const speed = 160 + Math.random() * 90;
+                bees.push({
+                    x,
+                    y: -30,
+                    width,
+                    height: width,
+                    speed
+                });
+            }
+
+            function updateHUD() {
+                if (scoreEl) scoreEl.textContent = Math.round(honeyScore).toString();
+                if (timeEl) timeEl.textContent = Math.max(0, Math.ceil(honeyTime)) + 's';
+                if (livesEl) livesEl.textContent = honeyLives.toString();
+                if (comboEl) {
+                    const comboText = honeyCombo.toFixed(1).replace(/\.0$/, '');
+                    comboEl.textContent = comboText + 'x';
+                }
+            }
+
+            function drawGame() {
+                if (!player) return;
+                ctx.clearRect(0, 0, gameWidth, gameHeight);
+
+                // Background sky -> meadow
+                const gradient = ctx.createLinearGradient(0, 0, 0, gameHeight);
+                gradient.addColorStop(0, '#87CEEB');
+                gradient.addColorStop(0.6, '#98FB98');
+                gradient.addColorStop(1, '#66BB6A');
+                ctx.fillStyle = gradient;
+                ctx.fillRect(0, 0, gameWidth, gameHeight);
+
+                // Ground band
+                ctx.fillStyle = 'rgba(46,139,87,0.9)';
+                ctx.fillRect(0, gameHeight - 40, gameWidth, 40);
+
+                // Player (Pooh) as a simple rectangle + emoji
+                ctx.fillStyle = '#8B4513';
+                ctx.fillRect(player.x, player.y, player.width, player.height);
+                ctx.font = '24px "Patrick Hand", sans-serif';
+                ctx.textBaseline = 'middle';
+                ctx.textAlign = 'center';
+                ctx.fillStyle = '#FFE082';
+                ctx.fillText('🐻', player.x + player.width / 2, player.y + player.height / 2);
+
+                // Honeys
+                honeys.forEach(h => {
+                    const centerX = h.x + h.width / 2;
+                    const centerY = h.y + h.height / 2;
+                    ctx.beginPath();
+                    ctx.fillStyle = '#FFC107';
+                    ctx.arc(centerX, centerY, h.width / 2, 0, Math.PI * 2);
+                    ctx.fill();
+                    // jar top
+                    ctx.fillStyle = '#6D4C41';
+                    ctx.fillRect(h.x + h.width * 0.2, h.y - 4, h.width * 0.6, 6);
+                });
+
+                // Bees
+                bees.forEach(b => {
+                    const centerX = b.x + b.width / 2;
+                    const centerY = b.y + b.height / 2;
+                    const r = b.width / 2;
+
+                    // body
+                    ctx.beginPath();
+                    ctx.fillStyle = '#FFEB3B';
+                    ctx.ellipse(centerX, centerY, r, r * 0.7, 0, 0, Math.PI * 2);
+                    ctx.fill();
+
+                    // stripes
+                    ctx.strokeStyle = '#212121';
+                    ctx.lineWidth = 3;
+                    ctx.beginPath();
+                    ctx.moveTo(centerX - r, centerY - r * 0.3);
+                    ctx.lineTo(centerX + r, centerY - r * 0.3);
+                    ctx.moveTo(centerX - r, centerY);
+                    ctx.lineTo(centerX + r, centerY);
+                    ctx.moveTo(centerX - r, centerY + r * 0.3);
+                    ctx.lineTo(centerX + r, centerY + r * 0.3);
+                    ctx.stroke();
+
+                    // wings
+                    ctx.fillStyle = 'rgba(255,255,255,0.8)';
+                    ctx.beginPath();
+                    ctx.ellipse(centerX - r * 0.4, centerY - r * 0.9, r * 0.4, r * 0.6, -0.3, 0, Math.PI * 2);
+                    ctx.fill();
+                    ctx.beginPath();
+                    ctx.ellipse(centerX + r * 0.4, centerY - r * 0.9, r * 0.4, r * 0.6, 0.3, 0, Math.PI * 2);
+                    ctx.fill();
+                });
+            }
+
+            function updateGame(delta) {
+                if (!player) return;
+
+                honeyTime -= delta;
+                if (honeyTime < 0) honeyTime = 0;
+
+                // Movement
+                const distance = player.speed * delta;
+                if (moveLeft) {
+                    player.x -= distance;
+                }
+                if (moveRight) {
+                    player.x += distance;
+                }
+                if (player.x < 0) player.x = 0;
+                if (player.x + player.width > gameWidth) {
+                    player.x = gameWidth - player.width;
+                }
+
+                // Spawning
+                spawnHoneyTimer += delta;
+                spawnBeeTimer += delta;
+                if (spawnHoneyTimer > 0.9) {
+                    spawnHoney();
+                    spawnHoneyTimer = 0;
+                }
+                if (spawnBeeTimer > 1.6) {
+                    spawnBee();
+                    spawnBeeTimer = 0;
+                }
+
+                // Update positions
+                honeys.forEach(h => {
+                    h.y += h.speed * delta;
+                });
+                bees.forEach(b => {
+                    b.y += b.speed * delta;
+                });
+
+                // Collisions
+                const playerRect = {
+                    x: player.x,
+                    y: player.y,
+                    width: player.width,
+                    height: player.height
+                };
+
+                honeys = honeys.filter(h => {
+                    if (h.y > gameHeight + 40) {
+                        // Missed honey: no penalty, just disappears
+                        return false;
+                    }
+                    if (rectsIntersect(playerRect, h)) {
+                        const gained = 10 * honeyCombo;
+                        honeyScore += gained;
+                        honeyCombo = Math.min(honeyCombo + 0.25, 5);
+                        return false;
+                    }
+                    return true;
+                });
+
+                bees = bees.filter(b => {
+                    if (b.y > gameHeight + 40) {
+                        return false;
+                    }
+                    if (rectsIntersect(playerRect, b)) {
+                        honeyLives -= 1;
+                        honeyCombo = 1;
+                        return false;
+                    }
+                    return true;
+                });
+
+                updateHUD();
+            }
+
+            function endGame(reason) {
+                if (gameState === 'ended' || gameState === 'idle') return;
+                gameState = 'ended';
+
+                updateHUD();
+
+                const finalScore = Math.round(honeyScore);
+                if (countdownEl) countdownEl.textContent = 'Game Over';
+                if (hintEl) {
+                    hintEl.textContent = reason === 'time'
+                        ? 'Time is up! That was a very fine honey hunt.'
+                        : 'The bees were very, very busy today.';
+                }
+                if (statusEl) statusEl.textContent = 'Final score: ' + finalScore + ' points';
+                if (overlay) overlay.style.display = 'flex';
+
+                // Save high score
+                if (finalScore > storedHigh) {
+                    storedHigh = finalScore;
+                    localStorage.setItem('honeyHighScore', String(storedHigh));
+                    if (highScoreDisplay) {
+                        highScoreDisplay.textContent = finalScore + ' points (New High Score!)';
+                    }
+                    if (cardHighScoreText) {
+                        cardHighScoreText.textContent = 'High Score: ' + finalScore + ' (New!)';
+                    }
+                } else {
+                    if (highScoreDisplay) {
+                        highScoreDisplay.textContent = storedHigh + ' points';
+                    }
+                }
+
+                // Update buttons
+                if (startBtn) {
+                    const span = startBtn.querySelector('span');
+                    if (span) span.textContent = 'Play Again';
+                }
+                if (pauseBtn) {
+                    pauseBtn.disabled = true;
+                    const span = pauseBtn.querySelector('span');
+                    const icon = pauseBtn.querySelector('i');
+                    if (span) span.textContent = 'Pause';
+                    if (icon) icon.className = 'fas fa-pause';
+                }
+            }
+
+            function gameLoop(timestamp) {
+                if (gameState !== 'running') return;
+                if (!lastFrameTime) lastFrameTime = timestamp;
+                const delta = (timestamp - lastFrameTime) / 1000;
+                lastFrameTime = timestamp;
+
+                updateGame(delta);
+                drawGame();
+
+                if (honeyTime <= 0) {
+                    endGame('time');
+                    return;
+                }
+                if (honeyLives <= 0) {
+                    endGame('lives');
+                    return;
+                }
+
+                requestAnimationFrame(gameLoop);
+            }
+
+            function resetState() {
+                honeys = [];
+                bees = [];
+                honeyTime = 60;
+                honeyScore = 0;
+                honeyLives = 3;
+                honeyCombo = 1;
+                spawnHoneyTimer = 0;
+                spawnBeeTimer = 0;
+                lastFrameTime = 0;
+                if (player) {
+                    player.x = gameWidth / 2 - player.width / 2;
+                    player.y = gameHeight - 70;
+                }
+                updateHUD();
+            }
+
+            function startGame() {
+                resetState();
+                gameState = 'running';
+                if (overlay) overlay.style.display = 'none';
+
+                if (statusEl) statusEl.textContent = 'Catch honey, dodge bees, build your combo!';
+                if (countdownEl) countdownEl.textContent = '';
+                if (hintEl) hintEl.textContent = 'Use arrows/A-D or touch buttons to move.';
+
+                if (startBtn) {
+                    const span = startBtn.querySelector('span');
+                    const icon = startBtn.querySelector('i');
+                    if (span) span.textContent = 'Restart Hunt';
+                    if (icon) icon.className = 'fas fa-redo';
+                }
+
+                if (pauseBtn) {
+                    pauseBtn.disabled = false;
+                    const span = pauseBtn.querySelector('span');
+                    const icon = pauseBtn.querySelector('i');
+                    if (span) span.textContent = 'Pause';
+                    if (icon) icon.className = 'fas fa-pause';
+                }
+
+                requestAnimationFrame(gameLoop);
+            }
+
+            function togglePause() {
+                if (gameState === 'running') {
+                    gameState = 'paused';
+                    if (overlay) overlay.style.display = 'flex';
+                    if (countdownEl) countdownEl.textContent = 'Game Paused';
+                    if (hintEl) hintEl.textContent = 'Tap Resume or press Pause again to continue.';
+                    if (statusEl) statusEl.textContent = 'Your honey hunt is waiting.';
+
+                    if (pauseBtn) {
+                        const span = pauseBtn.querySelector('span');
+                        const icon = pauseBtn.querySelector('i');
+                        if (span) span.textContent = 'Resume';
+                        if (icon) icon.className = 'fas fa-play';
+                    }
+                } else if (gameState === 'paused') {
+                    gameState = 'running';
+                    if (overlay) overlay.style.display = 'none';
+                    lastFrameTime = 0; // reset to avoid big delta on resume
+
+                    if (pauseBtn) {
+                        const span = pauseBtn.querySelector('span');
+                        const icon = pauseBtn.querySelector('i');
+                        if (span) span.textContent = 'Pause';
+                        if (icon) icon.className = 'fas fa-pause';
+                    }
+
+                    requestAnimationFrame(gameLoop);
+                }
+            }
+
+            // Keyboard controls
+            window.addEventListener('keydown', function(e) {
+                if (gameState !== 'running') return;
+                if (e.key === 'ArrowLeft' || e.key === 'a' || e.key === 'A') {
+                    moveLeft = true;
+                    e.preventDefault();
+                } else if (e.key === 'ArrowRight' || e.key === 'd' || e.key === 'D') {
+                    moveRight = true;
+                    e.preventDefault();
+                }
+            });
+
+            window.addEventListener('keyup', function(e) {
+                if (e.key === 'ArrowLeft' || e.key === 'a' || e.key === 'A') {
+                    moveLeft = false;
+                } else if (e.key === 'ArrowRight' || e.key === 'd' || e.key === 'D') {
+                    moveRight = false;
+                }
+            });
+
+            // Pointer / touch controls on buttons
+            function bindDirectionalButton(btn, direction) {
+                if (!btn) return;
+                btn.addEventListener('pointerdown', function() {
+                    if (gameState !== 'running') return;
+                    if (direction === 'left') {
+                        moveLeft = true;
+                        moveRight = false;
+                    } else {
+                        moveRight = true;
+                        moveLeft = false;
+                    }
+                });
+                const stop = function() {
+                    if (direction === 'left') {
+                        moveLeft = false;
+                    } else {
+                        moveRight = false;
+                    }
+                };
+                btn.addEventListener('pointerup', stop);
+                btn.addEventListener('pointerleave', stop);
+            }
+
+            bindDirectionalButton(mobileLeftBtn, 'left');
+            bindDirectionalButton(mobileRightBtn, 'right');
+
+            // Swipe controls on canvas (horizontal)
+            let touchStartX = null;
+            canvas.addEventListener('touchstart', function(e) {
+                if (!e.touches || e.touches.length === 0) return;
+                touchStartX = e.touches[0].clientX;
+            }, { passive: true });
+
+            canvas.addEventListener('touchmove', function(e) {
+                if (gameState !== 'running') return;
+                if (!e.touches || e.touches.length === 0) return;
+                if (!player) return;
+
+                const touchX = e.touches[0].clientX;
+                if (touchStartX === null) {
+                    touchStartX = touchX;
+                }
+                const diff = touchX - touchStartX;
+                player.x += diff * 0.6; // scale factor to slow movement
+                touchStartX = touchX;
+
+                if (player.x < 0) player.x = 0;
+                if (player.x + player.width > gameWidth) {
+                    player.x = gameWidth - player.width;
+                }
+            }, { passive: true });
+
+            canvas.addEventListener('touchend', function() {
+                touchStartX = null;
+            });
+
+            // Start / Pause buttons
+            startBtn.addEventListener('click', function() {
+                if (gameState === 'running') {
+                    // restart
+                    startGame();
+                } else if (gameState === 'paused' || gameState === 'ended' || gameState === 'idle') {
+                    startGame();
+                }
+            });
+
+            pauseBtn.addEventListener('click', function() {
+                if (pauseBtn.disabled) return;
+                if (gameState === 'running' || gameState === 'paused') {
+                    togglePause();
+                }
+            });
+
+            // Card "Play Honey Hunt" button scroll + start
+            playCardButtons.forEach(btn => {
+                btn.addEventListener('click', function() {
+                    smoothScrollTo('#honeyGameArea');
+                    if (gameState === 'idle' || gameState === 'ended') {
+                        setTimeout(startGame, 400);
+                    }
+                });
+            });
+        })();
     </script>
 </body>
 </html>
-
