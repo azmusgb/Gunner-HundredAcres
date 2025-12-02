@@ -11,9 +11,18 @@
   <link rel="stylesheet" href="styles.css">
 </head>
 <body>
-  <div class="loader" id="loader">
-    <div class="loader__jar">
-      <div class="loader__honey"></div>
+  <div class="loader" id="loader" role="status" aria-live="polite">
+    <div class="loader__pooh">
+      <div class="loader__ears loader__ears--left"></div>
+      <div class="loader__ears loader__ears--right"></div>
+      <div class="loader__face">
+        <div class="loader__honey-fill"></div>
+        <div class="loader__eyes"></div>
+        <div class="loader__snout"></div>
+      </div>
+      <div class="loader__spoon">
+        <div class="loader__drip"></div>
+      </div>
     </div>
     <p class="loader__text">Stirring up something sweet...</p>
   </div>
@@ -25,6 +34,7 @@
       <a href="#story">Story</a>
       <a href="#details">Details</a>
       <a href="#experiences">Experiences</a>
+      <a href="#characters">Characters</a>
       <a href="#game">Honey Hunt</a>
       <a href="#rsvp">RSVP</a>
     </nav>
@@ -151,11 +161,81 @@
       </div>
     </section>
 
+    <section class="panel panel--characters" id="characters">
+      <div class="panel__header">
+        <p class="eyebrow">Meet the crew</p>
+        <h2>Character cards from the Hundred Acre Wood</h2>
+        <p>Tap a friend to learn their quirks, their favorite quote, and what they want to gift Baby Gunner.</p>
+      </div>
+      <div class="character-grid">
+        <article class="character-card" data-character="pooh">
+          <div class="character-card__avatar">🐻🍯</div>
+          <div>
+            <p class="character-card__name">Winnie the Pooh</p>
+            <p class="character-card__hint">Humming about honey and home.</p>
+          </div>
+          <button class="btn btn--ghost character-card__btn">Open bio</button>
+        </article>
+        <article class="character-card" data-character="piglet">
+          <div class="character-card__avatar">🐷🌸</div>
+          <div>
+            <p class="character-card__name">Piglet</p>
+            <p class="character-card__hint">Small heart, huge bravery.</p>
+          </div>
+          <button class="btn btn--ghost character-card__btn">Open bio</button>
+        </article>
+        <article class="character-card" data-character="tigger">
+          <div class="character-card__avatar">🐯🎈</div>
+          <div>
+            <p class="character-card__name">Tigger</p>
+            <p class="character-card__hint">Bounces in with giggles.</p>
+          </div>
+          <button class="btn btn--ghost character-card__btn">Open bio</button>
+        </article>
+        <article class="character-card" data-character="eeyore">
+          <div class="character-card__avatar">🫏☁️</div>
+          <div>
+            <p class="character-card__name">Eeyore</p>
+            <p class="character-card__hint">Soft-spoken wisdom and hugs.</p>
+          </div>
+          <button class="btn btn--ghost character-card__btn">Open bio</button>
+        </article>
+        <article class="character-card" data-character="rabbit">
+          <div class="character-card__avatar">🐰🥕</div>
+          <div>
+            <p class="character-card__name">Rabbit</p>
+            <p class="character-card__hint">Garden planner extraordinaire.</p>
+          </div>
+          <button class="btn btn--ghost character-card__btn">Open bio</button>
+        </article>
+        <article class="character-card" data-character="owl">
+          <div class="character-card__avatar">🦉📜</div>
+          <div>
+            <p class="character-card__name">Owl</p>
+            <p class="character-card__hint">Storyteller under the stars.</p>
+          </div>
+          <button class="btn btn--ghost character-card__btn">Open bio</button>
+        </article>
+      </div>
+    </section>
+
     <section class="panel panel--alt" id="game">
       <div class="panel__header">
         <p class="eyebrow">Mini game</p>
         <h2>Honey Hunt Arcade</h2>
         <p>Guide Pooh to catch honey drops while dodging busy bees. Quick rounds, cozy colors, touch and keyboard friendly.</p>
+      </div>
+      <div class="game__overlay" id="instructionOverlay" role="dialog" aria-modal="true">
+        <div class="game__overlay-card">
+          <p class="eyebrow">How to play</p>
+          <h3>Hunt for honey, dodge the bees</h3>
+          <ul class="game__instructions">
+            <li><strong>Move</strong>: ← → keys or on-screen arrows</li>
+            <li><strong>Pause/Resume</strong>: Spacebar or pause button</li>
+            <li><strong>Goal</strong>: Collect drops for points, avoid losing your honey jars</li>
+          </ul>
+          <button class="btn" id="closeInstructions">Let's play</button>
+        </div>
       </div>
       <div class="game">
         <div class="game__hud">
@@ -167,9 +247,24 @@
         <canvas id="honeyCanvas" width="720" height="360" aria-label="Honey Hunt game area"></canvas>
         <div class="game__controls">
           <button class="btn" id="startGame"><i class="fa-solid fa-play"></i> Start</button>
+          <button class="btn btn--ghost" id="pauseGame"><i class="fa-solid fa-pause"></i> Pause</button>
           <div class="touch">
             <button class="btn btn--ghost" id="leftBtn"><i class="fa-solid fa-chevron-left"></i></button>
             <button class="btn btn--ghost" id="rightBtn"><i class="fa-solid fa-chevron-right"></i></button>
+          </div>
+        </div>
+        <p class="game__status" id="gameStatus"></p>
+      </div>
+      <div class="game__overlay game__overlay--end" id="gameOverOverlay" role="dialog" aria-modal="true">
+        <div class="game__overlay-card">
+          <div class="confetti">🎉</div>
+          <p class="eyebrow">Game over</p>
+          <h3>You gathered <span id="finalScore">0</span> honey pots!</h3>
+          <p class="game__highlight" id="highScoreBadge">New high score!</p>
+          <p class="game__share" id="sharePrompt"></p>
+          <div class="game__overlay-actions">
+            <button class="btn" id="playAgain">Play again</button>
+            <button class="btn btn--ghost" id="closeGameOver">Close</button>
           </div>
         </div>
       </div>
@@ -203,6 +298,34 @@
       </form>
     </section>
   </main>
+
+  <div class="rsvp-banner" id="rsvpBanner" role="status" aria-live="polite">
+    <div class="rsvp-banner__content">
+      <span class="rsvp-banner__icon">🍯</span>
+      <p class="rsvp-banner__text">Wonderful! We've saved your spot in the Hundred Acre Wood!</p>
+    </div>
+    <button class="rsvp-banner__close" id="bannerClose" aria-label="Close confirmation">&times;</button>
+  </div>
+
+  <div class="modal" id="characterModal" aria-hidden="true" role="dialog" aria-modal="true">
+    <div class="modal__backdrop"></div>
+    <div class="modal__card" role="document">
+      <button class="modal__close" id="closeModal" aria-label="Close character bio">&times;</button>
+      <p class="eyebrow" id="modalTrait"></p>
+      <h3 id="modalName"></h3>
+      <p class="modal__quote" id="modalQuote"></p>
+      <p class="modal__gift" id="modalGift"></p>
+    </div>
+  </div>
+
+  <div class="page-turns" id="pageTurns" aria-label="Story navigation">
+    <button class="page-turns__btn" id="prevPage" aria-label="Previous chapter">◄ Previous chapter</button>
+    <div class="page-turns__status">
+      <span class="page-turns__dot" aria-hidden="true"></span>
+      <span id="pageIndicator">Welcome</span>
+    </div>
+    <button class="page-turns__btn" id="nextPage" aria-label="Next chapter">Next chapter ►</button>
+  </div>
 
   <footer class="footer">
     <p>Handcrafted with honey and heart. See you in the Hundred Acre Wood!</p>
