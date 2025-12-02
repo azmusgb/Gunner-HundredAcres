@@ -50,6 +50,8 @@ const state = {
   best: Number(localStorage.getItem('honeyBest') || 0),
   time: 45,
   lives: 3,
+  combo: 1,
+  comboTime: 0,
   playing: false,
   paused: false,
   player: { x: 320 },
@@ -142,6 +144,25 @@ document.addEventListener('DOMContentLoaded', () => {
   hideLoader();
   bestEl.textContent = state.best;
   timerEl.textContent = `${state.time}s`;
+
+  // Initialize enhanced visuals once the DOM is ready
+  setTimeout(initEnhancedVisuals, 100);
+
+  // Add CSS for roundRect if not supported
+  if (!CanvasRenderingContext2D.prototype.roundRect) {
+    CanvasRenderingContext2D.prototype.roundRect = function(x, y, w, h, r) {
+      if (w < 2 * r) r = w / 2;
+      if (h < 2 * r) r = h / 2;
+      this.beginPath();
+      this.moveTo(x + r, y);
+      this.arcTo(x + w, y, x + w, y + h, r);
+      this.arcTo(x + w, y + h, x, y + h, r);
+      this.arcTo(x, y + h, x, y, r);
+      this.arcTo(x, y, x + w, y, r);
+      this.closePath();
+      return this;
+    };
+  }
 });
 
 window.addEventListener('scroll', () => {
@@ -180,6 +201,9 @@ function resetGame() {
   state.paused = false;
   updateHud();
   updateComboDisplay();
+
+  // Reset score display color
+  scoreEl.style.color = '';
 }
 
 function startGame() {
@@ -266,8 +290,12 @@ function togglePause() {
 function loop() {
   if (!state.playing) return;
   if (state.paused) { requestAnimationFrame(loop); return; }
-  ctx.clearRect(0, 0, canvas.width, canvas.height);
-  drawGround();
+  
+  // Clear with a subtle fade effect
+  ctx.fillStyle = 'rgba(255, 249, 235, 0.1)';
+  ctx.fillRect(0, 0, canvas.width, canvas.height);
+  
+  drawSky();
   drawPlayer();
   updateDrops();
   updateBees();
@@ -287,66 +315,225 @@ function drawGround() {
 function drawPlayer() {
   const x = state.player.x;
   const y = canvas.height - 70;
-  ctx.fillStyle = '#f7c948';
+  
+  // Save context state
+  ctx.save();
+  
+  // Shadow effect
+  ctx.shadowColor = 'rgba(179, 119, 46, 0.4)';
+  ctx.shadowBlur = 15;
+  ctx.shadowOffsetY = 5;
+  
+  // Main honey pot body
+  const gradient = ctx.createLinearGradient(x, y, x + 60, y + 48);
+  gradient.addColorStop(0, '#FFD166');
+  gradient.addColorStop(0.3, '#FFE87C');
+  gradient.addColorStop(0.7, '#FFD166');
+  gradient.addColorStop(1, '#F9C152');
+  
+  ctx.fillStyle = gradient;
   ctx.beginPath();
-  ctx.moveTo(x + 10, y);
-  ctx.lineTo(x + 50, y);
-  ctx.quadraticCurveTo(x + 58, y + 4, x + 58, y + 14);
-  ctx.lineTo(x + 58, y + 38);
-  ctx.quadraticCurveTo(x + 58, y + 46, x + 50, y + 48);
-  ctx.lineTo(x + 10, y + 48);
-  ctx.quadraticCurveTo(x + 2, y + 46, x + 2, y + 38);
-  ctx.lineTo(x + 2, y + 14);
-  ctx.quadraticCurveTo(x + 2, y + 4, x + 10, y);
-  ctx.closePath();
+  ctx.roundRect(x, y, 60, 48, [20, 20, 10, 10]);
   ctx.fill();
-  ctx.fillStyle = '#fff8e6';
-  ctx.fillRect(x + 10, y + 18, 40, 16);
-  ctx.fillStyle = '#184e35';
-  ctx.fillRect(x + 16, y - 6, 28, 10);
+  
+  // Honey level with shine
+  ctx.fillStyle = '#FFE87C';
+  ctx.beginPath();
+  ctx.roundRect(x + 8, y + 20, 44, 24, [8, 8, 8, 8]);
+  ctx.fill();
+  
+  // Honey texture
+  ctx.fillStyle = 'rgba(255, 209, 102, 0.3)';
+  for (let i = 0; i < 5; i++) {
+    ctx.beginPath();
+    ctx.arc(x + 15 + i * 8, y + 32, 2, 0, Math.PI * 2);
+    ctx.fill();
+  }
+  
+  // Pot lid with metallic shine
+  const lidGradient = ctx.createLinearGradient(x + 15, y - 8, x + 45, y + 2);
+  lidGradient.addColorStop(0, '#184e35');
+  lidGradient.addColorStop(0.3, '#2a6f4e');
+  lidGradient.addColorStop(0.5, '#3D9970');
+  lidGradient.addColorStop(0.7, '#2a6f4e');
+  lidGradient.addColorStop(1, '#184e35');
+  
+  ctx.fillStyle = lidGradient;
+  ctx.beginPath();
+  ctx.roundRect(x + 15, y - 8, 30, 10, [8, 8, 0, 0]);
+  ctx.fill();
+  
+  // Lid highlight
+  ctx.fillStyle = 'rgba(255, 255, 255, 0.3)';
+  ctx.beginPath();
+  ctx.roundRect(x + 17, y - 6, 10, 4, [4, 4, 0, 0]);
+  ctx.fill();
+  
+  // Pot handle
+  ctx.strokeStyle = '#8B7355';
+  ctx.lineWidth = 4;
+  ctx.beginPath();
+  ctx.arc(x + 30, y - 15, 12, 0.8 * Math.PI, 2.2 * Math.PI);
+  ctx.stroke();
+  
+  // Reset shadow
+  ctx.shadowColor = 'transparent';
+  ctx.shadowBlur = 0;
+  ctx.shadowOffsetY = 0;
+  
+  // Restore context
+  ctx.restore();
 }
 
 function updateDrops() {
-  ctx.fillStyle = '#f7c948';
   state.drops.forEach((d, i) => {
     d.y += d.speed;
+    
+    // Save context for drop effects
+    ctx.save();
+    
+    // Drop shadow
+    ctx.shadowColor = 'rgba(179, 119, 46, 0.3)';
+    ctx.shadowBlur = 10;
+    ctx.shadowOffsetY = 3;
+    
+    // Honey drop with gradient
+    const gradient = ctx.createRadialGradient(
+      d.x - 3, d.y - 3, 0,
+      d.x, d.y, 14
+    );
+    gradient.addColorStop(0, '#FFE87C');
+    gradient.addColorStop(0.7, '#FFD166');
+    gradient.addColorStop(1, '#F9C152');
+    
+    ctx.fillStyle = gradient;
     ctx.beginPath();
-    ctx.arc(d.x, d.y, 10, 0, Math.PI * 2);
+    ctx.ellipse(d.x, d.y, 8, 12, 0, 0, Math.PI * 2);
     ctx.fill();
+    
+    // Highlight
+    ctx.fillStyle = 'rgba(255, 255, 255, 0.4)';
+    ctx.beginPath();
+    ctx.ellipse(d.x - 2, d.y - 4, 3, 5, 0, 0, Math.PI * 2);
+    ctx.fill();
+    
+    // Reset shadow
+    ctx.shadowColor = 'transparent';
+    ctx.restore();
+    
+    // Create honey drip trail
+    if (Math.random() > 0.7) {
+      createHoneyDrip(d.x, d.y);
+    }
+    
+    // Collision detection
     if (d.y > canvas.height - 70 && d.x > state.player.x && d.x < state.player.x + 60) {
+      // Collection effects
       state.score += 5 + state.combo;
       state.combo = Math.min(state.combo + 1, 12);
       state.comboTime = performance.now();
       state.drops.splice(i, 1);
+      
+      // Visual effects
       updateHud();
       updateComboDisplay();
-      spawnParticles(d.x, d.y, '#f7c948');
-      if (state.combo >= 6) gameStatus.textContent = 'Golden streak! Keep bouncing!';
-      else if (state.combo >= 3) gameStatus.textContent = 'Combo is glowing — keep it up!';
+      spawnParticles(d.x, d.y, '#FFD166');
+      createCollectionEffect(d.x, d.y);
+      
+      // Score pop animation
+      scoreEl.classList.remove('score-pop');
+      void scoreEl.offsetWidth;
+      scoreEl.classList.add('score-pop');
+      
+      // Status messages
+      if (state.combo >= 6) gameStatus.textContent = '🌟 Golden streak! Bouncy-trouncy-flouncy!';
+      else if (state.combo >= 3) gameStatus.textContent = '✨ Sweet combo! More honey, please!';
+      else gameStatus.textContent = '🍯 Yummy honey collected!';
+      
+      // Play collection sound
+      if (chimeToggle.checked) {
+        playCollectionSound();
+      }
     }
+    
+    // Remove if out of bounds
     if (d.y > canvas.height) state.drops.splice(i, 1);
   });
 }
 
 function updateBees() {
-  ctx.fillStyle = '#f0a500';
   state.bees.forEach((b, i) => {
     b.y += b.speed;
+    
+    // Animate wings
+    const wingOffset = Math.sin(performance.now() * 0.01 + i) * 2;
+    
+    ctx.save();
+    
+    // Bee body
+    const gradient = ctx.createLinearGradient(b.x, b.y, b.x + 16, b.y + 12);
+    gradient.addColorStop(0, '#F0A500');
+    gradient.addColorStop(0.3, '#FFC857');
+    gradient.addColorStop(0.7, '#F0A500');
+    gradient.addColorStop(1, '#D18F00');
+    
+    ctx.fillStyle = gradient;
     ctx.beginPath();
-    ctx.rect(b.x, b.y, 16, 12);
+    ctx.ellipse(b.x + 8, b.y + 6, 8, 6, 0, 0, Math.PI * 2);
     ctx.fill();
+    
+    // Black stripes
+    ctx.fillStyle = '#000000';
+    ctx.fillRect(b.x + 4, b.y, 3, 12);
+    ctx.fillRect(b.x + 10, b.y, 3, 12);
+    
+    // Wings with animation
+    ctx.fillStyle = 'rgba(255, 255, 255, 0.7)';
+    ctx.beginPath();
+    ctx.ellipse(b.x + 4, b.y - 2 + wingOffset, 5, 3, 0, 0, Math.PI * 2);
+    ctx.fill();
+    ctx.beginPath();
+    ctx.ellipse(b.x + 12, b.y - 2 - wingOffset, 5, 3, 0, 0, Math.PI * 2);
+    ctx.fill();
+    
+    // Antennae
+    ctx.strokeStyle = '#000000';
+    ctx.lineWidth = 1;
+    ctx.beginPath();
+    ctx.moveTo(b.x + 5, b.y + 1);
+    ctx.lineTo(b.x + 2, b.y - 3);
+    ctx.moveTo(b.x + 11, b.y + 1);
+    ctx.lineTo(b.x + 14, b.y - 3);
+    ctx.stroke();
+    
+    ctx.restore();
+    
+    // Create bee trail
+    if (Math.random() > 0.5) {
+      createBeeTrail(b.x + 8, b.y + 6);
+    }
+    
+    // Collision detection
     if (b.y > canvas.height - 70 && b.x > state.player.x - 8 && b.x < state.player.x + 60) {
       state.lives -= 1;
       state.combo = 1;
       state.comboTime = 0;
-      state.hitFlash = 10;
+      state.hitFlash = 15;
       state.bees.splice(i, 1);
+      
       updateHud();
       updateComboDisplay();
-      spawnParticles(b.x, b.y, '#b23b2f');
-      gameStatus.textContent = 'Ouch! Bees stole a jar — shake it off!';
+      spawnParticles(b.x, b.y, '#B23B2F');
+      
+      // Visual feedback
+      livesEl.style.color = '#B23B2F';
+      setTimeout(() => livesEl.style.color = '', 500);
+      
+      gameStatus.textContent = '🐝 Oh, bother! A bee got you!';
+      
       if (state.lives <= 0) endGame();
     }
+    
     if (b.y > canvas.height) state.bees.splice(i, 1);
   });
 }
@@ -360,20 +547,45 @@ function updateHud() {
 
 function updateComboDisplay() {
   if (!comboDisplay) return;
+
   if (state.combo > 1) {
     comboDisplay.style.display = 'flex';
     comboStreak.textContent = `x${state.combo}`;
+
+    // Update combo color based on streak
+    let comboColor;
+    if (state.combo >= 8) comboColor = '#FF6B6B';
+    else if (state.combo >= 5) comboColor = '#4ECDC4';
+    else comboColor = '#FFD166';
+
+    comboDisplay.style.background = `linear-gradient(135deg, ${comboColor}, ${comboColor}dd)`;
+
+    // Trigger pop animation
     comboDisplay.classList.remove('pop');
     void comboDisplay.offsetWidth;
     comboDisplay.classList.add('pop');
+
+    // Show special effects for high combos
+    if (state.combo >= 5) {
+      createSpecialEffect(state.combo);
+    }
   } else {
     comboDisplay.style.display = 'none';
   }
 }
 
 function spawnParticles(x, y, color) {
-  for (let i = 0; i < 8; i += 1) {
-    state.particles.push({ x, y, life: 22, color, dx: (Math.random() - 0.5) * 3, dy: -1 - Math.random() * 1.5 });
+  for (let i = 0; i < 15; i++) {
+    state.particles.push({
+      x, y,
+      life: 30 + Math.random() * 20,
+      color,
+      dx: (Math.random() - 0.5) * 6,
+      dy: -2 - Math.random() * 3,
+      size: 2 + Math.random() * 5,
+      rotation: Math.random() * Math.PI * 2,
+      rotationSpeed: (Math.random() - 0.5) * 0.2
+    });
   }
 }
 
@@ -382,18 +594,41 @@ function drawParticles() {
     p.x += p.dx;
     p.y += p.dy;
     p.life -= 1;
-    ctx.fillStyle = `${p.color}cc`;
+    p.rotation += p.rotationSpeed;
+
+    ctx.save();
+    ctx.translate(p.x, p.y);
+    ctx.rotate(p.rotation);
+
+    const gradient = ctx.createRadialGradient(0, 0, 0, 0, 0, p.size);
+    gradient.addColorStop(0, `${p.color}FF`);
+    gradient.addColorStop(0.7, `${p.color}CC`);
+    gradient.addColorStop(1, `${p.color}00`);
+
+    ctx.fillStyle = gradient;
     ctx.beginPath();
-    ctx.arc(p.x, p.y, Math.max(1, p.life / 8), 0, Math.PI * 2);
+    ctx.arc(0, 0, p.size, 0, Math.PI * 2);
     ctx.fill();
+
+    ctx.restore();
+
     if (p.life <= 0) state.particles.splice(idx, 1);
   });
 }
 
 function renderHitFlash() {
   if (state.hitFlash <= 0) return;
-  ctx.fillStyle = `rgba(178, 59, 47, ${state.hitFlash / 24})`;
+
+  const gradient = ctx.createRadialGradient(
+    canvas.width/2, canvas.height/2, 0,
+    canvas.width/2, canvas.height/2, canvas.width
+  );
+  gradient.addColorStop(0, `rgba(178, 59, 47, ${state.hitFlash / 30})`);
+  gradient.addColorStop(1, `rgba(178, 59, 47, 0)`);
+
+  ctx.fillStyle = gradient;
   ctx.fillRect(0, 0, canvas.width, canvas.height);
+
   state.hitFlash -= 1;
 }
 
@@ -404,6 +639,203 @@ function decayCombo() {
     updateComboDisplay();
     gameStatus.textContent = 'Streak cooled — grab more honey!';
   }
+}
+
+// ==================== ENHANCED GAME GRAPHICS ====================
+
+// Initialize enhanced visuals
+function initEnhancedVisuals() {
+  createClouds();
+  createGrass();
+  createHoneycombPattern();
+  createAmbientParticles();
+}
+
+// Create decorative clouds
+function createClouds() {
+  const sky = document.querySelector('.sky-background') || document.createElement('div');
+  sky.className = 'sky-background';
+  document.querySelector('.canvas-container')?.prepend(sky);
+
+  for (let i = 0; i < 3; i++) {
+    const cloud = document.createElement('div');
+    cloud.className = 'cloud';
+    cloud.style.left = `${Math.random() * 100}%`;
+    cloud.style.top = `${30 + Math.random() * 40}%`;
+    cloud.style.width = `${80 + Math.random() * 80}px`;
+    cloud.style.height = `${30 + Math.random() * 20}px`;
+    cloud.style.animationDelay = `${Math.random() * 20}s`;
+    sky.appendChild(cloud);
+  }
+}
+
+// Create animated grass
+function createGrass() {
+  const ground = document.querySelector('.ground-container') || document.createElement('div');
+  ground.className = 'ground-container';
+  document.querySelector('.canvas-container')?.appendChild(ground);
+
+  for (let i = 0; i < 50; i++) {
+    const blade = document.createElement('div');
+    blade.className = 'grass-blade';
+    blade.style.left = `${Math.random() * 100}%`;
+    ground.appendChild(blade);
+  }
+}
+
+// Create honeycomb pattern
+function createHoneycombPattern() {
+  const pattern = document.createElement('div');
+  pattern.className = 'honeycomb-pattern';
+  document.querySelector('.canvas-container')?.appendChild(pattern);
+}
+
+// Create ambient particles
+function createAmbientParticles() {
+  setInterval(() => {
+    if (!state.playing || state.paused) return;
+
+    const particle = document.createElement('div');
+    particle.className = 'sparkle';
+    particle.style.left = `${Math.random() * 100}%`;
+    particle.style.top = `${Math.random() * 100}%`;
+    particle.style.background = `radial-gradient(circle at 30% 30%, 
+      rgba(255, 255, 255, 0.9) 0%,
+      ${Math.random() > 0.5 ? 'var(--honey-gold)' : 'var(--leaf-green)'} 50%,
+      transparent 70%
+    )`;
+
+    document.querySelector('.canvas-container')?.appendChild(particle);
+    setTimeout(() => particle.remove(), 1200);
+  }, 300);
+}
+
+// Create honey drip visual effect
+function createHoneyDrip(x, y) {
+  const drip = document.createElement('div');
+  drip.className = 'honey-drip';
+  drip.style.left = `${x}px`;
+  drip.style.top = `${y}px`;
+  drip.style.opacity = 0.6 + Math.random() * 0.4;
+  drip.style.animationDuration = `${1 + Math.random() * 2}s`;
+  document.querySelector('.canvas-container')?.appendChild(drip);
+
+  setTimeout(() => drip.remove(), 3000);
+}
+
+// Create bee trail effect
+function createBeeTrail(x, y) {
+  const trail = document.createElement('div');
+  trail.className = 'bee-trail';
+  trail.style.left = `${x}px`;
+  trail.style.top = `${y}px`;
+  trail.style.animationDuration = `${0.5 + Math.random() * 0.3}s`;
+  document.querySelector('.canvas-container')?.appendChild(trail);
+
+  setTimeout(() => trail.remove(), 800);
+}
+
+// Create honey collection effect
+function createCollectionEffect(x, y) {
+  const effect = document.createElement('div');
+  effect.className = 'honey-collect';
+  effect.style.left = `${x - 12}px`;
+  effect.style.top = `${y - 12}px`;
+  document.querySelector('.canvas-container')?.appendChild(effect);
+
+  setTimeout(() => effect.remove(), 600);
+}
+
+// Play collection sound
+function playCollectionSound() {
+  const audioContext = new (window.AudioContext || window.webkitAudioContext)();
+  const oscillator = audioContext.createOscillator();
+  const gainNode = audioContext.createGain();
+
+  oscillator.connect(gainNode);
+  gainNode.connect(audioContext.destination);
+
+  oscillator.frequency.setValueAtTime(523.25, audioContext.currentTime); // C5
+  oscillator.frequency.exponentialRampToValueAtTime(659.25, audioContext.currentTime + 0.1); // E5
+
+  gainNode.gain.setValueAtTime(0.1, audioContext.currentTime);
+  gainNode.gain.exponentialRampToValueAtTime(0.01, audioContext.currentTime + 0.2);
+
+  oscillator.start(audioContext.currentTime);
+  oscillator.stop(audioContext.currentTime + 0.2);
+}
+
+// Create special effects for high combos
+function createSpecialEffect(combo) {
+  const container = document.querySelector('.canvas-container');
+  if (!container) return;
+
+  if (combo >= 8) {
+    // Star burst effect
+    for (let i = 0; i < 8; i++) {
+      const star = document.createElement('div');
+      star.className = 'sparkle';
+      star.style.left = '50%';
+      star.style.top = '50%';
+      star.style.width = '12px';
+      star.style.height = '12px';
+      star.style.background = 'radial-gradient(circle, #FFD166, #FF9E00)';
+      star.style.animation = 'sparklePop 1s ease-out forwards';
+      container.appendChild(star);
+
+      // Animate stars outward
+      setTimeout(() => {
+        const angle = (i / 8) * Math.PI * 2;
+        const distance = 100;
+        star.style.left = `calc(50% + ${Math.cos(angle) * distance}px)`;
+        star.style.top = `calc(50% + ${Math.sin(angle) * distance}px)`;
+      }, 10);
+
+      setTimeout(() => star.remove(), 1000);
+    }
+  } else if (combo >= 5) {
+    // Ring effect
+    const ring = document.createElement('div');
+    ring.style.cssText = `
+      position: absolute;
+      left: 50%;
+      top: 50%;
+      width: 20px;
+      height: 20px;
+      border: 2px solid #FFD166;
+      border-radius: 50%;
+      transform: translate(-50%, -50%);
+      animation: ringExpand 0.8s ease-out forwards;
+    `;
+
+    const style = document.createElement('style');
+    style.textContent = `
+      @keyframes ringExpand {
+        to {
+          width: 200px;
+          height: 200px;
+          opacity: 0;
+          border-width: 1px;
+        }
+      }
+    `;
+
+    document.head.appendChild(style);
+    container.appendChild(ring);
+    setTimeout(() => ring.remove(), 800);
+  }
+}
+
+// Add sky drawing function
+function drawSky() {
+  const gradient = ctx.createLinearGradient(0, 0, 0, canvas.height * 0.7);
+  gradient.addColorStop(0, '#A3D5FF');
+  gradient.addColorStop(0.3, '#C1E3FF');
+  gradient.addColorStop(0.6, '#D8F0FF');
+  gradient.addColorStop(1, '#E6F7FF');
+
+  ctx.fillStyle = gradient;
+  ctx.fillRect(0, 0, canvas.width, canvas.height * 0.7);
 }
 
 const form = document.getElementById('rsvpForm');
