@@ -500,7 +500,7 @@ class HundredAcreApp {
             entries.forEach(entry => {
                 const sec = entry.target;
                 if (entry.isIntersecting) {
-                    sec.classList.add('section-visible');
+                    sec.classList.add('section-visible', 'scroll-animate');
                     if (sec.id && this.el.navItems) {
                         this.el.navItems.forEach(item => {
                             const href = item.getAttribute('href');
