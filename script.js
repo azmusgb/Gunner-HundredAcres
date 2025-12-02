@@ -29,25 +29,29 @@ const characters = {
     name: 'Winnie the Pooh',
     trait: 'Gentle host + honey connoisseur',
     quote: '"Sometimes the smallest things take up the most room in your heart."',
-    gift: 'A forever supply of calm, cozy mornings and a jar of courage for every new adventure.'
+    gift: 'A forever supply of calm, cozy mornings and a jar of courage for every new adventure.',
+    image: 'Images/Characters/honey-bear.png'
   },
   piglet: {
     name: 'Piglet',
     trait: 'Brave best friend',
     quote: '"It is hard to be brave when you\'re only a Very Small Animal."',
-    gift: 'A pocket-sized bravery badge and the reminder that even tiny voices matter.'
+    gift: 'A pocket-sized bravery badge and the reminder that even tiny voices matter.',
+    image: 'Images/Characters/piglet.png'
   },
   tigger: {
     name: 'Tigger',
     trait: 'Boundless joy & bounce',
     quote: '"Bouncing is what Tiggers do best!"',
-    gift: 'Endless giggles, rainy-day dance parties, and pep talks when confidence needs a lift.'
+    gift: 'Endless giggles, rainy-day dance parties, and pep talks when confidence needs a lift.',
+    image: 'Images/Characters/tigger.png'
   },
   eeyore: {
     name: 'Eeyore',
     trait: 'Thoughtful and steady',
     quote: '"It never hurts to keep looking for sunshine."',
-    gift: 'A place to rest when days feel heavy and a friend who listens without rushing.'
+    gift: 'A place to rest when days feel heavy and a friend who listens without rushing.',
+    image: 'Images/Characters/eeyore.png'
   },
   rabbit: {
     name: 'Rabbit',
@@ -59,7 +63,8 @@ const characters = {
     name: 'Owl',
     trait: 'Resident storyteller',
     quote: '"Stories taste better with friends and moonlight."',
-    gift: 'Starry bedtime tales, maps of the Wood, and wisdom shared with a wink.'
+    gift: 'Starry bedtime tales, maps of the Wood, and wisdom shared with a wink.',
+    image: 'Images/Characters/owl.png'
   }
 };
 
@@ -132,6 +137,8 @@ const modalName = document.getElementById('modalName');
 const modalTrait = document.getElementById('modalTrait');
 const modalQuote = document.getElementById('modalQuote');
 const modalGift = document.getElementById('modalGift');
+const modalImage = document.getElementById('modalImage');
+const modalAvatar = document.querySelector('.storybook-modal-avatar');
 const closeModal = document.getElementById('closeModal');
 const rsvpBanner = document.getElementById('rsvpBanner');
 const bannerClose = document.getElementById('bannerClose');
@@ -213,7 +220,7 @@ function initGame() {
       poohSpriteReady = false;
       console.log('Sprite failed to load, using default graphics');
     };
-    poohSprite.src = 'pooh-sprite.png'; // This should exist or be handled
+    poohSprite.src = 'Images/Characters/honey-bear.png';
   }
   
   // Initialize page turns
@@ -1119,6 +1126,17 @@ function openCharacter(key) {
   if (modalTrait) modalTrait.textContent = data.trait;
   if (modalQuote) modalQuote.textContent = data.quote;
   if (modalGift) modalGift.textContent = data.gift;
+  if (modalImage && modalAvatar) {
+    if (data.image) {
+      modalImage.src = data.image;
+      modalImage.alt = `${data.name} illustration`;
+      modalAvatar.classList.add('has-image');
+    } else {
+      modalImage.removeAttribute('src');
+      modalImage.alt = '';
+      modalAvatar.classList.remove('has-image');
+    }
+  }
   if (characterModal) characterModal.classList.add('is-visible');
 }
 
