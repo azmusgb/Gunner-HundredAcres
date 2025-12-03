@@ -3,507 +3,2778 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Gunner's Woodland Adventure - A Winnie the Pooh Storybook Shower</title>
-    <link href="https://fonts.googleapis.com/css2?family=Nunito:wght@400;600;700;800&family=Playfair+Display:wght@600;700&family=Schoolbell&display=swap" rel="stylesheet">
+    <meta name="description" content="Join Winnie-the-Pooh in a storybook adventure through the Hundred Acre Wood">
+    <title>Pooh's Honey Hunt - A Hundred Acre Wood Celebration</title>
+    
+    <!-- Fonts -->
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Nunito:wght@300;400;600;700;800&family=Playfair+Display:wght@400;700;900&family=Schoolbell&family=Lato:wght@300;400;700&display=swap" rel="stylesheet">
+    
+    <!-- Font Awesome -->
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
-    <link rel="stylesheet" href="styles.css">
+    
+    <!-- Favicon -->
+    <link rel="icon" type="image/x-icon" href="data:image/svg+xml,<svg xmlns=%22http://www.w3.org/2000/svg%22 viewBox=%220 0 100 100%22><text y=%22.9em%22 font-size=%2290%22>🍯</text></svg>">
+    
+    <style>
+        /* =========================
+           RESET & BASE
+           ========================= */
+        *,
+        *::before,
+        *::after {
+            box-sizing: border-box;
+            margin: 0;
+            padding: 0;
+        }
+
+        html,
+        body {
+            height: 100%;
+            width: 100%;
+            overflow-x: hidden;
+        }
+
+        body {
+            font-family: "Nunito", system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
+            background:
+                radial-gradient(circle at top left, rgba(255, 210, 112, 0.18), transparent 60%),
+                radial-gradient(circle at bottom right, rgba(176, 208, 227, 0.22), transparent 65%),
+                linear-gradient(180deg, #fff8ec 0%, #ffe5b9 35%, #f5d7b8 100%);
+            color: #43302a;
+            -webkit-font-smoothing: antialiased;
+            min-height: 100vh;
+            display: flex;
+            flex-direction: column;
+            touch-action: manipulation;
+        }
+
+        /* Combined Variables */
+        :root {
+            /* Storybook variables */
+            --pooh-yellow: #ffc42b;
+            --pooh-red: #d62e2e;
+            --honey-gold: #e6b86a;
+            --soft-blue: #b0d0e3;
+            --sage-green: #9cad90;
+            --cream: #fff7ec;
+            --page-yellow: #fef9e7;
+            --text-dark: #43302a;
+            --ink: #2f1a0e;
+
+            /* Game variables */
+            --color-honey: #FFC42B;
+            --color-honey-light: #FFE082;
+            --color-honey-dark: #FF9800;
+            --color-leaf: #7CB342;
+            --color-earth: #8D6E63;
+            --color-sky: #E3F2FD;
+            --color-gold: #FFD700;
+            --color-danger: #FF5252;
+            --color-success: #4CAF50;
+            --color-bg: #FFF8E1;
+            --color-card: #FFFFFF;
+            --color-text: #5D4037;
+            --color-text-light: #8D6E63;
+
+            /* Combined shadows */
+            --shadow-soft: 0 18px 45px rgba(15, 23, 42, 0.18);
+            --shadow-subtle: 0 10px 26px rgba(15, 23, 42, 0.12);
+            --shadow-sm: 0 2px 8px rgba(0, 0, 0, 0.08);
+            --shadow-md: 0 4px 16px rgba(0, 0, 0, 0.12);
+            --shadow-lg: 0 8px 32px rgba(0, 0, 0, 0.16);
+
+            /* Combined radii */
+            --radius-sm: 8px;
+            --radius-md: 16px;
+            --radius-lg: 24px;
+            --radius-xl: 32px;
+            --radius-pill: 999px;
+
+            /* Combined transitions */
+            --transition-fast: all 0.22s ease;
+            --transition-slow: all 0.5s cubic-bezier(0.25, 0.46, 0.45, 0.94);
+            --transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+        }
+
+        img {
+            max-width: 100%;
+            display: block;
+        }
+
+        a {
+            color: var(--pooh-red);
+            text-decoration: none;
+        }
+        a:hover {
+            text-decoration: underline;
+        }
+
+        main {
+            min-height: 100vh;
+            flex: 1;
+        }
+
+        /* =========================
+           SKIP LINKS
+           ========================= */
+        .skip-link {
+            position: absolute;
+            left: -999px;
+            top: 0;
+            background: #111827;
+            color: #f9fafb;
+            padding: 8px 14px;
+            border-radius: var(--radius-pill);
+            z-index: 50;
+            font-size: 0.9rem;
+        }
+        .skip-link:focus {
+            left: 12px;
+            top: 12px;
+            outline: none;
+        }
+
+        /* =========================
+           LOADER
+           ========================= */
+        .loader {
+            position: fixed;
+            inset: 0;
+            z-index: 1000;
+            background: radial-gradient(circle at top, #fff7e1 0, #ffd98a 45%, #f2c892 100%);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            flex-direction: column;
+            transition: opacity 0.4s ease, visibility 0.4s ease;
+        }
+        .loader--hidden {
+            opacity: 0;
+            visibility: hidden;
+        }
+
+        .loader__pooh {
+            position: relative;
+            width: 120px;
+            height: 140px;
+            margin-bottom: 18px;
+        }
+
+        /* Pooh head */
+        .loader__head {
+            position: absolute;
+            top: 10px;
+            left: 50%;
+            width: 76px;
+            height: 64px;
+            transform: translateX(-50%);
+            background: #f3c562;
+            border-radius: 36px;
+            box-shadow: 0 8px 0 rgba(199, 141, 46, 0.4);
+        }
+
+        /* Ears */
+        .loader__ears {
+            position: absolute;
+            width: 26px;
+            height: 26px;
+            background: #f3c562;
+            border-radius: 50%;
+            top: 0;
+        }
+        .loader__ears--left {
+            left: calc(50% - 40px);
+        }
+        .loader__ears--right {
+            right: calc(50% - 40px);
+        }
+
+        /* Eyes, nose, smile */
+        .loader__eyes {
+            position: absolute;
+            top: 22px;
+            left: 50%;
+            width: 40px;
+            display: flex;
+            justify-content: space-between;
+            transform: translateX(-50%);
+        }
+        .loader__eye {
+            width: 6px;
+            height: 6px;
+            border-radius: 999px;
+            background: #3f2a16;
+            animation: blink 3.5s infinite;
+        }
+        @keyframes blink {
+            0%, 92%, 100% { transform: scaleY(1); }
+            94%, 98% { transform: scaleY(0.1); }
+        }
+
+        .loader__nose {
+            position: absolute;
+            top: 34px;
+            left: 50%;
+            width: 12px;
+            height: 10px;
+            transform: translateX(-50%);
+            background: #3f2a16;
+            border-radius: 999px;
+        }
+
+        .loader__smile {
+            position: absolute;
+            top: 40px;
+            left: 50%;
+            width: 32px;
+            height: 18px;
+            transform: translateX(-50%);
+            border-bottom: 3px solid #3f2a16;
+            border-radius: 0 0 18px 18px;
+        }
+
+        /* Body */
+        .loader__body {
+            position: absolute;
+            bottom: 10px;
+            left: 50%;
+            width: 100px;
+            height: 72px;
+            transform: translateX(-50%);
+            background: #f3c562;
+            border-radius: 50px;
+        }
+        .loader__shirt {
+            position: absolute;
+            inset: 0;
+            height: 48px;
+            background: var(--pooh-red);
+            border-radius: 50px;
+        }
+
+        /* Honey pot */
+        .loader__honey-pot {
+            position: absolute;
+            right: 5px;
+            bottom: -10px;
+            width: 32px;
+            height: 32px;
+            background: #9a6a3b;
+            border-radius: 14px;
+            box-shadow: 0 6px 0 rgba(80, 45, 12, 0.45);
+        }
+        .loader__honey-pot::before {
+            content: "";
+            position: absolute;
+            inset: 0;
+            height: 11px;
+            background: #f4cd68;
+            border-radius: 14px 14px 10px 10px;
+        }
+
+        /* Shadow */
+        .loader__shadow {
+            position: absolute;
+            bottom: -18px;
+            left: 50%;
+            width: 80px;
+            height: 14px;
+            transform: translateX(-50%);
+            background: radial-gradient(circle, rgba(0, 0, 0, 0.35), transparent 60%);
+            opacity: 0.6;
+        }
+
+        /* Loader text */
+        .loader__text {
+            text-align: center;
+            color: #3f2a16;
+        }
+        .storybook-loader__text {
+            font-family: "Schoolbell", system-ui, sans-serif;
+            letter-spacing: 0.12em;
+            text-transform: uppercase;
+            font-size: 0.9rem;
+            margin-bottom: 10px;
+        }
+
+        .loader__progress {
+            width: 190px;
+            height: 6px;
+            border-radius: 999px;
+            background: rgba(255, 255, 255, 0.8);
+            overflow: hidden;
+        }
+        .loader__bar {
+            width: 0;
+            height: 100%;
+            border-radius: inherit;
+            background: linear-gradient(90deg, #ffe594, #ffc42b, #e6a623);
+            animation: loadBar 1.8s ease-in-out infinite;
+        }
+        @keyframes loadBar {
+            0% { width: 0; transform: translateX(-10%); }
+            50% { width: 85%; transform: translateX(5%); }
+            100% { width: 0; transform: translateX(100%); }
+        }
+
+        /* =========================
+           HEADER
+           ========================= */
+        .storybook-header {
+            position: sticky;
+            top: 0;
+            z-index: 20;
+            backdrop-filter: blur(14px);
+            background: linear-gradient(
+                180deg,
+                rgba(255, 247, 236, 0.96),
+                rgba(255, 247, 236, 0.88),
+                transparent 100%
+            );
+            border-bottom: 1px solid rgba(139, 69, 19, 0.14);
+        }
+
+        .storybook-header__top {
+            max-width: 1200px;
+            margin: 0 auto;
+            padding: 14px 24px 10px;
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            gap: 18px;
+        }
+
+        .storybook-logo {
+            display: flex;
+            align-items: center;
+            gap: 12px;
+        }
+
+        /* Tiny logo Pooh */
+        .storybook-logo__pooh {
+            position: relative;
+            width: 50px;
+            height: 56px;
+        }
+        .storybook-logo__ear {
+            position: absolute;
+            width: 16px;
+            height: 16px;
+            background: #f3c562;
+            border-radius: 50%;
+            top: 2px;
+        }
+        .storybook-logo__ear--left {
+            left: 4px;
+        }
+        .storybook-logo__ear--right {
+            right: 4px;
+        }
+        .storybook-logo__face {
+            position: absolute;
+            top: 8px;
+            left: 50%;
+            width: 34px;
+            height: 32px;
+            transform: translateX(-50%);
+            background: #f3c562;
+            border-radius: 48px;
+            box-shadow: 0 3px 0 rgba(199, 141, 46, 0.6);
+        }
+        .storybook-logo__eyes,
+        .storybook-logo__nose,
+        .storybook-logo__smile {
+            position: absolute;
+        }
+        .storybook-logo__eyes::before,
+        .storybook-logo__eyes::after {
+            content: "";
+            position: absolute;
+            top: 8px;
+            width: 4px;
+            height: 4px;
+            border-radius: 999px;
+            background: #3f2a16;
+        }
+        .storybook-logo__eyes::before {
+            left: 8px;
+        }
+        .storybook-logo__eyes::after {
+            right: 8px;
+        }
+        .storybook-logo__nose {
+            top: 14px;
+            left: 50%;
+            width: 8px;
+            height: 6px;
+            transform: translateX(-50%);
+            background: #3f2a16;
+            border-radius: 999px;
+        }
+        .storybook-logo__smile {
+            top: 16px;
+            left: 50%;
+            width: 18px;
+            height: 10px;
+            transform: translateX(-50%);
+            border-bottom: 2px solid #3f2a16;
+            border-radius: 0 0 12px 12px;
+        }
+
+        .storybook-logo__text {
+            display: flex;
+            flex-direction: column;
+        }
+        .storybook-logo__eyebrow {
+            font-family: "Schoolbell", system-ui, sans-serif;
+            font-size: 0.78rem;
+            letter-spacing: 0.18em;
+            text-transform: uppercase;
+            color: rgba(67, 48, 42, 0.8);
+        }
+        .storybook-logo__title {
+            margin: 0;
+            margin-top: 2px;
+            font-family: "Playfair Display", serif;
+            font-size: 1.5rem;
+            color: var(--ink);
+        }
+        .storybook-logo__subtitle {
+            margin: 0;
+            margin-top: 3px;
+            font-size: 0.92rem;
+            color: rgba(67, 48, 42, 0.9);
+        }
+
+        /* Header badges */
+        .storybook-header__meta {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 8px;
+            justify-content: flex-end;
+        }
+
+        .storybook-badge {
+            display: flex;
+            align-items: center;
+            gap: 8px;
+            padding: 8px 10px;
+            border-radius: 999px;
+            background: rgba(255, 255, 255, 0.98);
+            box-shadow: 0 8px 20px rgba(15, 23, 42, 0.15);
+            font-size: 0.8rem;
+        }
+        .storybook-badge i {
+            width: 24px;
+            height: 24px;
+            border-radius: 999px;
+            display: inline-flex;
+            align-items: center;
+            justify-content: center;
+            background: linear-gradient(145deg, #ffe29c, #ffc42b);
+            color: #5b3812;
+            box-shadow: 0 4px 10px rgba(148, 116, 62, 0.35);
+        }
+        .storybook-badge__label {
+            display: block;
+            text-transform: uppercase;
+            letter-spacing: 0.12em;
+            font-size: 0.7rem;
+            color: rgba(67, 48, 42, 0.72);
+        }
+        .storybook-badge__value {
+            display: block;
+            font-weight: 700;
+            color: var(--ink);
+        }
+        .storybook-badge__helper {
+            display: block;
+            font-size: 0.75rem;
+            color: rgba(67, 48, 42, 0.75);
+        }
+
+        /* =========================
+           NAV
+           ========================= */
+        .storybook-nav {
+            border-top: 1px solid rgba(139, 69, 19, 0.08);
+        }
+
+        .storybook-nav__toggle {
+            display: none;
+            border: none;
+            background: transparent;
+            width: 100%;
+            padding: 8px 16px;
+        }
+
+        .storybook-nav__list {
+            max-width: 1200px;
+            margin: 0 auto;
+            padding: 6px 24px 8px;
+            display: flex;
+            align-items: center;
+            gap: 10px;
+            overflow-x: auto;
+        }
+
+        .storybook-nav__link {
+            display: inline-flex;
+            align-items: center;
+            gap: 6px;
+            padding: 6px 12px;
+            border-radius: 999px;
+            background: rgba(255, 255, 255, 0.95);
+            color: rgba(67, 48, 42, 0.85);
+            font-size: 0.8rem;
+            font-weight: 700;
+            letter-spacing: 0.07em;
+            text-transform: uppercase;
+            white-space: nowrap;
+            box-shadow: 0 6px 16px rgba(15, 23, 42, 0.12);
+            transition: var(--transition-fast);
+        }
+        .storybook-nav__link i {
+            color: var(--pooh-yellow);
+        }
+        .storybook-nav__link:hover {
+            background: #ffffff;
+            transform: translateY(-1px);
+        }
+
+        /* Mobile nav toggle */
+        .storybook-nav__toggle {
+            display: none;
+        }
+
+        @media (max-width: 768px) {
+            .storybook-header__top {
+                flex-direction: column;
+                align-items: flex-start;
+            }
+
+            .storybook-header__meta {
+                justify-content: flex-start;
+            }
+
+            .storybook-nav__toggle {
+                display: flex;
+                align-items: center;
+                justify-content: space-between;
+                gap: 8px;
+                cursor: pointer;
+                background: rgba(255, 255, 255, 0.96);
+                border-top: 1px solid rgba(139, 69, 19, 0.08);
+                border-bottom: 1px solid rgba(139, 69, 19, 0.08);
+            }
+
+            .storybook-nav__toggle-line {
+                width: 16px;
+                height: 2px;
+                background: #43302a;
+                border-radius: 999px;
+                display: block;
+            }
+            .storybook-nav__toggle-label {
+                font-size: 0.8rem;
+                text-transform: uppercase;
+                letter-spacing: 0.12em;
+                color: rgba(67, 48, 42, 0.78);
+                font-weight: 700;
+            }
+
+            .storybook-nav__list {
+                display: none;
+                padding-top: 10px;
+                padding-bottom: 10px;
+                flex-wrap: wrap;
+            }
+            .storybook-nav__list--open {
+                display: flex;
+            }
+        }
+
+        /* =========================
+           MAIN LAYOUT / SECTIONS
+           ========================= */
+        .storybook-main {
+            max-width: 1200px;
+            margin: 0 auto;
+            padding: 20px 24px 40px;
+        }
+
+        .storybook-section {
+            margin-top: 24px;
+        }
+        .storybook-section__inner {
+            background: rgba(255, 250, 239, 0.96);
+            border-radius: var(--radius-xl);
+            box-shadow: var(--shadow-lg);
+            padding: 32px;
+            border: 2px solid rgba(255, 196, 0, 0.1);
+            position: relative;
+            overflow: hidden;
+        }
+        .storybook-section__inner::before {
+            content: '';
+            position: absolute;
+            top: 0;
+            left: 0;
+            right: 0;
+            height: 4px;
+            background: linear-gradient(90deg, var(--pooh-yellow), var(--color-gold));
+        }
+
+        /* Section header */
+        .storybook-section__header {
+            margin-bottom: 24px;
+        }
+        .storybook-chapter-label {
+            margin: 0 0 8px;
+            display: flex;
+            align-items: center;
+            gap: 8px;
+            font-family: "Schoolbell", system-ui, sans-serif;
+            font-size: 0.86rem;
+            letter-spacing: 0.18em;
+            text-transform: uppercase;
+            color: rgba(67, 48, 42, 0.78);
+        }
+        .storybook-chapter-ornament {
+            opacity: 0.8;
+        }
+        .storybook-section__title {
+            margin: 0;
+            font-family: "Playfair Display", serif;
+            font-size: 2.2rem;
+            color: var(--ink);
+        }
+        .storybook-section__subtitle {
+            margin: 4px 0 0;
+            font-size: 1.1rem;
+            color: rgba(67, 48, 42, 0.88);
+        }
+
+        /* Grids / cards */
+        .storybook-grid {
+            display: grid;
+            grid-template-columns: minmax(0, 1.4fr) minmax(0, 1.1fr);
+            gap: 24px;
+        }
+        .storybook-grid--columns-3 {
+            grid-template-columns: repeat(auto-fit, minmax(220px, 1fr));
+        }
+        .storybook-grid--columns-2 {
+            grid-template-columns: minmax(0, 1.2fr) minmax(0, 1.1fr);
+        }
+
+        .storybook-card {
+            background: #ffffff;
+            border-radius: var(--radius-lg);
+            padding: 24px;
+            box-shadow: var(--shadow-subtle);
+        }
+        .storybook-card--story {
+            font-size: 1rem;
+            line-height: 1.6;
+        }
+        .storybook-card--details {
+            font-size: 0.95rem;
+        }
+        .storybook-card--highlight {
+            text-align: left;
+        }
+
+        /* Dropcap paragraph */
+        .storybook-dropcap::first-letter {
+            float: left;
+            font-family: "Playfair Display", serif;
+            font-size: 3.5rem;
+            line-height: 0.8;
+            margin-right: 10px;
+            margin-top: 4px;
+            color: var(--pooh-yellow);
+        }
+        .storybook-text-highlight {
+            background: linear-gradient(120deg, #ffe7a8 0, #ffe1bf 100%);
+            padding: 2px 6px;
+            border-radius: 6px;
+            font-weight: 600;
+        }
+
+        /* Detail list (dl) */
+        .storybook-detail-list {
+            margin: 0;
+            padding: 0;
+        }
+        .storybook-detail-item {
+            display: flex;
+            justify-content: space-between;
+            gap: 6px;
+            padding: 8px 0;
+            border-bottom: 1px dashed rgba(139, 69, 19, 0.15);
+            font-size: 0.95rem;
+        }
+        .storybook-detail-item:last-child {
+            border-bottom: none;
+        }
+        .storybook-detail-item dt {
+            font-weight: 700;
+        }
+        .storybook-detail-item dd {
+            margin: 0;
+            text-align: right;
+            color: rgba(67, 48, 42, 0.95);
+        }
+        .storybook-card__note {
+            margin-top: 10px;
+            font-size: 0.86rem;
+            color: rgba(67, 48, 42, 0.85);
+        }
+
+        /* Note banner */
+        .storybook-note-banner {
+            margin-top: 20px;
+            padding: 12px 16px;
+            border-radius: var(--radius-md);
+            background: rgba(255, 255, 255, 0.88);
+            border: 1px dashed rgba(139, 69, 19, 0.2);
+            display: flex;
+            gap: 8px;
+            align-items: flex-start;
+            font-size: 0.95rem;
+        }
+        .storybook-note-banner i {
+            margin-top: 2px;
+            color: var(--soft-blue);
+        }
+
+        /* =========================
+           CHARACTERS GRID
+           ========================= */
+        .storybook-character-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(280px, 1fr));
+            gap: 20px;
+        }
+        .storybook-character {
+            display: flex;
+            gap: 16px;
+            padding: 20px;
+            border-radius: var(--radius-lg);
+            background: #ffffff;
+            box-shadow: var(--shadow-subtle);
+            transition: var(--transition-fast);
+        }
+        .storybook-character:hover {
+            transform: translateY(-4px);
+            box-shadow: var(--shadow-md);
+        }
+        .storybook-character__avatar {
+            flex-shrink: 0;
+            width: 80px;
+            height: 80px;
+            border-radius: 24px;
+            background: radial-gradient(circle at top, #fffdf4 0, #ffe2b5 55%, #f1c28a 100%);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            overflow: hidden;
+        }
+        .storybook-character__content h3 {
+            margin: 0 0 4px;
+            font-size: 1.2rem;
+            font-family: "Playfair Display", serif;
+        }
+        .storybook-character__role {
+            margin: 0 0 6px;
+            font-size: 0.9rem;
+            font-weight: 700;
+            color: rgba(67, 48, 42, 0.86);
+        }
+        .storybook-character__description {
+            margin: 0;
+            font-size: 0.95rem;
+            line-height: 1.5;
+        }
+
+        /* =========================
+           BUTTONS
+           ========================= */
+        .btn {
+            display: inline-flex;
+            align-items: center;
+            justify-content: center;
+            gap: 8px;
+            padding: 12px 24px;
+            border-radius: var(--radius-md);
+            border: none;
+            cursor: pointer;
+            font-family: inherit;
+            font-size: 1rem;
+            font-weight: 700;
+            letter-spacing: 0.06em;
+            text-transform: uppercase;
+            transition: var(--transition);
+            position: relative;
+            overflow: hidden;
+            user-select: none;
+            -webkit-tap-highlight-color: transparent;
+        }
+
+        .btn::after {
+            content: '';
+            position: absolute;
+            top: 50%;
+            left: 50%;
+            width: 5px;
+            height: 5px;
+            background: rgba(255, 255, 255, 0.5);
+            opacity: 0;
+            border-radius: 100%;
+            transform: scale(1, 1) translate(-50%);
+            transform-origin: 50% 50%;
+        }
+
+        .btn:active::after {
+            animation: ripple 0.6s ease-out;
+        }
+
+        @keyframes ripple {
+            0% { transform: scale(0, 0); opacity: 0.5; }
+            100% { transform: scale(40, 40); opacity: 0; }
+        }
+
+        /* Button Variants */
+        .btn--primary {
+            background: radial-gradient(circle at 10% 0, #fffbe7 0, #ffc42b 45%, #e6a623 100%);
+            color: #5b3812;
+            box-shadow:
+                0 10px 24px rgba(148, 116, 62, 0.45),
+                0 0 0 1px rgba(255, 255, 255, 0.9);
+        }
+        .btn--primary:hover {
+            transform: translateY(-2px);
+            box-shadow:
+                0 14px 30px rgba(148, 116, 62, 0.55),
+                0 0 0 1px rgba(255, 255, 255, 0.9);
+        }
+        .btn--primary:active {
+            transform: translateY(1px) scale(0.98);
+        }
+
+        .btn--ghost {
+            background: rgba(255, 255, 255, 0.96);
+            color: var(--ink);
+            box-shadow: 0 6px 16px rgba(148, 116, 62, 0.25);
+            border: 1px solid rgba(148, 116, 62, 0.15);
+        }
+        .btn--ghost:hover {
+            background: #ffffff;
+            transform: translateY(-2px);
+        }
+        .btn--ghost:active {
+            transform: translateY(1px) scale(0.98);
+        }
+
+        .btn--pill {
+            border-radius: var(--radius-pill);
+        }
+
+        .btn--outline {
+            background: transparent;
+            border: 2px dashed rgba(139, 69, 19, 0.4);
+            color: var(--ink);
+            box-shadow: none;
+        }
+        .btn--outline:hover {
+            background: rgba(255, 255, 255, 0.9);
+        }
+
+        /* =========================
+           GAME LAYOUT
+           ========================= */
+        .game-layout {
+            display: grid;
+            grid-template-columns: minmax(0, 1.5fr) minmax(0, 1fr);
+            gap: 24px;
+            margin-top: 4px;
+        }
+
+        /* Game card */
+        .game-card {
+            background: #ffffff;
+            border-radius: var(--radius-xl);
+            padding: 24px;
+            box-shadow: var(--shadow-lg);
+            border: 2px solid rgba(255, 196, 0, 0.1);
+        }
+        .game-card__header {
+            display: flex;
+            justify-content: space-between;
+            align-items: flex-start;
+            gap: 10px;
+            margin-bottom: 10px;
+        }
+        .game-card__title-group {
+            display: flex;
+            gap: 16px;
+            align-items: center;
+        }
+        .game-card__icon {
+            width: 60px;
+            height: 60px;
+            border-radius: 18px;
+            background: linear-gradient(145deg, var(--pooh-yellow), #ffd86a);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            box-shadow:
+                0 8px 18px rgba(255, 196, 43, 0.45),
+                0 0 0 4px rgba(255, 255, 255, 0.95);
+        }
+        .game-card__icon i {
+            color: #5b3812;
+            font-size: 1.5rem;
+        }
+        .game-card__title {
+            margin: 0;
+            font-size: 1.5rem;
+            font-family: "Playfair Display", serif;
+        }
+        .game-card__subtitle {
+            margin: 4px 0 0;
+            font-size: 1rem;
+            color: rgba(67, 48, 42, 0.85);
+        }
+
+        /* Stats */
+        .game-card__stats {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 12px;
+            justify-content: flex-end;
+        }
+        .game-stat {
+            padding: 10px 16px;
+            border-radius: 999px;
+            background: rgba(255, 250, 239, 0.96);
+            border: 2px solid rgba(139, 69, 19, 0.1);
+            min-width: 90px;
+            text-align: center;
+        }
+        .game-stat__label {
+            display: block;
+            font-size: 0.75rem;
+            text-transform: uppercase;
+            letter-spacing: 0.09em;
+            color: rgba(67, 48, 42, 0.72);
+        }
+        .game-stat__value {
+            display: block;
+            font-size: 1.3rem;
+            font-weight: 800;
+            color: var(--ink);
+        }
+
+        /* HUD Elements */
+        .honey-hud {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(180px, 1fr));
+            gap: 16px;
+            margin-bottom: 32px;
+            background: rgba(255, 248, 225, 0.5);
+            padding: 24px;
+            border-radius: var(--radius-lg);
+            border: 2px solid rgba(255, 196, 0, 0.1);
+        }
+
+        .hud-pill {
+            background: white;
+            padding: 20px;
+            border-radius: var(--radius-md);
+            box-shadow: var(--shadow-sm);
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            transition: var(--transition);
+            border: 2px solid transparent;
+        }
+        .hud-pill:hover {
+            transform: translateY(-4px);
+            box-shadow: var(--shadow-md);
+            border-color: rgba(255, 196, 0, 0.2);
+        }
+        .hud-pill--highlight {
+            background: linear-gradient(135deg, #FFF8E1 0%, #FFECB3 100%);
+            border-color: var(--color-honey);
+            animation: highlightPulse 2s infinite;
+        }
+        @keyframes highlightPulse {
+            0%, 100% { border-color: var(--color-honey); }
+            50% { border-color: var(--color-gold); }
+        }
+        .hud-pill__label {
+            font-size: 0.9rem;
+            color: var(--color-text-light);
+            margin-bottom: 8px;
+            font-weight: 600;
+        }
+        .hud-pill__value {
+            display: flex;
+            align-items: center;
+            gap: 8px;
+            font-size: 2rem;
+            font-weight: 700;
+            color: var(--color-text);
+        }
+
+        /* Canvas */
+        .honey-canvas-shell {
+            background: linear-gradient(135deg, #FFECB3 0%, #FFCCBC 100%);
+            border-radius: var(--radius-lg);
+            padding: 4px;
+            margin-bottom: 24px;
+            box-shadow: var(--shadow-md);
+            border: 4px solid var(--color-card);
+            position: relative;
+            overflow: hidden;
+        }
+        .honey-canvas-shell--tall {
+            height: 500px;
+        }
+        .honey-canvas-inner {
+            width: 100%;
+            height: 100%;
+            border-radius: calc(var(--radius-lg) - 4px);
+            overflow: hidden;
+            position: relative;
+        }
+
+        .game-canvas {
+            display: block;
+            width: 100%;
+            height: 100%;
+            background: linear-gradient(180deg, #fdf7e3 0%, #f8e6b6 50%, #f0dab0 100%);
+        }
+
+        /* Status Bar */
+        .honey-status {
+            background: rgba(255, 248, 225, 0.8);
+            border-radius: var(--radius-md);
+            padding: 16px 24px;
+            margin-bottom: 24px;
+            display: flex;
+            align-items: center;
+            gap: 16px;
+            border-left: 4px solid var(--pooh-yellow);
+            animation: statusPulse 2s ease-in-out infinite;
+        }
+        @keyframes statusPulse {
+            0%, 100% { border-left-color: var(--pooh-yellow); }
+            50% { border-left-color: var(--color-gold); }
+        }
+        .honey-status__icon {
+            width: 40px;
+            height: 40px;
+            background: var(--pooh-yellow);
+            border-radius: 50%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            color: white;
+            font-size: 1.2rem;
+        }
+        #statusText {
+            font-size: 1.1rem;
+            color: var(--color-text);
+            font-weight: 500;
+            flex: 1;
+        }
+
+        /* Controls */
+        .honey-controls {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            flex-wrap: wrap;
+            gap: 20px;
+            margin-bottom: 24px;
+            padding: 24px;
+            background: rgba(255, 248, 225, 0.5);
+            border-radius: var(--radius-lg);
+        }
+        .honey-controls__left {
+            display: flex;
+            gap: 12px;
+            flex-wrap: wrap;
+        }
+        .honey-controls__right {
+            display: flex;
+            gap: 20px;
+            align-items: center;
+        }
+
+        .difficulty-pill {
+            display: flex;
+            align-items: center;
+            gap: 8px;
+            padding: 10px 20px;
+            background: white;
+            border-radius: 50px;
+            box-shadow: var(--shadow-sm);
+            font-weight: 600;
+            border: 2px solid rgba(255, 196, 0, 0.2);
+            transition: var(--transition);
+        }
+        .difficulty-pill:hover {
+            border-color: var(--color-honey);
+            transform: scale(1.05);
+        }
+        .difficulty-pill select {
+            border: none;
+            background: transparent;
+            font-family: 'Lato', sans-serif;
+            font-weight: 600;
+            color: var(--color-text);
+            cursor: pointer;
+            outline: none;
+        }
+
+        /* Touch Controls */
+        .touch-controls {
+            background: rgba(255, 248, 225, 0.8);
+            border-radius: var(--radius-lg);
+            padding: 20px;
+            margin-bottom: 24px;
+            display: none;
+        }
+        .touch-controls__label {
+            display: flex;
+            align-items: center;
+            gap: 8px;
+            margin-bottom: 16px;
+            color: var(--color-text-light);
+            font-weight: 600;
+        }
+        .touch-controls__buttons {
+            display: grid;
+            grid-template-columns: 1fr 1fr 1fr;
+            gap: 16px;
+        }
+        .touch-btn {
+            height: 80px;
+            border: none;
+            border-radius: var(--radius-md);
+            background: linear-gradient(135deg, var(--color-honey-dark) 0%, var(--color-honey) 100%);
+            color: white;
+            font-size: 1.5rem;
+            cursor: pointer;
+            transition: var(--transition);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            box-shadow: var(--shadow-md);
+            -webkit-tap-highlight-color: transparent;
+            user-select: none;
+        }
+        .touch-btn:active {
+            transform: scale(0.95);
+        }
+
+        /* Game footer */
+        .game-card__footer {
+            margin-top: 10px;
+        }
+        .game-controls {
+            display: flex;
+            gap: 8px;
+            flex-wrap: wrap;
+        }
+        .game-controls--secondary {
+            margin-top: 8px;
+            font-size: 0.95rem;
+        }
+        .game-instructions {
+            margin: 0 0 10px;
+        }
+        .game-note {
+            margin: 0;
+            color: rgba(67, 48, 42, 0.85);
+        }
+
+        /* Sidebar */
+        .game-layout__sidebar {
+            display: flex;
+            flex-direction: column;
+            gap: 20px;
+        }
+        .game-prompt-card {
+            background: #ffffff;
+            border-radius: var(--radius-lg);
+            padding: 20px;
+            box-shadow: var(--shadow-subtle);
+            font-size: 0.95rem;
+        }
+        .game-prompt-card__title {
+            margin: 0 0 8px;
+            font-size: 1.1rem;
+            display: flex;
+            align-items: center;
+            gap: 8px;
+        }
+        .game-prompt-card__title i {
+            color: var(--soft-blue);
+        }
+        .game-prompt-card__subtitle {
+            margin: 0 0 12px;
+            font-size: 0.9rem;
+            color: rgba(67, 48, 42, 0.85);
+        }
+        .game-prompt-card__prompt {
+            margin-top: 8px;
+            padding: 12px;
+            border-radius: var(--radius-md);
+            background: rgba(255, 248, 236, 0.98);
+            border: 1px dashed rgba(139, 69, 19, 0.18);
+            min-height: 80px;
+            font-size: 1rem;
+        }
+
+        .game-chapter-note {
+            font-size: 0.9rem;
+            padding: 16px;
+            border-radius: var(--radius-md);
+            background: rgba(255, 255, 255, 0.96);
+            box-shadow: var(--shadow-subtle);
+        }
+
+        /* =========================
+           RSVP
+           ========================= */
+        .storybook-form {
+            display: grid;
+            gap: 16px;
+        }
+        .storybook-form__group {
+            display: flex;
+            flex-direction: column;
+            gap: 6px;
+        }
+        .storybook-form label {
+            font-size: 0.9rem;
+            font-weight: 700;
+        }
+        .storybook-form input,
+        .storybook-form select,
+        .storybook-form textarea {
+            border-radius: 12px;
+            border: 1px solid rgba(67, 48, 42, 0.2);
+            padding: 10px 12px;
+            font-family: inherit;
+            font-size: 1rem;
+            background: rgba(255, 255, 255, 0.98);
+            transition: var(--transition-fast);
+        }
+        .storybook-form input:focus,
+        .storybook-form select:focus,
+        .storybook-form textarea:focus {
+            outline: 2px solid rgba(214, 46, 46, 0.25);
+            outline-offset: 1px;
+            border-color: var(--pooh-yellow);
+        }
+
+        .storybook-form__actions {
+            margin-top: 12px;
+            display: flex;
+            flex-direction: column;
+            gap: 12px;
+        }
+        .storybook-form__status {
+            min-height: 18px;
+            font-size: 0.9rem;
+            padding: 8px;
+            border-radius: var(--radius-sm);
+        }
+
+        /* RSVP sidebar note */
+        .storybook-rsvp-note {
+            background: #ffffff;
+            border-radius: var(--radius-lg);
+            padding: 20px;
+            box-shadow: var(--shadow-subtle);
+            font-size: 0.95rem;
+        }
+        .storybook-rsvp-note h3 {
+            margin: 0 0 8px;
+            display: flex;
+            align-items: center;
+            gap: 8px;
+            font-family: "Playfair Display", serif;
+        }
+        .storybook-rsvp-note h3 i {
+            color: var(--pooh-red);
+        }
+        .storybook-list {
+            margin: 10px 0 8px 20px;
+            padding: 0;
+        }
+        .storybook-list li {
+            margin-bottom: 6px;
+            padding-left: 4px;
+        }
+        .storybook-rsvp-note__footer {
+            margin: 12px 0 0;
+            font-size: 0.9rem;
+            color: rgba(67, 48, 42, 0.85);
+            padding-top: 10px;
+            border-top: 1px dashed rgba(139, 69, 19, 0.2);
+        }
+
+        /* =========================
+           FOOTER
+           ========================= */
+        .storybook-footer {
+            padding: 32px 24px;
+            text-align: center;
+            background: rgba(255, 248, 236, 0.96);
+            border-top: 1px solid rgba(139, 69, 19, 0.1);
+            margin-top: auto;
+        }
+        .storybook-footer__inner {
+            max-width: 1200px;
+            margin: 0 auto;
+        }
+        .storybook-footer__text {
+            margin: 0 0 8px;
+            font-size: 1rem;
+        }
+        .storybook-footer__credits {
+            margin: 0;
+            font-size: 0.85rem;
+            color: rgba(67, 48, 42, 0.8);
+        }
+
+        /* Honey Footer */
+        .honey-footer {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            flex-wrap: wrap;
+            gap: 20px;
+            padding: 20px 0;
+            border-top: 2px solid rgba(255, 196, 0, 0.1);
+            margin-top: 24px;
+        }
+
+        .toggle {
+            display: flex;
+            align-items: center;
+            gap: 12px;
+            cursor: pointer;
+            user-select: none;
+        }
+        .toggle input {
+            display: none;
+        }
+        .toggle span {
+            position: relative;
+            padding-left: 50px;
+            color: var(--color-text);
+            font-weight: 500;
+        }
+        .toggle span::before {
+            content: '';
+            position: absolute;
+            left: 0;
+            top: 50%;
+            transform: translateY(-50%);
+            width: 40px;
+            height: 20px;
+            background: #ccc;
+            border-radius: 10px;
+            transition: var(--transition);
+        }
+        .toggle span::after {
+            content: '';
+            position: absolute;
+            left: 2px;
+            top: 50%;
+            transform: translateY(-50%);
+            width: 16px;
+            height: 16px;
+            background: white;
+            border-radius: 50%;
+            transition: var(--transition);
+        }
+        .toggle input:checked + span::before {
+            background: var(--color-success);
+        }
+        .toggle input:checked + span::after {
+            left: 22px;
+        }
+
+        .honey-small {
+            font-size: 0.9rem;
+            color: var(--color-text-light);
+            text-align: center;
+            margin-top: 24px;
+            padding: 16px;
+            background: rgba(255, 248, 225, 0.5);
+            border-radius: var(--radius-md);
+        }
+
+        kbd {
+            background: white;
+            padding: 4px 8px;
+            border-radius: var(--radius-sm);
+            border: 1px solid #ddd;
+            box-shadow: 0 2px 0 #ddd;
+            font-family: monospace;
+            font-size: 0.9rem;
+        }
+
+        /* =========================
+           RESPONSIVE
+           ========================= */
+        @media (max-width: 900px) {
+            .storybook-grid,
+            .storybook-grid--columns-2 {
+                grid-template-columns: 1fr;
+            }
+            .game-layout {
+                grid-template-columns: 1fr;
+            }
+            .honey-hud {
+                grid-template-columns: repeat(2, 1fr);
+            }
+        }
+
+        @media (max-width: 768px) {
+            .storybook-main {
+                padding: 16px;
+            }
+            .storybook-section__inner {
+                padding: 24px;
+            }
+            .storybook-header__top {
+                flex-direction: column;
+                align-items: stretch;
+                gap: 12px;
+            }
+            .storybook-header__meta {
+                justify-content: flex-start;
+            }
+            .touch-controls {
+                display: block;
+            }
+            .honey-canvas-shell--tall {
+                height: 400px;
+            }
+            .honey-controls {
+                flex-direction: column;
+            }
+            .honey-controls__left, .honey-controls__right {
+                width: 100%;
+                justify-content: center;
+            }
+            .honey-footer {
+                flex-direction: column;
+                text-align: center;
+            }
+        }
+
+        @media (max-width: 480px) {
+            .storybook-character-grid {
+                grid-template-columns: 1fr;
+            }
+            .game-card__header {
+                flex-direction: column;
+            }
+            .game-card__stats {
+                width: 100%;
+                justify-content: flex-start;
+            }
+            .honey-hud {
+                grid-template-columns: 1fr;
+            }
+            .honey-canvas-shell--tall {
+                height: 300px;
+            }
+            .storybook-section__title {
+                font-size: 1.8rem;
+            }
+            .hud-pill {
+                padding: 12px;
+            }
+            .hud-pill__value {
+                font-size: 1.5rem;
+            }
+            .honey-controls__left {
+                flex-direction: column;
+                width: 100%;
+            }
+            .btn {
+                width: 100%;
+                justify-content: center;
+            }
+        }
+
+        /* =========================
+           ANIMATIONS
+           ========================= */
+        @keyframes cardAppear {
+            from {
+                opacity: 0;
+                transform: translateY(20px) scale(0.98);
+            }
+            to {
+                opacity: 1;
+                transform: translateY(0) scale(1);
+            }
+        }
+
+        @keyframes badgePulse {
+            0%, 100% { transform: scale(1); }
+            50% { transform: scale(1.1); }
+        }
+
+        @keyframes scorePop {
+            0% { transform: scale(1); }
+            50% { transform: scale(1.3); }
+            100% { transform: scale(1); }
+        }
+
+        .score-updated {
+            animation: scorePop 0.3s ease;
+        }
+
+        @keyframes arcadeGlow {
+            0%, 100% { box-shadow: 0 0 20px var(--color-honey); }
+            50% { box-shadow: 0 0 40px var(--color-gold); }
+        }
+
+        .arcade-mode {
+            animation: arcadeGlow 2s infinite;
+        }
+
+        .honey-card--fullscreen {
+            animation: cardAppear 0.6s cubic-bezier(0.4, 0, 0.2, 1);
+        }
+
+        /* Game specific animations */
+        @keyframes float {
+            0%, 100% { transform: translateY(0); }
+            50% { transform: translateY(-10px); }
+        }
+
+        @keyframes bounce {
+            0%, 100% { transform: scale(1); }
+            50% { transform: scale(1.1); }
+        }
+
+        @keyframes honeyGlow {
+            0%, 100% { filter: drop-shadow(0 0 5px rgba(255, 196, 43, 0.5)); }
+            50% { filter: drop-shadow(0 0 15px rgba(255, 196, 43, 0.8)); }
+        }
+
+        .floating {
+            animation: float 3s ease-in-out infinite;
+        }
+
+        .bouncing {
+            animation: bounce 0.5s ease;
+        }
+
+        .honey-glow {
+            animation: honeyGlow 2s infinite;
+        }
+
+        /* Game cursor */
+        .game-canvas {
+            cursor: pointer;
+        }
+    </style>
 </head>
 <body>
-    <header class="storybook-header">
-    <div class="storybook-header__top">
-        <!-- Logo remains the same -->
-        <div class="storybook-logo">
-            <div class="storybook-logo__pooh">
-                <!-- Pooh logo elements remain -->
+    <!-- Skip to Main Content -->
+    <a href="#main-content" class="skip-link">Skip to main content</a>
+    
+    <!-- Loading Screen -->
+    <div class="loader" id="loader">
+        <div class="loader__pooh">
+            <!-- Pooh Head -->
+            <div class="loader__head"></div>
+            
+            <!-- Ears -->
+            <div class="loader__ears loader__ears--left"></div>
+            <div class="loader__ears loader__ears--right"></div>
+            
+            <!-- Face -->
+            <div class="loader__eyes">
+                <div class="loader__eye"></div>
+                <div class="loader__eye"></div>
             </div>
-            <div class="storybook-logo__text">
-                <p class="storybook-logo__eyebrow">A Hundred Acre Wood Celebration</p>
-                <h1 class="storybook-logo__title">Pooh's Honey Hunt</h1>
-                <p class="storybook-logo__subtitle">Join us for a storybook adventure & sweet surprises!</p>
-            </div>
+            <div class="loader__nose"></div>
+            <div class="loader__smile"></div>
+            
+            <!-- Body -->
+            <div class="loader__body"></div>
+            <div class="loader__shirt"></div>
+            
+            <!-- Honey Pot -->
+            <div class="loader__honey-pot"></div>
+            
+            <!-- Shadow -->
+            <div class="loader__shadow"></div>
         </div>
         
-        <!-- Enhanced meta badges -->
-        <div class="storybook-header__meta">
-            <div class="storybook-badge">
-                <i class="fas fa-calendar-star"></i>
-                <div>
-                    <span class="storybook-badge__label">Date</span>
-                    <span class="storybook-badge__value">April 24th</span>
-                </div>
-            </div>
-            <div class="storybook-badge">
-                <i class="fas fa-clock"></i>
-                <div>
-                    <span class="storybook-badge__label">Time</span>
-                    <span class="storybook-badge__value">2:00 PM</span>
-                </div>
-            </div>
-            <div class="storybook-badge">
-                <i class="fas fa-map-marker-alt"></i>
-                <div>
-                    <span class="storybook-badge__label">Location</span>
-                    <span class="storybook-badge__value">Hundred Acre Wood</span>
-                </div>
+        <div class="loader__text">
+            <p class="storybook-loader__text">Loading the Hundred Acre Wood...</p>
+            <div class="loader__progress">
+                <div class="loader__bar"></div>
             </div>
         </div>
     </div>
     
-    <!-- Navigation remains similar -->
-    <nav class="storybook-nav">
-        <button class="storybook-nav__toggle" aria-expanded="false" aria-controls="nav-list">
-            <span class="storybook-nav__toggle-line"></span>
-            <span class="storybook-nav__toggle-line"></span>
-            <span class="storybook-nav__toggle-line"></span>
-            <span class="storybook-nav__toggle-label">Story Chapters</span>
-        </button>
-        <ul class="storybook-nav__list" id="nav-list">
-            <!-- Navigation items remain -->
-        </ul>
-    </nav>
-</header>
-                <a href="#chapter-intro" class="storybook-nav__link">
-                    <i class="fas fa-book-open"></i>
-                    <span>Story</span>
-                </a>
-                <a href="#chapter-details" class="storybook-nav__link">
-                    <i class="fas fa-tree"></i>
-                    <span>Details</span>
-                </a>
-                <a href="#chapter-characters" class="storybook-nav__link">
-                    <i class="fas fa-bear"></i>
-                    <span>Meet Friends</span>
-                </a>
-                <a href="#game" class="storybook-nav__link">
-                    <i class="fas fa-gamepad"></i>
-                    <span>Honey Hunt</span>
-                </a>
-                <a href="#rsvp" class="storybook-nav__link">
-                    <i class="fas fa-pencil-alt"></i>
-                    <span>Join Story</span>
-                </a>
+    <!-- Header -->
+    <header class="storybook-header">
+        <div class="storybook-header__top">
+            <!-- Logo -->
+            <div class="storybook-logo">
+                <div class="storybook-logo__pooh">
+                    <!-- Ears -->
+                    <div class="storybook-logo__ear storybook-logo__ear--left"></div>
+                    <div class="storybook-logo__ear storybook-logo__ear--right"></div>
+                    
+                    <!-- Face -->
+                    <div class="storybook-logo__face"></div>
+                    
+                    <!-- Face Features -->
+                    <div class="storybook-logo__eyes"></div>
+                    <div class="storybook-logo__nose"></div>
+                    <div class="storybook-logo__smile"></div>
+                </div>
+                
+                <div class="storybook-logo__text">
+                    <p class="storybook-logo__eyebrow">A Hundred Acre Wood Celebration</p>
+                    <h1 class="storybook-logo__title">Pooh's Honey Hunt</h1>
+                    <p class="storybook-logo__subtitle">Join us for a storybook adventure & sweet surprises!</p>
+                </div>
             </div>
+            
+            <!-- Meta Badges -->
+            <div class="storybook-header__meta">
+                <div class="storybook-badge">
+                    <i class="fas fa-calendar-star"></i>
+                    <div>
+                        <span class="storybook-badge__label">Date</span>
+                        <span class="storybook-badge__value">April 24th</span>
+                    </div>
+                </div>
+                <div class="storybook-badge">
+                    <i class="fas fa-clock"></i>
+                    <div>
+                        <span class="storybook-badge__label">Time</span>
+                        <span class="storybook-badge__value">2:00 PM</span>
+                    </div>
+                </div>
+                <div class="storybook-badge">
+                    <i class="fas fa-map-marker-alt"></i>
+                    <div>
+                        <span class="storybook-badge__label">Location</span>
+                        <span class="storybook-badge__value">Hundred Acre Wood</span>
+                    </div>
+                </div>
+            </div>
+        </div>
+        
+        <!-- Navigation -->
+        <nav class="storybook-nav">
+            <button class="storybook-nav__toggle" aria-expanded="false" aria-controls="nav-list">
+                <span class="storybook-nav__toggle-line"></span>
+                <span class="storybook-nav__toggle-line"></span>
+                <span class="storybook-nav__toggle-line"></span>
+                <span class="storybook-nav__toggle-label">Story Chapters</span>
+            </button>
+            <ul class="storybook-nav__list" id="nav-list">
+                <li><a href="#chapter-1" class="storybook-nav__link"><i class="fas fa-book-open"></i> The Invitation</a></li>
+                <li><a href="#chapter-2" class="storybook-nav__link"><i class="fas fa-users"></i> Meet the Characters</a></li>
+                <li><a href="#chapter-3" class="storybook-nav__link"><i class="fas fa-gamepad"></i> Honey Hunt Game</a></li>
+                <li><a href="#chapter-4" class="storybook-nav__link"><i class="fas fa-calendar-check"></i> RSVP & Details</a></li>
+                <li><a href="#chapter-5" class="storybook-nav__link"><i class="fas fa-gift"></i> Special Surprises</a></li>
+            </ul>
         </nav>
     </header>
-
-    <!-- Main Storybook Content -->
-    <main id="mainContent" class="storybook-main" tabindex="-1">
-        <!-- Chapter 1: Once Upon a Time -->
-        <section id="chapter-intro" class="storybook-section">
-            <div class="storybook-section__inner">
-                <div class="storybook-section__header">
-                    <p class="storybook-chapter-label">
-                        <span class="storybook-chapter-number">Chapter One</span>
-                        <span class="storybook-chapter-ornament">⋆⋆⋆</span>
-                    </p>
-                    <h2 class="storybook-section__title">Once Upon a Time in the Hundred Acre Wood...</h2>
-                    <p class="storybook-section__subtitle">
-                        A little boy named Gunner was on his way, and all of Pooh's friends gathered to plan the sweetest storybook shower.
-                    </p>
-                </div>
-
+    
+    <!-- Main Content -->
+    <main class="storybook-main" id="main-content">
+        <!-- Chapter 1: The Invitation -->
+        <section id="chapter-1" class="storybook-section storybook-section--divider">
+            <div class="storybook-section__inner honey-card honey-card--fullscreen">
+                <header class="storybook-section__header">
+                    <h2 class="storybook-chapter-label">
+                        <i class="fas fa-scroll storybook-chapter-ornament"></i>
+                        Chapter 1: The Invitation
+                    </h2>
+                    <h3 class="storybook-section__title">You're Invited to a Very Important Day</h3>
+                    <p class="storybook-section__subtitle">A storybook adventure awaits in the Hundred Acre Wood</p>
+                </header>
+                
                 <div class="storybook-grid">
-                    <article class="storybook-card storybook-card--story">
+                    <div class="storybook-card storybook-card--story">
                         <p class="storybook-dropcap">
-                            In the heart of a sunny clearing, where the breeze smells faintly of honey and the creek sings a gentle song, a wonderful rumor began to spread...
+                            Once upon a time, in the Hundred Acre Wood, there lived a bear called Winnie-the-Pooh. 
+                            Pooh loved honey more than anything in the world. One sunny morning, he discovered that 
+                            his honey pots were nearly empty! "Oh, bother," said Pooh. But then he had a 
+                            <span class="storybook-text-highlight">wonderful idea</span>.
                         </p>
                         <p>
-                            "Did you hear?" whispered <span class="storybook-text-highlight">Piglet</span>, clutching his scarf a little tighter. "There's a new little someone joining the story!"
+                            "I shall have a Honey Hunt!" exclaimed Pooh. "And I shall invite all my friends to help me 
+                            find the sweetest honey in all the wood." So Pooh began writing invitations to Piglet, Tigger, 
+                            Eeyore, Rabbit, Owl, Kanga, and Roo. Each invitation was written with a special message, just 
+                            for them.
                         </p>
                         <p>
-                            <span class="storybook-text-highlight">Pooh</span> tilted his head, thinking very hard (which is something he does slowly). "A <em>Very Small Boy</em> with a <strong>Very Big</strong> place in our hearts," he decided.
+                            This is where <strong>you</strong> come in, dear reader. You are cordially invited to join 
+                            Pooh and his friends for a day of adventure, games, and of course, plenty of honey!
                         </p>
-                        <p>
-                            And so, the Hundred Acre Wood began to bustle with simple, happy preparations—not for just any ordinary day, but for
-                            <span class="storybook-text-highlight">Gunner's Woodland Adventure</span>.
-                        </p>
-                    </article>
-
-                    <aside class="storybook-card storybook-card--details" aria-label="Quick shower details">
-                        <h3 class="storybook-card__title">
-                            <i class="fas fa-scroll"></i>
-                            A Quick Peek at the Page
-                        </h3>
+                    </div>
+                    
+                    <div class="storybook-card storybook-card--details">
+                        <h4><i class="fas fa-info-circle"></i> Event Details</h4>
                         <dl class="storybook-detail-list">
                             <div class="storybook-detail-item">
-                                <dt>Date</dt>
-                                <dd>Saturday, March 22, 2025</dd>
+                                <dt>Date:</dt>
+                                <dd>April 24th, 2024</dd>
                             </div>
                             <div class="storybook-detail-item">
-                                <dt>Time</dt>
+                                <dt>Time:</dt>
                                 <dd>2:00 PM - 5:00 PM</dd>
                             </div>
                             <div class="storybook-detail-item">
-                                <dt>Location</dt>
-                                <dd>The Hundred Acre Home &middot; Anytown, USA</dd>
+                                <dt>Location:</dt>
+                                <dd>The Hundred Acre Wood</dd>
                             </div>
                             <div class="storybook-detail-item">
-                                <dt>Dress Code</dt>
-                                <dd>Soft, cozy, woodland-friendly (think honey, sky, and tree bark colors).</dd>
+                                <dt>Dress Code:</dt>
+                                <dd>Comfortable & Adventurous</dd>
+                            </div>
+                            <div class="storybook-detail-item">
+                                <dt>RSVP By:</dt>
+                                <dd>April 17th</dd>
                             </div>
                         </dl>
                         <p class="storybook-card__note">
-                            Whether you come in your comfiest sweater or your best storybook outfit, we’re just glad you’re in the tale.
+                            <i class="fas fa-exclamation-circle"></i> 
+                            <strong>Note:</strong> Please bring your imagination and appetite for adventure!
                         </p>
-                    </aside>
+                    </div>
+                </div>
+                
+                <div class="storybook-note-banner">
+                    <i class="fas fa-lightbulb"></i>
+                    <div>
+                        <strong>Pooh's Wisdom:</strong> "A day without a friend is like a pot without a single drop of honey left at the bottom."
+                    </div>
                 </div>
             </div>
         </section>
-
-        <!-- Chapter 2: The Plan for the Day -->
-        <section id="chapter-details" class="storybook-section storybook-section--divider">
-            <div class="storybook-section__inner">
-                <div class="storybook-section__header">
-                    <p class="storybook-chapter-label">
-                        <span class="storybook-chapter-number">Chapter Two</span>
-                        <span class="storybook-chapter-ornament">⋆⋆⋆</span>
-                    </p>
-                    <h2 class="storybook-section__title">A Very Simple, Very Lovely Kind of Day</h2>
-                    <p class="storybook-section__subtitle">
-                        No grand fuss. Just good company, warm treats, and a chance to toast Baby Gunner with love and laughter.
-                    </p>
-                </div>
-
-                <div class="storybook-grid storybook-grid--columns-3">
-                    <article class="storybook-card storybook-card--highlight">
-                        <h3><i class="fas fa-mug-hot"></i> Honey-Sweet Treats & Sips</h3>
-                        <p>
-                            A table of light bites, sweets, and a few cozy sips inspired by the Hundred Acre Wood—simple, familiar, and comforting.
-                        </p>
-                    </article>
-                    <article class="storybook-card storybook-card--highlight">
-                        <h3><i class="fas fa-comments-heart"></i> Stories & Wishes</h3>
-                        <p>
-                            Share your favorite memories, advice, or a few words of encouragement. These little notes will become part of Gunner’s first chapter.
-                        </p>
-                    </article>
-                    <article class="storybook-card storybook-card--highlight">
-                        <h3><i class="fas fa-gifts"></i> Gifts & Surprises</h3>
-                        <p>
-                            Presents are never required, but if you choose to bring one, we promise each thoughtful gesture will be appreciated and remembered.
-                        </p>
-                    </article>
-                </div>
-
-                <div class="storybook-note-banner" role="note">
-                    <i class="fas fa-info-circle"></i>
-                    <p>
-                        If you’d like to bring a book in place of a card, we’d love for Gunner’s shelves to be filled with stories and little notes from each of you.
-                    </p>
-                </div>
-            </div>
-        </section>
-
-        <!-- Chapter 3: Meet the Friends -->
-        <section id="chapter-characters" class="storybook-section storybook-section--characters">
-            <div class="storybook-section__inner">
-                <div class="storybook-section__header">
-                    <p class="storybook-chapter-label">
-                        <span class="storybook-chapter-number">Chapter Three</span>
-                        <span class="storybook-chapter-ornament">⋆⋆⋆</span>
-                    </p>
-                    <h2 class="storybook-section__title">A Few Familiar Faces in the Wood</h2>
-                    <p class="storybook-section__subtitle">
-                        These friends won’t be at the party in person, but their spirit is woven into every detail.
-                    </p>
-                </div>
-
-                <div class="storybook-character-grid" role="list">
-                    <!-- Pooh -->
-                    <article class="storybook-character" role="listitem">
+        
+        <!-- Chapter 2: Meet the Characters -->
+        <section id="chapter-2" class="storybook-section storybook-section--characters">
+            <div class="storybook-section__inner honey-card honey-card--fullscreen">
+                <header class="storybook-section__header">
+                    <h2 class="storybook-chapter-label">
+                        <i class="fas fa-users storybook-chapter-ornament"></i>
+                        Chapter 2: Meet the Characters
+                    </h2>
+                    <h3 class="storybook-section__title">Friends of the Hundred Acre Wood</h3>
+                    <p class="storybook-section__subtitle">Get to know the lovable characters who will be joining the adventure</p>
+                </header>
+                
+                <div class="storybook-character-grid">
+                    <article class="storybook-character">
                         <div class="storybook-character__avatar">
-                            <img src="Images/Characters/honey-bear.png" alt="Pooh-inspired bear illustration" loading="lazy">
+                            <i class="fas fa-bear" style="font-size: 2.5rem; color: #f3c562;"></i>
                         </div>
                         <div class="storybook-character__content">
-                            <h3 class="storybook-character__name">Pooh</h3>
-                            <p class="storybook-character__role">
-                                Official Honey Taster &amp; Chief Comfort Officer
-                            </p>
-                            <p class="storybook-character__description">
-                                Pooh reminds us that “sometimes the smallest things take up the most room in your heart.”
-                            </p>
+                            <h3 class="storybook-character__name">Winnie-the-Pooh</h3>
+                            <p class="storybook-character__role">Honey Enthusiast & Host</p>
+                            <p class="storybook-character__description">A bear of very little brain but a huge heart for honey. Pooh is always ready for an adventure, especially if it involves finding sweet treats.</p>
                         </div>
                     </article>
-
-                    <!-- Piglet -->
-                    <article class="storybook-character" role="listitem">
+                    
+                    <article class="storybook-character">
                         <div class="storybook-character__avatar">
-                            <img src="Images/Characters/piglet.png" alt="Piglet illustration" loading="lazy">
+                            <i class="fas fa-pig" style="font-size: 2.5rem; color: #ffb6c1;"></i>
                         </div>
                         <div class="storybook-character__content">
                             <h3 class="storybook-character__name">Piglet</h3>
-                            <p class="storybook-character__role">
-                                Keeper of Gently Brave Thoughts
-                            </p>
-                            <p class="storybook-character__description">
-                                A little nervous about big changes, but always the first to say “Yes, let’s.” Just like new parents.
-                            </p>
+                            <p class="storybook-character__role">Brave Little Friend</p>
+                            <p class="storybook-character__description">Small and often frightened, but with the biggest heart. Piglet proves that even the smallest can be the bravest of all.</p>
                         </div>
                     </article>
-
-                    <!-- Tigger -->
-                    <article class="storybook-character" role="listitem">
+                    
+                    <article class="storybook-character">
                         <div class="storybook-character__avatar">
-                            <img src="Images/Characters/tigger.png" alt="Tigger illustration" loading="lazy">
+                            <i class="fas fa-paw" style="font-size: 2.5rem; color: #ff8c00;"></i>
                         </div>
                         <div class="storybook-character__content">
                             <h3 class="storybook-character__name">Tigger</h3>
-                            <p class="storybook-character__role">
-                                Energy Consultant &amp; Jumping Coordinator
-                            </p>
-                            <p class="storybook-character__description">
-                                For when sleep schedules get creative and everyone needs a reminder that bouncing back is possible.
-                            </p>
+                            <p class="storybook-character__role">Bouncy Companion</p>
+                            <p class="storybook-character__description">The only one! Tigger bounces everywhere he goes and brings endless energy and laughter to any gathering.</p>
                         </div>
                     </article>
-
-                    <!-- Eeyore -->
-                    <article class="storybook-character" role="listitem">
+                    
+                    <article class="storybook-character">
                         <div class="storybook-character__avatar">
-                            <img src="Images/Characters/eeyore.png" alt="Eeyore illustration" loading="lazy">
+                            <i class="fas fa-horse-head" style="font-size: 2.5rem; color: #a9a9a9;"></i>
                         </div>
                         <div class="storybook-character__content">
                             <h3 class="storybook-character__name">Eeyore</h3>
-                            <p class="storybook-character__role">
-                                Realistic Expectations Specialist
-                            </p>
-                            <p class="storybook-character__description">
-                                The one who gently reminds us that some days will be hard, and that it’s okay not to have it all together.
-                            </p>
+                            <p class="storybook-character__role">Thoughtful Donkey</p>
+                            <p class="storybook-character__description">A bit gloomy but deeply loyal. Eeyore may expect the worst, but he always shows up for his friends.</p>
                         </div>
                     </article>
-
-                    <!-- Owl -->
-                    <article class="storybook-character" role="listitem">
-                        <div class="storybook-character__avatar">
-                            <img src="Images/Characters/owl.png" alt="Owl illustration" loading="lazy">
-                        </div>
-                        <div class="storybook-character__content">
-                            <h3 class="storybook-character__name">Owl</h3>
-                            <p class="storybook-character__role">
-                                Advice Giver (Whether You Asked or Not)
-                            </p>
-                            <p class="storybook-character__description">
-                                Has many ideas and a few very long stories, but occasionally, a helpful tip lands just right.
-                            </p>
-                        </div>
-                    </article>
-
-                    <!-- Roo -->
-                    <article class="storybook-character" role="listitem">
-                        <div class="storybook-character__avatar">
-                            <img src="Images/Characters/roo.png" alt="Roo illustration" loading="lazy">
-                        </div>
-                        <div class="storybook-character__content">
-                            <h3 class="storybook-character__name">Roo</h3>
-                            <p class="storybook-character__role">
-                                Official Reminder That Little Ones Grow Fast
-                            </p>
-                            <p class="storybook-character__description">
-                                Roo is here to keep us playful, curious, and aware that baby days are fleeting and very precious.
-                            </p>
-                        </div>
-                    </article>
+                </div>
+                
+                <div class="storybook-note-banner">
+                    <i class="fas fa-comments"></i>
+                    <div>
+                        <strong>Fun Fact:</strong> Each character brings their own special talent to the Honey Hunt. Who will be your favorite?
+                    </div>
                 </div>
             </div>
         </section>
-
-        <!-- Chapter 4: Honey Hunt Game -->
-        <section id="game" class="storybook-section storybook-section--game">
-            <div class="storybook-section__inner">
-                <div class="storybook-section__header">
-                    <p class="storybook-chapter-label">
-                        <span class="storybook-chapter-number">Bonus Chapter</span>
-                        <span class="storybook-chapter-ornament">⋆⋆⋆</span>
-                    </p>
-                    <h2 class="storybook-section__title">The Great Honey Hunt</h2>
-                    <p class="storybook-section__subtitle">
-                        A simple, sweet mini-game for guests to play between bites and conversations. Totally optional, endlessly charming.
-                    </p>
-                </div>
-
+        
+        <!-- Chapter 3: Honey Hunt Game -->
+        <section id="chapter-3" class="storybook-section storybook-section--game">
+            <div class="storybook-section__inner honey-card honey-card--fullscreen">
+                <header class="storybook-section__header">
+                    <h2 class="storybook-chapter-label">
+                        <i class="fas fa-gamepad storybook-chapter-ornament"></i>
+                        Chapter 3: The Honey Hunt Game
+                    </h2>
+                    <h3 class="storybook-section__title">Find the Hidden Honey Pots</h3>
+                    <p class="storybook-section__subtitle">Help Pooh find all the honey pots in the Hundred Acre Wood!</p>
+                </header>
+                
                 <div class="game-layout">
-                    <div class="game-layout__main">
-                        <div class="game-card">
-                            <header class="game-card__header">
-                                <div class="game-card__title-group">
-                                    <div class="game-card__icon">
-                                        <i class="fas fa-jar"></i>
-                                    </div>
-                                    <div>
-                                        <h3 class="game-card__title">Honey Catch Game</h3>
-                                        <p class="game-card__subtitle">
-                                            Move Pooh, catch the honey, and avoid a leafy surprise or two.
-                                        </p>
-                                    </div>
+                    <div class="game-card">
+                        <div class="game-card__header">
+                            <div class="game-card__title-group">
+                                <div class="game-card__icon">
+                                    <i class="fas fa-honey-pot"></i>
                                 </div>
-                                <div class="game-card__stats">
-                                    <div class="game-stat">
-                                        <span class="game-stat__label">Score</span>
-                                        <span class="game-stat__value" id="score">0</span>
-                                    </div>
-                                    <div class="game-stat">
-                                        <span class="game-stat__label">Time</span>
-                                        <span class="game-stat__value" id="timer">45s</span>
-                                    </div>
-                                    <div class="game-stat">
-                                        <span class="game-stat__label">Lives</span>
-                                        <span class="game-stat__value" id="lives">3</span>
-                                    </div>
-                                    <div class="game-stat">
-                                        <span class="game-stat__label">Best</span>
-                                        <span class="game-stat__value" id="best">0</span>
-                                    </div>
+                                <div>
+                                    <h4 class="game-card__title">Honey Hunt Adventure</h4>
+                                    <p class="game-card__subtitle">Click or tap on the honey pots to collect them!</p>
                                 </div>
-                            </header>
-
-                            <div class="game-canvas-wrapper">
-                                <canvas id="honey-game" class="game-canvas" aria-label="Honey catch game" role="img"></canvas>
                             </div>
-
-                            <footer class="game-card__footer">
-                                <div class="game-controls">
-                                    <button id="startGame" class="btn btn--primary">
-                                        <i class="fas fa-play"></i>
-                                        Start
+                            
+                            <!-- HUD -->
+                            <div class="game-card__stats">
+                                <div class="game-stat">
+                                    <span class="game-stat__label">Score</span>
+                                    <span class="game-stat__value" id="score">0</span>
+                                </div>
+                                <div class="game-stat">
+                                    <span class="game-stat__label">Time</span>
+                                    <span class="game-stat__value" id="timer">60</span>
+                                </div>
+                                <div class="game-stat">
+                                    <span class="game-stat__label">Pots</span>
+                                    <span class="game-stat__value" id="potsCount">0</span>
+                                </div>
+                            </div>
+                        </div>
+                        
+                        <!-- Status Bar -->
+                        <div class="honey-status">
+                            <div class="honey-status__icon">
+                                <i class="fas fa-info-circle"></i>
+                            </div>
+                            <p id="statusText">Click START to begin the Honey Hunt! Tap the honey pots to collect them.</p>
+                        </div>
+                        
+                        <!-- Game Canvas -->
+                        <div class="game-canvas-wrapper honey-canvas-shell honey-canvas-shell--tall">
+                            <div class="honey-canvas-inner">
+                                <canvas id="gameCanvas" class="game-canvas" width="800" height="500"></canvas>
+                            </div>
+                        </div>
+                        
+                        <!-- Controls -->
+                        <div class="game-card__footer">
+                            <div class="honey-controls">
+                                <div class="honey-controls__left">
+                                    <button class="btn btn--primary" id="startBtn">
+                                        <i class="fas fa-play"></i> Start Game
                                     </button>
-                                    <button id="pauseGame" class="btn btn--ghost">
-                                        <i class="fas fa-pause"></i>
-                                        Pause
+                                    <button class="btn btn--ghost" id="pauseBtn">
+                                        <i class="fas fa-pause"></i> Pause
                                     </button>
-                                    <button id="resetGame" class="btn btn--ghost">
-                                        <i class="fas fa-rotate-left"></i>
-                                        Reset
+                                    <button class="btn btn--ghost" id="resetBtn">
+                                        <i class="fas fa-redo"></i> Reset
                                     </button>
                                 </div>
-                                <div class="game-controls game-controls--secondary">
-                                    <p class="game-instructions">
-                                        <strong>How to play:</strong> Use <kbd>&larr;</kbd> and <kbd>&rarr;</kbd> or tap on mobile to move. Catch honey drops, avoid leaves.
-                                    </p>
-                                    <p class="game-note">
-                                        Short, light rounds to keep the fun moving—not competitive, just delightful.
-                                    </p>
-                                    <div class="game-controls">
-                                        <a class="btn btn--outline" href="honey-hunt.html">
-                                            <i class="fas fa-display"></i>
-                                            Play in a larger view
-                                        </a>
-                                        <a class="btn btn--ghost" href="honey-hunt-fullscreen.html">
-                                            <i class="fas fa-up-right-and-down-left-from-center"></i>
-                                            Open fullscreen mode
-                                        </a>
+                                <div class="honey-controls__right">
+                                    <div class="difficulty-pill">
+                                        <i class="fas fa-sliders-h"></i>
+                                        <label for="difficulty">Difficulty:</label>
+                                        <select id="difficulty">
+                                            <option value="easy">Easy</option>
+                                            <option value="medium" selected>Medium</option>
+                                            <option value="hard">Hard</option>
+                                        </select>
                                     </div>
                                 </div>
-                            </footer>
+                            </div>
+                            
+                            <!-- Instructions -->
+                            <div class="game-controls game-controls--secondary">
+                                <p class="game-instructions">
+                                    <strong>How to play:</strong> Click or tap on the honey pots to collect them. Each pot is worth 100 points!
+                                </p>
+                                <p class="game-note">
+                                    <i class="fas fa-lightbulb"></i>
+                                    Goal: Collect 10 honey pots in 60 seconds to win!
+                                </p>
+                            </div>
                         </div>
                     </div>
-
-                    <aside class="game-layout__sidebar">
+                    
+                    <!-- Sidebar -->
+                    <div class="game-layout__sidebar">
                         <div class="game-prompt-card">
-                            <h3 class="game-prompt-card__title">
-                                <i class="fas fa-sparkles"></i>
-                                Sweet Little Conversation Prompts
-                            </h3>
-                            <p class="game-prompt-card__subtitle">
-                                Use these if you’d like a gentle nudge to share a story or bit of wisdom while you play.
-                            </p>
-                            <button id="promptButton" class="btn btn--outline">
-                                Draw a new prompt
-                            </button>
-                            <div id="promptText" class="game-prompt-card__prompt">
-                                Tap the button for a small, thoughtful question.
+                            <h4 class="game-prompt-card__title">
+                                <i class="fas fa-bullhorn"></i>
+                                Today's Challenge
+                            </h4>
+                            <p class="game-prompt-card__subtitle">Can you beat the high score?</p>
+                            <div class="game-prompt-card__prompt" id="gamePrompt">
+                                Find 10 honey pots in 60 seconds to unlock the next chapter!
+                                <br><br>
+                                <strong>High Score:</strong> <span id="highScore">0</span>
                             </div>
                         </div>
-
+                        
                         <div class="game-chapter-note">
-                            <p>
-                                The Honey Hunt is entirely optional. If you prefer to simply sit, sip, and chat, that’s perfectly in the spirit of the Hundred Acre Wood, too.
-                            </p>
+                            <h5><i class="fas fa-trophy"></i> Rewards</h5>
+                            <ul class="storybook-list">
+                                <li>10+ pots: Honey Hunter Certificate</li>
+                                <li>15+ pots: Golden Honey Badge</li>
+                                <li>20+ pots: Master Collector Trophy</li>
+                            </ul>
                         </div>
-                    </aside>
+                    </div>
                 </div>
             </div>
         </section>
-
-        <!-- Chapter 5: RSVP & Wishes -->
-        <section id="rsvp" class="storybook-section storybook-section--rsvp">
-            <div class="storybook-section__inner">
-                <div class="storybook-section__header">
-                    <p class="storybook-chapter-label">
-                        <span class="storybook-chapter-number">Chapter Five</span>
-                        <span class="storybook-chapter-ornament">⋆⋆⋆</span>
-                    </p>
-                    <h2 class="storybook-section__title">Write Your Part of the Story</h2>
-                    <p class="storybook-section__subtitle">
-                        Let us know if you’ll be there, and share a little note for Baby Gunner’s someday-scrapbook.
-                    </p>
-                </div>
-
+        
+        <!-- Chapter 4: RSVP & Details -->
+        <section id="chapter-4" class="storybook-section storybook-section--rsvp">
+            <div class="storybook-section__inner honey-card honey-card--fullscreen">
+                <header class="storybook-section__header">
+                    <h2 class="storybook-chapter-label">
+                        <i class="fas fa-calendar-check storybook-chapter-ornament"></i>
+                        Chapter 4: RSVP & Details
+                    </h2>
+                    <h3 class="storybook-section__title">Will You Join the Adventure?</h3>
+                    <p class="storybook-section__subtitle">Let us know if you can make it to the Hundred Acre Wood</p>
+                </header>
+                
                 <div class="storybook-grid storybook-grid--columns-2">
-                    <form id="rsvp-form" class="storybook-form" novalidate>
-                        <div class="storybook-form__group">
-                            <label for="guestName">Your Name</label>
-                            <input type="text" id="guestName" name="guestName" required placeholder="Type your name here">
-                        </div>
-
-                        <div class="storybook-form__group">
-                            <label for="guestCount">How many are coming with you?</label>
-                            <input type="number" id="guestCount" name="guestCount" min="1" max="10" value="1" required>
-                        </div>
-
-                        <div class="storybook-form__group">
-                            <label for="attendance">Will you be joining the adventure?</label>
-                            <select id="attendance" name="attendance" required>
-                                <option value="" disabled selected>Select an option</option>
-                                <option value="yes">Yes, I’ll be there</option>
-                                <option value="maybe">Maybe / still checking</option>
-                                <option value="no">I’ll be cheering from afar</option>
-                            </select>
-                        </div>
-
-                        <div class="storybook-form__group">
-                            <label for="message">A note, wish, or bit of woodland wisdom</label>
-                            <textarea id="message" name="message" rows="4" placeholder="Write a message, blessing, or bit of woodland wisdom..." class="storybook-form-textarea"></textarea>
-                        </div>
-
-                        <div class="storybook-form__actions">
-                            <button type="submit" id="submitRsvp" class="btn btn--primary">
-                                <i class="fas fa-envelope-open-text"></i>
-                                Send RSVP
-                            </button>
-                            <p id="formStatus" class="storybook-form__status" aria-live="polite"></p>
-                        </div>
-                    </form>
-
-                    <aside class="storybook-rsvp-note">
-                        <h3><i class="fas fa-heart"></i> Little Details</h3>
+                    <div>
+                        <form class="storybook-form" id="rsvpForm">
+                            <div class="storybook-form__group">
+                                <label for="name"><i class="fas fa-user"></i> Your Name</label>
+                                <input type="text" id="name" name="name" required placeholder="Christopher Robin">
+                            </div>
+                            
+                            <div class="storybook-form__group">
+                                <label for="email"><i class="fas fa-envelope"></i> Email Address</label>
+                                <input type="email" id="email" name="email" required placeholder="christopher@hundredacrewood.com">
+                            </div>
+                            
+                            <div class="storybook-form__group">
+                                <label for="guests"><i class="fas fa-users"></i> Number of Guests</label>
+                                <select id="guests" name="guests">
+                                    <option value="1">1 (Just me)</option>
+                                    <option value="2">2</option>
+                                    <option value="3">3</option>
+                                    <option value="4">4</option>
+                                    <option value="5">5+ (A whole party!)</option>
+                                </select>
+                            </div>
+                            
+                            <div class="storybook-form__group">
+                                <label for="character"><i class="fas fa-heart"></i> Favorite Character</label>
+                                <select id="character" name="character">
+                                    <option value="pooh">Winnie-the-Pooh</option>
+                                    <option value="piglet">Piglet</option>
+                                    <option value="tigger">Tigger</option>
+                                    <option value="eeyore">Eeyore</option>
+                                </select>
+                            </div>
+                            
+                            <div class="storybook-form__actions">
+                                <button type="submit" class="btn btn--primary">
+                                    <i class="fas fa-paper-plane"></i> Send RSVP
+                                </button>
+                                <div class="storybook-form__status" id="formStatus"></div>
+                            </div>
+                        </form>
+                    </div>
+                    
+                    <div class="storybook-rsvp-note">
+                        <h3><i class="fas fa-info-circle"></i> Important Information</h3>
+                        <p>Before you RSVP, here are a few things to know:</p>
                         <ul class="storybook-list">
-                            <li>If plans change after you RSVP, a quick text is more than enough.</li>
-                            <li>You’re welcome to bring a partner or close family; just include them in your guest count.</li>
-                            <li>No pressure on gifts—your presence and your kindness are the main characters here.</li>
+                            <li>The event will take place rain or shine (we have plenty of umbrellas!)</li>
+                            <li>Comfortable shoes are recommended for exploring the Wood</li>
+                            <li>All honey served is 100% bee-approved and delicious</li>
+                            <li>There will be activities for adventurers of all ages</li>
+                            <li>Special surprises await those who complete the Honey Hunt game</li>
                         </ul>
-                        <p class="storybook-rsvp-note__footer">
-                            If you’re unsure what to bring or how to help, a simple written note for Gunner is always a perfect choice.
-                        </p>
-                    </aside>
+                    </div>
+                </div>
+            </div>
+        </section>
+        
+        <!-- Chapter 5: Special Surprises -->
+        <section id="chapter-5" class="storybook-section">
+            <div class="storybook-section__inner honey-card honey-card--fullscreen">
+                <header class="storybook-section__header">
+                    <h2 class="storybook-chapter-label">
+                        <i class="fas fa-gift storybook-chapter-ornament"></i>
+                        Chapter 5: Special Surprises
+                    </h2>
+                    <h3 class="storybook-section__title">What Awaits You in the Wood</h3>
+                    <p class="storybook-section__subtitle">Exciting activities and sweet rewards for all adventurers</p>
+                </header>
+                
+                <div class="honey-hud">
+                    <div class="hud-pill">
+                        <span class="hud-pill__label">Honey Tasting</span>
+                        <span class="hud-pill__value"><i class="fas fa-utensil-spoon"></i> 10+ Varieties</span>
+                    </div>
+                    <div class="hud-pill">
+                        <span class="hud-pill__label">Story Time</span>
+                        <span class="hud-pill__value"><i class="fas fa-book"></i> With Owl</span>
+                    </div>
+                    <div class="hud-pill hud-pill--highlight">
+                        <span class="hud-pill__label">Treasure Hunt</span>
+                        <span class="hud-pill__value"><i class="fas fa-map"></i> 5 Locations</span>
+                    </div>
+                    <div class="hud-pill">
+                        <span class="hud-pill__label">Photo Ops</span>
+                        <span class="hud-pill__value"><i class="fas fa-camera"></i> Character Meet</span>
+                    </div>
+                </div>
+                
+                <div class="storybook-grid">
+                    <div class="storybook-card">
+                        <h4><i class="fas fa-medal" style="color: var(--color-gold);"></i> Rewards & Prizes</h4>
+                        <p>Every adventurer who completes the Honey Hunt will receive:</p>
+                        <ul class="storybook-list">
+                            <li>Official "Honey Hunter" certificate signed by Pooh</li>
+                            <li>A small pot of Hundred Acre Wood honey</li>
+                            <li>Special button badge to show your achievement</li>
+                            <li>Entry into the grand prize drawing</li>
+                        </ul>
+                        <p style="margin-top: 12px;"><strong>Grand Prize:</strong> A year's supply of honey and a personalized storybook!</p>
+                    </div>
+                    
+                    <div class="storybook-card">
+                        <h4><i class="fas fa-calendar-alt" style="color: var(--pooh-red);"></i> Schedule of Events</h4>
+                        <dl class="storybook-detail-list">
+                            <div class="storybook-detail-item">
+                                <dt>2:00 PM</dt>
+                                <dd>Welcome & Introductions</dd>
+                            </div>
+                            <div class="storybook-detail-item">
+                                <dt>2:30 PM</dt>
+                                <dd>Honey Hunt Game Begins</dd>
+                            </div>
+                            <div class="storybook-detail-item">
+                                <dt>3:30 PM</dt>
+                                <dd>Story Time with Owl</dd>
+                            </div>
+                            <div class="storybook-detail-item">
+                                <dt>4:00 PM</dt>
+                                <dd>Honey Tasting & Snacks</dd>
+                            </div>
+                            <div class="storybook-detail-item">
+                                <dt>4:45 PM</dt>
+                                <dd>Prize Ceremony & Farewells</dd>
+                            </div>
+                        </dl>
+                    </div>
                 </div>
             </div>
         </section>
     </main>
-
-    <!-- Storybook Footer -->
+    
+    <!-- Footer -->
     <footer class="storybook-footer">
         <div class="storybook-footer__inner">
             <p class="storybook-footer__text">
-                A simple celebration, sprinkled with honey and held together with love.
+                Made with <i class="fas fa-heart" style="color: var(--pooh-red);"></i> in the Hundred Acre Wood
             </p>
             <p class="storybook-footer__credits">
-                Designed with care for Baby Gunner’s first adventure.
+                &copy; 2024 Winnie-the-Pooh's Honey Hunt. All honey rights reserved.<br>
+                This is a fan-made celebration site. Winnie-the-Pooh and friends are copyright A.A. Milne and E.H. Shepard.
             </p>
         </div>
     </footer>
-<script src="js/honey-hunt-game.js" defer></script>
-<script src="js/main.js"></script>
+    
+    <!-- JavaScript -->
+    <script>
+        // Remove loader when page loads
+        window.addEventListener('load', function() {
+            const loader = document.getElementById('loader');
+            setTimeout(() => {
+                loader.classList.add('loader--hidden');
+            }, 1500);
+            
+            // Initialize game
+            initGame();
+        });
+
+        // Mobile navigation toggle
+        document.addEventListener('DOMContentLoaded', function() {
+            const navToggle = document.querySelector('.storybook-nav__toggle');
+            const navList = document.querySelector('.storybook-nav__list');
+            
+            if (navToggle && navList) {
+                navToggle.addEventListener('click', function() {
+                    const expanded = this.getAttribute('aria-expanded') === 'true' || false;
+                    this.setAttribute('aria-expanded', !expanded);
+                    navList.classList.toggle('storybook-nav__list--open');
+                });
+            }
+
+            // Form submission
+            const rsvpForm = document.getElementById('rsvpForm');
+            const formStatus = document.getElementById('formStatus');
+            
+            if (rsvpForm) {
+                rsvpForm.addEventListener('submit', function(e) {
+                    e.preventDefault();
+                    
+                    // Get form data
+                    const name = document.getElementById('name').value;
+                    const character = document.getElementById('character').options[document.getElementById('character').selectedIndex].text;
+                    
+                    // Show success message
+                    formStatus.innerHTML = `
+                        <div style="background: rgba(76, 175, 80, 0.1); padding: 10px; border-radius: var(--radius-sm); border-left: 4px solid var(--color-success);">
+                            <i class="fas fa-check-circle" style="color: var(--color-success);"></i>
+                            <strong>Thank you, ${name}!</strong> Your RSVP has been sent. We can't wait to see you in the Hundred Acre Wood!
+                            <br><small>Psst... ${character} is excited to meet you!</small>
+                        </div>
+                    `;
+                    
+                    // Reset form
+                    setTimeout(() => {
+                        rsvpForm.reset();
+                        formStatus.innerHTML = '';
+                    }, 5000);
+                });
+            }
+
+            // Smooth scrolling for navigation links
+            document.querySelectorAll('a[href^="#"]').forEach(anchor => {
+                anchor.addEventListener('click', function(e) {
+                    e.preventDefault();
+                    
+                    const targetId = this.getAttribute('href');
+                    if (targetId === '#') return;
+                    
+                    const targetElement = document.querySelector(targetId);
+                    if (targetElement) {
+                        window.scrollTo({
+                            top: targetElement.offsetTop - 80,
+                            behavior: 'smooth'
+                        });
+                        
+                        // Close mobile menu if open
+                        if (navList && navList.classList.contains('storybook-nav__list--open')) {
+                            navList.classList.remove('storybook-nav__list--open');
+                            navToggle.setAttribute('aria-expanded', 'false');
+                        }
+                    }
+                });
+            });
+        });
+
+        // =========================
+        // GAME LOGIC
+        // =========================
+        const canvas = document.getElementById('gameCanvas');
+        const ctx = canvas.getContext('2d');
+        const scoreElement = document.getElementById('score');
+        const timerElement = document.getElementById('timer');
+        const potsCountElement = document.getElementById('potsCount');
+        const statusText = document.getElementById('statusText');
+        const gamePrompt = document.getElementById('gamePrompt');
+        const highScoreElement = document.getElementById('highScore');
+        const startBtn = document.getElementById('startBtn');
+        const pauseBtn = document.getElementById('pauseBtn');
+        const resetBtn = document.getElementById('resetBtn');
+        const difficultySelect = document.getElementById('difficulty');
+
+        // Game state
+        let game = {
+            score: 0,
+            timeLeft: 60,
+            potsCollected: 0,
+            pots: [],
+            gameActive: false,
+            gamePaused: false,
+            gameOver: false,
+            animationId: null,
+            lastTime: 0,
+            highScore: localStorage.getItem('poohHighScore') || 0,
+            difficulty: 'medium'
+        };
+
+        // Honey pot class
+        class HoneyPot {
+            constructor(x, y, size, speed) {
+                this.x = x;
+                this.y = y;
+                this.size = size;
+                this.speed = speed;
+                this.collected = false;
+                this.floatOffset = Math.random() * Math.PI * 2;
+                this.floatSpeed = 0.02 + Math.random() * 0.03;
+            }
+
+            draw() {
+                if (this.collected) return;
+                
+                ctx.save();
+                ctx.translate(this.x, this.y + Math.sin(Date.now() * this.floatSpeed + this.floatOffset) * 10);
+                
+                // Honey pot body
+                ctx.fillStyle = '#8B4513';
+                ctx.beginPath();
+                ctx.ellipse(0, 0, this.size, this.size * 0.6, 0, 0, Math.PI * 2);
+                ctx.fill();
+                
+                // Honey
+                ctx.fillStyle = '#FFD700';
+                ctx.beginPath();
+                ctx.ellipse(0, 5, this.size * 0.8, this.size * 0.4, 0, 0, Math.PI * 2);
+                ctx.fill();
+                
+                // Honey shine
+                ctx.fillStyle = 'rgba(255, 255, 255, 0.3)';
+                ctx.beginPath();
+                ctx.ellipse(-this.size * 0.3, -this.size * 0.2, this.size * 0.2, this.size * 0.1, 0, 0, Math.PI * 2);
+                ctx.fill();
+                
+                ctx.restore();
+            }
+
+            update() {
+                if (this.collected) return;
+                
+                // Move honey pot
+                this.x += this.speed.x;
+                this.y += this.speed.y;
+                
+                // Bounce off walls
+                if (this.x < this.size || this.x > canvas.width - this.size) {
+                    this.speed.x *= -1;
+                }
+                if (this.y < this.size || this.y > canvas.height - this.size) {
+                    this.speed.y *= -1;
+                }
+                
+                // Keep within bounds
+                this.x = Math.max(this.size, Math.min(canvas.width - this.size, this.x));
+                this.y = Math.max(this.size, Math.min(canvas.height - this.size, this.y));
+            }
+
+            isClicked(x, y) {
+                if (this.collected) return false;
+                
+                const dx = x - this.x;
+                const dy = y - this.y;
+                const distance = Math.sqrt(dx * dx + dy * dy);
+                
+                return distance <= this.size * 1.5;
+            }
+        }
+
+        // Initialize game
+        function initGame() {
+            // Set canvas size
+            const container = canvas.parentElement;
+            canvas.width = container.clientWidth;
+            canvas.height = container.clientHeight;
+            
+            // Reset game state
+            game.score = 0;
+            game.timeLeft = 60;
+            game.potsCollected = 0;
+            game.pots = [];
+            game.gameActive = false;
+            game.gamePaused = false;
+            game.gameOver = false;
+            
+            // Update UI
+            updateUI();
+            
+            // Set high score
+            highScoreElement.textContent = game.highScore;
+            
+            // Create initial honey pots
+            createHoneyPots();
+            
+            // Draw initial frame
+            draw();
+            
+            // Update status
+            statusText.textContent = 'Ready to start the Honey Hunt! Click START to begin.';
+        }
+
+        // Create honey pots based on difficulty
+        function createHoneyPots() {
+            game.pots = [];
+            let potCount, potSpeed;
+            
+            switch(game.difficulty) {
+                case 'easy':
+                    potCount = 8;
+                    potSpeed = 0.5;
+                    break;
+                case 'medium':
+                    potCount = 12;
+                    potSpeed = 1;
+                    break;
+                case 'hard':
+                    potCount = 16;
+                    potSpeed = 1.5;
+                    break;
+            }
+            
+            for (let i = 0; i < potCount; i++) {
+                const size = 20 + Math.random() * 15;
+                const x = size + Math.random() * (canvas.width - size * 2);
+                const y = size + Math.random() * (canvas.height - size * 2);
+                const speed = {
+                    x: (Math.random() - 0.5) * potSpeed,
+                    y: (Math.random() - 0.5) * potSpeed
+                };
+                
+                game.pots.push(new HoneyPot(x, y, size, speed));
+            }
+        }
+
+        // Start game
+        function startGame() {
+            if (game.gameActive) return;
+            
+            game.gameActive = true;
+            game.gamePaused = false;
+            game.gameOver = false;
+            game.timeLeft = 60;
+            game.score = 0;
+            game.potsCollected = 0;
+            
+            createHoneyPots();
+            updateUI();
+            
+            statusText.textContent = 'Game started! Click the honey pots to collect them!';
+            
+            // Start game loop
+            if (game.animationId) {
+                cancelAnimationFrame(game.animationId);
+            }
+            game.lastTime = performance.now();
+            gameLoop();
+            
+            // Start timer
+            startTimer();
+        }
+
+        // Pause game
+        function pauseGame() {
+            if (!game.gameActive || game.gameOver) return;
+            
+            game.gamePaused = !game.gamePaused;
+            
+            if (game.gamePaused) {
+                statusText.textContent = 'Game paused. Click PAUSE again to resume.';
+            } else {
+                statusText.textContent = 'Game resumed! Keep collecting honey pots!';
+                game.lastTime = performance.now();
+                gameLoop();
+            }
+        }
+
+        // Reset game
+        function resetGame() {
+            game.gameActive = false;
+            game.gamePaused = false;
+            game.gameOver = false;
+            
+            if (game.animationId) {
+                cancelAnimationFrame(game.animationId);
+                game.animationId = null;
+            }
+            
+            initGame();
+        }
+
+        // Start timer
+        function startTimer() {
+            if (game.timerInterval) clearInterval(game.timerInterval);
+            
+            game.timerInterval = setInterval(() => {
+                if (!game.gamePaused && game.gameActive && !game.gameOver) {
+                    game.timeLeft--;
+                    updateUI();
+                    
+                    if (game.timeLeft <= 0) {
+                        endGame();
+                    }
+                }
+            }, 1000);
+        }
+
+        // Game loop
+        function gameLoop(currentTime = performance.now()) {
+            if (!game.gameActive || game.gamePaused || game.gameOver) return;
+            
+            const deltaTime = currentTime - game.lastTime;
+            game.lastTime = currentTime;
+            
+            // Update game state
+            update(deltaTime);
+            
+            // Draw frame
+            draw();
+            
+            // Continue animation loop
+            game.animationId = requestAnimationFrame(gameLoop);
+        }
+
+        // Update game state
+        function update(deltaTime) {
+            // Update honey pots
+            game.pots.forEach(pot => {
+                if (!pot.collected) {
+                    pot.update();
+                }
+            });
+            
+            // Check if all pots collected
+            const remainingPots = game.pots.filter(pot => !pot.collected).length;
+            if (remainingPots === 0 && game.gameActive) {
+                createHoneyPots();
+            }
+        }
+
+        // Draw game
+        function draw() {
+            // Clear canvas
+            ctx.clearRect(0, 0, canvas.width, canvas.height);
+            
+            // Draw background
+            drawBackground();
+            
+            // Draw honey pots
+            game.pots.forEach(pot => {
+                pot.draw();
+            });
+            
+            // Draw score and timer
+            drawHUD();
+        }
+
+        // Draw background
+        function drawBackground() {
+            // Sky gradient
+            const skyGradient = ctx.createLinearGradient(0, 0, 0, canvas.height);
+            skyGradient.addColorStop(0, '#87CEEB');
+            skyGradient.addColorStop(1, '#E0F7FF');
+            ctx.fillStyle = skyGradient;
+            ctx.fillRect(0, 0, canvas.width, canvas.height);
+            
+            // Draw clouds
+            ctx.fillStyle = 'rgba(255, 255, 255, 0.8)';
+            for (let i = 0; i < 5; i++) {
+                const x = (i * 200 + Date.now() * 0.01) % (canvas.width + 400) - 200;
+                const y = 50 + Math.sin(i * 0.5 + Date.now() * 0.001) * 20;
+                const size = 30 + Math.sin(i + Date.now() * 0.002) * 10;
+                
+                ctx.beginPath();
+                ctx.arc(x, y, size, 0, Math.PI * 2);
+                ctx.arc(x + size * 0.7, y - size * 0.3, size * 0.8, 0, Math.PI * 2);
+                ctx.arc(x + size * 1.4, y, size * 0.7, 0, Math.PI * 2);
+                ctx.fill();
+            }
+            
+            // Grass
+            const grassGradient = ctx.createLinearGradient(0, canvas.height - 100, 0, canvas.height);
+            grassGradient.addColorStop(0, '#7CFC00');
+            grassGradient.addColorStop(1, '#32CD32');
+            ctx.fillStyle = grassGradient;
+            ctx.fillRect(0, canvas.height - 100, canvas.width, 100);
+            
+            // Draw trees
+            for (let i = 0; i < 3; i++) {
+                const x = 100 + i * 300;
+                const treeHeight = 150 + Math.sin(i + Date.now() * 0.001) * 10;
+                
+                // Tree trunk
+                ctx.fillStyle = '#8B4513';
+                ctx.fillRect(x - 15, canvas.height - 100 - treeHeight, 30, treeHeight);
+                
+                // Leaves
+                ctx.fillStyle = '#228B22';
+                ctx.beginPath();
+                ctx.arc(x, canvas.height - 100 - treeHeight - 20, 60, 0, Math.PI * 2);
+                ctx.fill();
+            }
+            
+            // Draw Pooh
+            const poohX = canvas.width / 2;
+            const poohY = canvas.height - 150;
+            
+            // Pooh body
+            ctx.fillStyle = '#FFB347';
+            ctx.beginPath();
+            ctx.arc(poohX, poohY, 40, 0, Math.PI * 2);
+            ctx.fill();
+            
+            // Pooh's red shirt
+            ctx.fillStyle = '#D62E2E';
+            ctx.beginPath();
+            ctx.arc(poohX, poohY + 10, 35, 0, Math.PI * 2);
+            ctx.fill();
+            
+            // Face
+            ctx.fillStyle = '#000';
+            ctx.beginPath();
+            ctx.arc(poohX - 15, poohY - 10, 4, 0, Math.PI * 2);
+            ctx.arc(poohX + 15, poohY - 10, 4, 0, Math.PI * 2);
+            ctx.fill();
+            
+            // Smile
+            ctx.beginPath();
+            ctx.arc(poohX, poohY + 5, 20, 0.2, Math.PI - 0.2, false);
+            ctx.lineWidth = 3;
+            ctx.stroke();
+            
+            // Honey pot in hand
+            ctx.fillStyle = '#8B4513';
+            ctx.beginPath();
+            ctx.ellipse(poohX + 50, poohY - 10, 15, 10, 0, 0, Math.PI * 2);
+            ctx.fill();
+            
+            ctx.fillStyle = '#FFD700';
+            ctx.beginPath();
+            ctx.ellipse(poohX + 50, poohY - 5, 12, 7, 0, 0, Math.PI * 2);
+            ctx.fill();
+        }
+
+        // Draw HUD
+        function drawHUD() {
+            // Score
+            ctx.fillStyle = '#8B4513';
+            ctx.font = 'bold 24px "Schoolbell"';
+            ctx.textAlign = 'left';
+            ctx.fillText(`Score: ${game.score}`, 20, 40);
+            
+            // Timer
+            ctx.fillText(`Time: ${game.timeLeft}s`, 20, 80);
+            
+            // Pots collected
+            ctx.fillText(`Pots: ${game.potsCollected}`, 20, 120);
+            
+            // Game title
+            ctx.textAlign = 'center';
+            ctx.font = 'bold 32px "Schoolbell"';
+            ctx.fillStyle = '#8B4513';
+            ctx.strokeStyle = '#FFD700';
+            ctx.lineWidth = 3;
+            ctx.strokeText('HONEY HUNT', canvas.width / 2, 50);
+            ctx.fillText('HONEY HUNT', canvas.width / 2, 50);
+        }
+
+        // Update UI elements
+        function updateUI() {
+            scoreElement.textContent = game.score;
+            timerElement.textContent = game.timeLeft;
+            potsCountElement.textContent = game.potsCollected;
+            
+            // Add animation to score
+            scoreElement.classList.add('score-updated');
+            setTimeout(() => scoreElement.classList.remove('score-updated'), 300);
+        }
+
+        // Handle canvas click
+        canvas.addEventListener('click', (e) => {
+            if (!game.gameActive || game.gamePaused || game.gameOver) return;
+            
+            const rect = canvas.getBoundingClientRect();
+            const x = e.clientX - rect.left;
+            const y = e.clientY - rect.top;
+            
+            // Check if any honey pot was clicked
+            let potCollected = false;
+            game.pots.forEach(pot => {
+                if (pot.isClicked(x, y) && !pot.collected) {
+                    pot.collected = true;
+                    game.score += 100;
+                    game.potsCollected++;
+                    potCollected = true;
+                    
+                    // Play collection animation
+                    playCollectionAnimation(x, y);
+                    
+                    // Update status occasionally
+                    if (game.potsCollected % 5 === 0) {
+                        statusText.textContent = `Great! ${game.potsCollected} honey pots collected!`;
+                    }
+                }
+            });
+            
+            if (potCollected) {
+                updateUI();
+                
+                // Check win condition
+                if (game.potsCollected >= 10) {
+                    endGame(true);
+                }
+            }
+        });
+
+        // Handle touch for mobile
+        canvas.addEventListener('touchstart', (e) => {
+            e.preventDefault();
+            const touch = e.touches[0];
+            const rect = canvas.getBoundingClientRect();
+            const x = touch.clientX - rect.left;
+            const y = touch.clientY - rect.top;
+            
+            // Simulate click
+            const clickEvent = new MouseEvent('click', {
+                clientX: touch.clientX,
+                clientY: touch.clientY
+            });
+            canvas.dispatchEvent(clickEvent);
+        }, { passive: false });
+
+        // Play collection animation
+        function playCollectionAnimation(x, y) {
+            ctx.save();
+            ctx.translate(x, y);
+            
+            // Honey burst
+            for (let i = 0; i < 8; i++) {
+                const angle = (i / 8) * Math.PI * 2;
+                const distance = 30;
+                
+                ctx.fillStyle = '#FFD700';
+                ctx.beginPath();
+                ctx.arc(
+                    Math.cos(angle) * distance,
+                    Math.sin(angle) * distance,
+                    5,
+                    0,
+                    Math.PI * 2
+                );
+                ctx.fill();
+            }
+            
+            // Plus 100 text
+            ctx.fillStyle = '#8B4513';
+            ctx.font = 'bold 24px "Schoolbell"';
+            ctx.textAlign = 'center';
+            ctx.fillText('+100', 0, -40);
+            
+            ctx.restore();
+        }
+
+        // End game
+        function endGame(win = false) {
+            game.gameActive = false;
+            game.gameOver = true;
+            
+            if (game.timerInterval) {
+                clearInterval(game.timerInterval);
+            }
+            
+            if (game.animationId) {
+                cancelAnimationFrame(game.animationId);
+                game.animationId = null;
+            }
+            
+            // Update high score
+            if (game.score > game.highScore) {
+                game.highScore = game.score;
+                localStorage.setItem('poohHighScore', game.highScore);
+                highScoreElement.textContent = game.highScore;
+            }
+            
+            // Show result
+            if (win) {
+                statusText.textContent = `Congratulations! You collected ${game.potsCollected} honey pots and scored ${game.score} points!`;
+                gamePrompt.innerHTML = `
+                    <strong>🎉 You Win! 🎉</strong><br><br>
+                    Final Score: ${game.score}<br>
+                    Honey Pots: ${game.potsCollected}<br>
+                    Time Left: ${game.timeLeft}s<br><br>
+                    <button class="btn btn--primary" onclick="startGame()" style="margin-top: 10px; padding: 8px 16px; font-size: 0.9rem;">
+                        <i class="fas fa-redo"></i> Play Again
+                    </button>
+                `;
+            } else {
+                statusText.textContent = `Time's up! You collected ${game.potsCollected} honey pots and scored ${game.score} points.`;
+                gamePrompt.innerHTML = `
+                    <strong>Game Over!</strong><br><br>
+                    Final Score: ${game.score}<br>
+                    Honey Pots: ${game.potsCollected}<br><br>
+                    <button class="btn btn--primary" onclick="startGame()" style="margin-top: 10px; padding: 8px 16px; font-size: 0.9rem;">
+                        <i class="fas fa-redo"></i> Try Again
+                    </button>
+                `;
+            }
+        }
+
+        // Button event listeners
+        startBtn.addEventListener('click', startGame);
+        pauseBtn.addEventListener('click', pauseGame);
+        resetBtn.addEventListener('click', resetGame);
+
+        // Difficulty selector
+        difficultySelect.addEventListener('change', (e) => {
+            game.difficulty = e.target.value;
+            if (!game.gameActive) {
+                createHoneyPots();
+                draw();
+            }
+        });
+
+        // Handle window resize
+        window.addEventListener('resize', () => {
+            if (!game.gameActive) {
+                initGame();
+            }
+        });
+
+        // Initialize game on load
+        initGame();
+    </script>
 </body>
 </html>
-
