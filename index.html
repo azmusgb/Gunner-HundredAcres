@@ -403,24 +403,25 @@
         /* Stats row */
         .stats-row {
             display: grid;
-            grid-template-columns: repeat(5, 1fr);
-            gap: 8px;
+            grid-template-columns: repeat(auto-fit, minmax(140px, 1fr));
+            gap: 10px;
             margin: 18px 0 16px;
         }
-        
+
         .stat-pill {
             background: linear-gradient(135deg, var(--bg-honey), var(--pooh-yellow-light));
-            border-radius: 999px;
-            padding: 8px 12px;
+            border-radius: 14px;
+            padding: 10px 14px;
             box-shadow: var(--shadow-sm);
             font-size: 0.82rem;
             border: 1px solid rgba(153, 110, 56, 0.3);
             transition: var(--transition);
             display: flex;
             flex-direction: column;
-            align-items: center;
+            align-items: flex-start;
             justify-content: center;
-            min-height: 58px;
+            min-height: 64px;
+            gap: 2px;
         }
         
         .stat-pill:hover {
@@ -429,8 +430,9 @@
         }
         
         .stat-pill--highlight {
-            background: linear-gradient(135deg, #ffe8a3, #f8c245);
-            border-color: rgba(224, 168, 27, 0.5);
+            background: linear-gradient(135deg, #ffe08a, #f7c948);
+            border-color: rgba(224, 168, 27, 0.7);
+            box-shadow: 0 10px 24px rgba(224, 168, 27, 0.25);
         }
         
         .stat-label {
@@ -439,12 +441,11 @@
             letter-spacing: 0.05em;
             color: rgba(62, 39, 35, 0.75);
             font-size: 0.7rem;
-            margin-bottom: 2px;
         }
         
         .stat-value {
             font-weight: 900;
-            font-size: 1.3rem;
+            font-size: 1.35rem;
             line-height: 1;
         }
         
@@ -624,7 +625,7 @@
             flex: 1;
             border: none;
             border-radius: 999px;
-            padding: 12px 16px;
+            padding: 14px 18px;
             font-size: 1rem;
             font-weight: 700;
             display: inline-flex;
@@ -637,6 +638,7 @@
             font-family: "Nunito", sans-serif;
             position: relative;
             overflow: hidden;
+            min-height: 52px;
         }
         
         .btn::after {
@@ -662,6 +664,8 @@
         .btn-primary {
             background: linear-gradient(135deg, var(--pooh-yellow), var(--pooh-yellow-dark));
             color: var(--ink-brown);
+            flex: 1.2;
+            letter-spacing: 0.01em;
         }
         
         .btn-primary:hover {
@@ -828,15 +832,14 @@
             .game-shell h2 {
                 font-size: 1.5rem;
             }
-            
+
             .stats-row {
-                grid-template-columns: repeat(3, 1fr);
-                grid-template-rows: repeat(2, auto);
-                gap: 6px;
+                grid-template-columns: repeat(2, 1fr);
+                gap: 8px;
             }
-            
-            .stat-pill:nth-child(4), .stat-pill:nth-child(5) {
-                grid-column: span 1;
+
+            .stat-pill--highlight {
+                grid-column: span 2;
             }
             
             .settings-row {
@@ -857,11 +860,7 @@
             .stats-row {
                 grid-template-columns: repeat(2, 1fr);
             }
-            
-            .stat-pill:nth-child(5) {
-                grid-column: span 2;
-            }
-            
+
             .controls-row {
                 flex-direction: column;
             }
@@ -923,13 +922,13 @@
     <div class="toast-container" id="toastContainer"></div>
     
     <!-- Instructions modal -->
-    <div class="instructions-modal" id="instructionsModal">
-        <div class="instructions-content">
-            <button class="instructions-close" id="instructionsClose">
+    <div class="instructions-modal" id="instructionsModal" role="dialog" aria-modal="true" aria-labelledby="instructionsTitle" aria-describedby="instructionsIntro" aria-hidden="true">
+        <div class="instructions-content" tabindex="-1">
+            <button class="instructions-close" id="instructionsClose" aria-label="Close instructions">
                 <i class="fas fa-times"></i>
             </button>
-            <h2 class="overlay-title">How to Play</h2>
-            <p class="overlay-text">Help Pooh Bear catch as many honeybee drops as possible!</p>
+            <h2 class="overlay-title" id="instructionsTitle">How to Play</h2>
+            <p class="overlay-text" id="instructionsIntro">Help Pooh Bear catch as many honeybee drops as possible!</p>
             
             <ul class="instructions-list">
                 <li>
@@ -1110,7 +1109,7 @@
                     </div>
                     
                     <!-- Status -->
-                    <div class="status" id="status">
+                    <div class="status" id="status" role="status" aria-live="polite">
                         <i class="fas fa-feather-pointed"></i>
                         <span id="statusText">Tap Start, then gently drag to move Pooh left and right.</span>
                     </div>
@@ -1462,7 +1461,10 @@
                     this.soundToggle = document.getElementById('soundToggle');
                     this.instructionsModal = document.getElementById('instructionsModal');
                     this.instructionsClose = document.getElementById('instructionsClose');
+                    this.instructionsContent = this.instructionsModal.querySelector('.instructions-content');
                     this.startFromInstructions = document.getElementById('startFromInstructions');
+                    this.lastFocusedElement = null;
+                    this.focusableInstructions = [];
                     
                     // Game state
                     this.gameState = 'idle'; // 'idle', 'countdown', 'running', 'paused', 'gameOver'
@@ -1616,11 +1618,55 @@
                 }
                 
                 showInstructions() {
+                    this.lastFocusedElement = document.activeElement;
                     this.instructionsModal.classList.add('active');
+                    this.instructionsModal.setAttribute('aria-hidden', 'false');
+
+                    const focusableElements = this.instructionsModal.querySelectorAll('button, [href], input, select, textarea, [tabindex]:not([tabindex="-1"])');
+                    this.focusableInstructions = Array.from(focusableElements);
+                    const firstElement = this.focusableInstructions[0];
+                    const targetFocus = this.instructionsContent || firstElement;
+
+                    if (targetFocus) {
+                        targetFocus.focus();
+                    }
+
+                    document.addEventListener('keydown', (this.boundInstructionsKeydown ||= (e) => this.handleInstructionsKeydown(e)));
                 }
-                
+
                 hideInstructions() {
                     this.instructionsModal.classList.remove('active');
+                    this.instructionsModal.setAttribute('aria-hidden', 'true');
+
+                    if (this.boundInstructionsKeydown) {
+                        document.removeEventListener('keydown', this.boundInstructionsKeydown);
+                    }
+
+                    if (this.lastFocusedElement && typeof this.lastFocusedElement.focus === 'function') {
+                        this.lastFocusedElement.focus();
+                    }
+                }
+
+                handleInstructionsKeydown(event) {
+                    if (event.key === 'Escape') {
+                        event.preventDefault();
+                        this.hideInstructions();
+                        return;
+                    }
+
+                    if (event.key !== 'Tab' || this.focusableInstructions.length === 0) return;
+
+                    const first = this.focusableInstructions[0];
+                    const last = this.focusableInstructions[this.focusableInstructions.length - 1];
+                    const active = document.activeElement;
+
+                    if (event.shiftKey && active === first) {
+                        event.preventDefault();
+                        last.focus();
+                    } else if (!event.shiftKey && active === last) {
+                        event.preventDefault();
+                        first.focus();
+                    }
                 }
                 
                 // ==================== Game State Management ====================
