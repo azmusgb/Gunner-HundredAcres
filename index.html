@@ -69,12 +69,12 @@
             min-height: -webkit-fill-available;
             display: flex;
             justify-content: center;
-            align-items: center;
-            padding: 16px;
-            padding-left: calc(16px + env(safe-area-inset-left));
-            padding-right: calc(16px + env(safe-area-inset-right));
-            padding-top: calc(16px + env(safe-area-inset-top));
-            padding-bottom: calc(16px + env(safe-area-inset-bottom));
+            align-items: flex-start;
+            padding: 14px;
+            padding-left: calc(14px + env(safe-area-inset-left));
+            padding-right: calc(14px + env(safe-area-inset-right));
+            padding-top: calc(14px + env(safe-area-inset-top));
+            padding-bottom: calc(14px + env(safe-area-inset-bottom));
             position: relative;
             overflow-y: auto;
         }
@@ -129,11 +129,11 @@
         /* Storybook page frame */
         .page-frame {
             width: 100%;
-            max-width: 540px;
+            max-width: 1200px;
             margin: 0 auto;
             background: linear-gradient(135deg, #f4e0c3, #e8cfad);
             border-radius: 24px;
-            box-shadow: 
+            box-shadow:
                 0 24px 60px rgba(96, 63, 32, 0.3),
                 0 0 0 2px rgba(255, 255, 255, 0.6),
                 inset 0 1px 0 rgba(255, 255, 255, 0.5);
@@ -155,7 +155,7 @@
         
         .page {
             border-radius: 18px;
-            background: 
+            background:
                 repeating-linear-gradient(
                     to bottom,
                     rgba(255, 255, 255, 0.95),
@@ -166,10 +166,27 @@
             border: 1px solid rgba(153, 110, 56, 0.35);
             padding: 24px 20px 28px;
             margin: 6px;
-            box-shadow: 
+            box-shadow:
                 inset 0 0 0 1px rgba(255, 255, 255, 0.8),
                 var(--shadow-md);
             position: relative;
+        }
+
+        .content-grid {
+            display: grid;
+            grid-template-columns: 1fr;
+            gap: 18px;
+            align-items: start;
+        }
+
+        .story-column {
+            order: -1;
+        }
+
+        .game-column {
+            display: flex;
+            flex-direction: column;
+            gap: 14px;
         }
         
         /* Skip link for accessibility */
@@ -555,7 +572,8 @@
             overflow: hidden;
             background: linear-gradient(180deg, #cbe3ff, #a8d0ff);
             position: relative;
-            aspect-ratio: 1 / 1.2;
+            aspect-ratio: 4 / 3;
+            min-height: 280px;
         }
         
         .game-canvas {
@@ -634,23 +652,23 @@
         }
 
         .btn {
-            flex: 1 1 160px;
+            flex: 1 1 170px;
             border: none;
             border-radius: 999px;
-            padding: 14px 18px;
-            font-size: 1rem;
+            padding: 16px 20px;
+            font-size: 1.05rem;
             font-weight: 700;
             display: inline-flex;
             align-items: center;
             justify-content: center;
-            gap: 8px;
+            gap: 10px;
             cursor: pointer;
             box-shadow: var(--shadow-sm);
             transition: var(--transition);
             font-family: "Nunito", sans-serif;
             position: relative;
             overflow: hidden;
-            min-height: 52px;
+            min-height: 56px;
             -webkit-touch-callout: none;
         }
         
@@ -813,7 +831,7 @@
             display: none;
             position: relative;
             margin-top: 15px;
-            height: 120px;
+            height: 140px;
             touch-action: none;
         }
         
@@ -831,8 +849,8 @@
         }
         
         .control-btn {
-            width: 70px;
-            height: 70px;
+            width: 76px;
+            height: 76px;
             border-radius: 50%;
             background: linear-gradient(135deg, var(--pooh-yellow), var(--pooh-yellow-dark));
             display: flex;
@@ -875,15 +893,19 @@
                 overflow-y: auto;
                 -webkit-overflow-scrolling: touch;
             }
-            
+
             .page-frame {
                 margin: 8px 0;
-                max-width: 100%;
+                max-width: 540px;
             }
             
             .page {
                 padding: 18px 14px 22px;
                 margin: 4px;
+            }
+
+            .content-grid {
+                gap: 14px;
             }
             
             h1 {
@@ -976,17 +998,36 @@
                 padding: 20px;
             }
         }
-        
+
+        @media (min-width: 900px) {
+            .page {
+                padding: 26px 22px 30px;
+            }
+
+            .content-grid {
+                grid-template-columns: minmax(340px, 1fr) minmax(520px, 1.15fr);
+                gap: 20px;
+            }
+
+            .story-column {
+                order: 0;
+            }
+        }
+
         /* Tablet */
         @media (min-width: 769px) and (max-width: 1024px) {
             .page-frame {
-                max-width: 90%;
+                max-width: 100%;
             }
-            
+
             .canvas-inner {
-                aspect-ratio: 1 / 1.3;
+                aspect-ratio: 4 / 3;
             }
-            
+
+            .content-grid {
+                gap: 18px;
+            }
+
             .stats-row {
                 grid-template-columns: repeat(5, 1fr);
             }
@@ -999,7 +1040,7 @@
         /* Desktop */
         @media (min-width: 1025px) {
             body {
-                padding: 32px 40px;
+                padding: 26px 32px;
                 align-items: flex-start;
                 overflow-y: auto;
             }
@@ -1009,35 +1050,16 @@
             }
 
             .page {
-                padding: 32px 28px 36px;
-                display: grid;
-                grid-template-columns: 1fr 1.1fr;
-                grid-template-areas:
-                    "header header"
-                    "story main"
-                    "footer footer";
-                column-gap: 28px;
+                padding: 30px 26px 34px;
             }
 
-            .page > header {
-                grid-area: header;
-            }
-
-            .page > .story-box {
-                grid-area: story;
-                align-self: start;
-            }
-
-            .page > main {
-                grid-area: main;
-            }
-
-            .page > footer {
-                grid-area: footer;
+            .content-grid {
+                grid-template-columns: minmax(380px, 1fr) minmax(560px, 1.2fr);
+                gap: 24px;
             }
 
             .canvas-inner {
-                aspect-ratio: 1 / 1.1;
+                aspect-ratio: 16 / 10;
             }
 
             .mobile-controls {
@@ -1257,39 +1279,40 @@
                 <div class="divider"></div>
                 <p class="subtitle">Pooh carries his barrel, honeybee drops fall from the sky, and the bees are very, very busy.</p>
             </header>
-            
-            <!-- Story intro / invitation -->
-            <section class="story-box" aria-label="Story introduction">
-                <p class="story-text">
-                    Once upon an afternoon in the Hundred Acre Wood, Pooh Bear found his honey cupboard terribly empty. So he picked up his very best barrel, stepped out into the sunshine, and waited for the honeybees to share a few drippy drops from the sky. Of course, the bees themselves were not to be bumped into, because bees have very particular feelings about bears and barrels.
-                </p>
-                <div class="event-list">
-                    <div class="event-row">
-                        <span class="event-label">
-                            <i class="fas fa-calendar-day"></i>
-                            When:
-                        </span>
-                        <span>April 24 · 2:00–5:00 PM</span>
+
+            <div class="content-grid">
+                <!-- Story intro / invitation -->
+                <section class="story-box story-column" aria-label="Story introduction">
+                    <p class="story-text">
+                        Once upon an afternoon in the Hundred Acre Wood, Pooh Bear found his honey cupboard terribly empty. So he picked up his very best barrel, stepped out into the sunshine, and waited for the honeybees to share a few drippy drops from the sky. Of course, the bees themselves were not to be bumped into, because bees have very particular feelings about bears and barrels.
+                    </p>
+                    <div class="event-list">
+                        <div class="event-row">
+                            <span class="event-label">
+                                <i class="fas fa-calendar-day"></i>
+                                When:
+                            </span>
+                            <span>April 24 · 2:00–5:00 PM</span>
+                        </div>
+                        <div class="event-row">
+                            <span class="event-label">
+                                <i class="fas fa-map-marker-alt"></i>
+                                Where:
+                            </span>
+                            <span>The Hundred Acre Wood</span>
+                        </div>
+                        <div class="event-row">
+                            <span class="event-label">
+                                <i class="fas fa-gamepad"></i>
+                                Your Part:
+                            </span>
+                            <span>Help Pooh catch the honeybee drops!</span>
+                        </div>
                     </div>
-                    <div class="event-row">
-                        <span class="event-label">
-                            <i class="fas fa-map-marker-alt"></i>
-                            Where:
-                        </span>
-                        <span>The Hundred Acre Wood</span>
-                    </div>
-                    <div class="event-row">
-                        <span class="event-label">
-                            <i class="fas fa-gamepad"></i>
-                            Your Part:
-                        </span>
-                        <span>Help Pooh catch the honeybee drops!</span>
-                    </div>
-                </div>
-            </section>
-            
-            <main id="main">
-                <section class="game-shell" aria-label="Honey Barrel game">
+                </section>
+
+                <main id="main" class="game-column">
+                    <section class="game-shell" aria-label="Honey Barrel game">
                     <header>
                         <h2>The Honey Barrel Game</h2>
                         <p>Slide Pooh along the ground with your finger (or mouse). Catch the glowing honeybee drops in his barrel, avoid the buzzing bees, and see how high your storybook score can go.</p>
@@ -1405,9 +1428,10 @@
                         <i class="fas fa-feather-pointed"></i>
                         <span id="statusText">Start the game, then move Pooh left and right to catch honey drops.</span>
                     </div>
-                </section>
-            </main>
-            
+                    </section>
+                </main>
+            </div>
+
             <footer>
                 <p>Told with warmth in the Hundred Acre Wood &mdash; a little fan-made storybook game.</p>
                 <p><small><i class="fas fa-heart"></i> Not affiliated with Disney. Made with honey and care.</small></p>
@@ -1852,9 +1876,10 @@
                     window.addEventListener('resize', () => this.resizeCanvas());
                     window.addEventListener('orientationchange', () => {
                         setTimeout(() => {
-                            this.resizeCanvas();
                             this.isLandscape = window.innerWidth > window.innerHeight;
-                        }, 300);
+                            this.resizeCanvas();
+                            this.toggleMobileControls();
+                        }, 250);
                     });
                     
                     // Set up event listeners
@@ -1902,8 +1927,8 @@
                 
                 setupEventListeners() {
                     // Input handling for both mouse and touch
-                    this.canvas.addEventListener('touchstart', (e) => this.handleTouchStart(e), { passive: true });
-                    this.canvas.addEventListener('touchmove', (e) => this.handleTouchMove(e), { passive: true });
+                    this.canvas.addEventListener('touchstart', (e) => this.handleTouchStart(e), { passive: false });
+                    this.canvas.addEventListener('touchmove', (e) => this.handleTouchMove(e), { passive: false });
                     this.canvas.addEventListener('touchend', (e) => this.handleTouchEnd(e));
                     this.canvas.addEventListener('touchcancel', (e) => this.handleTouchEnd(e));
                     
@@ -2580,10 +2605,20 @@
                 }
                 
                 handleKeyDown(e) {
+                    if (e.key === ' ') {
+                        e.preventDefault();
+                        if (this.gameState === 'running') {
+                            this.pause();
+                        } else if (this.gameState === 'paused') {
+                            this.resume();
+                        }
+                        return;
+                    }
+
                     if (this.gameState !== 'running') return;
-                    
+
                     const moveAmount = 20;
-                    
+
                     switch(e.key) {
                         case 'ArrowLeft':
                         case 'a':
@@ -2594,14 +2629,6 @@
                         case 'd':
                         case 'D':
                             this.player.targetX += moveAmount;
-                            break;
-                        case ' ':
-                            // Space to pause/resume
-                            if (this.gameState === 'running') {
-                                this.pause();
-                            } else if (this.gameState === 'paused') {
-                                this.resume();
-                            }
                             break;
                     }
                 }
@@ -2733,7 +2760,11 @@
                     const y = this.player.y;
                     const width = this.player.width;
                     const height = this.player.height;
-                    
+
+                    const furBase = '#f4c87a';
+                    const furDeep = '#e3a850';
+                    const outfit = '#c86d5a';
+
                     // Simple bobbing animation
                     const bob = Math.sin(Date.now() * 0.005) * 2;
                     
@@ -2744,19 +2775,19 @@
                     ctx.fill();
                     
                     // Draw Pooh body (simple oval)
-                    ctx.fillStyle = '#FFC107';
+                    ctx.fillStyle = furBase;
                     ctx.beginPath();
                     ctx.ellipse(x, y - 5 + bob, width * 0.4, height * 0.4, 0, 0, Math.PI * 2);
                     ctx.fill();
-                    
-                    // Draw red shirt
-                    ctx.fillStyle = '#E53935';
+
+                    // Draw simple top band
+                    ctx.fillStyle = outfit;
                     ctx.beginPath();
                     ctx.ellipse(x, y + 15 + bob, width * 0.45, height * 0.5, 0, 0, Math.PI * 2);
                     ctx.fill();
-                    
+
                     // Draw head
-                    ctx.fillStyle = '#FFB300';
+                    ctx.fillStyle = furDeep;
                     ctx.beginPath();
                     ctx.arc(x - 5, y - 40 + bob, 25, 0, Math.PI * 2);
                     ctx.fill();
@@ -3046,28 +3077,26 @@
                     const container = this.canvas.parentElement;
                     if (!container) return;
 
+                    this.isLandscape = window.innerWidth > window.innerHeight;
                     const width = container.clientWidth;
                     const containerRect = container.getBoundingClientRect();
                     const viewportAllowance = window.innerHeight - containerRect.top - 140;
-                    
-                    // Different aspect ratios for different devices
-                    let aspectRatio;
-                    if (this.isMobile) {
-                        if (this.isLandscape) {
-                            aspectRatio = 1 / 1; // Square for landscape mobile
-                        } else {
-                            aspectRatio = 1 / 1.4; // Taller for portrait mobile
-                        }
-                    } else {
-                        aspectRatio = 1 / 1.2; // Desktop
-                    }
-                    
+
+                    const viewportRatio = window.innerWidth / Math.max(window.innerHeight, 1);
+
+                    // Aspect ratios are expressed as height divided by width
+                    const aspectRatio = this.isMobile
+                        ? (this.isLandscape ? 0.65 : 0.85)
+                        : (viewportRatio > 1.4 ? 0.6 : 0.75);
+
                     const targetHeight = width * aspectRatio;
-                    const height = Math.max(
-                        260,
-                        Math.min(targetHeight, 520, viewportAllowance > 0 ? viewportAllowance : targetHeight)
-                    );
-                    
+                    const maxHeight = this.isMobile ? 520 : 640;
+                    const minHeight = this.isMobile ? 260 : 320;
+                    const boundedHeight = viewportAllowance > 0
+                        ? Math.min(targetHeight, viewportAllowance)
+                        : targetHeight;
+                    const height = clamp(boundedHeight, minHeight, maxHeight);
+
                     this.canvas.width = width;
                     this.canvas.height = height;
                     
