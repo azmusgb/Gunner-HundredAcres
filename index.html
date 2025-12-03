@@ -1,1617 +1,1354 @@
+
 <!DOCTYPE html>
 <html lang="en">
 <head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover">
-    <meta name="description" content="Join Winnie-the-Pooh in a storybook adventure through the Hundred Acre Wood">
-    <title>Pooh's Honey Hunt - A Hundred Acre Wood Celebration</title>
-    
+    <meta charset="UTF-8" />
+    <title>Pooh's Honey Barrel - Storybook Game</title>
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <meta name="description" content="A Winnie-the-Pooh style storybook game where Pooh carries a barrel and catches honeybee drops while avoiding buzzing bees." />
+
     <!-- Fonts -->
-    <link rel="preconnect" href="https://fonts.googleapis.com">
-    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-    <link href="https://fonts.googleapis.com/css2?family=Nunito:wght@300;400;600;700;800&family=Playfair+Display:wght@400;700;900&family=Schoolbell&family=Lato:wght@300;400;700&display=swap" rel="stylesheet">
-    
-    <!-- Font Awesome -->
-    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
-    
-    <!-- Favicon -->
-    <link rel="icon" type="image/x-icon" href="data:image/svg+xml,<svg xmlns=%22http://www.w3.org/2000/svg%22 viewBox=%220 0 100 100%22><text y=%22.9em%22 font-size=%2290%22>🍯</text></svg>">
-    
+    <link rel="preconnect" href="https://fonts.googleapis.com" />
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+    <link href="https://fonts.googleapis.com/css2?family=Nunito:wght@300;400;600;700;800&family=Playfair+Display:wght@400;600;700&family=Schoolbell&display=swap" rel="stylesheet" />
+
+    <!-- Icons -->
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css" />
+
     <style>
+        :root {
+            --pooh-yellow: #f7c948;
+            --pooh-yellow-light: #ffe7a3;
+            --pooh-yellow-dark: #e0a81b;
+            --pooh-red: #d64545;
+            --page-cream: #fdf5e6;
+            --page-edge: #f2e1c4;
+            --ink-brown: #3e2723;
+            --ink-soft: #5d4037;
+            --bg-honey: #fff4ce;
+            --shadow-md: 0 10px 24px rgba(102, 72, 39, 0.18);
+            --shadow-sm: 0 4px 10px rgba(102, 72, 39, 0.14);
+            --radius-md: 18px;
+            --radius-lg: 26px;
+        }
 
-    /* =========================
-       ENHANCED COLOR PALETTE
-       ========================= */
-    :root {
-        /* Primary Colors */
-        --pooh-yellow: #FFA726;  /* Brighter, more accessible yellow */
-        --pooh-yellow-light: #FFE0B2;
-        --pooh-yellow-dark: #FF9800;
-        --pooh-red: #E53935;     /* More vibrant red */
-        --pooh-red-light: #FFEBEE;
-        --pooh-red-dark: #C62828;
-        
-        /* Background Colors */
-        --bg-cream: #FFF8F0;     /* Warmer cream with better contrast */
-        --bg-paper: #FFFDF8;     /* Pure white for text areas */
-        --bg-card: #FFFFFF;      /* Clean white for cards */
-        --bg-honey: #FFF3E0;     /* Honey tint for highlights */
-        
-        /* Text Colors */
-        --text-dark: #3E2723;    /* Dark brown for primary text */
-        --text-medium: #5D4037;  /* Medium brown for secondary text */
-        --text-light: #8D6E63;   /* Light brown for tertiary text */
-        --text-on-dark: #FFFFFF; /* White text on dark backgrounds */
-        --text-on-yellow: #3E2723; /* Dark text on yellow */
-        
-        /* Accent Colors */
-        --honey-gold: #FFB300;   /* Rich gold for honey */
-        --honey-gold-light: #FFE082;
-        --honey-gold-dark: #FF8F00;
-        --leaf-green: #689F38;   /* Vibrant green */
-        --sky-blue: #2196F3;     /* Bright blue */
-        --soft-blue: #90CAF9;    /* Light blue for accents */
-        --sage-green: #7CB342;   /* Brighter sage */
-        
-        /* UI Colors */
-        --border-light: rgba(139, 69, 19, 0.1);
-        --border-medium: rgba(139, 69, 19, 0.2);
-        --border-dark: rgba(139, 69, 19, 0.3);
-        --shadow-color: rgba(139, 69, 19, 0.08);
-        --overlay-light: rgba(255, 255, 255, 0.9);
-        --overlay-dark: rgba(62, 39, 35, 0.9);
-        
-        /* Status Colors */
-        --success: #4CAF50;
-        --warning: #FF9800;
-        --danger: #F44336;
-        --info: #2196F3;
-        
-        /* Game Colors */
-        --honey-pot: #FF8F00;
-        --honey-pot-light: #FFB74D;
-        --bee-yellow: #FFD740;
-        --bee-black: #212121;
-        --golden-pot: #FFB300;
-        
-        /* Shadows (adjusted for better depth) */
-        --shadow-sm: 0 2px 4px var(--shadow-color);
-        --shadow-md: 0 4px 12px var(--shadow-color);
-        --shadow-lg: 0 8px 24px var(--shadow-color);
-        --shadow-xl: 0 12px 36px var(--shadow-color);
-        
-        /* Border Radius */
-        --radius-sm: 8px;
-        --radius-md: 12px;
-        --radius-lg: 16px;
-        --radius-xl: 20px;
-        --radius-pill: 999px;
-        
-        /* Transitions */
-        --transition-fast: all 0.15s ease;
-        --transition: all 0.25s cubic-bezier(0.4, 0, 0.2, 1);
-        --transition-slow: all 0.4s cubic-bezier(0.4, 0, 0.2, 1);
-        
-        /* Safe Areas */
-        --safe-area-inset-top: env(safe-area-inset-top, 0px);
-        --safe-area-inset-bottom: env(safe-area-inset-bottom, 0px);
-        --safe-area-inset-left: env(safe-area-inset-left, 0px);
-        --safe-area-inset-right: env(safe-area-inset-right, 0px);
-    }
-    
-    /* =========================
-       GLOBAL STYLES WITH IMPROVED CONTRAST
-       ========================= */
-    body {
-        background: linear-gradient(135deg, 
-            var(--bg-cream) 0%, 
-            #FFECB3 25%, 
-            #FFCCBC 50%, 
-            #D7CCC8 100%);
-        color: var(--text-dark);
-        font-family: -apple-system, BlinkMacSystemFont, "Nunito", "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
-        line-height: 1.6;
-        min-height: 100vh;
-        -webkit-font-smoothing: antialiased;
-        -moz-osx-font-smoothing: grayscale;
-    }
-    
-    /* =========================
-       IMPROVED TYPOGRAPHY CONTRAST
-       ========================= */
-    h1, h2, h3, h4, h5, h6 {
-        color: var(--text-dark);
-        font-weight: 700;
-        line-height: 1.3;
-    }
-    
-    h1 {
-        font-size: 2.5rem;
-        text-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
-    }
-    
-    h2 {
-        font-size: 2rem;
-        color: var(--text-dark);
-        border-bottom: 3px solid var(--pooh-yellow);
-        padding-bottom: 0.5rem;
-        margin-bottom: 1.5rem;
-    }
-    
-    h3 {
-        font-size: 1.5rem;
-        color: var(--text-medium);
-    }
-    
-    h4 {
-        font-size: 1.25rem;
-        color: var(--text-medium);
-    }
-    
-    p {
-        color: var(--text-medium);
-        margin-bottom: 1rem;
-    }
-    
-    strong {
-        color: var(--text-dark);
-        font-weight: 700;
-    }
-    
-    /* =========================
-       IMPROVED CARDS & CONTAINERS
-       ========================= */
-    .storybook-section__inner {
-        background: var(--bg-paper);
-        border: 2px solid var(--border-light);
-        box-shadow: var(--shadow-lg);
-        border-radius: var(--radius-lg);
-        padding: 2rem;
-        margin: 2rem 0;
-        position: relative;
-        overflow: hidden;
-    }
-    
-    .storybook-section__inner::before {
-        content: '';
-        position: absolute;
-        top: 0;
-        left: 0;
-        right: 0;
-        height: 6px;
-        background: linear-gradient(90deg, 
-            var(--pooh-yellow), 
-            var(--honey-gold),
-            var(--pooh-red));
-        border-radius: var(--radius-lg) var(--radius-lg) 0 0;
-    }
-    
-    .storybook-card {
-        background: var(--bg-card);
-        border: 1px solid var(--border-light);
-        border-radius: var(--radius-md);
-        padding: 1.5rem;
-        box-shadow: var(--shadow-sm);
-        transition: var(--transition);
-    }
-    
-    .storybook-card:hover {
-        box-shadow: var(--shadow-md);
-        transform: translateY(-2px);
-        border-color: var(--pooh-yellow);
-    }
-    
-    .game-card {
-        background: var(--bg-card);
-        border: 2px solid var(--border-medium);
-        border-radius: var(--radius-lg);
-        padding: 2rem;
-        box-shadow: var(--shadow-lg);
-        position: relative;
-    }
-    
-    .game-card::after {
-        content: '';
-        position: absolute;
-        top: -2px;
-        left: -2px;
-        right: -2px;
-        bottom: -2px;
-        border: 2px solid transparent;
-        border-image: linear-gradient(45deg, 
-            var(--pooh-yellow), 
-            var(--honey-gold),
-            transparent) 1;
-        border-radius: var(--radius-lg);
-        pointer-events: none;
-    }
-    
-    /* =========================
-       IMPROVED BUTTONS
-       ========================= */
-    .btn {
-        background: linear-gradient(135deg, 
-            var(--pooh-yellow) 0%, 
-            var(--honey-gold) 100%);
-        color: var(--text-on-yellow);
-        border: none;
-        border-radius: var(--radius-md);
-        padding: 0.875rem 1.75rem;
-        font-weight: 700;
-        font-size: 1rem;
-        text-transform: uppercase;
-        letter-spacing: 0.5px;
-        box-shadow: var(--shadow-md);
-        transition: var(--transition);
-        display: inline-flex;
-        align-items: center;
-        justify-content: center;
-        gap: 0.5rem;
-        cursor: pointer;
-        min-height: 48px; /* Minimum touch target size */
-    }
-    
-    .btn:hover {
-        transform: translateY(-2px);
-        box-shadow: var(--shadow-lg);
-        background: linear-gradient(135deg, 
-            var(--honey-gold) 0%, 
-            var(--pooh-yellow) 100%);
-        color: var(--text-on-yellow);
-    }
-    
-    .btn:active {
-        transform: translateY(0);
-        box-shadow: var(--shadow-sm);
-    }
-    
-    .btn--primary {
-        background: linear-gradient(135deg, 
-            var(--pooh-yellow) 0%, 
-            var(--honey-gold) 100%);
-        color: var(--text-on-yellow);
-    }
-    
-    .btn--primary:hover {
-        background: linear-gradient(135deg, 
-            var(--honey-gold) 0%, 
-            var(--pooh-yellow-dark) 100%);
-    }
-    
-    .btn--secondary {
-        background: var(--sky-blue);
-        color: white;
-    }
-    
-    .btn--outline {
-        background: transparent;
-        border: 2px solid var(--pooh-yellow);
-        color: var(--pooh-yellow);
-    }
-    
-    .btn--outline:hover {
-        background: var(--pooh-yellow);
-        color: var(--text-on-yellow);
-    }
-    
-    .btn--danger {
-        background: var(--danger);
-        color: white;
-    }
-    
-    /* =========================
-       IMPROVED HEADER
-       ========================= */
-    .storybook-header {
-        background: linear-gradient(135deg, 
-            var(--bg-paper) 0%, 
-            rgba(255, 167, 38, 0.1) 100%);
-        backdrop-filter: blur(20px);
-        -webkit-backdrop-filter: blur(20px);
-        border-bottom: 2px solid var(--border-light);
-        padding-top: var(--safe-area-inset-top);
-    }
-    
-    .storybook-logo__title {
-        background: linear-gradient(135deg, 
-            var(--text-dark) 0%, 
-            var(--pooh-red) 50%, 
-            var(--honey-gold) 100%);
-        -webkit-background-clip: text;
-        -webkit-text-fill-color: transparent;
-        background-clip: text;
-        font-weight: 800;
-    }
-    
-    .storybook-badge {
-        background: var(--bg-card);
-        border: 1px solid var(--border-light);
-        color: var(--text-medium);
-        border-radius: var(--radius-pill);
-        padding: 0.75rem 1rem;
-        box-shadow: var(--shadow-sm);
-    }
-    
-    .storybook-badge i {
-        color: var(--pooh-yellow);
-        background: var(--pooh-yellow-light);
-        padding: 0.5rem;
-        border-radius: 50%;
-    }
-    
-    /* =========================
-       IMPROVED NAVIGATION
-       ========================= */
-    .storybook-nav__link {
-        background: var(--bg-card);
-        color: var(--text-medium);
-        border: 1px solid var(--border-light);
-        border-radius: var(--radius-pill);
-        padding: 0.75rem 1.25rem;
-        font-weight: 600;
-        transition: var(--transition);
-    }
-    
-    .storybook-nav__link:hover,
-    .storybook-nav__link:focus {
-        background: var(--pooh-yellow);
-        color: var(--text-on-yellow);
-        border-color: var(--pooh-yellow);
-        transform: translateY(-2px);
-        box-shadow: var(--shadow-md);
-    }
-    
-    .storybook-nav__link i {
-        color: var(--pooh-yellow);
-        transition: var(--transition);
-    }
-    
-    .storybook-nav__link:hover i {
-        color: var(--text-on-yellow);
-    }
-    
-    /* =========================
-       IMPROVED GAME ELEMENTS
-       ========================= */
-    .game-stat {
-        background: linear-gradient(135deg, 
-            var(--bg-honey) 0%, 
-            var(--pooh-yellow-light) 100%);
-        border: 2px solid var(--border-light);
-        border-radius: var(--radius-md);
-        padding: 1rem;
-        text-align: center;
-        position: relative;
-        overflow: hidden;
-    }
-    
-    .game-stat::before {
-        content: '';
-        position: absolute;
-        top: 0;
-        left: 0;
-        right: 0;
-        height: 4px;
-        background: var(--pooh-yellow);
-    }
-    
-    .game-stat__value {
-        color: var(--text-dark);
-        font-weight: 800;
-        font-size: 1.75rem;
-        display: block;
-        line-height: 1;
-    }
-    
-    .game-stat__label {
-        color: var(--text-light);
-        font-size: 0.75rem;
-        text-transform: uppercase;
-        letter-spacing: 1px;
-        font-weight: 600;
-        margin-top: 0.25rem;
-        display: block;
-    }
-    
-    /* Power-ups */
-    .power-up {
-        background: var(--bg-card);
-        border: 2px solid var(--border-light);
-        border-radius: var(--radius-md);
-        padding: 1rem;
-        transition: var(--transition);
-    }
-    
-    .power-up:hover {
-        transform: translateY(-2px);
-        box-shadow: var(--shadow-md);
-        border-color: var(--pooh-yellow);
-    }
-    
-    .power-up--magnet {
-        border-left: 4px solid var(--success);
-    }
-    
-    .power-up--time {
-        border-left: 4px solid var(--info);
-    }
-    
-    .power-up--shield {
-        border-left: 4px solid var(--warning);
-    }
-    
-    .power-up__icon {
-        color: var(--text-dark);
-        font-size: 1.25rem;
-    }
-    
-    .power-up__count {
-        color: var(--text-dark);
-        font-weight: 800;
-        font-size: 1.25rem;
-    }
-    
-    /* Canvas and Game Area */
-    .honey-canvas-shell {
-        background: linear-gradient(135deg, 
-            var(--pooh-yellow-light) 0%, 
-            var(--bg-honey) 100%);
-        border: 4px solid var(--border-medium);
-        border-radius: var(--radius-lg);
-        padding: 6px;
-        box-shadow: 
-            inset 0 0 20px rgba(255, 167, 38, 0.2),
-            var(--shadow-lg);
-    }
-    
-    .honey-canvas-inner {
-        background: linear-gradient(180deg, 
-            #FFECB3 0%, 
-            #FFCCBC 50%, 
-            #FFAB91 100%);
-        border-radius: calc(var(--radius-lg) - 2px);
-        overflow: hidden;
-        position: relative;
-    }
-    
-    /* Status Bar */
-    .honey-status {
-        background: linear-gradient(135deg, 
-            var(--bg-honey) 0%, 
-            var(--pooh-yellow-light) 100%);
-        border: 2px solid var(--border-light);
-        border-left: 6px solid var(--pooh-yellow);
-        border-radius: var(--radius-md);
-        padding: 1.25rem;
-        margin: 1rem 0;
-    }
-    
-    #statusText {
-        color: var(--text-dark);
-        font-weight: 600;
-        font-size: 1.1rem;
-    }
-    
-    /* =========================
-       IMPROVED CHARACTER CARDS
-       ========================= */
-    .storybook-character {
-        background: var(--bg-card);
-        border: 2px solid var(--border-light);
-        border-radius: var(--radius-lg);
-        padding: 1.5rem;
-        transition: var(--transition);
-    }
-    
-    .storybook-character:hover {
-        transform: translateY(-4px);
-        box-shadow: var(--shadow-lg);
-        border-color: var(--pooh-yellow);
-    }
-    
-    .storybook-character__avatar {
-        background: linear-gradient(135deg, 
-            var(--pooh-yellow-light) 0%, 
-            var(--honey-gold-light) 100%);
-        border: 3px solid var(--pooh-yellow);
-        box-shadow: var(--shadow-md);
-    }
-    
-    .storybook-character__name {
-        color: var(--text-dark);
-        font-weight: 700;
-        margin-bottom: 0.5rem;
-    }
-    
-    .storybook-character__role {
-        color: var(--pooh-red);
-        font-weight: 600;
-        text-transform: uppercase;
-        letter-spacing: 1px;
-        font-size: 0.875rem;
-        margin-bottom: 0.75rem;
-        display: inline-block;
-        padding: 0.25rem 0.75rem;
-        background: var(--pooh-red-light);
-        border-radius: var(--radius-pill);
-    }
-    
-    .storybook-character__description {
-        color: var(--text-medium);
-        line-height: 1.6;
-    }
-    
-    /* =========================
-       IMPROVED FORMS
-       ========================= */
-    .storybook-form input,
-    .storybook-form select,
-    .storybook-form textarea {
-        background: var(--bg-card);
-        border: 2px solid var(--border-light);
-        border-radius: var(--radius-md);
-        padding: 1rem;
-        color: var(--text-dark);
-        font-size: 1rem;
-        transition: var(--transition);
-    }
-    
-    .storybook-form input:focus,
-    .storybook-form select:focus,
-    .storybook-form textarea:focus {
-        outline: none;
-        border-color: var(--pooh-yellow);
-        box-shadow: 0 0 0 3px var(--pooh-yellow-light);
-        background: var(--bg-paper);
-    }
-    
-    .storybook-form label {
-        color: var(--text-dark);
-        font-weight: 600;
-        margin-bottom: 0.5rem;
-        display: block;
-    }
-    
-    .storybook-form label i {
-        color: var(--pooh-yellow);
-        margin-right: 0.5rem;
-    }
-    
-    /* =========================
-       IMPROVED LISTS & DETAILS
-       ========================= */
-    .storybook-detail-item {
-        border-bottom: 2px dashed var(--border-light);
-        padding: 1rem 0;
-    }
-    
-    .storybook-detail-item:last-child {
-        border-bottom: none;
-    }
-    
-    .storybook-detail-item dt {
-        color: var(--text-dark);
-        font-weight: 700;
-    }
-    
-    .storybook-detail-item dd {
-        color: var(--text-medium);
-        font-weight: 600;
-    }
-    
-    .storybook-list li {
-        color: var(--text-medium);
-        padding-left: 1.5rem;
-        position: relative;
-        margin-bottom: 0.75rem;
-    }
-    
-    .storybook-list li::before {
-        content: '•';
-        color: var(--pooh-yellow);
-        font-weight: bold;
-        position: absolute;
-        left: 0;
-    }
-    
-    /* =========================
-       IMPROVED NOTES & BANNERS
-       ========================= */
-    .storybook-note-banner {
-        background: linear-gradient(135deg, 
-            var(--pooh-yellow-light) 0%, 
-            var(--bg-honey) 100%);
-        border: 2px solid var(--border-light);
-        border-left: 6px solid var(--pooh-yellow);
-        border-radius: var(--radius-md);
-        padding: 1.25rem;
-        margin: 1.5rem 0;
-    }
-    
-    .storybook-note-banner i {
-        color: var(--pooh-yellow);
-        font-size: 1.25rem;
-    }
-    
-    .storybook-note-banner strong {
-        color: var(--text-dark);
-        display: block;
-        margin-bottom: 0.25rem;
-    }
-    
-    .storybook-card__note {
-        background: var(--pooh-yellow-light);
-        border-left: 4px solid var(--pooh-yellow);
-        border-radius: var(--radius-sm);
-        padding: 1rem;
-        margin-top: 1rem;
-    }
-    
-    /* =========================
-       IMPROVED FOOTER
-       ========================= */
-    .storybook-footer {
-        background: linear-gradient(135deg, 
-            var(--text-dark) 0%, 
-            #5D4037 100%);
-        color: var(--text-on-dark);
-        padding: 3rem 1rem;
-        margin-top: 3rem;
-    }
-    
-    .storybook-footer__text {
-        color: var(--text-on-dark);
-        font-size: 1.25rem;
-        opacity: 0.9;
-    }
-    
-    .storybook-footer__credits {
-        color: var(--text-on-dark);
-        opacity: 0.7;
-    }
-    
-    .storybook-footer i {
-        color: var(--pooh-yellow);
-    }
-    
-    /* =========================
-       IMPROVED TOUCH CONTROLS
-       ========================= */
-    .touch-controls {
-        background: linear-gradient(135deg, 
-            var(--bg-honey) 0%, 
-            var(--pooh-yellow-light) 100%);
-        border: 2px solid var(--border-medium);
-        border-radius: var(--radius-lg);
-        padding: 1.5rem;
-        margin: 1.5rem 0;
-    }
-    
-    .touch-btn {
-        background: linear-gradient(135deg, 
-            var(--pooh-yellow) 0%, 
-            var(--honey-gold) 100%);
-        color: var(--text-on-yellow);
-        border: none;
-        border-radius: var(--radius-md);
-        font-size: 1.5rem;
-        box-shadow: var(--shadow-md);
-        transition: var(--transition-fast);
-    }
-    
-    .touch-btn:active {
-        transform: scale(0.95);
-        box-shadow: var(--shadow-sm);
-    }
-    
-    /* =========================
-       IMPROVED OVERLAYS & MODALS
-       ========================= */
-    .game-overlay {
-        background: linear-gradient(135deg, 
-            rgba(255, 248, 240, 0.95) 0%, 
-            rgba(255, 243, 224, 0.98) 100%);
-        backdrop-filter: blur(10px);
-        -webkit-backdrop-filter: blur(10px);
-        color: var(--text-dark);
-    }
-    
-    .game-overlay__badge {
-        background: linear-gradient(135deg, 
-            var(--pooh-yellow) 0%, 
-            var(--honey-gold) 100%);
-        color: var(--text-on-yellow);
-        border: 3px solid var(--border-light);
-        box-shadow: 
-            var(--shadow-xl),
-            0 0 0 10px rgba(255, 167, 38, 0.1),
-            inset 0 0 20px rgba(255, 255, 255, 0.5);
-    }
-    
-    /* =========================
-       IMPROVED PROGRESS BARS
-       ========================= */
-    .streak-meter__track {
-        background: var(--border-light);
-        border-radius: var(--radius-pill);
-        overflow: hidden;
-        height: 10px;
-    }
-    
-    .streak-meter__fill {
-        background: linear-gradient(90deg, 
-            var(--pooh-yellow) 0%, 
-            var(--honey-gold) 50%, 
-            var(--pooh-red) 100%);
-        border-radius: var(--radius-pill);
-        transition: width 0.3s ease;
-    }
-    
-    .objective-tracker__bar {
-        background: var(--border-light);
-        border-radius: var(--radius-pill);
-        overflow: hidden;
-        height: 8px;
-    }
-    
-    .objective-tracker__fill {
-        background: linear-gradient(90deg, 
-            var(--pooh-yellow) 0%, 
-            var(--honey-gold) 100%);
-        border-radius: var(--radius-pill);
-        transition: width 0.5s cubic-bezier(0.34, 1.56, 0.64, 1);
-    }
-    
-    /* =========================
-       IMPROVED HUD PILLS
-       ========================= */
-    .hud-pill {
-        background: var(--bg-card);
-        border: 2px solid var(--border-light);
-        border-radius: var(--radius-md);
-        padding: 1.5rem;
-        text-align: center;
-        transition: var(--transition);
-    }
-    
-    .hud-pill:hover {
-        transform: translateY(-3px);
-        box-shadow: var(--shadow-md);
-        border-color: var(--pooh-yellow);
-    }
-    
-    .hud-pill--highlight {
-        background: linear-gradient(135deg, 
-            var(--pooh-yellow-light) 0%, 
-            var(--bg-honey) 100%);
-        border-color: var(--pooh-yellow);
-        box-shadow: 0 0 20px rgba(255, 167, 38, 0.2);
-    }
-    
-    .hud-pill__label {
-        color: var(--text-light);
-        font-size: 0.875rem;
-        text-transform: uppercase;
-        letter-spacing: 1px;
-        font-weight: 600;
-        margin-bottom: 0.5rem;
-    }
-    
-    .hud-pill__value {
-        color: var(--text-dark);
-        font-size: 1.5rem;
-        font-weight: 700;
-    }
-    
-    /* =========================
-       IMPROVED LOADER
-       ========================= */
-    .loader {
-        background: linear-gradient(135deg, 
-            var(--bg-cream) 0%, 
-            var(--pooh-yellow-light) 100%);
-    }
-    
-    .loader__pooh {
-        background: linear-gradient(135deg, 
-            var(--pooh-yellow) 0%, 
-            var(--honey-gold) 100%);
-        box-shadow: 
-            var(--shadow-lg),
-            0 0 0 10px rgba(255, 167, 38, 0.1);
-    }
-    
-    /* =========================
-       IMPROVED DIFFICULTY SELECTOR
-       ========================= */
-    .difficulty-pill {
-        background: var(--bg-card);
-        border: 2px solid var(--border-light);
-        border-radius: var(--radius-pill);
-        padding: 0.75rem 1.25rem;
-        font-weight: 600;
-        color: var(--text-medium);
-    }
-    
-    .difficulty-pill select {
-        background: transparent;
-        border: none;
-        color: var(--text-dark);
-        font-weight: 600;
-        outline: none;
-    }
-    
-    /* =========================
-       IMPROVED SCROLLBAR
-       ========================= */
-    ::-webkit-scrollbar {
-        width: 10px;
-        height: 10px;
-    }
-    
-    ::-webkit-scrollbar-track {
-        background: var(--border-light);
-        border-radius: var(--radius-pill);
-    }
-    
-    ::-webkit-scrollbar-thumb {
-        background: var(--pooh-yellow);
-        border-radius: var(--radius-pill);
-    }
-    
-    ::-webkit-scrollbar-thumb:hover {
-        background: var(--honey-gold);
-    }
-    
-    /* =========================
-       DARK MODE SUPPORT
-       ========================= */
-    @media (prefers-color-scheme: dark) {
-        :root {
-            --bg-cream: #2D2424;
-            --bg-paper: #3A2F2F;
-            --bg-card: #463B3B;
-            --bg-honey: #5C4A4A;
-            
-            --text-dark: #F5F5F5;
-            --text-medium: #E0E0E0;
-            --text-light: #B0B0B0;
-            
-            --border-light: rgba(255, 255, 255, 0.1);
-            --border-medium: rgba(255, 255, 255, 0.2);
-            --shadow-color: rgba(0, 0, 0, 0.3);
-            
-            --pooh-yellow-light: #5C4A4A;
-            --pooh-red-light: #5C3A3A;
+        * {
+            box-sizing: border-box;
         }
-        
-        .storybook-section__inner::before {
-            opacity: 0.8;
+
+        html, body {
+            margin: 0;
+            padding: 0;
         }
-        
-        .honey-canvas-inner {
-            background: linear-gradient(180deg, 
-                #5C4A4A 0%, 
-                #4A3A3A 50%, 
-                #3A2A2A 100%);
+
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, "Nunito", system-ui, sans-serif;
+            background:
+                radial-gradient(circle at top left, #ffe9c4 0, transparent 50%),
+                radial-gradient(circle at bottom right, #ffd9b0 0, transparent 50%),
+                #f7e0c2;
+            color: var(--ink-brown);
+            min-height: 100vh;
+            display: flex;
+            justify-content: center;
         }
-        
-        .storybook-footer {
-            background: linear-gradient(135deg, 
-                #1A1A1A 0%, 
-                #2D2424 100%);
+
+        /* Storybook page frame */
+
+        .page-frame {
+            width: 100%;
+            max-width: 520px;
+            margin: 12px auto 16px;
+            padding: 10px;
+            background: linear-gradient(135deg, #f4e0c3, #e8cfad);
+            border-radius: 18px;
+            box-shadow:
+                0 18px 40px rgba(96, 63, 32, 0.25),
+                0 0 0 2px rgba(255, 255, 255, 0.5);
         }
-    }
-    
-    /* =========================
-       HIGH CONTRAST MODE
-       ========================= */
-    @media (prefers-contrast: high) {
-        :root {
-            --pooh-yellow: #FF6F00;
-            --pooh-red: #D32F2F;
-            --text-dark: #000000;
-            --text-medium: #212121;
-            --border-light: #000000;
+
+        .page {
+            border-radius: 14px;
+            background:
+                repeating-linear-gradient(
+                    to bottom,
+                    rgba(255, 255, 255, 0.9),
+                    rgba(255, 255, 255, 0.9) 32px,
+                    rgba(255, 250, 235, 0.9) 33px
+                ),
+                var(--page-cream);
+            border: 1px solid rgba(153, 110, 56, 0.35);
+            padding: 18px 16px 22px;
+            box-shadow:
+                inset 0 0 0 1px rgba(255, 255, 255, 0.7),
+                var(--shadow-md);
         }
-        
+
+        .skip-link {
+            position: absolute;
+            left: -999px;
+            top: auto;
+            width: 1px;
+            height: 1px;
+            overflow: hidden;
+        }
+
+        .skip-link:focus {
+            position: fixed;
+            left: 16px;
+            top: 16px;
+            width: auto;
+            height: auto;
+            padding: 8px 12px;
+            background: #000;
+            color: #fff;
+            z-index: 50;
+            border-radius: 999px;
+        }
+
+        /* Header / Story title */
+
+        header {
+            text-align: center;
+            margin-bottom: 14px;
+        }
+
+        .logo-icon {
+            width: 76px;
+            height: 76px;
+            border-radius: 22px;
+            background:
+                radial-gradient(circle at 30% 30%, #fff8d9 0, #f7c948 45%, #e0a81b 100%);
+            box-shadow: 0 10px 24px rgba(204, 149, 67, 0.55);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            margin: 0 auto 10px;
+            font-size: 2.7rem;
+        }
+
+        h1 {
+            font-family: "Playfair Display", Georgia, "Times New Roman", serif;
+            font-weight: 700;
+            font-size: 2.0rem;
+            margin: 0 0 2px;
+            letter-spacing: 0.04em;
+        }
+
+        .subtitle {
+            font-family: "Schoolbell", system-ui, sans-serif;
+            font-size: 1rem;
+            color: var(--ink-soft);
+        }
+
+        .divider {
+            width: 90px;
+            height: 4px;
+            border-radius: 999px;
+            margin: 10px auto 4px;
+            background: linear-gradient(90deg, #f7c948, #f29d4b, #f7c948);
+        }
+
+        .chapter-label {
+            font-size: 0.82rem;
+            letter-spacing: 0.16em;
+            text-transform: uppercase;
+            color: rgba(62, 39, 35, 0.7);
+            margin-bottom: 8px;
+        }
+
+        /* Storybox / Event details */
+
+        .story-box {
+            background: rgba(255, 250, 235, 0.92);
+            border-radius: var(--radius-lg);
+            padding: 12px 12px 14px;
+            margin-bottom: 14px;
+            box-shadow: var(--shadow-sm);
+            border: 1px solid rgba(153, 110, 56, 0.25);
+        }
+
+        .story-text {
+            font-size: 0.95rem;
+            line-height: 1.6;
+            color: var(--ink-soft);
+            margin-bottom: 8px;
+        }
+
+        .story-text:first-letter {
+            font-family: "Playfair Display", serif;
+            font-size: 1.6rem;
+            float: left;
+            line-height: 1;
+            padding-right: 4px;
+            padding-top: 1px;
+            color: var(--pooh-red);
+        }
+
+        .event-list {
+            border-top: 1px dashed rgba(153, 110, 56, 0.4);
+            margin-top: 8px;
+            padding-top: 8px;
+            font-size: 0.9rem;
+        }
+
+        .event-row {
+            display: flex;
+            justify-content: space-between;
+            margin-bottom: 3px;
+        }
+
+        .event-label {
+            font-weight: 600;
+        }
+
+        /* Game shell */
+
+        .game-shell {
+            background: rgba(255, 252, 240, 0.95);
+            border-radius: var(--radius-lg);
+            box-shadow: var(--shadow-md);
+            padding: 14px 12px 18px;
+            border: 1px solid rgba(153, 110, 56, 0.32);
+            position: relative;
+        }
+
+        .game-shell::before {
+            content: "";
+            position: absolute;
+            inset: 6px 10px auto 10px;
+            height: 4px;
+            border-radius: 999px;
+            background: linear-gradient(90deg, #f7c948, #f29d4b, #f7c948);
+            opacity: 0.6;
+        }
+
+        .game-shell header {
+            text-align: left;
+            margin-bottom: 10px;
+        }
+
+        .game-shell h2 {
+            font-family: "Schoolbell", system-ui, sans-serif;
+            font-size: 1.5rem;
+            margin: 4px 0 4px;
+        }
+
+        .game-shell p {
+            margin: 0;
+            font-size: 0.94rem;
+            color: var(--ink-soft);
+        }
+
+        .stats-row {
+            display: flex;
+            gap: 6px;
+            margin: 12px 0 10px;
+            overflow-x: auto;
+            padding-bottom: 4px;
+        }
+
+        .stat-pill {
+            min-width: 82px;
+            background: linear-gradient(135deg, var(--bg-honey), var(--pooh-yellow-light));
+            border-radius: 999px;
+            padding: 5px 10px;
+            box-shadow: var(--shadow-sm);
+            font-size: 0.8rem;
+            border: 1px solid rgba(153, 110, 56, 0.3);
+        }
+
+        .stat-pill--highlight {
+            background: linear-gradient(135deg, #ffe8a3, #f8c245);
+        }
+
+        .stat-label {
+            text-transform: uppercase;
+            font-weight: 600;
+            letter-spacing: 0.04em;
+            color: rgba(62, 39, 35, 0.75);
+            font-size: 0.72rem;
+        }
+
+        .stat-value {
+            font-weight: 800;
+            font-size: 1.08rem;
+        }
+
+        .difficulty-row {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            gap: 8px;
+            margin-bottom: 10px;
+            margin-top: 4px;
+        }
+
+        .difficulty-row label {
+            font-size: 0.88rem;
+            font-weight: 600;
+            color: var(--ink-soft);
+            display: flex;
+            align-items: center;
+            gap: 6px;
+        }
+
+        .difficulty-row label i {
+            color: var(--pooh-yellow-dark);
+        }
+
+        .difficulty-row select {
+            flex: 1;
+            padding: 8px 10px;
+            font-size: 0.9rem;
+            border-radius: 999px;
+            border: 1px solid rgba(153, 110, 56, 0.35);
+            background: #fffdf6;
+        }
+
+        /* Canvas area */
+
+        .canvas-shell {
+            margin-bottom: 12px;
+            border-radius: var(--radius-md);
+            padding: 6px;
+            background: linear-gradient(135deg, #ffe7b2, #ffd18a);
+            box-shadow: var(--shadow-md);
+        }
+
+        .canvas-inner {
+            border-radius: var(--radius-md);
+            overflow: hidden;
+            background: #cbe3ff;
+            position: relative;
+        }
+
+        .game-canvas {
+            display: block;
+            width: 100%;
+            touch-action: none;
+        }
+
+        .overlay {
+            position: absolute;
+            inset: 0;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            text-align: center;
+            padding: 12px;
+            background: rgba(255, 249, 226, 0.94);
+        }
+
+        .overlay-title {
+            font-family: "Schoolbell", system-ui, sans-serif;
+            font-size: 1.55rem;
+            margin-bottom: 6px;
+        }
+
+        .overlay-text {
+            font-size: 0.95rem;
+            color: var(--ink-soft);
+        }
+
+        /* Controls + status */
+
+        .controls-row {
+            display: flex;
+            gap: 8px;
+            margin-bottom: 10px;
+        }
+
         .btn {
-            border: 2px solid #000000;
+            flex: 1;
+            border: none;
+            border-radius: 999px;
+            padding: 9px 11px;
+            font-size: 0.95rem;
+            font-weight: 700;
+            display: inline-flex;
+            align-items: center;
+            justify-content: center;
+            gap: 6px;
+            cursor: pointer;
+            box-shadow: var(--shadow-sm);
         }
-        
-        .storybook-section__inner {
-            border: 3px solid #000000;
-        }
-        
-        .game-stat {
-            border: 2px solid #000000;
-        }
-    }
-    
-    /* =========================
-       REDUCED MOTION
-       ========================= */
-    @media (prefers-reduced-motion: reduce) {
-        *,
-        *::before,
-        *::after {
-            animation-duration: 0.01ms !important;
-            animation-iteration-count: 1 !important;
-            transition-duration: 0.01ms !important;
-        }
-        
-        .btn:hover,
-        .storybook-card:hover,
-        .storybook-character:hover {
-            transform: none;
-        }
-    }
 
-</style>
+        .btn-primary {
+            background: linear-gradient(135deg, var(--pooh-yellow), var(--pooh-yellow-dark));
+            color: #3e2723;
+        }
+
+        .btn-secondary {
+            background: #fffdf6;
+            color: var(--ink-soft);
+        }
+
+        .btn:active {
+            transform: scale(0.97);
+        }
+
+        .status {
+            font-size: 0.84rem;
+            padding: 8px 10px;
+            border-radius: 12px;
+            background: rgba(255, 249, 230, 0.9);
+            color: var(--ink-soft);
+            display: flex;
+            align-items: center;
+            gap: 6px;
+        }
+
+        .status i {
+            color: var(--pooh-yellow-dark);
+        }
+
+        footer {
+            text-align: center;
+            font-size: 0.78rem;
+            color: rgba(62, 39, 35, 0.7);
+            margin-top: 12px;
+            font-style: italic;
+        }
+
+        footer i {
+            color: var(--pooh-red);
+        }
+
+        @media (max-width: 480px) {
+            .page-frame {
+                margin: 8px 6px 12px;
+                padding: 8px;
+            }
+
+            .page {
+                padding: 14px 12px 18px;
+            }
+
+            h1 {
+                font-size: 1.8rem;
+            }
+
+            .game-shell h2 {
+                font-size: 1.35rem;
+            }
+        }
+    </style>
 </head>
 <body>
-    <!-- Skip to Main Content -->
-    <a href="#main-content" class="skip-link">Skip to main content</a>
-    
-    <!-- Loading Screen -->
-    <div class="loader" id="loader">
-        <div class="loader__content">
-            <div class="loader__pooh">
-                <div class="loader__ears loader__ears--left"></div>
-                <div class="loader__ears loader__ears--right"></div>
-                <div class="loader__eyes">
-                    <div class="loader__eye"></div>
-                    <div class="loader__eye"></div>
+<a href="#main" class="skip-link">Skip to main content</a>
+
+<div class="page-frame">
+    <div class="page">
+        <header>
+            <div class="logo-icon" aria-hidden="true">🍯</div>
+            <div class="chapter-label">A Hundred Acre Mini-Adventure</div>
+            <h1>Pooh's Honey Barrel</h1>
+            <div class="divider"></div>
+            <p class="subtitle">Pooh carries his barrel, honeybee drops fall from the sky, and the bees are very, very busy.</p>
+        </header>
+
+        <!-- Story intro / invitation -->
+        <section class="story-box" aria-label="Story introduction">
+            <p class="story-text">
+                Once upon an afternoon in the Hundred Acre Wood, Pooh Bear found his honey cupboard terribly empty. So he picked up his very best barrel, stepped out into the sunshine, and waited for the honeybees to share a few drippy drops from the sky. Of course, the bees themselves were not to be bumped into, because bees have very particular feelings about bears and barrels.
+            </p>
+            <div class="event-list">
+                <div class="event-row">
+                    <span class="event-label">When:</span>
+                    <span>April 24 · 2:00–5:00 PM</span>
                 </div>
-                <div class="loader__nose"></div>
+                <div class="event-row">
+                    <span class="event-label">Where:</span>
+                    <span>The Hundred Acre Wood</span>
+                </div>
+                <div class="event-row">
+                    <span class="event-label">Your Part:</span>
+                    <span>Help Pooh catch the honeybee drops!</span>
+                </div>
             </div>
-        </div>
-        
-        <div class="loader__text">
-            <p style="margin-bottom: 15px; font-family: 'Schoolbell'; font-size: 1.2rem;">Entering the Hundred Acre Wood...</p>
-            <div class="loader__progress">
-                <div class="loader__bar"></div>
-            </div>
-        </div>
+        </section>
+
+        <main id="main">
+            <section class="game-shell" aria-label="Honey Barrel game">
+                <header>
+                    <h2>The Honey Barrel Game</h2>
+                    <p>Slide Pooh along the ground with your finger (or mouse). Catch the glowing honeybee drops in his barrel, avoid the buzzing bees, and see how high your storybook score can go.</p>
+                </header>
+
+                <!-- Stats -->
+                <div class="stats-row">
+                    <div class="stat-pill stat-pill--highlight">
+                        <div class="stat-label">Score</div>
+                        <div class="stat-value" id="score">0</div>
+                    </div>
+                    <div class="stat-pill">
+                        <div class="stat-label">Time</div>
+                        <div class="stat-value" id="time">60</div>
+                    </div>
+                    <div class="stat-pill">
+                        <div class="stat-label">Drops</div>
+                        <div class="stat-value" id="caught">0</div>
+                    </div>
+                    <div class="stat-pill">
+                        <div class="stat-label">Best</div>
+                        <div class="stat-value" id="best">0</div>
+                    </div>
+                    <div class="stat-pill">
+                        <div class="stat-label">Streak</div>
+                        <div class="stat-value" id="streak">x1</div>
+                    </div>
+                </div>
+
+                <!-- Difficulty -->
+                <div class="difficulty-row">
+                    <label for="difficulty">
+                        <i class="fas fa-sliders-h"></i>
+                        Honey Weather
+                    </label>
+                    <select id="difficulty">
+                        <option value="easy">Gentle Drips</option>
+                        <option value="medium" selected>Busy Bees</option>
+                        <option value="hard">Honey Storm</option>
+                    </select>
+                </div>
+
+                <!-- Canvas -->
+                <div class="canvas-shell">
+                    <div class="canvas-inner">
+                        <canvas id="gameCanvas" class="game-canvas"></canvas>
+                        <div class="overlay" id="overlay">
+                            <div class="overlay-title">Ready, Pooh?</div>
+                            <div class="overlay-text">
+                                Tap <strong>Start</strong>, then slide your finger to move Pooh and his barrel.
+                                Catch the glowing <strong>honeybee drops</strong>, but mind the <strong>bees</strong> — they don't like barrels bumping into them.
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Controls -->
+                <div class="controls-row" aria-label="Game controls">
+                    <button class="btn btn-primary" id="startBtn">
+                        <i class="fas fa-play"></i> Start
+                    </button>
+                    <button class="btn btn-secondary" id="pauseBtn" disabled>
+                        <i class="fas fa-pause"></i> Pause
+                    </button>
+                </div>
+
+                <!-- Status -->
+                <div class="status" id="status">
+                    <i class="fas fa-feather-pointed"></i>
+                    <span>Tap Start, then gently drag to move Pooh left and right.</span>
+                </div>
+            </section>
+        </main>
+
+        <footer>
+            Told with warmth in the Hundred Acre Wood &mdash; a little fan-made storybook game.
+        </footer>
     </div>
-    
-    <!-- Header -->
-    <header class="storybook-header">
-        <div class="storybook-header__top">
-            <!-- Logo -->
-            <div class="storybook-logo">
-                <div class="storybook-logo__pooh"></div>
-                <div class="storybook-logo__text">
-                    <h1 class="storybook-logo__title">Pooh's Honey Hunt</h1>
-                    <p class="storybook-logo__subtitle">A Hundred Acre Wood Celebration</p>
-                </div>
-            </div>
-            
-            <!-- Meta Badges - Desktop Only -->
-            <div class="storybook-header__meta desktop-only">
-                <div class="storybook-badge">
-                    <i class="fas fa-calendar-star"></i>
-                    <span>April 24th</span>
-                </div>
-                <div class="storybook-badge">
-                    <i class="fas fa-clock"></i>
-                    <span>2:00 PM</span>
-                </div>
-            </div>
-        </div>
-        
-        <!-- Navigation -->
-        <nav class="storybook-nav">
-            <button class="storybook-nav__toggle" aria-expanded="false" aria-controls="nav-list">
-                <span>Story Chapters</span>
-                <i class="fas fa-chevron-down storybook-nav__toggle-icon"></i>
-            </button>
-            <ul class="storybook-nav__list" id="nav-list">
-                <li><a href="#chapter-1" class="storybook-nav__link"><i class="fas fa-book-open"></i> The Invitation</a></li>
-                <li><a href="#chapter-2" class="storybook-nav__link"><i class="fas fa-users"></i> Meet the Characters</a></li>
-                <li><a href="#chapter-3" class="storybook-nav__link"><i class="fas fa-gamepad"></i> Honey Hunt Game</a></li>
-                <li><a href="#chapter-4" class="storybook-nav__link"><i class="fas fa-calendar-check"></i> RSVP & Details</a></li>
-                <li><a href="#chapter-5" class="storybook-nav__link"><i class="fas fa-gift"></i> Special Surprises</a></li>
-            </ul>
-        </nav>
-    </header>
-    
-    <!-- Main Content -->
-    <main class="storybook-main" id="main-content">
-        <!-- Chapter 1: The Invitation -->
-        <section id="chapter-1" class="storybook-section">
-            <div class="storybook-section__inner">
-                <h2 class="storybook-section__title">You're Invited!</h2>
-                <p class="storybook-section__subtitle">A storybook adventure in the Hundred Acre Wood</p>
-                
-                <div class="storybook-grid">
-                    <div class="storybook-card">
-                        <p style="font-size: 1.1rem; line-height: 1.6; margin-bottom: 15px;">
-                            Once upon a time, in the Hundred Acre Wood, there lived a bear called Winnie-the-Pooh. 
-                            Pooh loved honey more than anything in the world...
-                        </p>
-                        <button class="btn btn--primary" style="width: 100%;" onclick="expandStory()">
-                            <i class="fas fa-book"></i> Read Full Story
-                        </button>
-                    </div>
-                    
-                    <div class="storybook-card">
-                        <h3 style="margin-bottom: 15px; font-size: 1.3rem;">Event Details</h3>
-                        <div style="display: grid; gap: 10px;">
-                            <div style="display: flex; justify-content: space-between;">
-                                <span style="font-weight: 600;">Date:</span>
-                                <span>April 24th, 2024</span>
-                            </div>
-                            <div style="display: flex; justify-content: space-between;">
-                                <span style="font-weight: 600;">Time:</span>
-                                <span>2:00 PM - 5:00 PM</span>
-                            </div>
-                            <div style="display: flex; justify-content: space-between;">
-                                <span style="font-weight: 600;">Location:</span>
-                                <span>Hundred Acre Wood</span>
-                            </div>
-                        </div>
-                    </div>
-                </div>
-            </div>
-        </section>
-        
-        <!-- Chapter 3: Honey Hunt Game (Mobile Optimized) -->
-        <section id="chapter-3" class="storybook-section">
-            <div class="storybook-section__inner">
-                <h2 class="storybook-section__title">Honey Hunt Game</h2>
-                <p class="storybook-section__subtitle">Help Pooh find all the honey pots!</p>
-                
-                <div class="game-card">
-                    <div class="game-card__header">
-                        <div style="text-align: center; margin-bottom: 15px;">
-                            <div style="width: 60px; height: 60px; background: linear-gradient(145deg, #ffc42b, #ffd86a); border-radius: 15px; display: flex; align-items: center; justify-content: center; margin: 0 auto 10px;">
-                                <i class="fas fa-honey-pot" style="font-size: 1.8rem; color: #5b3812;"></i>
-                            </div>
-                            <h3 style="font-size: 1.4rem; margin-bottom: 5px;">Honey Hunt Adventure</h3>
-                            <p style="color: rgba(67, 48, 42, 0.8);">Tap on honey pots to collect them!</p>
-                        </div>
-                        
-                        <!-- Stats -->
-                        <div class="game-card__stats">
-                            <div class="game-stat">
-                                <span class="game-stat__value" id="score">0</span>
-                                <span class="game-stat__label">Score</span>
-                            </div>
-                            <div class="game-stat">
-                                <span class="game-stat__value" id="timer">60</span>
-                                <span class="game-stat__label">Time</span>
-                            </div>
-                            <div class="game-stat">
-                                <span class="game-stat__value" id="potsCount">0</span>
-                                <span class="game-stat__label">Pots</span>
-                            </div>
-                            <div class="game-stat">
-                                <span class="game-stat__value" id="streak">x1</span>
-                                <span class="game-stat__label">Streak</span>
-                            </div>
-                            <div class="game-stat">
-                                <span class="game-stat__value" id="highScoreStat">0</span>
-                                <span class="game-stat__label">High</span>
-                            </div>
-                        </div>
-                        
-                        <!-- Power-ups -->
-                        <div class="power-ups">
-                            <div class="power-up power-up--magnet" id="magnetPowerUp">
-                                <i class="fas fa-magnet" style="color: #4CAF50;"></i>
-                                <span id="magnetCount">3</span>
-                            </div>
-                            <div class="power-up power-up--time" id="timePowerUp">
-                                <i class="fas fa-clock" style="color: #2196F3;"></i>
-                                <span id="timeCount">3</span>
-                            </div>
-                            <div class="power-up power-up--shield" id="shieldPowerUp">
-                                <i class="fas fa-shield-alt" style="color: #FF9800;"></i>
-                                <span id="shieldCount">3</span>
-                            </div>
-                        </div>
-                    </div>
-                    
-                    <!-- Game Canvas -->
-                    <div class="honey-canvas-shell">
-                        <div class="honey-canvas-inner">
-                            <canvas id="gameCanvas" class="game-canvas"></canvas>
-                            <div id="gameOverlay" style="position: absolute; top: 0; left: 0; right: 0; bottom: 0; display: flex; flex-direction: column; align-items: center; justify-content: center; background: rgba(255, 248, 225, 0.9);">
-                                <div style="font-size: 1.8rem; font-weight: 800; margin-bottom: 10px;" id="overlayText">Ready?</div>
-                                <div id="overlayHint">Press Start to begin</div>
-                            </div>
-                        </div>
-                    </div>
-                    
-                    <!-- Game Controls -->
-                    <div class="honey-controls">
-                        <div class="honey-controls__left">
-                            <button class="btn btn--primary" id="startBtn">
-                                <i class="fas fa-play"></i> Start
-                            </button>
-                            <button class="btn btn--ghost" id="pauseBtn">
-                                <i class="fas fa-pause"></i> Pause
-                            </button>
-                        </div>
-                        <div class="honey-controls__right">
-                            <select id="difficulty" style="padding: 12px; border: 2px solid rgba(67, 48, 42, 0.1); border-radius: var(--radius-md); background: white; flex: 1;">
-                                <option value="easy">Easy</option>
-                                <option value="medium" selected>Medium</option>
-                                <option value="hard">Hard</option>
-                            </select>
-                        </div>
-                    </div>
-                    
-                    <!-- Touch Controls (Always visible on mobile) -->
-                    <div class="touch-controls">
-                        <div style="font-weight: 600; margin-bottom: 15px; display: flex; align-items: center; gap: 10px;">
-                            <i class="fas fa-hand-point-up"></i>
-                            <span>Touch Controls</span>
-                        </div>
-                        <div class="touch-controls__buttons">
-                            <button class="touch-btn" data-action="up">
-                                <i class="fas fa-arrow-up"></i>
-                            </button>
-                            <button class="touch-btn" data-action="action">
-                                <i class="fas fa-star"></i>
-                            </button>
-                            <button class="touch-btn" data-action="down">
-                                <i class="fas fa-arrow-down"></i>
-                            </button>
-                        </div>
-                    </div>
-                    
-                    <!-- Game Status -->
-                    <div style="background: rgba(255, 248, 225, 0.8); padding: 15px; border-radius: var(--radius-md); margin-top: 20px; font-size: 0.9rem;">
-                        <i class="fas fa-info-circle" style="margin-right: 8px; color: #ffc42b;"></i>
-                        <span id="statusText">Tap START to begin collecting honey pots!</span>
-                    </div>
-                </div>
-            </div>
-        </section>
-    </main>
-    
-    <!-- Footer -->
-    <footer class="storybook-footer">
-        <p class="storybook-footer__text">
-            Made with <i class="fas fa-heart" style="color: var(--pooh-red);"></i> in the Hundred Acre Wood
-        </p>
-        <p class="storybook-footer__credits">
-            &copy; 2024 Winnie-the-Pooh's Honey Hunt.<br>
-            This is a fan-made celebration site.
-        </p>
-    </footer>
-    
-    <!-- Simplified Mobile-Optimized JavaScript -->
-    <script>
-        // Mobile-specific initialization
-        function initMobile() {
-            // Set safe area variables
-            document.documentElement.style.setProperty('--safe-area-inset-top', '0px');
-            document.documentElement.style.setProperty('--safe-area-inset-bottom', '0px');
-            
-            // Handle iOS safe areas
-            if (CSS.supports('padding-top: env(safe-area-inset-top)')) {
-                const safeAreaTop = getComputedStyle(document.documentElement).getPropertyValue('--safe-area-inset-top');
-                const safeAreaBottom = getComputedStyle(document.documentElement).getPropertyValue('--safe-area-inset-bottom');
-                
-                if (!safeAreaTop || safeAreaTop === '0px') {
-                    document.documentElement.style.setProperty('--safe-area-inset-top', 'env(safe-area-inset-top)');
-                    document.documentElement.style.setProperty('--safe-area-inset-bottom', 'env(safe-area-inset-bottom)');
-                }
-            }
-            
-            // Prevent double-tap zoom
-            let lastTouchEnd = 0;
-            document.addEventListener('touchend', function(event) {
-                const now = (new Date()).getTime();
-                if (now - lastTouchEnd <= 300) {
-                    event.preventDefault();
-                }
-                lastTouchEnd = now;
-            }, false);
-            
-            // Handle viewport height on iOS
-            function setVH() {
-                const vh = window.innerHeight * 0.01;
-                document.documentElement.style.setProperty('--vh', `${vh}px`);
-            }
-            
-            setVH();
-            window.addEventListener('resize', setVH);
-            window.addEventListener('orientationchange', setVH);
+</div>
+
+<script>
+(function () {
+    function clampNumber(n) {
+        return isNaN(n) ? 0 : n;
+    }
+
+    function randRange(min, max) {
+        return min + Math.random() * (max - min);
+    }
+
+    class PoohHoneyBarrelGame {
+        constructor() {
+            this.canvas  = document.getElementById('gameCanvas');
+            this.ctx     = this.canvas.getContext('2d');
+
+            this.scoreEl  = document.getElementById('score');
+            this.timeEl   = document.getElementById('time');
+            this.caughtEl = document.getElementById('caught');
+            this.bestEl   = document.getElementById('best');
+            this.streakEl = document.getElementById('streak');
+            this.statusEl = document.getElementById('status').querySelector('span');
+            this.overlay  = document.getElementById('overlay');
+            this.startBtn = document.getElementById('startBtn');
+            this.pauseBtn = document.getElementById('pauseBtn');
+            this.diffSelect = document.getElementById('difficulty');
+
+            this.width  = 0;
+            this.height = 0;
+
+            this.running  = false;
+            this.paused   = false;
+            this.timeLeft = 60;
+            this.score    = 0;
+            this.caught   = 0;
+
+            this.combo      = 0;
+            this.multiplier = 1;
+
+            this.entities = []; // mix of drops + bees
+            this.popups   = []; // floating texts
+
+            this.timerId       = null;
+            this.lastFrameTime = 0;
+
+            this.cloudOffset = 0;
+            this.beeHitTimer = 0;
+
+            this.player = {
+                x: 0,
+                y: 0,
+                width: 82,
+                height: 50
+            };
+
+            this.resizeHandler     = this.handleResize.bind(this);
+            this.touchHandler      = this.handleTouch.bind(this);
+            this.mouseMoveHandler  = this.handleMouseMove.bind(this);
+
+            this.init();
         }
-        
-        // Navigation toggle
-        function initNavigation() {
-            const navToggle = document.querySelector('.storybook-nav__toggle');
-            const navList = document.querySelector('.storybook-nav__list');
-            
-            if (navToggle && navList) {
-                navToggle.addEventListener('click', function() {
-                    const isExpanded = this.getAttribute('aria-expanded') === 'true';
-                    this.setAttribute('aria-expanded', !isExpanded);
-                    navList.classList.toggle('storybook-nav__list--open');
-                });
+
+        init() {
+            this.loadBestScore();
+            this.handleResize();
+
+            window.addEventListener('resize', this.resizeHandler);
+
+            this.canvas.addEventListener('touchstart', this.touchHandler, { passive: false });
+            this.canvas.addEventListener('touchmove',  this.touchHandler, { passive: false });
+            this.canvas.addEventListener('mousemove',  this.mouseMoveHandler);
+
+            this.startBtn.addEventListener('click', () => {
+                if (!this.running) {
+                    this.start();
+                } else if (this.paused) {
+                    this.resume();
+                } else {
+                    this.restart();
+                }
+            });
+
+            this.pauseBtn.addEventListener('click', () => {
+                if (!this.running) return;
+                if (this.paused) {
+                    this.resume();
+                } else {
+                    this.pause();
+                }
+            });
+
+            this.diffSelect.addEventListener('change', () => {
+                this.statusEl.textContent = 'The weather will feel different next time you start.';
+            });
+
+            this.drawIdleScreen();
+        }
+
+        loadBestScore() {
+            let stored = null;
+            try {
+                stored = localStorage.getItem('pooh_honey_barrel_best');
+            } catch (e) {
+                stored = null;
             }
-            
-            // Smooth scrolling for anchor links
-            document.querySelectorAll('a[href^="#"]').forEach(anchor => {
-                anchor.addEventListener('click', function(e) {
-                    e.preventDefault();
-                    const targetId = this.getAttribute('href');
-                    if (targetId === '#') return;
-                    
-                    const targetElement = document.querySelector(targetId);
-                    if (targetElement) {
-                        // Close mobile menu if open
-                        if (navList && navList.classList.contains('storybook-nav__list--open')) {
-                            navList.classList.remove('storybook-nav__list--open');
-                            navToggle.setAttribute('aria-expanded', 'false');
-                        }
-                        
-                        // Scroll to target
-                        window.scrollTo({
-                            top: targetElement.offsetTop - 80,
-                            behavior: 'smooth'
-                        });
+            let best = stored ? parseInt(stored, 10) : 0;
+            best = clampNumber(best);
+            this.bestEl.textContent = best;
+        }
+
+        saveBestScore() {
+            let currentBest = clampNumber(parseInt(this.bestEl.textContent, 10));
+            if (this.score > currentBest) {
+                this.bestEl.textContent = this.score;
+                try {
+                    localStorage.setItem('pooh_honey_barrel_best', String(this.score));
+                } catch (e) {
+                    // ignore
+                }
+            }
+        }
+
+        handleResize() {
+            const container = this.canvas.parentElement;
+            if (!container) return;
+            const width  = container.clientWidth;
+            const height = Math.min(width * 1.3, 500);
+
+            this.width  = width;
+            this.height = height;
+            this.canvas.width  = width;
+            this.canvas.height = height;
+
+            this.player.y = this.height - 52;
+            if (!this.player.x) {
+                this.player.x = this.width / 2;
+            }
+
+            if (!this.running) {
+                this.drawIdleScreen();
+            }
+        }
+
+        getDifficultyConfig() {
+            const diff = this.diffSelect.value;
+            if (diff === 'easy') {
+                return {
+                    drops: 4,
+                    bees: 2,
+                    minSpeed: 80,
+                    maxSpeed: 130,
+                    dropScore: 40,
+                    duration: 60
+                };
+            } else if (diff === 'hard') {
+                return {
+                    drops: 6,
+                    bees: 4,
+                    minSpeed: 150,
+                    maxSpeed: 230,
+                    dropScore: 70,
+                    duration: 45
+                };
+            }
+            // medium
+            return {
+                drops: 5,
+                bees: 3,
+                minSpeed: 110,
+                maxSpeed: 190,
+                dropScore: 55,
+                duration: 50
+            };
+        }
+
+        start() {
+            const config = this.getDifficultyConfig();
+            this.running = true;
+            this.paused  = false;
+
+            this.score      = 0;
+            this.caught     = 0;
+            this.combo      = 0;
+            this.multiplier = 1;
+
+            this.timeLeft    = config.duration;
+            this.dropScore   = config.dropScore;
+            this.minSpeed    = config.minSpeed;
+            this.maxSpeed    = config.maxSpeed;
+
+            this.scoreEl.textContent  = '0';
+            this.caughtEl.textContent = '0';
+            this.timeEl.textContent   = String(this.timeLeft);
+            this.streakEl.textContent = 'x1';
+            this.statusEl.textContent = 'Catch honeybee drops in the barrel, and don\'t bump the bees.';
+
+            this.overlay.style.display = 'none';
+
+            this.startBtn.innerHTML = '<i class="fas fa-rotate-right"></i> Restart';
+            this.pauseBtn.disabled  = false;
+            this.pauseBtn.innerHTML = '<i class="fas fa-pause"></i> Pause';
+
+            this.createEntities(config.drops, config.bees);
+            this.popups = [];
+            this.lastFrameTime = (typeof performance !== 'undefined' && performance.now) ? performance.now() : Date.now();
+            this.beeHitTimer = 0;
+
+            if (this.timerId) {
+                clearInterval(this.timerId);
+            }
+
+            this.timerId = setInterval(() => {
+                if (!this.running || this.paused) return;
+                this.timeLeft -= 1;
+                if (this.timeLeft <= 0) {
+                    this.timeLeft = 0;
+                    this.timeEl.textContent = '0';
+                    this.gameOver();
+                } else {
+                    this.timeEl.textContent = String(this.timeLeft);
+                }
+            }, 1000);
+
+            const self = this;
+            requestAnimationFrame(function (t) { self.loop(t); });
+        }
+
+        restart() {
+            this.running = false;
+            this.paused  = false;
+            if (this.timerId) {
+                clearInterval(this.timerId);
+                this.timerId = null;
+            }
+            this.start();
+        }
+
+        pause() {
+            this.paused = true;
+            this.pauseBtn.innerHTML = '<i class="fas fa-play"></i> Resume';
+            this.statusEl.textContent = 'Paused. Pooh is waiting patiently.';
+        }
+
+        resume() {
+            if (!this.running) return;
+            this.paused = false;
+            this.pauseBtn.innerHTML = '<i class="fas fa-pause"></i> Pause';
+            this.statusEl.textContent = 'Back to catching honey!';
+            this.lastFrameTime = (typeof performance !== 'undefined' && performance.now)
+                ? performance.now()
+                : Date.now();
+            const self = this;
+            requestAnimationFrame(function (t) { self.loop(t); });
+        }
+
+        gameOver() {
+            this.running = false;
+            this.paused  = false;
+            if (this.timerId) {
+                clearInterval(this.timerId);
+                this.timerId = null;
+            }
+
+            this.saveBestScore();
+
+            this.pauseBtn.disabled = true;
+            this.statusEl.textContent =
+                'Time\'s up! Score: ' + this.score +
+                ' · Drops caught: ' + this.caught +
+                ' · Best streak: x' + this.multiplier + '.';
+
+            this.overlay.style.display = 'flex';
+            this.overlay.querySelector('.overlay-title').textContent = 'A very good catch!';
+            this.overlay.querySelector('.overlay-text').textContent =
+                'Tap Restart to try for an even lovelier honey day.';
+        }
+
+        createEntities(dropCount, beeCount) {
+            this.entities = [];
+            for (let i = 0; i < dropCount; i++) {
+                this.entities.push(this.randomEntity('drop', true));
+            }
+            for (let j = 0; j < beeCount; j++) {
+                this.entities.push(this.randomEntity('bee', true));
+            }
+        }
+
+        randomEntity(type, fromTop) {
+            let radius = (type === 'bee') ? 16 : 18;
+            let x = radius + Math.random() * (this.width - radius * 2);
+            let y = fromTop ? -Math.random() * this.height : -radius;
+            let speed = this.minSpeed + Math.random() * (this.maxSpeed - this.minSpeed);
+            let drift = randRange(-30, 30);
+
+            let isGolden = false;
+            if (type === 'drop' && Math.random() < 0.18) {
+                isGolden = true;
+                radius += 2;
+            }
+
+            return {
+                x: x,
+                y: y,
+                radius: radius,
+                speed: speed,
+                drift: drift,
+                type: type,
+                isGolden: isGolden
+            };
+        }
+
+        respawnEntity(entity, type) {
+            const newEntity = this.randomEntity(type || entity.type, false);
+            entity.x = newEntity.x;
+            entity.y = newEntity.y;
+            entity.radius = newEntity.radius;
+            entity.speed = newEntity.speed;
+            entity.drift = newEntity.drift;
+            entity.type = newEntity.type;
+            entity.isGolden = newEntity.isGolden;
+        }
+
+        handleTouch(event) {
+            if (!this.running || this.paused) return;
+
+            event.preventDefault();
+            if (!event.touches || event.touches.length === 0) return;
+
+            const rect = this.canvas.getBoundingClientRect();
+            const clientX = event.touches[0].clientX;
+            const x = clientX - rect.left;
+            const halfW = this.player.width / 2;
+            this.player.x = Math.max(halfW, Math.min(this.width - halfW, x));
+        }
+
+        handleMouseMove(event) {
+            if (!this.running || this.paused) return;
+
+            const rect = this.canvas.getBoundingClientRect();
+            const x = event.clientX - rect.left;
+            const halfW = this.player.width / 2;
+            this.player.x = Math.max(halfW, Math.min(this.width - halfW, x));
+        }
+
+        loop(timestamp) {
+            if (!this.running || this.paused) return;
+
+            const now = (typeof timestamp === 'number')
+                ? timestamp
+                : ((typeof performance !== 'undefined' && performance.now) ? performance.now() : Date.now());
+
+            let dt = (now - this.lastFrameTime) / 1000;
+            this.lastFrameTime = now;
+            if (dt < 0 || dt > 0.5) {
+                dt = 0.016;
+            }
+
+            this.update(dt);
+            this.draw();
+
+            const self = this;
+            requestAnimationFrame(function (t) { self.loop(t); });
+        }
+
+        update(dt) {
+            this.cloudOffset += dt * 15;
+            if (this.beeHitTimer > 0) {
+                this.beeHitTimer -= dt;
+                if (this.beeHitTimer < 0) this.beeHitTimer = 0;
+            }
+
+            for (let i = 0; i < this.entities.length; i++) {
+                const e = this.entities[i];
+                e.y += e.speed * dt;
+                e.x += e.drift * dt * 0.4;
+
+                if (e.x < e.radius) e.x = e.radius;
+                if (e.x > this.width - e.radius) e.x = this.width - e.radius;
+
+                if (this.checkCatch(e)) {
+                    if (e.type === 'drop') {
+                        this.onCatchDrop(e);
+                    } else {
+                        this.onBeeHit(e);
                     }
-                });
+                    this.respawnEntity(e);
+                    continue;
+                }
+
+                if (e.y - e.radius > this.height) {
+                    if (e.type === 'drop') {
+                        this.onMissDrop();
+                    }
+                    this.respawnEntity(e);
+                }
+            }
+
+            for (let p = 0; p < this.popups.length; p++) {
+                const popup = this.popups[p];
+                popup.y += popup.vy * dt;
+                popup.opacity -= dt * 1.3;
+            }
+            this.popups = this.popups.filter(p => p.opacity > 0);
+        }
+
+        onCatchDrop(entity) {
+            this.combo += 1;
+            this.multiplier = 1 + Math.floor(this.combo / 3);
+            if (this.multiplier < 1) this.multiplier = 1;
+            if (this.multiplier > 5) this.multiplier = 5;
+
+            let base = this.dropScore;
+            if (entity.isGolden) {
+                base *= 2;
+            }
+            const gained = base * this.multiplier;
+
+            this.score  += gained;
+            this.caught += 1;
+
+            if (this.score < 0) this.score = 0;
+
+            this.scoreEl.textContent  = String(this.score);
+            this.caughtEl.textContent = String(this.caught);
+            this.streakEl.textContent = 'x' + this.multiplier;
+
+            this.statusEl.textContent =
+                (entity.isGolden ? 'A very special golden drop! ' : '') +
+                '+' + gained + ' points (streak x' + this.multiplier + ').';
+
+            this.popups.push({
+                x: entity.x,
+                y: entity.y,
+                text: '+' + gained,
+                opacity: 1,
+                vy: -40,
+                golden: entity.isGolden,
+                bad: false
             });
         }
-        
-        // Simplified Game Engine for Mobile
-        class MobileGameEngine {
-            constructor() {
-                this.canvas = document.getElementById('gameCanvas');
-                this.ctx = this.canvas.getContext('2d');
-                this.state = {
-                    score: 0,
-                    timeLeft: 60,
-                    potsCollected: 0,
-                    gameActive: false,
-                    difficulty: 'medium'
-                };
-                
-                this.init();
-            }
-            
-            init() {
-                this.setCanvasSize();
-                this.bindEvents();
-                this.drawStartScreen();
-            }
-            
-            setCanvasSize() {
-                const container = this.canvas.parentElement;
-                this.canvas.width = container.clientWidth;
-                this.canvas.height = container.clientHeight;
-            }
-            
-            bindEvents() {
-                // Canvas touch
-                this.canvas.addEventListener('touchstart', (e) => {
-                    e.preventDefault();
-                    if (!this.state.gameActive) return;
-                    
-                    const touch = e.touches[0];
-                    const rect = this.canvas.getBoundingClientRect();
-                    const x = touch.clientX - rect.left;
-                    const y = touch.clientY - rect.top;
-                    
-                    this.handleTap(x, y);
-                }, { passive: false });
-                
-                // Canvas click (for desktop)
-                this.canvas.addEventListener('click', (e) => {
-                    if (!this.state.gameActive) return;
-                    
-                    const rect = this.canvas.getBoundingClientRect();
-                    const x = e.clientX - rect.left;
-                    const y = e.clientY - rect.top;
-                    
-                    this.handleTap(x, y);
-                });
-                
-                // Buttons
-                document.getElementById('startBtn').addEventListener('click', () => this.startGame());
-                document.getElementById('pauseBtn').addEventListener('click', () => this.pauseGame());
-                document.getElementById('difficulty').addEventListener('change', (e) => {
-                    this.state.difficulty = e.target.value;
-                });
-                
-                // Power-ups
-                ['magnet', 'time', 'shield'].forEach(type => {
-                    document.getElementById(`${type}PowerUp`).addEventListener('click', () => {
-                        this.activatePowerUp(type);
-                    });
-                });
-                
-                // Touch controls
-                document.querySelectorAll('.touch-btn').forEach(btn => {
-                    btn.addEventListener('touchstart', (e) => {
-                        e.preventDefault();
-                        const action = btn.dataset.action;
-                        this.handleTouchControl(action);
-                    }, { passive: false });
-                });
-                
-                // Window resize
-                window.addEventListener('resize', () => {
-                    this.setCanvasSize();
-                    if (!this.state.gameActive) {
-                        this.drawStartScreen();
-                    }
-                });
-            }
-            
-            drawStartScreen() {
-                this.ctx.clearRect(0, 0, this.canvas.width, this.canvas.height);
-                
-                // Draw background
-                const gradient = this.ctx.createLinearGradient(0, 0, 0, this.canvas.height);
-                gradient.addColorStop(0, '#fdf7e3');
-                gradient.addColorStop(1, '#f8e6b6');
-                this.ctx.fillStyle = gradient;
-                this.ctx.fillRect(0, 0, this.canvas.width, this.canvas.height);
-                
-                // Draw title
-                this.ctx.fillStyle = '#5b3812';
-                this.ctx.font = 'bold 24px "Schoolbell"';
-                this.ctx.textAlign = 'center';
-                this.ctx.fillText('Honey Hunt', this.canvas.width / 2, 100);
-                
-                // Draw honey pot
-                this.ctx.fillStyle = '#8B4513';
+
+        onMissDrop() {
+            this.combo = 0;
+            this.multiplier = 1;
+            this.streakEl.textContent = 'x1';
+            this.statusEl.textContent = 'A drop slipped past the barrel. Streak reset.';
+        }
+
+        onBeeHit(entity) {
+            this.combo = 0;
+            this.multiplier = 1;
+            this.streakEl.textContent = 'x1';
+
+            const penaltyPoints = 40;
+            const penaltyTime   = 3;
+
+            this.score -= penaltyPoints;
+            if (this.score < 0) this.score = 0;
+
+            this.timeLeft -= penaltyTime;
+            if (this.timeLeft < 0) this.timeLeft = 0;
+            this.timeEl.textContent = String(this.timeLeft);
+
+            this.statusEl.textContent =
+                'Ouch! Bee bump. -' + penaltyPoints + ' points, -' + penaltyTime + ' seconds.';
+
+            this.popups.push({
+                x: entity.x,
+                y: entity.y,
+                text: '-' + penaltyPoints,
+                opacity: 1,
+                vy: -35,
+                golden: false,
+                bad: true
+            });
+
+            this.beeHitTimer = 0.3;
+        }
+
+        checkCatch(entity) {
+            const halfW = this.player.width / 2;
+            const halfH = this.player.height / 2;
+
+            // Treat collision area as the barrel area in front of Pooh
+            const catchWidth = this.player.width * 0.7;
+            const catchHeight = this.player.height * 0.7;
+            const centerX = this.player.x + this.player.width * 0.1; // shift a bit to barrel
+            const centerY = this.player.y - this.player.height * 0.05;
+
+            const left   = centerX - catchWidth / 2;
+            const right  = centerX + catchWidth / 2;
+            const top    = centerY - catchHeight / 2;
+            const bottom = centerY + catchHeight / 2;
+
+            const closestX = Math.max(left, Math.min(entity.x, right));
+            const closestY = Math.max(top, Math.min(entity.y, bottom));
+
+            const dx = entity.x - closestX;
+            const dy = entity.y - closestY;
+            const distSq = dx * dx + dy * dy;
+            return distSq <= entity.radius * entity.radius;
+        }
+
+        drawBackground() {
+            const ctx = this.ctx;
+            ctx.clearRect(0, 0, this.width, this.height);
+
+            // sky
+            const grad = ctx.createLinearGradient(0, 0, 0, this.height);
+            grad.addColorStop(0, '#cbe3ff');
+            grad.addColorStop(0.55, '#e9f2ff');
+            grad.addColorStop(1, '#ffe59c');
+            ctx.fillStyle = grad;
+            ctx.fillRect(0, 0, this.width, this.height);
+
+            // distant hills
+            ctx.fillStyle = '#b5d28d';
+            ctx.beginPath();
+            ctx.moveTo(0, this.height - 80);
+            ctx.quadraticCurveTo(this.width * 0.25, this.height - 130, this.width * 0.5, this.height - 90);
+            ctx.quadraticCurveTo(this.width * 0.8, this.height - 70, this.width, this.height - 100);
+            ctx.lineTo(this.width, this.height);
+            ctx.lineTo(0, this.height);
+            ctx.closePath();
+            ctx.fill();
+
+            ctx.fillStyle = '#9fc46f';
+            ctx.beginPath();
+            ctx.moveTo(0, this.height - 55);
+            ctx.quadraticCurveTo(this.width * 0.3, this.height - 90, this.width * 0.7, this.height - 60);
+            ctx.quadraticCurveTo(this.width * 0.95, this.height - 50, this.width, this.height - 70);
+            ctx.lineTo(this.width, this.height);
+            ctx.lineTo(0, this.height);
+            ctx.closePath();
+            ctx.fill();
+
+            // ground strip
+            ctx.fillStyle = '#8bc34a';
+            ctx.fillRect(0, this.height - 32, this.width, 32);
+
+            // clouds
+            ctx.fillStyle = 'rgba(255,255,255,0.9)';
+            const offset = this.cloudOffset;
+            const w = this.width;
+
+            this.drawCloud(ctx, (offset * 0.4) % (w + 160) - 80, 40, 60);
+            this.drawCloud(ctx, (offset * 0.3 + 200) % (w + 200) - 100, 70, 80);
+            this.drawCloud(ctx, (offset * 0.25 + 420) % (w + 220) - 110, 50, 50);
+        }
+
+        drawCloud(ctx, x, y, size) {
+            ctx.beginPath();
+            ctx.arc(x, y, size * 0.45, 0, Math.PI * 2);
+            ctx.arc(x + size * 0.4, y + size * 0.1, size * 0.4, 0, Math.PI * 2);
+            ctx.arc(x - size * 0.4, y + size * 0.15, size * 0.4, 0, Math.PI * 2);
+            ctx.fill();
+        }
+
+        drawPoohWithBarrel() {
+            const ctx = this.ctx;
+            const halfW = this.player.width / 2;
+            const halfH = this.player.height / 2;
+            const x = this.player.x;
+            const y = this.player.y;
+
+            // Ground shadow
+            ctx.fillStyle = 'rgba(62,39,35,0.26)';
+            ctx.beginPath();
+            ctx.ellipse(x + 4, y + halfH, halfW * 0.9, halfH * 0.4, 0, 0, Math.PI * 2);
+            ctx.fill();
+
+            // Body (bear)
+            ctx.fillStyle = '#f7c948';
+            ctx.beginPath();
+            ctx.ellipse(x, y, halfW * 0.9, halfH, 0, 0, Math.PI * 2);
+            ctx.fill();
+
+            // Shirt
+            ctx.fillStyle = '#d64545';
+            ctx.beginPath();
+            ctx.ellipse(x, y + halfH * 0.05, halfW * 0.9, halfH * 0.7, 0, 0, Math.PI * 2);
+            ctx.fill();
+
+            // Head
+            const headR = halfH * 0.95;
+            const headY = y - halfH - headR * 0.15;
+            ctx.fillStyle = '#f7c948';
+            ctx.beginPath();
+            ctx.arc(x - 3, headY, headR, 0, Math.PI * 2);
+            ctx.fill();
+
+            // Ears
+            const earOffsetX = headR * 0.7;
+            ctx.beginPath();
+            ctx.arc(x - earOffsetX - 3, headY - headR * 0.2, headR * 0.35, 0, Math.PI * 2);
+            ctx.arc(x + earOffsetX - 3, headY - headR * 0.2, headR * 0.35, 0, Math.PI * 2);
+            ctx.fill();
+
+            // Face details
+            ctx.fillStyle = '#5d4037';
+            ctx.beginPath();
+            ctx.arc(x - headR * 0.35 - 3, headY - headR * 0.1, headR * 0.12, 0, Math.PI * 2);
+            ctx.arc(x + headR * 0.05 - 3, headY - headR * 0.1, headR * 0.12, 0, Math.PI * 2);
+            ctx.fill();
+
+            ctx.beginPath();
+            ctx.arc(x - 3, headY + headR * 0.12, headR * 0.14, 0, Math.PI * 2);
+            ctx.fill();
+
+            ctx.strokeStyle = '#5d4037';
+            ctx.lineWidth = 2;
+            ctx.beginPath();
+            ctx.arc(x - 3, headY + headR * 0.32, headR * 0.25, 0.1 * Math.PI, 0.9 * Math.PI);
+            ctx.stroke();
+
+            // Arms holding barrel
+            const armY = y + 2;
+            ctx.lineWidth = 8;
+            ctx.lineCap = 'round';
+            ctx.strokeStyle = '#f7c948';
+            ctx.beginPath();
+            ctx.moveTo(x - halfW * 0.5, armY);
+            ctx.lineTo(x + halfW * 0.3, armY - 4);
+            ctx.stroke();
+
+            ctx.beginPath();
+            ctx.moveTo(x - halfW * 0.2, armY + 6);
+            ctx.lineTo(x + halfW * 0.4, armY + 3);
+            ctx.stroke();
+
+            // Barrel
+            const barrelWidth  = halfW * 0.9;
+            const barrelHeight = halfH * 0.9;
+            const barrelX = x + halfW * 0.15;
+            const barrelY = y - 4;
+
+            ctx.fillStyle = '#8d6e63';
+            ctx.beginPath();
+            ctx.ellipse(barrelX, barrelY, barrelWidth / 2, barrelHeight / 2, 0, 0, Math.PI * 2);
+            ctx.fill();
+
+            // Barrel top
+            ctx.fillStyle = '#ffeb90';
+            ctx.beginPath();
+            ctx.ellipse(barrelX, barrelY - barrelHeight * 0.4, barrelWidth * 0.8 / 2, barrelHeight * 0.45 / 2, 0, 0, Math.PI * 2);
+            ctx.fill();
+
+            // Barrel rim lines
+            ctx.strokeStyle = '#5d4037';
+            ctx.lineWidth = 2;
+            ctx.beginPath();
+            ctx.ellipse(barrelX, barrelY, barrelWidth / 2, barrelHeight / 2, 0, 0, Math.PI * 2);
+            ctx.stroke();
+
+            ctx.beginPath();
+            ctx.ellipse(barrelX, barrelY - barrelHeight * 0.35, barrelWidth * 0.75 / 2, barrelHeight * 0.35 / 2, 0, 0, Math.PI * 2);
+            ctx.stroke();
+
+            // Barrel label
+            ctx.fillStyle = '#fffbdd';
+            ctx.font = 'bold 10px "Nunito"';
+            ctx.textAlign = 'center';
+            ctx.fillText('HONEY', barrelX, barrelY + 3);
+        }
+
+        drawDrop(entity) {
+            const ctx = this.ctx;
+            const r = entity.radius;
+
+            // Outer glow
+            ctx.save();
+            ctx.shadowColor = entity.isGolden ? 'rgba(255,193,7,0.8)' : 'rgba(255,215,64,0.7)';
+            ctx.shadowBlur = 12;
+
+            ctx.beginPath();
+            ctx.moveTo(entity.x, entity.y - r);
+            ctx.quadraticCurveTo(entity.x + r, entity.y, entity.x, entity.y + r);
+            ctx.quadraticCurveTo(entity.x - r, entity.y, entity.x, entity.y - r);
+            ctx.closePath();
+            ctx.fillStyle = entity.isGolden ? '#ffd600' : '#ffec80';
+            ctx.fill();
+
+            ctx.restore();
+
+            // highlight
+            ctx.fillStyle = 'rgba(255,255,255,0.9)';
+            ctx.beginPath();
+            ctx.ellipse(entity.x - r * 0.3, entity.y - r * 0.4, r * 0.25, r * 0.3, 0, 0, Math.PI * 2);
+            ctx.fill();
+        }
+
+        drawBee(entity) {
+            const ctx = this.ctx;
+            const r = entity.radius;
+
+            // Wing
+            ctx.fillStyle = 'rgba(255,255,255,0.95)';
+            ctx.beginPath();
+            ctx.ellipse(entity.x - r * 0.1, entity.y - r * 0.7, r * 0.5, r * 0.3, -0.3, 0, Math.PI * 2);
+            ctx.ellipse(entity.x + r * 0.1, entity.y - r * 0.7, r * 0.5, r * 0.3, 0.3, 0, Math.PI * 2);
+            ctx.fill();
+
+            // Body
+            ctx.beginPath();
+            ctx.ellipse(entity.x, entity.y, r * 0.9, r * 0.6, 0, 0, Math.PI * 2);
+            ctx.fillStyle = '#ffeb3b';
+            ctx.fill();
+
+            // Stripes
+            ctx.fillStyle = '#424242';
+            ctx.beginPath();
+            ctx.ellipse(entity.x - r * 0.25, entity.y, r * 0.15, r * 0.6, 0, 0, Math.PI * 2);
+            ctx.ellipse(entity.x + r * 0.05, entity.y, r * 0.15, r * 0.6, 0, 0, Math.PI * 2);
+            ctx.fill();
+
+            // Head
+            ctx.beginPath();
+            ctx.arc(entity.x + r * 0.7, entity.y - r * 0.1, r * 0.35, 0, Math.PI * 2);
+            ctx.fillStyle = '#424242';
+            ctx.fill();
+
+            // Eye
+            ctx.fillStyle = '#ffffff';
+            ctx.beginPath();
+            ctx.arc(entity.x + r * 0.82, entity.y - r * 0.18, r * 0.12, 0, Math.PI * 2);
+            ctx.fill();
+            ctx.fillStyle = '#212121';
+            ctx.beginPath();
+            ctx.arc(entity.x + r * 0.84, entity.y - r * 0.18, r * 0.07, 0, Math.PI * 2);
+            ctx.fill();
+        }
+
+        drawEntities() {
+            for (let i = 0; i < this.entities.length; i++) {
+                const e = this.entities[i];
+                // small shadow
+                this.ctx.fillStyle = 'rgba(62,39,35,0.25)';
                 this.ctx.beginPath();
-                this.ctx.ellipse(this.canvas.width / 2, 200, 40, 20, 0, 0, Math.PI * 2);
+                this.ctx.ellipse(e.x, e.y + e.radius * 0.9, e.radius * 0.9, e.radius * 0.3, 0, 0, Math.PI * 2);
                 this.ctx.fill();
-                
-                this.ctx.fillStyle = '#FFD700';
-                this.ctx.beginPath();
-                this.ctx.ellipse(this.canvas.width / 2, 190, 35, 15, 0, 0, Math.PI * 2);
-                this.ctx.fill();
-                
-                // Draw instruction
-                this.ctx.fillStyle = '#8D6E63';
-                this.ctx.font = '16px "Nunito"';
-                this.ctx.fillText('Tap START to begin', this.canvas.width / 2, 300);
-            }
-            
-            handleTap(x, y) {
-                if (!this.state.gameActive) return;
-                
-                // Simple collection logic
-                this.state.score += 100;
-                this.state.potsCollected++;
-                
-                // Update UI
-                document.getElementById('score').textContent = this.state.score;
-                document.getElementById('potsCount').textContent = this.state.potsCollected;
-                
-                // Draw effect
-                this.ctx.fillStyle = '#FFD700';
-                this.ctx.beginPath();
-                this.ctx.arc(x, y, 20, 0, Math.PI * 2);
-                this.ctx.fill();
-                
-                // Show +100 text
-                this.ctx.fillStyle = '#8B4513';
-                this.ctx.font = 'bold 20px "Schoolbell"';
-                this.ctx.fillText('+100', x, y - 30);
-            }
-            
-            startGame() {
-                if (this.state.gameActive) return;
-                
-                this.state.gameActive = true;
-                this.state.score = 0;
-                this.state.potsCollected = 0;
-                this.state.timeLeft = 60;
-                
-                // Update UI
-                document.getElementById('score').textContent = '0';
-                document.getElementById('potsCount').textContent = '0';
-                document.getElementById('timer').textContent = '60';
-                document.getElementById('statusText').textContent = 'Game started! Tap the honey pots!';
-                
-                // Start timer
-                this.timerInterval = setInterval(() => {
-                    if (!this.state.gameActive) return;
-                    
-                    this.state.timeLeft--;
-                    document.getElementById('timer').textContent = this.state.timeLeft;
-                    
-                    if (this.state.timeLeft <= 0) {
-                        this.gameOver();
-                    }
-                }, 1000);
-                
-                // Clear canvas and start game loop
-                this.ctx.clearRect(0, 0, this.canvas.width, this.canvas.height);
-                this.gameLoop();
-            }
-            
-            gameLoop() {
-                if (!this.state.gameActive) return;
-                
-                // Draw simple honey pots at random positions
-                this.ctx.clearRect(0, 0, this.canvas.width, this.canvas.height);
-                
-                // Draw background
-                const gradient = this.ctx.createLinearGradient(0, 0, 0, this.canvas.height);
-                gradient.addColorStop(0, '#fdf7e3');
-                gradient.addColorStop(1, '#f8e6b6');
-                this.ctx.fillStyle = gradient;
-                this.ctx.fillRect(0, 0, this.canvas.width, this.canvas.height);
-                
-                // Draw some honey pots
-                for (let i = 0; i < 5; i++) {
-                    const x = 50 + (i * 70);
-                    const y = 100 + Math.sin(Date.now() * 0.001 + i) * 20;
-                    
-                    this.ctx.fillStyle = '#8B4513';
-                    this.ctx.beginPath();
-                    this.ctx.ellipse(x, y, 20, 10, 0, 0, Math.PI * 2);
-                    this.ctx.fill();
-                    
-                    this.ctx.fillStyle = '#FFD700';
-                    this.ctx.beginPath();
-                    this.ctx.ellipse(x, y - 5, 18, 8, 0, 0, Math.PI * 2);
-                    this.ctx.fill();
-                }
-                
-                requestAnimationFrame(() => this.gameLoop());
-            }
-            
-            pauseGame() {
-                this.state.gameActive = !this.state.gameActive;
-                const btn = document.getElementById('pauseBtn');
-                
-                if (this.state.gameActive) {
-                    btn.innerHTML = '<i class="fas fa-pause"></i> Pause';
-                    document.getElementById('statusText').textContent = 'Game resumed!';
-                    this.gameLoop();
+
+                if (e.type === 'drop') {
+                    this.drawDrop(e);
                 } else {
-                    btn.innerHTML = '<i class="fas fa-play"></i> Resume';
-                    document.getElementById('statusText').textContent = 'Game paused';
+                    this.drawBee(e);
                 }
-            }
-            
-            activatePowerUp(type) {
-                const countElement = document.getElementById(`${type}Count`);
-                let count = parseInt(countElement.textContent);
-                
-                if (count > 0) {
-                    count--;
-                    countElement.textContent = count;
-                    
-                    switch(type) {
-                        case 'time':
-                            this.state.timeLeft += 10;
-                            document.getElementById('timer').textContent = this.state.timeLeft;
-                            document.getElementById('statusText').textContent = '+10 seconds!';
-                            break;
-                        case 'shield':
-                            document.getElementById('statusText').textContent = 'Shield activated!';
-                            break;
-                        case 'magnet':
-                            document.getElementById('statusText').textContent = 'Magnet activated!';
-                            break;
-                    }
-                }
-            }
-            
-            handleTouchControl(action) {
-                if (!this.state.gameActive) return;
-                
-                switch(action) {
-                    case 'up':
-                        this.state.score += 50;
-                        document.getElementById('score').textContent = this.state.score;
-                        break;
-                    case 'down':
-                        // Some action
-                        break;
-                    case 'action':
-                        this.activatePowerUp('time');
-                        break;
-                }
-            }
-            
-            gameOver() {
-                this.state.gameActive = false;
-                clearInterval(this.timerInterval);
-                
-                // Update high score
-                const highScoreElement = document.getElementById('highScoreStat');
-                let highScore = parseInt(highScoreElement.textContent);
-                
-                if (this.state.score > highScore) {
-                    highScore = this.state.score;
-                    highScoreElement.textContent = highScore;
-                    localStorage.setItem('poohHighScore', highScore);
-                }
-                
-                document.getElementById('statusText').textContent = 
-                    `Game Over! Final Score: ${this.state.score}. Pots Collected: ${this.state.potsCollected}`;
-                
-                this.drawStartScreen();
             }
         }
-        
-        // Initialize everything when page loads
-        window.addEventListener('load', function() {
-            // Hide loader
-            setTimeout(() => {
-                const loader = document.getElementById('loader');
-                loader.classList.add('loader--hidden');
-                
-                setTimeout(() => {
-                    loader.style.display = 'none';
-                }, 500);
-            }, 1500);
-            
-            // Initialize mobile features
-            initMobile();
-            initNavigation();
-            
-            // Initialize game
-            window.game = new MobileGameEngine();
-        });
-        
-        // Handle orientation changes
-        window.addEventListener('orientationchange', function() {
-            setTimeout(() => {
-                if (window.game) {
-                    window.game.setCanvasSize();
-                    if (!window.game.state.gameActive) {
-                        window.game.drawStartScreen();
-                    }
-                }
-            }, 300);
-        });
-        
-        // Story expansion function
-        function expandStory() {
-            const storyCard = document.querySelector('#chapter-1 .storybook-card');
-            if (storyCard) {
-                storyCard.innerHTML = `
-                    <p style="font-size: 1.1rem; line-height: 1.6; margin-bottom: 15px;">
-                        Once upon a time, in the Hundred Acre Wood, there lived a bear called Winnie-the-Pooh. 
-                        Pooh loved honey more than anything in the world. One sunny morning, he discovered that 
-                        his honey pots were nearly empty! "Oh, bother," said Pooh. But then he had a wonderful idea.
-                    </p>
-                    <p style="font-size: 1.1rem; line-height: 1.6; margin-bottom: 15px;">
-                        "I shall have a Honey Hunt!" exclaimed Pooh. "And I shall invite all my friends to help me 
-                        find the sweetest honey in all the wood."
-                    </p>
-                    <p style="font-size: 1.1rem; line-height: 1.6;">
-                        This is where <strong>you</strong> come in, dear reader. You are cordially invited to join 
-                        Pooh and his friends for a day of adventure, games, and of course, plenty of honey!
-                    </p>
-                    <button class="btn btn--ghost" style="width: 100%; margin-top: 15px;" onclick="collapseStory()">
-                        <i class="fas fa-chevron-up"></i> Show Less
-                    </button>
-                `;
+
+        drawPopups() {
+            const ctx = this.ctx;
+            for (let i = 0; i < this.popups.length; i++) {
+                const p = this.popups[i];
+                ctx.save();
+                ctx.globalAlpha = p.opacity;
+                ctx.fillStyle = p.bad ? '#d32f2f' : (p.golden ? '#ff6f00' : '#5d4037');
+                ctx.font = 'bold 16px "Nunito"';
+                ctx.textAlign = 'center';
+                ctx.fillText(p.text, p.x, p.y);
+                ctx.restore();
             }
         }
-        
-        function collapseStory() {
-            const storyCard = document.querySelector('#chapter-1 .storybook-card');
-            if (storyCard) {
-                storyCard.innerHTML = `
-                    <p style="font-size: 1.1rem; line-height: 1.6; margin-bottom: 15px;">
-                        Once upon a time, in the Hundred Acre Wood, there lived a bear called Winnie-the-Pooh. 
-                        Pooh loved honey more than anything in the world...
-                    </p>
-                    <button class="btn btn--primary" style="width: 100%;" onclick="expandStory()">
-                        <i class="fas fa-book"></i> Read Full Story
-                    </button>
-                `;
+
+        drawIdleScreen() {
+            this.drawBackground();
+            this.player.x = this.width / 2;
+            this.player.y = this.height - 52;
+            this.drawPoohWithBarrel();
+
+            const ctx = this.ctx;
+            ctx.fillStyle = '#5d4037';
+            ctx.font = 'bold 18px "Schoolbell"';
+            ctx.textAlign = 'center';
+            ctx.fillText('Help Pooh catch honeybee drops.', this.width / 2, 44);
+
+            ctx.font = '14px "Nunito"';
+            ctx.fillStyle = '#6d4c41';
+            ctx.fillText('Tap Start, then drag to move Pooh.', this.width / 2, 64);
+        }
+
+        draw() {
+            this.drawBackground();
+            this.drawPoohWithBarrel();
+            this.drawEntities();
+            this.drawPopups();
+
+            if (this.beeHitTimer > 0) {
+                const alpha = Math.min(0.4, this.beeHitTimer * 1.3);
+                this.ctx.fillStyle = 'rgba(214, 69, 69,' + alpha.toFixed(2) + ')';
+                this.ctx.fillRect(0, 0, this.width, this.height);
             }
         }
-    </script>
+    }
+
+    window.addEventListener('DOMContentLoaded', function () {
+        window.poohHoneyBarrel = new PoohHoneyBarrelGame();
+    });
+})();
+</script>
 </body>
 </html>
