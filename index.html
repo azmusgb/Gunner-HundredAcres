@@ -2276,38 +2276,156 @@
                 beginGameplay() {
                     this.gameState = 'running';
                     this.overlay.classList.remove('active');
-                    
+
                     // Initialize entities based on season
                     const config = this.getCurrentConfig();
                     const seasonConfig = SEASONS[this.currentSeason];
                     this.createEntities(config.drops + this.seasonLevel - 1, seasonConfig.beeCount);
-                    
+
                     // Set up game timer
-                    if (this.timerInterval) clearInterval(this.timerInterval);
-                    this.timerInterval = setInterval(() => {
-                        if (this.gameState !== 'running') return;
-                        
-                        this.timeLeft--;
-                        this.timeEl.textContent = this.timeLeft;
-                        
-                        // Update power-up timers
-                        this.updatePowerupTimers();
-                        
-                        if (this.timeLeft <= 0) {
-                            this.endGame();
-                        }
-                    }, 1000);
-                    
+                    this.startTimer();
+
                     // Update UI
                     this.startBtn.disabled = false;
                     this.pauseBtn.disabled = false;
                     this.startBtn.innerHTML = '<i class="fas fa-rotate-right"></i> Restart';
                     this.pauseBtn.innerHTML = '<i class="fas fa-pause"></i> Pause';
                     this.statusText.textContent = `Catch ${SEASONS[this.currentSeason].specialHoney}! Avoid bees!`;
-                    
+
                     // Start game loop
                     this.lastFrameTime = performance.now();
                     requestAnimationFrame((time) => this.gameLoop(time));
+                }
+
+                handleStartClick() {
+                    if (this.gameState === 'countdown') {
+                        this.toastManager.show('Get ready! The game is about to start.', 'info');
+                        return;
+                    }
+
+                    if (this.gameState === 'paused') {
+                        this.resume();
+                        return;
+                    }
+
+                    if (this.gameState === 'running') {
+                        this.toastManager.show('Restarting your honey hunt!', 'info');
+                    }
+
+                    this.resetGame();
+                    this.start();
+                }
+
+                handlePauseClick() {
+                    if (this.gameState === 'running') {
+                        this.pause();
+                    } else if (this.gameState === 'paused') {
+                        this.resume();
+                    } else {
+                        this.toastManager.show('Start a game first to use pause.', 'warning');
+                    }
+                }
+
+                pause() {
+                    if (this.gameState !== 'running') return;
+
+                    this.gameState = 'paused';
+                    if (this.timerInterval) clearInterval(this.timerInterval);
+
+                    this.pauseBtn.innerHTML = '<i class="fas fa-play"></i> Resume';
+                    this.statusText.textContent = 'Game paused. Tap Resume when you are ready!';
+                    this.toastManager.show('Game paused', 'info');
+                }
+
+                resume() {
+                    if (this.gameState !== 'paused') return;
+
+                    this.gameState = 'running';
+                    this.pauseBtn.innerHTML = '<i class="fas fa-pause"></i> Pause';
+                    this.statusText.textContent = 'Back to catching honey!';
+
+                    this.lastFrameTime = performance.now();
+                    this.startTimer();
+                    requestAnimationFrame((time) => this.gameLoop(time));
+                }
+
+                resetGame() {
+                    if (this.timerInterval) clearInterval(this.timerInterval);
+                    if (this.countdownInterval) clearInterval(this.countdownInterval);
+
+                    this.entities = [];
+                    this.popups = [];
+                    this.powerups = [];
+
+                    this.gameState = 'idle';
+                    this.timeLeft = this.getCurrentConfig().duration;
+                    this.timeEl.textContent = this.timeLeft;
+
+                    this.overlay.classList.remove('active');
+                    this.overlayStats.style.display = 'none';
+
+                    this.startBtn.disabled = false;
+                    this.startBtn.innerHTML = '<i class="fas fa-play"></i> Start';
+                    this.pauseBtn.disabled = true;
+                    this.pauseBtn.innerHTML = '<i class="fas fa-pause"></i> Pause';
+
+                    this.statusText.textContent = 'Select a season and tap Start to begin your honey adventure!';
+                    this.drawSeasonScreen(this.currentSeason);
+                }
+
+                endGame() {
+                    if (this.timerInterval) clearInterval(this.timerInterval);
+
+                    this.gameState = 'gameOver';
+                    this.overlay.classList.add('active');
+                    this.overlayTitle.textContent = 'Adventure Complete!';
+                    this.overlayText.textContent = 'Tap Start to play again or pick a new season.';
+
+                    this.overlayStats.style.display = 'grid';
+                    this.finalScore.textContent = this.score;
+                    this.finalSeason.textContent = SEASONS[this.currentSeason].name;
+                    this.finalHoney.textContent = this.caught;
+                    this.finalAchievements.textContent = Object.values(this.achievements).filter(Boolean).length;
+
+                    this.startBtn.disabled = false;
+                    this.startBtn.innerHTML = '<i class="fas fa-rotate-right"></i> Restart';
+                    this.pauseBtn.disabled = true;
+                    this.pauseBtn.innerHTML = '<i class="fas fa-pause"></i> Pause';
+
+                    this.statusText.textContent = 'Great job! Start again to keep collecting honey.';
+
+                    if (this.score > this.bestScore) {
+                        this.bestScore = this.score;
+                        this.saveGameData();
+                        this.updateFriendsList();
+                        this.toastManager.show('New best score!', 'success');
+                    }
+                }
+
+                showInstructions() {
+                    this.instructionsModal.classList.add('active');
+                }
+
+                hideInstructions() {
+                    this.instructionsModal.classList.remove('active');
+                }
+
+                startTimer() {
+                    if (this.timerInterval) clearInterval(this.timerInterval);
+
+                    this.timerInterval = setInterval(() => {
+                        if (this.gameState !== 'running') return;
+
+                        this.timeLeft--;
+                        this.timeEl.textContent = this.timeLeft;
+
+                        // Update power-up timers
+                        this.updatePowerupTimers();
+
+                        if (this.timeLeft <= 0) {
+                            this.endGame();
+                        }
+                    }, 1000);
                 }
                 
                 updatePowerupTimers() {
