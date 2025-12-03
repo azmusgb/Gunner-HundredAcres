@@ -1214,6 +1214,138 @@
         .hide-scrollbar::-webkit-scrollbar {
             display: none;
         }
+
+        /* Achievements */
+        .achievements-modal {
+            position: fixed;
+            inset: 0;
+            background: rgba(62, 39, 35, 0.35);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            z-index: 999;
+            opacity: 0;
+            pointer-events: none;
+            transition: var(--transition);
+        }
+
+        .achievements-modal.active {
+            opacity: 1;
+            pointer-events: auto;
+        }
+
+        .achievements-content {
+            background: #fffdf7;
+            border-radius: var(--radius-lg);
+            padding: 20px;
+            width: min(960px, 96vw);
+            max-height: 90vh;
+            overflow: auto;
+            box-shadow: var(--shadow-lg);
+            border: 2px solid rgba(153, 110, 56, 0.3);
+        }
+
+        .achievements-header {
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            gap: 12px;
+            margin-bottom: 12px;
+        }
+
+        .achievements-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(220px, 1fr));
+            gap: 12px;
+        }
+
+        .achievement-card {
+            background: white;
+            padding: 14px;
+            border-radius: var(--radius-md);
+            border: 1px solid rgba(153, 110, 56, 0.2);
+            box-shadow: var(--shadow-sm);
+            display: flex;
+            flex-direction: column;
+            gap: 8px;
+            position: relative;
+        }
+
+        .achievement-card.unlocked {
+            border-color: var(--success-green);
+            box-shadow: 0 6px 20px rgba(76, 175, 80, 0.2);
+        }
+
+        .achievement-icon {
+            font-size: 1.6rem;
+            color: var(--pooh-red);
+        }
+
+        .achievement-card.unlocked .achievement-icon {
+            color: var(--success-green);
+        }
+
+        .achievement-progress {
+            height: 10px;
+            background: #f5e5c9;
+            border-radius: 999px;
+            overflow: hidden;
+            border: 1px solid rgba(153, 110, 56, 0.2);
+        }
+
+        .achievement-progress span {
+            display: block;
+            height: 100%;
+            background: linear-gradient(90deg, #f7c948, #f29d4b);
+        }
+
+        .achievement-badge {
+            position: absolute;
+            top: 10px;
+            right: 10px;
+            background: var(--success-green);
+            color: white;
+            padding: 4px 8px;
+            border-radius: 999px;
+            font-size: 0.75rem;
+            display: none;
+        }
+
+        .achievement-card.unlocked .achievement-badge {
+            display: inline-block;
+        }
+
+        .levels-badge {
+            display: inline-flex;
+            align-items: center;
+            gap: 6px;
+            background: #fff6d6;
+            border-radius: 999px;
+            padding: 6px 10px;
+            border: 1px solid rgba(153, 110, 56, 0.2);
+            font-weight: 700;
+            color: var(--ink-brown);
+        }
+
+        .multiplayer-panel {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(140px, 1fr));
+            gap: 10px;
+            margin: 10px 0;
+        }
+
+        .player-card {
+            background: white;
+            border-radius: var(--radius-md);
+            padding: 10px;
+            border: 1px solid rgba(153, 110, 56, 0.2);
+            box-shadow: var(--shadow-sm);
+        }
+
+        .player-card.active {
+            border-color: var(--pooh-yellow);
+            box-shadow: 0 6px 18px rgba(247, 201, 72, 0.25);
+        }
     </style>
 </head>
 <body>
@@ -1268,6 +1400,24 @@
                     <i class="fas fa-play"></i> Start Game
                 </button>
             </div>
+        </div>
+    </div>
+
+    <div class="achievements-modal" id="achievementsModal" aria-hidden="true" role="dialog" aria-label="Achievements">
+        <div class="achievements-content" tabindex="-1">
+            <div class="achievements-header">
+                <div>
+                    <div class="levels-badge">
+                        <i class="fas fa-medal"></i>
+                        <span>Achievements</span>
+                    </div>
+                    <p>Keep playing to unlock badges and watch your progress.</p>
+                </div>
+                <button class="btn btn-tertiary" id="closeAchievements">
+                    <i class="fas fa-times"></i> Close
+                </button>
+            </div>
+            <div class="achievements-grid" id="achievementsGrid"></div>
         </div>
     </div>
     
@@ -1370,6 +1520,23 @@
                                 <span class="toggle-icon"><i class="fas fa-check"></i></span>
                             </button>
                         </div>
+                        <div class="settings-group">
+                            <label for="levelSelect">
+                                <i class="fas fa-map"></i>
+                                Story Level
+                            </label>
+                            <select id="levelSelect"></select>
+                        </div>
+                        <div class="settings-group">
+                            <label for="multiplayerToggle">
+                                <i class="fas fa-people-group"></i>
+                                Multiplayer
+                            </label>
+                            <button class="btn-toggle" id="multiplayerToggle">
+                                <span>Off</span>
+                                <span class="toggle-icon"><i class="fas fa-users"></i></span>
+                            </button>
+                        </div>
                     </div>
                     
                     <!-- Canvas -->
@@ -1422,10 +1589,18 @@
                         <button class="btn btn-secondary" id="pauseBtn" disabled>
                             <i class="fas fa-pause"></i> Pause
                         </button>
+                        <button class="btn btn-secondary" id="achievementsBtn">
+                            <i class="fas fa-medal"></i> Achievements
+                        </button>
                         <button class="btn btn-tertiary" id="helpBtn">
                             <i class="fas fa-question-circle"></i> Help
                         </button>
+                        <button class="btn btn-tertiary" id="shareBtn">
+                            <i class="fas fa-share-alt"></i> Share
+                        </button>
                     </div>
+
+                    <div class="multiplayer-panel" id="multiplayerPanel" aria-live="polite"></div>
                     
                     <!-- Status -->
                     <div class="status" id="status" role="status" aria-live="polite">
@@ -1506,8 +1681,49 @@
             const STORAGE_KEYS = {
                 BEST_SCORE: 'pooh_honey_barrel_best',
                 SOUND_ENABLED: 'pooh_honey_barrel_sound',
-                DIFFICULTY: 'pooh_honey_barrel_difficulty'
+                DIFFICULTY: 'pooh_honey_barrel_difficulty',
+                ACHIEVEMENTS: 'pooh_honey_barrel_achievements',
+                LEVELS: 'pooh_honey_barrel_levels',
+                SELECTED_LEVEL: 'pooh_honey_barrel_selected_level',
+                MULTIPLAYER: 'pooh_honey_barrel_multiplayer'
             };
+
+            const ACHIEVEMENTS = {
+                firstDrop: {
+                    id: 'firstDrop',
+                    name: 'First Drop',
+                    description: 'Catch your first honey drop',
+                    icon: 'fas fa-trophy',
+                    unlocked: false,
+                    progress: 0,
+                    target: 1
+                },
+                highScorer: {
+                    id: 'highScorer',
+                    name: 'High Scorer',
+                    description: 'Score over 1000 points',
+                    icon: 'fas fa-star',
+                    unlocked: false,
+                    progress: 0,
+                    target: 1000
+                },
+                streakMaster: {
+                    id: 'streakMaster',
+                    name: 'Streak Master',
+                    description: 'Reach a x4 streak',
+                    icon: 'fas fa-fire',
+                    unlocked: false,
+                    progress: 0,
+                    target: 4
+                }
+            };
+
+            const LEVELS = [
+                { id: 1, name: 'Beginner Grove', unlocked: true, unlockScore: 0, config: { dropModifier: 0, beeModifier: 0, speedMultiplier: 1 } },
+                { id: 2, name: 'Busy Hive', unlocked: false, unlockScore: 500, config: { dropModifier: 1, beeModifier: 1, speedMultiplier: 1.05 } },
+                { id: 3, name: 'Whirling Woods', unlocked: false, unlockScore: 900, config: { dropModifier: 2, beeModifier: 1, speedMultiplier: 1.1 } },
+                { id: 4, name: 'Golden Glade', unlocked: false, unlockScore: 1400, config: { dropModifier: 2, beeModifier: 2, speedMultiplier: 1.15 } }
+            ];
             
             // ==================== Utility Functions ====================
             function clamp(value, min, max) {
@@ -1792,12 +2008,21 @@
                     this.startBtn = document.getElementById('startBtn');
                     this.pauseBtn = document.getElementById('pauseBtn');
                     this.helpBtn = document.getElementById('helpBtn');
+                    this.shareBtn = document.getElementById('shareBtn');
+                    this.achievementsBtn = document.getElementById('achievementsBtn');
                     this.difficultySelect = document.getElementById('difficulty');
+                    this.levelSelect = document.getElementById('levelSelect');
+                    this.multiplayerToggle = document.getElementById('multiplayerToggle');
+                    this.multiplayerPanel = document.getElementById('multiplayerPanel');
                     this.soundToggle = document.getElementById('soundToggle');
                     this.instructionsModal = document.getElementById('instructionsModal');
                     this.instructionsClose = document.getElementById('instructionsClose');
                     this.instructionsContent = this.instructionsModal.querySelector('.instructions-content');
                     this.startFromInstructions = document.getElementById('startFromInstructions');
+                    this.achievementsModal = document.getElementById('achievementsModal');
+                    this.achievementsGrid = document.getElementById('achievementsGrid');
+                    this.closeAchievements = document.getElementById('closeAchievements');
+                    this.achievementsContent = document.querySelector('.achievements-content');
                     
                     // Mobile controls
                     this.mobileControls = document.getElementById('mobileControls');
@@ -1815,6 +2040,13 @@
                     this.combo = 0;
                     this.multiplier = 1;
                     this.bestScore = 0;
+                    this.levels = [];
+                    this.currentLevelId = 1;
+                    this.achievements = {};
+                    this.multiplayerEnabled = false;
+                    this.currentPlayerIndex = 0;
+                    this.playerScores = [0, 0];
+                    this.playerNames = ['Player 1', 'Player 2'];
                     
                     // Game objects
                     this.entities = [];
@@ -1874,6 +2106,12 @@
                     // Load saved data
                     this.loadBestScore();
                     this.loadDifficulty();
+                    this.loadLevels();
+                    this.loadAchievements();
+                    this.loadMultiplayerSettings();
+                    this.populateLevelSelect();
+                    this.renderAchievements();
+                    this.renderPlayers();
                     
                     // Set up canvas
                     this.resizeCanvas();
@@ -1997,6 +2235,35 @@
                         this.saveDifficulty();
                         this.toastManager.show(`Difficulty set to: ${this.difficultySelect.options[this.difficultySelect.selectedIndex].text}`, 'info');
                     });
+
+                    this.levelSelect.addEventListener('change', () => {
+                        this.currentLevelId = parseInt(this.levelSelect.value, 10);
+                        this.saveSelectedLevel();
+                        const level = this.getSelectedLevel();
+                        if (level) {
+                            this.toastManager.show(`Level set to: ${level.name}`, 'info');
+                        }
+                    });
+
+                    this.multiplayerToggle.addEventListener('click', () => {
+                        this.multiplayerEnabled = !this.multiplayerEnabled;
+                        this.saveMultiplayerSettings();
+                        this.updateMultiplayerToggle();
+                        this.resetPlayers();
+                        this.renderPlayers();
+                        const stateMessage = this.multiplayerEnabled ? 'Multiplayer enabled' : 'Multiplayer disabled';
+                        this.toastManager.show(stateMessage, 'info');
+                    });
+
+                    this.achievementsBtn.addEventListener('click', () => this.showAchievements());
+                    this.closeAchievements.addEventListener('click', () => this.hideAchievements());
+                    this.achievementsModal.addEventListener('click', (e) => {
+                        if (e.target === this.achievementsModal) {
+                            this.hideAchievements();
+                        }
+                    });
+
+                    this.shareBtn.addEventListener('click', () => this.shareScore());
                     
                     this.soundToggle.addEventListener('click', () => {
                         const isEnabled = this.audioManager.toggle();
@@ -2108,6 +2375,10 @@
                     this.caught = 0;
                     this.combo = 0;
                     this.multiplier = 1;
+
+                    if (this.multiplayerEnabled) {
+                        this.statusText.textContent = `${this.playerNames[this.currentPlayerIndex]} is playing Level ${this.currentLevelId}.`;
+                    }
                     
                     // Update UI
                     this.updateStats();
@@ -2274,21 +2545,38 @@
                     // Show toast with results
                     const message = `Final Score: ${this.score} | Drops: ${this.caught} | Best Streak: x${this.multiplier}`;
                     this.toastManager.show(message, 'success', 5000);
-                    
+
                     // Play game over sound
                     this.audioManager.playGameOverSound();
-                    
+
                     // Create confetti for high score
                     if (this.score >= this.bestScore) {
                         this.particleSystem.createConfetti();
+                    }
+
+                    this.unlockLevels(this.score);
+
+                    if (this.multiplayerEnabled) {
+                        this.playerScores[this.currentPlayerIndex] = this.score;
+                        this.currentPlayerIndex = this.currentPlayerIndex === 0 ? 1 : 0;
+                        this.renderPlayers();
+                        this.statusText.textContent = `${this.playerNames[this.currentPlayerIndex]} is up next!`;
                     }
                 }
                 
                 // ==================== Game Logic ====================
                 getCurrentConfig() {
                     const difficulty = this.difficultySelect.value;
-                    const config = DIFFICULTY_CONFIG[difficulty] || DIFFICULTY_CONFIG.medium;
-                    
+                    const config = { ...(DIFFICULTY_CONFIG[difficulty] || DIFFICULTY_CONFIG.medium) };
+
+                    const level = this.getSelectedLevel();
+                    if (level && level.config) {
+                        config.drops += level.config.dropModifier;
+                        config.bees += level.config.beeModifier;
+                        config.minSpeed *= level.config.speedMultiplier;
+                        config.maxSpeed *= level.config.speedMultiplier;
+                    }
+
                     // Adjust player speed based on config
                     this.player.lerpSpeed = config.playerSpeed;
                     
@@ -2482,9 +2770,13 @@
                     }
                     
                     // Update status
-                    this.statusText.textContent = entity.isGolden 
+                    this.statusText.textContent = entity.isGolden
                         ? `Golden drop! +${scoreGain} points! (Streak x${this.multiplier})`
                         : `Honey caught! +${scoreGain} points. (Streak x${this.multiplier})`;
+
+                    this.updateAchievementProgress('firstDrop', this.caught);
+                    this.updateAchievementProgress('highScorer', this.score);
+                    this.updateAchievementProgress('streakMaster', this.multiplier);
                 }
                 
                 hitBee(entity) {
@@ -3067,12 +3359,230 @@
                         // Use default
                     }
                 }
-                
+
                 saveDifficulty() {
                     try {
                         localStorage.setItem(STORAGE_KEYS.DIFFICULTY, this.difficultySelect.value);
                     } catch (e) {
                         console.warn('Failed to save difficulty setting');
+                    }
+                }
+
+                loadLevels() {
+                    try {
+                        const stored = localStorage.getItem(STORAGE_KEYS.LEVELS);
+                        const parsed = stored ? JSON.parse(stored) : LEVELS;
+                        this.levels = parsed.map((level, index) => ({
+                            ...LEVELS[index],
+                            ...level,
+                        }));
+
+                        const savedSelected = localStorage.getItem(STORAGE_KEYS.SELECTED_LEVEL);
+                        if (savedSelected) {
+                            this.currentLevelId = parseInt(savedSelected, 10) || 1;
+                        }
+                    } catch (e) {
+                        this.levels = LEVELS;
+                    }
+                }
+
+                saveLevels() {
+                    try {
+                        localStorage.setItem(STORAGE_KEYS.LEVELS, JSON.stringify(this.levels));
+                    } catch (e) {
+                        console.warn('Failed to save levels');
+                    }
+                }
+
+                populateLevelSelect() {
+                    if (!this.levelSelect) return;
+                    this.levelSelect.innerHTML = '';
+                    let fallbackLevel = this.levels.find((lvl) => lvl.unlocked) || this.levels[0];
+                    this.levels.forEach((level) => {
+                        const option = document.createElement('option');
+                        option.value = level.id;
+                        option.textContent = `${level.name}${level.unlocked ? '' : ' (Locked)'}`;
+                        option.disabled = !level.unlocked;
+                        this.levelSelect.appendChild(option);
+                    });
+                    const selectedOption = this.levelSelect.querySelector(`option[value="${this.currentLevelId}"]`);
+                    if (selectedOption && !selectedOption.disabled) {
+                        this.levelSelect.value = this.currentLevelId;
+                    } else if (fallbackLevel) {
+                        this.currentLevelId = fallbackLevel.id;
+                        this.levelSelect.value = fallbackLevel.id;
+                        this.saveSelectedLevel();
+                    }
+                }
+
+                saveSelectedLevel() {
+                    try {
+                        localStorage.setItem(STORAGE_KEYS.SELECTED_LEVEL, this.currentLevelId.toString());
+                    } catch (e) {}
+                }
+
+                getSelectedLevel() {
+                    return this.levels.find((lvl) => lvl.id === this.currentLevelId) || this.levels[0];
+                }
+
+                unlockLevels(score) {
+                    let unlockedNew = false;
+                    this.levels = this.levels.map((level) => {
+                        if (!level.unlocked && score >= level.unlockScore) {
+                            unlockedNew = true;
+                            return { ...level, unlocked: true };
+                        }
+                        return level;
+                    });
+
+                    if (unlockedNew) {
+                        this.saveLevels();
+                        this.populateLevelSelect();
+                        this.toastManager.show('New level unlocked! Check the level selector.', 'success', 4000);
+                    }
+                }
+
+                loadAchievements() {
+                    try {
+                        const stored = localStorage.getItem(STORAGE_KEYS.ACHIEVEMENTS);
+                        const parsed = stored ? JSON.parse(stored) : {};
+                        this.achievements = Object.keys(ACHIEVEMENTS).reduce((acc, key) => {
+                            acc[key] = { ...ACHIEVEMENTS[key], ...(parsed[key] || {}) };
+                            return acc;
+                        }, {});
+                    } catch (e) {
+                        this.achievements = { ...ACHIEVEMENTS };
+                    }
+                }
+
+                saveAchievements() {
+                    try {
+                        localStorage.setItem(STORAGE_KEYS.ACHIEVEMENTS, JSON.stringify(this.achievements));
+                    } catch (e) {
+                        console.warn('Failed to save achievements');
+                    }
+                }
+
+                renderAchievements() {
+                    if (!this.achievementsGrid) return;
+                    this.achievementsGrid.innerHTML = '';
+                    Object.values(this.achievements).forEach((ach) => {
+                        const card = document.createElement('div');
+                        card.className = `achievement-card ${ach.unlocked ? 'unlocked' : ''}`;
+                        card.innerHTML = `
+                            <div class="achievement-badge">Unlocked</div>
+                            <div class="achievement-icon"><i class="${ach.icon}"></i></div>
+                            <div>
+                                <h3>${ach.name}</h3>
+                                <p>${ach.description}</p>
+                            </div>
+                            <div class="achievement-progress">
+                                <span style="width:${Math.min(100, (ach.progress / ach.target) * 100)}%"></span>
+                            </div>
+                            <small>${Math.min(ach.progress, ach.target)} / ${ach.target}</small>
+                        `;
+                        this.achievementsGrid.appendChild(card);
+                    });
+                }
+
+                showAchievements() {
+                    this.achievementsModal.classList.add('active');
+                    this.achievementsModal.setAttribute('aria-hidden', 'false');
+                    const focusTarget = this.achievementsContent || this.achievementsGrid;
+                    if (focusTarget) {
+                        focusTarget.focus();
+                    }
+                }
+
+                hideAchievements() {
+                    this.achievementsModal.classList.remove('active');
+                    this.achievementsModal.setAttribute('aria-hidden', 'true');
+                }
+
+                updateAchievementProgress(id, progressValue) {
+                    const achievement = this.achievements[id];
+                    if (!achievement || achievement.unlocked) return;
+
+                    achievement.progress = Math.max(achievement.progress, progressValue);
+                    if (achievement.progress >= achievement.target) {
+                        achievement.unlocked = true;
+                        this.toastManager.show(`Achievement unlocked: ${achievement.name}!`, 'success', 4000);
+                        this.particleSystem.createConfetti();
+                    }
+
+                    this.saveAchievements();
+                    this.renderAchievements();
+                }
+
+                loadMultiplayerSettings() {
+                    try {
+                        const stored = localStorage.getItem(STORAGE_KEYS.MULTIPLAYER);
+                        this.multiplayerEnabled = stored === 'true';
+                    } catch (e) {
+                        this.multiplayerEnabled = false;
+                    }
+                    this.updateMultiplayerToggle();
+                }
+
+                saveMultiplayerSettings() {
+                    try {
+                        localStorage.setItem(STORAGE_KEYS.MULTIPLAYER, this.multiplayerEnabled.toString());
+                    } catch (e) {}
+                }
+
+                updateMultiplayerToggle() {
+                    if (!this.multiplayerToggle) return;
+                    this.multiplayerToggle.classList.toggle('active', this.multiplayerEnabled);
+                    this.multiplayerToggle.querySelector('span:first-child').textContent = this.multiplayerEnabled ? 'On' : 'Off';
+                }
+
+                resetPlayers() {
+                    this.playerScores = [0, 0];
+                    this.currentPlayerIndex = 0;
+                }
+
+                renderPlayers() {
+                    if (!this.multiplayerPanel) return;
+                    this.multiplayerPanel.innerHTML = '';
+
+                    if (!this.multiplayerEnabled) {
+                        this.multiplayerPanel.innerHTML = '<p>Play solo or toggle multiplayer for a friendly competition.</p>';
+                        return;
+                    }
+
+                    this.playerNames.forEach((name, index) => {
+                        const card = document.createElement('div');
+                        card.className = `player-card ${this.currentPlayerIndex === index ? 'active' : ''}`;
+                        card.innerHTML = `
+                            <div class="stat-label">${name}</div>
+                            <div class="stat-value">${this.playerScores[index]} pts</div>
+                            <small>${this.currentPlayerIndex === index ? 'Current turn' : 'Waiting'}</small>
+                        `;
+                        this.multiplayerPanel.appendChild(card);
+                    });
+                }
+
+                shareScore() {
+                    const shareMessage = this.multiplayerEnabled
+                        ? `${this.playerNames[0]}: ${this.playerScores[0]} pts vs ${this.playerNames[1]}: ${this.playerScores[1]} pts in Pooh's Honey Barrel!`
+                        : `I scored ${this.score} points in Pooh's Honey Barrel! Can you beat me?`;
+
+                    const shareData = {
+                        title: "Pooh's Honey Barrel Score",
+                        text: shareMessage,
+                        url: window.location.href
+                    };
+
+                    if (navigator.share) {
+                        navigator.share(shareData).catch(() => {
+                            this.toastManager.show('Sharing was cancelled.', 'warning', 2000);
+                        });
+                    } else if (navigator.clipboard && navigator.clipboard.writeText) {
+                        navigator.clipboard.writeText(`${shareMessage} ${window.location.href}`)
+                            .then(() => this.toastManager.show('Share link copied to clipboard!', 'success', 2000))
+                            .catch(() => this.toastManager.show('Unable to copy share link.', 'error', 2000));
+                    } else {
+                        this.toastManager.show('Sharing is not supported in this browser.', 'warning', 2000);
                     }
                 }
                 
