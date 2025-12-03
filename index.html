@@ -54,7 +54,7 @@
         
         body {
             font-family: -apple-system, BlinkMacSystemFont, "Nunito", system-ui, sans-serif;
-            background: 
+            background:
                 radial-gradient(circle at top left, #ffe9c4 0, transparent 50%),
                 radial-gradient(circle at bottom right, #ffd9b0 0, transparent 50%),
                 linear-gradient(135deg, #f7e0c2, #f2d6a9);
@@ -64,6 +64,10 @@
             justify-content: center;
             align-items: center;
             padding: 16px;
+            padding-left: calc(16px + env(safe-area-inset-left));
+            padding-right: calc(16px + env(safe-area-inset-right));
+            padding-top: calc(16px + env(safe-area-inset-top));
+            padding-bottom: calc(16px + env(safe-area-inset-bottom));
             position: relative;
             overflow-y: auto;
         }
@@ -619,10 +623,11 @@
             display: flex;
             gap: 10px;
             margin-bottom: 14px;
+            flex-wrap: wrap;
         }
-        
+
         .btn {
-            flex: 1;
+            flex: 1 1 160px;
             border: none;
             border-radius: 999px;
             padding: 14px 18px;
@@ -841,16 +846,29 @@
             .stat-pill--highlight {
                 grid-column: span 2;
             }
-            
+
             .settings-row {
                 flex-direction: column;
                 gap: 10px;
             }
-            
+
             .settings-group {
                 min-width: 100%;
             }
-            
+
+            .controls-row {
+                flex-direction: column;
+            }
+
+            .btn {
+                width: 100%;
+            }
+
+            .status {
+                flex-direction: column;
+                align-items: flex-start;
+            }
+
             .canvas-inner {
                 aspect-ratio: 1 / 1.4;
             }
@@ -933,7 +951,7 @@
             <ul class="instructions-list">
                 <li>
                     <i class="fas fa-mouse-pointer"></i>
-                    <span><strong>Move Pooh:</strong> Drag with mouse or finger to move left/right</span>
+                    <span><strong>Move Pooh:</strong> Drag with mouse or finger to move left/right; arrow keys also work on desktop</span>
                 </li>
                 <li>
                     <i class="fas fa-tint"></i>
@@ -1111,7 +1129,7 @@
                     <!-- Status -->
                     <div class="status" id="status" role="status" aria-live="polite">
                         <i class="fas fa-feather-pointed"></i>
-                        <span id="statusText">Tap Start, then gently drag to move Pooh left and right.</span>
+                        <span id="statusText">Start the game, then move Pooh left and right to catch honey drops.</span>
                     </div>
                 </section>
             </main>
@@ -1465,6 +1483,13 @@
                     this.startFromInstructions = document.getElementById('startFromInstructions');
                     this.lastFocusedElement = null;
                     this.focusableInstructions = [];
+
+                    // Device capabilities
+                    this.isTouchDevice = 'ontouchstart' in window || navigator.maxTouchPoints > 0 || navigator.msMaxTouchPoints > 0;
+                    this.actionVerb = this.isTouchDevice ? 'Tap' : 'Click';
+                    this.moveInstruction = this.isTouchDevice
+                        ? 'Tap Start, then gently drag to move Pooh left and right.'
+                        : 'Click Start, then use the arrow keys or drag with your mouse to move Pooh left and right.';
                     
                     // Game state
                     this.gameState = 'idle'; // 'idle', 'countdown', 'running', 'paused', 'gameOver'
@@ -1505,6 +1530,9 @@
                     // Input handling
                     this.touchStartX = 0;
                     this.isDragging = false;
+
+                    // Set initial instructions
+                    this.statusText.textContent = this.moveInstruction;
                     
                     // Initialize
                     this.init();
@@ -1751,9 +1779,9 @@
                     this.overlayTitle.textContent = 'Game Paused';
                     this.overlayText.textContent = 'Pooh is taking a little rest.';
                     this.overlayStats.style.display = 'none';
-                    
+
                     this.pauseBtn.innerHTML = '<i class="fas fa-play"></i> Resume';
-                    this.statusText.textContent = 'Game paused. Tap Resume to continue.';
+                    this.statusText.textContent = `Game paused. ${this.actionVerb} Resume to continue.`;
                 }
                 
                 resume() {
@@ -2687,10 +2715,13 @@
                     this.ctx.font = 'bold 24px "Schoolbell"';
                     this.ctx.textAlign = 'center';
                     this.ctx.fillText('Help Pooh catch honeybee drops!', this.canvas.width / 2, 50);
-                    
+
                     this.ctx.font = '16px "Nunito"';
                     this.ctx.fillStyle = '#6D4C41';
-                    this.ctx.fillText('Tap Start, then drag to move Pooh.', this.canvas.width / 2, 80);
+                    const idleInstruction = this.isTouchDevice
+                        ? 'Tap Start, then drag to move Pooh.'
+                        : 'Click Start, then use arrow keys or drag to move Pooh.';
+                    this.ctx.fillText(idleInstruction, this.canvas.width / 2, 80);
                 }
                 
                 // ==================== UI Updates ====================
@@ -2754,9 +2785,15 @@
                 resizeCanvas() {
                     const container = this.canvas.parentElement;
                     if (!container) return;
-                    
+
                     const width = container.clientWidth;
-                    const height = Math.min(width * 1.3, 500);
+                    const containerRect = container.getBoundingClientRect();
+                    const viewportAllowance = window.innerHeight - containerRect.top - 140;
+                    const targetHeight = width * 1.25;
+                    const height = Math.max(
+                        260,
+                        Math.min(targetHeight, 520, viewportAllowance > 0 ? viewportAllowance : targetHeight)
+                    );
                     
                     this.canvas.width = width;
                     this.canvas.height = height;
