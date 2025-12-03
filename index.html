@@ -2206,113 +2206,337 @@
                 }
                 
                 drawPlayer() {
-                    const ctx = this.ctx;
-                    const x = this.player.x;
-                    const y = this.player.y;
-                    const halfW = this.player.width / 2;
-                    const halfH = this.player.height / 2;
-                    
-                    // Shadow
-                    ctx.fillStyle = 'rgba(62, 39, 35, 0.2)';
-                    ctx.beginPath();
-                    ctx.ellipse(x + 4, y + halfH, halfW * 0.9, halfH * 0.4, 0, 0, Math.PI * 2);
-                    ctx.fill();
-                    
-                    // Body
-                    ctx.fillStyle = '#f7c948';
-                    ctx.beginPath();
-                    ctx.ellipse(x, y, halfW * 0.9, halfH, 0, 0, Math.PI * 2);
-                    ctx.fill();
-                    
-                    // Shirt
-                    ctx.fillStyle = '#d64545';
-                    ctx.beginPath();
-                    ctx.ellipse(x, y + halfH * 0.05, halfW * 0.9, halfH * 0.7, 0, 0, Math.PI * 2);
-                    ctx.fill();
-                    
-                    // Head
-                    const headRadius = halfH * 0.95;
-                    const headY = y - halfH - headRadius * 0.15;
-                    ctx.fillStyle = '#f7c948';
-                    ctx.beginPath();
-                    ctx.arc(x - 3, headY, headRadius, 0, Math.PI * 2);
-                    ctx.fill();
-                    
-                    // Ears
-                    const earOffsetX = headRadius * 0.7;
-                    ctx.beginPath();
-                    ctx.arc(x - earOffsetX - 3, headY - headRadius * 0.2, headRadius * 0.35, 0, Math.PI * 2);
-                    ctx.arc(x + earOffsetX - 3, headY - headRadius * 0.2, headRadius * 0.35, 0, Math.PI * 2);
-                    ctx.fill();
-                    
-                    // Face details
-                    ctx.fillStyle = '#5d4037';
-                    ctx.beginPath();
-                    ctx.arc(x - headRadius * 0.35 - 3, headY - headRadius * 0.1, headRadius * 0.12, 0, Math.PI * 2);
-                    ctx.arc(x + headRadius * 0.05 - 3, headY - headRadius * 0.1, headRadius * 0.12, 0, Math.PI * 2);
-                    ctx.fill();
-                    
-                    ctx.beginPath();
-                    ctx.arc(x - 3, headY + headRadius * 0.12, headRadius * 0.14, 0, Math.PI * 2);
-                    ctx.fill();
-                    
-                    ctx.strokeStyle = '#5d4037';
-                    ctx.lineWidth = 2;
-                    ctx.beginPath();
-                    ctx.arc(x - 3, headY + headRadius * 0.32, headRadius * 0.25, 0.1 * Math.PI, 0.9 * Math.PI);
-                    ctx.stroke();
-                    
-                    // Arms
-                    const armY = y + 2;
-                    ctx.lineWidth = 8;
-                    ctx.lineCap = 'round';
-                    ctx.strokeStyle = '#f7c948';
-                    ctx.beginPath();
-                    ctx.moveTo(x - halfW * 0.5, armY);
-                    ctx.lineTo(x + halfW * 0.3, armY - 4);
-                    ctx.stroke();
-                    
-                    ctx.beginPath();
-                    ctx.moveTo(x - halfW * 0.2, armY + 6);
-                    ctx.lineTo(x + halfW * 0.4, armY + 3);
-                    ctx.stroke();
-                    
-                    // Barrel
-                    const barrelWidth = halfW * 0.9;
-                    const barrelHeight = halfH * 0.9;
-                    const barrelX = x + halfW * 0.15;
-                    const barrelY = y - 4;
-                    
-                    // Barrel body
-                    ctx.fillStyle = '#8d6e63';
-                    ctx.beginPath();
-                    ctx.ellipse(barrelX, barrelY, barrelWidth / 2, barrelHeight / 2, 0, 0, Math.PI * 2);
-                    ctx.fill();
-                    
-                    // Barrel top (honey)
-                    ctx.fillStyle = '#ffeb90';
-                    ctx.beginPath();
-                    ctx.ellipse(barrelX, barrelY - barrelHeight * 0.4, barrelWidth * 0.8 / 2, barrelHeight * 0.45 / 2, 0, 0, Math.PI * 2);
-                    ctx.fill();
-                    
-                    // Barrel details
-                    ctx.strokeStyle = '#5d4037';
-                    ctx.lineWidth = 2;
-                    ctx.beginPath();
-                    ctx.ellipse(barrelX, barrelY, barrelWidth / 2, barrelHeight / 2, 0, 0, Math.PI * 2);
-                    ctx.stroke();
-                    
-                    ctx.beginPath();
-                    ctx.ellipse(barrelX, barrelY - barrelHeight * 0.35, barrelWidth * 0.75 / 2, barrelHeight * 0.35 / 2, 0, 0, Math.PI * 2);
-                    ctx.stroke();
-                    
-                    // Barrel label
-                    ctx.fillStyle = '#fffbdd';
-                    ctx.font = 'bold 11px "Nunito"';
-                    ctx.textAlign = 'center';
-                    ctx.textBaseline = 'middle';
-                    ctx.fillText('HONEY', barrelX, barrelY + 3);
-                }
+    const ctx = this.ctx;
+    const x = this.player.x;
+    const y = this.player.y;
+    const halfW = this.player.width / 2;
+    const halfH = this.player.height / 2;
+    
+    // Animation values
+    const time = Date.now() * 0.001;
+    const bob = Math.sin(time * 2) * 2;
+    const earWiggle = Math.sin(time * 3) * 0.1;
+    const armSwing = Math.sin(time * 4) * 0.2;
+    const blink = Math.sin(time * 0.5) > 0.9 ? 0.3 : 1; // Blink occasionally
+    
+    // Draw sweet particle effects around Pooh
+    for (let i = 0; i < 3; i++) {
+        const angle = time + i * Math.PI * 2 / 3;
+        const particleX = x + Math.cos(angle) * 40;
+        const particleY = y - 20 + Math.sin(angle) * 15 + bob;
+        
+        ctx.save();
+        ctx.globalAlpha = 0.3;
+        ctx.fillStyle = '#FFD700';
+        ctx.beginPath();
+        ctx.arc(particleX, particleY, 3, 0, Math.PI * 2);
+        ctx.fill();
+        ctx.restore();
+    }
+    
+    // Enhanced shadow with gradient
+    const shadowGradient = ctx.createRadialGradient(
+        x + 4, y + halfH, 0,
+        x + 4, y + halfH, halfW * 0.9
+    );
+    shadowGradient.addColorStop(0, 'rgba(62, 39, 35, 0.3)');
+    shadowGradient.addColorStop(1, 'rgba(62, 39, 35, 0)');
+    
+    ctx.fillStyle = shadowGradient;
+    ctx.beginPath();
+    ctx.ellipse(x + 4, y + halfH + 2, halfW * 0.9, halfH * 0.4, 0, 0, Math.PI * 2);
+    ctx.fill();
+    
+    // Body with gradient and shine
+    const bodyGradient = ctx.createRadialGradient(
+        x - 10, y - 10, 0,
+        x, y, halfW * 1.2
+    );
+    bodyGradient.addColorStop(0, '#FFD166'); // Lighter center
+    bodyGradient.addColorStop(1, '#F7C948'); // Outer color
+    
+    ctx.fillStyle = bodyGradient;
+    ctx.beginPath();
+    ctx.ellipse(x, y + bob, halfW * 0.9, halfH, 0, 0, Math.PI * 2);
+    ctx.fill();
+    
+    // Body shine/highlight
+    ctx.fillStyle = 'rgba(255, 255, 255, 0.2)';
+    ctx.beginPath();
+    ctx.ellipse(x - halfW * 0.3, y - halfH * 0.2 + bob, halfW * 0.3, halfH * 0.2, 0, 0, Math.PI * 2);
+    ctx.fill();
+    
+    // Shirt with better detail
+    const shirtGradient = ctx.createLinearGradient(x, y - halfH, x, y + halfH);
+    shirtGradient.addColorStop(0, '#E63946'); // Lighter red at top
+    shirtGradient.addColorStop(1, '#D64545'); // Darker red at bottom
+    
+    ctx.fillStyle = shirtGradient;
+    ctx.beginPath();
+    ctx.ellipse(x, y + halfH * 0.05 + bob, halfW * 0.9, halfH * 0.7, 0, 0, Math.PI * 2);
+    ctx.fill();
+    
+    // Shirt collar
+    ctx.fillStyle = '#FFFBEB';
+    ctx.beginPath();
+    ctx.arc(x, y - halfH * 0.3 + bob, halfW * 0.3, Math.PI, 0, false);
+    ctx.fill();
+    
+    // Head with fluffier look
+    const headRadius = halfH * 0.95;
+    const headY = y - halfH - headRadius * 0.15 + bob;
+    
+    const headGradient = ctx.createRadialGradient(
+        x - 10, headY - 10, 0,
+        x, headY, headRadius * 1.2
+    );
+    headGradient.addColorStop(0, '#FFDA6A');
+    headGradient.addColorStop(1, '#F7C948');
+    
+    ctx.fillStyle = headGradient;
+    ctx.beginPath();
+    ctx.arc(x - 3, headY, headRadius, 0, Math.PI * 2);
+    ctx.fill();
+    
+    // Head shine
+    ctx.fillStyle = 'rgba(255, 255, 255, 0.2)';
+    ctx.beginPath();
+    ctx.arc(x - headRadius * 0.4 - 3, headY - headRadius * 0.3, headRadius * 0.2, 0, Math.PI * 2);
+    ctx.fill();
+    
+    // Ears with wiggle animation
+    const earOffsetX = headRadius * 0.7;
+    const earOffsetY = headRadius * 0.2;
+    
+    ctx.fillStyle = '#F7C948';
+    ctx.beginPath();
+    ctx.arc(x - earOffsetX - 3, headY - earOffsetY + Math.sin(time * 3) * 2, 
+            headRadius * 0.35 + earWiggle, 0, Math.PI * 2);
+    ctx.arc(x + earOffsetX - 3, headY - earOffsetY + Math.sin(time * 3 + 1) * 2, 
+            headRadius * 0.35 + earWiggle, 0, Math.PI * 2);
+    ctx.fill();
+    
+    // Ear insides
+    ctx.fillStyle = '#FFB347';
+    ctx.beginPath();
+    ctx.arc(x - earOffsetX - 3, headY - earOffsetY + Math.sin(time * 3) * 2, 
+            headRadius * 0.2, 0, Math.PI * 2);
+    ctx.arc(x + earOffsetX - 3, headY - earOffsetY + Math.sin(time * 3 + 1) * 2, 
+            headRadius * 0.2, 0, Math.PI * 2);
+    ctx.fill();
+    
+    // Eyes with blink animation
+    ctx.fillStyle = '#5d4037';
+    ctx.beginPath();
+    // Left eye (blinking)
+    ctx.ellipse(x - headRadius * 0.35 - 3, headY - headRadius * 0.1, 
+                headRadius * 0.12, headRadius * 0.12 * blink, 0, 0, Math.PI * 2);
+    // Right eye (blinking)
+    ctx.ellipse(x + headRadius * 0.05 - 3, headY - headRadius * 0.1, 
+                headRadius * 0.12, headRadius * 0.12 * blink, 0, 0, Math.PI * 2);
+    ctx.fill();
+    
+    // Eye highlights
+    ctx.fillStyle = 'rgba(255, 255, 255, 0.8)';
+    ctx.beginPath();
+    ctx.arc(x - headRadius * 0.4 - 3, headY - headRadius * 0.15, headRadius * 0.04, 0, Math.PI * 2);
+    ctx.arc(x + headRadius * 0.01 - 3, headY - headRadius * 0.15, headRadius * 0.04, 0, Math.PI * 2);
+    ctx.fill();
+    
+    // Nose
+    ctx.fillStyle = '#5d4037';
+    ctx.beginPath();
+    ctx.ellipse(x - 3, headY + headRadius * 0.12, headRadius * 0.14, headRadius * 0.1, 0, 0, Math.PI * 2);
+    ctx.fill();
+    
+    // Nose highlight
+    ctx.fillStyle = 'rgba(255, 255, 255, 0.3)';
+    ctx.beginPath();
+    ctx.arc(x - headRadius * 0.05 - 3, headY + headRadius * 0.08, headRadius * 0.03, 0, Math.PI * 2);
+    ctx.fill();
+    
+    // Smile with animation
+    const smileCurve = 0.1 + Math.sin(time * 2) * 0.05;
+    ctx.strokeStyle = '#5d4037';
+    ctx.lineWidth = 2;
+    ctx.lineCap = 'round';
+    ctx.beginPath();
+    ctx.arc(x - 3, headY + headRadius * 0.32, headRadius * 0.25, 
+            (0.1 + smileCurve) * Math.PI, (0.9 - smileCurve) * Math.PI);
+    ctx.stroke();
+    
+    // Cheeks
+    ctx.fillStyle = '#FFB6C1';
+    ctx.globalAlpha = 0.4;
+    ctx.beginPath();
+    ctx.arc(x - headRadius * 0.5 - 3, headY + headRadius * 0.1, headRadius * 0.15, 0, Math.PI * 2);
+    ctx.arc(x + headRadius * 0.2 - 3, headY + headRadius * 0.1, headRadius * 0.15, 0, Math.PI * 2);
+    ctx.fill();
+    ctx.globalAlpha = 1;
+    
+    // Arms with swing animation
+    const armY = y + 2 + bob;
+    ctx.lineWidth = 8;
+    ctx.lineCap = 'round';
+    ctx.strokeStyle = '#FFDA6A';
+    
+    // Left arm (swinging)
+    ctx.beginPath();
+    ctx.moveTo(x - halfW * 0.5, armY);
+    ctx.quadraticCurveTo(
+        x - halfW * 0.2 + Math.sin(time * 4) * 5, 
+        armY - 10 + armSwing * 10, 
+        x + halfW * 0.3, armY - 4
+    );
+    ctx.stroke();
+    
+    // Right arm (swinging)
+    ctx.beginPath();
+    ctx.moveTo(x - halfW * 0.2, armY + 6);
+    ctx.quadraticCurveTo(
+        x + halfW * 0.1 + Math.sin(time * 4 + 1) * 5, 
+        armY + 10 + armSwing * 10, 
+        x + halfW * 0.4, armY + 3
+    );
+    ctx.stroke();
+    
+    // Hands
+    ctx.fillStyle = '#FFDA6A';
+    ctx.beginPath();
+    ctx.arc(x + halfW * 0.3, armY - 4, 5, 0, Math.PI * 2);
+    ctx.arc(x + halfW * 0.4, armY + 3, 5, 0, Math.PI * 2);
+    ctx.fill();
+    
+    // Honey Barrel with more detail and animation
+    const barrelWidth = halfW * 0.9;
+    const barrelHeight = halfH * 0.9;
+    const barrelX = x + halfW * 0.15 + Math.sin(time * 2) * 1; // Slight sway
+    const barrelY = y - 4 + bob + Math.sin(time * 3) * 1; // Bob with Pooh
+    
+    // Barrel body with wood texture
+    const barrelGradient = ctx.createLinearGradient(
+        barrelX - barrelWidth/2, barrelY,
+        barrelX + barrelWidth/2, barrelY
+    );
+    barrelGradient.addColorStop(0, '#A1887F');
+    barrelGradient.addColorStop(0.5, '#8D6E63');
+    barrelGradient.addColorStop(1, '#795548');
+    
+    ctx.fillStyle = barrelGradient;
+    ctx.beginPath();
+    ctx.ellipse(barrelX, barrelY, barrelWidth / 2, barrelHeight / 2, 0, 0, Math.PI * 2);
+    ctx.fill();
+    
+    // Wood grain details
+    ctx.strokeStyle = '#5D4037';
+    ctx.lineWidth = 1;
+    for (let i = 0; i < 3; i++) {
+        const grainY = barrelY - barrelHeight/2 + (i + 1) * barrelHeight/3;
+        ctx.beginPath();
+        ctx.ellipse(barrelX, grainY, barrelWidth * 0.45, 1, 0, 0, Math.PI * 2);
+        ctx.stroke();
+    }
+    
+    // Barrel hoops
+    ctx.strokeStyle = '#5D4037';
+    ctx.lineWidth = 3;
+    ctx.beginPath();
+    ctx.ellipse(barrelX, barrelY - barrelHeight * 0.35, barrelWidth * 0.55 / 2, 3, 0, 0, Math.PI * 2);
+    ctx.stroke();
+    
+    ctx.beginPath();
+    ctx.ellipse(barrelX, barrelY + barrelHeight * 0.35, barrelWidth * 0.55 / 2, 3, 0, 0, Math.PI * 2);
+    ctx.stroke();
+    
+    // Honey with glow and dripping effect
+    const honeyGradient = ctx.createRadialGradient(
+        barrelX, barrelY - barrelHeight * 0.4, 0,
+        barrelX, barrelY - barrelHeight * 0.4, barrelWidth * 0.45
+    );
+    honeyGradient.addColorStop(0, '#FFF59D');
+    honeyGradient.addColorStop(0.7, '#FFEB3B');
+    honeyGradient.addColorStop(1, '#FFD600');
+    
+    ctx.fillStyle = honeyGradient;
+    ctx.beginPath();
+    ctx.ellipse(barrelX, barrelY - barrelHeight * 0.4, barrelWidth * 0.8 / 2, 
+                barrelHeight * 0.45 / 2, 0, 0, Math.PI * 2);
+    ctx.fill();
+    
+    // Honey shine
+    ctx.fillStyle = 'rgba(255, 255, 255, 0.4)';
+    ctx.beginPath();
+    ctx.ellipse(barrelX - barrelWidth * 0.2, barrelY - barrelHeight * 0.45, 
+                barrelWidth * 0.15, barrelHeight * 0.1, 0, 0, Math.PI * 2);
+    ctx.fill();
+    
+    // Honey drip animation
+    const dripY = barrelY - barrelHeight * 0.4 + barrelHeight * 0.25;
+    ctx.fillStyle = '#FFD600';
+    ctx.beginPath();
+    ctx.ellipse(barrelX + Math.sin(time * 2) * 2, dripY + Math.sin(time * 5) * 1, 
+                3, 5, 0, 0, Math.PI * 2);
+    ctx.fill();
+    
+    // Barrel label with cute font
+    ctx.fillStyle = '#FFF8E1';
+    ctx.font = 'bold 10px "Comic Sans MS", cursive';
+    ctx.textAlign = 'center';
+    ctx.textBaseline = 'middle';
+    ctx.fillText('🍯 HONEY 🍯', barrelX, barrelY + 3);
+    
+    // Little bees flying around the barrel
+    for (let i = 0; i < 2; i++) {
+        const beeAngle = time * 2 + i * Math.PI;
+        const beeRadius = 15;
+        const beeX = barrelX + Math.cos(beeAngle) * beeRadius;
+        const beeY = barrelY - barrelHeight * 0.6 + Math.sin(beeAngle * 1.5) * 8;
+        
+        // Bee body
+        ctx.fillStyle = '#FFD700';
+        ctx.beginPath();
+        ctx.ellipse(beeX, beeY, 3, 2, 0, 0, Math.PI * 2);
+        ctx.fill();
+        
+        // Bee stripes
+        ctx.fillStyle = '#5D4037';
+        ctx.fillRect(beeX - 2, beeY - 1, 1, 2);
+        ctx.fillRect(beeX + 1, beeY - 1, 1, 2);
+        
+        // Bee wings
+        ctx.fillStyle = 'rgba(255, 255, 255, 0.6)';
+        ctx.beginPath();
+        ctx.ellipse(beeX - 1, beeY - 2, 2, 1, Math.PI/4, 0, Math.PI * 2);
+        ctx.ellipse(beeX + 1, beeY - 2, 2, 1, -Math.PI/4, 0, Math.PI * 2);
+        ctx.fill();
+    }
+    
+    // Pooh's thought bubble with honey
+    if (Math.sin(time * 0.3) > 0.5) {
+        const bubbleX = x - halfW * 0.8;
+        const bubbleY = y - halfH * 1.5;
+        
+        // Bubble
+        ctx.fillStyle = 'rgba(255, 255, 255, 0.9)';
+        ctx.beginPath();
+        ctx.ellipse(bubbleX, bubbleY, 20, 15, 0, 0, Math.PI * 2);
+        ctx.fill();
+        
+        // Bubble tail
+        ctx.beginPath();
+        ctx.moveTo(bubbleX + 5, bubbleY + 10);
+        ctx.lineTo(x - halfW * 0.5, y - halfH * 0.8);
+        ctx.lineTo(bubbleX + 15, bubbleY + 10);
+        ctx.fill();
+        
+        // Honey in thought bubble
+        ctx.fillStyle = '#FFD600';
+        ctx.font = 'bold 14px "Comic Sans MS", cursive';
+        ctx.textAlign = 'center';
+        ctx.textBaseline = 'middle';
+        ctx.fillText('🍯', bubbleX, bubbleY);
+    }
+}
                 
                 drawEntities() {
                     for (const entity of this.entities) {
