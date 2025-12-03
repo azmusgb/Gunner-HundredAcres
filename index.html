@@ -3024,13 +3024,13 @@
                         ctx.lineTo(endX, endY);
                         ctx.stroke();
                     }
-                }
-                
-                // ==================== Additional Methods ====================
-                getCurrentConfig() {
-                    const difficulty = this.difficultySelect.value;
-                    return DIFFICULTY_CONFIG[difficulty] || DIFFICULTY_CONFIG.medium;
-                }
+            }
+
+            // ==================== Additional Methods ====================
+            getCurrentConfig() {
+                const difficulty = this.difficultySelect.value;
+                return DIFFICULTY_CONFIG[difficulty] || DIFFICULTY_CONFIG.medium;
+            }
                 
                 showShop() {
                     this.toastManager.show('Honey Shop coming soon! Collect more honey to unlock special items.', 'info', 4000);
@@ -3047,7 +3047,61 @@
                 // The complete implementation would include all the original methods
                 // adapted for the new seasonal and power-up features
             }
-            
+
+            // ==================== Base Audio Manager ====================
+            class AudioManager {
+                constructor() {
+                    this.enabled = true;
+                    this.initialized = false;
+                    this.context = null;
+                }
+
+                initAudioContext() {
+                    if (this.initialized) return;
+
+                    const AudioCtx = window.AudioContext || window.webkitAudioContext;
+                    if (!AudioCtx) {
+                        this.enabled = false;
+                        return;
+                    }
+
+                    this.context = new AudioCtx();
+                    this.initialized = true;
+                }
+
+                toggle() {
+                    this.enabled = !this.enabled;
+                    return this.enabled;
+                }
+
+                playTone(frequency, duration = 0.18, type = 'sine', gainValue = 0.14) {
+                    if (!this.enabled || !this.context) return;
+
+                    const osc = this.context.createOscillator();
+                    const gain = this.context.createGain();
+
+                    osc.type = type;
+                    osc.frequency.value = frequency;
+
+                    gain.gain.setValueAtTime(gainValue, this.context.currentTime);
+                    gain.gain.exponentialRampToValueAtTime(0.0001, this.context.currentTime + duration);
+
+                    osc.connect(gain);
+                    gain.connect(this.context.destination);
+
+                    osc.start();
+                    osc.stop(this.context.currentTime + duration);
+                }
+
+                playStartSound() { this.playTone(880, 0.15, 'sawtooth'); }
+                playPowerupSound() { this.playTone(1320, 0.18, 'triangle'); }
+                playGoldenDropSound() { this.playTone(1560, 0.2, 'triangle', 0.12); }
+                playSpecialDropSound() { this.playTone(1180, 0.18, 'sine'); }
+                playDropSound() { this.playTone(640, 0.12, 'sine'); }
+                playShieldSound() { this.playTone(420, 0.22, 'square', 0.16); }
+                playBeeHitSound() { this.playTone(220, 0.25, 'square', 0.18); }
+            }
+
             // ==================== Enhanced Audio Manager ====================
             class EnhancedAudioManager extends AudioManager {
                 constructor() {
