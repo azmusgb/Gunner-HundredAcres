@@ -1432,52 +1432,138 @@
         // Clear
         ctx.clearRect(0, 0, canvas.width, canvas.height);
 
-        // Sky gradient
+        // Sky gradient with gentle sunrise
         const skyGradient = ctx.createLinearGradient(0, 0, 0, canvas.height);
-        skyGradient.addColorStop(0, '#8cd3ff');
-        skyGradient.addColorStop(0.45, '#87CEEB');
-        skyGradient.addColorStop(0.9, '#d1f3ff');
+        skyGradient.addColorStop(0, '#bfe5ff');
+        skyGradient.addColorStop(0.42, '#8cd3ff');
+        skyGradient.addColorStop(0.9, '#e6f7ff');
         ctx.fillStyle = skyGradient;
         ctx.fillRect(0, 0, canvas.width, canvas.height);
 
-        // Soft distant hills
-        ctx.fillStyle = '#b7d7a8';
+        // Sun glow
+        const sunX = canvas.width * 0.12;
+        const sunY = canvas.height * 0.16;
+        const sunGradient = ctx.createRadialGradient(sunX, sunY, 12, sunX, sunY, 90);
+        sunGradient.addColorStop(0, 'rgba(255, 232, 150, 0.95)');
+        sunGradient.addColorStop(0.4, 'rgba(255, 215, 120, 0.55)');
+        sunGradient.addColorStop(1, 'rgba(255, 224, 153, 0)');
+        ctx.fillStyle = sunGradient;
         ctx.beginPath();
-        ctx.moveTo(0, canvas.height - 80);
-        ctx.quadraticCurveTo(canvas.width * 0.25, canvas.height - 120, canvas.width * 0.5, canvas.height - 80);
-        ctx.quadraticCurveTo(canvas.width * 0.75, canvas.height - 40, canvas.width, canvas.height - 70);
+        ctx.arc(sunX, sunY, 90, 0, Math.PI * 2);
+        ctx.fill();
+
+        // Soft clouds
+        const drawCloud = (x, y, scale = 1, opacity = 0.9) => {
+          ctx.save();
+          ctx.globalAlpha = opacity;
+          ctx.fillStyle = '#fff';
+          ctx.beginPath();
+          ctx.ellipse(x, y, 26 * scale, 18 * scale, 0, 0, Math.PI * 2);
+          ctx.ellipse(x + 18 * scale, y - 8 * scale, 22 * scale, 16 * scale, 0, 0, Math.PI * 2);
+          ctx.ellipse(x + 36 * scale, y + 2 * scale, 24 * scale, 17 * scale, 0, 0, Math.PI * 2);
+          ctx.fill();
+          ctx.restore();
+        };
+        drawCloud(canvas.width * 0.22, canvas.height * 0.2, 1.1, 0.85);
+        drawCloud(canvas.width * 0.55, canvas.height * 0.14, 0.9, 0.7);
+        drawCloud(canvas.width * 0.78, canvas.height * 0.24, 1.2, 0.8);
+
+        // Soft distant hills
+        const backHill = ctx.createLinearGradient(0, canvas.height - 160, 0, canvas.height);
+        backHill.addColorStop(0, '#b7d7a8');
+        backHill.addColorStop(1, '#9cc38a');
+        ctx.fillStyle = backHill;
+        ctx.beginPath();
+        ctx.moveTo(0, canvas.height - 110);
+        ctx.quadraticCurveTo(canvas.width * 0.25, canvas.height - 160, canvas.width * 0.55, canvas.height - 110);
+        ctx.quadraticCurveTo(canvas.width * 0.8, canvas.height - 80, canvas.width, canvas.height - 120);
         ctx.lineTo(canvas.width, canvas.height);
         ctx.lineTo(0, canvas.height);
         ctx.closePath();
         ctx.fill();
 
-        // Ground
-        ctx.fillStyle = '#6fa45a';
-        ctx.fillRect(0, canvas.height - 40, canvas.width, 40);
+        const frontHill = ctx.createLinearGradient(0, canvas.height - 120, 0, canvas.height);
+        frontHill.addColorStop(0, '#a3ce86');
+        frontHill.addColorStop(1, '#7fb76c');
+        ctx.fillStyle = frontHill;
+        ctx.beginPath();
+        ctx.moveTo(0, canvas.height - 70);
+        ctx.quadraticCurveTo(canvas.width * 0.22, canvas.height - 130, canvas.width * 0.5, canvas.height - 80);
+        ctx.quadraticCurveTo(canvas.width * 0.78, canvas.height - 40, canvas.width, canvas.height - 75);
+        ctx.lineTo(canvas.width, canvas.height);
+        ctx.lineTo(0, canvas.height);
+        ctx.closePath();
+        ctx.fill();
 
-        // Simple trees
-        ctx.fillStyle = 'rgba(74, 94, 62, 0.7)';
-        for (let i = 0; i < 4; i++) {
-          const baseX = (canvas.width / 4) * i + 20;
-          ctx.fillRect(baseX, canvas.height - 70, 20, 30);
+        // Ground & path
+        const grassGradient = ctx.createLinearGradient(0, canvas.height - 60, 0, canvas.height);
+        grassGradient.addColorStop(0, '#72a95c');
+        grassGradient.addColorStop(1, '#5e924c');
+        ctx.fillStyle = grassGradient;
+        ctx.fillRect(0, canvas.height - 48, canvas.width, 48);
+
+        const pathGradient = ctx.createLinearGradient(0, canvas.height - 70, 0, canvas.height);
+        pathGradient.addColorStop(0, '#e2c9a5');
+        pathGradient.addColorStop(1, '#c8a979');
+        ctx.fillStyle = pathGradient;
+        ctx.beginPath();
+        ctx.moveTo(0, canvas.height - 38);
+        ctx.quadraticCurveTo(canvas.width * 0.25, canvas.height - 20, canvas.width * 0.5, canvas.height - 34);
+        ctx.quadraticCurveTo(canvas.width * 0.75, canvas.height - 48, canvas.width, canvas.height - 30);
+        ctx.lineTo(canvas.width, canvas.height);
+        ctx.lineTo(0, canvas.height);
+        ctx.closePath();
+        ctx.fill();
+
+        // Storybook trees
+        const drawTree = (x, height) => {
+          ctx.save();
+          ctx.fillStyle = '#5d4730';
+          ctx.fillRect(x, canvas.height - height, 18, height - 26);
+          const leafGradient = ctx.createLinearGradient(0, canvas.height - height, 0, canvas.height - height + 90);
+          leafGradient.addColorStop(0, '#7dbd6a');
+          leafGradient.addColorStop(1, '#5c9b52');
+          ctx.fillStyle = leafGradient;
           ctx.beginPath();
-          ctx.moveTo(baseX - 20, canvas.height - 70);
-          ctx.lineTo(baseX + 10, canvas.height - 120);
-          ctx.lineTo(baseX + 40, canvas.height - 70);
-          ctx.closePath();
+          ctx.ellipse(x + 9, canvas.height - height + 14, 55, 38, 0, 0, Math.PI * 2);
+          ctx.ellipse(x - 10, canvas.height - height + 36, 48, 32, 0, 0, Math.PI * 2);
+          ctx.ellipse(x + 30, canvas.height - height + 40, 50, 30, 0, 0, Math.PI * 2);
           ctx.fill();
+          ctx.restore();
+        };
+        drawTree(canvas.width * 0.14, 120);
+        drawTree(canvas.width * 0.46, 140);
+        drawTree(canvas.width * 0.78, 126);
+
+        // Grass texture
+        ctx.strokeStyle = 'rgba(63, 94, 51, 0.4)';
+        ctx.lineWidth = 1.5;
+        const sway = Math.sin(Date.now() / 600);
+        for (let x = 8; x < canvas.width; x += 24) {
+          ctx.beginPath();
+          ctx.moveTo(x, canvas.height - 14);
+          ctx.lineTo(x + 4, canvas.height - 24 - (Math.sin(x * 0.08 + Date.now() / 400) + sway) * 4);
+          ctx.stroke();
         }
+
+        // Player shadow
+        ctx.fillStyle = 'rgba(0, 0, 0, 0.15)';
+        ctx.beginPath();
+        ctx.ellipse(player.x + 30, player.y + 104, 34, 12, 0, 0, Math.PI * 2);
+        ctx.fill();
 
         // Pooh ears
         ctx.fillStyle = '#f4c16e';
         ctx.beginPath();
         ctx.arc(player.x + 18, player.y + 10, 8, 0, Math.PI * 2);
-        ctx.fill();
-        ctx.beginPath();
         ctx.arc(player.x + 42, player.y + 10, 8, 0, Math.PI * 2);
         ctx.fill();
 
         // Pooh head
+        const headGradient = ctx.createLinearGradient(player.x + 20, player.y, player.x + 50, player.y + 40);
+        headGradient.addColorStop(0, '#f8cf78');
+        headGradient.addColorStop(1, '#e2ad57');
+        ctx.fillStyle = headGradient;
         ctx.beginPath();
         ctx.arc(player.x + 30, player.y + 26, 20, 0, Math.PI * 2);
         ctx.fill();
@@ -1486,8 +1572,6 @@
         ctx.fillStyle = '#2b1810';
         ctx.beginPath();
         ctx.arc(player.x + 23, player.y + 22, 3, 0, Math.PI * 2);
-        ctx.fill();
-        ctx.beginPath();
         ctx.arc(player.x + 37, player.y + 22, 3, 0, Math.PI * 2);
         ctx.fill();
 
@@ -1504,7 +1588,10 @@
         // Body + shirt
         ctx.fillStyle = '#f4c16e';
         ctx.fillRect(player.x + 14, player.y + 40, 32, 30);
-        ctx.fillStyle = '#d32f2f';
+        const shirtGradient = ctx.createLinearGradient(player.x + 12, player.y + 40, player.x + 48, player.y + 58);
+        shirtGradient.addColorStop(0, '#e74d3c');
+        shirtGradient.addColorStop(1, '#c4251f');
+        ctx.fillStyle = shirtGradient;
         ctx.fillRect(player.x + 12, player.y + 40, 36, 18);
 
         // Arms
@@ -1522,6 +1609,12 @@
         ctx.closePath();
         ctx.fill();
 
+        const barrelHighlight = ctx.createLinearGradient(player.x, player.y + 60, player.x + 60, player.y + 100);
+        barrelHighlight.addColorStop(0, 'rgba(255, 235, 205, 0.25)');
+        barrelHighlight.addColorStop(1, 'rgba(0, 0, 0, 0.08)');
+        ctx.fillStyle = barrelHighlight;
+        ctx.fill();
+
         ctx.strokeStyle = '#5a4a3a';
         ctx.lineWidth = 2;
         ctx.stroke();
@@ -1536,6 +1629,14 @@
 
         // Honey drops
         drops.forEach(drop => {
+          const honeyGlow = ctx.createRadialGradient(drop.x + 10, drop.y + 14, 2, drop.x + 10, drop.y + 14, 16);
+          honeyGlow.addColorStop(0, 'rgba(244, 169, 68, 0.8)');
+          honeyGlow.addColorStop(1, 'rgba(244, 169, 68, 0)');
+          ctx.fillStyle = honeyGlow;
+          ctx.beginPath();
+          ctx.arc(drop.x + 10, drop.y + 14, 16, 0, Math.PI * 2);
+          ctx.fill();
+
           ctx.fillStyle = '#f4a944';
           ctx.beginPath();
           ctx.ellipse(drop.x + 10, drop.y + 15, 10, 15, 0, 0, Math.PI * 2);
@@ -1549,20 +1650,44 @@
 
         // Bees
         bees.forEach(bee => {
-          ctx.fillStyle = '#f4a944';
-          ctx.fillRect(bee.x + 5, bee.y + 5, 22, 16);
-
-          ctx.fillStyle = '#2b1810';
-          ctx.fillRect(bee.x + 8, bee.y + 5, 3, 16);
-          ctx.fillRect(bee.x + 15, bee.y + 5, 3, 16);
-          ctx.fillRect(bee.x + 20, bee.y + 5, 3, 16);
-
-          ctx.fillStyle = 'rgba(255, 255, 255, 0.7)';
+          // motion trail
+          ctx.fillStyle = 'rgba(0,0,0,0.06)';
           ctx.beginPath();
-          ctx.ellipse(bee.x + 10, bee.y + 2, 7, 5, -0.3, 0, Math.PI * 2);
+          ctx.ellipse(bee.x + 8, bee.y + 12, 12, 8, 0, 0, Math.PI * 2);
           ctx.fill();
+
+          ctx.fillStyle = '#f4a944';
           ctx.beginPath();
-          ctx.ellipse(bee.x + 22, bee.y + 2, 7, 5, 0.3, 0, Math.PI * 2);
+          ctx.roundRect(bee.x + 4, bee.y + 4, 24, 18, 6);
+          ctx.fill();
+
+          ctx.strokeStyle = '#2b1810';
+          ctx.lineWidth = 2;
+          ctx.beginPath();
+          ctx.moveTo(bee.x + 10, bee.y + 5);
+          ctx.lineTo(bee.x + 10, bee.y + 22);
+          ctx.moveTo(bee.x + 17, bee.y + 5);
+          ctx.lineTo(bee.x + 17, bee.y + 22);
+          ctx.moveTo(bee.x + 24, bee.y + 5);
+          ctx.lineTo(bee.x + 24, bee.y + 22);
+          ctx.stroke();
+
+          const wingGradient = ctx.createLinearGradient(bee.x + 8, bee.y - 2, bee.x + 22, bee.y + 10);
+          wingGradient.addColorStop(0, 'rgba(255, 255, 255, 0.9)');
+          wingGradient.addColorStop(1, 'rgba(180, 220, 255, 0.5)');
+          ctx.fillStyle = wingGradient;
+          ctx.beginPath();
+          ctx.ellipse(bee.x + 12, bee.y + 2, 10, 6, -0.35, 0, Math.PI * 2);
+          ctx.ellipse(bee.x + 22, bee.y + 2, 10, 6, 0.35, 0, Math.PI * 2);
+          ctx.fill();
+
+          // stinger
+          ctx.fillStyle = '#2b1810';
+          ctx.beginPath();
+          ctx.moveTo(bee.x + 28, bee.y + 12);
+          ctx.lineTo(bee.x + 34, bee.y + 12);
+          ctx.lineTo(bee.x + 28, bee.y + 16);
+          ctx.closePath();
           ctx.fill();
         });
 
