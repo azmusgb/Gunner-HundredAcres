@@ -258,6 +258,19 @@
       <button class="btn ghost" type="button" id="fullscreenBtn" aria-pressed="false">⛶ Fullscreen</button>
       <button class="btn ghost active" type="button" id="musicToggle" aria-pressed="true">🔊 Music On</button>
     </div>
+
+    <div class="game-critique" aria-live="polite">
+      <div class="critique-header">
+        <div class="critique-icon" aria-hidden="true">🦉</div>
+        <div>
+          <p class="critique-kicker">Coach Owl's Critique</p>
+          <h4 id="critiqueSummary">Finish a run to unlock tips</h4>
+        </div>
+      </div>
+      <ul id="critiqueList" class="critique-list">
+        <li>Collect honey and avoid bees to see how you did.</li>
+      </ul>
+    </div>
   </div>
 </section>
 
@@ -553,6 +566,8 @@
     const gameCard = document.querySelector('.game-card');
     const bgMusic = document.getElementById('bgMusic');
     const musicToggle = document.getElementById('musicToggle');
+    const critiqueSummary = document.getElementById('critiqueSummary');
+    const critiqueList = document.getElementById('critiqueList');
     const MUSIC_KEY = 'hundredAcresMusic';
     let musicEnabled = true;
     let mobileFullscreenActive = false;
@@ -791,6 +806,21 @@
       }
     }
 
+    function renderCritique(summary, bulletPoints) {
+      if (critiqueSummary) {
+        critiqueSummary.textContent = summary;
+      }
+
+      if (critiqueList) {
+        critiqueList.innerHTML = '';
+        bulletPoints.forEach((point) => {
+          const li = document.createElement('li');
+          li.textContent = point;
+          critiqueList.appendChild(li);
+        });
+      }
+    }
+
     if (fullscreenBtn) {
       fullscreenBtn.addEventListener('click', toggleFullscreen);
     }
@@ -837,6 +867,8 @@
     let lives = 3;
     let timeLeft = 60;
     let difficulty = 'easy';
+    let beeHits = 0;
+    let runBestCombo = 0;
     let gameInterval, timerInterval, dropInterval, beeInterval, powerInterval;
     let hitFlash = 0;
     const isTouchDevice = 'ontouchstart' in window;
@@ -859,9 +891,51 @@
     };
 
     let keys = { left: false, right: false };
+    const defaultCritique = {
+      summary: 'Finish a run to unlock tips',
+      bullets: ['Collect honey and avoid bees to see how you did.']
+    };
 
     // ===== GAME FUNCTIONS =====
     const Game = {
+      buildRunCritique: function() {
+        const bullets = [];
+
+        const summary = score >= 260
+          ? 'Sweet scoring spree!'
+          : score >= 170
+            ? 'Solid honey haul!'
+            : 'Warm-up jog complete — more honey awaits.';
+
+        const stingNote = beeHits === 0
+          ? 'Stayed sting-free — nimble dodging!'
+          : `Shook off ${beeHits} bee bump${beeHits === 1 ? '' : 's'} — shields and weaving help.`;
+        bullets.push(stingNote);
+
+        const comboNote = runBestCombo >= 6
+          ? `Built a cozy combo of x${runBestCombo} — keep chaining catches.`
+          : runBestCombo >= 3
+            ? `Nice combo rhythm with x${runBestCombo}; keep honey steady for bigger bonuses.`
+            : 'Try catching back-to-back honey to build a combo bonus.';
+        bullets.push(comboNote);
+
+        const paceNote = honeyCollected >= 28
+          ? 'Honey haul was plentiful — sweet pace!'
+          : honeyCollected >= 15
+            ? 'Solid honey haul; chase a few more pots next run.'
+            : 'Slide under falling honey more often to grow your haul.';
+        bullets.push(paceNote);
+
+        const diffNote = difficulty === 'cozy'
+          ? 'Cozy mode is gentle; bump to Easy/Normal when you want faster drops.'
+          : difficulty === 'easy'
+            ? 'Easy mode unlocked; step to Normal for extra spring when you are ready.'
+            : 'Normal mode chosen — steady reflexes! Cozy is there for calmer play.';
+        bullets.push(diffNote);
+
+        return { summary, bullets };
+      },
+
       init: function() {
         canvas = document.getElementById('gameCanvas');
         if (!canvas) {
@@ -996,6 +1070,7 @@
 
         this.showOverlay('Ready to Play', 'Catch honey, avoid bees, and chase your best streak!', '🍯', 'Start Adventure');
         this.updateStatus('Ready to play!');
+        renderCritique(defaultCritique.summary, defaultCritique.bullets);
 
         window.addEventListener('resize', () => {
           this.resizeCanvas(true);
@@ -1055,6 +1130,8 @@
         honeyCollected = 0;
         combo = 0;
         lives = 3;
+        beeHits = 0;
+        runBestCombo = 0;
         hitFlash = 0;
         timeLeft = 60;
         drops = [];
@@ -1069,6 +1146,10 @@
         this.updateDisplay();
         this.startLoops();
         this.updateStatus('Go! Catch the honey!');
+        renderCritique('Honey run underway', [
+          'Keep moving under honey pots to raise your score.',
+          'Dodge bees or grab a shield power-up when one appears.'
+        ]);
 
         console.log('Game started');
       },
@@ -1184,6 +1265,7 @@
         this.draw();
         this.showOverlay('Reset & Ready', 'Press start to begin a new honey run!', '🔄', 'Start Adventure');
         this.updateStatus('Ready to play!');
+        renderCritique(defaultCritique.summary, defaultCritique.bullets);
 
         console.log('Game reset');
       },
@@ -1212,6 +1294,8 @@
         this.updateDisplay();
         this.showOverlay('Game Over', `Score: ${score}<br>Honey: ${honeyCollected}<br>Best Combo: x${bestCombo}`, '🐝', 'Play Again');
         this.updateStatus('Game over — try again!');
+        const critique = this.buildRunCritique();
+        renderCritique(critique.summary, critique.bullets);
 
         console.log('Game ended');
       },
@@ -1265,6 +1349,7 @@
             score += points;
             honeyCollected++;
             combo++;
+            runBestCombo = Math.max(runBestCombo, combo);
             bestCombo = Math.max(bestCombo, combo);
             sparkles.push({
               x: drop.x + 10,
@@ -1306,6 +1391,7 @@
               activeEffects.shield = false;
               this.updateStatus('Shield blocked a bee!');
             } else {
+              beeHits++;
               lives--;
               combo = 0;
             }
