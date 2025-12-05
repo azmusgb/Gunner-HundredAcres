@@ -1613,19 +1613,32 @@
     .game-card {
       background: linear-gradient(180deg, #fffdf6, #f4ead7);
       border: 3px solid #f4a944;
-      border-radius: 20px;
-      padding: 14px;
-      max-width: 520px;
+      border-radius: 24px;
+      padding: clamp(14px, 2vw + 8px, 24px);
+      max-width: min(960px, 100%);
       margin: 0 auto;
       box-shadow: 0 16px 36px rgba(0, 0, 0, 0.24);
       display: grid;
-      gap: 12px;
+      gap: 16px;
+    }
+
+    .game-card.fullscreen {
+      width: 100%;
+      max-width: 1100px;
+      height: calc(100vh - 40px);
+      display: grid;
+      grid-template-rows: auto auto 1fr auto;
+      padding: clamp(18px, 3vw, 28px);
+      align-content: start;
+      gap: 18px;
     }
 
     .game-card-header {
       display: flex;
       justify-content: space-between;
       align-items: center;
+      gap: 12px;
+      flex-wrap: wrap;
     }
 
     .game-kicker {
@@ -1645,35 +1658,38 @@
       background: #e9f3e6;
       border: 1px dashed #76a66b;
       border-radius: 999px;
-      padding: 4px 10px;
-      font-size: 0.85rem;
-      font-weight: 700;
+      padding: 6px 14px;
+      font-size: 0.92rem;
+      font-weight: 800;
       color: #355c2c;
+      white-space: nowrap;
+      box-shadow: 0 6px 14px rgba(53, 92, 44, 0.14);
     }
 
     .hud {
       display: grid;
-      grid-template-columns: repeat(4, 1fr);
+      grid-template-columns: repeat(auto-fit, minmax(140px, 1fr));
       background: #fff7ec;
-      border-radius: 14px;
-      padding: 8px;
-      gap: 6px;
+      border-radius: 16px;
+      padding: 12px 14px;
+      gap: 10px;
       box-shadow: inset 0 0 0 1px rgba(0, 0, 0, 0.06);
     }
 
     .hud-secondary {
-      grid-template-columns: repeat(2, 1fr);
+      grid-template-columns: repeat(auto-fit, minmax(160px, 1fr));
       background: #fff3e0;
     }
 
     .hud-item {
       background: white;
-      border-radius: 10px;
-      padding: 8px 0;
+      border-radius: 12px;
+      padding: 10px 12px;
       text-align: center;
-      font-size: 1rem;
-      font-weight: 700;
+      font-size: 1.05rem;
+      font-weight: 800;
       color: #2b1810;
+      box-shadow: 0 4px 12px rgba(0, 0, 0, 0.06);
     }
 
     .hud-item span {
@@ -1698,47 +1714,65 @@
     }
 
     .canvas-shell {
-      background: #87ceeb;
-      border-radius: 14px;
-      padding: 8px;
+      background: linear-gradient(135deg, #87ceeb, #ccecff);
+      border-radius: 16px;
+      padding: 12px;
       border: 2px solid #d48a1f;
       position: relative;
       overflow: hidden;
+      box-shadow: inset 0 0 0 1px rgba(255, 255, 255, 0.35), 0 14px 26px rgba(0, 0, 0, 0.16);
+      min-height: 340px;
     }
 
     .canvas-shell #gameCanvas {
       width: 100%;
-      height: 280px;
-      border-radius: 10px;
+      min-height: 320px;
+      height: auto;
+      border-radius: 12px;
       background: linear-gradient(#87ceeb, #bfe8ff);
+      box-shadow: inset 0 0 0 1px rgba(0, 0, 0, 0.04);
+      display: block;
+    }
+
+    .game-card.fullscreen .canvas-shell {
+      min-height: unset;
+      height: 100%;
+      display: grid;
+      align-items: stretch;
+    }
+
+    .game-card.fullscreen .canvas-shell #gameCanvas {
+      height: 100%;
+      min-height: 420px;
     }
 
     .game-controls {
       display: grid;
-      gap: 10px;
+      gap: 12px;
     }
 
     .difficulty-row {
-      display: flex;
+      display: grid;
+      grid-template-columns: repeat(auto-fit, minmax(140px, 1fr));
       justify-content: center;
       gap: 0.75rem;
-      margin-bottom: 1rem;
-      flex-wrap: wrap;
+      margin-bottom: 0.5rem;
+      align-items: stretch;
     }
 
     .difficulty-btn {
-      padding: 0.75rem 1.5rem;
+      padding: 0.9rem 1.2rem;
       background: white;
       border: 2px solid #dfe6e9;
-      border-radius: 25px;
-      color: #636e72;
-      font-weight: bold;
+      border-radius: 18px;
+      color: #2d3436;
+      font-weight: 800;
       cursor: pointer;
       transition: all 0.3s ease;
       box-shadow: 0 4px 12px rgba(0, 0, 0, 0.08);
-      flex: 1 1 0;
-      min-width: 120px;
+      min-width: 140px;
       text-align: center;
+      letter-spacing: 0.02em;
     }
 
     .difficulty-btn.active {
@@ -1749,22 +1783,24 @@
     }
 
     .action-row {
-      display: flex;
+      display: grid;
+      grid-template-columns: repeat(auto-fit, minmax(150px, 1fr));
       justify-content: center;
-      gap: 1rem;
-      flex-wrap: wrap;
+      gap: 0.75rem;
+      align-items: stretch;
     }
 
     .game-card .btn {
-      border-radius: 12px;
-      padding: 1rem 2.5rem;
-      font-weight: 700;
+      border-radius: 14px;
+      padding: 0.95rem 1.5rem;
+      font-weight: 800;
       cursor: pointer;
       border: none;
       color: white;
-      font-size: 1rem;
+      font-size: 1.02rem;
       box-shadow: 0 6px 20px rgba(0, 0, 0, 0.2);
       transition: all 0.3s ease;
+      width: 100%;
     }
     .game-card .btn,
     .hud-item {
@@ -2798,6 +2834,9 @@
 
     function updateFullscreenState() {
       const isFull = Boolean(document.fullscreenElement);
+      if (gameCard) {
+        gameCard.classList.toggle('fullscreen', isFull);
+      }
       if (fullscreenBtn) {
         fullscreenBtn.classList.toggle('active', isFull);
         fullscreenBtn.textContent = isFull ? '🗗 Exit Fullscreen' : '⛶ Fullscreen';
@@ -2842,7 +2881,12 @@
     if (fullscreenBtn) {
       fullscreenBtn.addEventListener('click', toggleFullscreen);
     }
-    document.addEventListener('fullscreenchange', updateFullscreenState);
+    document.addEventListener('fullscreenchange', () => {
+      updateFullscreenState();
+      if (Game.resizeCanvas) {
+        Game.resizeCanvas(true);
+      }
+    });
 
     const storedMusic = localStorage.getItem(MUSIC_KEY);
     musicEnabled = storedMusic !== 'off';
@@ -2923,15 +2967,31 @@
 
         const sizeCanvas = () => {
           const container = canvas.parentElement;
-          const maxWidth = Math.min(520, container.offsetWidth - 28);
-          canvas.width = Math.max(220, maxWidth);
-          canvas.height = Math.max(240, Math.min(420, Math.round(canvas.width * (window.innerWidth < 640 ? 0.75 : 0.85))));
+          const isFull = gameCard?.classList?.contains('fullscreen');
+          const maxWidth = Math.min(container.offsetWidth - 28, isFull ? 1100 : 680);
+          canvas.width = Math.max(260, maxWidth);
+
+          const heightRatio = isFull ? 0.62 : (window.innerWidth < 640 ? 0.75 : 0.85);
+          const maxHeight = isFull ? 680 : 480;
+          canvas.height = Math.max(260, Math.min(maxHeight, Math.round(canvas.width * heightRatio)));
         };
 
-        sizeCanvas();
+        this.resizeCanvas = (preservePosition = false) => {
+          const previousWidth = canvas.width;
+          sizeCanvas();
 
-        player.x = canvas.width / 2 - player.width / 2;
-        player.y = canvas.height - player.height - 18;
+          if (preservePosition) {
+            player.x = (player.x / previousWidth) * canvas.width;
+          } else {
+            player.x = canvas.width / 2 - player.width / 2;
+          }
+
+          player.x = Math.max(0, Math.min(canvas.width - player.width, player.x));
+          player.y = canvas.height - player.height - 18;
+          this.draw();
+        };
+
+        this.resizeCanvas();
 
         // Keyboard controls
         document.addEventListener('keydown', this.handleKeyDown);
@@ -2993,10 +3053,7 @@
         this.updateStatus('Ready to play!');
 
         window.addEventListener('resize', () => {
-          const oldWidth = canvas.width;
-          sizeCanvas();
-          player.x = (player.x / oldWidth) * canvas.width;
-          this.draw();
+          this.resizeCanvas(true);
         });
 
         console.log('Game initialized successfully');
