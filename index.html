@@ -989,6 +989,72 @@
       margin-top: 10px;
     }
 
+    .start-with-tip {
+      display: inline-flex;
+      align-items: center;
+      gap: 8px;
+      position: relative;
+    }
+
+    .inline-tip {
+      position: relative;
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+      width: 32px;
+      height: 32px;
+      border-radius: 50%;
+      background: var(--parchment);
+      border: 2px solid var(--honey-dark);
+      color: var(--honey-dark);
+      font-weight: bold;
+      cursor: help;
+      box-shadow: 0 4px 10px rgba(0,0,0,0.1);
+    }
+
+    .inline-tip:focus-visible {
+      outline: 2px solid var(--honey);
+      outline-offset: 3px;
+    }
+
+    .inline-tip .tooltip {
+      visibility: hidden;
+      opacity: 0;
+      position: absolute;
+      bottom: calc(100% + 10px);
+      left: 50%;
+      transform: translateX(-50%);
+      background: var(--parchment);
+      border: 1px solid var(--parchment-dark);
+      box-shadow: 0 8px 18px rgba(0, 0, 0, 0.18);
+      border-radius: 10px;
+      padding: 10px 12px;
+      width: 240px;
+      color: var(--ink);
+      line-height: 1.4;
+      transition: opacity 0.2s ease, visibility 0.2s ease;
+      z-index: 2;
+      text-align: left;
+    }
+
+    .inline-tip .tooltip::after {
+      content: '';
+      position: absolute;
+      top: 100%;
+      left: 50%;
+      transform: translateX(-50%);
+      border-width: 8px;
+      border-style: solid;
+      border-color: var(--parchment) transparent transparent transparent;
+    }
+
+    .inline-tip:hover .tooltip,
+    .inline-tip:focus .tooltip,
+    .inline-tip:focus-within .tooltip {
+      visibility: visible;
+      opacity: 1;
+    }
+
     .btn {
       padding: 11px 22px;
       border: 2px solid var(--ink);
@@ -2525,7 +2591,15 @@
                   </div>
 
                   <div class="game-controls">
-                    <button class="btn sparkle" id="startBtn" onclick="startGame()">▶ Start</button>
+                    <div class="start-with-tip">
+                      <button class="btn sparkle" id="startBtn" onclick="startGame()">▶ Start</button>
+                      <div class="inline-tip" tabindex="0" aria-label="How to play: tap Start, catch honey, dodge bees, and fill the barrel before time runs out.">
+                        ?
+                        <div class="tooltip" role="tooltip">
+                          Tap Start to drop into the clearing. Catch honey 🧺, dodge bees 🐝, and fill the barrel before the timer blinks away. Arrow keys or A/D move Pooh; on mobile, use the gold arrows.
+                        </div>
+                      </div>
+                    </div>
                     <button class="btn btn-secondary" id="pauseBtn" onclick="pauseGame()" disabled>⏸ Pause</button>
                     <button class="btn btn-secondary" onclick="resetGame()">🔄 Reset</button>
                   </div>
