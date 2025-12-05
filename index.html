@@ -2307,6 +2307,307 @@
   }
 }
 
+/* ===== MOBILE-FRIENDLY FULLSCREEN ENHANCEMENTS ===== */
+
+/* Ensure game card takes full viewport on mobile */
+@media (max-width: 768px) {
+  .game-card {
+    width: 100vw;
+    margin: 0;
+    padding: 16px;
+    border-radius: 0;
+    min-height: 100svh;
+    display: flex;
+    flex-direction: column;
+  }
+  
+  /* Optimize HUD for mobile */
+  .hud {
+    grid-template-columns: repeat(2, 1fr);
+    gap: 8px;
+    padding: 10px;
+  }
+  
+  .hud-secondary {
+    grid-template-columns: repeat(2, 1fr);
+    font-size: 0.9rem;
+  }
+  
+  .hud-item {
+    padding: 8px 10px;
+    font-size: 0.95rem;
+  }
+  
+  /* Canvas adjustments */
+  .canvas-shell {
+    flex: 1;
+    min-height: 0;
+    padding: 8px;
+  }
+  
+  #gameCanvas {
+    width: 100%;
+    height: 100%;
+    min-height: 300px;
+  }
+  
+  /* Game controls stacking */
+  .difficulty-row,
+  .action-row {
+    grid-template-columns: 1fr;
+    gap: 8px;
+  }
+  
+  .difficulty-btn,
+  .game-card .btn {
+    min-width: auto;
+    width: 100%;
+    padding: 12px;
+  }
+  
+  /* Touch controls visibility */
+  .touch-controls {
+    display: flex !important;
+    bottom: 20px;
+    gap: 15px;
+    width: 90%;
+  }
+  
+  .touch-btn {
+    padding: 15px 0;
+    font-size: 1.3rem;
+  }
+}
+
+/* ===== LANDSCAPE ORIENTATION SUPPORT ===== */
+@media (max-width: 768px) and (orientation: landscape) {
+  body {
+    padding: 8px !important;
+  }
+  
+  .game-card {
+    padding: 12px;
+  }
+  
+  .game-card-header {
+    flex-wrap: nowrap;
+  }
+  
+  .hud {
+    grid-template-columns: repeat(4, 1fr);
+  }
+  
+  .hud-secondary {
+    grid-template-columns: repeat(2, 1fr);
+  }
+  
+  .canvas-shell {
+    height: 60vh;
+  }
+  
+  .action-row {
+    grid-template-columns: repeat(3, 1fr);
+    gap: 6px;
+  }
+  
+  .difficulty-row {
+    grid-template-columns: repeat(3, 1fr);
+    gap: 6px;
+  }
+  
+  .touch-controls {
+    bottom: 10px;
+    width: 80%;
+  }
+}
+
+/* ===== SMALL PHONE OPTIMIZATIONS ===== */
+@media (max-width: 380px) {
+  .game-card-header {
+    flex-direction: column;
+    align-items: flex-start;
+    gap: 8px;
+  }
+  
+  .best-score-strip {
+    align-self: stretch;
+    text-align: center;
+  }
+  
+  .hud {
+    grid-template-columns: repeat(2, 1fr);
+  }
+  
+  .hud-item {
+    font-size: 0.85rem;
+    padding: 6px 8px;
+  }
+  
+  .touch-controls {
+    gap: 10px;
+  }
+  
+  .touch-btn {
+    font-size: 1.1rem;
+    padding: 12px 0;
+  }
+}
+
+/* ===== FULLSCREEN MODE STYLES ===== */
+.game-card.fullscreen-mobile {
+  position: fixed;
+  top: 0;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  width: 100%;
+  height: 100%;
+  z-index: 9999;
+  margin: 0;
+  padding: env(safe-area-inset-top) env(safe-area-inset-right) env(safe-area-inset-bottom) env(safe-area-inset-left);
+  border-radius: 0;
+  overflow: auto;
+}
+
+/* Safe area handling for notched phones */
+@supports (padding: max(0px)) {
+  .game-card.fullscreen-mobile {
+    padding-top: max(16px, env(safe-area-inset-top));
+    padding-bottom: max(16px, env(safe-area-inset-bottom));
+    padding-left: max(16px, env(safe-area-inset-left));
+    padding-right: max(16px, env(safe-area-inset-right));
+  }
+}
+
+/* ===== IMPROVED TOUCH CONTROLS ===== */
+.touch-controls {
+  display: none;
+  position: absolute;
+  bottom: 20px;
+  left: 50%;
+  transform: translateX(-50%);
+  width: min(400px, 90%);
+  gap: 20px;
+  z-index: 10;
+}
+
+.touch-btn {
+  flex: 1;
+  padding: 20px 0;
+  font-size: 1.5rem;
+  background: rgba(255, 255, 255, 0.95);
+  border: 3px solid var(--honey);
+  border-radius: 20px;
+  box-shadow: 0 10px 25px rgba(0, 0, 0, 0.25);
+  backdrop-filter: blur(10px);
+  -webkit-backdrop-filter: blur(10px);
+  touch-action: manipulation;
+  user-select: none;
+  transition: all 0.1s ease;
+}
+
+.touch-btn:active {
+  transform: scale(0.95);
+  background: rgba(244, 169, 68, 0.2);
+}
+
+/* ===== GAME CONTROLS OPTIMIZATION ===== */
+.game-controls {
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+  margin-top: auto;
+}
+
+.difficulty-row {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(100px, 1fr));
+  gap: 10px;
+}
+
+.action-row {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(120px, 1fr));
+  gap: 10px;
+}
+
+.game-card .btn {
+  touch-action: manipulation;
+  min-height: 50px;
+  font-size: 1rem;
+}
+
+/* ===== IMPROVED CANVAS RESPONSIVENESS ===== */
+.canvas-shell {
+  position: relative;
+  width: 100%;
+  flex: 1;
+  min-height: 300px;
+  background: linear-gradient(135deg, #87ceeb, #ccecff);
+  border-radius: 16px;
+  overflow: hidden;
+  margin-bottom: 10px;
+}
+
+#gameCanvas {
+  width: 100%;
+  height: 100%;
+  display: block;
+  object-fit: contain;
+}
+
+/* ===== OVERLAY ADJUSTMENTS ===== */
+.game-overlay {
+  background: rgba(0, 0, 0, 0.85);
+  backdrop-filter: blur(8px);
+  -webkit-backdrop-filter: blur(8px);
+}
+
+.overlay-card {
+  max-width: 90%;
+  margin: 0 16px;
+  background: rgba(255, 250, 240, 0.98);
+  backdrop-filter: blur(10px);
+  -webkit-backdrop-filter: blur(10px);
+}
+
+/* ===== ACHIEVEMENT TOAST MOBILE ===== */
+.achievement-toast {
+  top: max(20px, env(safe-area-inset-top));
+  right: 16px;
+  left: 16px;
+  min-width: auto;
+}
+
+/* ===== UTILITY CLASSES ===== */
+.hidden {
+  display: none !important;
+}
+
+.visually-hidden {
+  position: absolute;
+  width: 1px;
+  height: 1px;
+  padding: 0;
+  margin: -1px;
+  overflow: hidden;
+  clip: rect(0, 0, 0, 0);
+  white-space: nowrap;
+  border: 0;
+}
+
+/* ===== REDUCED MOTION SUPPORT ===== */
+@media (prefers-reduced-motion: reduce) {
+  .touch-btn:active {
+    transform: none;
+  }
+  
+  .achievement-toast,
+  .overlay-card {
+    animation-duration: 0.001ms !important;
+  }
+}
+
 </style>
 </head>
 <body>
@@ -2856,58 +3157,210 @@
     const musicToggle = document.getElementById('musicToggle');
     const MUSIC_KEY = 'hundredAcresMusic';
     let musicEnabled = true;
-    let pseudoFullscreen = false;
+    let mobileFullscreenActive = false;
+    const isMobileUser = /Mobi|Android|iPhone|iPad|iPod/i.test(navigator.userAgent || '');
 
-    const isMobile = /Mobi|Android|iPhone|iPad|iPod/i.test(navigator.userAgent || '');
+    function syncFullscreenUI() {
+      const isNativeFullscreen = Boolean(document.fullscreenElement);
+      const isFull = isNativeFullscreen || mobileFullscreenActive;
 
-    function supportsNativeFullscreen() {
-      return Boolean(document.fullscreenEnabled && gameCard?.requestFullscreen);
-    }
-
-    function applyPseudoFullscreen(active) {
-      pseudoFullscreen = active;
-      document.body.classList.toggle('mobile-fullscreen', active);
-      gameCard?.classList.toggle('mobile-fullscreen', active);
-    }
-
-    function updateFullscreenState() {
-      const nativeFull = Boolean(document.fullscreenElement);
-      const isFull = nativeFull || pseudoFullscreen;
       if (gameCard) {
-        gameCard.classList.toggle('fullscreen', nativeFull);
-        gameCard.classList.toggle('mobile-fullscreen', pseudoFullscreen);
+        gameCard.classList.toggle('fullscreen', isNativeFullscreen);
+        gameCard.classList.toggle('fullscreen-mobile', mobileFullscreenActive);
       }
-      document.body.classList.toggle('mobile-fullscreen', pseudoFullscreen);
 
       if (fullscreenBtn) {
         fullscreenBtn.classList.toggle('active', isFull);
         fullscreenBtn.textContent = isFull ? '🗗 Exit Fullscreen' : '⛶ Fullscreen';
-        fullscreenBtn.setAttribute('aria-pressed', isFull.toString());
+        fullscreenBtn.setAttribute('aria-pressed', isFull ? 'true' : 'false');
       }
+
+      if (!isFull) {
+        document.body.style.overflow = '';
+      }
+    }
+
+    function toggleMobileFullscreen() {
+      if (!gameCard || !fullscreenBtn) return;
+
+      mobileFullscreenActive = !mobileFullscreenActive;
+
+      if (mobileFullscreenActive) {
+        gameCard.classList.add('fullscreen-mobile');
+        document.body.style.overflow = 'hidden';
+
+        fullscreenBtn.textContent = '🗗 Exit Fullscreen';
+        fullscreenBtn.setAttribute('aria-pressed', 'true');
+
+        setTimeout(() => {
+          if (Game && Game.resizeCanvas) {
+            Game.resizeCanvas(true);
+          }
+        }, 100);
+
+        if (screen.orientation && screen.orientation.lock) {
+          screen.orientation.lock('landscape').catch(() => {});
+        }
+      } else {
+        gameCard.classList.remove('fullscreen-mobile');
+        document.body.style.overflow = '';
+
+        fullscreenBtn.textContent = '⛶ Fullscreen';
+        fullscreenBtn.setAttribute('aria-pressed', 'false');
+
+        if (screen.orientation && screen.orientation.unlock) {
+          screen.orientation.unlock();
+        }
+
+        if (Game && Game.resizeCanvas) {
+          Game.resizeCanvas(true);
+        }
+      }
+
+      syncFullscreenUI();
     }
 
     function toggleFullscreen() {
-      const nativeAvailable = supportsNativeFullscreen();
-      const nativeActive = Boolean(document.fullscreenElement);
+      if (mobileFullscreenActive && !isMobileUser && !document.fullscreenElement) {
+        toggleMobileFullscreen();
+        return;
+      }
 
-      if (nativeAvailable) {
-        if (!nativeActive) {
-          gameCard.requestFullscreen().catch(() => {
-            if (isMobile) {
-              applyPseudoFullscreen(!pseudoFullscreen);
-              updateFullscreenState();
-              Game.resizeCanvas?.(true);
-            }
+      const isMobile = /Mobi|Android|iPhone|iPad|iPod/i.test(navigator.userAgent);
+
+      if (isMobile) {
+        toggleMobileFullscreen();
+      } else {
+        if (!document.fullscreenElement) {
+          gameCard?.requestFullscreen().catch(err => {
+            console.log(`Error attempting to enable fullscreen: ${err.message}`);
+            toggleMobileFullscreen();
           });
-        } else if (document.exitFullscreen) {
-          document.exitFullscreen().catch(() => {});
+        } else {
+          if (document.exitFullscreen) {
+            document.exitFullscreen();
+          }
         }
-      } else if (isMobile) {
-        applyPseudoFullscreen(!pseudoFullscreen);
-        updateFullscreenState();
-        Game.resizeCanvas?.(true);
       }
     }
+
+    // ===== ORIENTATION CHANGE HANDLER =====
+    window.addEventListener('orientationchange', function() {
+      setTimeout(() => {
+        if (Game && Game.resizeCanvas) {
+          Game.resizeCanvas(true);
+        }
+      }, 300);
+    });
+
+    // ===== TOUCH CONTROL EVENT HANDLERS =====
+    function setupTouchControls() {
+      const leftBtn = document.getElementById('leftBtn');
+      const rightBtn = document.getElementById('rightBtn');
+
+      if (!leftBtn || !rightBtn) return;
+
+      const setPressed = (btn, isActive) => {
+        btn.classList.toggle('pressed', isActive);
+      };
+
+      const handleStart = (direction) => {
+        keys[direction] = true;
+        return false;
+      };
+
+      const handleEnd = (direction) => {
+        keys[direction] = false;
+      };
+
+      ['touchstart', 'mousedown'].forEach(eventType => {
+        leftBtn.addEventListener(eventType, (e) => {
+          e.preventDefault();
+          handleStart('left');
+          setPressed(leftBtn, true);
+        });
+
+        rightBtn.addEventListener(eventType, (e) => {
+          e.preventDefault();
+          handleStart('right');
+          setPressed(rightBtn, true);
+        });
+      });
+
+      ['touchend', 'touchcancel', 'mouseup', 'mouseleave'].forEach(eventType => {
+        leftBtn.addEventListener(eventType, () => {
+          handleEnd('left');
+          setPressed(leftBtn, false);
+        });
+        rightBtn.addEventListener(eventType, () => {
+          handleEnd('right');
+          setPressed(rightBtn, false);
+        });
+      });
+    }
+
+    // ===== INITIALIZE MOBILE OPTIMIZATIONS =====
+    function initMobileOptimizations() {
+      const isMobile = /Mobi|Android|iPhone|iPad|iPod/i.test(navigator.userAgent);
+
+      if (isMobile) {
+        const touchControls = document.querySelector('.touch-controls');
+        if (touchControls) {
+          touchControls.style.display = 'flex';
+        }
+
+        if (player) {
+          player.speed = 7;
+        }
+
+        setupTouchControls();
+
+        document.addEventListener('touchstart', function(event) {
+          if (event.touches.length > 1) {
+            event.preventDefault();
+          }
+        }, { passive: false });
+
+        const canvas = document.getElementById('gameCanvas');
+        if (canvas) {
+          canvas.addEventListener('touchmove', function(e) {
+            if (gameState === 'playing') {
+              e.preventDefault();
+            }
+          }, { passive: false });
+        }
+      }
+    }
+
+    // ===== IMPROVED KEYBOARD CONTROL FOR MOBILE EXTERNAL KEYBOARDS =====
+    document.addEventListener('keydown', function(e) {
+      if (gameState === 'playing' &&
+          (e.key === 'ArrowLeft' || e.key === 'ArrowRight' ||
+           e.key === 'ArrowUp' || e.key === 'ArrowDown')) {
+        e.preventDefault();
+      }
+    });
+
+    // ===== VISUAL FEEDBACK FOR TOUCH CONTROLS =====
+    function addTouchFeedback() {
+      const style = document.createElement('style');
+      style.textContent = `
+    .touch-btn.pressed {
+      background: rgba(244, 169, 68, 0.3) !important;
+      transform: scale(0.95) !important;
+    }
+    
+    @media (max-width: 768px) {
+      .game-card .btn:active {
+        transform: scale(0.97);
+        transition: transform 0.1s ease;
+      }
+    }
+  `;
+      document.head.appendChild(style);
+    }
+
+    addTouchFeedback();
 
     function setMusicState(enabled) {
       if (!bgMusic) return;
@@ -2939,9 +3392,17 @@
       fullscreenBtn.addEventListener('click', toggleFullscreen);
     }
     document.addEventListener('fullscreenchange', () => {
-      updateFullscreenState();
+      const nativeActive = Boolean(document.fullscreenElement);
+      if (!nativeActive && mobileFullscreenActive) {
+        mobileFullscreenActive = false;
+        gameCard?.classList.remove('fullscreen-mobile');
+        document.body.style.overflow = '';
+      }
+
+      syncFullscreenUI();
+
       if (Game.resizeCanvas) {
-        Game.resizeCanvas(true);
+        setTimeout(() => Game.resizeCanvas(true), 100);
       }
     });
 
@@ -2959,7 +3420,7 @@
 
     document.addEventListener('click', primeMusicPlayback, { once: true });
     document.addEventListener('touchstart', primeMusicPlayback, { once: true, passive: true });
-    updateFullscreenState();
+    syncFullscreenUI();
 
     // ===== GAME LOGIC =====
     let canvas, ctx;
@@ -3024,7 +3485,7 @@
 
         const sizeCanvas = () => {
           const container = canvas.parentElement;
-          const isFull = gameCard?.classList?.contains('fullscreen');
+          const isFull = gameCard?.classList?.contains('fullscreen') || gameCard?.classList?.contains('fullscreen-mobile');
           const maxWidth = Math.min(container.offsetWidth - 28, isFull ? 1100 : 680);
           canvas.width = Math.max(260, maxWidth);
 
@@ -3079,22 +3540,6 @@
         });
         canvas.addEventListener('mouseup', () => { isDragging = false; });
         canvas.addEventListener('mouseleave', () => { isDragging = false; });
-
-        // Mobile buttons
-        const leftBtn = document.getElementById('leftBtn');
-        const rightBtn = document.getElementById('rightBtn');
-        const bindDirectionalButton = (btn, direction) => {
-          if (!btn) return;
-          btn.addEventListener('touchstart', () => { keys[direction] = true; }, { passive: true });
-          btn.addEventListener('touchend', () => { keys[direction] = false; }, { passive: true });
-          btn.addEventListener('mousedown', () => { keys[direction] = true; });
-          ['mouseup', 'mouseleave', 'mouseout'].forEach(evt => {
-            btn.addEventListener(evt, () => { keys[direction] = false; });
-          });
-        };
-
-        bindDirectionalButton(leftBtn, 'left');
-        bindDirectionalButton(rightBtn, 'right');
 
         // Difficulty buttons
         document.querySelectorAll('.difficulty-btn').forEach(btn => {
@@ -3806,6 +4251,7 @@
       updateNavigation();
       Game.init();
       Game.loadBestStats();
+      initMobileOptimizations();
 
     });
   </script>
