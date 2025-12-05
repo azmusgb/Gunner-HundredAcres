@@ -924,13 +924,40 @@
       display: flex;
       flex-direction: column;
       gap: 4px;
-      transition: transform 0.2s ease, box-shadow 0.2s ease;
+      transition: transform 0.2s ease, box-shadow 0.2s ease, border-color 0.3s ease, background 0.3s ease;
       min-width: 0;
     }
 
     .stat:hover {
       transform: translateY(-3px);
       box-shadow: 0 6px 14px rgba(0, 0, 0, 0.16);
+    }
+
+    .stat-alert {
+      border-color: #d32f2f;
+      box-shadow: 0 8px 18px rgba(211, 47, 47, 0.25);
+      animation: stat-shake 0.55s ease;
+      background: linear-gradient(180deg, #fff8f7, #fde8e6);
+    }
+
+    .timer-warning {
+      border-color: #b02525;
+      background: linear-gradient(180deg, #fff3f0, #fde1dc);
+      box-shadow: 0 10px 18px rgba(176, 37, 37, 0.2);
+    }
+
+    .timer-warning .stat-label-row,
+    .timer-warning .stat-value {
+      color: #8c1717;
+    }
+
+    @keyframes stat-shake {
+      0% { transform: translateY(0); }
+      20% { transform: translateY(-2px); }
+      40% { transform: translateY(2px); }
+      60% { transform: translateY(-2px); }
+      80% { transform: translateY(2px); }
+      100% { transform: translateY(0); }
     }
 
     .stat-label-row {
@@ -2358,28 +2385,28 @@
                   </div>
 
                   <div class="game-stats">
-                    <div class="stat">
+                    <div class="stat" id="scoreStat">
                       <div class="stat-label-row">
                         <span>Score</span>
                         <span class="stat-emoji">⭐</span>
                       </div>
                       <div class="stat-value" id="score">0</div>
                     </div>
-                    <div class="stat">
+                    <div class="stat" id="honeyStat">
                       <div class="stat-label-row">
                         <span>Honey</span>
                         <span class="stat-emoji">🍯</span>
                       </div>
                       <div class="stat-value" id="honeyCount">0</div>
                     </div>
-                    <div class="stat">
+                    <div class="stat" id="livesStat">
                       <div class="stat-label-row">
                         <span>Lives</span>
                         <span class="stat-emoji">❤️</span>
                       </div>
                       <div class="stat-value" id="lives">❤️❤️❤️</div>
                     </div>
-                    <div class="stat">
+                    <div class="stat" id="timerStat">
                       <div class="stat-label-row">
                         <span>Time</span>
                         <span class="stat-emoji">⏱️</span>
@@ -2647,6 +2674,9 @@
     let bees = [];
     let sparkles = [];
 
+    const livesStat = document.getElementById('livesStat');
+    const timerStat = document.getElementById('timerStat');
+
     const difficulties = {
       easy:   { dropSpeed: 2, beeSpeed: 1.5, dropFreq: 1500, beeFreq: 3000 },
       normal: { dropSpeed: 3, beeSpeed: 2.4, dropFreq: 1000, beeFreq: 2000 },
@@ -2747,6 +2777,8 @@
       sparkles = [];
 
       updateDisplay();
+      resetStatAlerts();
+      updateTimerWarning();
 
       document.getElementById('startBtn').disabled = true;
       const pauseBtn = document.getElementById('pauseBtn');
@@ -2758,6 +2790,7 @@
       timerInterval = setInterval(() => {
         timeLeft--;
         document.getElementById('timer').textContent = timeLeft;
+        updateTimerWarning();
         if (timeLeft <= 0) {
           endGame();
         }
@@ -2780,6 +2813,7 @@
         timerInterval = setInterval(() => {
           timeLeft--;
           document.getElementById('timer').textContent = timeLeft;
+          updateTimerWarning();
           if (timeLeft <= 0) endGame();
         }, 1000);
         pauseBtn.textContent = '⏸ Pause';
@@ -2800,6 +2834,8 @@
       sparkles = [];
 
       updateDisplay();
+      resetStatAlerts();
+      updateTimerWarning();
       const overlay = document.getElementById('gameOverlay');
       overlay.classList.remove('hidden');
       overlay.innerHTML = `
@@ -2928,6 +2964,7 @@
         if (checkCollision(bee, player)) {
           lives--;
           bees.splice(index, 1);
+          triggerStatAlert(livesStat);
           updateDisplay();
 
           if (lives <= 0) {
@@ -3107,6 +3144,33 @@
         ctx.beginPath();
         ctx.arc(s.x, s.y, radius, 0, Math.PI * 2);
         ctx.fill();
+      });
+    }
+
+    function triggerStatAlert(element) {
+      if (!element) return;
+      element.classList.remove('stat-alert');
+      void element.offsetWidth; // restart animation
+      element.classList.add('stat-alert');
+      setTimeout(() => element.classList.remove('stat-alert'), 600);
+    }
+
+    function updateTimerWarning() {
+      if (!timerStat) return;
+      if (timeLeft <= 10) {
+        if (!timerStat.classList.contains('timer-warning') && timeLeft === 10) {
+          triggerStatAlert(timerStat);
+        }
+        timerStat.classList.add('timer-warning');
+      } else {
+        timerStat.classList.remove('timer-warning');
+      }
+    }
+
+    function resetStatAlerts() {
+      [livesStat, timerStat].forEach(el => {
+        el?.classList.remove('stat-alert');
+        el?.classList.remove('timer-warning');
       });
     }
 
