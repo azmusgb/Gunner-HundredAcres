@@ -1633,6 +1633,29 @@
       gap: 18px;
     }
 
+    /* Mobile-friendly fullscreen fallback */
+    body.mobile-fullscreen {
+      padding: 0;
+      overflow: hidden;
+    }
+
+    .game-card.mobile-fullscreen {
+      position: fixed;
+      inset: 0;
+      margin: 0;
+      max-width: none;
+      width: 100%;
+      height: 100svh;
+      border-radius: 0;
+      z-index: 1000;
+      display: grid;
+      grid-template-rows: auto auto 1fr auto;
+      padding: clamp(16px, 4vw, 28px);
+      align-content: start;
+      gap: 18px;
+      background: linear-gradient(180deg, #fffdf6, #f4ead7);
+    }
+
     .game-card-header {
       display: flex;
       justify-content: space-between;
@@ -1734,14 +1757,16 @@
       display: block;
     }
 
-    .game-card.fullscreen .canvas-shell {
+    .game-card.fullscreen .canvas-shell,
+    .game-card.mobile-fullscreen .canvas-shell {
       min-height: unset;
       height: 100%;
       display: grid;
       align-items: stretch;
     }
 
-    .game-card.fullscreen .canvas-shell #gameCanvas {
+    .game-card.fullscreen .canvas-shell #gameCanvas,
+    .game-card.mobile-fullscreen .canvas-shell #gameCanvas {
       height: 100%;
       min-height: 420px;
     }
@@ -2831,12 +2856,29 @@
     const musicToggle = document.getElementById('musicToggle');
     const MUSIC_KEY = 'hundredAcresMusic';
     let musicEnabled = true;
+    let pseudoFullscreen = false;
+
+    const isMobile = /Mobi|Android|iPhone|iPad|iPod/i.test(navigator.userAgent || '');
+
+    function supportsNativeFullscreen() {
+      return Boolean(document.fullscreenEnabled && gameCard?.requestFullscreen);
+    }
+
+    function applyPseudoFullscreen(active) {
+      pseudoFullscreen = active;
+      document.body.classList.toggle('mobile-fullscreen', active);
+      gameCard?.classList.toggle('mobile-fullscreen', active);
+    }
 
     function updateFullscreenState() {
-      const isFull = Boolean(document.fullscreenElement);
+      const nativeFull = Boolean(document.fullscreenElement);
+      const isFull = nativeFull || pseudoFullscreen;
       if (gameCard) {
-        gameCard.classList.toggle('fullscreen', isFull);
+        gameCard.classList.toggle('fullscreen', nativeFull);
+        gameCard.classList.toggle('mobile-fullscreen', pseudoFullscreen);
       }
+      document.body.classList.toggle('mobile-fullscreen', pseudoFullscreen);
+
       if (fullscreenBtn) {
         fullscreenBtn.classList.toggle('active', isFull);
         fullscreenBtn.textContent = isFull ? '🗗 Exit Fullscreen' : '⛶ Fullscreen';
@@ -2845,10 +2887,25 @@
     }
 
     function toggleFullscreen() {
-      if (!document.fullscreenElement && gameCard?.requestFullscreen) {
-        gameCard.requestFullscreen().catch(() => {});
-      } else if (document.exitFullscreen) {
-        document.exitFullscreen().catch(() => {});
+      const nativeAvailable = supportsNativeFullscreen();
+      const nativeActive = Boolean(document.fullscreenElement);
+
+      if (nativeAvailable) {
+        if (!nativeActive) {
+          gameCard.requestFullscreen().catch(() => {
+            if (isMobile) {
+              applyPseudoFullscreen(!pseudoFullscreen);
+              updateFullscreenState();
+              Game.resizeCanvas?.(true);
+            }
+          });
+        } else if (document.exitFullscreen) {
+          document.exitFullscreen().catch(() => {});
+        }
+      } else if (isMobile) {
+        applyPseudoFullscreen(!pseudoFullscreen);
+        updateFullscreenState();
+        Game.resizeCanvas?.(true);
       }
     }
 
