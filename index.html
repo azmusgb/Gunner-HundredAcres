@@ -3151,7 +3151,7 @@
 
       if (pageIndicator) {
         const completed = Math.max(0, currentChapter - 1);
-        pageIndicator.textContent = `Chapter ${currentChapter} of ${totalChapters} — ${completed} completed`;
+        pageIndicator.textContent = `Chapter ${currentChapter} of ${totalChapters}`;
       }
 
       const progress = totalChapters > 1
@@ -3198,605 +3198,495 @@
     let bees = [];
     let sparkles = [];
 
-    const livesStat = document.getElementById('livesStat');
-    const timerStat = document.getElementById('timerStat');
-
     const difficulties = {
-      tutorial: { dropSpeed: 1.6, beeSpeed: 1.1, dropFreq: 1800, beeFreq: 3200 },
-      easy:   { dropSpeed: 2, beeSpeed: 1.5, dropFreq: 1500, beeFreq: 3000 },
+      easy: { dropSpeed: 2, beeSpeed: 1.5, dropFreq: 1500, beeFreq: 3000 },
       normal: { dropSpeed: 3, beeSpeed: 2.4, dropFreq: 1000, beeFreq: 2000 },
-      hard:   { dropSpeed: 4, beeSpeed: 3.3, dropFreq: 700,  beeFreq: 1200 }
+      cozy: { dropSpeed: 1.6, beeSpeed: 1.1, dropFreq: 1800, beeFreq: 3200 }
     };
 
     let keys = { left: false, right: false };
 
-    function initGame() {
-      canvas = document.getElementById('gameCanvas');
-      if (!canvas) return;
-      ctx = canvas.getContext('2d');
-
-      const sizeCanvas = () => {
-        const container = canvas.parentElement;
-        const maxWidth = Math.min(520, container.offsetWidth - 28);
-        canvas.width = Math.max(220, maxWidth);
-        canvas.height = Math.max(240, Math.min(420, Math.round(canvas.width * (window.innerWidth < 640 ? 0.75 : 0.85))));
-      };
-
-      sizeCanvas();
-
-      player.x = canvas.width / 2 - player.width / 2;
-      player.y = canvas.height - player.height - 18;
-
-      document.addEventListener('keydown', handleKeyDown);
-      document.addEventListener('keyup', handleKeyUp);
-
-      let isDragging = false;
-
-      canvas.addEventListener('touchstart', (e) => {
-        isDragging = true;
-        handleTouch(e);
-      }, { passive: false });
-
-      canvas.addEventListener('touchmove', (e) => {
-        if (isDragging) handleTouch(e);
-      }, { passive: false });
-
-      canvas.addEventListener('touchend', () => { isDragging = false; });
-
-      canvas.addEventListener('mousedown', () => { isDragging = true; });
-      canvas.addEventListener('mousemove', (e) => {
-        if (isDragging && gameState === 'playing') {
-          const rect = canvas.getBoundingClientRect();
-          player.x = e.clientX - rect.left - player.width / 2;
-          player.x = Math.max(0, Math.min(canvas.width - player.width, player.x));
+    // ===== GAME FUNCTIONS =====
+    const Game = {
+      init: function() {
+        canvas = document.getElementById('gameCanvas');
+        if (!canvas) {
+          console.error('Game canvas not found!');
+          return;
         }
-      });
-      canvas.addEventListener('mouseup', () => { isDragging = false; });
-      canvas.addEventListener('mouseleave', () => { isDragging = false; });
+        ctx = canvas.getContext('2d');
 
-      const leftBtn = document.getElementById('leftBtn');
-      const rightBtn = document.getElementById('rightBtn');
+        const sizeCanvas = () => {
+          const container = canvas.parentElement;
+          const maxWidth = Math.min(520, container.offsetWidth - 28);
+          canvas.width = Math.max(220, maxWidth);
+          canvas.height = Math.max(240, Math.min(420, Math.round(canvas.width * (window.innerWidth < 640 ? 0.75 : 0.85))));
+        };
 
-      leftBtn.addEventListener('touchstart', () => { keys.left = true; }, { passive: true });
-      leftBtn.addEventListener('touchend', () => { keys.left = false; }, { passive: true });
-
-      rightBtn.addEventListener('touchstart', () => { keys.right = true; }, { passive: true });
-      rightBtn.addEventListener('touchend', () => { keys.right = false; }, { passive: true });
-
-      drawGame();
-
-      window.addEventListener('resize', () => {
-        const oldWidth = canvas.width;
         sizeCanvas();
-        player.x = (player.x / oldWidth) * canvas.width;
-        drawGame();
-      });
-    }
 
-    function handleTouch(e) {
-      if (gameState !== 'playing') return;
-      e.preventDefault();
-      const rect = canvas.getBoundingClientRect();
-      const touch = e.touches[0];
-      player.x = touch.clientX - rect.left - player.width / 2;
-      player.x = Math.max(0, Math.min(canvas.width - player.width, player.x));
-    }
+        player.x = canvas.width / 2 - player.width / 2;
+        player.y = canvas.height - player.height - 18;
 
-    function handleKeyDown(e) {
-      if (e.key === 'ArrowLeft' || e.key === 'a' || e.key === 'A') keys.left = true;
-      if (e.key === 'ArrowRight' || e.key === 'd' || e.key === 'D') keys.right = true;
-    }
+        // Keyboard controls
+        document.addEventListener('keydown', this.handleKeyDown);
+        document.addEventListener('keyup', this.handleKeyUp);
 
-    function handleKeyUp(e) {
-      if (e.key === 'ArrowLeft' || e.key === 'a' || e.key === 'A') keys.left = false;
-      if (e.key === 'ArrowRight' || e.key === 'd' || e.key === 'D') keys.right = false;
-    }
+        // Touch controls
+        let isDragging = false;
 
-    function setDifficulty(level, btn) {
-      difficulty = level;
-      document.querySelectorAll('.difficulty-btn').forEach(b => b.classList.remove('active'));
-      if (btn) btn.classList.add('active');
-    }
+        canvas.addEventListener('touchstart', (e) => {
+          isDragging = true;
+          this.handleTouch(e);
+        }, { passive: false });
 
-    function renderBriefing() {
-      const overlay = document.getElementById('gameOverlay');
-      if (!overlay) return;
-      overlay.innerHTML = `
-        <div class="overlay-pill">Storybook briefing</div>
-        <div class="overlay-title">🍯 Quick How-To</div>
-        <div class="overlay-subtitle">Catch honey, dodge bees, fill the barrel before time blinks away.</div>
-        <ul class="overlay-steps">
-          <li>⭐ Catch drops to score and fill the barrel. Bees cost a heart.</li>
-          <li>⏱️ 60 second rounds; tutorial is 35 seconds with calmer drops.</li>
-          <li>🌳 Pick a drizzle strength below. Harder = faster drops & bees.</li>
-        </ul>
-        <div class="overlay-controls">
-          <div>
-            <div class="control-label">🖥️ Desktop</div>
-            <p>Press ← → or A / D to roll Pooh. Quick taps dodge bees best.</p>
-          </div>
-          <div>
-            <div class="control-label">📱 Mobile</div>
-            <p>Swipe or drag the honey pot. On-screen arrows also work for taps.</p>
-          </div>
-        </div>
-        <div class="overlay-actions">
-          <button class="btn sparkle" onclick="startGame('quick')">⚡ Quick Start (Tutorial)</button>
-          <button class="btn btn-secondary" onclick="startGame()">▶ Full Run</button>
-        </div>
-        <p class="overlay-footer">Tip: Start with the tutorial, then jump into a faster drizzle.</p>
-      `;
-      overlay.classList.remove('hidden');
-    }
+        canvas.addEventListener('touchmove', (e) => {
+          if (isDragging) this.handleTouch(e);
+        }, { passive: false });
 
-    function showCanvasHint() {
-      const hint = document.getElementById('canvasHint');
-      if (!hint) return;
-      hint.classList.add('visible');
-      clearTimeout(hintTimeout);
-      hintTimeout = setTimeout(() => hint.classList.remove('visible'), 4500);
-    }
+        canvas.addEventListener('touchend', () => { isDragging = false; });
 
-    function startGame(mode = 'full') {
-      if (gameState === 'playing') return;
+        // Mouse controls
+        canvas.addEventListener('mousedown', () => { isDragging = true; });
+        canvas.addEventListener('mousemove', (e) => {
+          if (isDragging && gameState === 'playing') {
+            const rect = canvas.getBoundingClientRect();
+            player.x = e.clientX - rect.left - player.width / 2;
+            player.x = Math.max(0, Math.min(canvas.width - player.width, player.x));
+          }
+        });
+        canvas.addEventListener('mouseup', () => { isDragging = false; });
+        canvas.addEventListener('mouseleave', () => { isDragging = false; });
 
-      const overlay = document.getElementById('gameOverlay');
-      overlay.classList.add('hidden');
+        // Mobile buttons
+        const leftBtn = document.getElementById('leftBtn');
+        const rightBtn = document.getElementById('rightBtn');
 
-      gameState = 'playing';
-      score = 0;
-      honeyCollected = 0;
-      lives = 3;
-      hitFlash = 0;
-      timeLeft = mode === 'quick' ? 35 : 60;
-      drops = [];
-      bees = [];
-      sparkles = [];
-
-      if (mode === 'quick') {
-        setDifficulty('tutorial', document.getElementById('tutorialBtn'));
-      }
-
-      updateDisplay();
-      resetStatAlerts();
-      updateTimerWarning();
-      showCanvasHint();
-
-      document.getElementById('startBtn').disabled = true;
-      const pauseBtn = document.getElementById('pauseBtn');
-      pauseBtn.disabled = false;
-      pauseBtn.textContent = '⏸ Pause';
-
-      gameInterval = setInterval(gameLoop, 1000 / 60);
-
-      timerInterval = setInterval(() => {
-        timeLeft--;
-        document.getElementById('timer').textContent = timeLeft;
-        updateTimerWarning();
-        if (timeLeft <= 0) {
-          endGame();
+        if (leftBtn) {
+          leftBtn.addEventListener('touchstart', () => { keys.left = true; }, { passive: true });
+          leftBtn.addEventListener('touchend', () => { keys.left = false; }, { passive: true });
         }
-      }, 1000);
 
-      spawnDrops();
-      spawnBees();
-    }
+        if (rightBtn) {
+          rightBtn.addEventListener('touchstart', () => { keys.right = true; }, { passive: true });
+          rightBtn.addEventListener('touchend', () => { keys.right = false; }, { passive: true });
+        }
 
-    function pauseGame() {
-      const pauseBtn = document.getElementById('pauseBtn');
-      if (gameState === 'playing') {
-        gameState = 'paused';
-        clearInterval(gameInterval);
-        clearInterval(timerInterval);
-        pauseBtn.textContent = '▶ Resume';
-      } else if (gameState === 'paused') {
+        // Difficulty buttons
+        document.querySelectorAll('.difficulty-btn').forEach(btn => {
+          btn.addEventListener('click', () => {
+            const level = btn.dataset.diff;
+            Game.setDifficulty(level);
+          });
+        });
+
+        this.draw();
+        
+        window.addEventListener('resize', () => {
+          const oldWidth = canvas.width;
+          sizeCanvas();
+          player.x = (player.x / oldWidth) * canvas.width;
+          this.draw();
+        });
+
+        console.log('Game initialized successfully');
+      },
+
+      handleKeyDown: function(e) {
+        if (e.key === 'ArrowLeft' || e.key === 'a' || e.key === 'A') keys.left = true;
+        if (e.key === 'ArrowRight' || e.key === 'd' || e.key === 'D') keys.right = true;
+      },
+
+      handleKeyUp: function(e) {
+        if (e.key === 'ArrowLeft' || e.key === 'a' || e.key === 'A') keys.left = false;
+        if (e.key === 'ArrowRight' || e.key === 'd' || e.key === 'D') keys.right = false;
+      },
+
+      handleTouch: function(e) {
+        if (gameState !== 'playing') return;
+        e.preventDefault();
+        const rect = canvas.getBoundingClientRect();
+        const touch = e.touches[0];
+        player.x = touch.clientX - rect.left - player.width / 2;
+        player.x = Math.max(0, Math.min(canvas.width - player.width, player.x));
+      },
+
+      setDifficulty: function(level) {
+        difficulty = level;
+        document.querySelectorAll('.difficulty-btn').forEach(b => b.classList.remove('active'));
+        const btn = document.querySelector(`[data-diff="${level}"]`);
+        if (btn) btn.classList.add('active');
+        console.log('Difficulty set to:', level);
+      },
+
+      start: function() {
+        if (gameState === 'playing') return;
+
         gameState = 'playing';
-        gameInterval = setInterval(gameLoop, 1000 / 60);
+        score = 0;
+        honeyCollected = 0;
+        lives = 3;
+        hitFlash = 0;
+        timeLeft = 60;
+        drops = [];
+        bees = [];
+        sparkles = [];
+
+        this.updateDisplay();
+
+        // Start game loop
+        gameInterval = setInterval(() => this.loop(), 1000 / 60);
+
+        // Start timer
         timerInterval = setInterval(() => {
           timeLeft--;
-          document.getElementById('timer').textContent = timeLeft;
-          updateTimerWarning();
-          if (timeLeft <= 0) endGame();
-        }, 1000);
-        pauseBtn.textContent = '⏸ Pause';
-      }
-    }
-
-    function resetGame() {
-      gameState = 'idle';
-      clearInterval(gameInterval);
-      clearInterval(timerInterval);
-
-      score = 0;
-      honeyCollected = 0;
-      lives = 3;
-      timeLeft = 60;
-      drops = [];
-      bees = [];
-      sparkles = [];
-
-      updateDisplay();
-      resetStatAlerts();
-      updateTimerWarning();
-      renderBriefing();
-
-      document.getElementById('startBtn').disabled = false;
-      const pauseBtn = document.getElementById('pauseBtn');
-      pauseBtn.disabled = true;
-      pauseBtn.textContent = '⏸ Pause';
-
-      drawGame();
-    }
-
-    function endGame() {
-      gameState = 'over';
-      clearInterval(gameInterval);
-      clearInterval(timerInterval);
-
-      const newBestScore = score > bestScore;
-      const newBestHoney = honeyCollected > bestHoney;
-      if (newBestScore) bestScore = score;
-      if (newBestHoney) bestHoney = honeyCollected;
-      saveBestStats();
-      updateBestDisplay();
-
-      const overlay = document.getElementById('gameOverlay');
-      overlay.classList.remove('hidden');
-      overlay.innerHTML = `
-        <div class="overlay-pill">Round summary</div>
-        <div class="overlay-title">🍯 Sweet Work! 🍯</div>
-        <div class="overlay-subtitle">Pooh has plenty for Baby Gunner's picnic thanks to you.</div>
-        <div class="overlay-metrics">
-          <div class="metric-card">
-            <span class="metric-label">Final Score</span>
-            <span class="metric-value">${score}</span>
-          </div>
-          <div class="metric-card">
-            <span class="metric-label">Honey Collected</span>
-            <span class="metric-value">${honeyCollected}</span>
-          </div>
-          <div class="metric-card best-stat">
-            <span class="metric-label">${newBestScore ? 'New High Score' : 'Best Run'}</span>
-            <span class="metric-value">${bestScore}</span>
-          </div>
-        </div>
-        <button class="btn sparkle" onclick="resetGame(); startGame();">Play Again</button>
-        <button class="btn btn-secondary" onclick="resetGame();" style="margin-top: 10px;">Back to Briefing</button>
-        <p class="overlay-footer">${newBestScore ? 'New record! Keep the streak going.' : 'Try a braver drizzle or dodge those bees with quicker sidesteps.'}</p>
-      `;
-
-      document.getElementById('startBtn').disabled = false;
-      const pauseBtn = document.getElementById('pauseBtn');
-      pauseBtn.disabled = true;
-      pauseBtn.textContent = '⏸ Pause';
-    }
-
-    function spawnDrops() {
-      if (gameState !== 'playing') return;
-
-      drops.push({
-        x: Math.random() * (canvas.width - 20),
-        y: -20,
-        width: 20,
-        height: 30,
-        speed: difficulties[difficulty].dropSpeed
-      });
-
-      setTimeout(spawnDrops, difficulties[difficulty].dropFreq);
-    }
-
-    function spawnBees() {
-      if (gameState !== 'playing') return;
-
-      bees.push({
-        x: Math.random() * (canvas.width - 30),
-        y: -30,
-        width: 30,
-        height: 25,
-        speed: difficulties[difficulty].beeSpeed
-      });
-
-      setTimeout(spawnBees, difficulties[difficulty].beeFreq);
-    }
-
-    function gameLoop() {
-      if (gameState !== 'playing') return;
-
-      if (keys.left) {
-        player.x -= player.speed;
-      }
-      if (keys.right) {
-        player.x += player.speed;
-      }
-      player.x = Math.max(0, Math.min(canvas.width - player.width, player.x));
-
-      drops.forEach((drop, index) => {
-        drop.y += drop.speed;
-
-        if (checkCollision(drop, player)) {
-          score += 10;
-          honeyCollected++;
-          sparkles.push({
-            x: drop.x + 10,
-            y: drop.y + 10,
-            life: 22
-          });
-          drops.splice(index, 1);
-          updateDisplay();
-        } else if (drop.y > canvas.height) {
-          drops.splice(index, 1);
-        }
-      });
-
-      bees.forEach((bee, index) => {
-        bee.y += bee.speed;
-
-        if (checkCollision(bee, player)) {
-          lives--;
-          bees.splice(index, 1);
-          triggerStatAlert(livesStat);
-          hitFlash = 16;
-          updateDisplay();
-
-          if (lives <= 0) {
-            endGame();
+          document.getElementById('time').textContent = timeLeft;
+          if (timeLeft <= 0) {
+            this.end();
           }
-        } else if (bee.y > canvas.height) {
-          bees.splice(index, 1);
+        }, 1000);
+
+        // Start spawning objects
+        this.spawnDrops();
+        this.spawnBees();
+
+        console.log('Game started');
+      },
+
+      reset: function() {
+        gameState = 'idle';
+        clearInterval(gameInterval);
+        clearInterval(timerInterval);
+
+        score = 0;
+        honeyCollected = 0;
+        lives = 3;
+        timeLeft = 60;
+        drops = [];
+        bees = [];
+        sparkles = [];
+
+        player.x = canvas.width / 2 - player.width / 2;
+        player.y = canvas.height - player.height - 18;
+
+        this.updateDisplay();
+        this.draw();
+        
+        console.log('Game reset');
+      },
+
+      end: function() {
+        gameState = 'over';
+        clearInterval(gameInterval);
+        clearInterval(timerInterval);
+
+        // Update best scores
+        if (score > bestScore) {
+          bestScore = score;
+          document.getElementById('gameHighScore').textContent = bestScore;
+          this.saveBestStats();
         }
-      });
+        if (honeyCollected > bestHoney) {
+          bestHoney = honeyCollected;
+        }
 
-      // Update sparkles
-      sparkles.forEach((s, i) => {
-        s.life--;
-        s.y += 0.5;
-        if (s.life <= 0) sparkles.splice(i, 1);
-      });
+        alert(`Game Over!\nFinal Score: ${score}\nHoney Collected: ${honeyCollected}\nBest Score: ${bestScore}`);
+        
+        console.log('Game ended');
+      },
 
-      drawGame();
-    }
+      spawnDrops: function() {
+        if (gameState !== 'playing') return;
 
-    function checkCollision(obj1, obj2) {
-      return obj1.x < obj2.x + obj2.width &&
-             obj1.x + obj1.width > obj2.x &&
-             obj1.y < obj2.y + obj2.height &&
-             obj1.y + obj1.height > obj2.y;
-    }
+        drops.push({
+          x: Math.random() * (canvas.width - 20),
+          y: -20,
+          width: 20,
+          height: 30,
+          speed: difficulties[difficulty].dropSpeed
+        });
 
-    function drawGame() {
-      if (!ctx) return;
+        setTimeout(() => this.spawnDrops(), difficulties[difficulty].dropFreq);
+      },
 
-      // Clear
-      ctx.clearRect(0, 0, canvas.width, canvas.height);
+      spawnBees: function() {
+        if (gameState !== 'playing') return;
 
-      // Sky gradient
-      const skyGradient = ctx.createLinearGradient(0, 0, 0, canvas.height);
-      skyGradient.addColorStop(0, '#8cd3ff');
-      skyGradient.addColorStop(0.45, '#87CEEB');
-      skyGradient.addColorStop(0.9, '#d1f3ff');
-      ctx.fillStyle = skyGradient;
-      ctx.fillRect(0, 0, canvas.width, canvas.height);
+        bees.push({
+          x: Math.random() * (canvas.width - 30),
+          y: -30,
+          width: 30,
+          height: 25,
+          speed: difficulties[difficulty].beeSpeed
+        });
 
-      // Soft distant hills
-      ctx.fillStyle = '#b7d7a8';
-      ctx.beginPath();
-      ctx.moveTo(0, canvas.height - 80);
-      ctx.quadraticCurveTo(canvas.width * 0.25, canvas.height - 120, canvas.width * 0.5, canvas.height - 80);
-      ctx.quadraticCurveTo(canvas.width * 0.75, canvas.height - 40, canvas.width, canvas.height - 70);
-      ctx.lineTo(canvas.width, canvas.height);
-      ctx.lineTo(0, canvas.height);
-      ctx.closePath();
-      ctx.fill();
+        setTimeout(() => this.spawnBees(), difficulties[difficulty].beeFreq);
+      },
 
-      // Ground
-      ctx.fillStyle = '#6fa45a';
-      ctx.fillRect(0, canvas.height - 40, canvas.width, 40);
+      loop: function() {
+        if (gameState !== 'playing') return;
 
-      // Simple trees
-      ctx.fillStyle = 'rgba(74, 94, 62, 0.7)';
-      for (let i = 0; i < 4; i++) {
-        const baseX = (canvas.width / 4) * i + 20;
-        ctx.fillRect(baseX, canvas.height - 70, 20, 30);
+        // Update player position based on keys
+        if (keys.left) {
+          player.x -= player.speed;
+        }
+        if (keys.right) {
+          player.x += player.speed;
+        }
+        player.x = Math.max(0, Math.min(canvas.width - player.width, player.x));
+
+        // Update drops
+        drops.forEach((drop, index) => {
+          drop.y += drop.speed;
+
+          if (this.checkCollision(drop, player)) {
+            score += 10;
+            honeyCollected++;
+            sparkles.push({
+              x: drop.x + 10,
+              y: drop.y + 10,
+              life: 22
+            });
+            drops.splice(index, 1);
+            this.updateDisplay();
+          } else if (drop.y > canvas.height) {
+            drops.splice(index, 1);
+          }
+        });
+
+        // Update bees
+        bees.forEach((bee, index) => {
+          bee.y += bee.speed;
+
+          if (this.checkCollision(bee, player)) {
+            lives--;
+            bees.splice(index, 1);
+            hitFlash = 16;
+            this.updateDisplay();
+
+            if (lives <= 0) {
+              this.end();
+            }
+          } else if (bee.y > canvas.height) {
+            bees.splice(index, 1);
+          }
+        });
+
+        // Update sparkles
+        sparkles.forEach((s, i) => {
+          s.life--;
+          s.y += 0.5;
+          if (s.life <= 0) sparkles.splice(i, 1);
+        });
+
+        this.draw();
+      },
+
+      checkCollision: function(obj1, obj2) {
+        return obj1.x < obj2.x + obj2.width &&
+               obj1.x + obj1.width > obj2.x &&
+               obj1.y < obj2.y + obj2.height &&
+               obj1.y + obj1.height > obj2.y;
+      },
+
+      draw: function() {
+        if (!ctx) return;
+
+        // Clear
+        ctx.clearRect(0, 0, canvas.width, canvas.height);
+
+        // Sky gradient
+        const skyGradient = ctx.createLinearGradient(0, 0, 0, canvas.height);
+        skyGradient.addColorStop(0, '#8cd3ff');
+        skyGradient.addColorStop(0.45, '#87CEEB');
+        skyGradient.addColorStop(0.9, '#d1f3ff');
+        ctx.fillStyle = skyGradient;
+        ctx.fillRect(0, 0, canvas.width, canvas.height);
+
+        // Soft distant hills
+        ctx.fillStyle = '#b7d7a8';
         ctx.beginPath();
-        ctx.moveTo(baseX - 20, canvas.height - 70);
-        ctx.lineTo(baseX + 10, canvas.height - 120);
-        ctx.lineTo(baseX + 40, canvas.height - 70);
+        ctx.moveTo(0, canvas.height - 80);
+        ctx.quadraticCurveTo(canvas.width * 0.25, canvas.height - 120, canvas.width * 0.5, canvas.height - 80);
+        ctx.quadraticCurveTo(canvas.width * 0.75, canvas.height - 40, canvas.width, canvas.height - 70);
+        ctx.lineTo(canvas.width, canvas.height);
+        ctx.lineTo(0, canvas.height);
         ctx.closePath();
         ctx.fill();
-      }
 
-      // Pooh ears
-      ctx.fillStyle = '#f4c16e';
-      ctx.beginPath();
-      ctx.arc(player.x + 18, player.y + 10, 8, 0, Math.PI * 2);
-      ctx.fill();
-      ctx.beginPath();
-      ctx.arc(player.x + 42, player.y + 10, 8, 0, Math.PI * 2);
-      ctx.fill();
+        // Ground
+        ctx.fillStyle = '#6fa45a';
+        ctx.fillRect(0, canvas.height - 40, canvas.width, 40);
 
-      // Pooh head
-      ctx.beginPath();
-      ctx.arc(player.x + 30, player.y + 26, 20, 0, Math.PI * 2);
-      ctx.fill();
+        // Simple trees
+        ctx.fillStyle = 'rgba(74, 94, 62, 0.7)';
+        for (let i = 0; i < 4; i++) {
+          const baseX = (canvas.width / 4) * i + 20;
+          ctx.fillRect(baseX, canvas.height - 70, 20, 30);
+          ctx.beginPath();
+          ctx.moveTo(baseX - 20, canvas.height - 70);
+          ctx.lineTo(baseX + 10, canvas.height - 120);
+          ctx.lineTo(baseX + 40, canvas.height - 70);
+          ctx.closePath();
+          ctx.fill();
+        }
 
-      // Face
-      ctx.fillStyle = '#2b1810';
-      ctx.beginPath();
-      ctx.arc(player.x + 23, player.y + 22, 3, 0, Math.PI * 2);
-      ctx.fill();
-      ctx.beginPath();
-      ctx.arc(player.x + 37, player.y + 22, 3, 0, Math.PI * 2);
-      ctx.fill();
-
-      ctx.beginPath();
-      ctx.arc(player.x + 30, player.y + 28, 3, 0, Math.PI * 2);
-      ctx.fill();
-
-      ctx.beginPath();
-      ctx.arc(player.x + 30, player.y + 33, 7, 0, Math.PI);
-      ctx.strokeStyle = '#2b1810';
-      ctx.lineWidth = 1.5;
-      ctx.stroke();
-
-      // Body + shirt
-      ctx.fillStyle = '#f4c16e';
-      ctx.fillRect(player.x + 14, player.y + 40, 32, 30);
-      ctx.fillStyle = '#d32f2f';
-      ctx.fillRect(player.x + 12, player.y + 40, 36, 18);
-
-      // Arms
-      ctx.fillStyle = '#f4c16e';
-      ctx.fillRect(player.x + 6, player.y + 44, 10, 14);
-      ctx.fillRect(player.x + 44, player.y + 44, 10, 14);
-
-      // Barrel
-      ctx.fillStyle = '#8b6f47';
-      ctx.beginPath();
-      ctx.moveTo(player.x, player.y + 60);
-      ctx.lineTo(player.x + 60, player.y + 60);
-      ctx.quadraticCurveTo(player.x + 56, player.y + 96, player.x + 30, player.y + 100);
-      ctx.quadraticCurveTo(player.x + 4, player.y + 96, player.x, player.y + 60);
-      ctx.closePath();
-      ctx.fill();
-
-      ctx.strokeStyle = '#5a4a3a';
-      ctx.lineWidth = 2;
-      ctx.stroke();
-
-      // Barrel bands
-      ctx.beginPath();
-      ctx.moveTo(player.x + 4, player.y + 72);
-      ctx.lineTo(player.x + 56, player.y + 72);
-      ctx.moveTo(player.x + 4, player.y + 88);
-      ctx.lineTo(player.x + 56, player.y + 88);
-      ctx.stroke();
-
-      // Honey drops
-      drops.forEach(drop => {
-        ctx.fillStyle = '#f4a944';
+        // Pooh ears
+        ctx.fillStyle = '#f4c16e';
         ctx.beginPath();
-        ctx.ellipse(drop.x + 10, drop.y + 15, 10, 15, 0, 0, Math.PI * 2);
+        ctx.arc(player.x + 18, player.y + 10, 8, 0, Math.PI * 2);
+        ctx.fill();
+        ctx.beginPath();
+        ctx.arc(player.x + 42, player.y + 10, 8, 0, Math.PI * 2);
         ctx.fill();
 
-        ctx.fillStyle = '#fff5d6';
+        // Pooh head
         ctx.beginPath();
-        ctx.ellipse(drop.x + 8, drop.y + 10, 3, 5, 0, 0, Math.PI * 2);
+        ctx.arc(player.x + 30, player.y + 26, 20, 0, Math.PI * 2);
         ctx.fill();
-      });
 
-      // Bees
-      bees.forEach(bee => {
-        ctx.fillStyle = '#f4a944';
-        ctx.fillRect(bee.x + 5, bee.y + 5, 22, 16);
-
+        // Face
         ctx.fillStyle = '#2b1810';
-        ctx.fillRect(bee.x + 8, bee.y + 5, 3, 16);
-        ctx.fillRect(bee.x + 15, bee.y + 5, 3, 16);
-        ctx.fillRect(bee.x + 20, bee.y + 5, 3, 16);
-
-        ctx.fillStyle = 'rgba(255, 255, 255, 0.7)';
         ctx.beginPath();
-        ctx.ellipse(bee.x + 10, bee.y + 2, 7, 5, -0.3, 0, Math.PI * 2);
+        ctx.arc(player.x + 23, player.y + 22, 3, 0, Math.PI * 2);
         ctx.fill();
         ctx.beginPath();
-        ctx.ellipse(bee.x + 22, bee.y + 2, 7, 5, 0.3, 0, Math.PI * 2);
+        ctx.arc(player.x + 37, player.y + 22, 3, 0, Math.PI * 2);
         ctx.fill();
-      });
 
-      // Sparkles on honey catch
-      sparkles.forEach(s => {
-        const alpha = Math.max(0, s.life / 22);
-        const radius = 10 + (22 - s.life) * 0.7;
-        const gradient = ctx.createRadialGradient(s.x, s.y, 0, s.x, s.y, radius);
-        gradient.addColorStop(0, `rgba(255, 245, 214, ${alpha})`);
-        gradient.addColorStop(0.4, `rgba(244, 169, 68, ${alpha * 0.9})`);
-        gradient.addColorStop(1, 'rgba(244, 169, 68, 0)');
-        ctx.fillStyle = gradient;
         ctx.beginPath();
-        ctx.arc(s.x, s.y, radius, 0, Math.PI * 2);
+        ctx.arc(player.x + 30, player.y + 28, 3, 0, Math.PI * 2);
         ctx.fill();
-      });
 
-      if (hitFlash > 0) {
-        ctx.fillStyle = `rgba(211, 47, 47, ${Math.min(0.45, hitFlash / 20)})`;
-        ctx.fillRect(0, 0, canvas.width, canvas.height);
-        hitFlash--;
-      }
-    }
+        ctx.beginPath();
+        ctx.arc(player.x + 30, player.y + 33, 7, 0, Math.PI);
+        ctx.strokeStyle = '#2b1810';
+        ctx.lineWidth = 1.5;
+        ctx.stroke();
 
-    function triggerStatAlert(element) {
-      if (!element) return;
-      element.classList.remove('stat-alert');
-      void element.offsetWidth; // restart animation
-      element.classList.add('stat-alert');
-      setTimeout(() => element.classList.remove('stat-alert'), 600);
-    }
+        // Body + shirt
+        ctx.fillStyle = '#f4c16e';
+        ctx.fillRect(player.x + 14, player.y + 40, 32, 30);
+        ctx.fillStyle = '#d32f2f';
+        ctx.fillRect(player.x + 12, player.y + 40, 36, 18);
 
-    function updateTimerWarning() {
-      if (!timerStat) return;
-      if (timeLeft <= 10) {
-        if (!timerStat.classList.contains('timer-warning') && timeLeft === 10) {
-          triggerStatAlert(timerStat);
+        // Arms
+        ctx.fillStyle = '#f4c16e';
+        ctx.fillRect(player.x + 6, player.y + 44, 10, 14);
+        ctx.fillRect(player.x + 44, player.y + 44, 10, 14);
+
+        // Barrel
+        ctx.fillStyle = '#8b6f47';
+        ctx.beginPath();
+        ctx.moveTo(player.x, player.y + 60);
+        ctx.lineTo(player.x + 60, player.y + 60);
+        ctx.quadraticCurveTo(player.x + 56, player.y + 96, player.x + 30, player.y + 100);
+        ctx.quadraticCurveTo(player.x + 4, player.y + 96, player.x, player.y + 60);
+        ctx.closePath();
+        ctx.fill();
+
+        ctx.strokeStyle = '#5a4a3a';
+        ctx.lineWidth = 2;
+        ctx.stroke();
+
+        // Barrel bands
+        ctx.beginPath();
+        ctx.moveTo(player.x + 4, player.y + 72);
+        ctx.lineTo(player.x + 56, player.y + 72);
+        ctx.moveTo(player.x + 4, player.y + 88);
+        ctx.lineTo(player.x + 56, player.y + 88);
+        ctx.stroke();
+
+        // Honey drops
+        drops.forEach(drop => {
+          ctx.fillStyle = '#f4a944';
+          ctx.beginPath();
+          ctx.ellipse(drop.x + 10, drop.y + 15, 10, 15, 0, 0, Math.PI * 2);
+          ctx.fill();
+
+          ctx.fillStyle = '#fff5d6';
+          ctx.beginPath();
+          ctx.ellipse(drop.x + 8, drop.y + 10, 3, 5, 0, 0, Math.PI * 2);
+          ctx.fill();
+        });
+
+        // Bees
+        bees.forEach(bee => {
+          ctx.fillStyle = '#f4a944';
+          ctx.fillRect(bee.x + 5, bee.y + 5, 22, 16);
+
+          ctx.fillStyle = '#2b1810';
+          ctx.fillRect(bee.x + 8, bee.y + 5, 3, 16);
+          ctx.fillRect(bee.x + 15, bee.y + 5, 3, 16);
+          ctx.fillRect(bee.x + 20, bee.y + 5, 3, 16);
+
+          ctx.fillStyle = 'rgba(255, 255, 255, 0.7)';
+          ctx.beginPath();
+          ctx.ellipse(bee.x + 10, bee.y + 2, 7, 5, -0.3, 0, Math.PI * 2);
+          ctx.fill();
+          ctx.beginPath();
+          ctx.ellipse(bee.x + 22, bee.y + 2, 7, 5, 0.3, 0, Math.PI * 2);
+          ctx.fill();
+        });
+
+        // Sparkles on honey catch
+        sparkles.forEach(s => {
+          const alpha = Math.max(0, s.life / 22);
+          const radius = 10 + (22 - s.life) * 0.7;
+          const gradient = ctx.createRadialGradient(s.x, s.y, 0, s.x, s.y, radius);
+          gradient.addColorStop(0, `rgba(255, 245, 214, ${alpha})`);
+          gradient.addColorStop(0.4, `rgba(244, 169, 68, ${alpha * 0.9})`);
+          gradient.addColorStop(1, 'rgba(244, 169, 68, 0)');
+          ctx.fillStyle = gradient;
+          ctx.beginPath();
+          ctx.arc(s.x, s.y, radius, 0, Math.PI * 2);
+          ctx.fill();
+        });
+
+        if (hitFlash > 0) {
+          ctx.fillStyle = `rgba(211, 47, 47, ${Math.min(0.45, hitFlash / 20)})`;
+          ctx.fillRect(0, 0, canvas.width, canvas.height);
+          hitFlash--;
         }
-        timerStat.classList.add('timer-warning');
-      } else {
-        timerStat.classList.remove('timer-warning');
-      }
-    }
+      },
 
-    function resetStatAlerts() {
-      [livesStat, timerStat].forEach(el => {
-        el?.classList.remove('stat-alert');
-        el?.classList.remove('timer-warning');
-      });
-    }
-
-    function saveBestStats() {
-      try {
-        localStorage.setItem('poohBest', JSON.stringify({ score: bestScore, honey: bestHoney }));
-      } catch (e) {
-        console.warn('Unable to save best stats', e);
-      }
-    }
-
-    function loadBestStats() {
-      try {
-        const saved = localStorage.getItem('poohBest');
-        if (saved) {
-          const parsed = JSON.parse(saved);
-          if (parsed.score) bestScore = parsed.score;
-          if (parsed.honey) bestHoney = parsed.honey;
+      updateDisplay: function() {
+        document.getElementById('score').textContent = score;
+        document.getElementById('honey').textContent = honeyCollected;
+        document.getElementById('time').textContent = timeLeft;
+        
+        let heartsDisplay = '';
+        for (let i = 0; i < lives; i++) {
+          heartsDisplay += '❤️';
         }
-        updateBestDisplay();
-      } catch (e) {
-        console.warn('No saved stats', e);
+        document.getElementById('lives').textContent = heartsDisplay || '💔';
+      },
+
+      saveBestStats: function() {
+        try {
+          localStorage.setItem('poohBest', JSON.stringify({ 
+            score: bestScore, 
+            honey: bestHoney 
+          }));
+        } catch (e) {
+          console.warn('Unable to save best stats', e);
+        }
+      },
+
+      loadBestStats: function() {
+        try {
+          const saved = localStorage.getItem('poohBest');
+          if (saved) {
+            const parsed = JSON.parse(saved);
+            if (parsed.score) bestScore = parsed.score;
+            if (parsed.honey) bestHoney = parsed.honey;
+          }
+          document.getElementById('gameHighScore').textContent = bestScore;
+        } catch (e) {
+          console.warn('No saved stats', e);
+        }
       }
-    }
-
-    function handleImageFallback(event) {
-      const img = event.target;
-      img.onerror = null;
-      img.src = 'data:image/svg+xml;utf8,<svg xmlns="http://www.w3.org/2000/svg" width="120" height="120" viewBox="0 0 120 120"><rect width="120" height="120" rx="18" ry="18" fill="%23f9f4e8"/><text x="50%" y="56%" dominant-baseline="middle" text-anchor="middle" font-size="52">🍯</text></svg>';
-      img.classList.add('fallback-img');
-    }
-
-    function updateDisplay() {
-      document.getElementById('score').textContent = score;
-      document.getElementById('honeyCount').textContent = honeyCollected;
-      document.getElementById('timer').textContent = timeLeft;
-      updateBestDisplay();
-
-      let heartsDisplay = '';
-      for (let i = 0; i < lives; i++) {
-        heartsDisplay += '❤️';
-      }
-      document.getElementById('lives').textContent = heartsDisplay || '💔';
-    }
-
-    function updateBestDisplay() {
-      const bestEl = document.getElementById('bestScore');
-      if (bestEl) bestEl.textContent = bestScore;
-    }
+    };
 
     // ===== GUESTBOOK & PAGE INIT =====
     document.addEventListener('DOMContentLoaded', () => {
@@ -3875,18 +3765,23 @@
         });
       }
 
+      // Initialize everything
       loadWishes();
       updateNavigation();
-      initGame();
-      loadBestStats();
+      Game.init();
+      Game.loadBestStats();
 
+      // Set up character image fallbacks
       document.querySelectorAll('.character-card img').forEach((img) => {
         img.loading = 'lazy';
-        img.addEventListener('error', handleImageFallback);
+        img.addEventListener('error', function(event) {
+          const img = event.target;
+          img.onerror = null;
+          img.src = 'data:image/svg+xml;utf8,<svg xmlns="http://www.w3.org/2000/svg" width="120" height="120" viewBox="0 0 120 120"><rect width="120" height="120" rx="18" ry="18" fill="%23f9f4e8"/><text x="50%" y="56%" dominant-baseline="middle" text-anchor="middle" font-size="52">🍯</text></svg>';
+          img.classList.add('fallback-img');
+        });
       });
     });
-
-    // resize handled inside initGame to keep canvas readable on small screens
   </script>
 </body>
 </html>
