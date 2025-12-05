@@ -741,6 +741,47 @@
       text-transform: uppercase;
     }
 
+    .lore-panel {
+      background: rgba(255, 255, 255, 0.94);
+      border: 2px dashed rgba(244, 169, 68, 0.8);
+      border-radius: 14px;
+      padding: 14px 16px;
+      box-shadow: 0 10px 24px rgba(0, 0, 0, 0.12);
+    }
+
+    .lore-panel summary {
+      list-style: none;
+      display: flex;
+      align-items: center;
+      gap: 10px;
+      cursor: pointer;
+      font-weight: 800;
+      color: var(--pooh-red);
+      font-size: 1.05rem;
+    }
+
+    .lore-panel summary::-webkit-details-marker {
+      display: none;
+    }
+
+    .lore-panel[open] {
+      border-style: solid;
+    }
+
+    .lore-content {
+      margin-top: 12px;
+      display: grid;
+      grid-template-columns: minmax(0, 1.1fr) minmax(0, 0.9fr);
+      gap: 16px;
+      align-items: start;
+    }
+
+    .lore-stories {
+      display: flex;
+      flex-direction: column;
+      gap: 12px;
+    }
+
     .detail-item {
       display: flex;
       align-items: center;
@@ -836,12 +877,17 @@
     }
 
     .game-layout {
-      display: grid;
-      grid-template-columns: minmax(0, 1.5fr) minmax(0, 1fr);
-      column-gap: 24px;
-      row-gap: 18px;
-      align-items: start;
+      display: flex;
+      flex-direction: column;
+      gap: 16px;
       margin: 0;
+    }
+
+    .game-top {
+      display: grid;
+      grid-template-columns: minmax(0, 1.25fr) minmax(280px, 0.85fr);
+      gap: 16px;
+      align-items: stretch;
     }
 
     .game-container {
@@ -868,6 +914,30 @@
     .game-inner {
       position: relative;
       z-index: 1;
+    }
+
+    .control-panel {
+      background: white;
+      border: 3px solid rgba(107, 163, 212, 0.55);
+      border-radius: 16px;
+      padding: 16px 18px;
+      box-shadow:
+        0 14px 34px rgba(43, 24, 16, 0.22),
+        inset 0 0 0 1px rgba(255, 255, 255, 0.75);
+      display: flex;
+      flex-direction: column;
+      gap: 12px;
+      min-height: 100%;
+    }
+
+    .control-title {
+      display: flex;
+      align-items: center;
+      gap: 10px;
+      font-size: 1rem;
+      letter-spacing: 0.6px;
+      text-transform: uppercase;
+      color: #2f4f6b;
     }
 
     .honey-drip {
@@ -981,12 +1051,19 @@
       color: var(--ink);
     }
 
+    .control-actions,
     .game-controls {
       display: flex;
-      gap: 10px;
-      justify-content: center;
+      gap: 8px;
+      justify-content: flex-start;
       flex-wrap: wrap;
-      margin-top: 10px;
+      margin-top: 4px;
+    }
+
+    .control-note {
+      font-size: 0.92rem;
+      color: #3c2a1a;
+      line-height: 1.4;
     }
 
     .start-with-tip {
@@ -1116,8 +1193,8 @@
       display: inline-flex;
       flex-wrap: wrap;
       gap: 6px;
-      justify-content: center;
-      margin: 12px 0 6px;
+      justify-content: flex-start;
+      margin: 6px 0 0px;
       width: 100%;
     }
 
@@ -1425,12 +1502,16 @@
         border-radius: 16px;
       }
 
-      .game-layout {
-        grid-template-columns: 1.1fr;
+      .game-top {
+        grid-template-columns: 1fr;
       }
 
       .game-container {
         padding: 14px 12px 14px;
+      }
+
+      .lore-content {
+        grid-template-columns: 1fr;
       }
 
       #gameCanvas {
@@ -1484,9 +1565,13 @@
         font-size: 1.25rem;
       }
 
-      .game-layout {
+      .game-top {
         grid-template-columns: 1fr;
         row-gap: 14px;
+      }
+
+      .lore-content {
+        grid-template-columns: 1fr;
       }
 
       .game-container {
@@ -2510,16 +2595,17 @@
 
           <section class="game-section sparkle">
             <div class="game-section-header">
-              <div class="game-section-title">
-                <span>Mini game</span>
-                <span>Pooh’s Honey Run</span>
-              </div>
-              <div class="game-tag">
-                <span>🍯</span> <span>Catch &amp; Dodge</span>
-              </div>
+            <div class="game-section-title">
+              <span>Mini game</span>
+              <span>Pooh’s Honey Run</span>
             </div>
+            <div class="game-tag">
+              <span>🍯</span> <span>Catch &amp; Dodge</span>
+            </div>
+          </div>
 
-            <div class="game-layout">
+          <div class="game-layout">
+            <div class="game-top">
               <div class="game-container">
                 <!-- honey drips at the top of the frame -->
                 <div class="honey-drip"></div>
@@ -2552,94 +2638,108 @@
                       <p class="overlay-footer">Tip: Quick nudges help dodge bees better than long slides.</p>
                     </div>
                   </div>
-
-                  <div class="game-stats">
-                    <div class="stat" id="scoreStat">
-                      <div class="stat-label-row">
-                        <span>Score</span>
-                        <span class="stat-emoji">⭐</span>
-                      </div>
-                      <div class="stat-value" id="score">0</div>
-                    </div>
-                    <div class="stat" id="honeyStat">
-                      <div class="stat-label-row">
-                        <span>Honey</span>
-                        <span class="stat-emoji">🍯</span>
-                      </div>
-                      <div class="stat-value" id="honeyCount">0</div>
-                    </div>
-                    <div class="stat" id="livesStat">
-                      <div class="stat-label-row">
-                        <span>Lives</span>
-                        <span class="stat-emoji">❤️</span>
-                      </div>
-                      <div class="stat-value" id="lives">❤️❤️❤️</div>
-                    </div>
-                    <div class="stat" id="timerStat">
-                      <div class="stat-label-row">
-                        <span>Time</span>
-                        <span class="stat-emoji">⏱️</span>
-                      </div>
-                      <div class="stat-value" id="timer">60</div>
-                    </div>
-                  </div>
-
-                  <div class="difficulty-selector">
-                    <button class="difficulty-btn active" onclick="setDifficulty('easy', this)">Gentle Drizzle</button>
-                    <button class="difficulty-btn" onclick="setDifficulty('normal', this)">Honey Shower</button>
-                    <button class="difficulty-btn" onclick="setDifficulty('hard', this)">Bee Storm</button>
-                  </div>
-
-                  <div class="game-controls">
-                    <div class="start-with-tip">
-                      <button class="btn sparkle" id="startBtn" onclick="startGame()">▶ Start</button>
-                      <div class="inline-tip" tabindex="0" aria-label="How to play: tap Start, catch honey, dodge bees, and fill the barrel before time runs out.">
-                        ?
-                        <div class="tooltip" role="tooltip">
-                          Tap Start to drop into the clearing. Catch honey 🧺, dodge bees 🐝, and fill the barrel before the timer blinks away. Arrow keys or A/D move Pooh; on mobile, use the gold arrows.
-                        </div>
-                      </div>
-                    </div>
-                    <button class="btn btn-secondary" id="pauseBtn" onclick="pauseGame()" disabled>⏸ Pause</button>
-                    <button class="btn btn-secondary" onclick="resetGame()">🔄 Reset</button>
-                  </div>
-
-                  <div class="mobile-controls" aria-label="Touch controls">
-                    <div class="mobile-thumbstick" role="group" aria-label="Thumbstick">
-                      <button class="thumb-pad" id="leftBtn" aria-label="Move left">⬅️</button>
-                      <div class="thumb-divider" aria-hidden="true"></div>
-                      <button class="thumb-pad" id="rightBtn" aria-label="Move right">➡️</button>
-                    </div>
-                  </div>
                 </div>
               </div>
 
-              <div class="info-card sparkle">
-                <h4>Quick game tips</h4>
-                <ul style="margin-left: 16px; line-height: 1.6;">
-                  <li>Pick a difficulty that matches your mood, then press <strong>Start</strong>.</li>
-                  <li>Short taps on mobile buttons give gentle nudges; hold them to glide faster.</li>
-                  <li>Watch the timer and keep an eye on your hearts—three stings ends the round.</li>
-                </ul>
-                <p style="margin: 0; line-height: 1.6;">Fill the honey pot and return with a sweet score to share with the rest of the party.</p>
+              <div class="control-panel sparkle">
+                <div class="control-title">🍯 Ready, Set, Honey Run</div>
+
+                <div class="game-stats">
+                  <div class="stat" id="scoreStat">
+                    <div class="stat-label-row">
+                      <span>Score</span>
+                      <span class="stat-emoji">⭐</span>
+                    </div>
+                    <div class="stat-value" id="score">0</div>
+                  </div>
+                  <div class="stat" id="honeyStat">
+                    <div class="stat-label-row">
+                      <span>Honey</span>
+                      <span class="stat-emoji">🍯</span>
+                    </div>
+                    <div class="stat-value" id="honeyCount">0</div>
+                  </div>
+                  <div class="stat" id="livesStat">
+                    <div class="stat-label-row">
+                      <span>Lives</span>
+                      <span class="stat-emoji">❤️</span>
+                    </div>
+                    <div class="stat-value" id="lives">❤️❤️❤️</div>
+                  </div>
+                  <div class="stat" id="timerStat">
+                    <div class="stat-label-row">
+                      <span>Time</span>
+                      <span class="stat-emoji">⏱️</span>
+                    </div>
+                    <div class="stat-value" id="timer">60</div>
+                  </div>
+                </div>
+
+                <div class="control-actions">
+                  <div class="start-with-tip">
+                    <button class="btn sparkle" id="startBtn" onclick="startGame()">▶ Start</button>
+                    <div class="inline-tip" tabindex="0" aria-label="How to play: tap Start, catch honey, dodge bees, and fill the barrel before time runs out.">
+                      ?
+                      <div class="tooltip" role="tooltip">
+                        Tap Start to drop into the clearing. Catch honey 🧺, dodge bees 🐝, and fill the barrel before the timer blinks away. Arrow keys or A/D move Pooh; on mobile, use the gold arrows.
+                      </div>
+                    </div>
+                  </div>
+                  <button class="btn btn-secondary" id="pauseBtn" onclick="pauseGame()" disabled>⏸ Pause</button>
+                  <button class="btn btn-secondary" onclick="resetGame()">🔄 Reset</button>
+                </div>
+
+                <div class="difficulty-selector">
+                  <button class="difficulty-btn active" onclick="setDifficulty('easy', this)">Gentle Drizzle</button>
+                  <button class="difficulty-btn" onclick="setDifficulty('normal', this)">Honey Shower</button>
+                  <button class="difficulty-btn" onclick="setDifficulty('hard', this)">Bee Storm</button>
+                </div>
+
+                <p class="control-note">Start, pause, and tweak difficulty from one place so you can get back to dodging bees faster.</p>
               </div>
             </div>
-          </section>
 
-          <p class="story-text">
-            Pooh stood beneath the tall honey tree, his favorite barrel in his arms. Above him, golden drops of honey began to fall, glistening in the sunlight like liquid sunshine. But there was a problem—the bees were buzzing about too!
-          </p>
+            <div class="mobile-controls" aria-label="Touch controls">
+              <div class="mobile-thumbstick" role="group" aria-label="Thumbstick">
+                <button class="thumb-pad" id="leftBtn" aria-label="Move left">⬅️</button>
+                <div class="thumb-divider" aria-hidden="true"></div>
+                <button class="thumb-pad" id="rightBtn" aria-label="Move right">➡️</button>
+              </div>
+            </div>
 
-          <p class="story-text">
-            "Oh bother," said Pooh. "I must catch the honey but avoid the bees. This requires concentration. And perhaps some help from a friend like you."
-          </p>
+            <details class="lore-panel sparkle">
+              <summary>Story, lore, and quick tips</summary>
+              <div class="lore-content">
+                <div class="lore-stories">
+                  <p class="story-text">
+                    Pooh stood beneath the tall honey tree, his favorite barrel in his arms. Above him, golden drops of honey began to fall, glistening in the sunlight like liquid sunshine. But there was a problem—the bees were buzzing about too!
+                  </p>
 
-          <p class="story-text" style="text-indent: 0; text-align: center; font-style: italic; margin-top: 20px;">
-            "That was splendid!" said Pooh when the barrel was full. "Now we have plenty of honey for Baby Gunner's celebration!"
-          </p>
-        </div>
+                  <p class="story-text">
+                    "Oh bother," said Pooh. "I must catch the honey but avoid the bees. This requires concentration. And perhaps some help from a friend like you."
+                  </p>
 
-        <!-- Chapter 3: Registry & Details -->
+                  <p class="story-text" style="text-indent: 0; text-align: center; font-style: italic; margin-top: 8px;">
+                    "That was splendid!" said Pooh when the barrel was full. "Now we have plenty of honey for Baby Gunner's celebration!"
+                  </p>
+                </div>
+
+                <div class="info-card sparkle">
+                  <h4>Quick game tips</h4>
+                  <ul style="margin-left: 16px; line-height: 1.6;">
+                    <li>Pick a difficulty that matches your mood, then press <strong>Start</strong>.</li>
+                    <li>Short taps on mobile buttons give gentle nudges; hold them to glide faster.</li>
+                    <li>Watch the timer and keep an eye on your hearts—three stings ends the round.</li>
+                  </ul>
+                  <p style="margin: 0; line-height: 1.6;">Fill the honey pot and return with a sweet score to share with the rest of the party.</p>
+                </div>
+              </div>
+            </details>
+          </div>
+        </section>
+      </div>
+
+      <!-- Chapter 3: Registry & Details -->
         <div class="page" data-chapter="3">
           <div class="chapter-header">
             <div class="chapter-number">Chapter Three</div>
