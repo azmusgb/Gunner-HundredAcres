@@ -244,6 +244,13 @@
       filter: drop-shadow(0 6px 10px rgba(0,0,0,0.2));
     }
 
+    .character-card img.fallback-img {
+      background: radial-gradient(circle at 30% 30%, rgba(255,255,255,0.8), rgba(107, 163, 212, 0.3));
+      border-radius: 12px;
+      padding: 8px;
+      filter: none;
+    }
+
     .character-name {
       font-weight: 700;
       color: var(--pooh-red);
@@ -421,6 +428,15 @@
     .chapter-pill.visited {
       border-color: rgba(90, 124, 62, 0.7);
       opacity: 0.9;
+    }
+
+    .chapter-pill.visited .pill-number {
+      background: radial-gradient(circle at 30% 30%, rgba(255,255,255,0.7), rgba(90, 124, 62, 0.75));
+      color: white;
+    }
+
+    .chapter-pill.visited::after {
+      opacity: 0.4;
     }
 
     .pill-number {
@@ -1425,6 +1441,53 @@
       font-weight: bold;
     }
 
+    .canvas-hint {
+      position: absolute;
+      inset: 8px auto auto 10px;
+      background: rgba(0, 0, 0, 0.48);
+      color: white;
+      padding: 8px 10px;
+      border-radius: 12px;
+      font-size: 0.85rem;
+      line-height: 1.3;
+      backdrop-filter: blur(4px);
+      box-shadow: 0 8px 14px rgba(0,0,0,0.3);
+      display: flex;
+      gap: 8px;
+      align-items: center;
+      opacity: 0;
+      pointer-events: none;
+      transition: opacity 0.3s ease;
+    }
+
+    .canvas-hint.visible {
+      opacity: 1;
+    }
+
+    .hint-badge {
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+      min-width: 28px;
+      height: 28px;
+      background: rgba(244, 169, 68, 0.9);
+      color: #3c1f0a;
+      border-radius: 999px;
+      font-weight: 800;
+      box-shadow: inset 0 0 0 2px rgba(255,255,255,0.5);
+    }
+
+    .hint-text {
+      display: grid;
+      gap: 2px;
+      max-width: 220px;
+    }
+
+    .best-stat {
+      background: rgba(106, 170, 90, 0.14);
+      border: 1px dashed rgba(90, 124, 62, 0.6);
+    }
+
     .sparkle {
       position: relative;
     }
@@ -1440,7 +1503,7 @@
     }
 
     .sparkle:hover::after {
-      opacity: 1;
+      opacity: 0.55;
       animation: twinkle 0.5s ease;
     }
 
@@ -1843,6 +1906,56 @@
       resize: vertical;
     }
 
+    .form-feedback {
+      margin-top: -6px;
+      margin-bottom: 12px;
+      font-weight: 600;
+      color: var(--pooh-red);
+      min-height: 20px;
+    }
+
+    .wishes-list {
+      display: grid;
+      gap: 14px;
+    }
+
+    .wish-card {
+      background: linear-gradient(120deg, rgba(249, 244, 232, 0.95), rgba(232, 220, 197, 0.95));
+      border-radius: 12px;
+      padding: 14px 16px;
+      border: 1px solid rgba(244, 169, 68, 0.35);
+      box-shadow: 0 8px 16px rgba(0,0,0,0.08);
+      display: grid;
+      gap: 6px;
+    }
+
+    .wish-meta {
+      display: flex;
+      align-items: center;
+      gap: 8px;
+      font-weight: 700;
+      color: var(--honey-dark);
+    }
+
+    .wish-time {
+      font-size: 0.9rem;
+      color: #4a3928;
+      opacity: 0.8;
+    }
+
+    .wish-message {
+      line-height: 1.6;
+      font-style: italic;
+    }
+
+    .wish-empty {
+      text-align: center;
+      color: #5a3a1f;
+      padding: 12px;
+      border: 1px dashed rgba(90, 124, 62, 0.3);
+      border-radius: 12px;
+    }
+
     .divider {
       text-align: center;
       margin: 30px 0;
@@ -1914,7 +2027,7 @@
       flex-direction: column;
       align-items: center;
       justify-content: center;
-      padding: 24px 22px 20px;
+      padding: 20px 18px 18px;
       text-align: center;
       border-radius: 12px;
       animation: fadeIn 0.5s ease;
@@ -1941,7 +2054,7 @@
     .overlay-subtitle {
       font-size: 1.05rem;
       color: #5a3a1f;
-      margin-bottom: 10px;
+      margin-bottom: 6px;
       line-height: 1.5;
     }
 
@@ -2016,6 +2129,14 @@
       margin-top: 3px;
     }
 
+    .overlay-actions {
+      display: grid;
+      grid-template-columns: repeat(auto-fit, minmax(160px, 1fr));
+      gap: 10px;
+      width: 100%;
+      margin-top: 4px;
+    }
+
     .overlay-metrics {
       display: grid;
       grid-template-columns: repeat(auto-fit, minmax(160px, 1fr));
@@ -2063,7 +2184,7 @@
     }
 
     .sparkle:hover::after {
-      opacity: 1;
+      opacity: 0.55;
       animation: twinkle 0.5s ease;
     }
 
@@ -2148,6 +2269,11 @@
   body {
     align-items: flex-start;
     padding: 14px;
+  }
+
+  .ambient-scene,
+  .cloud-layer {
+    display: none;
   }
 
   .chapter-tracker {
@@ -2667,27 +2793,37 @@
                 <div class="game-inner">
                   <div style="position: relative;">
                     <canvas id="gameCanvas"></canvas>
+                    <div class="canvas-hint" id="canvasHint" aria-live="polite">
+                      <div class="hint-badge">↔</div>
+                      <div class="hint-text">
+                        <strong>Move Pooh</strong>
+                        <span>Arrow keys / A-D or swipe &amp; drag the honey pot.</span>
+                      </div>
+                    </div>
                     <div class="game-overlay" id="gameOverlay">
                       <div class="overlay-pill">Storybook briefing</div>
-                      <div class="overlay-title">🍯 Catch Pooh's Sweet Rain</div>
-                      <div class="overlay-subtitle">Gather every golden drop while tiptoeing around the buzzing bees.</div>
+                      <div class="overlay-title">🍯 Quick How-To</div>
+                      <div class="overlay-subtitle">Catch honey, dodge bees, fill the barrel before time blinks away.</div>
                       <ul class="overlay-steps">
-                        <li>🐝 Bees sting and take a heart, so give them a wide berth.</li>
-                        <li>🍯 Honey drops boost your score—fill the barrel before the timer blinks away.</li>
-                        <li>🌳 Pick a drizzle strength with the difficulty buttons below the game.</li>
+                        <li>⭐ Catch drops to score and fill the barrel. Bees cost a heart.</li>
+                        <li>⏱️ 60 second rounds; tutorial is 35 seconds with calmer drops.</li>
+                        <li>🌳 Pick a drizzle strength below. Harder = faster drops &amp; bees.</li>
                       </ul>
                       <div class="overlay-controls">
                         <div>
                           <div class="control-label">🖥️ Desktop</div>
-                          <p>Use the ← → arrow keys or A / D to roll Pooh along the forest floor.</p>
+                          <p>Press ← → or A / D to roll Pooh. Quick taps dodge bees best.</p>
                         </div>
                         <div>
                           <div class="control-label">📱 Mobile</div>
-                          <p>Tap and hold the on-screen arrows or drag Pooh left and right with your finger.</p>
+                          <p>Swipe or drag the honey pot. On-screen arrows also work for taps.</p>
                         </div>
                       </div>
-                      <button class="btn sparkle" onclick="startGame()">Begin Honey Run</button>
-                      <p class="overlay-footer">Tip: Quick nudges help dodge bees better than long slides.</p>
+                      <div class="overlay-actions">
+                        <button class="btn sparkle" onclick="startGame('quick')">⚡ Quick Start (Tutorial)</button>
+                        <button class="btn btn-secondary" onclick="startGame()">▶ Full Run</button>
+                      </div>
+                      <p class="overlay-footer">Tip: Start with the tutorial, then jump into a faster drizzle.</p>
                     </div>
                   </div>
                 </div>
@@ -2703,6 +2839,13 @@
                       <span class="stat-emoji">⭐</span>
                     </div>
                     <div class="stat-value" id="score">0</div>
+                  </div>
+                  <div class="stat best-stat" id="bestStat" aria-live="polite">
+                    <div class="stat-label-row">
+                      <span>Best Score</span>
+                      <span class="stat-emoji">🏆</span>
+                    </div>
+                    <div class="stat-value" id="bestScore">0</div>
                   </div>
                   <div class="stat" id="honeyStat">
                     <div class="stat-label-row">
@@ -2742,12 +2885,13 @@
                 </div>
 
                 <div class="difficulty-selector">
+                  <button class="difficulty-btn" id="tutorialBtn" onclick="setDifficulty('tutorial', this)">Tutorial Lap</button>
                   <button class="difficulty-btn active" onclick="setDifficulty('easy', this)">Gentle Drizzle</button>
                   <button class="difficulty-btn" onclick="setDifficulty('normal', this)">Honey Shower</button>
                   <button class="difficulty-btn" onclick="setDifficulty('hard', this)">Bee Storm</button>
                 </div>
 
-                <p class="control-note">Start, pause, and tweak difficulty from one place so you can get back to dodging bees faster.</p>
+                <p class="control-note">Start, pause, and tweak difficulty from one place so you can get back to dodging bees faster. Your best score is saved between visits.</p>
               </div>
             </div>
 
@@ -2892,11 +3036,12 @@
                 <label for="wishMessage">Your Wish or Advice for Baby Gunner:</label>
                 <textarea id="wishMessage" placeholder="Share your wisdom, hopes, or a favorite memory..." required></textarea>
               </div>
+              <div class="form-feedback" id="wishFeedback" role="status" aria-live="polite"></div>
               <button type="submit" class="btn sparkle" style="width: 100%;">📝 Add to Guestbook</button>
             </form>
           </div>
 
-          <div id="wishesDisplay" style="margin-top: 30px;">
+          <div id="wishesDisplay" class="wishes-list" style="margin-top: 30px;">
             <!-- Wishes appear here -->
           </div>
 
@@ -2972,7 +3117,8 @@
       }
 
       if (pageIndicator) {
-        pageIndicator.textContent = 'Chapter ' + currentChapter + ' of ' + totalChapters;
+        const completed = Math.max(0, currentChapter - 1);
+        pageIndicator.textContent = `Chapter ${currentChapter} of ${totalChapters} — ${completed} completed`;
       }
 
       const progress = totalChapters > 1
@@ -3004,12 +3150,17 @@
     let gameState = 'idle';
     let score = 0;
     let honeyCollected = 0;
+    let bestScore = 0;
+    let bestHoney = 0;
     let lives = 3;
     let timeLeft = 60;
     let difficulty = 'easy';
     let gameInterval, timerInterval;
+    let hitFlash = 0;
+    let hintTimeout;
+    const isTouchDevice = 'ontouchstart' in window;
 
-    let player = { x: 0, y: 0, width: 60, height: 90, speed: 5 };
+    let player = { x: 0, y: 0, width: 60, height: 90, speed: isTouchDevice ? 6 : 5 };
     let drops = [];
     let bees = [];
     let sparkles = [];
@@ -3018,6 +3169,7 @@
     const timerStat = document.getElementById('timerStat');
 
     const difficulties = {
+      tutorial: { dropSpeed: 1.6, beeSpeed: 1.1, dropFreq: 1800, beeFreq: 3200 },
       easy:   { dropSpeed: 2, beeSpeed: 1.5, dropFreq: 1500, beeFreq: 3000 },
       normal: { dropSpeed: 3, beeSpeed: 2.4, dropFreq: 1000, beeFreq: 2000 },
       hard:   { dropSpeed: 4, beeSpeed: 3.3, dropFreq: 700,  beeFreq: 1200 }
@@ -3030,9 +3182,14 @@
       if (!canvas) return;
       ctx = canvas.getContext('2d');
 
-      const container = canvas.parentElement;
-      canvas.width = Math.max(220, Math.min(520, container.offsetWidth - 40));
-      canvas.height = 380;
+      const sizeCanvas = () => {
+        const container = canvas.parentElement;
+        const maxWidth = Math.min(520, container.offsetWidth - 28);
+        canvas.width = Math.max(220, maxWidth);
+        canvas.height = Math.max(240, Math.min(420, Math.round(canvas.width * (window.innerWidth < 640 ? 0.75 : 0.85))));
+      };
+
+      sizeCanvas();
 
       player.x = canvas.width / 2 - player.width / 2;
       player.y = canvas.height - player.height - 18;
@@ -3074,6 +3231,13 @@
       rightBtn.addEventListener('touchend', () => { keys.right = false; }, { passive: true });
 
       drawGame();
+
+      window.addEventListener('resize', () => {
+        const oldWidth = canvas.width;
+        sizeCanvas();
+        player.x = (player.x / oldWidth) * canvas.width;
+        drawGame();
+      });
     }
 
     function handleTouch(e) {
@@ -3101,7 +3265,46 @@
       if (btn) btn.classList.add('active');
     }
 
-    function startGame() {
+    function renderBriefing() {
+      const overlay = document.getElementById('gameOverlay');
+      if (!overlay) return;
+      overlay.innerHTML = `
+        <div class="overlay-pill">Storybook briefing</div>
+        <div class="overlay-title">🍯 Quick How-To</div>
+        <div class="overlay-subtitle">Catch honey, dodge bees, fill the barrel before time blinks away.</div>
+        <ul class="overlay-steps">
+          <li>⭐ Catch drops to score and fill the barrel. Bees cost a heart.</li>
+          <li>⏱️ 60 second rounds; tutorial is 35 seconds with calmer drops.</li>
+          <li>🌳 Pick a drizzle strength below. Harder = faster drops & bees.</li>
+        </ul>
+        <div class="overlay-controls">
+          <div>
+            <div class="control-label">🖥️ Desktop</div>
+            <p>Press ← → or A / D to roll Pooh. Quick taps dodge bees best.</p>
+          </div>
+          <div>
+            <div class="control-label">📱 Mobile</div>
+            <p>Swipe or drag the honey pot. On-screen arrows also work for taps.</p>
+          </div>
+        </div>
+        <div class="overlay-actions">
+          <button class="btn sparkle" onclick="startGame('quick')">⚡ Quick Start (Tutorial)</button>
+          <button class="btn btn-secondary" onclick="startGame()">▶ Full Run</button>
+        </div>
+        <p class="overlay-footer">Tip: Start with the tutorial, then jump into a faster drizzle.</p>
+      `;
+      overlay.classList.remove('hidden');
+    }
+
+    function showCanvasHint() {
+      const hint = document.getElementById('canvasHint');
+      if (!hint) return;
+      hint.classList.add('visible');
+      clearTimeout(hintTimeout);
+      hintTimeout = setTimeout(() => hint.classList.remove('visible'), 4500);
+    }
+
+    function startGame(mode = 'full') {
       if (gameState === 'playing') return;
 
       const overlay = document.getElementById('gameOverlay');
@@ -3111,14 +3314,20 @@
       score = 0;
       honeyCollected = 0;
       lives = 3;
-      timeLeft = 60;
+      hitFlash = 0;
+      timeLeft = mode === 'quick' ? 35 : 60;
       drops = [];
       bees = [];
       sparkles = [];
 
+      if (mode === 'quick') {
+        setDifficulty('tutorial', document.getElementById('tutorialBtn'));
+      }
+
       updateDisplay();
       resetStatAlerts();
       updateTimerWarning();
+      showCanvasHint();
 
       document.getElementById('startBtn').disabled = true;
       const pauseBtn = document.getElementById('pauseBtn');
@@ -3176,30 +3385,7 @@
       updateDisplay();
       resetStatAlerts();
       updateTimerWarning();
-      const overlay = document.getElementById('gameOverlay');
-      overlay.classList.remove('hidden');
-      overlay.innerHTML = `
-        <div class="overlay-pill">Storybook briefing</div>
-        <div class="overlay-title">🍯 Catch Pooh's Sweet Rain</div>
-        <div class="overlay-subtitle">Gather every golden drop while tiptoeing around the buzzing bees.</div>
-        <ul class="overlay-steps">
-          <li>🐝 Bees sting and take a heart, so give them a wide berth.</li>
-          <li>🍯 Honey drops boost your score—fill the barrel before the timer blinks away.</li>
-          <li>🌳 Pick a drizzle strength with the difficulty buttons below the game.</li>
-        </ul>
-        <div class="overlay-controls">
-          <div>
-            <div class="control-label">🖥️ Desktop</div>
-            <p>Use the ← → arrow keys or A / D to roll Pooh along the forest floor.</p>
-          </div>
-          <div>
-            <div class="control-label">📱 Mobile</div>
-            <p>Tap and hold the on-screen arrows or drag Pooh left and right with your finger.</p>
-          </div>
-        </div>
-        <button class="btn sparkle" onclick="startGame()">Begin Honey Run</button>
-        <p class="overlay-footer">Tip: Quick nudges help dodge bees better than long slides.</p>
-      `;
+      renderBriefing();
 
       document.getElementById('startBtn').disabled = false;
       const pauseBtn = document.getElementById('pauseBtn');
@@ -3213,6 +3399,13 @@
       gameState = 'over';
       clearInterval(gameInterval);
       clearInterval(timerInterval);
+
+      const newBestScore = score > bestScore;
+      const newBestHoney = honeyCollected > bestHoney;
+      if (newBestScore) bestScore = score;
+      if (newBestHoney) bestHoney = honeyCollected;
+      saveBestStats();
+      updateBestDisplay();
 
       const overlay = document.getElementById('gameOverlay');
       overlay.classList.remove('hidden');
@@ -3229,10 +3422,14 @@
             <span class="metric-label">Honey Collected</span>
             <span class="metric-value">${honeyCollected}</span>
           </div>
+          <div class="metric-card best-stat">
+            <span class="metric-label">${newBestScore ? 'New High Score' : 'Best Run'}</span>
+            <span class="metric-value">${bestScore}</span>
+          </div>
         </div>
         <button class="btn sparkle" onclick="resetGame(); startGame();">Play Again</button>
         <button class="btn btn-secondary" onclick="resetGame();" style="margin-top: 10px;">Back to Briefing</button>
-        <p class="overlay-footer">Try a braver drizzle or dodge those bees with quicker sidesteps.</p>
+        <p class="overlay-footer">${newBestScore ? 'New record! Keep the streak going.' : 'Try a braver drizzle or dodge those bees with quicker sidesteps.'}</p>
       `;
 
       document.getElementById('startBtn').disabled = false;
@@ -3305,6 +3502,7 @@
           lives--;
           bees.splice(index, 1);
           triggerStatAlert(livesStat);
+          hitFlash = 16;
           updateDisplay();
 
           if (lives <= 0) {
@@ -3485,6 +3683,12 @@
         ctx.arc(s.x, s.y, radius, 0, Math.PI * 2);
         ctx.fill();
       });
+
+      if (hitFlash > 0) {
+        ctx.fillStyle = `rgba(211, 47, 47, ${Math.min(0.45, hitFlash / 20)})`;
+        ctx.fillRect(0, 0, canvas.width, canvas.height);
+        hitFlash--;
+      }
     }
 
     function triggerStatAlert(element) {
@@ -3514,10 +3718,40 @@
       });
     }
 
+    function saveBestStats() {
+      try {
+        localStorage.setItem('poohBest', JSON.stringify({ score: bestScore, honey: bestHoney }));
+      } catch (e) {
+        console.warn('Unable to save best stats', e);
+      }
+    }
+
+    function loadBestStats() {
+      try {
+        const saved = localStorage.getItem('poohBest');
+        if (saved) {
+          const parsed = JSON.parse(saved);
+          if (parsed.score) bestScore = parsed.score;
+          if (parsed.honey) bestHoney = parsed.honey;
+        }
+        updateBestDisplay();
+      } catch (e) {
+        console.warn('No saved stats', e);
+      }
+    }
+
+    function handleImageFallback(event) {
+      const img = event.target;
+      img.onerror = null;
+      img.src = 'data:image/svg+xml;utf8,<svg xmlns="http://www.w3.org/2000/svg" width="120" height="120" viewBox="0 0 120 120"><rect width="120" height="120" rx="18" ry="18" fill="%23f9f4e8"/><text x="50%" y="56%" dominant-baseline="middle" text-anchor="middle" font-size="52">🍯</text></svg>';
+      img.classList.add('fallback-img');
+    }
+
     function updateDisplay() {
       document.getElementById('score').textContent = score;
       document.getElementById('honeyCount').textContent = honeyCollected;
       document.getElementById('timer').textContent = timeLeft;
+      updateBestDisplay();
 
       let heartsDisplay = '';
       for (let i = 0; i < lives; i++) {
@@ -3526,52 +3760,100 @@
       document.getElementById('lives').textContent = heartsDisplay || '💔';
     }
 
-    // ===== GUESTBOOK =====
+    function updateBestDisplay() {
+      const bestEl = document.getElementById('bestScore');
+      if (bestEl) bestEl.textContent = bestScore;
+    }
+
+    // ===== GUESTBOOK & PAGE INIT =====
     document.addEventListener('DOMContentLoaded', () => {
       const wishesForm = document.getElementById('wishesForm');
+      const wishFeedback = document.getElementById('wishFeedback');
+      const wishesDisplay = document.getElementById('wishesDisplay');
+      const wishesKey = 'guestbookWishes';
+      let wishes = [];
+
+      const showWishFeedback = (msg, tone = 'info') => {
+        if (!wishFeedback) return;
+        wishFeedback.textContent = msg;
+        wishFeedback.style.color = tone === 'error' ? '#d32f2f' : 'var(--pooh-red)';
+      };
+
+      const renderWishes = () => {
+        if (!wishesDisplay) return;
+        wishesDisplay.innerHTML = '';
+        if (!wishes.length) {
+          wishesDisplay.innerHTML = '<div class="wish-empty">No wishes yet. Be the first to add one! ✨</div>';
+          return;
+        }
+
+        [...wishes].reverse().forEach((wish) => {
+          const card = document.createElement('div');
+          card.className = 'wish-card';
+          const date = new Date(wish.timestamp).toLocaleString([], { month: 'short', day: 'numeric', hour: '2-digit', minute: '2-digit' });
+          card.innerHTML = `
+            <div class="wish-meta">💌 <span>${wish.name}</span> <span class="wish-time">${date}</span></div>
+            <div class="wish-message">"${wish.message}"</div>
+          `;
+          wishesDisplay.appendChild(card);
+        });
+      };
+
+      const saveWishes = () => {
+        try {
+          localStorage.setItem(wishesKey, JSON.stringify(wishes));
+        } catch (e) {
+          console.warn('Unable to save wishes', e);
+        }
+      };
+
+      const loadWishes = () => {
+        try {
+          const saved = localStorage.getItem(wishesKey);
+          if (saved) {
+            wishes = JSON.parse(saved);
+          }
+          renderWishes();
+        } catch (e) {
+          console.warn('Unable to load wishes', e);
+        }
+      };
+
       if (wishesForm) {
         wishesForm.addEventListener('submit', function(e) {
           e.preventDefault();
 
           const name = document.getElementById('guestName').value.trim();
           const message = document.getElementById('wishMessage').value.trim();
-          if (!name || !message) return;
 
-          const wishElement = document.createElement('div');
-          wishElement.style.cssText =
-            'background: #fffdf7; padding: 18px 18px 16px; border-radius: 10px; margin-bottom: 16px; border-left: 4px solid var(--honey); box-shadow: 0 6px 14px rgba(0,0,0,0.06); animation: fadeIn 0.5s ease;';
-          wishElement.innerHTML = `
-            <div style="font-weight: 600; color: var(--honey-dark); margin-bottom: 6px;">
-              ${name}
-            </div>
-            <div style="font-style: italic; line-height: 1.7;">
-              "${message}"
-            </div>
-          `;
+          if (!name || !message) {
+            showWishFeedback('Please share both your name and wish.', 'error');
+            return;
+          }
 
-          const display = document.getElementById('wishesDisplay');
-          display.prepend(wishElement);
+          const entry = { name, message, timestamp: Date.now() };
+          wishes.push(entry);
+          saveWishes();
+          renderWishes();
+          showWishFeedback('Wish saved to the guestbook ✨');
 
           document.getElementById('guestName').value = '';
           document.getElementById('wishMessage').value = '';
-
-          alert('Thank you for your lovely wishes! 💙');
         });
       }
 
+      loadWishes();
       updateNavigation();
       initGame();
+      loadBestStats();
+
+      document.querySelectorAll('.character-card img').forEach((img) => {
+        img.loading = 'lazy';
+        img.addEventListener('error', handleImageFallback);
+      });
     });
 
-    window.addEventListener('resize', () => {
-      if (canvas && ctx) {
-        const container = canvas.parentElement;
-        const oldWidth = canvas.width;
-        canvas.width = Math.max(220, Math.min(520, container.offsetWidth - 40));
-        player.x = (player.x / oldWidth) * canvas.width;
-        drawGame();
-      }
-    });
+    // resize handled inside initGame to keep canvas readable on small screens
   </script>
 </body>
 </html>
