@@ -3186,6 +3186,11 @@
       mobileFullscreenActive = !mobileFullscreenActive;
 
       if (mobileFullscreenActive) {
+        // Make sure the game card is the thing in view when we go fullscreen
+        gameCard.scrollIntoView({ behavior: 'smooth', block: 'start' });
+      }
+
+      if (mobileFullscreenActive) {
         gameCard.classList.add('fullscreen-mobile');
         document.body.style.overflow = 'hidden';
 
@@ -3485,13 +3490,53 @@
 
         const sizeCanvas = () => {
           const container = canvas.parentElement;
+          if (!container) return;
+
           const isFull = gameCard?.classList?.contains('fullscreen') || gameCard?.classList?.contains('fullscreen-mobile');
+          const isSmallScreen = window.innerWidth <= 900;
+
+          // Width: same logic as before, just guarded
           const maxWidth = Math.min(container.offsetWidth - 28, isFull ? 1100 : 680);
           canvas.width = Math.max(260, maxWidth);
 
-          const heightRatio = isFull ? 0.62 : (window.innerWidth < 640 ? 0.75 : 0.85);
-          const maxHeight = isFull ? 680 : 480;
-          canvas.height = Math.max(260, Math.min(maxHeight, Math.round(canvas.width * heightRatio)));
+          let targetHeight;
+
+          if (isFull && isSmallScreen && gameCard) {
+            // Mobile-ish fullscreen: fill the viewport vertically
+            let availableHeight = window.innerHeight;
+
+            // Subtract card padding
+            const cardStyles = window.getComputedStyle(gameCard);
+            const padTop = parseFloat(cardStyles.paddingTop) || 0;
+            const padBottom = parseFloat(cardStyles.paddingBottom) || 0;
+            availableHeight -= (padTop + padBottom);
+
+            // Subtract header / HUD / controls height
+            const header = gameCard.querySelector('.game-card-header');
+            const hudPrimary = gameCard.querySelector('.hud');
+            const hudSecondary = gameCard.querySelector('.hud-secondary');
+            const controls = gameCard.querySelector('.game-controls');
+
+            [header, hudPrimary, hudSecondary, controls].forEach(el => {
+              if (el) {
+                availableHeight -= (el.offsetHeight || 0);
+              }
+            });
+
+            // Leave a little room for touch controls / thumbs
+            availableHeight -= isTouchDevice ? 80 : 24;
+
+            // Height based on width, but clamped into the available space
+            const idealFromAspect = canvas.width * 0.75; // slightly taller for playability
+            targetHeight = Math.max(220, Math.min(availableHeight, idealFromAspect));
+          } else {
+            // Desktop / non-fullscreen behavior (very close to what you had)
+            const heightRatio = isFull ? 0.62 : (window.innerWidth < 640 ? 0.75 : 0.85);
+            const maxHeight = isFull ? 680 : 480;
+            targetHeight = Math.min(maxHeight, Math.round(canvas.width * heightRatio));
+          }
+
+          canvas.height = Math.max(220, targetHeight);
         };
 
         this.resizeCanvas = (preservePosition = false) => {
@@ -3597,6 +3642,14 @@
 
       start: function() {
         if (gameState === 'playing') return;
+
+        // On mobile, automatically jump into fullscreen game view
+        const isMobile = /Mobi|Android|iPhone|iPad|iPod/i.test(navigator.userAgent || '');
+        if (isMobile && !mobileFullscreenActive && !document.fullscreenElement) {
+          // Safe to call here – toggleMobileFullscreen is defined above,
+          // and Game exists at this point.
+          toggleMobileFullscreen();
+        }
 
         gameState = 'playing';
         primeMusicPlayback();
