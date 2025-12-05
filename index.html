@@ -1465,41 +1465,72 @@
         // Clear
         ctx.clearRect(0, 0, canvas.width, canvas.height);
 
-        // Sky gradient with gentle sunrise
+        const time = Date.now();
+
+        // Sky gradient with sunrise warmth
         const skyGradient = ctx.createLinearGradient(0, 0, 0, canvas.height);
-        skyGradient.addColorStop(0, '#bfe5ff');
-        skyGradient.addColorStop(0.42, '#8cd3ff');
-        skyGradient.addColorStop(0.9, '#e6f7ff');
+        skyGradient.addColorStop(0, '#d9f1ff');
+        skyGradient.addColorStop(0.28, '#addcff');
+        skyGradient.addColorStop(0.62, '#7fc4ff');
+        skyGradient.addColorStop(0.88, '#fbe7c8');
         ctx.fillStyle = skyGradient;
         ctx.fillRect(0, 0, canvas.width, canvas.height);
 
-        // Sun glow
+        // Sun glow + soft rays
         const sunX = canvas.width * 0.12;
         const sunY = canvas.height * 0.16;
-        const sunGradient = ctx.createRadialGradient(sunX, sunY, 12, sunX, sunY, 90);
-        sunGradient.addColorStop(0, 'rgba(255, 232, 150, 0.95)');
-        sunGradient.addColorStop(0.4, 'rgba(255, 215, 120, 0.55)');
+        const sunGradient = ctx.createRadialGradient(sunX, sunY, 16, sunX, sunY, 110);
+        sunGradient.addColorStop(0, 'rgba(255, 237, 185, 0.98)');
+        sunGradient.addColorStop(0.45, 'rgba(255, 214, 143, 0.6)');
         sunGradient.addColorStop(1, 'rgba(255, 224, 153, 0)');
         ctx.fillStyle = sunGradient;
         ctx.beginPath();
-        ctx.arc(sunX, sunY, 90, 0, Math.PI * 2);
+        ctx.arc(sunX, sunY, 110, 0, Math.PI * 2);
         ctx.fill();
 
-        // Soft clouds
+        for (let i = 0; i < 6; i++) {
+          ctx.save();
+          ctx.translate(sunX, sunY);
+          ctx.rotate((Math.PI / 8) * i - 0.3);
+          const rayGradient = ctx.createLinearGradient(0, 0, canvas.width * 0.32, 0);
+          rayGradient.addColorStop(0, 'rgba(255, 236, 185, 0.22)');
+          rayGradient.addColorStop(1, 'rgba(255, 236, 185, 0)');
+          ctx.fillStyle = rayGradient;
+          ctx.beginPath();
+          ctx.moveTo(0, -12);
+          ctx.lineTo(canvas.width * 0.32, -24);
+          ctx.lineTo(canvas.width * 0.32, 28);
+          ctx.closePath();
+          ctx.fill();
+          ctx.restore();
+        }
+
+        // Soft clouds with painted edges
         const drawCloud = (x, y, scale = 1, opacity = 0.9) => {
           ctx.save();
           ctx.globalAlpha = opacity;
-          ctx.fillStyle = '#fff';
+          const cloudGradient = ctx.createLinearGradient(x, y - 24 * scale, x, y + 28 * scale);
+          cloudGradient.addColorStop(0, '#ffffff');
+          cloudGradient.addColorStop(1, '#e3f0ff');
+          ctx.fillStyle = cloudGradient;
           ctx.beginPath();
           ctx.ellipse(x, y, 26 * scale, 18 * scale, 0, 0, Math.PI * 2);
           ctx.ellipse(x + 18 * scale, y - 8 * scale, 22 * scale, 16 * scale, 0, 0, Math.PI * 2);
           ctx.ellipse(x + 36 * scale, y + 2 * scale, 24 * scale, 17 * scale, 0, 0, Math.PI * 2);
+          ctx.ellipse(x - 18 * scale, y + 4 * scale, 18 * scale, 14 * scale, 0, 0, Math.PI * 2);
           ctx.fill();
+
+          ctx.strokeStyle = 'rgba(193, 211, 233, 0.6)';
+          ctx.lineWidth = 2;
+          ctx.beginPath();
+          ctx.ellipse(x + 4 * scale, y + 6 * scale, 42 * scale, 26 * scale, 0, 0.15, Math.PI * 2.2);
+          ctx.stroke();
           ctx.restore();
         };
-        drawCloud(canvas.width * 0.22, canvas.height * 0.2, 1.1, 0.85);
-        drawCloud(canvas.width * 0.55, canvas.height * 0.14, 0.9, 0.7);
-        drawCloud(canvas.width * 0.78, canvas.height * 0.24, 1.2, 0.8);
+        const cloudDrift = Math.sin(time / 3200) * 12;
+        drawCloud(canvas.width * 0.22 + cloudDrift, canvas.height * 0.2, 1.12, 0.9);
+        drawCloud(canvas.width * 0.55 - cloudDrift * 0.6, canvas.height * 0.14 + 6, 0.94, 0.78);
+        drawCloud(canvas.width * 0.78 + cloudDrift * 0.4, canvas.height * 0.24, 1.26, 0.85);
 
         // Soft distant hills
         const backHill = ctx.createLinearGradient(0, canvas.height - 160, 0, canvas.height);
@@ -1585,79 +1616,134 @@
         ctx.ellipse(player.x + 30, player.y + 104, 34, 12, 0, 0, Math.PI * 2);
         ctx.fill();
 
-        // Pooh ears
-        ctx.fillStyle = '#f4c16e';
+        const bearLight = '#f8cf78';
+        const bearShade = '#e2ad57';
+
+        // Pooh ears with inner shading
+        const earGradient = ctx.createLinearGradient(player.x + 12, player.y + 2, player.x + 48, player.y + 18);
+        earGradient.addColorStop(0, bearLight);
+        earGradient.addColorStop(1, bearShade);
+        ctx.fillStyle = earGradient;
         ctx.beginPath();
         ctx.arc(player.x + 18, player.y + 10, 8, 0, Math.PI * 2);
         ctx.arc(player.x + 42, player.y + 10, 8, 0, Math.PI * 2);
         ctx.fill();
+        ctx.fillStyle = 'rgba(255, 239, 207, 0.7)';
+        ctx.beginPath();
+        ctx.arc(player.x + 18, player.y + 10, 4.5, 0, Math.PI * 2);
+        ctx.arc(player.x + 42, player.y + 10, 4.5, 0, Math.PI * 2);
+        ctx.fill();
 
-        // Pooh head
-        const headGradient = ctx.createLinearGradient(player.x + 20, player.y, player.x + 50, player.y + 40);
-        headGradient.addColorStop(0, '#f8cf78');
-        headGradient.addColorStop(1, '#e2ad57');
+        // Pooh head with softer muzzle
+        const headGradient = ctx.createLinearGradient(player.x + 14, player.y + 2, player.x + 50, player.y + 44);
+        headGradient.addColorStop(0, bearLight);
+        headGradient.addColorStop(1, bearShade);
         ctx.fillStyle = headGradient;
         ctx.beginPath();
         ctx.arc(player.x + 30, player.y + 26, 20, 0, Math.PI * 2);
         ctx.fill();
 
+        ctx.fillStyle = '#f9dd98';
+        ctx.beginPath();
+        ctx.ellipse(player.x + 30, player.y + 30, 15, 12, 0, 0, Math.PI * 2);
+        ctx.fill();
+
         // Face
         ctx.fillStyle = '#2b1810';
         ctx.beginPath();
-        ctx.arc(player.x + 23, player.y + 22, 3, 0, Math.PI * 2);
-        ctx.arc(player.x + 37, player.y + 22, 3, 0, Math.PI * 2);
+        ctx.arc(player.x + 23, player.y + 22, 3.2, 0, Math.PI * 2);
+        ctx.arc(player.x + 37, player.y + 22, 3.2, 0, Math.PI * 2);
         ctx.fill();
 
         ctx.beginPath();
-        ctx.arc(player.x + 30, player.y + 28, 3, 0, Math.PI * 2);
+        ctx.arc(player.x + 30, player.y + 28, 3.6, 0, Math.PI * 2);
+        ctx.fill();
+        ctx.fillStyle = 'rgba(255, 255, 255, 0.7)';
+        ctx.beginPath();
+        ctx.arc(player.x + 25, player.y + 20, 1.1, 0, Math.PI * 2);
+        ctx.arc(player.x + 39, player.y + 20, 1.1, 0, Math.PI * 2);
         ctx.fill();
 
         ctx.beginPath();
-        ctx.arc(player.x + 30, player.y + 33, 7, 0, Math.PI);
+        ctx.arc(player.x + 30, player.y + 34, 8, 0, Math.PI);
         ctx.strokeStyle = '#2b1810';
-        ctx.lineWidth = 1.5;
+        ctx.lineWidth = 1.6;
         ctx.stroke();
 
         // Body + shirt
-        ctx.fillStyle = '#f4c16e';
-        ctx.fillRect(player.x + 14, player.y + 40, 32, 30);
-        const shirtGradient = ctx.createLinearGradient(player.x + 12, player.y + 40, player.x + 48, player.y + 58);
-        shirtGradient.addColorStop(0, '#e74d3c');
+        ctx.fillStyle = bearLight;
+        ctx.beginPath();
+        ctx.roundRect(player.x + 10, player.y + 38, 40, 36, 10);
+        ctx.fill();
+
+        const shirtGradient = ctx.createLinearGradient(player.x + 10, player.y + 42, player.x + 50, player.y + 70);
+        shirtGradient.addColorStop(0, '#f05b4c');
         shirtGradient.addColorStop(1, '#c4251f');
         ctx.fillStyle = shirtGradient;
-        ctx.fillRect(player.x + 12, player.y + 40, 36, 18);
-
-        // Arms
-        ctx.fillStyle = '#f4c16e';
-        ctx.fillRect(player.x + 6, player.y + 44, 10, 14);
-        ctx.fillRect(player.x + 44, player.y + 44, 10, 14);
-
-        // Barrel
-        ctx.fillStyle = '#8b6f47';
         ctx.beginPath();
-        ctx.moveTo(player.x, player.y + 60);
-        ctx.lineTo(player.x + 60, player.y + 60);
-        ctx.quadraticCurveTo(player.x + 56, player.y + 96, player.x + 30, player.y + 100);
-        ctx.quadraticCurveTo(player.x + 4, player.y + 96, player.x, player.y + 60);
-        ctx.closePath();
+        ctx.roundRect(player.x + 8, player.y + 42, 44, 20, 8);
         ctx.fill();
-
-        const barrelHighlight = ctx.createLinearGradient(player.x, player.y + 60, player.x + 60, player.y + 100);
-        barrelHighlight.addColorStop(0, 'rgba(255, 235, 205, 0.25)');
-        barrelHighlight.addColorStop(1, 'rgba(0, 0, 0, 0.08)');
-        ctx.fillStyle = barrelHighlight;
-        ctx.fill();
-
-        ctx.strokeStyle = '#5a4a3a';
-        ctx.lineWidth = 2;
+        ctx.strokeStyle = 'rgba(255,255,255,0.35)';
+        ctx.lineWidth = 1.4;
+        ctx.beginPath();
+        ctx.moveTo(player.x + 12, player.y + 48);
+        ctx.quadraticCurveTo(player.x + 30, player.y + 44, player.x + 48, player.y + 50);
         ctx.stroke();
 
-        // Barrel bands
+        // Arms
+        ctx.fillStyle = bearLight;
         ctx.beginPath();
-        ctx.moveTo(player.x + 4, player.y + 72);
-        ctx.lineTo(player.x + 56, player.y + 72);
-        ctx.moveTo(player.x + 4, player.y + 88);
-        ctx.lineTo(player.x + 56, player.y + 88);
+        ctx.roundRect(player.x + 4, player.y + 46, 12, 14, 4);
+        ctx.roundRect(player.x + 44, player.y + 46, 12, 14, 4);
+        ctx.fill();
+
+        // Woven honey basket
+        const basketTopY = player.y + 66;
+        const basketWidth = 64;
+        const basketHeight = 36;
+        const basketX = player.x - 2;
+        const basketGradient = ctx.createLinearGradient(basketX, basketTopY, basketX, basketTopY + basketHeight);
+        basketGradient.addColorStop(0, '#c89b5b');
+        basketGradient.addColorStop(1, '#9c7446');
+        ctx.fillStyle = basketGradient;
+        ctx.beginPath();
+        ctx.roundRect(basketX, basketTopY, basketWidth, basketHeight, 12);
+        ctx.fill();
+
+        // Basket weave
+        ctx.strokeStyle = 'rgba(255, 236, 200, 0.5)';
+        ctx.lineWidth = 3;
+        for (let i = 6; i < basketWidth; i += 12) {
+          ctx.beginPath();
+          ctx.moveTo(basketX + i, basketTopY + 6);
+          ctx.lineTo(basketX + i - 8, basketTopY + basketHeight - 8);
+          ctx.stroke();
+        }
+        ctx.strokeStyle = 'rgba(86, 52, 24, 0.4)';
+        for (let j = basketTopY + 10; j < basketTopY + basketHeight - 4; j += 10) {
+          ctx.beginPath();
+          ctx.moveTo(basketX + 6, j);
+          ctx.quadraticCurveTo(basketX + basketWidth / 2, j + 4, basketX + basketWidth - 6, j);
+          ctx.stroke();
+        }
+
+        // Basket rim & handle
+        ctx.fillStyle = '#8b6439';
+        ctx.beginPath();
+        ctx.ellipse(player.x + 30, basketTopY + 4, 32, 8, 0, 0, Math.PI * 2);
+        ctx.fill();
+
+        ctx.strokeStyle = '#7b5734';
+        ctx.lineWidth = 5;
+        ctx.beginPath();
+        ctx.moveTo(player.x + 10, basketTopY + 8);
+        ctx.quadraticCurveTo(player.x + 30, basketTopY - 18, player.x + 50, basketTopY + 8);
+        ctx.stroke();
+        ctx.strokeStyle = '#dcb07c';
+        ctx.lineWidth = 2;
+        ctx.beginPath();
+        ctx.moveTo(player.x + 14, basketTopY + 6);
+        ctx.quadraticCurveTo(player.x + 30, basketTopY - 10, player.x + 46, basketTopY + 6);
         ctx.stroke();
 
         // Honey drops
