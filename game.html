@@ -1137,12 +1137,13 @@
             height: 0
         };
 
+        // IMPORTANT: Bigger, storybook-style bear
         const bear = {
             x: 0,
             y: 0,
-            width: 60,
-            height: 90,
-            speed: 260,
+            width: 70,  // Increased from 60
+            height: 110, // Increased from 90
+            speed: 280,  // Slightly faster for bigger bear
             vx: 0,
             dir: 0
         };
@@ -1150,7 +1151,6 @@
         const jars = [];
         const bees = [];
         const scorePopups = [];
-        const particles = [];
         const sparkles = [];
         let bgCanvas = null, bgCtx = null;
 
@@ -1214,8 +1214,9 @@
             world.width = width;
             world.height = height;
 
-            bear.y = world.height - 70;
-            bear.x = clamp(bear.x || world.width / 2, 30, world.width - 30);
+            // FIX: Position bear higher up on screen (not at bottom)
+            bear.y = world.height - bear.height - 40; // 40px from bottom
+            bear.x = clamp(bear.x || world.width / 2 - bear.width/2, 30, world.width - bear.width - 30);
 
             // Recreate cached background
             bgCanvas = document.createElement('canvas');
@@ -1234,14 +1235,13 @@
             jars.length = 0;
             bees.length = 0;
             scorePopups.length = 0;
-            particles.length = 0;
             sparkles.length = 0;
             jarSpawnTimer = 0;
             beeSpawnTimer = 0;
             hitFlash = 0;
 
             bear.x = world.width / 2 - bear.width / 2;
-            bear.y = world.height - 70;
+            bear.y = world.height - bear.height - 40;
         }
 
         function difficultyConfig() {
@@ -1402,12 +1402,18 @@
         }
 
         function handleCollisions() {
+            // FIX: Better collision detection for bigger bear
             for (let i = jars.length - 1; i >= 0; i--) {
                 const jar = jars[i];
-                const dx = jar.x - (bear.x + bear.width/2 - 10);
-                const dy = jar.y - (bear.y + 20);
+                const bearCenterX = bear.x + bear.width/2;
+                const bearCenterY = bear.y + 50; // Center of bear's body
+                
+                const dx = jar.x + 10 - bearCenterX;
+                const dy = jar.y + 15 - bearCenterY;
                 const dist = Math.sqrt(dx * dx + dy * dy);
-                if (dist < 20 + 15) {
+                
+                // Larger collision radius for bigger bear
+                if (dist < 25) {
                     jars.splice(i, 1);
                     let mult = 1 + Math.min(gameState.streak * 0.05, 1.5);
                     let gain = Math.round(jar.value * mult);
@@ -1415,7 +1421,7 @@
                     gameState.streak += 1;
 
                     const popColor = jar.type === "gold" ? "#f97316" : jar.type === "shield" ? "#38bdf8" : "#0f766e";
-                    addScorePopup(gain, bear.x + bear.width/2, bear.y - 20, popColor);
+                    addScorePopup(gain, bearCenterX, bear.y - 20, popColor);
                     createSparkles(jar.x + 10, jar.y + 15, popColor, jar.type === "gold" ? 12 : 8);
                     showComboIfNeeded();
 
@@ -1429,21 +1435,26 @@
 
             for (let i = bees.length - 1; i >= 0; i--) {
                 const bee = bees[i];
-                const dx = bee.x + 15 - (bear.x + bear.width/2);
-                const dy = bee.y + 12 - (bear.y + 30);
+                const bearCenterX = bear.x + bear.width/2;
+                const bearCenterY = bear.y + 50;
+                
+                const dx = bee.x + 15 - bearCenterX;
+                const dy = bee.y + 12 - bearCenterY;
                 const dist = Math.sqrt(dx * dx + dy * dy);
-                if (dist < 20 + 15) {
+                
+                // Larger collision radius for bigger bear
+                if (dist < 30) {
                     if (gameState.shieldTime > 0) {
                         gameState.shieldTime = 0;
                         powerupIndicator.classList.remove("visible");
-                        addScorePopup(0, bear.x + bear.width/2, bear.y - 20, "#e5e7eb");
+                        addScorePopup(0, bearCenterX, bear.y - 20, "#e5e7eb");
                         createSparkles(bee.x + 15, bee.y + 12, "#38bdf8", 10);
                         liveRegion.textContent = "Bee blocked by shield.";
                     } else {
                         gameState.lives -= 1;
                         gameState.streak = 0;
                         hitFlash = 16;
-                        createSparkles(bear.x + bear.width/2, bear.y + 30, "#ef4444", 16);
+                        createSparkles(bearCenterX, bearCenterY, "#ef4444", 16);
                         liveRegion.textContent = "Bee hit! Lives left: " + gameState.lives;
                         if (gameState.lives <= 0) {
                             endGame();
@@ -1527,39 +1538,39 @@
             bgCtx.closePath();
             bgCtx.fill();
 
-            // Ground & path
-            const grassGradient = bgCtx.createLinearGradient(0, h - 60, 0, h);
+            // Ground & path - FIX: Move ground higher so bear stands on it
+            const grassGradient = bgCtx.createLinearGradient(0, h - 100, 0, h);
             grassGradient.addColorStop(0, '#72a95c');
             grassGradient.addColorStop(1, '#5e924c');
             bgCtx.fillStyle = grassGradient;
-            bgCtx.fillRect(0, h - 48, w, 48);
+            bgCtx.fillRect(0, h - 88, w, 88);
 
-            const pathGradient = bgCtx.createLinearGradient(0, h - 70, 0, h);
+            const pathGradient = bgCtx.createLinearGradient(0, h - 100, 0, h);
             pathGradient.addColorStop(0, '#e2c9a5');
             pathGradient.addColorStop(1, '#c8a979');
             bgCtx.fillStyle = pathGradient;
             bgCtx.beginPath();
-            bgCtx.moveTo(0, h - 38);
-            bgCtx.quadraticCurveTo(w * 0.25, h - 20, w * 0.5, h - 34);
-            bgCtx.quadraticCurveTo(w * 0.75, h - 48, w, h - 30);
+            bgCtx.moveTo(0, h - 78);
+            bgCtx.quadraticCurveTo(w * 0.25, h - 60, w * 0.5, h - 74);
+            bgCtx.quadraticCurveTo(w * 0.75, h - 88, w, h - 70);
             bgCtx.lineTo(w, h);
             bgCtx.lineTo(0, h);
             bgCtx.closePath();
             bgCtx.fill();
 
-            // Trees
+            // Trees - FIX: Position trees on the higher ground
             const drawTree = (x, height) => {
                 bgCtx.save();
                 bgCtx.fillStyle = '#5d4730';
-                bgCtx.fillRect(x, h - height, 18, height - 26);
-                const leafGradient = bgCtx.createLinearGradient(0, h - height, 0, h - height + 90);
+                bgCtx.fillRect(x, h - height - 40, 18, height - 26);
+                const leafGradient = bgCtx.createLinearGradient(0, h - height - 40, 0, h - height + 50);
                 leafGradient.addColorStop(0, '#7dbd6a');
                 leafGradient.addColorStop(1, '#5c9b52');
                 bgCtx.fillStyle = leafGradient;
                 bgCtx.beginPath();
-                bgCtx.ellipse(x + 9, h - height + 14, 55, 38, 0, 0, Math.PI * 2);
-                bgCtx.ellipse(x - 10, h - height + 36, 48, 32, 0, 0, Math.PI * 2);
-                bgCtx.ellipse(x + 30, h - height + 40, 50, 30, 0, 0, Math.PI * 2);
+                bgCtx.ellipse(x + 9, h - height - 26, 55, 38, 0, 0, Math.PI * 2);
+                bgCtx.ellipse(x - 10, h - height - 4, 48, 32, 0, 0, Math.PI * 2);
+                bgCtx.ellipse(x + 30, h - height, 50, 30, 0, 0, Math.PI * 2);
                 bgCtx.fill();
                 bgCtx.restore();
             };
@@ -1572,8 +1583,8 @@
             bgCtx.lineWidth = 1.5;
             for (let x = 8; x < w; x += 24) {
                 bgCtx.beginPath();
-                bgCtx.moveTo(x, h - 14);
-                bgCtx.lineTo(x + 4, h - 24);
+                bgCtx.moveTo(x, h - 54);
+                bgCtx.lineTo(x + 4, h - 64);
                 bgCtx.stroke();
             }
         }
@@ -1610,159 +1621,160 @@
             ctx.save();
             ctx.translate(x, y);
 
-            // Bear shadow
+            // Bear shadow - FIX: Position shadow under bear
             ctx.fillStyle = 'rgba(0, 0, 0, 0.15)';
             ctx.beginPath();
-            ctx.ellipse(30, 104, 34, 12, 0, 0, Math.PI * 2);
+            ctx.ellipse(35, 124, 44, 14, 0, 0, Math.PI * 2); // Bigger shadow
             ctx.fill();
 
             // Storybook bear colors
             const bearLight = '#f8cf78';
             const bearShade = '#e2ad57';
 
-            // Ears with inner shading
-            const earGradient = ctx.createLinearGradient(12, 2, 48, 18);
+            // Ears with inner shading - FIX: Scaled up for bigger bear
+            const earGradient = ctx.createLinearGradient(14, 4, 56, 22);
             earGradient.addColorStop(0, bearLight);
             earGradient.addColorStop(1, bearShade);
             ctx.fillStyle = earGradient;
             ctx.beginPath();
-            ctx.arc(18, 10, 8, 0, Math.PI * 2);
-            ctx.arc(42, 10, 8, 0, Math.PI * 2);
+            ctx.arc(21, 12, 10, 0, Math.PI * 2); // Bigger ears
+            ctx.arc(49, 12, 10, 0, Math.PI * 2);
             ctx.fill();
             ctx.fillStyle = 'rgba(255, 239, 207, 0.7)';
             ctx.beginPath();
-            ctx.arc(18, 10, 4.5, 0, Math.PI * 2);
-            ctx.arc(42, 10, 4.5, 0, Math.PI * 2);
+            ctx.arc(21, 12, 5.5, 0, Math.PI * 2); // Bigger inner ear
+            ctx.arc(49, 12, 5.5, 0, Math.PI * 2);
             ctx.fill();
 
-            // Head with soft muzzle
-            const headGradient = ctx.createLinearGradient(14, 2, 50, 44);
+            // Head with soft muzzle - FIX: Scaled up
+            const headGradient = ctx.createLinearGradient(16, 4, 60, 54);
             headGradient.addColorStop(0, bearLight);
             headGradient.addColorStop(1, bearShade);
             ctx.fillStyle = headGradient;
             ctx.beginPath();
-            ctx.arc(30, 26, 20, 0, Math.PI * 2);
+            ctx.arc(35, 32, 25, 0, Math.PI * 2); // Bigger head
             ctx.fill();
 
             ctx.fillStyle = '#f9dd98';
             ctx.beginPath();
-            ctx.ellipse(30, 30, 15, 12, 0, 0, Math.PI * 2);
+            ctx.ellipse(35, 38, 18, 15, 0, 0, Math.PI * 2); // Bigger muzzle
             ctx.fill();
 
-            // Face details
+            // Face details - FIX: Scaled up
             ctx.fillStyle = '#2b1810';
             ctx.beginPath();
-            ctx.arc(23, 22, 3.2, 0, Math.PI * 2);
-            ctx.arc(37, 22, 3.2, 0, Math.PI * 2);
+            ctx.arc(27, 27, 4, 0, Math.PI * 2); // Bigger eyes
+            ctx.arc(43, 27, 4, 0, Math.PI * 2);
             ctx.fill();
 
             ctx.beginPath();
-            ctx.arc(30, 28, 3.6, 0, Math.PI * 2);
+            ctx.arc(35, 34, 4.5, 0, Math.PI * 2); // Bigger nose
             ctx.fill();
             
             // Eye highlights
             ctx.fillStyle = 'rgba(255, 255, 255, 0.7)';
             ctx.beginPath();
-            ctx.arc(25, 20, 1.1, 0, Math.PI * 2);
-            ctx.arc(39, 20, 1.1, 0, Math.PI * 2);
+            ctx.arc(29, 25, 1.4, 0, Math.PI * 2); // Bigger highlights
+            ctx.arc(45, 25, 1.4, 0, Math.PI * 2);
             ctx.fill();
 
             // Smile
             ctx.beginPath();
-            ctx.arc(30, 34, 8, 0, Math.PI);
+            ctx.arc(35, 42, 10, 0, Math.PI); // Bigger smile
             ctx.strokeStyle = '#2b1810';
-            ctx.lineWidth = 1.6;
+            ctx.lineWidth = 2;
             ctx.stroke();
 
-            // Body
+            // Body - FIX: Scaled up
             ctx.fillStyle = bearLight;
             ctx.beginPath();
-            ctx.roundRect(10, 38, 40, 36, 10);
+            ctx.roundRect(12, 48, 46, 44, 12); // Bigger body
             ctx.fill();
 
-            // Red shirt
-            const shirtGradient = ctx.createLinearGradient(10, 42, 50, 70);
+            // Red shirt - FIX: Scaled up
+            const shirtGradient = ctx.createLinearGradient(12, 52, 58, 86);
             shirtGradient.addColorStop(0, '#f05b4c');
             shirtGradient.addColorStop(1, '#c4251f');
             ctx.fillStyle = shirtGradient;
             ctx.beginPath();
-            ctx.roundRect(8, 42, 44, 20, 8);
+            ctx.roundRect(10, 52, 50, 25, 10); // Bigger shirt
             ctx.fill();
             
             // Shirt stitching
             ctx.strokeStyle = 'rgba(255,255,255,0.35)';
-            ctx.lineWidth = 1.4;
+            ctx.lineWidth = 1.6;
             ctx.beginPath();
-            ctx.moveTo(12, 48);
-            ctx.quadraticCurveTo(30, 44, 48, 50);
+            ctx.moveTo(14, 58);
+            ctx.quadraticCurveTo(35, 54, 56, 60);
             ctx.stroke();
 
-            // Arms
+            // Arms - FIX: Scaled up
             ctx.fillStyle = bearLight;
             ctx.beginPath();
-            ctx.roundRect(4, 46, 12, 14, 4);
-            ctx.roundRect(44, 46, 12, 14, 4);
+            ctx.roundRect(5, 56, 14, 18, 5); // Bigger arms
+            ctx.roundRect(51, 56, 14, 18, 5);
             ctx.fill();
 
-            // Honey basket
-            const basketTopY = 66;
-            const basketWidth = 64;
-            const basketHeight = 36;
+            // Honey basket - FIX: Scaled up
+            const basketTopY = 82;
+            const basketWidth = 74;
+            const basketHeight = 44;
             const basketX = -2;
             const basketGradient = ctx.createLinearGradient(basketX, basketTopY, basketX, basketTopY + basketHeight);
             basketGradient.addColorStop(0, '#c89b5b');
             basketGradient.addColorStop(1, '#9c7446');
             ctx.fillStyle = basketGradient;
             ctx.beginPath();
-            ctx.roundRect(basketX, basketTopY, basketWidth, basketHeight, 12);
+            ctx.roundRect(basketX, basketTopY, basketWidth, basketHeight, 14); // Bigger basket
             ctx.fill();
 
-            // Basket weave pattern
+            // Basket weave pattern - FIX: Scaled up
             ctx.strokeStyle = 'rgba(255, 236, 200, 0.5)';
-            ctx.lineWidth = 3;
-            for (let i = 6; i < basketWidth; i += 12) {
+            ctx.lineWidth = 4;
+            for (let i = 7; i < basketWidth; i += 14) {
                 ctx.beginPath();
-                ctx.moveTo(basketX + i, basketTopY + 6);
-                ctx.lineTo(basketX + i - 8, basketTopY + basketHeight - 8);
+                ctx.moveTo(basketX + i, basketTopY + 7);
+                ctx.lineTo(basketX + i - 10, basketTopY + basketHeight - 10);
                 ctx.stroke();
             }
             ctx.strokeStyle = 'rgba(86, 52, 24, 0.4)';
-            for (let j = basketTopY + 10; j < basketTopY + basketHeight - 4; j += 10) {
+            ctx.lineWidth = 2;
+            for (let j = basketTopY + 12; j < basketTopY + basketHeight - 4; j += 12) {
                 ctx.beginPath();
-                ctx.moveTo(basketX + 6, j);
-                ctx.quadraticCurveTo(basketX + basketWidth / 2, j + 4, basketX + basketWidth - 6, j);
+                ctx.moveTo(basketX + 7, j);
+                ctx.quadraticCurveTo(basketX + basketWidth / 2, j + 5, basketX + basketWidth - 7, j);
                 ctx.stroke();
             }
 
-            // Basket rim
+            // Basket rim - FIX: Scaled up
             ctx.fillStyle = '#8b6439';
             ctx.beginPath();
-            ctx.ellipse(30, basketTopY + 4, 32, 8, 0, 0, Math.PI * 2);
+            ctx.ellipse(35, basketTopY + 5, 38, 10, 0, 0, Math.PI * 2); // Bigger rim
             ctx.fill();
 
-            // Basket handle
+            // Basket handle - FIX: Scaled up
             ctx.strokeStyle = '#7b5734';
-            ctx.lineWidth = 5;
+            ctx.lineWidth = 6;
             ctx.beginPath();
-            ctx.moveTo(10, basketTopY + 8);
-            ctx.quadraticCurveTo(30, basketTopY - 18, 50, basketTopY + 8);
+            ctx.moveTo(12, basketTopY + 10);
+            ctx.quadraticCurveTo(35, basketTopY - 22, 58, basketTopY + 10);
             ctx.stroke();
             ctx.strokeStyle = '#dcb07c';
-            ctx.lineWidth = 2;
+            ctx.lineWidth = 3;
             ctx.beginPath();
-            ctx.moveTo(14, basketTopY + 6);
-            ctx.quadraticCurveTo(30, basketTopY - 10, 46, basketTopY + 6);
+            ctx.moveTo(16, basketTopY + 8);
+            ctx.quadraticCurveTo(35, basketTopY - 12, 54, basketTopY + 8);
             ctx.stroke();
 
-            // Shield effect
+            // Shield effect - FIX: Scaled up for bigger bear
             if (gameState.shieldTime > 0) {
                 const pulse = 1 + Math.sin(performance.now() / 200) * 0.08;
                 ctx.strokeStyle = 'rgba(56, 189, 248, 0.85)';
-                ctx.lineWidth = 3;
+                ctx.lineWidth = 4;
                 ctx.save();
                 ctx.scale(pulse, pulse);
                 ctx.beginPath();
-                ctx.arc(30, 22, 38, 0, Math.PI * 2);
+                ctx.arc(35, 32, 48, 0, Math.PI * 2); // Bigger shield
                 ctx.stroke();
                 ctx.restore();
             }
@@ -1922,6 +1934,9 @@
         }
 
         function render() {
+            // Clear canvas
+            ctx.clearRect(0, 0, world.width, world.height);
+            
             // Draw cached static background
             if (bgCanvas) {
                 ctx.drawImage(bgCanvas, 0, 0);
