@@ -1502,112 +1502,118 @@ if (ctx && typeof ctx.roundRect !== "function") {
             }
         }
 
-        function drawStaticBackground() {
-            if (!bgCtx) return;
-            const w = world.width;
-            const h = world.height;
+function drawStaticBackground() {
+    if (!bgCtx) return;
+    const w = world.width;
+    const h = world.height;
 
-            bgCanvas.width = w;
-            bgCanvas.height = h;
+    bgCanvas.width = w;
+    bgCanvas.height = h;
 
-            // Sky gradient with sunrise warmth
-            const skyGradient = bgCtx.createLinearGradient(0, 0, 0, h);
-            skyGradient.addColorStop(0, '#d9f1ff');
-            skyGradient.addColorStop(0.28, '#addcff');
-            skyGradient.addColorStop(0.62, '#7fc4ff');
-            skyGradient.addColorStop(0.88, '#fbe7c8');
-            bgCtx.fillStyle = skyGradient;
-            bgCtx.fillRect(0, 0, w, h);
+    // Sky gradient with sunrise warmth (unchanged, but now visually shorter because hills/ground are higher)
+    const skyGradient = bgCtx.createLinearGradient(0, 0, 0, h);
+    skyGradient.addColorStop(0, '#d9f1ff');
+    skyGradient.addColorStop(0.28, '#addcff');
+    skyGradient.addColorStop(0.62, '#7fc4ff');
+    skyGradient.addColorStop(0.88, '#fbe7c8');
+    bgCtx.fillStyle = skyGradient;
+    bgCtx.fillRect(0, 0, w, h);
 
-            // Sun glow
-            const sunX = w * 0.12;
-            const sunY = h * 0.16;
-            const sunGradient = bgCtx.createRadialGradient(sunX, sunY, 16, sunX, sunY, 110);
-            sunGradient.addColorStop(0, 'rgba(255, 237, 185, 0.98)');
-            sunGradient.addColorStop(0.45, 'rgba(255, 214, 143, 0.6)');
-            sunGradient.addColorStop(1, 'rgba(255, 224, 153, 0)');
-            bgCtx.fillStyle = sunGradient;
-            bgCtx.beginPath();
-            bgCtx.arc(sunX, sunY, 110, 0, Math.PI * 2);
-            bgCtx.fill();
+    // Sun glow (unchanged)
+    const sunX = w * 0.12;
+    const sunY = h * 0.16;
+    const sunGradient = bgCtx.createRadialGradient(sunX, sunY, 16, sunX, sunY, 110);
+    sunGradient.addColorStop(0, 'rgba(255, 237, 185, 0.98)');
+    sunGradient.addColorStop(0.45, 'rgba(255, 214, 143, 0.6)');
+    sunGradient.addColorStop(1, 'rgba(255, 224, 153, 0)');
+    bgCtx.fillStyle = sunGradient;
+    bgCtx.beginPath();
+    bgCtx.arc(sunX, sunY, 110, 0, Math.PI * 2);
+    bgCtx.fill();
 
-            // Distant hills
-            const backHill = bgCtx.createLinearGradient(0, h - 160, 0, h);
-            backHill.addColorStop(0, '#b7d7a8');
-            backHill.addColorStop(1, '#9cc38a');
-            bgCtx.fillStyle = backHill;
-            bgCtx.beginPath();
-            bgCtx.moveTo(0, h - 110);
-            bgCtx.quadraticCurveTo(w * 0.25, h - 160, w * 0.55, h - 110);
-            bgCtx.quadraticCurveTo(w * 0.8, h - 80, w, h - 120);
-            bgCtx.lineTo(w, h);
-            bgCtx.lineTo(0, h);
-            bgCtx.closePath();
-            bgCtx.fill();
+    // --- LESS SKY: hills moved up, so horizon is higher on the screen ---
 
-            const frontHill = bgCtx.createLinearGradient(0, h - 120, 0, h);
-            frontHill.addColorStop(0, '#a3ce86');
-            frontHill.addColorStop(1, '#7fb76c');
-            bgCtx.fillStyle = frontHill;
-            bgCtx.beginPath();
-            bgCtx.moveTo(0, h - 70);
-            bgCtx.quadraticCurveTo(w * 0.22, h - 130, w * 0.5, h - 80);
-            bgCtx.quadraticCurveTo(w * 0.78, h - 40, w, h - 75);
-            bgCtx.lineTo(w, h);
-            bgCtx.lineTo(0, h);
-            bgCtx.closePath();
-            bgCtx.fill();
+    // Distant hills (raised)
+    const backHill = bgCtx.createLinearGradient(0, h - 260, 0, h);
+    backHill.addColorStop(0, '#b7d7a8');
+    backHill.addColorStop(1, '#9cc38a');
+    bgCtx.fillStyle = backHill;
+    bgCtx.beginPath();
+    bgCtx.moveTo(0, h - 220);                            // was h - 110
+    bgCtx.quadraticCurveTo(w * 0.25, h - 260, w * 0.55, h - 220); // was around h - 160/110
+    bgCtx.quadraticCurveTo(w * 0.8, h - 200, w, h - 240);
+    bgCtx.lineTo(w, h);
+    bgCtx.lineTo(0, h);
+    bgCtx.closePath();
+    bgCtx.fill();
 
-            // Ground & path - FIX: Move ground higher so bear stands on it
-            const grassGradient = bgCtx.createLinearGradient(0, h - 100, 0, h);
-            grassGradient.addColorStop(0, '#72a95c');
-            grassGradient.addColorStop(1, '#5e924c');
-            bgCtx.fillStyle = grassGradient;
-            bgCtx.fillRect(0, h - 88, w, 88);
+    // Front hills (also raised)
+    const frontHill = bgCtx.createLinearGradient(0, h - 210, 0, h);
+    frontHill.addColorStop(0, '#a3ce86');
+    frontHill.addColorStop(1, '#7fb76c');
+    bgCtx.fillStyle = frontHill;
+    bgCtx.beginPath();
+    bgCtx.moveTo(0, h - 180);                            // was h - 70
+    bgCtx.quadraticCurveTo(w * 0.22, h - 230, w * 0.5, h - 190);
+    bgCtx.quadraticCurveTo(w * 0.78, h - 170, w, h - 195);
+    bgCtx.lineTo(w, h);
+    bgCtx.lineTo(0, h);
+    bgCtx.closePath();
+    bgCtx.fill();
 
-            const pathGradient = bgCtx.createLinearGradient(0, h - 100, 0, h);
-            pathGradient.addColorStop(0, '#e2c9a5');
-            pathGradient.addColorStop(1, '#c8a979');
-            bgCtx.fillStyle = pathGradient;
-            bgCtx.beginPath();
-            bgCtx.moveTo(0, h - 78);
-            bgCtx.quadraticCurveTo(w * 0.25, h - 60, w * 0.5, h - 74);
-            bgCtx.quadraticCurveTo(w * 0.75, h - 88, w, h - 70);
-            bgCtx.lineTo(w, h);
-            bgCtx.lineTo(0, h);
-            bgCtx.closePath();
-            bgCtx.fill();
+    // --- MORE GROUND: thicker grass band & path tied to it ---
 
-            // Trees - FIX: Position trees on the higher ground
-            const drawTree = (x, height) => {
-                bgCtx.save();
-                bgCtx.fillStyle = '#5d4730';
-                bgCtx.fillRect(x, h - height - 40, 18, height - 26);
-                const leafGradient = bgCtx.createLinearGradient(0, h - height - 40, 0, h - height + 50);
-                leafGradient.addColorStop(0, '#7dbd6a');
-                leafGradient.addColorStop(1, '#5c9b52');
-                bgCtx.fillStyle = leafGradient;
-                bgCtx.beginPath();
-                bgCtx.ellipse(x + 9, h - height - 26, 55, 38, 0, 0, Math.PI * 2);
-                bgCtx.ellipse(x - 10, h - height - 4, 48, 32, 0, 0, Math.PI * 2);
-                bgCtx.ellipse(x + 30, h - height, 50, 30, 0, 0, Math.PI * 2);
-                bgCtx.fill();
-                bgCtx.restore();
-            };
-            drawTree(w * 0.14, 120);
-            drawTree(w * 0.46, 140);
-            drawTree(w * 0.78, 126);
+    const grassTop = h - 200; // was h - 88 (much thinner); this makes ground ~200px tall
 
-            // Grass texture
-            bgCtx.strokeStyle = 'rgba(63, 94, 51, 0.4)';
-            bgCtx.lineWidth = 1.5;
-            for (let x = 8; x < w; x += 24) {
-                bgCtx.beginPath();
-                bgCtx.moveTo(x, h - 54);
-                bgCtx.lineTo(x + 4, h - 64);
-                bgCtx.stroke();
-            }
-        }
+    const grassGradient = bgCtx.createLinearGradient(0, grassTop, 0, h);
+    grassGradient.addColorStop(0, '#72a95c');
+    grassGradient.addColorStop(1, '#5e924c');
+    bgCtx.fillStyle = grassGradient;
+    bgCtx.fillRect(0, grassTop, w, h - grassTop);
+
+    const pathGradient = bgCtx.createLinearGradient(0, grassTop, 0, h);
+    pathGradient.addColorStop(0, '#e2c9a5');
+    pathGradient.addColorStop(1, '#c8a979');
+    bgCtx.fillStyle = pathGradient;
+    bgCtx.beginPath();
+    bgCtx.moveTo(0, grassTop + 10);
+    bgCtx.quadraticCurveTo(w * 0.25, grassTop + 30, w * 0.5, grassTop + 5);
+    bgCtx.quadraticCurveTo(w * 0.75, grassTop - 10, w, grassTop + 15);
+    bgCtx.lineTo(w, h);
+    bgCtx.lineTo(0, h);
+    bgCtx.closePath();
+    bgCtx.fill();
+
+    // Trees (reuse your existing tree code; no need to move them, they’ll now sit in the bigger ground band)
+    const drawTree = (x, height) => {
+        bgCtx.save();
+        bgCtx.fillStyle = '#5d4730';
+        bgCtx.fillRect(x, h - height - 40, 18, height - 26);
+        const leafGradient = bgCtx.createLinearGradient(0, h - height - 40, 0, h - height + 50);
+        leafGradient.addColorStop(0, '#7dbd6a');
+        leafGradient.addColorStop(1, '#5c9b52');
+        bgCtx.fillStyle = leafGradient;
+        bgCtx.beginPath();
+        bgCtx.ellipse(x + 9, h - height - 26, 55, 38, 0, 0, Math.PI * 2);
+        bgCtx.ellipse(x - 10, h - height - 4, 48, 32, 0, 0, Math.PI * 2);
+        bgCtx.ellipse(x + 30, h - height, 50, 30, 0, 0, Math.PI * 2);
+        bgCtx.fill();
+        bgCtx.restore();
+    };
+    drawTree(w * 0.14, 120);
+    drawTree(w * 0.46, 140);
+    drawTree(w * 0.78, 126);
+
+    // Grass texture (tied to grassTop so blades sit properly on the new ground)
+    bgCtx.strokeStyle = 'rgba(63, 94, 51, 0.4)';
+    bgCtx.lineWidth = 1.5;
+    for (let x = 8; x < w; x += 24) {
+        bgCtx.beginPath();
+        bgCtx.moveTo(x, grassTop + 34);   // was h - 54
+        bgCtx.lineTo(x + 4, grassTop + 24); // was h - 64
+        bgCtx.stroke();
+    }
+}
 
         function drawClouds() {
             const time = Date.now();
