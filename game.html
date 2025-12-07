@@ -1063,8 +1063,25 @@
 
         const gameContainer = document.getElementById("gameContainer");
         const canvas = document.getElementById("gameCanvas");
-        const ctx = canvas.getContext("2d");
+const ctx = canvas.getContext("2d");
 
+// Polyfill for roundRect on older browsers (e.g. some Safari versions)
+if (ctx && typeof ctx.roundRect !== "function" && typeof CanvasRenderingContext2D !== "undefined") {
+    CanvasRenderingContext2D.prototype.roundRect = function (x, y, width, height, radius) {
+        let r = typeof radius === "number" ? radius : 0;
+        r = Math.max(0, Math.min(r, Math.min(width, height) / 2));
+
+        this.moveTo(x + r, y);
+        this.lineTo(x + width - r, y);
+        this.quadraticCurveTo(x + width, y, x + width, y + r);
+        this.lineTo(x + width, y + height - r);
+        this.quadraticCurveTo(x + width, y + height, x + width - r, y + height);
+        this.lineTo(x + r, y + height);
+        this.quadraticCurveTo(x, y + height, x, y + height - r);
+        this.lineTo(x, y + r);
+        this.quadraticCurveTo(x, y, x + r, y);
+    };
+}
         const scoreValue = document.getElementById("scoreValue");
         const bestValue = document.getElementById("bestValue");
         const timeValue = document.getElementById("timeValue");
