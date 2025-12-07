@@ -1062,15 +1062,17 @@
         const MAX_LIVES = 3;
 
         const gameContainer = document.getElementById("gameContainer");
-        const canvas = document.getElementById("gameCanvas");
+const canvas = document.getElementById("gameCanvas");
 const ctx = canvas.getContext("2d");
 
-// Polyfill for roundRect on older browsers (e.g. some Safari versions)
-if (ctx && typeof ctx.roundRect !== "function" && typeof CanvasRenderingContext2D !== "undefined") {
-    CanvasRenderingContext2D.prototype.roundRect = function (x, y, width, height, radius) {
+// SAFEST roundRect polyfill: patch only this context, no prototype writes
+if (ctx && typeof ctx.roundRect !== "function") {
+    ctx.roundRect = function (x, y, width, height, radius) {
         let r = typeof radius === "number" ? radius : 0;
-        r = Math.max(0, Math.min(r, Math.min(width, height) / 2));
+        const maxR = Math.min(width, height) / 2;
+        r = Math.max(0, Math.min(r, maxR));
 
+        this.beginPath();
         this.moveTo(x + r, y);
         this.lineTo(x + width - r, y);
         this.quadraticCurveTo(x + width, y, x + width, y + r);
@@ -1080,7 +1082,9 @@ if (ctx && typeof ctx.roundRect !== "function" && typeof CanvasRenderingContext2
         this.quadraticCurveTo(x, y + height, x, y + height - r);
         this.lineTo(x, y + r);
         this.quadraticCurveTo(x, y, x + r, y);
+        // caller still does fill() / stroke()
     };
+}
 }
         const scoreValue = document.getElementById("scoreValue");
         const bestValue = document.getElementById("bestValue");
