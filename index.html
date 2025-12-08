@@ -599,6 +599,76 @@
 <audio id="ambientForest" loop preload="auto">
     <source src="https://assets.mixkit.co/sfx/preview/mixkit-forest-birds-ambience-121.mp3">
 </audio>
+<script>
+// Storybook chapter navigation
+document.addEventListener("DOMContentLoaded", () => {
+  const pages = [...document.querySelectorAll(".page")];
+  const nextBtn = document.getElementById("nextBtn");
+  const prevBtn = document.getElementById("prevBtn");
+  const indicator = document.getElementById("pageIndicator");
+  const progress = document.getElementById("progressFill");
+  const total = pages.length;
+  let current = 0;
+
+  function updateUI() {
+    pages.forEach((page, i) => page.classList.toggle("active", i === current));
+    indicator.textContent = `Chapter ${current + 1} of ${total}`;
+    progress.style.width = `${((current + 1) / total) * 100}%`;
+    document
+      .querySelectorAll("[data-chapter-target]")
+      .forEach((btn) =>
+        btn.classList.toggle(
+          "active",
+          parseInt(btn.dataset.chapterTarget, 10) === current + 1
+        )
+      );
+
+    // Play page-turn sound if available
+    const sound = document.getElementById("pageSound");
+    if (sound) {
+      sound.currentTime = 0;
+      sound.play().catch(() => {});
+    }
+
+    // Smooth scroll
+    pages[current].scrollIntoView({ behavior: "smooth", block: "start" });
+  }
+
+  nextBtn?.addEventListener("click", () => {
+    if (current < total - 1) {
+      current++;
+      updateUI();
+    }
+  });
+
+  prevBtn?.addEventListener("click", () => {
+    if (current > 0) {
+      current--;
+      updateUI();
+    }
+  });
+
+  // Allow clicking chapter pills directly
+  document.querySelectorAll("[data-chapter-target]").forEach((btn) => {
+    btn.addEventListener("click", () => {
+      const target = parseInt(btn.dataset.chapterTarget, 10) - 1;
+      if (!isNaN(target) && target >= 0 && target < total) {
+        current = target;
+        updateUI();
+      }
+    });
+  });
+
+  // Optional keyboard navigation
+  document.addEventListener("keydown", (e) => {
+    if (e.key === "ArrowRight") nextBtn?.click();
+    if (e.key === "ArrowLeft") prevBtn?.click();
+  });
+
+  // Initialize
+  updateUI();
+});
+</script>
 <script defer src="script.js"></script>
 </body>
 </html>
