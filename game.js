@@ -1,5 +1,4 @@
-// game.js - Honey Hunt Game (Enhanced Edition)
-// This file contains all the enhanced game logic with improved bear animations and effects
+// game.js - Honey Hunt Game (Fixed Settings)
 
 (function () {
     "use strict";
@@ -57,14 +56,1157 @@
 
     const liveRegion = document.getElementById("liveRegion");
 
+    // ==================== ENHANCED AUDIO SYSTEM ====================
+    let audioContext = null;
+    let audioBuffers = {};
+    let isAudioInitialized = false;
+    let musicSource = null;
+    let musicPlaying = false;
+    let backgroundMusic = null;
+    let musicGainNode = null;
+    let musicAudioElement = null;
+
+    const SOUNDS = {
+        // Jar catching sounds
+        CATCH_NORMAL: 'catch_normal',
+        CATCH_GOLD: 'catch_gold',
+        CATCH_SHIELD: 'catch_shield',
+        CATCH_POWERUP: 'catch_powerup',
+
+        // Bee sounds
+        BEE_HIT: 'bee_hit',
+        BEE_MISS: 'bee_miss',
+        BEE_SWOOP: 'bee_swoop',
+
+        // Power-up sounds
+        SHIELD_ACTIVATE: 'shield_activate',
+        SHIELD_BLOCK: 'shield_block',
+        POWERUP_ACTIVATE: 'powerup_activate',
+        POWERUP_EXPIRE: 'powerup_expire',
+        POWERUP_COLLECT: 'powerup_collect',
+
+        // Combo & streak sounds
+        COMBO_START: 'combo_start',
+        COMBO_CHAIN: 'combo_chain',
+        COMBO_BREAK: 'combo_break',
+        STREAK_5: 'streak_5',
+        STREAK_10: 'streak_10',
+
+        // Game state sounds
+        GAME_START: 'game_start',
+        GAME_OVER: 'game_over',
+        GAME_PAUSE: 'game_pause',
+        GAME_RESUME: 'game_resume',
+
+        // UI sounds
+        BUTTON_CLICK: 'button_click',
+        BUTTON_HOVER: 'button_hover',
+        MENU_OPEN: 'menu_open',
+        MENU_CLOSE: 'menu_close',
+
+        // Evolution & achievement sounds
+        EVOLUTION_UPGRADE: 'evolution_upgrade',
+        ACHIEVEMENT_UNLOCK: 'achievement_unlock',
+
+        // Daily challenge sounds
+        CHALLENGE_PROGRESS: 'challenge_progress',
+        CHALLENGE_COMPLETE: 'challenge_complete'
+    };
+
+    function initAudio() {
+        if (isAudioInitialized) return;
+
+        try {
+            // Try to create audio context
+            const AudioContextClass = window.AudioContext || window.webkitAudioContext;
+            if (!AudioContextClass) {
+                throw new Error("Web Audio API not supported");
+            }
+
+            audioContext = new AudioContextClass();
+
+            // Create audio gain nodes
+            musicGainNode = audioContext.createGain();
+            musicGainNode.connect(audioContext.destination);
+            musicGainNode.gain.value = settingsState.musicOn ? 0.6 : 0;
+
+            // Load background music (uses synthesized music)
+            loadBackgroundMusic();
+
+            // Generate sound effects
+            generateSoundEffects();
+
+            // Add click handler to unlock audio
+            const unlockAudio = () => {
+                if (audioContext && audioContext.state === 'suspended') {
+                    audioContext.resume();
+                }
+                document.removeEventListener('click', unlockAudio);
+                document.removeEventListener('touchstart', unlockAudio);
+            };
+
+            document.addEventListener('click', unlockAudio);
+            document.addEventListener('touchstart', unlockAudio);
+
+            isAudioInitialized = true;
+            console.log("Audio system initialized successfully");
+        } catch (error) {
+            console.warn("Audio initialization failed, using fallback:", error);
+            // Fallback: create dummy audio system
+            audioBuffers = {};
+            isAudioInitialized = true;
+        }
+    }
+
+    function loadBackgroundMusic() {
+        // Use synthesized music as primary
+        console.log("Using synthesized background music");
+        createSynthesizedBackgroundMusic();
+
+        // Create fallback audio element
+        musicAudioElement = new Audio();
+        musicAudioElement.loop = true;
+        musicAudioElement.volume = settingsState.musicOn ? 0.6 : 0;
+    }
+
+    function createSynthesizedBackgroundMusic() {
+        // Fallback synthesized music
+        const createNote = (frequency, duration, startTime, type = 'sine', volume = 0.15) => {
+            if (!audioContext) return;
+
+            const oscillator = audioContext.createOscillator();
+            const gainNode = audioContext.createGain();
+
+            oscillator.connect(gainNode);
+            gainNode.connect(musicGainNode);
+
+            oscillator.frequency.value = frequency;
+            oscillator.type = type;
+
+            const fadeTime = 0.05;
+            gainNode.gain.setValueAtTime(0, startTime);
+            gainNode.gain.linearRampToValueAtTime(volume, startTime + fadeTime);
+            gainNode.gain.setValueAtTime(volume, startTime + duration - fadeTime);
+            gainNode.gain.linearRampToValueAtTime(0, startTime + duration);
+
+            oscillator.start(startTime);
+            oscillator.stop(startTime + duration);
+        };
+
+        const melody = [
+            { note: 'C4', duration: 0.5 },
+            { note: 'E4', duration: 0.5 },
+            { note: 'G4', duration: 0.5 },
+            { note: 'C5', duration: 0.75 },
+            { note: 'G4', duration: 0.25 },
+            { note: 'E4', duration: 0.5 },
+            { note: 'C4', duration: 0.5 },
+            { note: 'G3', duration: 1 }
+        ];
+
+        const noteToFrequency = {
+            'C3': 130.81, 'D3': 146.83, 'E3': 164.81, 'F3': 174.61, 'G3': 196.00, 'A3': 220.00, 'B3': 246.94,
+            'C4': 261.63, 'D4': 293.66, 'E4': 329.63, 'F4': 349.23, 'G4': 392.00, 'A4': 440.00, 'B4': 493.88,
+            'C5': 523.25, 'D5': 587.33, 'E5': 659.25, 'F5': 698.46, 'G5': 783.99, 'A5': 880.00, 'B5': 987.77
+        };
+
+        let musicSynthesisInterval = null;
+
+        const playMelody = () => {
+            if (!audioContext || !musicPlaying || !settingsState.musicOn) return;
+
+            let currentTime = audioContext.currentTime;
+
+            melody.forEach(({ note, duration }) => {
+                createNote(noteToFrequency[note], duration, currentTime, 'triangle', 0.12);
+
+                if (note === 'C4' || note === 'C5') {
+                    createNote(noteToFrequency[note] * 1.5, duration, currentTime, 'sine', 0.06);
+                }
+
+                currentTime += duration;
+            });
+
+            // Schedule next melody
+            return (currentTime - audioContext.currentTime) * 1000;
+        };
+
+        backgroundMusic = {
+            play: () => {
+                if (musicPlaying || !settingsState.musicOn) return;
+                musicPlaying = true;
+
+                if (!audioContext) return;
+
+                const interval = playMelody();
+                if (musicSynthesisInterval) {
+                    clearInterval(musicSynthesisInterval);
+                }
+                musicSynthesisInterval = setInterval(() => {
+                    if (musicPlaying && settingsState.musicOn) {
+                        playMelody();
+                    } else {
+                        clearInterval(musicSynthesisInterval);
+                        musicSynthesisInterval = null;
+                    }
+                }, interval);
+            },
+            stop: () => {
+                musicPlaying = false;
+                if (musicSynthesisInterval) {
+                    clearInterval(musicSynthesisInterval);
+                    musicSynthesisInterval = null;
+                }
+            },
+            setVolume: (volume) => {
+                const safeVolume = Math.max(0, Math.min(1, volume));
+                if (musicGainNode) {
+                    musicGainNode.gain.value = safeVolume;
+                }
+                if (musicAudioElement) {
+                    musicAudioElement.volume = safeVolume;
+                }
+            }
+        };
+    }
+
+    function playSynthesizedMusic() {
+        // Fallback if both Web Audio API and HTML5 Audio fail
+        console.log("Playing synthesized fallback music");
+
+        if (!audioContext) return;
+
+        const tempo = 120;
+        const quarterNote = 60 / tempo;
+        const melody = [
+            { note: 'C4', duration: quarterNote },
+            { note: 'E4', duration: quarterNote },
+            { note: 'G4', duration: quarterNote },
+            { note: 'C5', duration: quarterNote },
+            { note: 'E5', duration: quarterNote },
+            { note: 'G4', duration: quarterNote },
+            { note: 'C5', duration: quarterNote },
+            { note: 'B4', duration: quarterNote * 2 }
+        ];
+
+        const noteToFrequency = {
+            'C4': 261.63, 'E4': 329.63, 'G4': 392.00,
+            'C5': 523.25, 'E5': 659.25, 'B4': 493.88
+        };
+
+        let currentTime = audioContext.currentTime;
+
+        melody.forEach(({ note, duration }, index) => {
+            const oscillator = audioContext.createOscillator();
+            const gainNode = audioContext.createGain();
+
+            oscillator.connect(gainNode);
+            gainNode.connect(audioContext.destination);
+
+            oscillator.frequency.value = noteToFrequency[note];
+            oscillator.type = 'triangle';
+
+            gainNode.gain.setValueAtTime(0, currentTime);
+            gainNode.gain.linearRampToValueAtTime(0.03, currentTime + 0.05);
+            gainNode.gain.exponentialRampToValueAtTime(0.001, currentTime + duration - 0.05);
+
+            oscillator.start(currentTime);
+            oscillator.stop(currentTime + duration);
+            currentTime += duration;
+        });
+
+        if (musicSource) {
+            clearTimeout(musicSource);
+        }
+        musicSource = setTimeout(() => {
+            if (musicPlaying && settingsState.musicOn) playSynthesizedMusic();
+        }, currentTime - audioContext.currentTime + 500);
+    }
+
+    function generateSoundEffects() {
+        if (!audioContext) return;
+
+        // Normal jar catch - happy pluck sound
+        audioBuffers[SOUNDS.CATCH_NORMAL] = createPluckSound(523.25, 0.2, 0.15, 'sine');
+
+        // Gold jar catch - richer, more rewarding sound
+        audioBuffers[SOUNDS.CATCH_GOLD] = createRichPluckSound(659.25, 0.3, 0.2);
+
+        // Shield jar catch - shimmering, magical sound
+        audioBuffers[SOUNDS.CATCH_SHIELD] = createShimmerSound(392.00, 0.4, 0.18);
+
+        // Power-up jar catch - exciting, ascending sound
+        audioBuffers[SOUNDS.CATCH_POWERUP] = createAscendingSound(261.63, 1046.50, 0.5, 0.2);
+
+        // Power-up collect - distinct from activation
+        audioBuffers[SOUNDS.POWERUP_COLLECT] = createSparkleSound(0.3, 0.15);
+
+        // Bee hit - sharp, painful sound
+        audioBuffers[SOUNDS.BEE_HIT] = createBeeHitSound();
+
+        // Bee miss (near miss) - warning whoosh
+        audioBuffers[SOUNDS.BEE_MISS] = createWhooshSound(0.2, 0.1);
+
+        // Bee swoop - movement sound
+        audioBuffers[SOUNDS.BEE_SWOOP] = createSwoopSound(0.3, 0.08);
+
+        // Shield activate - protective bubble sound
+        audioBuffers[SOUNDS.SHIELD_ACTIVATE] = createBubbleSound(0.4, 0.15);
+
+        // Shield block - satisfying deflection sound
+        audioBuffers[SOUNDS.SHIELD_BLOCK] = createDeflectSound(0.3, 0.12);
+
+        // Power-up activate - exciting activation
+        audioBuffers[SOUNDS.POWERUP_ACTIVATE] = createPowerupActivateSound();
+
+        // Power-up expire - fading out sound
+        audioBuffers[SOUNDS.POWERUP_EXPIRE] = createFadeOutSound(0.4, 0.1);
+
+        // Combo start - exciting beginning
+        audioBuffers[SOUNDS.COMBO_START] = createComboStartSound();
+
+        // Combo chain - continuation sound
+        audioBuffers[SOUNDS.COMBO_CHAIN] = createChainSound(0.2, 0.08);
+
+        // Combo break - disappointing sound
+        audioBuffers[SOUNDS.COMBO_BREAK] = createBreakSound(0.3, 0.12);
+
+        // Streak milestones
+        audioBuffers[SOUNDS.STREAK_5] = createMilestoneSound(5, 0.3, 0.15);
+        audioBuffers[SOUNDS.STREAK_10] = createMilestoneSound(10, 0.4, 0.18);
+
+        // Game state sounds
+        audioBuffers[SOUNDS.GAME_START] = createGameStartSound();
+        audioBuffers[SOUNDS.GAME_OVER] = createGameOverSound();
+        audioBuffers[SOUNDS.GAME_PAUSE] = createPauseSound();
+        audioBuffers[SOUNDS.GAME_RESUME] = createResumeSound();
+
+        // UI sounds
+        audioBuffers[SOUNDS.BUTTON_CLICK] = createClickSound();
+        audioBuffers[SOUNDS.BUTTON_HOVER] = createHoverSound();
+        audioBuffers[SOUNDS.MENU_OPEN] = createMenuOpenSound();
+        audioBuffers[SOUNDS.MENU_CLOSE] = createMenuCloseSound();
+
+        // Evolution & achievement sounds
+        audioBuffers[SOUNDS.EVOLUTION_UPGRADE] = createEvolutionSound();
+        audioBuffers[SOUNDS.ACHIEVEMENT_UNLOCK] = createAchievementSound();
+
+        // Daily challenge sounds
+        audioBuffers[SOUNDS.CHALLENGE_PROGRESS] = createProgressSound();
+        audioBuffers[SOUNDS.CHALLENGE_COMPLETE] = createCompleteSound();
+    }
+
+    // ==================== SOUND GENERATORS ====================
+
+    function createPluckSound(freq, duration, volume, type = 'sine') {
+        if (!audioContext) return { oscillator: null, gainNode: null, duration };
+
+        const oscillator = audioContext.createOscillator();
+        const gainNode = audioContext.createGain();
+
+        oscillator.connect(gainNode);
+        gainNode.connect(audioContext.destination);
+
+        oscillator.frequency.value = freq;
+        oscillator.type = type;
+
+        gainNode.gain.setValueAtTime(0, audioContext.currentTime);
+        gainNode.gain.linearRampToValueAtTime(volume, audioContext.currentTime + 0.01);
+        gainNode.gain.exponentialRampToValueAtTime(0.001, audioContext.currentTime + duration);
+
+        return { oscillator, gainNode, duration };
+    }
+
+    function createRichPluckSound(freq, duration, volume) {
+        if (!audioContext) return { oscillators: [], duration };
+
+        const oscillators = [];
+
+        for (let i = 0; i < 3; i++) {
+            const oscillator = audioContext.createOscillator();
+            const gainNode = audioContext.createGain();
+
+            oscillator.connect(gainNode);
+            gainNode.connect(audioContext.destination);
+
+            oscillator.frequency.value = freq * (1 + (i - 1) * 0.01);
+            oscillator.type = i === 0 ? 'sine' : i === 1 ? 'triangle' : 'sawtooth';
+
+            gainNode.gain.setValueAtTime(0, audioContext.currentTime);
+            gainNode.gain.linearRampToValueAtTime(volume * (1 - i * 0.3), audioContext.currentTime + 0.02);
+            gainNode.gain.exponentialRampToValueAtTime(0.001, audioContext.currentTime + duration * (1 + i * 0.1));
+
+            oscillators.push({ oscillator, gainNode });
+        }
+
+        return { oscillators, duration };
+    }
+
+    function createShimmerSound(freq, duration, volume) {
+        if (!audioContext) return { oscillators: [], duration };
+
+        const oscillators = [];
+
+        for (let i = 0; i < 4; i++) {
+            const oscillator = audioContext.createOscillator();
+            const gainNode = audioContext.createGain();
+
+            oscillator.connect(gainNode);
+            gainNode.connect(audioContext.destination);
+
+            oscillator.frequency.value = freq * Math.pow(2, i/12);
+            oscillator.type = 'sine';
+
+            const startTime = audioContext.currentTime + i * 0.05;
+            gainNode.gain.setValueAtTime(0, startTime);
+            gainNode.gain.linearRampToValueAtTime(volume * 0.7, startTime + 0.1);
+            gainNode.gain.exponentialRampToValueAtTime(0.001, startTime + duration);
+
+            oscillators.push({ oscillator, gainNode });
+        }
+
+        return { oscillators, duration };
+    }
+
+    function createAscendingSound(startFreq, endFreq, duration, volume) {
+        if (!audioContext) return { oscillator: null, gainNode: null, duration };
+
+        const oscillator = audioContext.createOscillator();
+        const gainNode = audioContext.createGain();
+
+        oscillator.connect(gainNode);
+        gainNode.connect(audioContext.destination);
+
+        oscillator.frequency.setValueAtTime(startFreq, audioContext.currentTime);
+        oscillator.frequency.linearRampToValueAtTime(endFreq, audioContext.currentTime + duration);
+        oscillator.type = 'sawtooth';
+
+        gainNode.gain.setValueAtTime(0, audioContext.currentTime);
+        gainNode.gain.linearRampToValueAtTime(volume, audioContext.currentTime + 0.1);
+        gainNode.gain.exponentialRampToValueAtTime(0.001, audioContext.currentTime + duration);
+
+        return { oscillator, gainNode, duration };
+    }
+
+    function createSparkleSound(duration, volume) {
+        if (!audioContext) return { oscillators: [], duration };
+
+        const oscillators = [];
+
+        for (let i = 0; i < 6; i++) {
+            const oscillator = audioContext.createOscillator();
+            const gainNode = audioContext.createGain();
+
+            oscillator.connect(gainNode);
+            gainNode.connect(audioContext.destination);
+
+            oscillator.frequency.value = 1000 + Math.random() * 2000;
+            oscillator.type = 'sine';
+
+            const startTime = audioContext.currentTime + Math.random() * 0.1;
+            gainNode.gain.setValueAtTime(0, startTime);
+            gainNode.gain.linearRampToValueAtTime(volume * 0.5, startTime + 0.02);
+            gainNode.gain.exponentialRampToValueAtTime(0.001, startTime + duration * 0.5);
+
+            oscillators.push({ oscillator, gainNode });
+        }
+
+        return { oscillators, duration };
+    }
+
+    function createBeeHitSound() {
+        if (!audioContext) return { oscillator: null, gainNode: null, duration: 0.3 };
+
+        const oscillator = audioContext.createOscillator();
+        const gainNode = audioContext.createGain();
+
+        oscillator.connect(gainNode);
+        gainNode.connect(audioContext.destination);
+
+        oscillator.frequency.setValueAtTime(300, audioContext.currentTime);
+        oscillator.frequency.exponentialRampToValueAtTime(100, audioContext.currentTime + 0.3);
+        oscillator.type = 'sawtooth';
+
+        gainNode.gain.setValueAtTime(0.25, audioContext.currentTime);
+        gainNode.gain.exponentialRampToValueAtTime(0.001, audioContext.currentTime + 0.3);
+
+        return { oscillator, gainNode, duration: 0.3 };
+    }
+
+    function createWhooshSound(duration, volume) {
+        if (!audioContext) return { oscillator: null, gainNode: null, duration };
+
+        const oscillator = audioContext.createOscillator();
+        const gainNode = audioContext.createGain();
+
+        oscillator.connect(gainNode);
+        gainNode.connect(audioContext.destination);
+
+        oscillator.frequency.setValueAtTime(400, audioContext.currentTime);
+        oscillator.frequency.exponentialRampToValueAtTime(100, audioContext.currentTime + duration);
+        oscillator.type = 'sine';
+
+        gainNode.gain.setValueAtTime(0, audioContext.currentTime);
+        gainNode.gain.linearRampToValueAtTime(volume, audioContext.currentTime + 0.05);
+        gainNode.gain.exponentialRampToValueAtTime(0.001, audioContext.currentTime + duration);
+
+        return { oscillator, gainNode, duration };
+    }
+
+    function createSwoopSound(duration, volume) {
+        if (!audioContext) return { oscillator: null, gainNode: null, duration };
+
+        const oscillator = audioContext.createOscillator();
+        const gainNode = audioContext.createGain();
+
+        oscillator.connect(gainNode);
+        gainNode.connect(audioContext.destination);
+
+        oscillator.frequency.setValueAtTime(200, audioContext.currentTime);
+        oscillator.frequency.linearRampToValueAtTime(600, audioContext.currentTime + duration/2);
+        oscillator.frequency.linearRampToValueAtTime(200, audioContext.currentTime + duration);
+        oscillator.type = 'sine';
+
+        gainNode.gain.setValueAtTime(0, audioContext.currentTime);
+        gainNode.gain.linearRampToValueAtTime(volume, audioContext.currentTime + 0.05);
+        gainNode.gain.exponentialRampToValueAtTime(0.001, audioContext.currentTime + duration);
+
+        return { oscillator, gainNode, duration };
+    }
+
+    function createBubbleSound(duration, volume) {
+        if (!audioContext) return { oscillators: [], duration };
+
+        const oscillators = [];
+
+        for (let i = 0; i < 3; i++) {
+            const oscillator = audioContext.createOscillator();
+            const gainNode = audioContext.createGain();
+
+            oscillator.connect(gainNode);
+            gainNode.connect(audioContext.destination);
+
+            oscillator.frequency.value = 300 + i * 100;
+            oscillator.type = 'sine';
+
+            const startTime = audioContext.currentTime + i * 0.1;
+            gainNode.gain.setValueAtTime(0, startTime);
+            gainNode.gain.linearRampToValueAtTime(volume * 0.8, startTime + 0.1);
+            gainNode.gain.exponentialRampToValueAtTime(0.001, startTime + duration * 0.8);
+
+            oscillators.push({ oscillator, gainNode });
+        }
+
+        return { oscillators, duration };
+    }
+
+    function createDeflectSound(duration, volume) {
+        if (!audioContext) return { oscillator: null, gainNode: null, duration };
+
+        const oscillator = audioContext.createOscillator();
+        const gainNode = audioContext.createGain();
+
+        oscillator.connect(gainNode);
+        gainNode.connect(audioContext.destination);
+
+        oscillator.frequency.setValueAtTime(800, audioContext.currentTime);
+        oscillator.frequency.exponentialRampToValueAtTime(400, audioContext.currentTime + duration);
+        oscillator.type = 'square';
+
+        gainNode.gain.setValueAtTime(0, audioContext.currentTime);
+        gainNode.gain.linearRampToValueAtTime(volume, audioContext.currentTime + 0.02);
+        gainNode.gain.exponentialRampToValueAtTime(0.001, audioContext.currentTime + duration);
+
+        return { oscillator, gainNode, duration };
+    }
+
+    function createPowerupActivateSound() {
+        if (!audioContext) return { oscillators: [], duration: 0.5 };
+
+        const oscillators = [];
+
+        for (let i = 0; i < 4; i++) {
+            const oscillator = audioContext.createOscillator();
+            const gainNode = audioContext.createGain();
+
+            oscillator.connect(gainNode);
+            gainNode.connect(audioContext.destination);
+
+            oscillator.frequency.value = 200 * (i + 1);
+            oscillator.type = i % 2 === 0 ? 'sawtooth' : 'triangle';
+
+            const startTime = audioContext.currentTime + i * 0.05;
+            gainNode.gain.setValueAtTime(0, startTime);
+            gainNode.gain.linearRampToValueAtTime(0.15, startTime + 0.1);
+            gainNode.gain.exponentialRampToValueAtTime(0.001, startTime + 0.4);
+
+            oscillators.push({ oscillator, gainNode });
+        }
+
+        return { oscillators, duration: 0.5 };
+    }
+
+    function createFadeOutSound(duration, volume) {
+        if (!audioContext) return { oscillator: null, gainNode: null, duration };
+
+        const oscillator = audioContext.createOscillator();
+        const gainNode = audioContext.createGain();
+
+        oscillator.connect(gainNode);
+        gainNode.connect(audioContext.destination);
+
+        oscillator.frequency.value = 400;
+        oscillator.type = 'sine';
+
+        gainNode.gain.setValueAtTime(volume, audioContext.currentTime);
+        gainNode.gain.exponentialRampToValueAtTime(0.001, audioContext.currentTime + duration);
+
+        return { oscillator, gainNode, duration };
+    }
+
+    function createComboStartSound() {
+        if (!audioContext) return { oscillators: [], duration: 0.4 };
+
+        const oscillators = [];
+        const frequencies = [523.25, 659.25, 783.99, 1046.50];
+
+        frequencies.forEach((freq, i) => {
+            const oscillator = audioContext.createOscillator();
+            const gainNode = audioContext.createGain();
+
+            oscillator.connect(gainNode);
+            gainNode.connect(audioContext.destination);
+
+            oscillator.frequency.value = freq;
+            oscillator.type = 'square';
+
+            const startTime = audioContext.currentTime + i * 0.05;
+            gainNode.gain.setValueAtTime(0, startTime);
+            gainNode.gain.linearRampToValueAtTime(0.2, startTime + 0.1);
+            gainNode.gain.exponentialRampToValueAtTime(0.001, startTime + 0.3);
+
+            oscillators.push({ oscillator, gainNode });
+        });
+
+        return { oscillators, duration: 0.4 };
+    }
+
+    function createChainSound(duration, volume) {
+        if (!audioContext) return { oscillators: [], duration };
+
+        const oscillators = [];
+
+        for (let i = 0; i < 3; i++) {
+            const oscillator = audioContext.createOscillator();
+            const gainNode = audioContext.createGain();
+
+            oscillator.connect(gainNode);
+            gainNode.connect(audioContext.destination);
+
+            oscillator.frequency.value = 600 + i * 100;
+            oscillator.type = 'sine';
+
+            const startTime = audioContext.currentTime + i * 0.05;
+            gainNode.gain.setValueAtTime(0, startTime);
+            gainNode.gain.linearRampToValueAtTime(volume, startTime + 0.05);
+            gainNode.gain.exponentialRampToValueAtTime(0.001, startTime + duration * 0.7);
+
+            oscillators.push({ oscillator, gainNode });
+        }
+
+        return { oscillators, duration };
+    }
+
+    function createBreakSound(duration, volume) {
+        if (!audioContext) return { oscillator: null, gainNode: null, duration };
+
+        const oscillator = audioContext.createOscillator();
+        const gainNode = audioContext.createGain();
+
+        oscillator.connect(gainNode);
+        gainNode.connect(audioContext.destination);
+
+        oscillator.frequency.setValueAtTime(400, audioContext.currentTime);
+        oscillator.frequency.exponentialRampToValueAtTime(200, audioContext.currentTime + duration);
+        oscillator.type = 'sawtooth';
+
+        gainNode.gain.setValueAtTime(volume, audioContext.currentTime);
+        gainNode.gain.exponentialRampToValueAtTime(0.001, audioContext.currentTime + duration);
+
+        return { oscillator, gainNode, duration };
+    }
+
+    function createMilestoneSound(streak, duration, volume) {
+        if (!audioContext) return { oscillators: [], duration };
+
+        const oscillators = [];
+        const noteCount = Math.min(streak / 5, 5);
+
+        for (let i = 0; i < noteCount; i++) {
+            const oscillator = audioContext.createOscillator();
+            const gainNode = audioContext.createGain();
+
+            oscillator.connect(gainNode);
+            gainNode.connect(audioContext.destination);
+
+            oscillator.frequency.value = 300 + i * 100;
+            oscillator.type = 'triangle';
+
+            const startTime = audioContext.currentTime + i * 0.1;
+            gainNode.gain.setValueAtTime(0, startTime);
+            gainNode.gain.linearRampToValueAtTime(volume, startTime + 0.05);
+            gainNode.gain.exponentialRampToValueAtTime(0.001, startTime + duration);
+
+            oscillators.push({ oscillator, gainNode });
+        }
+
+        return { oscillators, duration };
+    }
+
+    function createGameStartSound() {
+        if (!audioContext) return { oscillators: [], duration: 0.6 };
+
+        const oscillators = [];
+        const frequencies = [261.63, 329.63, 392.00, 523.25];
+
+        frequencies.forEach((freq, i) => {
+            const oscillator = audioContext.createOscillator();
+            const gainNode = audioContext.createGain();
+
+            oscillator.connect(gainNode);
+            gainNode.connect(audioContext.destination);
+
+            oscillator.frequency.value = freq;
+            oscillator.type = 'sine';
+
+            const startTime = audioContext.currentTime + i * 0.1;
+            gainNode.gain.setValueAtTime(0, startTime);
+            gainNode.gain.linearRampToValueAtTime(0.15, startTime + 0.1);
+            gainNode.gain.exponentialRampToValueAtTime(0.001, startTime + 0.5);
+
+            oscillators.push({ oscillator, gainNode });
+        });
+
+        return { oscillators, duration: 0.6 };
+    }
+
+    function createGameOverSound() {
+        if (!audioContext) return { oscillator: null, gainNode: null, duration: 0.8 };
+
+        const oscillator = audioContext.createOscillator();
+        const gainNode = audioContext.createGain();
+
+        oscillator.connect(gainNode);
+        gainNode.connect(audioContext.destination);
+
+        oscillator.frequency.setValueAtTime(523.25, audioContext.currentTime);
+        oscillator.frequency.exponentialRampToValueAtTime(130.81, audioContext.currentTime + 0.8);
+        oscillator.type = 'sine';
+
+        gainNode.gain.setValueAtTime(0.2, audioContext.currentTime);
+        gainNode.gain.exponentialRampToValueAtTime(0.001, audioContext.currentTime + 0.8);
+
+        return { oscillator, gainNode, duration: 0.8 };
+    }
+
+    function createPauseSound() {
+        if (!audioContext) return { oscillator: null, gainNode: null, duration: 0.1 };
+
+        const oscillator = audioContext.createOscillator();
+        const gainNode = audioContext.createGain();
+
+        oscillator.connect(gainNode);
+        gainNode.connect(audioContext.destination);
+
+        oscillator.frequency.value = 200;
+        oscillator.type = 'sine';
+
+        gainNode.gain.setValueAtTime(0.1, audioContext.currentTime);
+        gainNode.gain.exponentialRampToValueAtTime(0.001, audioContext.currentTime + 0.1);
+
+        return { oscillator, gainNode, duration: 0.1 };
+    }
+
+    function createResumeSound() {
+        if (!audioContext) return { oscillators: [], duration: 0.25 };
+
+        const oscillators = [];
+
+        for (let i = 0; i < 2; i++) {
+            const oscillator = audioContext.createOscillator();
+            const gainNode = audioContext.createGain();
+
+            oscillator.connect(gainNode);
+            gainNode.connect(audioContext.destination);
+
+            oscillator.frequency.value = 300 + i * 100;
+            oscillator.type = 'sine';
+
+            const startTime = audioContext.currentTime + i * 0.05;
+            gainNode.gain.setValueAtTime(0, startTime);
+            gainNode.gain.linearRampToValueAtTime(0.1, startTime + 0.05);
+            gainNode.gain.exponentialRampToValueAtTime(0.001, startTime + 0.2);
+
+            oscillators.push({ oscillator, gainNode });
+        }
+
+        return { oscillators, duration: 0.25 };
+    }
+
+    function createClickSound() {
+        if (!audioContext) return { oscillator: null, gainNode: null, duration: 0.05 };
+
+        const oscillator = audioContext.createOscillator();
+        const gainNode = audioContext.createGain();
+
+        oscillator.connect(gainNode);
+        gainNode.connect(audioContext.destination);
+
+        oscillator.frequency.value = 800;
+        oscillator.type = 'sine';
+
+        gainNode.gain.setValueAtTime(0.1, audioContext.currentTime);
+        gainNode.gain.exponentialRampToValueAtTime(0.001, audioContext.currentTime + 0.05);
+
+        return { oscillator, gainNode, duration: 0.05 };
+    }
+
+    function createHoverSound() {
+        if (!audioContext) return { oscillator: null, gainNode: null, duration: 0.1 };
+
+        const oscillator = audioContext.createOscillator();
+        const gainNode = audioContext.createGain();
+
+        oscillator.connect(gainNode);
+        gainNode.connect(audioContext.destination);
+
+        oscillator.frequency.value = 600;
+        oscillator.type = 'sine';
+
+        gainNode.gain.setValueAtTime(0.05, audioContext.currentTime);
+        gainNode.gain.exponentialRampToValueAtTime(0.001, audioContext.currentTime + 0.1);
+
+        return { oscillator, gainNode, duration: 0.1 };
+    }
+
+    function createMenuOpenSound() {
+        if (!audioContext) return { oscillator: null, gainNode: null, duration: 0.2 };
+
+        const oscillator = audioContext.createOscillator();
+        const gainNode = audioContext.createGain();
+
+        oscillator.connect(gainNode);
+        gainNode.connect(audioContext.destination);
+
+        oscillator.frequency.setValueAtTime(300, audioContext.currentTime);
+        oscillator.frequency.linearRampToValueAtTime(600, audioContext.currentTime + 0.2);
+        oscillator.type = 'sine';
+
+        gainNode.gain.setValueAtTime(0.1, audioContext.currentTime);
+        gainNode.gain.exponentialRampToValueAtTime(0.001, audioContext.currentTime + 0.2);
+
+        return { oscillator, gainNode, duration: 0.2 };
+    }
+
+    function createMenuCloseSound() {
+        if (!audioContext) return { oscillator: null, gainNode: null, duration: 0.2 };
+
+        const oscillator = audioContext.createOscillator();
+        const gainNode = audioContext.createGain();
+
+        oscillator.connect(gainNode);
+        gainNode.connect(audioContext.destination);
+
+        oscillator.frequency.setValueAtTime(600, audioContext.currentTime);
+        oscillator.frequency.linearRampToValueAtTime(300, audioContext.currentTime + 0.2);
+        oscillator.type = 'sine';
+
+        gainNode.gain.setValueAtTime(0.1, audioContext.currentTime);
+        gainNode.gain.exponentialRampToValueAtTime(0.001, audioContext.currentTime + 0.2);
+
+        return { oscillator, gainNode, duration: 0.2 };
+    }
+
+    function createEvolutionSound() {
+        if (!audioContext) return { oscillators: [], duration: 0.4 };
+
+        const oscillators = [];
+        const frequencies = [523.25, 659.25, 783.99, 1046.50, 1318.51];
+
+        frequencies.forEach((freq, i) => {
+            const oscillator = audioContext.createOscillator();
+            const gainNode = audioContext.createGain();
+
+            oscillator.connect(gainNode);
+            gainNode.connect(audioContext.destination);
+
+            oscillator.frequency.value = freq;
+            oscillator.type = 'triangle';
+
+            const startTime = audioContext.currentTime + i * 0.08;
+            gainNode.gain.setValueAtTime(0, startTime);
+            gainNode.gain.linearRampToValueAtTime(0.12, startTime + 0.1);
+            gainNode.gain.exponentialRampToValueAtTime(0.001, startTime + 0.3);
+
+            oscillators.push({ oscillator, gainNode });
+        });
+
+        return { oscillators, duration: 0.4 };
+    }
+
+    function createAchievementSound() {
+        if (!audioContext) return { oscillators: [], duration: 0.35 };
+
+        const oscillators = [];
+
+        for (let i = 0; i < 5; i++) {
+            const oscillator = audioContext.createOscillator();
+            const gainNode = audioContext.createGain();
+
+            oscillator.connect(gainNode);
+            gainNode.connect(audioContext.destination);
+
+            oscillator.frequency.value = 800 + i * 200;
+            oscillator.type = 'sine';
+
+            const startTime = audioContext.currentTime + i * 0.05;
+            gainNode.gain.setValueAtTime(0, startTime);
+            gainNode.gain.linearRampToValueAtTime(0.15, startTime + 0.1);
+            gainNode.gain.exponentialRampToValueAtTime(0.001, startTime + 0.3);
+
+            oscillators.push({ oscillator, gainNode });
+        }
+
+        return { oscillators, duration: 0.35 };
+    }
+
+    function createProgressSound() {
+        if (!audioContext) return { oscillator: null, gainNode: null, duration: 0.15 };
+
+        const oscillator = audioContext.createOscillator();
+        const gainNode = audioContext.createGain();
+
+        oscillator.connect(gainNode);
+        gainNode.connect(audioContext.destination);
+
+        oscillator.frequency.value = 400;
+        oscillator.type = 'sine';
+
+        gainNode.gain.setValueAtTime(0.08, audioContext.currentTime);
+        gainNode.gain.exponentialRampToValueAtTime(0.001, audioContext.currentTime + 0.15);
+
+        return { oscillator, gainNode, duration: 0.15 };
+    }
+
+    function createCompleteSound() {
+        if (!audioContext) return { oscillators: [], duration: 0.5 };
+
+        const oscillators = [];
+        const frequencies = [261.63, 329.63, 392.00];
+
+        frequencies.forEach((freq, i) => {
+            const oscillator = audioContext.createOscillator();
+            const gainNode = audioContext.createGain();
+
+            oscillator.connect(gainNode);
+            gainNode.connect(audioContext.destination);
+
+            oscillator.frequency.value = freq;
+            oscillator.type = 'sine';
+
+            const startTime = audioContext.currentTime + i * 0.1;
+            gainNode.gain.setValueAtTime(0, startTime);
+            gainNode.gain.linearRampToValueAtTime(0.12, startTime + 0.1);
+            gainNode.gain.exponentialRampToValueAtTime(0.001, startTime + 0.4);
+
+            oscillators.push({ oscillator, gainNode });
+        });
+
+        return { oscillators, duration: 0.5 };
+    }
+
+    function playSound(soundType) {
+        if (!settingsState.sfxOn || !isAudioInitialized || !audioContext || audioContext.state === 'suspended') return;
+
+        const sound = audioBuffers[soundType];
+        if (!sound) {
+            return;
+        }
+
+        try {
+            if (sound.oscillators) {
+                sound.oscillators.forEach(({ oscillator, gainNode }) => {
+                    const newOscillator = audioContext.createOscillator();
+                    const newGainNode = audioContext.createGain();
+
+                    newOscillator.connect(newGainNode);
+                    newGainNode.connect(audioContext.destination);
+
+                    newOscillator.frequency.value = oscillator.frequency.value;
+                    newOscillator.type = oscillator.type;
+
+                    const currentTime = audioContext.currentTime;
+                    newGainNode.gain.cancelScheduledValues(currentTime);
+                    newGainNode.gain.setValueAtTime(0, currentTime);
+                    newGainNode.gain.linearRampToValueAtTime(gainNode.gain.value || 0.1, currentTime + 0.01);
+                    newGainNode.gain.exponentialRampToValueAtTime(0.001, currentTime + sound.duration);
+
+                    newOscillator.start(currentTime);
+                    newOscillator.stop(currentTime + sound.duration);
+                });
+            } else {
+                const newOscillator = audioContext.createOscillator();
+                const newGainNode = audioContext.createGain();
+
+                newOscillator.connect(newGainNode);
+                newGainNode.connect(audioContext.destination);
+
+                newOscillator.frequency.value = sound.oscillator.frequency.value;
+                newOscillator.type = sound.oscillator.type;
+
+                const currentTime = audioContext.currentTime;
+                newGainNode.gain.cancelScheduledValues(currentTime);
+                newGainNode.gain.setValueAtTime(0, currentTime);
+                newGainNode.gain.linearRampToValueAtTime(sound.gainNode.gain.value || 0.1, currentTime + 0.01);
+                newGainNode.gain.exponentialRampToValueAtTime(0.001, currentTime + sound.duration);
+
+                newOscillator.start(currentTime);
+                newOscillator.stop(currentTime + sound.duration);
+            }
+        } catch (error) {
+            console.warn("Failed to play sound:", error);
+        }
+    }
+
+    function startBackgroundMusic() {
+        if (!settingsState.musicOn || musicPlaying) return;
+
+        if (musicGainNode) {
+            musicGainNode.gain.value = 0.6;
+        }
+
+        if (backgroundMusic && backgroundMusic.play) {
+            backgroundMusic.play();
+        } else {
+            // Fallback to synthesized music
+            musicPlaying = true;
+            playSynthesizedMusic();
+        }
+    }
+
+    function stopBackgroundMusic() {
+        musicPlaying = false;
+
+        if (musicGainNode) {
+            musicGainNode.gain.value = 0;
+        }
+
+        if (backgroundMusic && backgroundMusic.stop) {
+            backgroundMusic.stop();
+        }
+
+        if (musicSource) {
+            clearTimeout(musicSource);
+            musicSource = null;
+        }
+    }
+
+    function setMusicVolume(volume) {
+        const safeVolume = Math.max(0, Math.min(1, volume));
+
+        if (backgroundMusic && backgroundMusic.setVolume) {
+            backgroundMusic.setVolume(safeVolume);
+        } else if (musicGainNode) {
+            musicGainNode.gain.value = safeVolume;
+        }
+
+        if (musicAudioElement) {
+            musicAudioElement.volume = safeVolume;
+        }
+    }
+
+    function playCatchSound(jarType) {
+        switch(jarType) {
+            case 'gold':
+                playSound(SOUNDS.CATCH_GOLD);
+                break;
+            case 'shield':
+                playSound(SOUNDS.CATCH_SHIELD);
+                break;
+            case 'powerup':
+                playSound(SOUNDS.CATCH_POWERUP);
+                playSound(SOUNDS.POWERUP_COLLECT);
+                break;
+            default:
+                playSound(SOUNDS.CATCH_NORMAL);
+        }
+    }
+
+    function playBeeHitSound() {
+        playSound(SOUNDS.BEE_HIT);
+    }
+
+    function playShieldBlockSound() {
+        playSound(SOUNDS.SHIELD_BLOCK);
+    }
+
+    function playComboSound() {
+        playSound(SOUNDS.COMBO_START);
+    }
+
+    function playGameStartSound() {
+        playSound(SOUNDS.GAME_START);
+    }
+
+    function playGameOverSound() {
+        playSound(SOUNDS.GAME_OVER);
+    }
+
+    function playEvolutionSound() {
+        playSound(SOUNDS.EVOLUTION_UPGRADE);
+    }
+
+    function playButtonClickSound() {
+        playSound(SOUNDS.BUTTON_CLICK);
+    }
+
+    function playPowerupActivateSound() {
+        playSound(SOUNDS.POWERUP_ACTIVATE);
+    }
+
+    function playPowerupExpireSound() {
+        playSound(SOUNDS.POWERUP_EXPIRE);
+    }
+
+    function playAchievementSound() {
+        playSound(SOUNDS.ACHIEVEMENT_UNLOCK);
+    }
+
+    function playPauseSound() {
+        playSound(SOUNDS.GAME_PAUSE);
+    }
+
+    function playResumeSound() {
+        playSound(SOUNDS.GAME_RESUME);
+    }
+
+    function playStreakSound(streak) {
+        if (streak === 5) {
+            playSound(SOUNDS.STREAK_5);
+        } else if (streak === 10) {
+            playSound(SOUNDS.STREAK_10);
+        }
+    }
+
     const keys = {
         left: false,
         right: false
     };
 
+    // ==================== SETTINGS STATE ====================
     let settingsState = {
-        musicOn: false,
-        sfxOn: false,
+        musicOn: true,  // Changed to true by default
+        sfxOn: true,    // Changed to true by default
         difficulty: 1
     };
 
@@ -77,7 +1219,35 @@
         gamesPlayed: 0,
         streak: 0,
         lives: MAX_LIVES,
-        shieldTime: 0
+        shieldTime: 0,
+        activeEffects: {},
+        stats: {
+            jarsCaught: 0,
+            beesAvoided: 0,
+            consecutiveCatches: 0,
+            highestCombo: 0,
+            fastest5Catches: Infinity,
+            lastCatchTime: 0,
+            powerupsCollected: 0,
+            goldJarsCaught: 0
+        },
+        achievements: [],
+        currentEvolution: 0,
+        dailyProgress: {}
+    };
+
+    // ==================== DYNAMIC DIFFICULTY ====================
+    let dynamicDifficulty = {
+        multiplier: 1,
+        performanceHistory: [],
+        lastAdjustment: 0
+    };
+
+    // ==================== TUTORIAL SYSTEM ====================
+    let tutorialState = {
+        currentStep: 1,
+        totalSteps: 4,
+        completed: false
     };
 
     const world = {
@@ -101,7 +1271,7 @@
             squashStretch: 1,
             isMoving: false,
             blinkTimer: 0,
-            mood: "happy", // happy, worried, excited
+            mood: "happy",
             lastMoodChange: 0,
             celebrationTimer: 0
         }
@@ -123,6 +1293,122 @@
     let jarSpawnTimer = 0;
     let beeSpawnTimer = 0;
 
+    // ==================== QUICK WINS CONSTANTS ====================
+    const POWERUPS = {
+        DOUBLE_POINTS: {
+            name: "Double Points",
+            duration: 10,
+            icon: "✖️2",
+            color: "#fbbf24",
+            effect: "doublePoints"
+        },
+        SLOW_TIME: {
+            name: "Slow Time",
+            duration: 8,
+            icon: "⏱️",
+            color: "#60a5fa",
+            effect: "slowTime"
+        },
+        MAGNET: {
+            name: "Magnet",
+            duration: 12,
+            icon: "🧲",
+            color: "#ef4444",
+            effect: "magnet",
+            radius: 120
+        },
+        BEE_REPELLENT: {
+            name: "Bee Repellent",
+            duration: 15,
+            icon: "🐝🚫",
+            color: "#22c55e",
+            effect: "beeRepellent"
+        }
+    };
+
+    const BEAR_EVOLUTIONS = [
+        { score: 0, size: 1, color: "#fbbf24", hat: null, name: "Cub" },
+        { score: 500, size: 1.1, color: "#f59e0b", hat: "cap", name: "Adventurer" },
+        { score: 1000, size: 1.2, color: "#d97706", hat: "crown", name: "Champion" },
+        { score: 2000, size: 1.3, color: "#92400e", hat: "majestic_crown", name: "Monarch" }
+    ];
+
+    const ACHIEVEMENTS = [
+        {
+            id: "first_100",
+            name: "Honey Starter",
+            desc: "Score 100 points",
+            icon: "🍯",
+            condition: (score, stats) => score >= 100
+        },
+        {
+            id: "perfect_50",
+            name: "Untouched",
+            desc: "Catch 50 jars without bee hits",
+            icon: "👑",
+            condition: (score, stats) => stats.consecutiveCatches >= 50
+        },
+        {
+            id: "combo_master",
+            name: "Combo King",
+            desc: "Reach 15x combo",
+            icon: "🔥",
+            condition: (score, stats) => stats.highestCombo >= 15
+        },
+        {
+            id: "speed_demon",
+            name: "Speed Demon",
+            desc: "Catch 5 jars in 3 seconds",
+            icon: "⚡",
+            condition: (score, stats) => stats.fastest5Catches <= 3
+        },
+        {
+            id: "power_collector",
+            name: "Power Collector",
+            desc: "Collect 10 power-ups",
+            icon: "✨",
+            condition: (score, stats) => stats.powerupsCollected >= 10
+        }
+    ];
+
+    const DAILY_CHALLENGES = {
+        monday: {
+            objective: "Catch 30 gold jars",
+            target: 30,
+            type: "goldJars",
+            reward: "Golden Bear Skin",
+            active: true
+        },
+        tuesday: {
+            objective: "Reach 20x combo",
+            target: 20,
+            type: "combo",
+            reward: "Combo Master Title",
+            active: true
+        },
+        wednesday: {
+            objective: "Score 1000 points",
+            target: 1000,
+            type: "score",
+            reward: "Crown Accessory",
+            active: true
+        },
+        thursday: {
+            objective: "Survive 45 seconds without hits",
+            target: 45,
+            type: "survival",
+            reward: "Shield Power-up Pack",
+            active: true
+        },
+        friday: {
+            objective: "Collect 5 power-ups",
+            target: 5,
+            type: "powerups",
+            reward: "Mega Magnet",
+            active: true
+        }
+    };
+
     // ==================== UTILITY FUNCTIONS ====================
     function clamp(value, min, max) {
         return Math.max(min, Math.min(max, value));
@@ -134,10 +1420,13 @@
 
     function togglePause() {
         if (!gameState.running) return;
+
         if (gameState.paused) {
             resumeGame();
+            playResumeSound();
         } else {
             pauseGame();
+            playPauseSound();
         }
     }
 
@@ -152,7 +1441,18 @@
             const savedSettings = localStorage.getItem(STORAGE_KEYS.SETTINGS);
             if (savedSettings) {
                 const parsed = JSON.parse(savedSettings);
-                settingsState = Object.assign(settingsState, parsed);
+                settingsState = {
+                    musicOn: parsed.musicOn !== undefined ? parsed.musicOn : true,
+                    sfxOn: parsed.sfxOn !== undefined ? parsed.sfxOn : true,
+                    difficulty: parsed.difficulty !== undefined ? parsed.difficulty : 1
+                };
+            } else {
+                // Default settings if none saved
+                settingsState = {
+                    musicOn: true,
+                    sfxOn: true,
+                    difficulty: 1
+                };
             }
 
             const savedTheme = localStorage.getItem(STORAGE_KEYS.THEME);
@@ -161,8 +1461,27 @@
                 themeToggle.setAttribute("aria-pressed", "true");
                 themeToggle.innerHTML = '<i class="fas fa-sun" aria-hidden="true"></i><span>Theme</span>';
             }
+
+            // Load achievements
+            const savedAchievements = localStorage.getItem("honeyHunt_achievements");
+            if (savedAchievements) {
+                gameState.achievements = JSON.parse(savedAchievements);
+            }
+
+            // Load daily challenge progress
+            const today = new Date().toLocaleDateString('en-US', { weekday: 'long' }).toLowerCase();
+            const savedDailyProgress = localStorage.getItem(`dailyChallenge_${today}`);
+            if (savedDailyProgress) {
+                gameState.dailyProgress = JSON.parse(savedDailyProgress);
+            }
         } catch (e) {
             console.warn("Failed to load saved state", e);
+            // Set default settings on error
+            settingsState = {
+                musicOn: true,
+                sfxOn: true,
+                difficulty: 1
+            };
         }
     }
 
@@ -171,6 +1490,8 @@
             localStorage.setItem(STORAGE_KEYS.BEST, String(gameState.best));
             localStorage.setItem(STORAGE_KEYS.GAMES, String(gameState.gamesPlayed));
             localStorage.setItem(STORAGE_KEYS.SETTINGS, JSON.stringify(settingsState));
+            localStorage.setItem("honeyHunt_achievements", JSON.stringify(gameState.achievements || []));
+            console.log("Settings saved:", settingsState);
         } catch (e) {
             console.warn("Failed to save progress", e);
         }
@@ -188,10 +1509,11 @@
         const colors = {
             normal: ["#facc15", "#eab308", "#fbbf24"],
             gold: ["#f97316", "#ea580c", "#fb923c"],
-            shield: ["#38bdf8", "#0ea5e9", "#7dd3fc"]
+            shield: ["#38bdf8", "#0ea5e9", "#7dd3fc"],
+            powerup: ["#fbbf24", "#60a5fa", "#ef4444", "#22c55e"]
         };
 
-        const particleCount = type === "gold" ? 20 : type === "shield" ? 15 : 12;
+        const particleCount = type === "gold" ? 20 : type === "shield" || type === "powerup" ? 15 : 12;
         const colorSet = colors[type] || colors.normal;
 
         for (let i = 0; i < particleCount; i++) {
@@ -214,8 +1536,8 @@
             });
         }
 
-        // Add sparkle particles for gold jars
-        if (type === "gold") {
+        // Add sparkle particles for special jars
+        if (type === "gold" || type === "powerup") {
             for (let i = 0; i < 6; i++) {
                 particles.push({
                     x,
@@ -352,14 +1674,347 @@
         }, 200);
     }
 
+    // ==================== QUICK WINS: POWER-UP SYSTEM ====================
+    function createPowerupIndicators() {
+        // Remove existing indicators if any
+        const existing = document.getElementById("powerupIndicators");
+        if (existing) {
+            existing.remove();
+        }
+
+        const container = document.createElement("div");
+        container.id = "powerupIndicators";
+        container.className = "powerup-indicators";
+        container.innerHTML = `
+        <div class="powerup-indicator" data-type="DOUBLE_POINTS">
+            <span class="powerup-icon">✖️2</span>
+            <div class="powerup-timer"></div>
+        </div>
+        <div class="powerup-indicator" data-type="SLOW_TIME">
+            <span class="powerup-icon">⏱️</span>
+            <div class="powerup-timer"></div>
+        </div>
+        <div class="powerup-indicator" data-type="MAGNET">
+            <span class="powerup-icon">🧲</span>
+            <div class="powerup-timer"></div>
+        </div>
+        <div class="powerup-indicator" data-type="BEE_REPELLENT">
+            <span class="powerup-icon">🐝🚫</span>
+            <div class="powerup-timer"></div>
+        </div>
+    `;
+        gameContainer.appendChild(container);
+    }
+
+    function activatePowerup(type) {
+        const powerup = POWERUPS[type];
+        if (!powerup) return;
+
+        gameState.activeEffects[type] = {
+            timeLeft: powerup.duration,
+            ...powerup
+        };
+
+        gameState.stats.powerupsCollected++;
+
+        // Update UI indicator
+        const indicator = document.querySelector(`.powerup-indicator[data-type="${type}"]`);
+        if (indicator) {
+            indicator.classList.add('active');
+            const timer = indicator.querySelector('.powerup-timer');
+            if (timer) {
+                timer.style.width = '100%';
+            }
+        }
+
+        // Show notification
+        showNotification(`Power-up: ${powerup.name} activated!`, powerup.color);
+        playPowerupActivateSound();
+    }
+
+    function updatePowerups(dt) {
+        for (const type in gameState.activeEffects) {
+            const effect = gameState.activeEffects[type];
+            effect.timeLeft -= dt;
+
+            // Update UI timer
+            const indicator = document.querySelector(`.powerup-indicator[data-type="${type}"]`);
+            if (indicator) {
+                const timer = indicator.querySelector('.powerup-timer');
+                if (timer) {
+                    const percent = (effect.timeLeft / POWERUPS[type].duration) * 100;
+                    timer.style.width = `${percent}%`;
+                }
+            }
+
+            if (effect.timeLeft <= 0) {
+                deactivatePowerup(type);
+            }
+        }
+    }
+
+    function deactivatePowerup(type) {
+        delete gameState.activeEffects[type];
+
+        const indicator = document.querySelector(`.powerup-indicator[data-type="${type}"]`);
+        if (indicator) {
+            indicator.classList.remove('active');
+        }
+
+        showNotification(`Power-up: ${POWERUPS[type].name} expired!`, '#64748b');
+        playPowerupExpireSound();
+    }
+
+    function drawMagnetEffect() {
+        if (!gameState.activeEffects.MAGNET) return;
+
+        const magnet = gameState.activeEffects.MAGNET;
+        const radius = magnet.radius || 120;
+
+        ctx.save();
+        ctx.translate(bear.x, bear.y - 10);
+
+        // Draw magnet field
+        const gradient = ctx.createRadialGradient(0, 0, 0, 0, 0, radius);
+        gradient.addColorStop(0, 'rgba(239, 68, 68, 0.3)');
+        gradient.addColorStop(1, 'rgba(239, 68, 68, 0)');
+
+        ctx.fillStyle = gradient;
+        ctx.beginPath();
+        ctx.arc(0, 0, radius, 0, Math.PI * 2);
+        ctx.fill();
+
+        // Draw pulsing rings
+        const pulse = (Math.sin(performance.now() / 300) * 0.2 + 0.8);
+        ctx.strokeStyle = `rgba(239, 68, 68, ${0.5 * pulse})`;
+        ctx.lineWidth = 2;
+        ctx.beginPath();
+        ctx.arc(0, 0, radius * pulse, 0, Math.PI * 2);
+        ctx.stroke();
+
+        ctx.restore();
+    }
+
+    // ==================== QUICK WINS: BEAR EVOLUTION ====================
+    function updateBearEvolution() {
+        const newEvolution = BEAR_EVOLUTIONS.findIndex(evo => gameState.score >= evo.score);
+        if (newEvolution > gameState.currentEvolution) {
+            gameState.currentEvolution = newEvolution;
+            showEvolutionUpgrade(newEvolution);
+        }
+    }
+
+    function showEvolutionUpgrade(level) {
+        const evolution = BEAR_EVOLUTIONS[level];
+        if (!evolution) return;
+
+        const evolutionDisplay = document.getElementById("evolutionDisplay");
+        if (!evolutionDisplay) {
+            const display = document.createElement("div");
+            display.id = "evolutionDisplay";
+            display.className = "evolution-display";
+            gameContainer.appendChild(display);
+        }
+
+        const display = document.getElementById("evolutionDisplay");
+        display.innerHTML = `
+        <span class="evolution-level">${level + 1}</span>
+        <span class="evolution-name">${evolution.name} Bear</span>
+        <span class="evolution-icon">${level === 0 ? '🐻' : level === 1 ? '🐻‍❄️' : level === 2 ? '👑' : '🏆'}</span>
+    `;
+
+        // Show with animation
+        display.style.display = 'flex';
+        display.style.animation = 'evolutionPopIn 0.5s cubic-bezier(0.34, 1.56, 0.64, 1)';
+
+        // Hide after 3 seconds
+        setTimeout(() => {
+            display.style.animation = 'none';
+            setTimeout(() => {
+                display.style.display = 'none';
+            }, 300);
+        }, 3000);
+
+        showNotification(`Evolved to ${evolution.name}!`, "#fbbf24");
+        triggerHaptic("evolution");
+        playEvolutionSound();
+    }
+
+    // Helper function to darken colors
+    function darkenColor(color, percent) {
+        const num = parseInt(color.replace("#", ""), 16);
+        const amt = Math.round(2.55 * percent);
+        const R = (num >> 16) - amt;
+        const G = (num >> 8 & 0x00FF) - amt;
+        const B = (num & 0x0000FF) - amt;
+        return "#" + (0x1000000 + (R < 255 ? R < 1 ? 0 : R : 255) * 0x10000 +
+            (G < 255 ? G < 1 ? 0 : G : 255) * 0x100 +
+            (B < 255 ? B < 1 ? 0 : B : 255)).toString(16).slice(1);
+    }
+
+    // ==================== QUICK WINS: ACHIEVEMENT SYSTEM ====================
+    function checkAchievements() {
+        for (const achievement of ACHIEVEMENTS) {
+            if (!gameState.achievements.includes(achievement.id)) {
+                if (achievement.condition(gameState.score, gameState.stats)) {
+                    unlockAchievement(achievement);
+                }
+            }
+        }
+    }
+
+    function unlockAchievement(achievement) {
+        gameState.achievements.push(achievement.id);
+        showAchievementPopup(achievement);
+        playAchievementSound();
+        saveProgress();
+    }
+
+    function showAchievementPopup(achievement) {
+        // Create popup element
+        const popup = document.createElement("div");
+        popup.className = "achievement-popup";
+        popup.innerHTML = `
+            <div class="achievement-icon">${achievement.icon}</div>
+            <div class="achievement-text">
+                <div class="achievement-title">Achievement Unlocked!</div>
+                <div class="achievement-name">${achievement.name}</div>
+                <div class="achievement-desc">${achievement.desc}</div>
+            </div>
+        `;
+
+        document.body.appendChild(popup);
+
+        // Remove after animation
+        setTimeout(() => {
+            if (popup.parentNode) {
+                popup.parentNode.removeChild(popup);
+            }
+        }, 3000);
+
+        liveRegion.textContent = `Achievement unlocked: ${achievement.name}! ${achievement.desc}`;
+    }
+
+    // ==================== QUICK WINS: DAILY CHALLENGE SYSTEM ====================
+    function initDailyChallenge() {
+        const today = new Date().toLocaleDateString('en-US', { weekday: 'long' }).toLowerCase();
+        const challenge = DAILY_CHALLENGES[today];
+
+        const dailyChallengePanel = document.getElementById("dailyChallengePanel");
+        const dailyChallengeText = document.getElementById("dailyChallengeText");
+        const dailyChallengeProgress = document.getElementById("dailyChallengeProgress");
+        const dailyChallengeReward = document.getElementById("dailyChallengeReward");
+
+        if (!challenge || !dailyChallengePanel || !dailyChallengeText || !dailyChallengeProgress || !dailyChallengeReward) return;
+
+        // Update UI
+        dailyChallengeText.textContent = challenge.objective;
+        dailyChallengeReward.innerHTML = `<span>🎁</span> Reward: ${challenge.reward}`;
+
+        updateDailyChallengeProgress();
+
+        // Show panel
+        dailyChallengePanel.style.display = 'block';
+    }
+
+    function updateDailyChallengeProgress() {
+        const today = new Date().toLocaleDateString('en-US', { weekday: 'long' }).toLowerCase();
+        const challenge = DAILY_CHALLENGES[today];
+
+        const dailyChallengeProgress = document.getElementById("dailyChallengeProgress");
+        if (!challenge || !dailyChallengeProgress) return;
+
+        let progress = 0;
+        switch(challenge.type) {
+            case 'goldJars':
+                progress = gameState.stats.goldJarsCaught;
+                break;
+            case 'combo':
+                progress = gameState.stats.highestCombo;
+                break;
+            case 'score':
+                progress = gameState.score;
+                break;
+            case 'survival':
+                progress = GAME_DURATION - gameState.timeLeft;
+                break;
+            case 'powerups':
+                progress = gameState.stats.powerupsCollected;
+                break;
+        }
+
+        const percent = Math.min((progress / challenge.target) * 100, 100);
+        dailyChallengeProgress.style.width = `${percent}%`;
+
+        // Check if challenge completed
+        if (progress >= challenge.target && (!gameState.dailyProgress || !gameState.dailyProgress.completed)) {
+            completeDailyChallenge(challenge);
+        }
+    }
+
+    function completeDailyChallenge(challenge) {
+        gameState.dailyProgress.completed = true;
+        gameState.dailyProgress.rewardClaimed = false;
+
+        showNotification(`Daily Challenge Complete! Reward: ${challenge.reward}`, "#fbbf24");
+        liveRegion.textContent = `Daily challenge completed! You earned: ${challenge.reward}`;
+        playSound(SOUNDS.CHALLENGE_COMPLETE);
+
+        // Save progress
+        const today = new Date().toLocaleDateString('en-US', { weekday: 'long' }).toLowerCase();
+        localStorage.setItem(`dailyChallenge_${today}`, JSON.stringify(gameState.dailyProgress));
+    }
+
+    // ==================== QUICK WINS: NOTIFICATION SYSTEM ====================
+    function showNotification(text, color) {
+        // Create notification element
+        const notification = document.createElement("div");
+        notification.className = "notification";
+        notification.textContent = text;
+        notification.style.cssText = `
+            position: fixed;
+            top: 20%;
+            left: 50%;
+            transform: translateX(-50%);
+            background: ${color};
+            color: white;
+            padding: 10px 20px;
+            border-radius: 10px;
+            font-weight: bold;
+            z-index: 1000;
+            box-shadow: 0 5px 20px rgba(0,0,0,0.3);
+            animation: slideDown 0.3s ease;
+        `;
+
+        document.body.appendChild(notification);
+
+        // Remove after 2 seconds
+        setTimeout(() => {
+            notification.style.animation = 'slideUp 0.3s ease';
+            setTimeout(() => {
+                if (notification.parentNode) {
+                    notification.parentNode.removeChild(notification);
+                }
+            }, 300);
+        }, 2000);
+    }
+
     // ==================== DRAWING FUNCTIONS ====================
+    // Replace the entire drawBear() function with this enhanced version:
+
     function drawBear() {
         const x = bear.x;
         const y = bear.y;
         const anim = bear.animation;
+        const evolution = BEAR_EVOLUTIONS[gameState.currentEvolution];
 
         ctx.save();
         ctx.translate(x, y);
+
+        // Apply evolution scaling
+        if (evolution && evolution.size) {
+            ctx.scale(evolution.size, evolution.size);
+        }
 
         // Apply direction and squash/stretch
         ctx.scale(anim.scaleX * anim.squashStretch, 1 / anim.squashStretch);
@@ -377,36 +2032,45 @@
 
         // Shadow with movement blur
         ctx.fillStyle = anim.isMoving ?
-            `rgba(0, 0, 0, 0.2)` :
-            `rgba(0, 0, 0, 0.15)`;
+            `rgba(0, 0, 0, 0.25)` :
+            `rgba(0, 0, 0, 0.2)`;
 
         ctx.beginPath();
-        ctx.ellipse(0, 32,
-            anim.isMoving ? 28 : 24,
-            anim.isMoving ? 10 : 8,
+        ctx.ellipse(0, 40,
+            anim.isMoving ? 32 : 28,
+            anim.isMoving ? 12 : 10,
             0, 0, Math.PI * 2);
         ctx.fill();
 
-        // Body with gradient
-        const bodyGradient = ctx.createLinearGradient(-25, -40, 25, 40);
-        bodyGradient.addColorStop(0, "#fbbf24");
-        bodyGradient.addColorStop(1, "#eab308");
+        // ============= ENHANCED WINNIE THE POOH BODY =============
 
-        // Main body
-        ctx.fillStyle = bodyGradient;
+        // Body with Pooh's classic red shirt
+        ctx.fillStyle = "#e02828"; // Pooh's classic red color
         ctx.beginPath();
 
         // Walking animation - slight leaning
         const leanOffset = anim.isMoving ? Math.sin(anim.walkCycle * 2) * 3 : 0;
 
-        // Bear body with more shape
-        ctx.ellipse(leanOffset, -10, 25, 35, 0, 0, Math.PI * 2);
+        // Pooh's body - rounder and more huggable
+        ctx.ellipse(leanOffset, 0, 32, 42, 0, 0, Math.PI * 2);
         ctx.fill();
 
-        // Draw bear components
+        // Draw evolution hat if any
+        if (evolution && evolution.hat) {
+            drawEvolutionHat(evolution.hat);
+        }
+
+        // ============= ENHANCED HEAD =============
         drawBearHead(anim);
+
+        // ============= ENHANCED ARMS =============
         drawBearArms(anim);
+
+        // ============= ENHANCED HONEY JAR =============
         drawJarWithBear(anim);
+
+        // ============= ADDITIONAL POOH DETAILS =============
+        drawPoohDetails(anim);
 
         // Shield effect
         if (gameState.shieldTime > 0) {
@@ -416,263 +2080,444 @@
         ctx.restore();
     }
 
+// ==================== ENHANCED HEAD FUNCTION ====================
+
     function drawBearHead(anim) {
-        // Head
-        ctx.fillStyle = "#fbbf24";
+        // Head with classic Pooh shape
+        ctx.fillStyle = "#fbbf24"; // Lighter yellow for Pooh
         ctx.beginPath();
-        ctx.arc(0, -28, 20, 0, Math.PI * 2);
+
+        // Classic Pooh head shape - rounder
+        ctx.ellipse(0, -30, 24, 22, 0, 0, Math.PI * 2);
         ctx.fill();
 
-        // Ears with fluff
+        // Ears with more character
         drawEars(anim);
 
-        // Face based on mood
-        drawBearFace(anim);
+        // Face with classic Pooh expression
+        drawPoohFace(anim);
 
-        // Cheeks blush when excited
-        if (anim.mood === "excited") {
-            ctx.fillStyle = "rgba(255, 100, 100, 0.3)";
-            ctx.beginPath();
-            ctx.arc(-8, -22, 4, 0, Math.PI * 2);
-            ctx.arc(8, -22, 4, 0, Math.PI * 2);
-            ctx.fill();
-        }
+        // Neck and shirt collar
+        ctx.fillStyle = "#e02828";
+        ctx.beginPath();
+        ctx.arc(0, -10, 18, 0.2, Math.PI - 0.2);
+        ctx.fill();
+
+        // Shirt collar detail
+        ctx.fillStyle = "#b91c1c";
+        ctx.beginPath();
+        ctx.ellipse(0, -8, 20, 5, 0, 0, Math.PI);
+        ctx.fill();
     }
 
     function drawEars(anim) {
-        // Left ear
+        // Left ear with more animation
         ctx.save();
-        ctx.translate(-14, -38);
-        ctx.rotate(Math.sin(anim.walkCycle) * 0.1);
+        ctx.translate(-18, -40);
+        ctx.rotate(Math.sin(anim.walkCycle) * 0.15);
+
+        // Outer ear
         ctx.fillStyle = "#fbbf24";
         ctx.beginPath();
-        ctx.arc(0, 0, 9, 0, Math.PI * 2);
+        ctx.arc(0, 0, 10, 0, Math.PI * 2);
         ctx.fill();
 
-        // Inner ear
-        ctx.fillStyle = "#f59e0b";
+        // Inner ear - lighter color
+        ctx.fillStyle = "#fde047";
         ctx.beginPath();
-        ctx.arc(0, 0, 5, 0, Math.PI * 2);
+        ctx.arc(0, 0, 6, 0, Math.PI * 2);
+        ctx.fill();
+
+        // Ear highlight
+        ctx.fillStyle = "rgba(255, 255, 255, 0.3)";
+        ctx.beginPath();
+        ctx.arc(-2, -2, 3, 0, Math.PI * 2);
         ctx.fill();
         ctx.restore();
 
         // Right ear
         ctx.save();
-        ctx.translate(14, -38);
-        ctx.rotate(-Math.sin(anim.walkCycle) * 0.1);
+        ctx.translate(18, -40);
+        ctx.rotate(-Math.sin(anim.walkCycle) * 0.15);
+
+        // Outer ear
         ctx.fillStyle = "#fbbf24";
         ctx.beginPath();
-        ctx.arc(0, 0, 9, 0, Math.PI * 2);
+        ctx.arc(0, 0, 10, 0, Math.PI * 2);
         ctx.fill();
 
         // Inner ear
-        ctx.fillStyle = "#f59e0b";
+        ctx.fillStyle = "#fde047";
         ctx.beginPath();
-        ctx.arc(0, 0, 5, 0, Math.PI * 2);
+        ctx.arc(0, 0, 6, 0, Math.PI * 2);
+        ctx.fill();
+
+        // Ear highlight
+        ctx.fillStyle = "rgba(255, 255, 255, 0.3)";
+        ctx.beginPath();
+        ctx.arc(-2, -2, 3, 0, Math.PI * 2);
         ctx.fill();
         ctx.restore();
     }
 
-    function drawBearFace(anim) {
+    function drawPoohFace(anim) {
         // Eyes with blinking
         const blink = anim.blinkTimer < 0.1 ? 0.1 : 1;
+        const isExcited = anim.mood === "excited";
+        const isWorried = anim.mood === "worried";
 
-        ctx.fillStyle = "#1f2937";
+        ctx.fillStyle = "#1f2937"; // Dark brown for Pooh's eyes
 
         // Left eye
         ctx.save();
-        ctx.translate(-8, -30);
+        ctx.translate(-8, -28);
         ctx.scale(1, blink);
+
+        // Eye shape - more rounded
         ctx.beginPath();
-        ctx.arc(0, 0, 3, 0, Math.PI * 2);
+        ctx.ellipse(0, 0, 4, 5, 0, 0, Math.PI * 2);
         ctx.fill();
 
-        // Eye sparkle
+        // Eye sparkle (except when blinking)
         if (blink > 0.5) {
             ctx.fillStyle = "white";
             ctx.beginPath();
-            ctx.arc(-1, -1, 1, 0, Math.PI * 2);
+            ctx.arc(-1, -1, 1.5, 0, Math.PI * 2);
             ctx.fill();
         }
         ctx.restore();
 
         // Right eye
         ctx.save();
-        ctx.translate(8, -30);
+        ctx.translate(8, -28);
         ctx.scale(1, blink);
+        ctx.fillStyle = "#1f2937";
+
         ctx.beginPath();
-        ctx.arc(0, 0, 3, 0, Math.PI * 2);
+        ctx.ellipse(0, 0, 4, 5, 0, 0, Math.PI * 2);
         ctx.fill();
 
         // Eye sparkle
         if (blink > 0.5) {
             ctx.fillStyle = "white";
             ctx.beginPath();
-            ctx.arc(-1, -1, 1, 0, Math.PI * 2);
+            ctx.arc(-1, -1, 1.5, 0, Math.PI * 2);
             ctx.fill();
         }
         ctx.restore();
+
+        // Snout/nose
+        ctx.fillStyle = "#1f2937";
+        ctx.beginPath();
+        ctx.arc(0, -20, 5, 0, Math.PI * 2);
+        ctx.fill();
+
+        // Nose highlight
+        ctx.fillStyle = "rgba(255, 255, 255, 0.4)";
+        ctx.beginPath();
+        ctx.arc(-1, -21, 1.5, 0, Math.PI * 2);
+        ctx.fill();
 
         // Mouth based on mood
         ctx.strokeStyle = "#1f2937";
         ctx.lineWidth = 2;
         ctx.lineCap = "round";
 
-        if (anim.mood === "happy") {
-            // Smile
+        if (isExcited) {
+            // Big happy smile for excitement
             ctx.beginPath();
-            ctx.arc(0, -22, 6, 0.2, Math.PI - 0.2);
+            ctx.arc(0, -15, 8, 0.1, Math.PI - 0.1);
             ctx.stroke();
-        } else if (anim.mood === "worried") {
-            // Worried mouth
-            ctx.beginPath();
-            ctx.moveTo(-4, -20);
-            ctx.quadraticCurveTo(0, -18, 4, -20);
-            ctx.stroke();
-        } else if (anim.mood === "excited") {
-            // Open mouth (excited)
-            ctx.fillStyle = "#dc2626";
-            ctx.beginPath();
-            ctx.ellipse(0, -21, 5, 3, 0, 0, Math.PI * 2);
-            ctx.fill();
 
-            // Tongue
+            // Tongue sticking out
             ctx.fillStyle = "#fb7185";
             ctx.beginPath();
-            ctx.ellipse(0, -19, 3, 2, 0, 0, Math.PI);
+            ctx.ellipse(0, -8, 4, 3, 0, 0, Math.PI);
+            ctx.fill();
+        } else if (isWorried) {
+            // Concerned expression
+            ctx.beginPath();
+            ctx.moveTo(-5, -15);
+            ctx.quadraticCurveTo(0, -12, 5, -15);
+            ctx.stroke();
+
+            // Worry lines
+            ctx.beginPath();
+            ctx.moveTo(-2, -18);
+            ctx.lineTo(-2, -16);
+            ctx.moveTo(2, -18);
+            ctx.lineTo(2, -16);
+            ctx.stroke();
+        } else {
+            // Default gentle smile
+            ctx.beginPath();
+            ctx.arc(0, -15, 6, 0.2, Math.PI - 0.2);
+            ctx.stroke();
+        }
+
+        // Cheeks blush when excited
+        if (isExcited) {
+            ctx.fillStyle = "rgba(255, 100, 100, 0.4)";
+            ctx.beginPath();
+            ctx.arc(-10, -20, 3, 0, Math.PI * 2);
+            ctx.arc(10, -20, 3, 0, Math.PI * 2);
             ctx.fill();
         }
     }
 
+// ==================== ENHANCED ARMS FUNCTION ====================
+
     function drawBearArms(anim) {
         // Walking arm animation
-        const armSwing = anim.isMoving ? Math.sin(anim.walkCycle * 4) * 15 : 0;
+        const armSwing = anim.isMoving ? Math.sin(anim.walkCycle * 4) * 20 : 0;
 
         // Left arm
         ctx.save();
-        ctx.translate(-22, -15);
-        ctx.rotate(armSwing * 0.03);
-        ctx.fillStyle = "#f59e0b";
+        ctx.translate(-26, -8);
+        ctx.rotate(armSwing * 0.04);
+
+        // Arm sleeve (red part)
+        ctx.fillStyle = "#e02828";
         ctx.beginPath();
-        ctx.roundRect(-5, 0, 10, 25, 5);
+        ctx.roundRect(-6, 0, 12, 28, 6);
+        ctx.fill();
+
+        // Arm end (yellow fur)
+        ctx.fillStyle = "#fbbf24";
+        ctx.beginPath();
+        ctx.roundRect(-5, 28, 10, 10, 5);
         ctx.fill();
 
         // Paw
         ctx.fillStyle = "#d97706";
         ctx.beginPath();
-        ctx.arc(0, 25, 6, 0, Math.PI * 2);
+        ctx.arc(0, 38, 8, 0, Math.PI * 2);
         ctx.fill();
+
+        // Paw pads
+        ctx.fillStyle = "#92400e";
+        for (let i = 0; i < 4; i++) {
+            const angle = (i / 4) * Math.PI * 2;
+            const px = Math.cos(angle) * 4;
+            const py = 38 + Math.sin(angle) * 4;
+            ctx.beginPath();
+            ctx.arc(px, py, 2, 0, Math.PI * 2);
+            ctx.fill();
+        }
         ctx.restore();
 
         // Right arm
         ctx.save();
-        ctx.translate(22, -15);
-        ctx.rotate(-armSwing * 0.03);
-        ctx.fillStyle = "#f59e0b";
+        ctx.translate(26, -8);
+        ctx.rotate(-armSwing * 0.04);
+
+        // Arm sleeve
+        ctx.fillStyle = "#e02828";
         ctx.beginPath();
-        ctx.roundRect(-5, 0, 10, 25, 5);
+        ctx.roundRect(-6, 0, 12, 28, 6);
+        ctx.fill();
+
+        // Arm end
+        ctx.fillStyle = "#fbbf24";
+        ctx.beginPath();
+        ctx.roundRect(-5, 28, 10, 10, 5);
         ctx.fill();
 
         // Paw
         ctx.fillStyle = "#d97706";
         ctx.beginPath();
-        ctx.arc(0, 25, 6, 0, Math.PI * 2);
+        ctx.arc(0, 38, 8, 0, Math.PI * 2);
         ctx.fill();
+
+        // Paw pads
+        ctx.fillStyle = "#92400e";
+        for (let i = 0; i < 4; i++) {
+            const angle = (i / 4) * Math.PI * 2;
+            const px = Math.cos(angle) * 4;
+            const py = 38 + Math.sin(angle) * 4;
+            ctx.beginPath();
+            ctx.arc(px, py, 2, 0, Math.PI * 2);
+            ctx.fill();
+        }
         ctx.restore();
     }
+
+// ==================== ENHANCED JAR FUNCTION ====================
 
     function drawJarWithBear(anim) {
         // Jar body with honey level that changes with streak
         const honeyLevel = Math.min(0.7 + (gameState.streak * 0.02), 0.95);
 
-        // Jar outline
-        ctx.fillStyle = "#b91c1c";
+        // Jar outline - more detailed
+        ctx.fillStyle = "#7c2d12"; // Darker brown for jar
         ctx.beginPath();
-        ctx.roundRect(-25, 0, 50, 40, 12);
+        ctx.roundRect(-22, 10, 44, 50, 15);
         ctx.fill();
 
-        // Honey fill with gradient
-        const honeyGradient = ctx.createLinearGradient(-20, 40, -20, 40 - (40 * honeyLevel));
-        honeyGradient.addColorStop(0, "#facc15");
-        honeyGradient.addColorStop(1, "#eab308");
+        // Jar glass effect with gradient
+        const jarGradient = ctx.createLinearGradient(-20, 60, -20, 10);
+        jarGradient.addColorStop(0, "rgba(254, 215, 170, 0.7)"); // Light amber
+        jarGradient.addColorStop(0.3, "rgba(253, 186, 116, 0.9)"); // Medium amber
+        jarGradient.addColorStop(1, "rgba(251, 146, 60, 0.95)"); // Dark amber
 
-        ctx.fillStyle = honeyGradient;
+        ctx.fillStyle = jarGradient;
         ctx.beginPath();
-        ctx.roundRect(-20, 40 - (40 * honeyLevel), 40, 40 * honeyLevel, 8);
+        ctx.roundRect(-18, 60 - (50 * honeyLevel), 36, 50 * honeyLevel, 12);
         ctx.fill();
 
-        // Honey bubbles when excited
-        if (anim.mood === "excited") {
-            const bubbleTime = performance.now() / 200;
-            for (let i = 0; i < 3; i++) {
-                const bubbleY = 40 - (40 * honeyLevel) - 5;
-                const bubbleX = (Math.sin(bubbleTime + i) * 10);
-                const bubbleSize = 2 + Math.sin(bubbleTime * 2 + i) * 1;
+        // Honey bubbles
+        const bubbleTime = performance.now() / 300;
+        for (let i = 0; i < 5; i++) {
+            const bubbleY = 60 - (50 * honeyLevel) + Math.sin(bubbleTime + i) * 3;
+            const bubbleX = (Math.cos(bubbleTime * 1.5 + i) * 8);
+            const bubbleSize = 2 + Math.sin(bubbleTime * 2 + i) * 1.5;
 
-                ctx.fillStyle = "rgba(255, 255, 255, 0.6)";
-                ctx.beginPath();
-                ctx.arc(bubbleX, bubbleY, bubbleSize, 0, Math.PI * 2);
-                ctx.fill();
-            }
+            ctx.fillStyle = "rgba(255, 237, 213, 0.7)";
+            ctx.beginPath();
+            ctx.arc(bubbleX, bubbleY, bubbleSize, 0, Math.PI * 2);
+            ctx.fill();
         }
 
-        // Jar label with streak number
+        // Jar label with Winnie the Pooh style
+        ctx.fillStyle = "#fbbf24";
+        ctx.beginPath();
+        ctx.roundRect(-15, 25, 30, 20, 8);
+        ctx.fill();
+
+        // Label text
         ctx.fillStyle = "#78350f";
-        ctx.font = "bold 12px system-ui";
+        ctx.font = "bold 14px 'Comic Sans MS', cursive";
         ctx.textAlign = "center";
         ctx.textBaseline = "middle";
-        ctx.fillText(gameState.streak > 0 ? `x${gameState.streak}` : "HONEY", 0, 20);
+        ctx.fillText("Pooh's", 0, 30);
+        ctx.fillText("Honey", 0, 40);
 
-        // Jar lid
+        // Jar lid with more detail
         ctx.fillStyle = "#92400e";
         ctx.beginPath();
-        ctx.roundRect(-22, -5, 44, 10, 4);
+        ctx.roundRect(-20, 5, 40, 12, 6);
+        ctx.fill();
+
+        // Lid highlight
+        ctx.fillStyle = "rgba(255, 255, 255, 0.2)";
+        ctx.beginPath();
+        ctx.roundRect(-18, 6, 36, 4, 3);
         ctx.fill();
 
         // Jar gloss reflection
-        ctx.fillStyle = "rgba(255, 255, 255, 0.3)";
+        ctx.fillStyle = "rgba(255, 255, 255, 0.15)";
         ctx.beginPath();
-        ctx.ellipse(0, 15, 12, 8, 0, 0, Math.PI * 2);
+        ctx.ellipse(5, 40, 8, 12, 0, 0, Math.PI * 2);
         ctx.fill();
     }
 
+// ==================== ADDITIONAL POOH DETAILS ====================
+
+    function drawPoohDetails(anim) {
+        // Shirt buttons
+        ctx.fillStyle = "#fbbf24"; // Yellow buttons
+        for (let i = 0; i < 2; i++) {
+            ctx.beginPath();
+            ctx.arc(0, 5 + (i * 15), 3, 0, Math.PI * 2);
+            ctx.fill();
+
+            // Button highlight
+            ctx.fillStyle = "rgba(255, 255, 255, 0.4)";
+            ctx.beginPath();
+            ctx.arc(-1, 4 + (i * 15), 1, 0, Math.PI * 2);
+            ctx.fill();
+            ctx.fillStyle = "#fbbf24";
+        }
+
+        // Belly fur
+        ctx.fillStyle = "#fde047"; // Lighter yellow for belly
+        ctx.beginPath();
+        ctx.ellipse(0, 10, 20, 15, 0, 0, Math.PI * 2);
+        ctx.fill();
+
+        // Legs (simplified)
+        ctx.fillStyle = "#fbbf24";
+        ctx.beginPath();
+        ctx.ellipse(-12, 35, 8, 6, 0, 0, Math.PI * 2);
+        ctx.ellipse(12, 35, 8, 6, 0, 0, Math.PI * 2);
+        ctx.fill();
+
+        // Feet
+        ctx.fillStyle = "#d97706";
+        ctx.beginPath();
+        ctx.ellipse(-12, 42, 6, 4, 0, 0, Math.PI * 2);
+        ctx.ellipse(12, 42, 6, 4, 0, 0, Math.PI * 2);
+        ctx.fill();
+    }
+
+// ==================== SHIELD EFFECT (UPDATED) ====================
+
     function drawShieldEffect() {
         const pulse = 1 + Math.sin(performance.now() / 200) * 0.1;
-        const alpha = 0.3 + Math.sin(performance.now() / 300) * 0.2;
+        const alpha = 0.4 + Math.sin(performance.now() / 300) * 0.3;
 
-        // Outer shield
-        ctx.strokeStyle = `rgba(56, 189, 248, ${alpha})`;
-        ctx.lineWidth = 4;
+        // Outer shield - honey-themed
+        const shieldGradient = ctx.createRadialGradient(0, -5, 0, 0, -5, 50 * pulse);
+        shieldGradient.addColorStop(0, "rgba(251, 191, 36, 0.6)");
+        shieldGradient.addColorStop(1, "rgba(251, 191, 36, 0.1)");
+
+        ctx.fillStyle = shieldGradient;
         ctx.beginPath();
-        ctx.arc(0, -8, 45 * pulse, 0, Math.PI * 2);
-        ctx.stroke();
+        ctx.arc(0, -5, 50 * pulse, 0, Math.PI * 2);
+        ctx.fill();
 
-        // Inner shield
-        ctx.strokeStyle = `rgba(96, 165, 250, ${alpha + 0.2})`;
+        // Honeycomb pattern in shield
+        ctx.strokeStyle = `rgba(120, 53, 15, ${alpha})`;
         ctx.lineWidth = 2;
-        ctx.beginPath();
-        ctx.arc(0, -8, 40 * pulse, 0, Math.PI * 2);
-        ctx.stroke();
 
-        // Rotating sparks
-        const sparkTime = performance.now() / 500;
-        for (let i = 0; i < 8; i++) {
-            const angle = (i / 8) * Math.PI * 2 + sparkTime;
-            const sx = Math.cos(angle) * 42;
-            const sy = Math.sin(angle) * 42 - 8;
+        const hexSize = 15;
+        for (let i = 0; i < 6; i++) {
+            const angle = (i / 6) * Math.PI * 2 + performance.now() / 1000;
+            const sx = Math.cos(angle) * 30;
+            const sy = -5 + Math.sin(angle) * 30;
 
-            // Spark trail
-            ctx.strokeStyle = `rgba(96, 165, 250, 0.7)`;
-            ctx.lineWidth = 1;
+            // Draw hexagon
             ctx.beginPath();
-            ctx.moveTo(sx, sy);
-            ctx.lineTo(sx - Math.cos(angle) * 6, sy - Math.sin(angle) * 6);
+            for (let j = 0; j < 6; j++) {
+                const hexAngle = (j / 6) * Math.PI * 2 + angle;
+                const hexX = sx + Math.cos(hexAngle) * hexSize;
+                const hexY = sy + Math.sin(hexAngle) * hexSize;
+
+                if (j === 0) {
+                    ctx.moveTo(hexX, hexY);
+                } else {
+                    ctx.lineTo(hexX, hexY);
+                }
+            }
+            ctx.closePath();
             ctx.stroke();
+        }
 
-            // Spark head
-            ctx.fillStyle = "rgba(255, 255, 255, 0.9)";
+        // Rotating honey drips
+        const dripTime = performance.now() / 800;
+        for (let i = 0; i < 4; i++) {
+            const angle = (i / 4) * Math.PI * 2 + dripTime;
+            const sx = Math.cos(angle) * 40;
+            const sy = -5 + Math.sin(angle) * 40;
+
+            // Honey drip shape
+            ctx.fillStyle = `rgba(251, 191, 36, ${alpha + 0.3})`;
             ctx.beginPath();
-            ctx.arc(sx, sy, 2, 0, Math.PI * 2);
+            ctx.ellipse(sx, sy, 3, 6, angle, 0, Math.PI * 2);
+            ctx.fill();
+
+            // Drip trail
+            const trailLength = 8;
+            const trailGradient = ctx.createLinearGradient(
+                sx, sy - trailLength,
+                sx, sy
+            );
+            trailGradient.addColorStop(0, "rgba(251, 191, 36, 0)");
+            trailGradient.addColorStop(1, `rgba(251, 191, 36, ${alpha})`);
+
+            ctx.fillStyle = trailGradient;
+            ctx.beginPath();
+            ctx.ellipse(sx, sy - trailLength/2, 2, trailLength, angle, 0, Math.PI * 2);
             ctx.fill();
         }
     }
@@ -727,6 +2572,19 @@
         gameState.streak = 0;
         gameState.lives = MAX_LIVES;
         gameState.shieldTime = 0;
+        gameState.activeEffects = {};
+        gameState.stats = {
+            jarsCaught: 0,
+            beesAvoided: 0,
+            consecutiveCatches: 0,
+            highestCombo: 0,
+            fastest5Catches: Infinity,
+            lastCatchTime: 0,
+            powerupsCollected: 0,
+            goldJarsCaught: 0
+        };
+        gameState.currentEvolution = 0;
+        gameState.dailyProgress = {};
         jars.length = 0;
         bees.length = 0;
         scorePopups.length = 0;
@@ -747,27 +2605,37 @@
         bear.animation.isMoving = false;
         bear.animation.mood = "happy";
         bear.animation.celebrationTimer = 0;
+
+        // Reset power-up indicators
+        document.querySelectorAll('.powerup-indicator').forEach(indicator => {
+            indicator.classList.remove('active');
+            const timer = indicator.querySelector('.powerup-timer');
+            if (timer) {
+                timer.style.width = '0%';
+            }
+        });
+
+        dynamicDifficulty.multiplier = 1;
+        dynamicDifficulty.performanceHistory = [];
     }
 
     // ==================== GAME LOGIC ====================
     function difficultyConfig() {
+        const baseConfig = { jarRate: 0.7, beeRate: 1.7, fallSpeed: 190 };
         if (settingsState.difficulty === 0) {
-            return {
-                jarRate: 0.9,
-                beeRate: 2.2,
-                fallSpeed: 150
-            };
-        } else if (settingsState.difficulty === 2) {
-            return {
-                jarRate: 0.55,
-                beeRate: 1.3,
-                fallSpeed: 220
-            };
+            baseConfig.jarRate = 0.9;
+            baseConfig.beeRate = 2.2;
+            baseConfig.fallSpeed = 150;
+        }
+        else if (settingsState.difficulty === 2) {
+            baseConfig.jarRate = 0.55;
+            baseConfig.beeRate = 1.3;
+            baseConfig.fallSpeed = 220;
         }
         return {
-            jarRate: 0.7,
-            beeRate: 1.7,
-            fallSpeed: 190
+            jarRate: baseConfig.jarRate / dynamicDifficulty.multiplier,
+            beeRate: baseConfig.beeRate * dynamicDifficulty.multiplier,
+            fallSpeed: baseConfig.fallSpeed * dynamicDifficulty.multiplier
         };
     }
 
@@ -777,7 +2645,13 @@
         const kindRand = Math.random();
         let type = "normal";
         let value = 10;
-        if (kindRand > 0.85) {
+
+        if (kindRand > 0.95) {
+            // Power-up jar (5% chance)
+            type = "powerup";
+            const powerupTypes = Object.keys(POWERUPS);
+            value = powerupTypes[Math.floor(Math.random() * powerupTypes.length)];
+        } else if (kindRand > 0.85) {
             type = "gold";
             value = 30;
         } else if (kindRand > 0.7) {
@@ -788,7 +2662,7 @@
         jars.push({
             x,
             y: -20,
-            radius: 12,
+            radius: type === "powerup" ? 16 : 12,
             vy: fallSpeed + rand(-20, 20),
             type,
             value
@@ -810,10 +2684,14 @@
     }
 
     function updateEntities(dt) {
+        // Apply slow time effect
+        const timeScale = gameState.activeEffects.SLOW_TIME ? 0.5 : 1;
+        const scaledDt = dt * timeScale;
+
         const {jarRate, beeRate} = difficultyConfig();
 
-        jarSpawnTimer += dt;
-        beeSpawnTimer += dt;
+        jarSpawnTimer += scaledDt;
+        beeSpawnTimer += scaledDt;
 
         const jarInterval = jarRate;
         const beeInterval = beeRate;
@@ -830,22 +2708,23 @@
 
         const targetDir = (keys.left ? -1 : 0) + (keys.right ? 1 : 0);
         bear.dir = targetDir;
-        bear.vx = bear.dir * bear.speed;
+        bear.vx = bear.dir * bear.speed * timeScale;
         bear.x = clamp(bear.x + bear.vx * dt, 26, world.width - 26);
 
         for (let i = jars.length - 1; i >= 0; i--) {
             const jar = jars[i];
-            jar.y += jar.vy * dt;
+            jar.y += jar.vy * scaledDt;
             if (jar.y - jar.radius > world.height + 40) {
                 jars.splice(i, 1);
                 gameState.streak = 0;
+                gameState.stats.consecutiveCatches = 0;
             }
         }
 
         for (let i = bees.length - 1; i >= 0; i--) {
             const bee = bees[i];
-            bee.x += bee.vx * dt;
-            bee.y += bee.vy * dt * 0.04;
+            bee.x += bee.vx * scaledDt;
+            bee.y += bee.vy * scaledDt * 0.04;
 
             if (bee.x < -60 || bee.x > world.width + 60 || bee.y > world.height + 40) {
                 bees.splice(i, 1);
@@ -859,9 +2738,37 @@
                 powerupIndicator.classList.remove("visible");
             }
         }
+
+        // Update power-ups
+        updatePowerups(dt);
     }
 
-    function addScorePopup(amount, x, y, color) {
+    // ==================== NEW UI/UX FUNCTIONS ====================
+
+    // Floating Score System
+    function createFloatingScore(amount, x, y, type = "normal") {
+        const scoreElement = document.createElement("div");
+        scoreElement.className = `floating-score ${type}`;
+        scoreElement.textContent = amount > 0 ? `+${amount}` : amount;
+        scoreElement.style.left = `${x}px`;
+        scoreElement.style.top = `${y}px`;
+        scoreElement.style.color = getScoreColor(type, amount);
+        gameContainer.appendChild(scoreElement);
+        setTimeout(() => { if (scoreElement.parentNode) scoreElement.parentNode.removeChild(scoreElement); }, 1000);
+    }
+
+    function getScoreColor(type, amount) {
+        switch(type) {
+            case "combo": return "#f97316";
+            case "gold": return "#fbbf24";
+            case "shield": return "#60a5fa";
+            case "powerup": return "#22c55e";
+            case "negative": return "#ef4444";
+            default: return amount >= 30 ? "#f59e0b" : "#84cc16";
+        }
+    }
+
+    function addScorePopup(amount, x, y, color, type = "normal") {
         scorePopups.push({
             amount: amount > 0 ? "+" + amount : String(amount),
             x,
@@ -870,7 +2777,219 @@
             start: performance.now(),
             duration: 650
         });
+        createFloatingScore(amount, x, y - 30, type);
     }
+
+    // Haptic Feedback
+    function triggerHaptic(feedbackType) {
+        if ('vibrate' in navigator) {
+            const patterns = {
+                catch: 30,
+                catchGold: [30, 20, 30],
+                catchPowerup: 100,
+                beeHit: [80, 40, 80],
+                shieldBlock: 50,
+                combo: [20, 20, 20, 20, 20],
+                gameOver: [200],
+                evolution: [50, 30, 50]
+            };
+            navigator.vibrate(patterns[feedbackType] || 30);
+        }
+    }
+
+    // Tutorial System
+    function initTutorial() {
+        const tutorialOverlay = document.getElementById("tutorialOverlay");
+        const skipTutorial = document.getElementById("skipTutorial");
+        const nextTutorial = document.getElementById("nextTutorial");
+        const startTutorial = document.getElementById("startTutorial");
+        const hasSeenTutorial = localStorage.getItem("honeyHunt_tutorialSeen");
+        if (!hasSeenTutorial && gameState.gamesPlayed === 0) showTutorial();
+        if (skipTutorial) {
+            skipTutorial.addEventListener("click", () => {
+                hideTutorial();
+                localStorage.setItem("honeyHunt_tutorialSeen", "true");
+            });
+        }
+        if (nextTutorial) {
+            nextTutorial.addEventListener("click", nextTutorialStep);
+        }
+        if (startTutorial) {
+            startTutorial.addEventListener("click", () => {
+                hideTutorial();
+                localStorage.setItem("honeyHunt_tutorialSeen", "true");
+                startGame();
+            });
+        }
+    }
+
+    function showTutorial() {
+        const tutorialOverlay = document.getElementById("tutorialOverlay");
+        if (tutorialOverlay) {
+            tutorialOverlay.classList.add("visible");
+            tutorialOverlay.setAttribute("aria-hidden", "false");
+            updateTutorialStep();
+        }
+    }
+
+    function hideTutorial() {
+        const tutorialOverlay = document.getElementById("tutorialOverlay");
+        if (tutorialOverlay) {
+            tutorialOverlay.classList.remove("visible");
+            tutorialOverlay.setAttribute("aria-hidden", "true");
+        }
+    }
+
+    function nextTutorialStep() {
+        if (tutorialState.currentStep < tutorialState.totalSteps) {
+            tutorialState.currentStep++;
+            updateTutorialStep();
+        }
+    }
+
+    function updateTutorialStep() {
+        document.querySelectorAll(".tutorial-step").forEach(step => step.classList.remove("active"));
+        const currentStep = document.querySelector(`.tutorial-step[data-step="${tutorialState.currentStep}"]`);
+        if (currentStep) {
+            currentStep.classList.add("active");
+        }
+        document.querySelectorAll(".tutorial-dot").forEach((dot, index) => dot.classList.toggle("active", index + 1 === tutorialState.currentStep));
+        const nextButton = document.getElementById("nextTutorial");
+        const startButton = document.getElementById("startTutorial");
+        if (nextButton && startButton) {
+            if (tutorialState.currentStep === tutorialState.totalSteps) {
+                nextButton.style.display = "none";
+                startButton.style.display = "inline-flex";
+            } else {
+                nextButton.style.display = "inline-flex";
+                startButton.style.display = "none";
+            }
+        }
+    }
+
+    // Dynamic Difficulty
+    function updateDynamicDifficulty() {
+        if (gameState.timeLeft % 10 > 1) return;
+        const currentPerformance = gameState.score / (GAME_DURATION - gameState.timeLeft);
+        dynamicDifficulty.performanceHistory.push(currentPerformance);
+        if (dynamicDifficulty.performanceHistory.length > 3) dynamicDifficulty.performanceHistory.shift();
+        const avgPerformance = dynamicDifficulty.performanceHistory.reduce((a, b) => a + b, 0) / dynamicDifficulty.performanceHistory.length;
+        if (avgPerformance > 12) {
+            dynamicDifficulty.multiplier = Math.min(1.5, 1 + (avgPerformance - 12) * 0.04);
+            showNotification("Difficulty increased!", "#ef4444");
+        } else if (avgPerformance < 6) {
+            dynamicDifficulty.multiplier = Math.max(0.7, 1 - (6 - avgPerformance) * 0.05);
+            showNotification("Difficulty decreased", "#22c55e");
+        } else {
+            dynamicDifficulty.multiplier = 1;
+        }
+        showDifficultyIndicator();
+    }
+
+    function showDifficultyIndicator() {
+        if (Math.abs(dynamicDifficulty.multiplier - 1) > 0.05) {
+            const indicator = document.createElement("div");
+            indicator.className = "difficulty-indicator";
+            indicator.textContent = dynamicDifficulty.multiplier > 1 ? "⚡ Harder" : "🕊️ Easier";
+            indicator.style.cssText = `position: absolute; top: 50%; left: 50%; transform: translate(-50%, -50%); background: ${dynamicDifficulty.multiplier > 1 ? "#ef4444" : "#22c55e"}; color: white; padding: 8px 16px; border-radius: 20px; font-weight: bold; z-index: 100; animation: fadeOut 1.5s ease forwards;`;
+            gameContainer.appendChild(indicator);
+            setTimeout(() => indicator.remove(), 1500);
+        }
+    }
+
+    // Share Functionality
+    function initShareFunctionality() {
+        const shareButton = document.getElementById("shareScoreButton");
+        if (!shareButton) return;
+        shareButton.addEventListener("click", shareScore);
+        shareButton.addEventListener("click", function() {
+            this.classList.add("share-success");
+            setTimeout(() => this.classList.remove("share-success"), 500);
+        });
+    }
+
+    function shareScore() {
+        const score = gameState.score;
+        const best = gameState.best;
+        const isNewBest = score === best && score > 0;
+        const shareText = `I scored ${score} points${isNewBest ? ' (NEW BEST!)' : ''} in Honey Hunt! 🍯🐻\n\nCan you beat my score?\n\nPlay at: ${window.location.href}`;
+        const shareData = {
+            title: 'Honey Hunt Score',
+            text: shareText,
+            url: window.location.href
+        };
+        if (navigator.share && navigator.canShare(shareData)) {
+            navigator.share(shareData)
+                .then(() => showNotification('Score shared successfully!', '#22c55e'))
+                .catch(err => fallbackShare(shareText));
+        } else {
+            fallbackShare(shareText);
+        }
+    }
+
+    function fallbackShare(text) {
+        if (navigator.clipboard && navigator.clipboard.writeText) {
+            navigator.clipboard.writeText(text)
+                .then(() => showNotification('Score copied to clipboard! 📋', '#fbbf24'))
+                .catch(err => prompt('Copy this text to share:', text));
+        } else {
+            prompt('Copy this text to share:', text);
+        }
+    }
+
+    // Trail Effects
+    function updateBearTrail(dt) {
+        if (Math.abs(bear.vx) > 80 && gameState.running && !gameState.paused) {
+            bearTrail.push({
+                x: bear.x,
+                y: bear.y,
+                life: 1,
+                decay: 0.03 + Math.random() * 0.02,
+                size: 6 + Math.random() * 4,
+                color: `rgba(${gameState.currentEvolution * 40 + 200}, ${150 + gameState.currentEvolution * 20}, ${50}, 0.6)`,
+                vx: (Math.random() - 0.5) * 20,
+                vy: -20 - Math.random() * 20
+            });
+        }
+        for (let i = bearTrail.length - 1; i >= 0; i--) {
+            const trail = bearTrail[i];
+            trail.x += trail.vx * dt;
+            trail.y += trail.vy * dt;
+            trail.life -= trail.decay;
+            trail.size *= 0.97;
+            if (trail.life <= 0) bearTrail.splice(i, 1);
+        }
+    }
+
+    function drawBearTrail() {
+        for (const trail of bearTrail) {
+            ctx.save();
+            ctx.globalAlpha = trail.life * 0.7;
+            ctx.fillStyle = trail.color;
+            ctx.beginPath();
+            ctx.arc(trail.x, trail.y, trail.size, 0, Math.PI * 2);
+            ctx.fill();
+            ctx.globalAlpha = trail.life * 0.3;
+            ctx.beginPath();
+            ctx.arc(trail.x, trail.y, trail.size * 1.5, 0, Math.PI * 2);
+            ctx.fill();
+            ctx.restore();
+        }
+    }
+
+    // Button Click Sounds
+    function addButtonClickSounds() {
+        document.querySelectorAll('button').forEach(button => {
+            if (button.hasAttribute('data-has-sound')) return;
+            button.addEventListener('click', (e) => {
+                if (button.disabled || button.getAttribute('aria-disabled') === 'true') return;
+                playButtonClickSound();
+            });
+            button.setAttribute('data-has-sound', 'true');
+        });
+    }
+
+    // ==================== UPDATED GAME FUNCTIONS ====================
 
     function handleCollisions() {
         for (let i = jars.length - 1; i >= 0; i--) {
@@ -878,22 +2997,89 @@
             const dx = jar.x - bear.x;
             const dy = jar.y - (bear.y - 10);
             const dist = Math.sqrt(dx * dx + dy * dy);
-            if (dist < jar.radius + 26) {
+            const collisionRadius = jar.type === "powerup" ? 30 : 26;
+
+            if (dist < jar.radius + collisionRadius) {
                 jars.splice(i, 1);
+
+                if (jar.type === "powerup") {
+                    activatePowerup(jar.value);
+                    createJarParticles(jar.x, jar.y, "powerup");
+                    liveRegion.textContent = `Collected ${POWERUPS[jar.value].name} power-up!`;
+                    triggerHaptic("catchPowerup");
+                    addScorePopup("POWER UP!", bear.x, bear.y - 50, POWERUPS[jar.value].color, "powerup");
+                    playSound(SOUNDS.POWERUP_COLLECT);
+                    continue;
+                }
+
                 let mult = 1 + Math.min(gameState.streak * 0.05, 1.5);
+                if (gameState.activeEffects.DOUBLE_POINTS) mult *= 2;
                 let gain = Math.round(jar.value * mult);
                 gameState.score += gain;
                 gameState.streak += 1;
-
-                const popColor = jar.type === "gold" ? "#f97316" : jar.type === "shield" ? "#38bdf8" : "#0f766e";
-                addScorePopup(gain, bear.x, bear.y - 50, popColor);
+                gameState.stats.jarsCaught++;
+                gameState.stats.consecutiveCatches++;
+                if (gameState.streak > gameState.stats.highestCombo) gameState.stats.highestCombo = gameState.streak;
+                if (jar.type === "gold") gameState.stats.goldJarsCaught++;
+                const now = performance.now() / 1000;
+                if (gameState.stats.lastCatchTime > 0) {
+                    const timeDiff = now - gameState.stats.lastCatchTime;
+                    if (gameState.stats.consecutiveCatches >= 5) {
+                        const catchTime = timeDiff * 5;
+                        if (catchTime < gameState.stats.fastest5Catches) gameState.stats.fastest5Catches = catchTime;
+                    }
+                }
+                gameState.stats.lastCatchTime = now;
+                const type = jar.type === "gold" ? "gold" : jar.type === "shield" ? "shield" : gameState.streak >= 10 ? "combo" : "normal";
+                const popColor = jar.type === "gold" ? "#f97316" : jar.type === "shield" ? "#38bdf8" : gameState.streak >= 10 ? "#f97316" : "#0f766e";
+                addScorePopup(gain, bear.x, bear.y - 50, popColor, type);
                 createJarParticles(jar.x, jar.y, jar.type);
+                triggerHaptic(jar.type === "gold" ? "catchGold" : "catch");
+                playCatchSound(jar.type);
+
+                // Play streak milestone sounds
+                if (gameState.streak === 5 || gameState.streak === 10) {
+                    playStreakSound(gameState.streak);
+                }
+
                 showComboIfNeeded();
 
                 if (jar.type === "shield") {
                     gameState.shieldTime = 5;
                     powerupIndicator.classList.add("visible");
                     liveRegion.textContent = "Shield active for five seconds.";
+                    triggerHaptic("shieldBlock");
+                    playSound(SOUNDS.SHIELD_ACTIVATE);
+                }
+            }
+        }
+
+        if (gameState.activeEffects.MAGNET) {
+            const magnetRadius = gameState.activeEffects.MAGNET.radius || 120;
+            for (let i = jars.length - 1; i >= 0; i--) {
+                const jar = jars[i];
+                const dx = jar.x - bear.x;
+                const dy = jar.y - (bear.y - 10);
+                const dist = Math.sqrt(dx * dx + dy * dy);
+                if (dist < magnetRadius) {
+                    const speed = 300;
+                    const angle = Math.atan2(bear.y - 10 - jar.y, bear.x - jar.x);
+                    jar.x += Math.cos(angle) * speed * (1/60);
+                    jar.y += Math.sin(angle) * speed * (1/60);
+                }
+            }
+        }
+
+        if (gameState.activeEffects.BEE_REPELLENT) {
+            for (let i = bees.length - 1; i >= 0; i--) {
+                const bee = bees[i];
+                const dx = bee.x - bear.x;
+                const dy = bee.y - (bear.y - 10);
+                const dist = Math.sqrt(dx * dx + dy * dy);
+                if (dist < 150) {
+                    const angle = Math.atan2(bee.y - (bear.y - 10), bee.x - bear.x);
+                    bee.x += Math.cos(angle) * 200 * (1/60);
+                    bee.y += Math.sin(angle) * 200 * (1/60);
                 }
             }
         }
@@ -911,12 +3097,17 @@
                     addScorePopup(0, bear.x, bear.y - 50, "#e5e7eb");
                     createJarParticles(bee.x, bee.y, "shield");
                     liveRegion.textContent = "Bee blocked by shield.";
+                    triggerHaptic("shieldBlock");
+                    playShieldBlockSound();
                 } else {
                     gameState.lives -= 1;
                     gameState.streak = 0;
+                    gameState.stats.consecutiveCatches = 0;
                     createBeeHitParticles(bear.x, bear.y - 10);
                     shakeScreen(8, 0.4);
                     liveRegion.textContent = "Bee hit! Lives left: " + gameState.lives;
+                    triggerHaptic("beeHit");
+                    playBeeHitSound();
                     if (gameState.lives <= 0) {
                         endGame();
                         return;
@@ -927,7 +3118,6 @@
     }
 
     function triggerComboEffect() {
-        // Create celebration particles
         for (let i = 0; i < 30; i++) {
             particles.push({
                 x: bear.x,
@@ -941,24 +3131,29 @@
                 gravity: 80
             });
         }
-
         triggerBearCelebration();
+        triggerHaptic("combo");
+        playComboSound();
     }
 
     function showComboIfNeeded() {
         streakValue.textContent = String(gameState.streak);
         if (gameState.streak >= 5) {
-            streakBadge.textContent = "Combo!";
-            streakBadge.classList.add("visible");
+            if (streakBadge) {
+                streakBadge.textContent = "Combo!";
+                streakBadge.classList.add("visible");
+            }
         } else {
-            streakBadge.classList.remove("visible");
+            if (streakBadge) streakBadge.classList.remove("visible");
         }
 
         if (gameState.streak > 0 && gameState.streak % 10 === 0) {
-            comboIndicator.textContent = "x" + (1 + Math.floor(gameState.streak / 10)) + " Combo!";
-            comboIndicator.classList.add("visible");
-            triggerComboEffect();
-            setTimeout(() => comboIndicator.classList.remove("visible"), 700);
+            if (comboIndicator) {
+                comboIndicator.textContent = "x" + (1 + Math.floor(gameState.streak / 10)) + " Combo!";
+                comboIndicator.classList.add("visible");
+                triggerComboEffect();
+                setTimeout(() => comboIndicator.classList.remove("visible"), 700);
+            }
         }
     }
 
@@ -975,14 +3170,17 @@
             if (jar.type === "gold") {
                 bodyColor = "#f97316";
                 glowColor = "rgba(249, 115, 22, 0.7)";
-            }
-            if (jar.type === "shield") {
+            } else if (jar.type === "shield") {
                 bodyColor = "#38bdf8";
                 glowColor = "rgba(56, 189, 248, 0.7)";
+            } else if (jar.type === "powerup") {
+                const powerup = POWERUPS[jar.value];
+                bodyColor = powerup ? powerup.color : "#facc15";
+                glowColor = `rgba(${parseInt(bodyColor.slice(1,3), 16)}, ${parseInt(bodyColor.slice(3,5), 16)}, ${parseInt(bodyColor.slice(5,7), 16)}, 0.7)`;
             }
 
             ctx.shadowColor = glowColor;
-            ctx.shadowBlur = jar.type === "gold" || jar.type === "shield" ? 12 : 6;
+            ctx.shadowBlur = jar.type === "gold" || jar.type === "shield" || jar.type === "powerup" ? 12 : 6;
 
             ctx.fillStyle = bodyColor;
             ctx.beginPath();
@@ -991,16 +3189,28 @@
 
             ctx.shadowBlur = 0;
 
-            ctx.fillStyle = "rgba(255, 255, 255, 0.9)";
-            ctx.fillRect(-10, -18, 20, 6);
+            // Power-up icon
+            if (jar.type === "powerup") {
+                const powerup = POWERUPS[jar.value];
+                if (powerup) {
+                    ctx.fillStyle = "white";
+                    ctx.font = "bold 10px system-ui";
+                    ctx.textAlign = "center";
+                    ctx.textBaseline = "middle";
+                    ctx.fillText(powerup.icon, 0, 0);
+                }
+            } else {
+                ctx.fillStyle = "rgba(255, 255, 255, 0.9)";
+                ctx.fillRect(-10, -18, 20, 6);
 
-            ctx.fillStyle = "rgba(255, 255, 255, 0.5)";
-            ctx.beginPath();
-            ctx.ellipse(-3, -8, 4, 6, 0, 0, Math.PI * 2);
-            ctx.fill();
+                ctx.fillStyle = "rgba(255, 255, 255, 0.5)";
+                ctx.beginPath();
+                ctx.ellipse(-3, -8, 4, 6, 0, 0, Math.PI * 2);
+                ctx.fill();
 
-            ctx.fillStyle = "rgba(0, 0, 0, 0.25)";
-            ctx.fillRect(-6, -10, 12, 2);
+                ctx.fillStyle = "rgba(0, 0, 0, 0.25)";
+                ctx.fillRect(-6, -10, 12, 2);
+            }
 
             ctx.restore();
         }
@@ -1100,7 +3310,7 @@
 
         // Apply screen shake
         if (screenShake.timer > 0) {
-            screenShake.timer -= 1/60; // Approximate dt
+            screenShake.timer -= 1/60;
         }
 
         const shakeX = screenShake.timer > 0 ?
@@ -1113,9 +3323,14 @@
 
         // Draw game elements
         drawParticles();
+        drawBearTrail();
         drawJars();
         drawBees();
         drawBear();
+
+        // Draw magnet effect
+        drawMagnetEffect();
+
         drawScorePopups();
 
         ctx.restore();
@@ -1147,7 +3362,22 @@
                 updateBearAnimation(dt);
                 updateEntities(dt);
                 updateParticles(dt);
+                updateBearTrail(dt);
                 handleCollisions();
+
+                // Check for achievements
+                checkAchievements();
+
+                // Update bear evolution
+                updateBearEvolution();
+
+                // Update daily challenge progress
+                updateDailyChallengeProgress();
+
+                // Update dynamic difficulty every 10 seconds
+                if (Math.floor(gameState.timeLeft) % 10 === 0) {
+                    updateDynamicDifficulty();
+                }
             }
             updateHud();
         }
@@ -1180,6 +3410,8 @@
         hideOverlay(pauseOverlay);
         updateHud();
         liveRegion.textContent = "Game started. Catch the honey and avoid the bees.";
+        playGameStartSound();
+        if (settingsState.musicOn) startBackgroundMusic();
     }
 
     function pauseGame() {
@@ -1210,39 +3442,70 @@
         }
 
         saveProgress();
-        finalScore.textContent = String(gameState.score);
-        finalBest.textContent = String(gameState.best);
-        overlayBest.textContent = String(gameState.best);
-        overlayGames.textContent = String(gameState.gamesPlayed);
+        if (finalScore) finalScore.textContent = String(gameState.score);
+        if (finalBest) finalBest.textContent = String(gameState.best);
+        if (overlayBest) overlayBest.textContent = String(gameState.best);
+        if (overlayGames) overlayGames.textContent = String(gameState.gamesPlayed);
 
         showOverlay(gameOverOverlay);
+        triggerHaptic("gameOver");
+        playGameOverSound();
+        stopBackgroundMusic();
     }
 
     // ==================== UI CONTROLS ====================
     function toggleHelp() {
+        if (!helpPanel) return;
         const isOpen = helpPanel.classList.toggle("visible");
         helpPanel.setAttribute("aria-hidden", String(!isOpen));
-        helpToggle.setAttribute("aria-expanded", String(isOpen));
-        helpToggleSecondary.setAttribute("aria-expanded", String(isOpen));
+        if (helpToggle) helpToggle.setAttribute("aria-expanded", String(isOpen));
+        if (helpToggleSecondary) helpToggleSecondary.setAttribute("aria-expanded", String(isOpen));
+        playSound(isOpen ? SOUNDS.MENU_OPEN : SOUNDS.MENU_CLOSE);
     }
 
     function openSettings() {
+        console.log("Opening settings modal...");
+        if (!settingsModal) {
+            console.error("Settings modal element not found!");
+            return;
+        }
         settingsModal.classList.add("visible");
-        settingsToggle.setAttribute("aria-expanded", "true");
-        settingsBest.textContent = String(gameState.best);
-        settingsPanel.focus();
+        settingsModal.style.display = "flex";
+        if (settingsToggle) settingsToggle.setAttribute("aria-expanded", "true");
+        if (settingsBest) settingsBest.textContent = String(gameState.best);
+        if (settingsPanel) settingsPanel.focus();
+        playSound(SOUNDS.MENU_OPEN);
+        console.log("Settings modal opened");
     }
 
     function closeSettings() {
+        console.log("Closing settings modal...");
+        if (!settingsModal) return;
         settingsModal.classList.remove("visible");
-        settingsToggle.setAttribute("aria-expanded", "false");
+        settingsModal.style.display = "none";
+        if (settingsToggle) settingsToggle.setAttribute("aria-expanded", "false");
+        playSound(SOUNDS.MENU_CLOSE);
+        console.log("Settings modal closed");
     }
 
     function applySettingsToUi() {
-        musicToggle.dataset.on = settingsState.musicOn ? "true" : "false";
-        musicToggle.setAttribute("aria-pressed", String(settingsState.musicOn));
-        sfxToggle.dataset.on = settingsState.sfxOn ? "true" : "false";
-        sfxToggle.setAttribute("aria-pressed", String(settingsState.sfxOn));
+        console.log("Applying settings to UI:", settingsState);
+
+        if (musicToggle) {
+            musicToggle.dataset.on = settingsState.musicOn ? "true" : "false";
+            musicToggle.setAttribute("aria-pressed", String(settingsState.musicOn));
+            musicToggle.innerHTML = settingsState.musicOn ?
+                '<i class="fas fa-volume-up" aria-hidden="true"></i><span>Music</span>' :
+                '<i class="fas fa-volume-mute" aria-hidden="true"></i><span>Music</span>';
+        }
+
+        if (sfxToggle) {
+            sfxToggle.dataset.on = settingsState.sfxOn ? "true" : "false";
+            sfxToggle.setAttribute("aria-pressed", String(settingsState.sfxOn));
+            sfxToggle.innerHTML = settingsState.sfxOn ?
+                '<i class="fas fa-volume-up" aria-hidden="true"></i><span>SFX</span>' :
+                '<i class="fas fa-volume-mute" aria-hidden="true"></i><span>SFX</span>';
+        }
 
         diffButtons.forEach(btn => {
             const level = Number(btn.dataset.level);
@@ -1252,11 +3515,15 @@
 
     function initTheme() {
         if (document.body.classList.contains("dark")) {
-            themeToggle.setAttribute("aria-pressed", "true");
-            themeToggle.innerHTML = '<i class="fas fa-sun" aria-hidden="true"></i><span>Theme</span>';
+            if (themeToggle) {
+                themeToggle.setAttribute("aria-pressed", "true");
+                themeToggle.innerHTML = '<i class="fas fa-sun" aria-hidden="true"></i><span>Theme</span>';
+            }
         } else {
-            themeToggle.setAttribute("aria-pressed", "false");
-            themeToggle.innerHTML = '<i class="fas fa-moon" aria-hidden="true"></i><span>Theme</span>';
+            if (themeToggle) {
+                themeToggle.setAttribute("aria-pressed", "false");
+                themeToggle.innerHTML = '<i class="fas fa-moon" aria-hidden="true"></i><span>Theme</span>';
+            }
         }
     }
 
@@ -1298,16 +3565,21 @@
         const icon = isFs ? "fa-down-left-and-up-right-to-center" : "fa-up-right-and-down-left-from-center";
         const text = isFs ? "Exit Fullscreen" : "Fullscreen";
 
-        fullscreenToggle.innerHTML = `<i class="fas ${icon}" aria-hidden="true"></i><span>${text}</span>`;
+        if (fullscreenToggle) {
+            fullscreenToggle.innerHTML = `<i class="fas ${icon}" aria-hidden="true"></i><span>${text}</span>`;
+        }
     }
 
     function initFullscreen() {
+        if (!fullscreenToggle) return;
+
         fullscreenToggle.addEventListener("click", () => {
             if (isFullscreen()) {
                 exitFullscreen();
             } else {
                 enterFullscreen(gameContainer);
             }
+            playButtonClickSound();
         });
 
         document.addEventListener("fullscreenchange", () => {
@@ -1360,11 +3632,11 @@
             e.preventDefault();
             togglePause();
         } else if (e.key === "Escape") {
-            if (settingsModal.classList.contains("visible")) {
+            if (settingsModal && settingsModal.classList.contains("visible")) {
                 closeSettings();
                 e.preventDefault();
             }
-            if (helpPanel.classList.contains("visible")) {
+            if (helpPanel && helpPanel.classList.contains("visible")) {
                 toggleHelp();
                 e.preventDefault();
             }
@@ -1439,115 +3711,680 @@
     }
 
     function initSettings() {
-        settingsToggle.addEventListener("click", openSettings);
-        settingsClose.addEventListener("click", closeSettings);
-        settingsModal.addEventListener("click", (e) => {
+        console.log("Initializing settings...");
+
+        if (!settingsToggle) {
+            console.error("Settings toggle button not found!");
+            return;
+        }
+
+        if (!settingsModal) {
+            console.error("Settings modal not found!");
+            return;
+        }
+
+        if (!settingsClose) {
+            console.error("Settings close button not found!");
+            return;
+        }
+
+        console.log("All settings elements found, setting up event listeners...");
+
+        // Setup settings toggle
+        settingsToggle.addEventListener("click", function(e) {
+            console.log("Settings toggle clicked!");
+            e.preventDefault();
+            e.stopPropagation();
+            openSettings();
+        });
+
+        // Setup settings close
+        settingsClose.addEventListener("click", function(e) {
+            console.log("Settings close clicked!");
+            e.preventDefault();
+            e.stopPropagation();
+            closeSettings();
+        });
+
+        // Close modal when clicking outside
+        settingsModal.addEventListener("click", function(e) {
             if (e.target === settingsModal) {
+                console.log("Clicked outside modal, closing...");
                 closeSettings();
             }
         });
 
-        musicToggle.addEventListener("click", () => {
-            settingsState.musicOn = !settingsState.musicOn;
-            applySettingsToUi();
-            saveProgress();
-            liveRegion.textContent = "Music " + (settingsState.musicOn ? "enabled" : "disabled");
-        });
+        // Setup music toggle
+        if (musicToggle) {
+            musicToggle.addEventListener("click", function(e) {
+                e.preventDefault();
+                e.stopPropagation();
+                console.log("Music toggle clicked, current state:", settingsState.musicOn);
+                settingsState.musicOn = !settingsState.musicOn;
+                applySettingsToUi();
+                saveProgress();
 
-        sfxToggle.addEventListener("click", () => {
-            settingsState.sfxOn = !settingsState.sfxOn;
-            applySettingsToUi();
-            saveProgress();
-            liveRegion.textContent = "Sound effects " + (settingsState.sfxOn ? "enabled" : "disabled");
-        });
+                if (settingsState.musicOn) {
+                    startBackgroundMusic();
+                    setMusicVolume(0.6);
+                    liveRegion.textContent = "Music enabled";
+                    console.log("Music enabled");
+                } else {
+                    stopBackgroundMusic();
+                    setMusicVolume(0);
+                    liveRegion.textContent = "Music disabled";
+                    console.log("Music disabled");
+                }
+                playButtonClickSound();
+            });
+        }
 
+        // Setup SFX toggle
+        if (sfxToggle) {
+            sfxToggle.addEventListener("click", function(e) {
+                e.preventDefault();
+                e.stopPropagation();
+                console.log("SFX toggle clicked, current state:", settingsState.sfxOn);
+                settingsState.sfxOn = !settingsState.sfxOn;
+                applySettingsToUi();
+                saveProgress();
+                liveRegion.textContent = "Sound effects " + (settingsState.sfxOn ? "enabled" : "disabled");
+                console.log("SFX:", settingsState.sfxOn ? "enabled" : "disabled");
+                playButtonClickSound();
+            });
+        }
+
+        // Setup difficulty buttons
         diffButtons.forEach(btn => {
-            btn.addEventListener("click", () => {
+            btn.addEventListener("click", function(e) {
+                e.preventDefault();
+                e.stopPropagation();
                 const level = Number(btn.dataset.level);
+                console.log("Difficulty button clicked, level:", level);
                 settingsState.difficulty = level;
                 applySettingsToUi();
                 saveProgress();
                 liveRegion.textContent = "Difficulty set to " + btn.textContent + ".";
+                console.log("Difficulty set to:", level);
+                playButtonClickSound();
             });
         });
 
-        resetProgress.addEventListener("click", () => {
-            if (confirm("Are you sure you want to reset all progress? This will delete your high score and games played.")) {
-                gameState.best = 0;
-                gameState.gamesPlayed = 0;
-                saveProgress();
-                settingsBest.textContent = "0";
-                bestValue.textContent = "0";
-                overlayBest.textContent = "0";
-                overlayGames.textContent = "0";
-                liveRegion.textContent = "Progress reset.";
-            }
-        });
+        // Setup reset progress
+        if (resetProgress) {
+            resetProgress.addEventListener("click", function(e) {
+                e.preventDefault();
+                e.stopPropagation();
+                console.log("Reset progress clicked");
+                if (confirm("Are you sure you want to reset all progress? This will delete your high score and games played.")) {
+                    gameState.best = 0;
+                    gameState.gamesPlayed = 0;
+                    gameState.achievements = [];
+                    saveProgress();
+                    if (settingsBest) settingsBest.textContent = "0";
+                    if (bestValue) bestValue.textContent = "0";
+                    if (overlayBest) overlayBest.textContent = "0";
+                    if (overlayGames) overlayGames.textContent = "0";
+                    liveRegion.textContent = "Progress reset.";
+                    console.log("Progress reset");
+                    playButtonClickSound();
+                }
+            });
+        }
+
+        console.log("Settings initialization complete");
     }
 
     function initTopbar() {
-        themeToggle.addEventListener("click", () => {
+        if (!themeToggle) return;
+
+        themeToggle.addEventListener("click", function(e) {
+            e.preventDefault();
+            e.stopPropagation();
             const isDark = document.body.classList.toggle("dark");
             localStorage.setItem(STORAGE_KEYS.THEME, isDark ? "dark" : "light");
             initTheme();
+            playButtonClickSound();
         });
         initTheme();
         initFullscreen();
     }
 
     function initOverlays() {
-        startButton.addEventListener("click", startGame);
-        resumeButton.addEventListener("click", resumeGame);
-        restartButton.addEventListener("click", startGame);
+        if (startButton) startButton.addEventListener("click", startGame);
+        if (resumeButton) resumeButton.addEventListener("click", resumeGame);
+        if (restartButton) restartButton.addEventListener("click", startGame);
 
-        overlayBest.textContent = String(gameState.best);
-        overlayGames.textContent = String(gameState.gamesPlayed);
+        if (overlayBest) overlayBest.textContent = String(gameState.best);
+        if (overlayGames) overlayGames.textContent = String(gameState.gamesPlayed);
     }
 
     function initHelp() {
-        helpToggle.addEventListener("click", toggleHelp);
-        helpToggleSecondary.addEventListener("click", toggleHelp);
+        if (helpToggle) helpToggle.addEventListener("click", toggleHelp);
+        if (helpToggleSecondary) helpToggleSecondary.addEventListener("click", toggleHelp);
+    }
+
+    // ==================== QUICK WINS: CSS INJECTION ====================
+    function injectQuickWinsCSS() {
+        const powerupCSS = `
+            .powerup-indicators {
+                position: absolute;
+                top: 80px;
+                right: 20px;
+                display: flex;
+                flex-direction: column;
+                gap: 10px;
+                z-index: 100;
+            }
+
+            .powerup-indicator {
+                width: 50px;
+                height: 50px;
+                border-radius: 12px;
+                display: flex;
+                align-items: center;
+                justify-content: center;
+                font-size: 20px;
+                position: relative;
+                opacity: 0.3;
+                transition: all 0.3s ease;
+                transform: scale(0.9);
+            }
+
+            .powerup-indicator.active {
+                opacity: 1;
+                transform: scale(1);
+                box-shadow: 0 0 20px currentColor;
+            }
+
+            .powerup-indicator[data-type="DOUBLE_POINTS"] {
+                background: linear-gradient(135deg, #fbbf24, #f59e0b);
+                color: #78350f;
+            }
+
+            .powerup-indicator[data-type="SLOW_TIME"] {
+                background: linear-gradient(135deg, #60a5fa, #3b82f6);
+                color: white;
+            }
+
+            .powerup-indicator[data-type="MAGNET"] {
+                background: linear-gradient(135deg, #ef4444, #dc2626);
+                color: white;
+            }
+
+            .powerup-indicator[data-type="BEE_REPELLENT"] {
+                background: linear-gradient(135deg, #22c55e, #16a34a);
+                color: white;
+            }
+
+            .powerup-timer {
+                position: absolute;
+                bottom: -8px;
+                left: 5px;
+                right: 5px;
+                height: 3px;
+                background: rgba(255, 255, 255, 0.3);
+                border-radius: 2px;
+                overflow: hidden;
+            }
+
+            .powerup-timer::after {
+                content: '';
+                position: absolute;
+                top: 0;
+                left: 0;
+                height: 100%;
+                background: white;
+                width: 100%;
+                transition: width linear;
+            }
+
+            .achievement-popup {
+                position: fixed;
+                top: 50%;
+                left: 50%;
+                transform: translate(-50%, -50%);
+                background: linear-gradient(135deg, #fbbf24, #f59e0b);
+                color: #78350f;
+                padding: 20px;
+                border-radius: 20px;
+                box-shadow: 0 10px 40px rgba(0, 0, 0, 0.3);
+                z-index: 1000;
+                display: none;
+                align-items: center;
+                gap: 15px;
+                min-width: 300px;
+                animation: achievementPopup 3s ease forwards;
+                border: 3px solid #78350f;
+            }
+
+            @keyframes achievementPopup {
+                0% { opacity: 0; transform: translate(-50%, -40%); }
+                10% { opacity: 1; transform: translate(-50%, -50%); }
+                90% { opacity: 1; transform: translate(-50%, -50%); }
+                100% { opacity: 0; transform: translate(-50%, -60%); }
+            }
+
+            .achievement-icon {
+                font-size: 40px;
+                filter: drop-shadow(2px 2px 2px rgba(0,0,0,0.2));
+            }
+
+            .achievement-text {
+                flex: 1;
+            }
+
+            .achievement-title {
+                font-weight: bold;
+                font-size: 18px;
+                margin-bottom: 5px;
+            }
+
+            .achievement-name {
+                font-size: 16px;
+                font-weight: bold;
+                margin-bottom: 5px;
+            }
+
+            .achievement-desc {
+                font-size: 14px;
+                opacity: 0.9;
+            }
+
+            .daily-challenge-panel {
+                position: absolute;
+                top: 80px;
+                left: 20px;
+                background: rgba(30, 41, 59, 0.9);
+                border-radius: 15px;
+                padding: 15px;
+                color: white;
+                width: 250px;
+                backdrop-filter: blur(10px);
+                border: 2px solid #fbbf24;
+                z-index: 50;
+            }
+
+            .daily-challenge-title {
+                font-weight: bold;
+                color: #fbbf24;
+                margin-bottom: 10px;
+                font-size: 16px;
+                display: flex;
+                align-items: center;
+                gap: 8px;
+            }
+
+            .daily-challenge-title::before {
+                content: '🏆';
+                font-size: 14px;
+            }
+
+            .daily-challenge-progress {
+                height: 8px;
+                background: rgba(255, 255, 255, 0.1);
+                border-radius: 4px;
+                margin: 10px 0;
+                overflow: hidden;
+            }
+
+            .daily-challenge-progress-fill {
+                height: 100%;
+                background: linear-gradient(90deg, #fbbf24, #f59e0b);
+                border-radius: 4px;
+                transition: width 0.3s ease;
+            }
+
+            .daily-challenge-reward {
+                font-size: 12px;
+                color: #fbbf24;
+                margin-top: 8px;
+                display: flex;
+                align-items: center;
+                gap: 5px;
+            }
+
+            .evolution-display {
+                position: absolute;
+                top: 20px;
+                left: 50%;
+                transform: translateX(-50%);
+                background: rgba(30, 41, 59, 0.9);
+                border-radius: 15px;
+                padding: 8px 20px;
+                color: white;
+                backdrop-filter: blur(10px);
+                border: 2px solid #fbbf24;
+                z-index: 50;
+                font-weight: bold;
+                display: none;
+                align-items: center;
+                gap: 10px;
+            }
+
+            .evolution-level {
+                color: #fbbf24;
+                font-size: 18px;
+            }
+
+            .evolution-name {
+                font-size: 14px;
+            }
+
+            @keyframes slideDown {
+                from { transform: translate(-50%, -20px); opacity: 0; }
+                to { transform: translate(-50%, 0); opacity: 1; }
+            }
+
+            @keyframes slideUp {
+                from { transform: translate(-50%, 0); opacity: 1; }
+                to { transform: translate(-50%, -20px); opacity: 0; }
+            }
+
+            .achievements-container {
+                max-height: 400px;
+                overflow-y: auto;
+                margin-top: 20px;
+                padding: 15px;
+                background: rgba(30, 41, 59, 0.9);
+                border-radius: 15px;
+                border: 2px solid #fbbf24;
+            }
+
+            .achievement {
+                display: flex;
+                align-items: center;
+                gap: 15px;
+                padding: 12px;
+                margin-bottom: 10px;
+                background: rgba(255, 255, 255, 0.1);
+                border-radius: 10px;
+                border-left: 4px solid #fbbf24;
+            }
+
+            .achievement-icon {
+                font-size: 24px;
+                min-width: 40px;
+                text-align: center;
+            }
+
+            .achievement-name {
+                font-weight: bold;
+                color: #fbbf24;
+                font-size: 16px;
+            }
+
+            .achievement-desc {
+                font-size: 12px;
+                color: rgba(255, 255, 255, 0.8);
+            }
+            
+            /* Settings Modal Styles */
+            #settingsModal {
+                display: none;
+                position: fixed;
+                top: 0;
+                left: 0;
+                width: 100%;
+                height: 100%;
+                background-color: rgba(0, 0, 0, 0.8);
+                z-index: 2000;
+                align-items: center;
+                justify-content: center;
+            }
+            
+            #settingsModal.visible {
+                display: flex;
+            }
+            
+            #settingsPanel {
+                background: linear-gradient(135deg, #1e293b, #0f172a);
+                border-radius: 20px;
+                padding: 30px;
+                width: 90%;
+                max-width: 500px;
+                max-height: 80vh;
+                overflow-y: auto;
+                border: 3px solid #fbbf24;
+                box-shadow: 0 10px 40px rgba(0, 0, 0, 0.5);
+            }
+            
+            .settings-header {
+                display: flex;
+                justify-content: space-between;
+                align-items: center;
+                margin-bottom: 30px;
+            }
+            
+            .settings-header h2 {
+                color: #fbbf24;
+                font-size: 28px;
+                margin: 0;
+            }
+            
+            .settings-close {
+                background: none;
+                border: none;
+                color: #fbbf24;
+                font-size: 24px;
+                cursor: pointer;
+                padding: 5px;
+                border-radius: 5px;
+            }
+            
+            .settings-close:hover {
+                background-color: rgba(251, 191, 36, 0.1);
+            }
+            
+            .settings-group {
+                margin-bottom: 25px;
+                background: rgba(255, 255, 255, 0.05);
+                padding: 20px;
+                border-radius: 15px;
+            }
+            
+            .settings-group h3 {
+                color: #fbbf24;
+                font-size: 20px;
+                margin: 0 0 15px 0;
+            }
+            
+            .settings-row {
+                display: flex;
+                align-items: center;
+                justify-content: space-between;
+                margin-bottom: 15px;
+                padding: 10px 0;
+                border-bottom: 1px solid rgba(255, 255, 255, 0.1);
+            }
+            
+            .settings-row:last-child {
+                border-bottom: none;
+            }
+            
+            .settings-label {
+                color: white;
+                font-size: 16px;
+                font-weight: bold;
+            }
+            
+            .toggle-btn {
+                background: rgba(255, 255, 255, 0.1);
+                border: 2px solid #fbbf24;
+                border-radius: 50px;
+                width: 60px;
+                height: 30px;
+                position: relative;
+                cursor: pointer;
+                transition: all 0.3s ease;
+            }
+            
+            .toggle-btn[data-on="true"] {
+                background-color: #fbbf24;
+            }
+            
+            .toggle-btn::after {
+                content: '';
+                position: absolute;
+                top: 3px;
+                left: 3px;
+                width: 22px;
+                height: 22px;
+                background-color: white;
+                border-radius: 50%;
+                transition: all 0.3s ease;
+            }
+            
+            .toggle-btn[data-on="true"]::after {
+                left: calc(100% - 25px);
+            }
+            
+            .diff-btn {
+                background: rgba(255, 255, 255, 0.1);
+                border: 2px solid #fbbf24;
+                color: white;
+                padding: 8px 16px;
+                border-radius: 8px;
+                cursor: pointer;
+                transition: all 0.3s ease;
+                font-weight: bold;
+            }
+            
+            .diff-btn:hover {
+                background: rgba(251, 191, 36, 0.2);
+            }
+            
+            .diff-btn.active {
+                background-color: #fbbf24;
+                color: #1e293b;
+            }
+            
+            .settings-btn {
+                background: linear-gradient(135deg, #fbbf24, #f59e0b);
+                color: #1e293b;
+                border: none;
+                padding: 12px 24px;
+                border-radius: 10px;
+                font-weight: bold;
+                cursor: pointer;
+                transition: all 0.3s ease;
+                display: flex;
+                align-items: center;
+                gap: 8px;
+                width: 100%;
+                justify-content: center;
+                margin-top: 10px;
+            }
+            
+            .settings-btn:hover {
+                transform: translateY(-2px);
+                box-shadow: 0 5px 15px rgba(251, 191, 36, 0.4);
+            }
+            
+            .settings-btn.danger {
+                background: linear-gradient(135deg, #ef4444, #dc2626);
+                color: white;
+            }
+            
+            .settings-btn.danger:hover {
+                box-shadow: 0 5px 15px rgba(239, 68, 68, 0.4);
+            }
+        `;
+
+        const styleSheet = document.createElement("style");
+        styleSheet.textContent = powerupCSS;
+        document.head.appendChild(styleSheet);
     }
 
     // ==================== MAIN INITIALIZATION ====================
     function init() {
-        console.log("Initializing Honey Hunt...");
+        console.log("Initializing Honey Hunt with Enhanced Features & Audio...");
+        console.log("Game container:", gameContainer);
+        console.log("Settings toggle:", settingsToggle);
+        console.log("Settings modal:", settingsModal);
+        console.log("Settings close:", settingsClose);
+
+        // Initialize settings UI first
+        applySettingsToUi();
+
+        injectQuickWinsCSS();
         loadPersistedState();
         resizeCanvas();
         updateHud();
-        applySettingsToUi();
         initControls();
         initSettings();
         initTopbar();
         initOverlays();
         initHelp();
+        initTutorial();
+        initShareFunctionality();
+        initAudio();
+        createPowerupIndicators();
+        initDailyChallenge();
 
-        // Initialize bear animation
         bear.animation.blinkTimer = 1 + Math.random() * 2;
+        dynamicDifficulty.multiplier = 1;
+        dynamicDifficulty.performanceHistory = [];
+
+        // Add button click sounds to all buttons
+        if (document.readyState === "loading") {
+            document.addEventListener("DOMContentLoaded", addButtonClickSounds);
+        } else {
+            addButtonClickSounds();
+        }
+
+        if (settingsState.musicOn) {
+            startBackgroundMusic();
+        }
 
         window.addEventListener("resize", resizeCanvas);
         requestAnimationFrame(gameLoop);
-        console.log("Honey Hunt initialized successfully!");
+        console.log("Honey Hunt Enhanced with Audio initialized successfully!");
+
+        // Add debug button for testing
+        const debugBtn = document.createElement('button');
+        debugBtn.textContent = 'Debug Settings';
+        debugBtn.style.position = 'fixed';
+        debugBtn.style.bottom = '10px';
+        debugBtn.style.right = '10px';
+        debugBtn.style.zIndex = '9999';
+        debugBtn.style.background = '#fbbf24';
+        debugBtn.style.color = '#1e293b';
+        debugBtn.style.padding = '10px';
+        debugBtn.style.border = 'none';
+        debugBtn.style.borderRadius = '5px';
+        debugBtn.style.fontWeight = 'bold';
+        debugBtn.style.cursor = 'pointer';
+        debugBtn.addEventListener('click', () => {
+            console.log('Settings State:', settingsState);
+            console.log('Game State:', gameState);
+            console.log('Settings Modal:', document.getElementById('settingsModal'));
+            console.log('Settings Toggle:', document.getElementById('settingsToggle'));
+            alert(`Settings Debug:\nMusic: ${settingsState.musicOn ? 'ON' : 'OFF'}\nSFX: ${settingsState.sfxOn ? 'ON' : 'OFF'}\nDifficulty: ${settingsState.difficulty}\n\nCheck console for more details.`);
+        });
+        document.body.appendChild(debugBtn);
     }
 
-    // Export functions for external use
-    window.HoneyHuntGame = {
-        startGame,
-        pauseGame,
-        resumeGame,
-        endGame,
-        togglePause,
-        getScore: () => gameState.score,
-        getBestScore: () => gameState.best,
-        getGameState: () => ({...gameState}),
-        getSettings: () => ({...settingsState}),
-        isRunning: () => gameState.running,
-        isPaused: () => gameState.paused
-    };
+    // DOM integration for settings button
+    document.addEventListener('DOMContentLoaded', function() {
+        console.log("DOM fully loaded, initializing game...");
 
-    if (document.readyState === "loading") {
-        document.addEventListener("DOMContentLoaded", init);
-    } else {
+        // Connect the game settings button to the existing settings functionality
+        const gameSettingsButton = document.getElementById('gameSettingsButton');
+
+        if (gameSettingsButton) {
+            console.log("Found game settings button");
+            gameSettingsButton.addEventListener('click', function(e) {
+                e.preventDefault();
+                e.stopPropagation();
+                console.log("Game settings button clicked!");
+                openSettings();
+            });
+        } else {
+            console.log("Game settings button not found");
+        }
+
+        // Initialize the game
         init();
-    }
+    });
 })();
