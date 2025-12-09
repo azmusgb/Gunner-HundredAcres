@@ -1,5 +1,5 @@
-// game.js - Honey Hunt Game
-// This file contains all the game logic extracted from the HTML
+// game.js - Honey Hunt Game (Enhanced Edition)
+// This file contains all the enhanced game logic with improved bear animations and effects
 
 (function () {
     "use strict";
@@ -93,7 +93,7 @@
         speed: 260,
         vx: 0,
         dir: 0,
-        // New animation properties
+        // Enhanced animation properties
         animation: {
             walkCycle: 0,
             bobPhase: 0,
@@ -101,20 +101,29 @@
             squashStretch: 1,
             isMoving: false,
             blinkTimer: 0,
-            mood: "happy" // happy, worried, excited
+            mood: "happy", // happy, worried, excited
+            lastMoodChange: 0,
+            celebrationTimer: 0
         }
     };
-
 
     const jars = [];
     const bees = [];
     const scorePopups = [];
     const particles = [];
+    const bearTrail = [];
+
+    let screenShake = {
+        intensity: 0,
+        duration: 0,
+        timer: 0
+    };
 
     let lastTimestamp = 0;
     let jarSpawnTimer = 0;
     let beeSpawnTimer = 0;
 
+    // ==================== UTILITY FUNCTIONS ====================
     function clamp(value, min, max) {
         return Math.max(min, Math.min(max, value));
     }
@@ -132,6 +141,7 @@
         }
     }
 
+    // ==================== PERSISTENCE ====================
     function loadPersistedState() {
         try {
             const best = Number(localStorage.getItem(STORAGE_KEYS.BEST) || "0");
@@ -166,250 +176,183 @@
         }
     }
 
-    function resizeCanvas() {
-        const rect = gameContainer.getBoundingClientRect();
-        const dpr = window.devicePixelRatio || 1;
-        const width = rect.width;
-        const height = rect.height;
-
-        canvas.width = width * dpr;
-        canvas.height = height * dpr;
-        ctx.setTransform(dpr, 0, 0, dpr, 0, 0);
-
-        world.width = width;
-        world.height = height;
-
-        bear.y = world.height * 0.85;
-        bear.x = clamp(bear.x || world.width / 2, 30, world.width - 30);
+    // ==================== SCREEN SHAKE ====================
+    function shakeScreen(intensity = 5, duration = 0.3) {
+        screenShake.intensity = intensity;
+        screenShake.duration = duration;
+        screenShake.timer = duration;
     }
 
-    function resetGameState() {
-        gameState.running = false;
-        gameState.paused = false;
-        gameState.timeLeft = GAME_DURATION;
-        gameState.score = 0;
-        gameState.streak = 0;
-        gameState.lives = MAX_LIVES;
-        gameState.shieldTime = 0;
-        jars.length = 0;
-        bees.length = 0;
-        scorePopups.length = 0;
-        particles.length = 0;
-        jarSpawnTimer = 0;
-        beeSpawnTimer = 0;
-
-        bear.x = world.width / 2;
-        bear.y = world.height * 0.85;
-    }
-
-    function difficultyConfig() {
-        if (settingsState.difficulty === 0) {
-            return {
-                jarRate: 0.9,
-                beeRate: 2.2,
-                fallSpeed: 150
-            };
-        } else if (settingsState.difficulty === 2) {
-            return {
-                jarRate: 0.55,
-                beeRate: 1.3,
-                fallSpeed: 220
-            };
-        }
-        return {
-            jarRate: 0.7,
-            beeRate: 1.7,
-            fallSpeed: 190
+    // ==================== PARTICLE SYSTEM ====================
+    function createJarParticles(x, y, type) {
+        const colors = {
+            normal: ["#facc15", "#eab308", "#fbbf24"],
+            gold: ["#f97316", "#ea580c", "#fb923c"],
+            shield: ["#38bdf8", "#0ea5e9", "#7dd3fc"]
         };
-    }
 
-    function spawnJar() {
-        const {fallSpeed} = difficultyConfig();
-        const x = rand(30, world.width - 30);
-        const kindRand = Math.random();
-        let type = "normal";
-        let value = 10;
-        if (kindRand > 0.85) {
-            type = "gold";
-            value = 30;
-        } else if (kindRand > 0.7) {
-            type = "shield";
-            value = 15;
-        }
+        const particleCount = type === "gold" ? 20 : type === "shield" ? 15 : 12;
+        const colorSet = colors[type] || colors.normal;
 
-        jars.push({
-            x,
-            y: -20,
-            radius: 12,
-            vy: fallSpeed + rand(-20, 20),
-            type,
-            value
-        });
-    }
+        for (let i = 0; i < particleCount; i++) {
+            const angle = Math.random() * Math.PI * 2;
+            const speed = 80 + Math.random() * 120;
+            const size = 3 + Math.random() * 4;
 
-    function spawnBee() {
-        const {fallSpeed} = difficultyConfig();
-        const x = Math.random() < 0.5 ? -30 : world.width + 30;
-        const vy = fallSpeed * 0.7;
-        const dir = x < 0 ? 1 : -1;
-        bees.push({
-            x,
-            y: rand(world.height * 0.2, world.height * 0.7),
-            vx: dir * rand(80, 140),
-            vy,
-            radius: 14
-        });
-    }
-
-    function updateEntities(dt) {
-        const {jarRate, beeRate} = difficultyConfig();
-
-        jarSpawnTimer += dt;
-        beeSpawnTimer += dt;
-
-        const jarInterval = jarRate;
-        const beeInterval = beeRate;
-
-        while (jarSpawnTimer > jarInterval) {
-            jarSpawnTimer -= jarInterval;
-            spawnJar();
-        }
-
-        while (beeSpawnTimer > beeInterval) {
-            beeSpawnTimer -= beeInterval;
-            spawnBee();
-        }
-
-        const targetDir = (keys.left ? -1 : 0) + (keys.right ? 1 : 0);
-        bear.dir = targetDir;
-        bear.vx = bear.dir * bear.speed;
-        bear.x = clamp(bear.x + bear.vx * dt, 26, world.width - 26);
-
-        for (let i = jars.length - 1; i >= 0; i--) {
-            const jar = jars[i];
-            jar.y += jar.vy * dt;
-            if (jar.y - jar.radius > world.height + 40) {
-                jars.splice(i, 1);
-                gameState.streak = 0;
-            }
-        }
-
-        for (let i = bees.length - 1; i >= 0; i--) {
-            const bee = bees[i];
-            bee.x += bee.vx * dt;
-            bee.y += bee.vy * dt * 0.04;
-
-            if (bee.x < -60 || bee.x > world.width + 60 || bee.y > world.height + 40) {
-                bees.splice(i, 1);
-            }
-        }
-
-        if (gameState.shieldTime > 0) {
-            gameState.shieldTime -= dt;
-            if (gameState.shieldTime <= 0) {
-                gameState.shieldTime = 0;
-                powerupIndicator.classList.remove("visible");
-            }
-        }
-    }
-
-    function addScorePopup(amount, x, y, color) {
-        scorePopups.push({
-            amount: amount > 0 ? "+" + amount : String(amount),
-            x,
-            y,
-            color,
-            start: performance.now(),
-            duration: 650
-        });
-    }
-
-    function createParticles(x, y, color, count = 8) {
-        for (let i = 0; i < count; i++) {
-            const angle = (Math.PI * 2 * i) / count + Math.random() * 0.3;
-            const speed = 80 + Math.random() * 60;
             particles.push({
                 x,
                 y,
                 vx: Math.cos(angle) * speed,
-                vy: Math.sin(angle) * speed - 50,
-                color,
+                vy: Math.sin(angle) * speed - 40,
+                color: colorSet[Math.floor(Math.random() * colorSet.length)],
                 life: 1,
-                decay: 0.016,
-                radius: 2 + Math.random() * 2
+                decay: 0.012 + Math.random() * 0.008,
+                radius: size,
+                gravity: 120,
+                rotation: Math.random() * Math.PI * 2,
+                rotationSpeed: (Math.random() - 0.5) * 10
+            });
+        }
+
+        // Add sparkle particles for gold jars
+        if (type === "gold") {
+            for (let i = 0; i < 6; i++) {
+                particles.push({
+                    x,
+                    y,
+                    vx: (Math.random() - 0.5) * 60,
+                    vy: -80 - Math.random() * 60,
+                    color: "#ffffff",
+                    life: 1,
+                    decay: 0.02,
+                    radius: 1.5,
+                    gravity: 60
+                });
+            }
+        }
+    }
+
+    function createBeeHitParticles(x, y, count = 16) {
+        for (let i = 0; i < count; i++) {
+            const angle = Math.random() * Math.PI * 2;
+            const speed = 60 + Math.random() * 90;
+
+            particles.push({
+                x,
+                y,
+                vx: Math.cos(angle) * speed,
+                vy: Math.sin(angle) * speed,
+                color: "#ef4444",
+                life: 1,
+                decay: 0.02,
+                radius: 2 + Math.random() * 3,
+                gravity: 100,
+                rotation: Math.random() * Math.PI * 2
             });
         }
     }
 
-    function handleCollisions() {
-        for (let i = jars.length - 1; i >= 0; i--) {
-            const jar = jars[i];
-            const dx = jar.x - bear.x;
-            const dy = jar.y - (bear.y - 10);
-            const dist = Math.sqrt(dx * dx + dy * dy);
-            if (dist < jar.radius + 26) {
-                jars.splice(i, 1);
-                let mult = 1 + Math.min(gameState.streak * 0.05, 1.5);
-                let gain = Math.round(jar.value * mult);
-                gameState.score += gain;
-                gameState.streak += 1;
+    function updateParticles(dt) {
+        for (let i = particles.length - 1; i >= 0; i--) {
+            const p = particles[i];
+            p.x += p.vx * dt;
+            p.y += p.vy * dt;
+            p.vy += (p.gravity || 200) * dt;
+            p.life -= p.decay;
 
-                const popColor = jar.type === "gold" ? "#f97316" : jar.type === "shield" ? "#38bdf8" : "#0f766e";
-                addScorePopup(gain, bear.x, bear.y - 50, popColor);
-                createParticles(jar.x, jar.y, popColor, jar.type === "gold" ? 12 : 8);
-                showComboIfNeeded();
-
-                if (jar.type === "shield") {
-                    gameState.shieldTime = 5;
-                    powerupIndicator.classList.add("visible");
-                    liveRegion.textContent = "Shield active for five seconds.";
-                }
+            if (p.rotation !== undefined) {
+                p.rotation += (p.rotationSpeed || 0) * dt;
             }
-        }
 
-        for (let i = bees.length - 1; i >= 0; i--) {
-            const bee = bees[i];
-            const dx = bee.x - bear.x;
-            const dy = bee.y - (bear.y - 10);
-            const dist = Math.sqrt(dx * dx + dy * dy);
-            if (dist < bee.radius + 24) {
-                bees.splice(i, 1);
-                if (gameState.shieldTime > 0) {
-                    gameState.shieldTime = 0;
-                    powerupIndicator.classList.remove("visible");
-                    addScorePopup(0, bear.x, bear.y - 50, "#e5e7eb");
-                    createParticles(bee.x, bee.y, "#38bdf8", 10);
-                    liveRegion.textContent = "Bee blocked by shield.";
-                } else {
-                    gameState.lives -= 1;
-                    gameState.streak = 0;
-                    createParticles(bear.x, bear.y - 10, "#ef4444", 16);
-                    liveRegion.textContent = "Bee hit! Lives left: " + gameState.lives;
-                    if (gameState.lives <= 0) {
-                        endGame();
-                        return;
-                    }
-                }
+            if (p.life <= 0) {
+                particles.splice(i, 1);
             }
         }
     }
 
-    function showComboIfNeeded() {
-        streakValue.textContent = String(gameState.streak);
-        if (gameState.streak >= 5) {
-            streakBadge.textContent = "Combo!";
-            streakBadge.classList.add("visible");
+    function drawParticles() {
+        for (const p of particles) {
+            ctx.save();
+            ctx.globalAlpha = p.life;
+            ctx.fillStyle = p.color;
+
+            if (p.rotation !== undefined) {
+                ctx.translate(p.x, p.y);
+                ctx.rotate(p.rotation);
+                ctx.beginPath();
+                ctx.arc(0, 0, p.radius, 0, Math.PI * 2);
+                ctx.fill();
+            } else {
+                ctx.beginPath();
+                ctx.arc(p.x, p.y, p.radius, 0, Math.PI * 2);
+                ctx.fill();
+            }
+
+            ctx.restore();
+        }
+    }
+
+    // ==================== BEAR ANIMATION ====================
+    function updateBearAnimation(dt) {
+        const anim = bear.animation;
+
+        // Walking animation
+        if (bear.vx !== 0) {
+            anim.isMoving = true;
+            anim.walkCycle += Math.abs(bear.vx) * 0.01 * dt;
+            anim.bobPhase += dt * 8;
+
+            // Squash/stretch on direction change
+            if (Math.sign(bear.vx) !== Math.sign(bear.dir) && bear.dir !== 0) {
+                anim.squashStretch = 0.8;
+            } else {
+                anim.squashStretch = 1 + Math.sin(anim.walkCycle * 2) * 0.05;
+            }
         } else {
-            streakBadge.classList.remove("visible");
+            anim.isMoving = false;
+            anim.squashStretch = 1 + Math.sin(performance.now() / 1000) * 0.02;
+            anim.bobPhase += dt * 2;
         }
 
-        if (gameState.streak > 0 && gameState.streak % 10 === 0) {
-            comboIndicator.textContent = "x" + (1 + Math.floor(gameState.streak / 10)) + " Combo!";
-            comboIndicator.classList.add("visible");
-            setTimeout(() => comboIndicator.classList.remove("visible"), 700);
+        // Blinking animation
+        anim.blinkTimer -= dt;
+        if (anim.blinkTimer <= 0) {
+            anim.blinkTimer = 3 + Math.random() * 4;
         }
+
+        // Mood based on game state
+        const newMood = gameState.lives === 1 ? "worried" :
+            gameState.streak >= 10 ? "excited" : "happy";
+
+        if (newMood !== anim.mood) {
+            anim.mood = newMood;
+            anim.lastMoodChange = performance.now();
+        }
+
+        // Celebration timer for combos
+        if (anim.celebrationTimer > 0) {
+            anim.celebrationTimer -= dt;
+        }
+
+        // Direction flipping
+        anim.scaleX = bear.dir < 0 ? -1 : 1;
     }
 
+    function triggerBearCelebration() {
+        bear.animation.celebrationTimer = 0.5;
+        bear.animation.mood = "excited";
+
+        // Jump animation
+        bear.animation.squashStretch = 0.7;
+        setTimeout(() => {
+            bear.animation.squashStretch = 1.3;
+        }, 100);
+        setTimeout(() => {
+            bear.animation.squashStretch = 1;
+        }, 200);
+    }
+
+    // ==================== DRAWING FUNCTIONS ====================
     function drawBear() {
         const x = bear.x;
         const y = bear.y;
@@ -426,6 +369,11 @@
 
         ctx.rotate(tilt);
         ctx.translate(0, bob);
+
+        // Draw speed trail if moving fast
+        if (anim.isMoving && Math.abs(bear.vx) > 150) {
+            drawSpeedTrail(anim);
+        }
 
         // Shadow with movement blur
         ctx.fillStyle = anim.isMoving ?
@@ -455,23 +403,14 @@
         ctx.ellipse(leanOffset, -10, 25, 35, 0, 0, Math.PI * 2);
         ctx.fill();
 
-        // Head with fluff
+        // Draw bear components
         drawBearHead(anim);
-
-        // Arms with walking animation
         drawBearArms(anim);
-
-        // Jar with bear
         drawJarWithBear(anim);
 
         // Shield effect
         if (gameState.shieldTime > 0) {
             drawShieldEffect();
-        }
-
-        // Trail effect when moving fast
-        if (anim.isMoving && Math.abs(bear.vx) > 150) {
-            drawSpeedTrail(anim);
         }
 
         ctx.restore();
@@ -762,6 +701,311 @@
         }
     }
 
+    // ==================== GAME INITIALIZATION ====================
+    function resizeCanvas() {
+        const rect = gameContainer.getBoundingClientRect();
+        const dpr = window.devicePixelRatio || 1;
+        const width = rect.width;
+        const height = rect.height;
+
+        canvas.width = width * dpr;
+        canvas.height = height * dpr;
+        ctx.setTransform(dpr, 0, 0, dpr, 0, 0);
+
+        world.width = width;
+        world.height = height;
+
+        bear.y = world.height * 0.85;
+        bear.x = clamp(bear.x || world.width / 2, 30, world.width - 30);
+    }
+
+    function resetGameState() {
+        gameState.running = false;
+        gameState.paused = false;
+        gameState.timeLeft = GAME_DURATION;
+        gameState.score = 0;
+        gameState.streak = 0;
+        gameState.lives = MAX_LIVES;
+        gameState.shieldTime = 0;
+        jars.length = 0;
+        bees.length = 0;
+        scorePopups.length = 0;
+        particles.length = 0;
+        bearTrail.length = 0;
+        jarSpawnTimer = 0;
+        beeSpawnTimer = 0;
+        screenShake.timer = 0;
+
+        bear.x = world.width / 2;
+        bear.y = world.height * 0.85;
+
+        // Reset bear animation
+        bear.animation.walkCycle = 0;
+        bear.animation.bobPhase = 0;
+        bear.animation.scaleX = 1;
+        bear.animation.squashStretch = 1;
+        bear.animation.isMoving = false;
+        bear.animation.mood = "happy";
+        bear.animation.celebrationTimer = 0;
+    }
+
+    // ==================== GAME LOGIC ====================
+    function difficultyConfig() {
+        if (settingsState.difficulty === 0) {
+            return {
+                jarRate: 0.9,
+                beeRate: 2.2,
+                fallSpeed: 150
+            };
+        } else if (settingsState.difficulty === 2) {
+            return {
+                jarRate: 0.55,
+                beeRate: 1.3,
+                fallSpeed: 220
+            };
+        }
+        return {
+            jarRate: 0.7,
+            beeRate: 1.7,
+            fallSpeed: 190
+        };
+    }
+
+    function spawnJar() {
+        const {fallSpeed} = difficultyConfig();
+        const x = rand(30, world.width - 30);
+        const kindRand = Math.random();
+        let type = "normal";
+        let value = 10;
+        if (kindRand > 0.85) {
+            type = "gold";
+            value = 30;
+        } else if (kindRand > 0.7) {
+            type = "shield";
+            value = 15;
+        }
+
+        jars.push({
+            x,
+            y: -20,
+            radius: 12,
+            vy: fallSpeed + rand(-20, 20),
+            type,
+            value
+        });
+    }
+
+    function spawnBee() {
+        const {fallSpeed} = difficultyConfig();
+        const x = Math.random() < 0.5 ? -30 : world.width + 30;
+        const vy = fallSpeed * 0.7;
+        const dir = x < 0 ? 1 : -1;
+        bees.push({
+            x,
+            y: rand(world.height * 0.2, world.height * 0.7),
+            vx: dir * rand(80, 140),
+            vy,
+            radius: 14
+        });
+    }
+
+    function updateEntities(dt) {
+        const {jarRate, beeRate} = difficultyConfig();
+
+        jarSpawnTimer += dt;
+        beeSpawnTimer += dt;
+
+        const jarInterval = jarRate;
+        const beeInterval = beeRate;
+
+        while (jarSpawnTimer > jarInterval) {
+            jarSpawnTimer -= jarInterval;
+            spawnJar();
+        }
+
+        while (beeSpawnTimer > beeInterval) {
+            beeSpawnTimer -= beeInterval;
+            spawnBee();
+        }
+
+        const targetDir = (keys.left ? -1 : 0) + (keys.right ? 1 : 0);
+        bear.dir = targetDir;
+        bear.vx = bear.dir * bear.speed;
+        bear.x = clamp(bear.x + bear.vx * dt, 26, world.width - 26);
+
+        for (let i = jars.length - 1; i >= 0; i--) {
+            const jar = jars[i];
+            jar.y += jar.vy * dt;
+            if (jar.y - jar.radius > world.height + 40) {
+                jars.splice(i, 1);
+                gameState.streak = 0;
+            }
+        }
+
+        for (let i = bees.length - 1; i >= 0; i--) {
+            const bee = bees[i];
+            bee.x += bee.vx * dt;
+            bee.y += bee.vy * dt * 0.04;
+
+            if (bee.x < -60 || bee.x > world.width + 60 || bee.y > world.height + 40) {
+                bees.splice(i, 1);
+            }
+        }
+
+        if (gameState.shieldTime > 0) {
+            gameState.shieldTime -= dt;
+            if (gameState.shieldTime <= 0) {
+                gameState.shieldTime = 0;
+                powerupIndicator.classList.remove("visible");
+            }
+        }
+    }
+
+    function addScorePopup(amount, x, y, color) {
+        scorePopups.push({
+            amount: amount > 0 ? "+" + amount : String(amount),
+            x,
+            y,
+            color,
+            start: performance.now(),
+            duration: 650
+        });
+    }
+
+    function handleCollisions() {
+        for (let i = jars.length - 1; i >= 0; i--) {
+            const jar = jars[i];
+            const dx = jar.x - bear.x;
+            const dy = jar.y - (bear.y - 10);
+            const dist = Math.sqrt(dx * dx + dy * dy);
+            if (dist < jar.radius + 26) {
+                jars.splice(i, 1);
+                let mult = 1 + Math.min(gameState.streak * 0.05, 1.5);
+                let gain = Math.round(jar.value * mult);
+                gameState.score += gain;
+                gameState.streak += 1;
+
+                const popColor = jar.type === "gold" ? "#f97316" : jar.type === "shield" ? "#38bdf8" : "#0f766e";
+                addScorePopup(gain, bear.x, bear.y - 50, popColor);
+                createJarParticles(jar.x, jar.y, jar.type);
+                showComboIfNeeded();
+
+                if (jar.type === "shield") {
+                    gameState.shieldTime = 5;
+                    powerupIndicator.classList.add("visible");
+                    liveRegion.textContent = "Shield active for five seconds.";
+                }
+            }
+        }
+
+        for (let i = bees.length - 1; i >= 0; i--) {
+            const bee = bees[i];
+            const dx = bee.x - bear.x;
+            const dy = bee.y - (bear.y - 10);
+            const dist = Math.sqrt(dx * dx + dy * dy);
+            if (dist < bee.radius + 24) {
+                bees.splice(i, 1);
+                if (gameState.shieldTime > 0) {
+                    gameState.shieldTime = 0;
+                    powerupIndicator.classList.remove("visible");
+                    addScorePopup(0, bear.x, bear.y - 50, "#e5e7eb");
+                    createJarParticles(bee.x, bee.y, "shield");
+                    liveRegion.textContent = "Bee blocked by shield.";
+                } else {
+                    gameState.lives -= 1;
+                    gameState.streak = 0;
+                    createBeeHitParticles(bear.x, bear.y - 10);
+                    shakeScreen(8, 0.4);
+                    liveRegion.textContent = "Bee hit! Lives left: " + gameState.lives;
+                    if (gameState.lives <= 0) {
+                        endGame();
+                        return;
+                    }
+                }
+            }
+        }
+    }
+
+    function triggerComboEffect() {
+        // Create celebration particles
+        for (let i = 0; i < 30; i++) {
+            particles.push({
+                x: bear.x,
+                y: bear.y - 30,
+                vx: (Math.random() - 0.5) * 300,
+                vy: -100 - Math.random() * 200,
+                color: i < 10 ? "#f97316" : i < 20 ? "#facc15" : "#38bdf8",
+                life: 1.5,
+                decay: 0.01,
+                radius: 3 + Math.random() * 4,
+                gravity: 80
+            });
+        }
+
+        triggerBearCelebration();
+    }
+
+    function showComboIfNeeded() {
+        streakValue.textContent = String(gameState.streak);
+        if (gameState.streak >= 5) {
+            streakBadge.textContent = "Combo!";
+            streakBadge.classList.add("visible");
+        } else {
+            streakBadge.classList.remove("visible");
+        }
+
+        if (gameState.streak > 0 && gameState.streak % 10 === 0) {
+            comboIndicator.textContent = "x" + (1 + Math.floor(gameState.streak / 10)) + " Combo!";
+            comboIndicator.classList.add("visible");
+            triggerComboEffect();
+            setTimeout(() => comboIndicator.classList.remove("visible"), 700);
+        }
+    }
+
+    function drawJars() {
+        for (const jar of jars) {
+            ctx.save();
+            ctx.translate(jar.x, jar.y);
+
+            const rot = jar.y * 0.01;
+            ctx.rotate(rot);
+
+            let bodyColor = "#facc15";
+            let glowColor = "rgba(250, 204, 21, 0.6)";
+            if (jar.type === "gold") {
+                bodyColor = "#f97316";
+                glowColor = "rgba(249, 115, 22, 0.7)";
+            }
+            if (jar.type === "shield") {
+                bodyColor = "#38bdf8";
+                glowColor = "rgba(56, 189, 248, 0.7)";
+            }
+
+            ctx.shadowColor = glowColor;
+            ctx.shadowBlur = jar.type === "gold" || jar.type === "shield" ? 12 : 6;
+
+            ctx.fillStyle = bodyColor;
+            ctx.beginPath();
+            ctx.roundRect(-10, -14, 20, 26, 6);
+            ctx.fill();
+
+            ctx.shadowBlur = 0;
+
+            ctx.fillStyle = "rgba(255, 255, 255, 0.9)";
+            ctx.fillRect(-10, -18, 20, 6);
+
+            ctx.fillStyle = "rgba(255, 255, 255, 0.5)";
+            ctx.beginPath();
+            ctx.ellipse(-3, -8, 4, 6, 0, 0, Math.PI * 2);
+            ctx.fill();
+
+            ctx.fillStyle = "rgba(0, 0, 0, 0.25)";
+            ctx.fillRect(-6, -10, 12, 2);
+
+            ctx.restore();
+        }
+    }
+
     function drawBees() {
         for (const bee of bees) {
             ctx.save();
@@ -851,39 +1095,30 @@
         }
     }
 
-    function updateParticles(dt) {
-        for (let i = particles.length - 1; i >= 0; i--) {
-            const p = particles[i];
-            p.x += p.vx * dt;
-            p.y += p.vy * dt;
-            p.vy += 200 * dt;
-            p.life -= p.decay;
-
-            if (p.life <= 0) {
-                particles.splice(i, 1);
-            }
-        }
-    }
-
-    function drawParticles() {
-        for (const p of particles) {
-            ctx.save();
-            ctx.globalAlpha = p.life;
-            ctx.fillStyle = p.color;
-            ctx.beginPath();
-            ctx.arc(p.x, p.y, p.radius, 0, Math.PI * 2);
-            ctx.fill();
-            ctx.restore();
-        }
-    }
-
     function render() {
         ctx.clearRect(0, 0, world.width, world.height);
+
+        // Apply screen shake
+        if (screenShake.timer > 0) {
+            screenShake.timer -= 1/60; // Approximate dt
+        }
+
+        const shakeX = screenShake.timer > 0 ?
+            (Math.random() - 0.5) * screenShake.intensity * (screenShake.timer / screenShake.duration) : 0;
+        const shakeY = screenShake.timer > 0 ?
+            (Math.random() - 0.5) * screenShake.intensity * (screenShake.timer / screenShake.duration) : 0;
+
+        ctx.save();
+        ctx.translate(shakeX, shakeY);
+
+        // Draw game elements
         drawParticles();
         drawJars();
         drawBees();
         drawBear();
         drawScorePopups();
+
+        ctx.restore();
     }
 
     function updateHud() {
@@ -909,6 +1144,7 @@
                 gameState.timeLeft = 0;
                 endGame();
             } else {
+                updateBearAnimation(dt);
                 updateEntities(dt);
                 updateParticles(dt);
                 handleCollisions();
@@ -920,6 +1156,7 @@
         requestAnimationFrame(gameLoop);
     }
 
+    // ==================== OVERLAY MANAGEMENT ====================
     function showOverlay(overlay) {
         [startOverlay, pauseOverlay, gameOverOverlay].forEach(function (el) {
             if (!el) return;
@@ -981,6 +1218,7 @@
         showOverlay(gameOverOverlay);
     }
 
+    // ==================== UI CONTROLS ====================
     function toggleHelp() {
         const isOpen = helpPanel.classList.toggle("visible");
         helpPanel.setAttribute("aria-hidden", String(!isOpen));
@@ -1271,6 +1509,7 @@
         helpToggleSecondary.addEventListener("click", toggleHelp);
     }
 
+    // ==================== MAIN INITIALIZATION ====================
     function init() {
         console.log("Initializing Honey Hunt...");
         loadPersistedState();
@@ -1282,6 +1521,10 @@
         initTopbar();
         initOverlays();
         initHelp();
+
+        // Initialize bear animation
+        bear.animation.blinkTimer = 1 + Math.random() * 2;
+
         window.addEventListener("resize", resizeCanvas);
         requestAnimationFrame(gameLoop);
         console.log("Honey Hunt initialized successfully!");
