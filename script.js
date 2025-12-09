@@ -1,2196 +1,1823 @@
-<!DOCTYPE html>
-<html lang="en">
-<head>
-    <meta charset="UTF-8" />
-    <title>Honey Hunt — Ultimate Edition</title>
-    <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover" />
-    <meta name="description" content="Collect honey, dodge bees, stack streaks, and unlock power-ups in this cozy Hundred Acre Wood–inspired honey hunt." />
-    <meta name="color-scheme" content="light dark" />
-    <meta name="theme-color" content="#ffb23a" />
-    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.1/css/all.min.css" />
-    <style>
-        *,
-        *::before,
-        *::after {
-            box-sizing: border-box;
-        }
-        :root {
-            --bg-grad-1: #fff8e1;
-            --bg-grad-2: #ffe0b2;
-            --panel: #ffffff;
-            --panel-soft: #fff8e6;
-            --panel-border: #fbc02d;
-            --ink: #2c1810;
-            --muted: #6b5c4a;
-            --muted-soft: #8b7b66;
-            --accent: #ff9d00;
-            --accent-hover: #ff8a00;
-            --accent-soft: rgba(255, 184, 77, 0.3);
-            --danger: #f97373;
-            --good: #22c55e;
-            --radius-lg: 24px;
-            --radius-pill: 999px;
-            --space-1: 4px;
-            --space-2: 8px;
-            --space-3: 12px;
-            --space-4: 16px;
-            --space-5: 24px;
-            --font-xs: 0.72rem;
-            --font-sm: 0.8rem;
-            --font-md: 0.9rem;
-            --font-lg: 1rem;
-            --font-xl: 1.25rem;
-            --font-2xl: 1.5rem;
-            --shadow-soft: 0 12px 30px rgba(0, 0, 0, 0.18);
-            --shadow-halo: 0 0 0 1px rgba(255, 255, 255, 0.7);
-        }
-        body {
-            margin: 0;
-            min-height: 100vh;
-            font-family: system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
-            color: var(--ink);
-            background:
-                    radial-gradient(circle at top left, rgba(251, 191, 36, 0.55), transparent 55%),
-                    radial-gradient(circle at bottom right, rgba(59, 130, 246, 0.45), transparent 55%),
-                    linear-gradient(to bottom, var(--bg-grad-1), var(--bg-grad-2));
-            display: flex;
-            justify-content: center;
-            align-items: stretch;
-            padding: var(--space-3);
-        }
-        body.dark {
-            --bg-grad-1: #020617;
-            --bg-grad-2: #0b1020;
-            --panel: #020617;
-            --panel-soft: #020617;
-            --panel-border: #1f2937;
-            --ink: #f9fafb;
-            --muted: #9ca3af;
-            --muted-soft: #6b7280;
-            --accent: #fbbf24;
-            --accent-hover: #f59e0b;
-            background:
-                    radial-gradient(circle at top left, rgba(59, 130, 246, 0.55), transparent 55%),
-                    radial-gradient(circle at bottom right, rgba(248, 250, 252, 0.12), transparent 55%),
-                    radial-gradient(circle at center, rgba(15, 23, 42, 0.9), #020617);
-        }
-        body:focus-visible {
-            outline: none;
-        }
-        button {
-            font-family: inherit;
-        }
-        .app {
-            width: 100%;
-            max-width: 960px;
-            margin: 0 auto;
-            display: flex;
-            flex-direction: column;
-            gap: var(--space-3);
-        }
-        .topbar {
-            display: flex;
-            align-items: center;
-            justify-content: space-between;
-            gap: var(--space-3);
-            padding: var(--space-3);
-            border-radius: var(--radius-lg);
-            background: linear-gradient(120deg, rgba(255, 255, 255, 0.98), rgba(255, 250, 235, 0.98));
-            border: 1px solid rgba(250, 204, 21, 0.5);
-            box-shadow: var(--shadow-soft);
-        }
-        body.dark .topbar {
-            background: radial-gradient(circle at top left, rgba(15, 23, 42, 0.98), rgba(15, 23, 42, 0.96));
-            border-color: rgba(148, 163, 184, 0.7);
-        }
-        .title {
-            display: flex;
-            align-items: center;
-            gap: var(--space-2);
-            min-width: 0;
-        }
-        .title-icon {
-            font-size: 1.6rem;
-            color: #fbbf24;
-            text-shadow: 0 0 10px rgba(250, 204, 21, 0.9);
-        }
-        .title-main {
-            font-weight: 700;
-            font-size: var(--font-xl);
-            letter-spacing: 0.03em;
-            white-space: nowrap;
-        }
-        .title-sub {
-            font-size: var(--font-xs);
-            color: var(--muted);
-            white-space: nowrap;
-        }
-        .title-text {
-            display: flex;
-            flex-direction: column;
-            gap: 2px;
-            overflow: hidden;
-        }
-        .title-text span {
-            text-overflow: ellipsis;
-            overflow: hidden;
-        }
-        .topbar-buttons {
-            display: flex;
-            flex-wrap: wrap;
-            gap: var(--space-2);
-            justify-content: flex-end;
-        }
-        .btn {
-            border: 0;
-            border-radius: var(--radius-pill);
-            padding: 6px 12px;
-            font-size: var(--font-sm);
-            display: inline-flex;
-            align-items: center;
-            gap: 6px;
-            cursor: pointer;
-            background: rgba(255, 255, 255, 0.9);
-            color: var(--ink);
-            box-shadow: 0 1px 0 rgba(255, 255, 255, 0.7), 0 6px 14px rgba(0, 0, 0, 0.15);
-            transition: transform 0.2s cubic-bezier(0.34, 1.56, 0.64, 1),
-            box-shadow 0.2s ease,
-            background 0.2s ease,
-            color 0.2s ease;
-            position: relative;
-            overflow: hidden;
-        }
-        .btn::before {
-            content: "";
-            position: absolute;
-            top: 50%;
-            left: 50%;
-            width: 0;
-            height: 0;
-            border-radius: 50%;
-            background: rgba(255, 255, 255, 0.4);
-            transform: translate(-50%, -50%);
-            transition: width 0.6s ease, height 0.6s ease;
-        }
-        .btn:hover::before {
-            width: 300px;
-            height: 300px;
-        }
-        .btn.small {
-            padding: 4px 10px;
-            font-size: var(--font-xs);
-        }
-        .btn.primary {
-            background: linear-gradient(135deg, var(--accent), var(--accent-hover));
-            color: #1f1306;
-            box-shadow: 0 1px 0 rgba(255, 255, 255, 0.3), 0 8px 16px rgba(251, 146, 60, 0.4);
-        }
-        .btn.secondary {
-            background: rgba(255, 255, 255, 0.9);
-        }
-        body.dark .btn.secondary {
-            background: rgba(15, 23, 42, 0.95);
-            color: #e5e7eb;
-        }
-        .btn:hover {
-            transform: translateY(-2px) scale(1.02);
-            box-shadow: 0 12px 28px rgba(0, 0, 0, 0.3);
-        }
-        .btn.primary:hover {
-            box-shadow: 0 1px 0 rgba(255, 255, 255, 0.3), 0 12px 32px rgba(251, 146, 60, 0.6);
-        }
-        .btn:active {
-            transform: translateY(0) scale(0.98);
-            box-shadow: 0 4px 12px rgba(0, 0, 0, 0.2);
-        }
-        .btn i {
-            font-size: 0.9em;
-            position: relative;
-            z-index: 1;
-        }
-        .btn span {
-            position: relative;
-            z-index: 1;
-        }
-        .game-layout {
-            flex: 1;
-            display: flex;
-            flex-direction: column;
-            gap: var(--space-3);
-            align-items: center;
-            justify-content: center;
-        }
-        .viewport-shell {
-            width: 100%;
-            max-width: 520px;
-            margin: 0 auto;
-            display: flex;
-            flex-direction: column;
-            gap: var(--space-2);
-            align-items: center;
-        }
-        .game-card {
-            width: 100%;
-            border-radius: var(--radius-lg);
-            padding: var(--space-3);
-            background: radial-gradient(circle at top, rgba(255, 253, 245, 0.98), rgba(255, 243, 205, 0.98));
-            border: 1px solid var(--panel-border);
-            box-shadow: var(--shadow-soft);
-        }
-        body.dark .game-card {
-            background: radial-gradient(circle at top, rgba(15, 23, 42, 0.98), rgba(15, 23, 42, 0.96));
-            border-color: rgba(148, 163, 184, 0.75);
-        }
-        .game-container {
-            position: relative;
-            width: 100%;
-            border-radius: 20px;
-            overflow: hidden;
-            border: 1px solid rgba(250, 204, 21, 0.7);
-            background: linear-gradient(to top, #fef3c7, #fffbeb);
-            aspect-ratio: 9 / 16;
-            box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.75);
-            touch-action: none;
-        }
-        body.dark .game-container {
-            background: radial-gradient(circle at top, #1f2937, #020617);
-            border-color: rgba(148, 163, 184, 0.75);
-            box-shadow: inset 0 1px 0 rgba(15, 23, 42, 1);
-        }
-        .game-bg-horizon {
-            position: absolute;
-            inset: 0;
-            background:
-                    radial-gradient(circle at 20% 15%, rgba(255, 255, 255, 0.9), transparent 60%),
-                    radial-gradient(circle at 80% 10%, rgba(254, 240, 138, 0.9), transparent 60%),
-                    linear-gradient(to bottom, #bfdbfe 0%, #e0f2fe 40%, transparent 60%);
-            opacity: 0.95;
-            pointer-events: none;
-            animation: skyPulse 8s ease-in-out infinite;
-        }
-        body.dark .game-bg-horizon {
-            background:
-                    radial-gradient(circle at 30% 10%, rgba(129, 140, 248, 0.85), transparent 60%),
-                    radial-gradient(circle at 70% 8%, rgba(251, 191, 36, 0.7), transparent 60%),
-                    linear-gradient(to bottom, #020617 0%, #020617 40%, transparent 60%);
-            opacity: 0.9;
-        }
+// a11y utility styles
+(function(){
+    const style = document.createElement('style');
+    style.textContent = '.sr-only{position:absolute!important;width:1px;height:1px;padding:0;margin:-1px;overflow:hidden;clip:rect(0,0,0,0);white-space:nowrap;border:0} :focus-visible{outline:3px solid #1976d2; outline-offset: 2px}';
+    document.head.appendChild(style);
+})();
 
-        @keyframes skyPulse {
-            0%, 100% { opacity: 0.95; }
-            50% { opacity: 1; }
-        }
-        .game-bg-ground {
-            position: absolute;
-            left: -10%;
-            right: -10%;
-            bottom: -5%;
-            height: 28%;
-            background:
-                    radial-gradient(circle at 20% 0, rgba(134, 239, 172, 0.95), transparent 55%),
-                    radial-gradient(circle at 80% 0, rgba(74, 222, 128, 0.95), transparent 55%),
-                    linear-gradient(to top, #65a30d, #4d7c0f);
-            box-shadow: 0 -16px 32px rgba(34, 197, 94, 0.6);
-            pointer-events: none;
-            animation: groundSway 6s ease-in-out infinite;
-        }
-        body.dark .game-bg-ground {
-            background:
-                    radial-gradient(circle at 20% 0, rgba(22, 163, 74, 1), transparent 55%),
-                    radial-gradient(circle at 80% 0, rgba(22, 163, 74, 1), transparent 55%),
-                    linear-gradient(to top, #14532d, #166534);
-            box-shadow: 0 -16px 38px rgba(21, 128, 61, 0.85);
-        }
+// ===== STORYBOOK NAVIGATION =====
+let currentChapter = 1;
+const totalChapters = 4;
+const pageIndicator = document.getElementById('pageIndicator');
+const prevBtn = document.getElementById('prevBtn');
+const nextBtn = document.getElementById('nextBtn');
+const progressFill = document.getElementById('progressFill');
+const chapterPills = Array.from(document.querySelectorAll('.chapter-pill'));
 
-        @keyframes groundSway {
-            0%, 100% { transform: translateX(0); }
-            50% { transform: translateX(2px); }
-        }
-        #gameCanvas {
-            position: relative;
-            z-index: 1;
-            width: 100%;
-            height: 100%;
-            display: block;
-        }
-        .hud {
-            position: absolute;
-            z-index: 2;
-            left: 50%;
-            top: 8px;
-            transform: translateX(-50%);
-            width: calc(100% - 16px);
-            display: grid;
-            grid-template-columns: repeat(4, minmax(0, 1fr));
-            gap: 4px;
-            padding: 4px 8px;
-            border-radius: 999px;
-            background: linear-gradient(135deg, rgba(255, 255, 255, 0.9), rgba(255, 248, 220, 0.95));
-            box-shadow: 0 8px 20px rgba(0, 0, 0, 0.25), var(--shadow-halo);
-            border: 1px solid rgba(255, 255, 255, 0.8);
-            font-size: var(--font-xs);
-            align-items: center;
-        }
-        body.dark .hud {
-            background: radial-gradient(circle at top, rgba(15, 23, 42, 0.98), rgba(15, 23, 42, 0.98));
-            border-color: rgba(148, 163, 184, 0.8);
-            box-shadow: 0 10px 26px rgba(0, 0, 0, 0.7), 0 0 0 1px rgba(15, 23, 42, 0.9);
-        }
-        .hud-item {
-            display: flex;
-            flex-direction: column;
-            align-items: center;
-            line-height: 1.1;
-            min-width: 0;
-        }
-        .hud-label {
-            opacity: 0.75;
-            font-size: 0.7em;
-            text-transform: uppercase;
-            letter-spacing: 0.08em;
-        }
-        .hud-value {
-            font-weight: 700;
-            font-size: 0.9em;
-            white-space: nowrap;
-        }
-        .hud-item.streak .hud-value {
-            color: #f97316;
-        }
-        .streak-badge {
-            margin-top: 2px;
-            padding: 0 6px;
-            border-radius: var(--radius-pill);
-            font-size: 0.65em;
-            text-transform: uppercase;
-            letter-spacing: 0.08em;
-            background: linear-gradient(135deg, rgba(254, 243, 199, 0.95), rgba(253, 224, 71, 0.95));
-            color: #c2410c;
-            font-weight: 700;
-            box-shadow: 0 2px 8px rgba(249, 115, 22, 0.4);
-            opacity: 0;
-            transform: scale(0.7);
-            transform-origin: center;
-            transition: opacity 0.3s cubic-bezier(0.34, 1.56, 0.64, 1),
-            transform 0.3s cubic-bezier(0.34, 1.56, 0.64, 1);
-        }
-        .streak-badge.visible {
-            opacity: 1;
-            transform: scale(1);
-            animation: badgePulse 1.5s ease-in-out infinite;
-        }
+function showChapter(ch) {
+    const currentPage = document.querySelector('[data-chapter="' + currentChapter + '"]');
+    const nextPageEl = document.querySelector('[data-chapter="' + ch + '"]');
+    if (!nextPageEl || currentChapter === ch) return;
 
-        @keyframes badgePulse {
-            0%, 100% { transform: scale(1); }
-            50% { transform: scale(1.05); }
-        }
-        .combo-indicator {
-            position: absolute;
-            z-index: 2;
-            top: 50%;
-            left: 50%;
-            transform: translate(-50%, -50%) scale(0.7);
-            padding: 12px 24px;
-            border-radius: var(--radius-pill);
-            background: linear-gradient(135deg, rgba(255, 255, 255, 0.98), rgba(255, 237, 213, 0.98));
-            color: #b45309;
-            font-weight: 700;
-            font-size: 1.1rem;
-            letter-spacing: 0.12em;
-            text-transform: uppercase;
-            box-shadow: 0 12px 40px rgba(251, 146, 60, 0.6), 0 0 0 2px rgba(251, 146, 60, 0.3);
-            opacity: 0;
-            pointer-events: none;
-            transition: opacity 0.2s ease-out, transform 0.3s cubic-bezier(0.34, 1.56, 0.64, 1);
-            animation: comboPulse 0.5s ease-out;
-        }
-        .combo-indicator.visible {
-            opacity: 1;
-            transform: translate(-50%, -50%) scale(1.15);
-            animation: comboPopIn 0.6s cubic-bezier(0.34, 1.56, 0.64, 1);
-        }
+    currentPage.classList.add('exiting');
+    setTimeout(() => {
+        currentPage.classList.remove('active', 'exiting');
+        nextPageEl.classList.add('active');
+        currentChapter = ch;
+        updateNavigation();
+    }, 600);
+}
 
-        @keyframes comboPopIn {
-            0% {
-                transform: translate(-50%, -50%) scale(0.3) rotate(-5deg);
-                opacity: 0;
+function nextPage() {
+    if (currentChapter < totalChapters) {
+        showChapter(currentChapter + 1);
+    }
+}
+
+function previousPage() {
+    if (currentChapter > 1) {
+        showChapter(currentChapter - 1);
+    }
+}
+
+function updateNavigation() {
+    if (prevBtn && nextBtn) {
+        prevBtn.disabled = currentChapter === 1;
+        nextBtn.disabled = currentChapter === totalChapters;
+    }
+
+    if (pageIndicator) {
+        const completed = Math.max(0, currentChapter - 1);
+        pageIndicator.textContent = `Chapter ${currentChapter} of ${totalChapters}`;
+    }
+
+    const progress = totalChapters > 1
+        ? ((currentChapter - 1) / (totalChapters - 1)) * 100
+        : 100;
+    if (progressFill) {
+        progressFill.style.width = progress + '%';
+    }
+    const progressBar = document.querySelector('.book-progress');
+    if (progressBar) {
+        progressBar.setAttribute('aria-valuenow', String(Math.round(progress)));
+    }
+
+    chapterPills.forEach((pill) => {
+        const target = Number(pill.dataset.chapterTarget);
+        const isActive = target === currentChapter;
+        pill.classList.toggle('active', isActive);
+        pill.classList.toggle('visited', target < currentChapter);
+        pill.setAttribute('aria-current', isActive ? 'page' : 'false');
+    });
+}
+
+chapterPills.forEach((pill) => {
+    pill.addEventListener('click', () => {
+        const targetChapter = Number(pill.dataset.chapterTarget);
+        showChapter(targetChapter);
+    });
+});
+
+// ===== FULLSCREEN & MUSIC CONTROLS =====
+const fullscreenBtn = document.getElementById('fullscreenBtn');
+const gameCard = document.querySelector('.game-card');
+const bgMusic = document.getElementById('bgMusic');
+const musicToggle = document.getElementById('musicToggle');
+const critiqueSummary = document.getElementById('critiqueSummary');
+const critiqueList = document.getElementById('critiqueList');
+const MUSIC_KEY = 'hundredAcres.music';
+let musicEnabled = false;
+let mobileFullscreenActive = false;
+const isMobileUser = /Mobi|Android|iPhone|iPad|iPod/i.test(navigator.userAgent || '');
+
+function syncFullscreenUI() {
+    const isNativeFullscreen = Boolean(document.fullscreenElement);
+    const isFull = isNativeFullscreen || mobileFullscreenActive;
+
+    if (gameCard) {
+        gameCard.classList.toggle('fullscreen', isNativeFullscreen);
+        gameCard.classList.toggle('fullscreen-mobile', mobileFullscreenActive);
+    }
+
+    if (fullscreenBtn) {
+        fullscreenBtn.classList.toggle('active', isFull);
+        fullscreenBtn.textContent = isFull ? '🗗 Exit Fullscreen' : '⛶ Fullscreen';
+        fullscreenBtn.setAttribute('aria-pressed', isFull ? 'true' : 'false');
+    }
+
+    if (!isFull) {
+        document.body.style.overflow = '';
+    }
+}
+// Add to script.js
+function scrollToChapter(chapterNumber) {
+    const chapterElement = document.querySelector(`[data-chapter="${chapterNumber}"]`);
+    const chapterTracker = document.querySelector('.chapter-tracker');
+
+    if (chapterElement && chapterTracker) {
+        // Update active chapter
+        document.querySelectorAll('.chapter-pill').forEach(pill => {
+            pill.classList.remove('active');
+        });
+        document.querySelector(`[data-chapter-target="${chapterNumber}"]`).classList.add('active');
+
+        // Scroll to chapter
+        const yOffset = -80; // Adjust for header
+        const y = chapterTracker.getBoundingClientRect().top + window.pageYOffset + yOffset;
+        window.scrollTo({ top: y, behavior: 'smooth' });
+
+        // Update page content if needed
+        updatePageDisplay(chapterNumber);
+    }
+}
+function toggleMobileFullscreen() {
+    if (!gameCard || !fullscreenBtn) return;
+
+    mobileFullscreenActive = !mobileFullscreenActive;
+
+    if (mobileFullscreenActive) {
+        // Make sure the game card is the thing in view when we go fullscreen
+        gameCard.scrollIntoView({ behavior: 'smooth', block: 'start' });
+    }
+
+    if (mobileFullscreenActive) {
+        gameCard.classList.add('fullscreen-mobile');
+        document.body.style.overflow = 'hidden';
+
+        fullscreenBtn.textContent = '🗗 Exit Fullscreen';
+        fullscreenBtn.setAttribute('aria-pressed', 'true');
+
+        setTimeout(() => {
+            if (Game && Game.resizeCanvas) {
+                Game.resizeCanvas(true);
             }
-            50% {
-                transform: translate(-50%, -50%) scale(1.25) rotate(2deg);
-            }
-            100% {
-                transform: translate(-50%, -50%) scale(1.15) rotate(0deg);
-                opacity: 1;
-            }
-        }
+        }, 100);
 
-        @keyframes comboPulse {
-            0%, 100% { box-shadow: 0 12px 40px rgba(251, 146, 60, 0.6), 0 0 0 2px rgba(251, 146, 60, 0.3); }
-            50% { box-shadow: 0 12px 50px rgba(251, 146, 60, 0.8), 0 0 0 3px rgba(251, 146, 60, 0.5); }
-        }
-        .powerup-indicator {
-            position: absolute;
-            bottom: 10px;
-            right: 10px;
-            z-index: 2;
-            display: flex;
-            align-items: center;
-            gap: 6px;
-            padding: 6px 14px;
-            border-radius: var(--radius-pill);
-            background: linear-gradient(135deg, rgba(34, 197, 94, 0.98), rgba(22, 163, 74, 0.98));
-            color: #ecfdf3;
-            font-size: var(--font-xs);
-            font-weight: 600;
-            box-shadow: 0 8px 24px rgba(22, 163, 74, 0.6), 0 0 0 2px rgba(134, 239, 172, 0.4);
-            opacity: 0;
-            transform: translateY(10px) scale(0.9);
-            pointer-events: none;
-            transition: opacity 0.3s cubic-bezier(0.34, 1.56, 0.64, 1),
-            transform 0.3s cubic-bezier(0.34, 1.56, 0.64, 1);
-        }
-        .powerup-indicator.visible {
-            opacity: 1;
-            transform: translateY(0) scale(1);
-            animation: shieldPulse 2s ease-in-out infinite;
-        }
-        .powerup-indicator i {
-            font-size: 0.9em;
-            animation: shieldSpin 3s linear infinite;
-        }
+    } else {
+        gameCard.classList.remove('fullscreen-mobile');
+        document.body.style.overflow = '';
 
-        @keyframes shieldPulse {
-            0%, 100% { box-shadow: 0 8px 24px rgba(22, 163, 74, 0.6), 0 0 0 2px rgba(134, 239, 172, 0.4); }
-            50% { box-shadow: 0 8px 32px rgba(22, 163, 74, 0.8), 0 0 0 3px rgba(134, 239, 172, 0.6); }
-        }
+        fullscreenBtn.textContent = '⛶ Fullscreen';
+        fullscreenBtn.setAttribute('aria-pressed', 'false');
 
-        @keyframes shieldSpin {
-            0% { transform: rotate(0deg); }
-            100% { transform: rotate(360deg); }
+        if (Game && Game.resizeCanvas) {
+            Game.resizeCanvas(true);
         }
-        .overlay {
-            position: absolute;
-            inset: 0;
-            z-index: 3;
-            display: flex;
-            align-items: center;
-            justify-content: center;
-            padding: var(--space-3);
-            background: radial-gradient(circle at top, rgba(248, 250, 252, 0.96), rgba(248, 250, 252, 0.7));
-            backdrop-filter: blur(8px);
-            opacity: 0;
-            pointer-events: none;
-            transition: opacity 0.3s ease-out, backdrop-filter 0.3s ease-out;
-        }
-        body.dark .overlay {
-            background: radial-gradient(circle at top, rgba(15, 23, 42, 0.96), rgba(15, 23, 42, 0.86));
-        }
-        .overlay.visible {
-            opacity: 1;
-            pointer-events: auto;
-        }
-        .overlay-card {
-            width: 100%;
-            max-width: 320px;
-            border-radius: 20px;
-            padding: var(--space-4);
-            background: rgba(255, 255, 255, 0.98);
-            border: 1px solid rgba(250, 204, 21, 0.7);
-            box-shadow: var(--shadow-soft), 0 0 0 1px rgba(255, 255, 255, 0.5);
-            text-align: center;
-            transform: scale(0.9);
-            transition: transform 0.3s cubic-bezier(0.34, 1.56, 0.64, 1);
-        }
-        .overlay.visible .overlay-card {
-            transform: scale(1);
-        }
-        body.dark .overlay-card {
-            background: rgba(15, 23, 42, 0.98);
-            border-color: rgba(148, 163, 184, 0.85);
-        }
-        .overlay-title {
-            font-size: var(--font-2xl);
-            margin-bottom: var(--space-2);
-        }
-        .overlay-sub {
-            font-size: var(--font-sm);
-            color: var(--muted);
-            margin-bottom: var(--space-3);
-        }
-        body.dark .overlay-sub {
-            color: var(--muted-soft);
-        }
-        .overlay-stats {
-            display: flex;
-            justify-content: center;
-            gap: var(--space-4);
-            margin-bottom: var(--space-3);
-            font-size: var(--font-sm);
-        }
-        .overlay-stat-label {
-            font-size: 0.7rem;
-            text-transform: uppercase;
-            letter-spacing: 0.08em;
-            opacity: 0.7;
-        }
-        .overlay-stat-value {
-            font-weight: 700;
-            font-size: 1rem;
-        }
-        .controls-region {
-            width: 100%;
-            max-width: 520px;
-            padding: 0 var(--space-1);
-            display: flex;
-            flex-direction: column;
-            align-items: center;
-            gap: var(--space-1);
-        }
-        .controls-bar {
-            width: 100%;
-            border-radius: 999px;
-            padding: var(--space-2) var(--space-3);
-            background: rgba(255, 255, 255, 0.92);
-            border: 1px solid rgba(250, 204, 21, 0.5);
-            box-shadow: var(--shadow-soft);
-            display: flex;
-            align-items: center;
-            justify-content: space-between;
-            gap: var(--space-2);
-        }
-        body.dark .controls-bar {
-            background: rgba(15, 23, 42, 0.98);
-            border-color: rgba(148, 163, 184, 0.7);
-        }
-        .dpad {
-            display: grid;
-            grid-template-areas:
-         ". up ."
-         "left center right"
-         ". down .";
-            grid-template-columns: repeat(3, 40px);
-            grid-template-rows: repeat(3, 32px);
-            gap: 4px;
-            align-items: center;
-            justify-content: center;
-        }
-        .pad-btn {
-            width: 40px;
-            height: 32px;
-            border-radius: 999px;
-            border: 0;
-            background: rgba(251, 191, 36, 0.2);
-            box-shadow: 0 4px 10px rgba(0, 0, 0, 0.18);
-            display: inline-flex;
-            align-items: center;
-            justify-content: center;
-            cursor: pointer;
-            color: var(--ink);
-            font-size: 0.9rem;
-            transition: transform 0.1s ease, box-shadow 0.1s ease, background 0.1s ease;
-        }
-        .pad-btn:active,
-        .pad-btn[aria-pressed="true"] {
-            transform: translateY(1px);
-            box-shadow: 0 2px 6px rgba(0, 0, 0, 0.18);
-            background: rgba(251, 191, 36, 0.35);
-        }
-        body.dark .pad-btn {
-            background: rgba(15, 23, 42, 0.96);
-            color: #e5e7eb;
-        }
-        .pad-up {
-            grid-area: up;
-        }
-        .pad-down {
-            grid-area: down;
-        }
-        .pad-left {
-            grid-area: left;
-        }
-        .pad-right {
-            grid-area: right;
-        }
-        .pad-center {
-            grid-area: center;
-            width: 30px;
-            height: 30px;
-            border-radius: 999px;
-            border: 1px dashed rgba(250, 204, 21, 0.5);
-            background: rgba(255, 255, 255, 0.85);
-        }
-        .controls-right {
-            display: flex;
-            align-items: center;
-            gap: var(--space-2);
-        }
-        .caption {
-            font-size: var(--font-xs);
-            color: var(--muted);
-            text-align: center;
-        }
-        body.dark .caption {
-            color: var(--muted-soft);
-        }
-        .help-toggle {
-            font-size: var(--font-xs);
-            border-radius: var(--radius-pill);
-            border: 0;
-            padding: 3px 10px;
-            background: rgba(255, 255, 255, 0.9);
-            color: var(--ink);
-            cursor: pointer;
-            display: inline-flex;
-            align-items: center;
-            gap: 4px;
-            box-shadow: 0 4px 12px rgba(0, 0, 0, 0.15);
-        }
-        body.dark .help-toggle {
-            background: rgba(15, 23, 42, 0.98);
-            color: #e5e7eb;
-        }
-        .help-toggle i {
-            font-size: 0.9em;
-        }
-        .help-panel {
-            width: 100%;
-            max-width: 520px;
-            margin-top: 4px;
-            border-radius: 18px;
-            background: rgba(255, 255, 255, 0.97);
-            border: 1px solid rgba(250, 204, 21, 0.55);
-            box-shadow: 0 12px 24px rgba(0, 0, 0, 0.2);
-            padding: var(--space-3);
-            font-size: var(--font-sm);
-            color: var(--muted);
-            max-height: 0;
-            overflow: hidden;
-            opacity: 0;
-            transform: translateY(-4px);
-            transition: max-height 0.24s ease, opacity 0.24s ease, transform 0.24s ease;
-        }
-        body.dark .help-panel {
-            background: rgba(15, 23, 42, 0.98);
-            border-color: rgba(148, 163, 184, 0.8);
-            color: var(--muted-soft);
-        }
-        .help-panel.visible {
-            max-height: 260px;
-            opacity: 1;
-            transform: translateY(0);
-        }
-        .help-columns {
-            display: grid;
-            grid-template-columns: 1.3fr 1fr;
-            gap: var(--space-3);
-        }
-        .help-heading {
-            font-weight: 700;
-            margin-bottom: 4px;
-            font-size: var(--font-md);
-        }
-        .help-list {
-            list-style: none;
-            padding-left: 0;
-            margin: 0;
-            display: grid;
-            gap: 2px;
-        }
-        .help-list li::before {
-            content: "•";
-            color: #f59e0b;
-            margin-right: 6px;
-        }
-        .settings-backdrop {
-            position: fixed;
-            inset: 0;
-            background: rgba(15, 23, 42, 0.65);
-            display: flex;
-            align-items: center;
-            justify-content: center;
-            opacity: 0;
-            pointer-events: none;
-            transition: opacity 0.2s ease-out;
-            z-index: 40;
-        }
-        .settings-backdrop.visible {
-            opacity: 1;
-            pointer-events: auto;
-        }
-        .settings-panel {
-            width: min(360px, 100% - 32px);
-            border-radius: 20px;
-            padding: var(--space-4);
-            background: rgba(255, 255, 255, 0.98);
-            border: 1px solid rgba(250, 204, 21, 0.7);
-            box-shadow: 0 24px 60px rgba(0, 0, 0, 0.45);
-        }
-        body.dark .settings-panel {
-            background: rgba(15, 23, 42, 0.98);
-            border-color: rgba(148, 163, 184, 0.8);
-        }
-        .settings-header {
-            display: flex;
-            align-items: center;
-            justify-content: space-between;
-            margin-bottom: var(--space-3);
-            gap: var(--space-2);
-        }
-        .settings-title {
-            font-size: var(--font-lg);
-            font-weight: 600;
-        }
-        .settings-row {
-            display: flex;
-            align-items: center;
-            justify-content: space-between;
-            gap: var(--space-2);
-            margin-bottom: var(--space-3);
-            font-size: var(--font-sm);
-        }
-        .settings-label {
-            display: flex;
-            flex-direction: column;
-            gap: 2px;
-        }
-        .settings-label span:last-child {
-            font-size: var(--font-xs);
-            color: var(--muted);
-        }
-        body.dark .settings-label span:last-child {
-            color: var(--muted-soft);
-        }
-        .toggle {
-            position: relative;
-            width: 42px;
-            height: 22px;
-            border-radius: 999px;
-            background: rgba(148, 163, 184, 0.6);
-            cursor: pointer;
-            flex-shrink: 0;
-        }
-        .toggle-knob {
-            position: absolute;
-            top: 2px;
-            left: 2px;
-            width: 18px;
-            height: 18px;
-            border-radius: 50%;
-            background: #f9fafb;
-            box-shadow: 0 2px 6px rgba(0, 0, 0, 0.25);
-            transition: transform 0.18s ease-out, background 0.18s ease-out;
-        }
-        .toggle[data-on="true"] {
-            background: rgba(34, 197, 94, 0.9);
-        }
-        .toggle[data-on="true"] .toggle-knob {
-            transform: translateX(20px);
-        }
-        .difficulty-pill {
-            display: inline-flex;
-            border-radius: 999px;
-            padding: 2px;
-            background: rgba(248, 250, 252, 0.9);
-            border: 1px solid rgba(148, 163, 184, 0.7);
-            gap: 2px;
-        }
-        .difficulty-pill button {
-            border: 0;
-            border-radius: 999px;
-            padding: 4px 8px;
-            font-size: var(--font-xs);
-            background: transparent;
-            cursor: pointer;
-            color: var(--muted);
-        }
-        .difficulty-pill button.active {
-            background: rgba(251, 191, 36, 0.2);
-            color: var(--ink);
-            font-weight: 600;
-        }
-        .settings-footer {
-            margin-top: var(--space-2);
-            display: flex;
-            justify-content: space-between;
-            align-items: center;
-            font-size: var(--font-xs);
-            color: var(--muted);
-        }
-        .settings-footer button {
-            font-size: var(--font-xs);
-        }
-        .sr-only {
-            position: absolute;
-            width: 1px;
-            height: 1px;
-            padding: 0;
-            margin: -1px;
-            overflow: hidden;
-            clip: rect(0, 0, 0, 0);
-            border: 0;
-        }
-        @media (max-width: 768px) {
-            body {
-                padding: var(--space-2);
-            }
-            .topbar {
-                padding: var(--space-2);
-                flex-wrap: wrap;
-            }
-            .title-main {
-                font-size: 1.05rem;
-            }
-            .title-sub {
-                display: none;
-            }
-            .game-card {
-                padding: var(--space-2);
-            }
-            .hud {
-                grid-template-columns: repeat(2, minmax(0, 1fr));
-                row-gap: 2px;
-                padding: 3px 8px;
-            }
-            .controls-bar {
-                padding: var(--space-2);
-            }
-        }
-        @media (max-width: 480px) {
-            .app {
-                gap: var(--space-2);
-            }
-            .topbar {
-                border-radius: 18px;
-            }
-            .game-card {
-                border-radius: 18px;
-            }
-            .hud {
-                font-size: 0.7rem;
-            }
-            .pad-btn {
-                width: 36px;
-                height: 28px;
-            }
-            .dpad {
-                grid-template-columns: repeat(3, 32px);
-            }
-            .help-panel.visible {
-                max-height: 220px;
-            }
-        }
-        .game-bg-horizon {
-            z-index: 0; /* Make sure this is behind canvas */
-        }
+    }
 
-        .game-bg-ground {
-            z-index: 0; /* Make sure this is behind canvas */
-        }
+    syncFullscreenUI();
+}
 
-        #gameCanvas {
-            z-index: 2; /* Ensure canvas is above background */
-        }
-        .game-bg-ground {
-            /* Change from: height: 28% */
-            height: 20%; /* Reduce ground height */
-            /* Change from: bottom: -5% */
-            bottom: -2%; /* Adjust bottom position */
-        }
-    </style>
-</head>
-<body>
-<div class="app">
-    <header class="topbar">
-        <div class="title">
-            <span class="title-icon" aria-hidden="true">🍯</span>
-            <div class="title-text">
-                <span class="title-main">Honey Hunt</span>
-                <span class="title-sub">Catch the honey, dodge the bees, stack the streaks.</span>
-            </div>
-        </div>
-        <div class="topbar-buttons">
-            <button id="themeToggle" class="btn small secondary" type="button" aria-pressed="false">
-                <i class="fas fa-moon" aria-hidden="true"></i>
-                <span>Theme</span>
-            </button>
-            <button id="fullscreenToggle" class="btn small secondary" type="button">
-                <i class="fas fa-up-right-and-down-left-from-center" aria-hidden="true"></i>
-                <span>Fullscreen</span>
-            </button>
-            <button id="helpToggle" class="btn small secondary" type="button" aria-expanded="false" aria-controls="helpPanel">
-                <i class="fas fa-question-circle" aria-hidden="true"></i>
-                <span>Help</span>
-            </button>
-            <button id="settingsToggle" class="btn small primary" type="button" aria-expanded="false" aria-controls="settingsPanel">
-                <i class="fas fa-sliders-h" aria-hidden="true"></i>
-                <span>Settings</span>
-            </button>
-        </div>
-    </header>
-    <main class="game-layout">
-        <div class="viewport-shell">
-            <section class="game-card" aria-label="Honey Hunt game">
-                <div class="game-container" id="gameContainer">
-                    <div class="game-bg-horizon"></div>
-                    <div class="game-bg-ground"></div>
-                    <div class="hud" aria-live="polite">
-                        <div class="hud-item">
-                            <span class="hud-label">Score</span>
-                            <span id="scoreValue" class="hud-value">0</span>
-                        </div>
-                        <div class="hud-item">
-                            <span class="hud-label">Best</span>
-                            <span id="bestValue" class="hud-value">0</span>
-                        </div>
-                        <div class="hud-item">
-                            <span class="hud-label">Time</span>
-                            <span id="timeValue" class="hud-value">60</span>
-                        </div>
-                        <div class="hud-item streak">
-                            <span class="hud-label">Streak</span>
-                            <span id="streakValue" class="hud-value">0</span>
-                            <span id="streakBadge" class="streak-badge">Combo!</span>
-                        </div>
-                    </div>
-                    <div id="comboIndicator" class="combo-indicator">x2 Combo!</div>
-                    <div id="powerupIndicator" class="powerup-indicator" aria-hidden="true">
-                        <i class="fas fa-bolt" aria-hidden="true"></i>
-                        <span>Shield active</span>
-                    </div>
-                    <canvas id="gameCanvas" aria-label="Honey Hunt playfield" role="img"></canvas>
-                    <div id="startOverlay" class="overlay visible" aria-hidden="false">
-                        <div class="overlay-card">
-                            <h2 class="overlay-title">Ready to hunt?</h2>
-                            <p class="overlay-sub">
-                                Move your bear left and right to catch honey jars and dodge bees.
-                                Chain catches for big combos.
-                            </p>
-                            <div class="overlay-stats">
-                                <div>
-                                    <div class="overlay-stat-label">Best</div>
-                                    <div id="overlayBest" class="overlay-stat-value">0</div>
-                                </div>
-                                <div>
-                                    <div class="overlay-stat-label">Games</div>
-                                    <div id="overlayGames" class="overlay-stat-value">0</div>
-                                </div>
-                            </div>
-                            <button id="startButton" class="btn primary" type="button">
-                                <i class="fas fa-play" aria-hidden="true"></i>
-                                <span>Start</span>
-                            </button>
-                        </div>
-                    </div>
-                    <div id="pauseOverlay" class="overlay" aria-hidden="true">
-                        <div class="overlay-card">
-                            <h2 class="overlay-title">Paused</h2>
-                            <p class="overlay-sub">Stretch your paws. The bees will wait (for now).</p>
-                            <button id="resumeButton" class="btn primary" type="button">
-                                <i class="fas fa-play" aria-hidden="true"></i>
-                                <span>Resume</span>
-                            </button>
-                        </div>
-                    </div>
-                    <div id="gameOverOverlay" class="overlay" aria-hidden="true">
-                        <div class="overlay-card">
-                            <h2 class="overlay-title">Game over</h2>
-                            <p class="overlay-sub">The bees won this round, but the honey's still out there.</p>
-                            <div class="overlay-stats">
-                                <div>
-                                    <div class="overlay-stat-label">Score</div>
-                                    <div id="finalScore" class="overlay-stat-value">0</div>
-                                </div>
-                                <div>
-                                    <div class="overlay-stat-label">Best</div>
-                                    <div id="finalBest" class="overlay-stat-value">0</div>
-                                </div>
-                            </div>
-                            <button id="restartButton" class="btn primary" type="button">
-                                <i class="fas fa-rotate-right" aria-hidden="true"></i>
-                                <span>Play again</span>
-                            </button>
-                        </div>
-                    </div>
-                </div>
-            </section>
-            <section class="controls-region" aria-label="On-screen controls">
-                <div class="controls-bar">
-                    <div class="dpad" aria-hidden="false">
-                        <div class="pad-center"></div>
-                        <button id="btnUp" class="pad-btn pad-up" type="button" aria-label="Nudge up">
-                            <i class="fas fa-chevron-up" aria-hidden="true"></i>
-                        </button>
-                        <button id="btnDown" class="pad-btn pad-down" type="button" aria-label="Nudge down">
-                            <i class="fas fa-chevron-down" aria-hidden="true"></i>
-                        </button>
-                        <button id="btnLeft" class="pad-btn pad-left" type="button" aria-label="Move left">
-                            <i class="fas fa-chevron-left" aria-hidden="true"></i>
-                        </button>
-                        <button id="btnRight" class="pad-btn pad-right" type="button" aria-label="Move right">
-                            <i class="fas fa-chevron-right" aria-hidden="true"></i>
-                        </button>
-                    </div>
-                    <div class="controls-right">
-                        <button id="pauseButton" class="btn small secondary" type="button">
-                            <i class="fas fa-pause" aria-hidden="true"></i>
-                            <span>Pause</span>
-                        </button>
-                    </div>
-                </div>
-                <p class="caption">
-                    Use the arrows or ⬅ ➡ keys · Space / Pause = pause &amp; resume
-                </p>
-            </section>
-            <button id="helpToggleSecondary" class="help-toggle" type="button" aria-expanded="false" aria-controls="helpPanel">
-                <i class="fas fa-lightbulb" aria-hidden="true"></i>
-                <span>Quick tips</span>
-            </button>
-            <section id="helpPanel" class="help-panel" aria-label="How to play Honey Hunt" aria-hidden="true">
-                <div class="help-columns">
-                    <div>
-                        <div class="help-heading">How to play</div>
-                        <ul class="help-list">
-                            <li>Move your bear with the arrow keys or on-screen pads.</li>
-                            <li>Catching honey jars adds score. Golden jars give bonus points.</li>
-                            <li>Hitting a bee costs a life and breaks your streak.</li>
-                            <li>Blue jars grant a temporary shield that blocks one bee.</li>
-                            <li>Finish the 60 second hunt with the highest score you can.</li>
-                        </ul>
-                    </div>
-                    <div>
-                        <div class="help-heading">Scoring &amp; streaks</div>
-                        <ul class="help-list">
-                            <li>Each jar adds points; combos increase the value of each catch.</li>
-                            <li>Keep catching jars without missing to grow your streak meter.</li>
-                            <li>Streaks unlock big combo bursts. Watch the Combo indicator.</li>
-                            <li>Your best score is saved on this device between games.</li>
-                        </ul>
-                    </div>
-                </div>
-            </section>
-        </div>
-    </main>
-</div>
-<div id="settingsModal" class="settings-backdrop" role="dialog" aria-modal="true" aria-labelledby="settingsTitle">
-    <div class="settings-panel" id="settingsPanel" tabindex="-1">
-        <div class="settings-header">
-            <div class="settings-title" id="settingsTitle">Game settings</div>
-            <button id="settingsClose" class="btn small secondary" type="button">
-                <i class="fas fa-times" aria-hidden="true"></i>
-                <span>Close</span>
-            </button>
-        </div>
-        <div class="settings-row">
-            <div class="settings-label">
-                <span>Music</span>
-                <span>Background tune while you play.</span>
-            </div>
-            <button id="musicToggle" class="toggle" type="button" data-on="true" aria-pressed="true">
-                <span class="toggle-knob"></span>
-                <span class="sr-only">Toggle music</span>
-            </button>
-        </div>
-        <div class="settings-row">
-            <div class="settings-label">
-                <span>Sound effects</span>
-                <span>Jar catches, bees, and combo pops.</span>
-            </div>
-            <button id="sfxToggle" class="toggle" type="button" data-on="true" aria-pressed="true">
-                <span class="toggle-knob"></span>
-                <span class="sr-only">Toggle sound effects</span>
-            </button>
-        </div>
-        <div class="settings-row">
-            <div class="settings-label">
-                <span>Difficulty</span>
-                <span>Changes jar speed and bee frequency.</span>
-            </div>
-            <div class="difficulty-pill" role="radiogroup" aria-label="Difficulty">
-                <button type="button" class="diff-btn" data-level="0">Chill</button>
-                <button type="button" class="diff-btn active" data-level="1">Classic</button>
-                <button type="button" class="diff-btn" data-level="2">Spicy</button>
-            </div>
-        </div>
-        <div class="settings-footer">
-            <span>High score: <strong id="settingsBest">0</strong></span>
-            <button id="resetProgress" class="btn small secondary" type="button">
-                <i class="fas fa-broom" aria-hidden="true"></i>
-                <span>Reset progress</span>
-            </button>
-        </div>
-    </div>
-</div>
-<div id="liveRegion" class="sr-only" aria-live="polite" aria-atomic="true"></div>
-<script>
-    (function() {
-        "use strict";
+function toggleFullscreen() {
+    if (mobileFullscreenActive && !isMobileUser && !document.fullscreenElement) {
+        toggleMobileFullscreen();
+        return;
+    }
 
-        const STORAGE_KEYS = {
-            BEST: "honeyHunt_bestScore_v2",
-            GAMES: "honeyHunt_gamesPlayed_v2",
-            SETTINGS: "honeyHunt_settings_v2",
-            THEME: "honeyHunt_theme_v2"
-        };
+    const isMobile = /Mobi|Android|iPhone|iPad|iPod/i.test(navigator.userAgent);
 
-        const GAME_DURATION = 60;
-        const MAX_LIVES = 3;
-
-        const gameContainer = document.getElementById("gameContainer");
-        const canvas = document.getElementById("gameCanvas");
-        const ctx = canvas.getContext("2d");
-
-        const scoreValue = document.getElementById("scoreValue");
-        const bestValue = document.getElementById("bestValue");
-        const timeValue = document.getElementById("timeValue");
-        const streakValue = document.getElementById("streakValue");
-        const streakBadge = document.getElementById("streakBadge");
-        const comboIndicator = document.getElementById("comboIndicator");
-        const powerupIndicator = document.getElementById("powerupIndicator");
-
-        const startOverlay = document.getElementById("startOverlay");
-        const pauseOverlay = document.getElementById("pauseOverlay");
-        const gameOverOverlay = document.getElementById("gameOverOverlay");
-        const startButton = document.getElementById("startButton");
-        const resumeButton = document.getElementById("resumeButton");
-        const restartButton = document.getElementById("restartButton");
-        const overlayBest = document.getElementById("overlayBest");
-        const overlayGames = document.getElementById("overlayGames");
-        const finalScore = document.getElementById("finalScore");
-        const finalBest = document.getElementById("finalBest");
-
-        const btnLeft = document.getElementById("btnLeft");
-        const btnRight = document.getElementById("btnRight");
-        const btnUp = document.getElementById("btnUp");
-        const btnDown = document.getElementById("btnDown");
-        const pauseButton = document.getElementById("pauseButton");
-
-        const helpToggle = document.getElementById("helpToggle");
-        const helpToggleSecondary = document.getElementById("helpToggleSecondary");
-        const helpPanel = document.getElementById("helpPanel");
-
-        const settingsToggle = document.getElementById("settingsToggle");
-        const settingsModal = document.getElementById("settingsModal");
-        const settingsPanel = document.getElementById("settingsPanel");
-        const settingsClose = document.getElementById("settingsClose");
-        const musicToggle = document.getElementById("musicToggle");
-        const sfxToggle = document.getElementById("sfxToggle");
-        const diffButtons = Array.from(document.querySelectorAll(".diff-btn"));
-        const resetProgress = document.getElementById("resetProgress");
-        const settingsBest = document.getElementById("settingsBest");
-
-        const themeToggle = document.getElementById("themeToggle");
-        const fullscreenToggle = document.getElementById("fullscreenToggle");
-
-        const liveRegion = document.getElementById("liveRegion");
-
-        const keys = {
-            left: false,
-            right: false
-        };
-
-        let settingsState = {
-            musicOn: false,
-            sfxOn: false,
-            difficulty: 1
-        };
-
-        let gameState = {
-            running: false,
-            paused: false,
-            timeLeft: GAME_DURATION,
-            score: 0,
-            best: 0,
-            gamesPlayed: 0,
-            streak: 0,
-            lives: MAX_LIVES,
-            shieldTime: 0
-        };
-
-        const world = {
-            width: 0,
-            height: 0
-        };
-
-        const bear = {
-            x: 0,
-            y: 0,
-            width: 40,
-            height: 60,
-            speed: 260,
-            vx: 0,
-            dir: 0
-        };
-
-        const jars = [];
-        const bees = [];
-        const scorePopups = [];
-        const particles = [];
-
-        let lastTimestamp = 0;
-        let jarSpawnTimer = 0;
-        let beeSpawnTimer = 0;
-
-        function clamp(value, min, max) {
-            return Math.max(min, Math.min(max, value));
-        }
-
-        function rand(min, max) {
-            return Math.random() * (max - min) + min;
-        }
-
-        function loadPersistedState() {
-            try {
-                const best = Number(localStorage.getItem(STORAGE_KEYS.BEST) || "0");
-                const games = Number(localStorage.getItem(STORAGE_KEYS.GAMES) || "0");
-                gameState.best = isFinite(best) ? best : 0;
-                gameState.gamesPlayed = isFinite(games) ? games : 0;
-
-                const savedSettings = localStorage.getItem(STORAGE_KEYS.SETTINGS);
-                if (savedSettings) {
-                    const parsed = JSON.parse(savedSettings);
-                    settingsState = Object.assign(settingsState, parsed);
-                }
-
-                const savedTheme = localStorage.getItem(STORAGE_KEYS.THEME);
-                if (savedTheme === "dark") {
-                    document.body.classList.add("dark");
-                    themeToggle.setAttribute("aria-pressed", "true");
-                    themeToggle.innerHTML = '<i class="fas fa-sun" aria-hidden="true"></i><span>Theme</span>';
-                }
-            } catch (e) {
-                console.warn("Failed to load saved state", e);
-            }
-        }
-
-        function saveProgress() {
-            try {
-                localStorage.setItem(STORAGE_KEYS.BEST, String(gameState.best));
-                localStorage.setItem(STORAGE_KEYS.GAMES, String(gameState.gamesPlayed));
-                localStorage.setItem(STORAGE_KEYS.SETTINGS, JSON.stringify(settingsState));
-            } catch (e) {
-                console.warn("Failed to save progress", e);
-            }
-        }
-
-        function resizeCanvas() {
-            const rect = gameContainer.getBoundingClientRect();
-            const dpr = window.devicePixelRatio || 1;
-            const width = rect.width;
-            const height = rect.height;
-
-            canvas.width = width * dpr;
-            canvas.height = height * dpr;
-            ctx.setTransform(dpr, 0, 0, dpr, 0, 0);
-
-            world.width = width;
-            world.height = height;
-
-            bear.y = world.height * 0.85; // Position at 85% from top (higher up)
-            bear.x = clamp(bear.x || world.width / 2, 30, world.width - 30);
-        }
-
-        function resetGameState() {
-            gameState.running = false;
-            gameState.paused = false;
-            gameState.timeLeft = GAME_DURATION;
-            gameState.score = 0;
-            gameState.streak = 0;
-            gameState.lives = MAX_LIVES;
-            gameState.shieldTime = 0;
-            jars.length = 0;
-            bees.length = 0;
-            scorePopups.length = 0;
-            particles.length = 0;
-            jarSpawnTimer = 0;
-            beeSpawnTimer = 0;
-
-            bear.x = world.width / 2;
-            bear.y = world.height - 40;
-        }
-
-        function difficultyConfig() {
-            if (settingsState.difficulty === 0) {
-                return {
-                    jarRate: 0.9,
-                    beeRate: 2.2,
-                    fallSpeed: 150
-                };
-            } else if (settingsState.difficulty === 2) {
-                return {
-                    jarRate: 0.55,
-                    beeRate: 1.3,
-                    fallSpeed: 220
-                };
-            }
-            return {
-                jarRate: 0.7,
-                beeRate: 1.7,
-                fallSpeed: 190
-            };
-        }
-
-        function spawnJar() {
-            const {
-                fallSpeed
-            } = difficultyConfig();
-            const x = rand(30, world.width - 30);
-            const kindRand = Math.random();
-            let type = "normal";
-            let value = 10;
-            if (kindRand > 0.85) {
-                type = "gold";
-                value = 30;
-            } else if (kindRand > 0.7) {
-                type = "shield";
-                value = 15;
-            }
-
-            jars.push({
-                x,
-                y: -20,
-                radius: 12,
-                vy: fallSpeed + rand(-20, 20),
-                type,
-                value
+    if (isMobile) {
+        toggleMobileFullscreen();
+    } else {
+        if (!document.fullscreenElement) {
+            gameCard?.requestFullscreen().catch(err => {
+                console.log(`Error attempting to enable fullscreen: ${err.message}`);
+                toggleMobileFullscreen();
             });
-        }
-
-        function spawnBee() {
-            const {
-                fallSpeed
-            } = difficultyConfig();
-            const x = Math.random() < 0.5 ? -30 : world.width + 30;
-            const vy = fallSpeed * 0.7;
-            const dir = x < 0 ? 1 : -1;
-            bees.push({
-                x,
-                y: rand(world.height * 0.2, world.height * 0.7),
-                vx: dir * rand(80, 140),
-                vy,
-                radius: 14
-            });
-        }
-
-        function updateEntities(dt) {
-            const {
-                jarRate,
-                beeRate
-            } = difficultyConfig();
-
-            jarSpawnTimer += dt;
-            beeSpawnTimer += dt;
-
-            const jarInterval = jarRate;
-            const beeInterval = beeRate;
-
-            while (jarSpawnTimer > jarInterval) {
-                jarSpawnTimer -= jarInterval;
-                spawnJar();
-            }
-
-            while (beeSpawnTimer > beeInterval) {
-                beeSpawnTimer -= beeInterval;
-                spawnBee();
-            }
-
-            const targetDir = (keys.left ? -1 : 0) + (keys.right ? 1 : 0);
-            bear.dir = targetDir;
-            bear.vx = bear.dir * bear.speed;
-            bear.x = clamp(bear.x + bear.vx * dt, 26, world.width - 26);
-
-            for (let i = jars.length - 1; i >= 0; i--) {
-                const jar = jars[i];
-                jar.y += jar.vy * dt;
-                if (jar.y - jar.radius > world.height + 40) {
-                    jars.splice(i, 1);
-                    gameState.streak = 0;
-                }
-            }
-
-            for (let i = bees.length - 1; i >= 0; i--) {
-                const bee = bees[i];
-                bee.x += bee.vx * dt;
-                bee.y += bee.vy * dt * 0.04;
-
-                if (bee.x < -60 || bee.x > world.width + 60 || bee.y > world.height + 40) {
-                    bees.splice(i, 1);
-                }
-            }
-
-            if (gameState.shieldTime > 0) {
-                gameState.shieldTime -= dt;
-                if (gameState.shieldTime <= 0) {
-                    gameState.shieldTime = 0;
-                    powerupIndicator.classList.remove("visible");
-                }
-            }
-        }
-
-        function addScorePopup(amount, x, y, color) {
-            scorePopups.push({
-                amount: amount > 0 ? "+" + amount : String(amount),
-                x,
-                y,
-                color,
-                start: performance.now(),
-                duration: 650
-            });
-        }
-
-        function createParticles(x, y, color, count = 8) {
-            for (let i = 0; i < count; i++) {
-                const angle = (Math.PI * 2 * i) / count + Math.random() * 0.3;
-                const speed = 80 + Math.random() * 60;
-                particles.push({
-                    x,
-                    y,
-                    vx: Math.cos(angle) * speed,
-                    vy: Math.sin(angle) * speed - 50,
-                    color,
-                    life: 1,
-                    decay: 0.016,
-                    radius: 2 + Math.random() * 2
-                });
-            }
-        }
-
-        function handleCollisions() {
-            for (let i = jars.length - 1; i >= 0; i--) {
-                const jar = jars[i];
-                const dx = jar.x - bear.x;
-                const dy = jar.y - (bear.y - 10);
-                const dist = Math.sqrt(dx * dx + dy * dy);
-                if (dist < jar.radius + 26) {
-                    jars.splice(i, 1);
-                    let mult = 1 + Math.min(gameState.streak * 0.05, 1.5);
-                    let gain = Math.round(jar.value * mult);
-                    gameState.score += gain;
-                    gameState.streak += 1;
-
-                    const popColor = jar.type === "gold" ? "#f97316" : jar.type === "shield" ? "#38bdf8" : "#0f766e";
-                    addScorePopup(gain, bear.x, bear.y - 50, popColor);
-                    createParticles(jar.x, jar.y, popColor, jar.type === "gold" ? 12 : 8);
-                    showComboIfNeeded();
-
-                    if (jar.type === "shield") {
-                        gameState.shieldTime = 5;
-                        powerupIndicator.classList.add("visible");
-                        liveRegion.textContent = "Shield active for five seconds.";
-                    }
-                }
-            }
-
-            for (let i = bees.length - 1; i >= 0; i--) {
-                const bee = bees[i];
-                const dx = bee.x - bear.x;
-                const dy = bee.y - (bear.y - 10);
-                const dist = Math.sqrt(dx * dx + dy * dy);
-                if (dist < bee.radius + 24) {
-                    bees.splice(i, 1);
-                    if (gameState.shieldTime > 0) {
-                        gameState.shieldTime = 0;
-                        powerupIndicator.classList.remove("visible");
-                        addScorePopup(0, bear.x, bear.y - 50, "#e5e7eb");
-                        createParticles(bee.x, bee.y, "#38bdf8", 10);
-                        liveRegion.textContent = "Bee blocked by shield.";
-                    } else {
-                        gameState.lives -= 1;
-                        gameState.streak = 0;
-                        createParticles(bear.x, bear.y - 10, "#ef4444", 16);
-                        liveRegion.textContent = "Bee hit! Lives left: " + gameState.lives;
-                        if (gameState.lives <= 0) {
-                            endGame();
-                            return;
-                        }
-                    }
-                }
-            }
-        }
-
-        function showComboIfNeeded() {
-            streakValue.textContent = String(gameState.streak);
-            if (gameState.streak >= 5) {
-                streakBadge.textContent = "Combo!";
-                streakBadge.classList.add("visible");
-            } else {
-                streakBadge.classList.remove("visible");
-            }
-
-            if (gameState.streak > 0 && gameState.streak % 10 === 0) {
-                comboIndicator.textContent = "x" + (1 + Math.floor(gameState.streak / 10)) + " Combo!";
-                comboIndicator.classList.add("visible");
-                setTimeout(() => comboIndicator.classList.remove("visible"), 700);
-            }
-        }
-
-        function drawBear() {
-            const x = bear.x;
-            const y = bear.y;
-
-            ctx.save();
-            ctx.translate(x, y);
-
-            const phase = performance.now() / 500;
-            const bob = Math.sin(phase) * 2;
-            const tilt = bear.vx * 0.01;
-
-            ctx.rotate(tilt);
-            ctx.translate(0, bob);
-
-            // Shadow
-            ctx.fillStyle = "rgba(0, 0, 0, 0.15)";
-            ctx.beginPath();
-            ctx.ellipse(0, 32, 24, 8, 0, 0, Math.PI * 2);
-            ctx.fill();
-
-            ctx.fillStyle = "#eab308";
-            ctx.beginPath();
-            ctx.arc(0, -28, 18, 0, Math.PI * 2);
-            ctx.fill();
-
-            ctx.beginPath();
-            ctx.arc(-12, -36, 7, 0, Math.PI * 2);
-            ctx.arc(12, -36, 7, 0, Math.PI * 2);
-            ctx.fill();
-
-            ctx.fillStyle = "#111827";
-            ctx.beginPath();
-            ctx.arc(-6, -30, 2, 0, Math.PI * 2);
-            ctx.arc(6, -30, 2, 0, Math.PI * 2);
-            ctx.fill();
-
-            ctx.beginPath();
-            ctx.arc(0, -24, 3, 0, Math.PI);
-            ctx.strokeStyle = "#111827";
-            ctx.lineWidth = 1.5;
-            ctx.stroke();
-
-            ctx.fillStyle = "#b91c1c";
-            ctx.beginPath();
-            ctx.roundRect(-22, -10, 44, 32, 10);
-            ctx.fill();
-
-            ctx.fillStyle = "#facc15";
-            ctx.beginPath();
-            ctx.roundRect(-16, -6, 32, 26, 8);
-            ctx.fill();
-
-            // Gloss effect on jar
-            ctx.fillStyle = "rgba(255, 255, 255, 0.4)";
-            ctx.beginPath();
-            ctx.ellipse(0, -2, 10, 6, 0, 0, Math.PI * 2);
-            ctx.fill();
-
-            ctx.fillStyle = "#78350f";
-            ctx.font = "bold 10px system-ui";
-            ctx.textAlign = "center";
-            ctx.textBaseline = "middle";
-            ctx.fillText("HONEY", 0, 5);
-
-            ctx.strokeStyle = "rgba(56, 189, 248, 0.85)";
-            ctx.lineWidth = 3;
-            if (gameState.shieldTime > 0) {
-                const pulse = 1 + Math.sin(performance.now() / 200) * 0.08;
-                ctx.save();
-                ctx.scale(pulse, pulse);
-                ctx.beginPath();
-                ctx.arc(0, -8, 38, 0, Math.PI * 2);
-                ctx.stroke();
-
-                // Shield sparkles
-                const sparkleCount = 6;
-                for (let i = 0; i < sparkleCount; i++) {
-                    const angle = (i / sparkleCount) * Math.PI * 2 + performance.now() / 500;
-                    const sx = Math.cos(angle) * 38;
-                    const sy = Math.sin(angle) * 38 - 8;
-                    ctx.fillStyle = "rgba(56, 189, 248, 0.8)";
-                    ctx.beginPath();
-                    ctx.arc(sx, sy, 2, 0, Math.PI * 2);
-                    ctx.fill();
-                }
-                ctx.restore();
-            }
-
-            ctx.restore();
-        }
-
-        function drawJars() {
-            for (const jar of jars) {
-                ctx.save();
-                ctx.translate(jar.x, jar.y);
-
-                // Rotation for falling effect
-                const rot = jar.y * 0.01;
-                ctx.rotate(rot);
-
-                let bodyColor = "#facc15";
-                let glowColor = "rgba(250, 204, 21, 0.6)";
-                if (jar.type === "gold") {
-                    bodyColor = "#f97316";
-                    glowColor = "rgba(249, 115, 22, 0.7)";
-                }
-                if (jar.type === "shield") {
-                    bodyColor = "#38bdf8";
-                    glowColor = "rgba(56, 189, 248, 0.7)";
-                }
-
-                // Glow effect
-                ctx.shadowColor = glowColor;
-                ctx.shadowBlur = jar.type === "gold" || jar.type === "shield" ? 12 : 6;
-
-                ctx.fillStyle = bodyColor;
-                ctx.beginPath();
-                ctx.roundRect(-10, -14, 20, 26, 6);
-                ctx.fill();
-
-                ctx.shadowBlur = 0;
-
-                ctx.fillStyle = "rgba(255, 255, 255, 0.9)";
-                ctx.fillRect(-10, -18, 20, 6);
-
-                // Highlight on jar
-                ctx.fillStyle = "rgba(255, 255, 255, 0.5)";
-                ctx.beginPath();
-                ctx.ellipse(-3, -8, 4, 6, 0, 0, Math.PI * 2);
-                ctx.fill();
-
-                ctx.fillStyle = "rgba(0, 0, 0, 0.25)";
-                ctx.fillRect(-6, -10, 12, 2);
-
-                ctx.restore();
-            }
-        }
-
-        function drawBees() {
-            for (const bee of bees) {
-                ctx.save();
-                ctx.translate(bee.x, bee.y);
-
-                // Wing flap animation
-                const wingFlap = Math.sin(performance.now() / 80) * 0.3;
-
-                ctx.fillStyle = "#facc15";
-                ctx.beginPath();
-                ctx.ellipse(0, 0, 14, 10, 0, 0, Math.PI * 2);
-                ctx.fill();
-
-                ctx.strokeStyle = "#111827";
-                ctx.lineWidth = 2;
-                ctx.beginPath();
-                ctx.moveTo(-8, -3);
-                ctx.lineTo(8, -3);
-                ctx.moveTo(-8, 0);
-                ctx.lineTo(8, 0);
-                ctx.moveTo(-8, 3);
-                ctx.lineTo(8, 3);
-                ctx.stroke();
-
-                // Animated wings
-                ctx.fillStyle = "rgba(248, 250, 252, 0.85)";
-                ctx.save();
-                ctx.translate(-6, -10);
-                ctx.rotate(-0.8 + wingFlap);
-                ctx.beginPath();
-                ctx.ellipse(0, 0, 10, 6, 0, 0, Math.PI * 2);
-                ctx.fill();
-                ctx.restore();
-
-                ctx.save();
-                ctx.translate(6, -10);
-                ctx.rotate(0.8 - wingFlap);
-                ctx.beginPath();
-                ctx.ellipse(0, 0, 10, 6, 0, 0, Math.PI * 2);
-                ctx.fill();
-                ctx.restore();
-
-                // Wing shimmer
-                ctx.shadowColor = "rgba(255, 255, 255, 0.8)";
-                ctx.shadowBlur = 4;
-                ctx.strokeStyle = "rgba(255, 255, 255, 0.6)";
-                ctx.lineWidth = 1;
-                ctx.beginPath();
-                ctx.ellipse(-6, -10, 9, 5, -0.8 + wingFlap, 0, Math.PI * 2);
-                ctx.ellipse(6, -10, 9, 5, 0.8 - wingFlap, 0, Math.PI * 2);
-                ctx.stroke();
-                ctx.shadowBlur = 0;
-
-                ctx.fillStyle = "#111827";
-                ctx.beginPath();
-                ctx.arc(8, -1, 2, 0, Math.PI * 2);
-                ctx.fill();
-
-                ctx.restore();
-            }
-        }
-
-        function drawScorePopups() {
-            const now = performance.now();
-            for (let i = scorePopups.length - 1; i >= 0; i--) {
-                const p = scorePopups[i];
-                const t = (now - p.start) / p.duration;
-                if (t >= 1) {
-                    scorePopups.splice(i, 1);
-                    continue;
-                }
-                const easeOut = 1 - Math.pow(1 - t, 3);
-                const y = p.y - easeOut * 40;
-                const alpha = 1 - Math.pow(t, 2);
-                const scale = 1 + Math.sin(t * Math.PI) * 0.2;
-
-                ctx.save();
-                ctx.globalAlpha = alpha;
-                ctx.translate(p.x, y);
-                ctx.scale(scale, scale);
-                ctx.fillStyle = p.color;
-                ctx.strokeStyle = "rgba(255, 255, 255, 0.9)";
-                ctx.lineWidth = 3;
-                ctx.font = "bold 18px system-ui";
-                ctx.textAlign = "center";
-                ctx.textBaseline = "middle";
-                ctx.strokeText(p.amount, 0, 0);
-                ctx.fillText(p.amount, 0, 0);
-                ctx.restore();
-            }
-        }
-
-        function updateParticles(dt) {
-            for (let i = particles.length - 1; i >= 0; i--) {
-                const p = particles[i];
-                p.x += p.vx * dt;
-                p.y += p.vy * dt;
-                p.vy += 200 * dt; // gravity
-                p.life -= p.decay;
-
-                if (p.life <= 0) {
-                    particles.splice(i, 1);
-                }
-            }
-        }
-
-        function drawParticles() {
-            for (const p of particles) {
-                ctx.save();
-                ctx.globalAlpha = p.life;
-                ctx.fillStyle = p.color;
-                ctx.beginPath();
-                ctx.arc(p.x, p.y, p.radius, 0, Math.PI * 2);
-                ctx.fill();
-                ctx.restore();
-            }
-        }
-
-        function render() {
-            ctx.clearRect(0, 0, world.width, world.height);
-            drawParticles();
-            drawJars();
-            drawBees();
-            drawBear();
-            drawScorePopups();
-        }
-
-        function updateHud() {
-            scoreValue.textContent = String(gameState.score);
-            bestValue.textContent = String(gameState.best);
-            timeValue.textContent = String(Math.max(0, Math.floor(gameState.timeLeft)));
-            streakValue.textContent = String(gameState.streak);
-        }
-
-        function gameLoop(timestamp) {
-            if (!lastTimestamp) lastTimestamp = timestamp;
-            const dt = (timestamp - lastTimestamp) / 1000;
-            lastTimestamp = timestamp;
-
-            if (gameState.running && !gameState.paused) {
-                gameState.timeLeft -= dt;
-                if (gameState.timeLeft <= 0) {
-                    gameState.timeLeft = 0;
-                    endGame();
-                } else {
-                    updateEntities(dt);
-                    updateParticles(dt);
-                    handleCollisions();
-                }
-                updateHud();
-            }
-
-            render();
-            requestAnimationFrame(gameLoop);
-        }
-
-        function showOverlay(overlay) {
-            [startOverlay, pauseOverlay, gameOverOverlay].forEach(function(el) {
-                if (!el) return;
-                const isTarget = el === overlay;
-                el.classList.toggle("visible", isTarget);
-                el.setAttribute("aria-hidden", String(!isTarget));
-            });
-        }
-
-        function hideOverlay(overlay) {
-            if (!overlay) return;
-            overlay.classList.remove("visible");
-            overlay.setAttribute("aria-hidden", "true");
-        }
-
-        function startGame() {
-            resetGameState();
-            gameState.running = true;
-            hideOverlay(startOverlay);
-            hideOverlay(gameOverOverlay);
-            hideOverlay(pauseOverlay);
-            liveRegion.textContent = "Game started. Catch the honey and avoid the bees.";
-        }
-
-        function pauseGame() {
-            if (!gameState.running) return;
-            gameState.paused = true;
-            showOverlay(pauseOverlay);
-            liveRegion.textContent = "Game paused.";
-        }
-
-        function resumeGame() {
-            if (!gameState.running) return;
-            gameState.paused = false;
-            hideOverlay(pauseOverlay);
-            liveRegion.textContent = "Game resumed.";
-        }
-
-        function endGame() {
-            if (!gameState.running) return;
-            gameState.running = false;
-            gameState.paused = false;
-            gameState.gamesPlayed += 1;
-
-            if (gameState.score > gameState.best) {
-                gameState.best = gameState.score;
-                liveRegion.textContent = "New high score " + gameState.best + "!";
-            } else {
-                liveRegion.textContent = "Final score " + gameState.score + ".";
-            }
-
-            saveProgress();
-            finalScore.textContent = String(gameState.score);
-            finalBest.textContent = String(gameState.best);
-            overlayBest.textContent = String(gameState.best);
-            overlayGames.textContent = String(gameState.gamesPlayed);
-
-            showOverlay(gameOverOverlay);
-        }
-
-        function toggleHelp() {
-            const isOpen = helpPanel.classList.toggle("visible");
-            helpPanel.setAttribute("aria-hidden", String(!isOpen));
-            helpToggle.setAttribute("aria-expanded", String(isOpen));
-            helpToggleSecondary.setAttribute("aria-expanded", String(isOpen));
-        }
-
-        function openSettings() {
-            settingsModal.classList.add("visible");
-            settingsToggle.setAttribute("aria-expanded", "true");
-            settingsBest.textContent = String(gameState.best);
-            settingsPanel.focus();
-        }
-
-        function closeSettings() {
-            settingsModal.classList.remove("visible");
-            settingsToggle.setAttribute("aria-expanded", "false");
-        }
-
-        function applySettingsToUi() {
-            musicToggle.dataset.on = settingsState.musicOn ? "true" : "false";
-            musicToggle.setAttribute("aria-pressed", String(settingsState.musicOn));
-            sfxToggle.dataset.on = settingsState.sfxOn ? "true" : "false";
-            sfxToggle.setAttribute("aria-pressed", String(settingsState.sfxOn));
-
-            diffButtons.forEach(btn => {
-                const level = Number(btn.dataset.level);
-                btn.classList.toggle("active", level === settingsState.difficulty);
-            });
-        }
-
-        function initTheme() {
-            if (document.body.classList.contains("dark")) {
-                themeToggle.setAttribute("aria-pressed", "true");
-                themeToggle.innerHTML = '<i class="fas fa-sun" aria-hidden="true"></i><span>Theme</span>';
-            } else {
-                themeToggle.setAttribute("aria-pressed", "false");
-                themeToggle.innerHTML = '<i class="fas fa-moon" aria-hidden="true"></i><span>Theme</span>';
-            }
-        }
-
-        function isFullscreen() {
-            return (
-                document.fullscreenElement ||
-                document.webkitFullscreenElement ||
-                document.mozFullScreenElement ||
-                document.msFullscreenElement
-            );
-        }
-
-        function enterFullscreen(el) {
-            if (el.requestFullscreen) {
-                el.requestFullscreen();
-            } else if (el.webkitRequestFullscreen) {
-                el.webkitRequestFullscreen();
-            } else if (el.mozRequestFullScreen) {
-                el.mozRequestFullScreen();
-            } else if (el.msRequestFullscreen) {
-                el.msRequestFullscreen();
-            }
-        }
-
-        function exitFullscreen() {
+        } else {
             if (document.exitFullscreen) {
                 document.exitFullscreen();
-            } else if (document.webkitExitFullscreen) {
-                document.webkitExitFullscreen();
-            } else if (document.mozCancelFullScreen) {
-                document.mozCancelFullScreen();
-            } else if (document.msExitFullscreen) {
-                document.msExitFullscreen();
             }
         }
+    }
+}
 
-        function updateFullscreenButton() {
-            const isFs = isFullscreen();
-            const icon = isFs ? "fa-down-left-and-up-right-to-center" : "fa-up-right-and-down-left-from-center";
-            const text = isFs ? "Exit Fullscreen" : "Fullscreen";
+// ===== ORIENTATION CHANGE HANDLER =====
+window.addEventListener('orientationchange', function() {
+    setTimeout(() => {
+        if (Game && Game.resizeCanvas) {
+            Game.resizeCanvas(true);
+        }
+    }, 300);
+});
 
-            fullscreenToggle.innerHTML = `<i class="fas ${icon}" aria-hidden="true"></i><span>${text}</span>`;
+document.addEventListener('visibilitychange', () => {
+    if (!document.hidden && Game && Game.resizeCanvas) {
+        Game.resizeCanvas(true);
+    }
+});
+
+// ===== TOUCH CONTROL EVENT HANDLERS =====
+function setupTouchControls() {
+    const leftBtn = document.getElementById('leftBtn');
+    const rightBtn = document.getElementById('rightBtn');
+
+    if (!leftBtn || !rightBtn) return;
+
+    const setPressed = (btn, isActive) => {
+        btn.classList.toggle('pressed', isActive);
+    };
+
+    const handleStart = (direction) => {
+        keys[direction] = true;
+        return false;
+    };
+
+    const handleEnd = (direction) => {
+        keys[direction] = false;
+    };
+
+    ['touchstart', 'mousedown'].forEach(eventType => {
+        leftBtn.addEventListener(eventType, (e) => {
+            e.preventDefault();
+            handleStart('left');
+            setPressed(leftBtn, true);
+        });
+
+        rightBtn.addEventListener(eventType, (e) => {
+            e.preventDefault();
+            handleStart('right');
+            setPressed(rightBtn, true);
+        });
+    });
+
+    ['touchend', 'touchcancel', 'mouseup', 'mouseleave'].forEach(eventType => {
+        leftBtn.addEventListener(eventType, () => {
+            handleEnd('left');
+            setPressed(leftBtn, false);
+        });
+        rightBtn.addEventListener(eventType, () => {
+            handleEnd('right');
+            setPressed(rightBtn, false);
+        });
+    });
+}
+
+// ===== INITIALIZE MOBILE OPTIMIZATIONS =====
+function initMobileOptimizations() {
+    const isMobile = /Mobi|Android|iPhone|iPad|iPod/i.test(navigator.userAgent);
+
+    if (isMobile) {
+        const touchControls = document.querySelector('.touch-controls');
+        if (touchControls) {
+            touchControls.style.display = 'flex';
         }
 
-        function initFullscreen() {
-            fullscreenToggle.addEventListener("click", () => {
-                if (isFullscreen()) {
-                    exitFullscreen();
+        if (player) {
+            player.speed = 7;
+        }
+
+        setupTouchControls();
+
+        document.addEventListener('touchstart', function(event) {
+            if (event.touches.length > 1) {
+                event.preventDefault();
+            }
+        }, { passive: false });
+
+        const canvas = document.getElementById('gameCanvas');
+        if (canvas) {
+            canvas.addEventListener('touchmove', function(e) {
+                if (gameState === 'playing') {
+                    e.preventDefault();
+                }
+            }, { passive: false });
+        }
+    }
+}
+
+// ===== IMPROVED KEYBOARD CONTROL FOR MOBILE EXTERNAL KEYBOARDS =====
+document.addEventListener('keydown', function(e) {
+    if (gameState === 'playing' &&
+        (e.key === 'ArrowLeft' || e.key === 'ArrowRight' ||
+            e.key === 'ArrowUp' || e.key === 'ArrowDown')) {
+        e.preventDefault();
+    }
+});
+
+// ===== VISUAL FEEDBACK FOR TOUCH CONTROLS =====
+function addTouchFeedback() {
+    const style = document.createElement('style');
+    style.textContent = `
+    .touch-btn.pressed {
+      background: rgba(244, 169, 68, 0.3) !important;
+      transform: scale(0.95) !important;
+    }
+    
+    @media (max-width: 768px) {
+      .game-card .btn:active {
+        transform: scale(0.97);
+        transition: transform 0.1s ease;
+      }
+    }
+  `;
+    document.head.appendChild(style);
+}
+
+addTouchFeedback();
+
+function setMusicState(enabled) {
+    if (!bgMusic) return;
+    musicEnabled = enabled;
+    // Replace the entire enhanced audio controller (last anonymous function)
+// with proper integration:
+
+    if (musicToggle) {
+        musicToggle.addEventListener('click', () => {
+            musicEnabled = !musicEnabled;
+            localStorage.setItem('hundredAcres.music', musicEnabled ? 'on' : 'off');
+            setMusicState(musicEnabled);
+
+            // Also sync ambient forest sound
+            if (ambientForest) {
+                if (musicEnabled) {
+                    ambientForest.volume = 0.12;
+                    ambientForest.play().catch(() => {});
                 } else {
-                    enterFullscreen(gameContainer);
+                    ambientForest.pause();
+                }
+            }
+        });
+    }
+
+
+    if (enabled) {
+        bgMusic.volume = 0.45;
+        const playPromise = bgMusic.play();
+        if (playPromise?.catch) {
+            playPromise.catch(() => {});
+        }
+    } else {
+        bgMusic.pause();
+    }
+}
+
+function primeMusicPlayback() {
+    if (musicEnabled) {
+        setMusicState(true);
+    }
+}
+
+function renderCritique(summary, bulletPoints) {
+    if (critiqueSummary) {
+        critiqueSummary.textContent = summary;
+    }
+
+    if (critiqueList) {
+        critiqueList.innerHTML = '';
+        bulletPoints.forEach((point) => {
+            const li = document.createElement('li');
+            li.textContent = point;
+            critiqueList.appendChild(li);
+        });
+    }
+}
+
+if (fullscreenBtn) {
+    fullscreenBtn.addEventListener('click', toggleFullscreen);
+}
+// Attach control button listeners (replacing inline onclicks)
+const startBtn = document.getElementById('startBtn');
+const pauseBtn = document.getElementById('pauseBtn');
+const resetBtn = document.getElementById('resetBtn');
+startBtn?.addEventListener('click', () => Game.start());
+pauseBtn?.addEventListener('click', () => Game.togglePause());
+resetBtn?.addEventListener('click', () => Game.reset());
+// Chapter nav listeners
+prevBtn?.addEventListener('click', previousPage);
+nextBtn?.addEventListener('click', nextPage);
+document.addEventListener('fullscreenchange', () => {
+    const nativeActive = Boolean(document.fullscreenElement);
+    if (!nativeActive && mobileFullscreenActive) {
+        mobileFullscreenActive = false;
+        gameCard?.classList.remove('fullscreen-mobile');
+        document.body.style.overflow = '';
+    }
+
+    syncFullscreenUI();
+
+    if (Game.resizeCanvas) {
+        setTimeout(() => Game.resizeCanvas(true), 100);
+    }
+});
+
+const storedMusic = localStorage.getItem(MUSIC_KEY);
+musicEnabled = storedMusic === 'on';
+setMusicState(musicEnabled);
+
+if (musicToggle) {
+    musicToggle.addEventListener('click', () => {
+        musicEnabled = !musicEnabled;
+        localStorage.setItem(MUSIC_KEY, musicEnabled ? 'on' : 'off');
+        setMusicState(musicEnabled);
+    });
+}
+
+document.addEventListener('click', primeMusicPlayback, { once: true });
+document.addEventListener('touchstart', primeMusicPlayback, { once: true, passive: true });
+syncFullscreenUI();
+
+// ===== GAME LOGIC =====
+let canvas, ctx;
+let rafId = null; // rAF id
+let bgCanvas = null, bgCtx = null; // cached background canvas
+let gameState = 'idle';
+let score = 0;
+let honeyCollected = 0;
+let bestScore = 0;
+let bestHoney = 0;
+let bestCombo = 0;
+let combo = 0;
+let lives = 3;
+let timeLeft = 60;
+let difficulty = 'easy';
+let beeHits = 0;
+let runBestCombo = 0;
+let gameInterval, timerInterval, dropInterval, beeInterval, powerInterval;
+let hitFlash = 0;
+const isTouchDevice = 'ontouchstart' in window;
+
+let player = { x: 0, y: 0, width: 60, height: 90, speed: isTouchDevice ? 6 : 5 };
+let drops = [];
+let bees = [];
+let sparkles = [];
+let powerups = [];
+const activeEffects = {
+    shield: false,
+    magnetUntil: 0,
+    doubleUntil: 0
+};
+
+const difficulties = {
+    easy: { dropSpeed: 2, beeSpeed: 1.5, dropFreq: 1500, beeFreq: 3000, dropValue: 10 },
+    normal: { dropSpeed: 3, beeSpeed: 2.4, dropFreq: 1000, beeFreq: 2000, dropValue: 14 },
+    cozy: { dropSpeed: 1.6, beeSpeed: 1.1, dropFreq: 1800, beeFreq: 3200, dropValue: 8 }
+};
+
+let keys = { left: false, right: false };
+const defaultCritique = {
+    summary: 'Finish a run to unlock tips',
+    bullets: ['Collect honey and avoid bees to see how you did.']
+};
+
+// ===== GAME FUNCTIONS =====
+const Game = {
+    buildRunCritique: function() {
+        const bullets = [];
+
+        const summary = score >= 260
+            ? 'Sweet scoring spree!'
+            : score >= 170
+                ? 'Solid honey haul!'
+                : 'Warm-up jog complete — more honey awaits.';
+
+        const stingNote = beeHits === 0
+            ? 'Stayed sting-free — nimble dodging!'
+            : `Shook off ${beeHits} bee bump${beeHits === 1 ? '' : 's'} — shields and weaving help.`;
+        bullets.push(stingNote);
+
+        const comboNote = runBestCombo >= 6
+            ? `Built a cozy combo of x${runBestCombo} — keep chaining catches.`
+            : runBestCombo >= 3
+                ? `Nice combo rhythm with x${runBestCombo}; keep honey steady for bigger bonuses.`
+                : 'Try catching back-to-back honey to build a combo bonus.';
+        bullets.push(comboNote);
+
+        const paceNote = honeyCollected >= 28
+            ? 'Honey haul was plentiful — sweet pace!'
+            : honeyCollected >= 15
+                ? 'Solid honey haul; chase a few more pots next run.'
+                : 'Slide under falling honey more often to grow your haul.';
+        bullets.push(paceNote);
+
+        const diffNote = difficulty === 'cozy'
+            ? 'Cozy mode is gentle; bump to Easy/Normal when you want faster drops.'
+            : difficulty === 'easy'
+                ? 'Easy mode unlocked; step to Normal for extra spring when you are ready.'
+                : 'Normal mode chosen — steady reflexes! Cozy is there for calmer play.';
+        bullets.push(diffNote);
+
+        return { summary, bullets };
+    },
+
+    init: function() {
+        canvas = document.getElementById('gameCanvas');
+        if (!canvas) {
+            console.error('Game canvas not found!');
+            return;
+        }
+        ctx = canvas.getContext('2d');
+
+        this.overlay = document.getElementById('gameOverlay');
+        this.overlayButton = document.getElementById('overlayButton');
+        this.overlayTitle = document.getElementById('overlayTitle');
+        this.overlayMessage = document.getElementById('overlayMessage');
+        this.overlayIcon = document.getElementById('overlayIcon');
+        this.previouslyFocused = null;
+
+        if (this.overlayButton) {
+            this.overlayButton.addEventListener('click', () => {
+                if (gameState === 'paused') {
+                    this.resume();
+                } else {
+                    this.start();
                 }
             });
+        }
+        // ESC key handling for overlay states
+        document.addEventListener('keydown', (e) => {
+            if (e.key === 'Escape') {
+                if (gameState === 'paused') this.resume();
+                else if (gameState === 'over') this.reset();
+            }
+        });
 
-            document.addEventListener("fullscreenchange", () => {
-                updateFullscreenButton();
-                resizeCanvas();
-            });
+        const sizeCanvas = () => {
+            const container = canvas.parentElement;
+            if (!container) return;
 
-            document.addEventListener("webkitfullscreenchange", () => {
-                updateFullscreenButton();
-                resizeCanvas();
-            });
+            const isFull = gameCard?.classList?.contains('fullscreen') || gameCard?.classList?.contains('fullscreen-mobile');
+            const isSmallScreen = window.innerWidth <= 900;
 
-            document.addEventListener("mozfullscreenchange", () => {
-                updateFullscreenButton();
-                resizeCanvas();
-            });
+            // Width: same logic as before, just guarded
+            const maxWidth = Math.min(container.offsetWidth - 28, isFull ? 1100 : 680);
+            canvas.width = Math.max(260, maxWidth);
 
-            document.addEventListener("msfullscreenchange", () => {
-                updateFullscreenButton();
-                resizeCanvas();
-            });
+            let targetHeight;
 
-            updateFullscreenButton();
+            if (isFull && isSmallScreen && gameCard) {
+                // Mobile-ish fullscreen: fill the viewport vertically
+                let availableHeight = window.innerHeight;
 
-            document.addEventListener('keydown', (e) => {
-                if (e.key === 'F11') {
-                    e.preventDefault();
-                    if (isFullscreen()) {
-                        exitFullscreen();
-                    } else {
-                        enterFullscreen(gameContainer);
+                // Subtract card padding
+                const cardStyles = window.getComputedStyle(gameCard);
+                const padTop = parseFloat(cardStyles.paddingTop) || 0;
+                const padBottom = parseFloat(cardStyles.paddingBottom) || 0;
+                availableHeight -= (padTop + padBottom);
+
+                // Subtract header / HUD / controls height
+                const header = gameCard.querySelector('.game-card-header');
+                const hudPrimary = gameCard.querySelector('.hud');
+                const hudSecondary = gameCard.querySelector('.hud-secondary');
+                const controls = gameCard.querySelector('.game-controls');
+
+                [header, hudPrimary, hudSecondary, controls].forEach(el => {
+                    if (el) {
+                        availableHeight -= (el.offsetHeight || 0);
                     }
-                }
-            });
-        }
-
-        function handleKeyDown(e) {
-            if (e.key === "ArrowLeft") {
-                keys.left = true;
-            } else if (e.key === "ArrowRight") {
-                keys.right = true;
-            } else if (e.key === " " || e.code === "Space") {
-                e.preventDefault();
-                if (!gameState.running) {
-                    startGame();
-                } else if (gameState.paused) {
-                    resumeGame();
-                } else {
-                    pauseGame();
-                }
-            } else if (e.key === "p" || e.key === "P") {
-                e.preventDefault();
-                if (gameState.running && !gameState.paused) {
-                    pauseGame();
-                } else if (gameState.paused) {
-                    resumeGame();
-                }
-            } else if (e.key === "Escape") {
-                if (settingsModal.classList.contains("visible")) {
-                    closeSettings();
-                    e.preventDefault();
-                }
-                if (helpPanel.classList.contains("visible")) {
-                    toggleHelp();
-                    e.preventDefault();
-                }
-                if (isFullscreen()) {
-                    exitFullscreen();
-                    e.preventDefault();
-                }
-            }
-        }
-
-        function handleKeyUp(e) {
-            if (e.key === "ArrowLeft") {
-                keys.left = false;
-            } else if (e.key === "ArrowRight") {
-                keys.right = false;
-            }
-        }
-
-        function bindPadButton(btn, direction) {
-            if (!btn) return;
-
-            const set = (pressed) => {
-                btn.setAttribute("aria-pressed", String(pressed));
-                if (direction === "left") {
-                    keys.left = pressed;
-                } else if (direction === "right") {
-                    keys.right = pressed;
-                }
-            };
-
-            btn.addEventListener("mousedown", (e) => {
-                e.preventDefault();
-                set(true);
-            });
-
-            btn.addEventListener("mouseup", (e) => {
-                e.preventDefault();
-                set(false);
-            });
-
-            btn.addEventListener("mouseleave", () => set(false));
-
-            btn.addEventListener("touchstart", (e) => {
-                e.preventDefault();
-                set(true);
-            });
-
-            btn.addEventListener("touchend", (e) => {
-                e.preventDefault();
-                set(false);
-            });
-
-            btn.addEventListener("touchcancel", () => set(false));
-        }
-
-        function initControls() {
-            window.addEventListener("keydown", handleKeyDown);
-            window.addEventListener("keyup", handleKeyUp);
-
-            bindPadButton(btnLeft, "left");
-            bindPadButton(btnRight, "right");
-
-            pauseButton.addEventListener("click", () => {
-                if (!gameState.running) return;
-                if (gameState.paused) {
-                    resumeGame();
-                } else {
-                    pauseGame();
-                }
-            });
-
-            helpToggle.addEventListener("click", toggleHelp);
-            helpToggleSecondary.addEventListener("click", toggleHelp);
-        }
-
-        function initSettings() {
-            settingsToggle.addEventListener("click", openSettings);
-            settingsClose.addEventListener("click", closeSettings);
-            settingsModal.addEventListener("click", (e) => {
-                if (e.target === settingsModal) {
-                    closeSettings();
-                }
-            });
-
-            musicToggle.addEventListener("click", () => {
-                settingsState.musicOn = !settingsState.musicOn;
-                applySettingsToUi();
-                saveProgress();
-                liveRegion.textContent = "Music " + (settingsState.musicOn ? "enabled" : "disabled");
-            });
-
-            sfxToggle.addEventListener("click", () => {
-                settingsState.sfxOn = !settingsState.sfxOn;
-                applySettingsToUi();
-                saveProgress();
-                liveRegion.textContent = "Sound effects " + (settingsState.sfxOn ? "enabled" : "disabled");
-            });
-
-            diffButtons.forEach(btn => {
-                btn.addEventListener("click", () => {
-                    const level = Number(btn.dataset.level);
-                    settingsState.difficulty = level;
-                    applySettingsToUi();
-                    saveProgress();
-                    liveRegion.textContent = "Difficulty set to " + btn.textContent + ".";
                 });
+
+                // Leave a little room for touch controls / thumbs
+                availableHeight -= isTouchDevice ? 80 : 24;
+
+                // Height based on width, but clamped into the available space
+                const idealFromAspect = canvas.width * 0.75; // slightly taller for playability
+                targetHeight = Math.max(220, Math.min(availableHeight, idealFromAspect));
+            } else {
+                // Desktop / non-fullscreen behavior (very close to what you had)
+                const heightRatio = isFull ? 0.62 : (window.innerWidth < 640 ? 0.75 : 0.85);
+                const maxHeight = isFull ? 680 : 480;
+                targetHeight = Math.min(maxHeight, Math.round(canvas.width * heightRatio));
+            }
+
+            canvas.height = Math.max(220, targetHeight);
+        };
+
+        this.resizeCanvas = (preservePosition = false) => {
+            const previousWidth = canvas.width;
+            sizeCanvas();
+
+            if (preservePosition) {
+                player.x = (player.x / previousWidth) * canvas.width;
+            } else {
+                player.x = canvas.width / 2 - player.width / 2;
+            }
+
+            player.x = Math.max(0, Math.min(canvas.width - player.width, player.x));
+            player.y = canvas.height - player.height - 18;
+            this.draw();
+        };
+
+        this.resizeCanvas();
+
+        // prepare offscreen background canvas
+        bgCanvas = document.createElement('canvas');
+        bgCtx = bgCanvas.getContext('2d');
+
+        // Keyboard controls
+        document.addEventListener('keydown', this.handleKeyDown);
+        document.addEventListener('keyup', this.handleKeyUp);
+
+        // Touch controls
+        let isDragging = false;
+
+        canvas.addEventListener('touchstart', (e) => {
+            isDragging = true;
+            this.handleTouch(e);
+        }, { passive: false });
+
+        canvas.addEventListener('touchmove', (e) => {
+            if (isDragging) this.handleTouch(e);
+        }, { passive: false });
+
+        canvas.addEventListener('touchend', () => { isDragging = false; });
+
+        // Mouse controls
+        canvas.addEventListener('mousedown', () => { isDragging = true; });
+        canvas.addEventListener('mousemove', (e) => {
+            if (isDragging && gameState === 'playing') {
+                const rect = canvas.getBoundingClientRect();
+                player.x = e.clientX - rect.left - player.width / 2;
+                player.x = Math.max(0, Math.min(canvas.width - player.width, player.x));
+            }
+        });
+        canvas.addEventListener('mouseup', () => { isDragging = false; });
+        canvas.addEventListener('mouseleave', () => { isDragging = false; });
+
+        // Difficulty buttons
+        document.querySelectorAll('.difficulty-btn').forEach(btn => {
+            btn.addEventListener('click', () => {
+                const level = btn.dataset.diff;
+                Game.setDifficulty(level);
             });
+        });
 
-            resetProgress.addEventListener("click", () => {
-                if (confirm("Are you sure you want to reset all progress? This will delete your high score and games played.")) {
-                    gameState.best = 0;
-                    gameState.gamesPlayed = 0;
-                    saveProgress();
-                    settingsBest.textContent = "0";
-                    bestValue.textContent = "0";
-                    overlayBest.textContent = "0";
-                    overlayGames.textContent = "0";
-                    liveRegion.textContent = "Progress reset.";
-                }
-            });
-        }
-
-        function initTopbar() {
-            themeToggle.addEventListener("click", () => {
-                const isDark = document.body.classList.toggle("dark");
-                localStorage.setItem(STORAGE_KEYS.THEME, isDark ? "dark" : "light");
-                initTheme();
-            });
-            initTheme();
-            initFullscreen();
-        }
-
-        function initOverlays() {
-            startButton.addEventListener("click", startGame);
-            resumeButton.addEventListener("click", resumeGame);
-            restartButton.addEventListener("click", startGame);
-
-            overlayBest.textContent = String(gameState.best);
-            overlayGames.textContent = String(gameState.gamesPlayed);
-        }
-
-        function init() {
-            console.log("Initializing Honey Hunt...");
-            loadPersistedState();
-            resizeCanvas();
-            updateHud();
-            applySettingsToUi();
-            initControls();
-            initSettings();
-            initTopbar();
-            initOverlays();
-            window.addEventListener("resize", resizeCanvas);
-            requestAnimationFrame(gameLoop);
-            console.log("Honey Hunt initialized successfully!");
-        }
-
-        if (document.readyState === 'loading') {
-            document.addEventListener('DOMContentLoaded', init);
+        // Load persisted difficulty
+        const savedDiff = localStorage.getItem('hundredAcres.difficulty');
+        if (savedDiff && difficulties[savedDiff]) {
+            this.setDifficulty(savedDiff);
         } else {
-            init();
+            this.setDifficulty(difficulty);
         }
-    })();
-</script>
-</body>
-</html>
+
+
+
+        this.draw();
+
+        this.showOverlay('Ready to Play', 'Catch honey, avoid bees, and chase your best streak!', '🍯', 'Start Adventure');
+        this.updateStatus('Ready to play!');
+        renderCritique(defaultCritique.summary, defaultCritique.bullets);
+
+        window.addEventListener('resize', () => {
+            this.resizeCanvas(true);
+        });
+
+        console.log('Game initialized successfully');
+    },
+
+    handleKeyDown: function(e) {
+        if (e.key === 'ArrowLeft' || e.key === 'a' || e.key === 'A') keys.left = true;
+        if (e.key === 'ArrowRight' || e.key === 'd' || e.key === 'D') keys.right = true;
+        if (e.key === ' ') {
+            e.preventDefault();
+            Game.togglePause();
+        }
+        if (e.key === 'r' || e.key === 'R') {
+            Game.reset();
+        }
+    },
+
+    handleKeyUp: function(e) {
+        if (e.key === 'ArrowLeft' || e.key === 'a' || e.key === 'A') keys.left = false;
+        if (e.key === 'ArrowRight' || e.key === 'd' || e.key === 'D') keys.right = false;
+    },
+
+    handleTouch: function(e) {
+        if (gameState !== 'playing') return;
+        e.preventDefault();
+        const rect = canvas.getBoundingClientRect();
+        const touch = e.touches[0];
+        player.x = touch.clientX - rect.left - player.width / 2;
+        player.x = Math.max(0, Math.min(canvas.width - player.width, player.x));
+    },
+
+    setDifficulty: function(level) {
+        difficulty = level;
+        document.querySelectorAll('.difficulty-btn').forEach(b => b.classList.remove('active'));
+        const btn = document.querySelector(`[data-diff="${level}"]`);
+        if (btn) btn.classList.add('active');
+        try {
+            localStorage.setItem('hundredAcres.difficulty', level);
+        } catch {}
+        console.log('Difficulty set to:', level);
+    },
+
+    start: function() {
+        if (gameState === 'playing') return;
+
+        // On mobile, automatically jump into fullscreen game view
+        const isMobile = /Mobi|Android|iPhone|iPad|iPod/i.test(navigator.userAgent || '');
+        if (isMobile && !mobileFullscreenActive && !document.fullscreenElement) {
+            // Safe to call here – toggleMobileFullscreen is defined above,
+            // and Game exists at this point.
+            toggleMobileFullscreen();
+        }
+
+        gameState = 'playing';
+        primeMusicPlayback();
+        score = 0;
+        honeyCollected = 0;
+        combo = 0;
+        lives = 3;
+        beeHits = 0;
+        runBestCombo = 0;
+        hitFlash = 0;
+        timeLeft = 60;
+        drops = [];
+        bees = [];
+        sparkles = [];
+        powerups = [];
+        activeEffects.shield = false;
+        activeEffects.magnetUntil = 0;
+        activeEffects.doubleUntil = 0;
+
+        this.hideOverlay();
+        this.updateDisplay();
+        this.startLoops();
+        this.updateStatus('Go! Catch the honey!');
+        renderCritique('Honey run underway', [
+            'Keep moving under honey pots to raise your score.',
+            'Dodge bees or grab a shield power-up when one appears.'
+        ]);
+
+        console.log('Game started');
+    },
+
+    startLoops: function() {
+        this.clearIntervals();
+        // Use requestAnimationFrame for smooth loop
+        const tick = () => {
+            this.loop();
+            rafId = requestAnimationFrame(tick);
+        };
+        if (rafId) cancelAnimationFrame(rafId);
+        rafId = requestAnimationFrame(tick);
+
+        timerInterval = setInterval(() => {
+            if (gameState !== 'playing') return;
+            timeLeft--;
+            document.getElementById('time').textContent = timeLeft;
+            if (timeLeft <= 0) {
+                this.end();
+            }
+        }, 1000);
+
+        this.startSpawners();
+    },
+
+    startSpawners: function() {
+        const diff = difficulties[difficulty];
+        this.clearSpawnerIntervals();
+
+        dropInterval = setInterval(() => {
+            if (gameState !== 'playing') return;
+            drops.push({
+                x: Math.random() * (canvas.width - 20),
+                y: -20,
+                width: 20,
+                height: 30,
+                speed: diff.dropSpeed,
+                value: diff.dropValue,
+                type: 'honey'
+            });
+        }, diff.dropFreq);
+
+        beeInterval = setInterval(() => {
+            if (gameState !== 'playing') return;
+            bees.push({
+                x: Math.random() * (canvas.width - 30),
+                y: -30,
+                width: 30,
+                height: 25,
+                speed: diff.beeSpeed,
+                type: 'bee'
+            });
+        }, diff.beeFreq);
+
+        powerInterval = setInterval(() => {
+            if (gameState !== 'playing') return;
+            if (Math.random() < 0.2) this.spawnPowerup();
+        }, 4000);
+    },
+
+    clearSpawnerIntervals: function() {
+        if (dropInterval) clearInterval(dropInterval);
+        if (beeInterval) clearInterval(beeInterval);
+        if (powerInterval) clearInterval(powerInterval);
+    },
+
+    clearIntervals: function() {
+        if (rafId) cancelAnimationFrame(rafId);
+        rafId = null;
+        if (timerInterval) clearInterval(timerInterval);
+        this.clearSpawnerIntervals();
+    },
+
+    togglePause: function() {
+        if (gameState === 'playing') {
+            this.pause();
+        } else if (gameState === 'paused') {
+            this.resume();
+        }
+    },
+
+    pause: function() {
+        if (gameState !== 'playing') return;
+        gameState = 'paused';
+        this.clearIntervals();
+        this.showOverlay('Game Paused', 'Take a breather then keep catching honey!', '⏸', 'Continue');
+        this.updateStatus('Paused');
+    },
+
+    resume: function() {
+        if (gameState !== 'paused') return;
+        gameState = 'playing';
+        this.hideOverlay();
+        this.startLoops();
+        this.updateStatus('Back to the adventure!');
+    },
+
+    reset: function() {
+        gameState = 'idle';
+        this.clearIntervals();
+
+        score = 0;
+        honeyCollected = 0;
+        combo = 0;
+        lives = 3;
+        timeLeft = 60;
+        drops = [];
+        bees = [];
+        sparkles = [];
+        powerups = [];
+        activeEffects.shield = false;
+        activeEffects.magnetUntil = 0;
+        activeEffects.doubleUntil = 0;
+
+        player.x = canvas.width / 2 - player.width / 2;
+        player.y = canvas.height - player.height - 18;
+
+        this.updateDisplay();
+        this.draw();
+        this.showOverlay('Reset & Ready', 'Press start to begin a new honey run!', '🔄', 'Start Adventure');
+        this.updateStatus('Ready to play!');
+        renderCritique(defaultCritique.summary, defaultCritique.bullets);
+
+        console.log('Game reset');
+    },
+
+    end: function() {
+        gameState = 'over';
+        this.clearIntervals();
+
+        // Update best scores
+        if (score > bestScore) {
+            bestScore = score;
+            document.getElementById('gameHighScore').textContent = bestScore;
+            this.showAchievement('New High Score!');
+        }
+        if (honeyCollected > bestHoney) {
+            bestHoney = honeyCollected;
+            this.showAchievement('Most Honey Yet!');
+        }
+
+        if (combo > bestCombo) {
+            bestCombo = combo;
+            this.showAchievement('Sweetest Combo!');
+        }
+
+        this.saveBestStats();
+        this.updateDisplay();
+        this.showOverlay('Game Over', `Score: ${score}<br>Honey: ${honeyCollected}<br>Best Combo: x${bestCombo}`, '🐝', 'Play Again');
+        this.updateStatus('Game over — try again!');
+        const critique = this.buildRunCritique();
+        renderCritique(critique.summary, critique.bullets);
+
+        console.log('Game ended');
+    },
+
+    spawnPowerup: function() {
+        const options = [
+            { type: 'shield', color: '#64b5f6', symbol: '🛡️', note: 'Blocks one bee hit' },
+            { type: 'magnet', color: '#e57373', symbol: '🧲', note: 'Pulls honey toward you' },
+            { type: 'double', color: '#81c784', symbol: '2️⃣', note: 'Double honey points' }
+        ];
+        const pick = options[Math.floor(Math.random() * options.length)];
+
+        powerups.push({
+            x: Math.random() * (canvas.width - 26),
+            y: -30,
+            width: 26,
+            height: 26,
+            speed: 2.2,
+            ...pick
+        });
+    },
+
+    loop: function() {
+        if (gameState !== 'playing') return;
+
+        // Update player position based on keys
+        if (keys.left) {
+            player.x -= player.speed;
+        }
+        if (keys.right) {
+            player.x += player.speed;
+        }
+        player.x = Math.max(0, Math.min(canvas.width - player.width, player.x));
+
+        const now = Date.now();
+        const magnetActive = activeEffects.magnetUntil > now;
+        const doubleActive = activeEffects.doubleUntil > now;
+        const playerCenter = player.x + player.width / 2;
+
+        // Update drops
+        for (let i = drops.length - 1; i >= 0; i--) {
+            const drop = drops[i];
+            drop.y += drop.speed;
+            if (magnetActive) {
+                const dropCenter = drop.x + drop.width / 2;
+                drop.x += (playerCenter - dropCenter) * 0.03;
+            }
+
+            if (this.checkCollision(drop, player)) {
+                const points = (drop.value || 10) * (doubleActive ? 2 : 1);
+                score += points;
+                honeyCollected++;
+                combo++;
+                runBestCombo = Math.max(runBestCombo, combo);
+                bestCombo = Math.max(bestCombo, combo);
+                sparkles.push({
+                    x: drop.x + 10,
+                    y: drop.y + 10,
+                    life: 22
+                });
+                drops.splice(i, 1);
+                if (combo > 0 && combo % 5 === 0) {
+                    this.showAchievement(`${combo}x Combo!`);
+                }
+                this.updateDisplay();
+            } else if (drop.y > canvas.height) {
+                drops.splice(i, 1);
+                combo = 0;
+            }
+        }
+
+        // Update powerups
+        for (let i = powerups.length - 1; i >= 0; i--) {
+            const power = powerups[i];
+            power.y += power.speed;
+
+            if (this.checkCollision(power, player)) {
+                this.activatePowerup(power);
+                powerups.splice(i, 1);
+                this.updateDisplay();
+            } else if (power.y > canvas.height) {
+                powerups.splice(i, 1);
+            }
+        }
+
+        // Update bees
+        for (let i = bees.length - 1; i >= 0; i--) {
+            const bee = bees[i];
+            bee.y += bee.speed;
+
+            if (this.checkCollision(bee, player)) {
+                if (activeEffects.shield) {
+                    activeEffects.shield = false;
+                    this.updateStatus('Shield blocked a bee!');
+                } else {
+                    beeHits++;
+                    lives--;
+                    combo = 0;
+                }
+                bees.splice(i, 1);
+                hitFlash = 16;
+                this.updateDisplay();
+
+                if (lives <= 0) {
+                    this.end();
+                }
+            } else if (bee.y > canvas.height) {
+                bees.splice(i, 1);
+            }
+        }
+
+        // Update sparkles
+        sparkles.forEach((s, i) => {
+            s.life--;
+            s.y += 0.5;
+            if (s.life <= 0) sparkles.splice(i, 1);
+        });
+
+        this.draw();
+    },
+
+    checkCollision: function(obj1, obj2) {
+        return obj1.x < obj2.x + obj2.width &&
+            obj1.x + obj1.width > obj2.x &&
+            obj1.y < obj2.y + obj2.height &&
+            obj1.y + obj1.height > obj2.y;
+    },
+
+    draw: function() {
+        if (!ctx) return;
+
+        // Cache and render the static background
+        if (!bgCanvas) {
+            bgCanvas = document.createElement('canvas');
+            bgCtx = bgCanvas.getContext('2d');
+        }
+        if (bgCanvas.width !== canvas.width || bgCanvas.height !== canvas.height) {
+            bgCanvas.width = canvas.width;
+            bgCanvas.height = canvas.height;
+            this.drawStaticBackground(bgCtx, bgCanvas.width, bgCanvas.height);
+        }
+        ctx.clearRect(0, 0, canvas.width, canvas.height);
+        ctx.drawImage(bgCanvas, 0, 0);
+
+        const time = Date.now();
+
+        // Soft clouds with painted edges
+        const drawCloud = (x, y, scale = 1, opacity = 0.9) => {
+            ctx.save();
+            ctx.globalAlpha = opacity;
+            const cloudGradient = ctx.createLinearGradient(x, y - 24 * scale, x, y + 28 * scale);
+            cloudGradient.addColorStop(0, '#ffffff');
+            cloudGradient.addColorStop(1, '#e3f0ff');
+            ctx.fillStyle = cloudGradient;
+            ctx.beginPath();
+            ctx.ellipse(x, y, 26 * scale, 18 * scale, 0, 0, Math.PI * 2);
+            ctx.ellipse(x + 18 * scale, y - 8 * scale, 22 * scale, 16 * scale, 0, 0, Math.PI * 2);
+            ctx.ellipse(x + 36 * scale, y + 2 * scale, 24 * scale, 17 * scale, 0, 0, Math.PI * 2);
+            ctx.ellipse(x - 18 * scale, y + 4 * scale, 18 * scale, 14 * scale, 0, 0, Math.PI * 2);
+            ctx.fill();
+
+            ctx.strokeStyle = 'rgba(193, 211, 233, 0.6)';
+            ctx.lineWidth = 2;
+            ctx.beginPath();
+            ctx.ellipse(x + 4 * scale, y + 6 * scale, 42 * scale, 26 * scale, 0, 0.15, Math.PI * 2.2);
+            ctx.stroke();
+            ctx.restore();
+        };
+        const cloudDrift = Math.sin(time / 3200) * 12;
+        drawCloud(canvas.width * 0.22 + cloudDrift, canvas.height * 0.2, 1.12, 0.9);
+        drawCloud(canvas.width * 0.55 - cloudDrift * 0.6, canvas.height * 0.14 + 6, 0.94, 0.78);
+        drawCloud(canvas.width * 0.78 + cloudDrift * 0.4, canvas.height * 0.24, 1.26, 0.85);
+
+        // Soft distant hills
+        const backHill = ctx.createLinearGradient(0, canvas.height - 160, 0, canvas.height);
+        backHill.addColorStop(0, '#b7d7a8');
+        backHill.addColorStop(1, '#9cc38a');
+        ctx.fillStyle = backHill;
+        ctx.beginPath();
+        ctx.moveTo(0, canvas.height - 110);
+        ctx.quadraticCurveTo(canvas.width * 0.25, canvas.height - 160, canvas.width * 0.55, canvas.height - 110);
+        ctx.quadraticCurveTo(canvas.width * 0.8, canvas.height - 80, canvas.width, canvas.height - 120);
+        ctx.lineTo(canvas.width, canvas.height);
+        ctx.lineTo(0, canvas.height);
+        ctx.closePath();
+        ctx.fill();
+
+        const frontHill = ctx.createLinearGradient(0, canvas.height - 120, 0, canvas.height);
+        frontHill.addColorStop(0, '#a3ce86');
+        frontHill.addColorStop(1, '#7fb76c');
+        ctx.fillStyle = frontHill;
+        ctx.beginPath();
+        ctx.moveTo(0, canvas.height - 70);
+        ctx.quadraticCurveTo(canvas.width * 0.22, canvas.height - 130, canvas.width * 0.5, canvas.height - 80);
+        ctx.quadraticCurveTo(canvas.width * 0.78, canvas.height - 40, canvas.width, canvas.height - 75);
+        ctx.lineTo(canvas.width, canvas.height);
+        ctx.lineTo(0, canvas.height);
+        ctx.closePath();
+        ctx.fill();
+
+        // Ground & path
+        const grassGradient = ctx.createLinearGradient(0, canvas.height - 60, 0, canvas.height);
+        grassGradient.addColorStop(0, '#72a95c');
+        grassGradient.addColorStop(1, '#5e924c');
+        ctx.fillStyle = grassGradient;
+        ctx.fillRect(0, canvas.height - 48, canvas.width, 48);
+
+        const pathGradient = ctx.createLinearGradient(0, canvas.height - 70, 0, canvas.height);
+        pathGradient.addColorStop(0, '#e2c9a5');
+        pathGradient.addColorStop(1, '#c8a979');
+        ctx.fillStyle = pathGradient;
+        ctx.beginPath();
+        ctx.moveTo(0, canvas.height - 38);
+        ctx.quadraticCurveTo(canvas.width * 0.25, canvas.height - 20, canvas.width * 0.5, canvas.height - 34);
+        ctx.quadraticCurveTo(canvas.width * 0.75, canvas.height - 48, canvas.width, canvas.height - 30);
+        ctx.lineTo(canvas.width, canvas.height);
+        ctx.lineTo(0, canvas.height);
+        ctx.closePath();
+        ctx.fill();
+
+        // Storybook trees
+        const drawTree = (x, height) => {
+            ctx.save();
+            ctx.fillStyle = '#5d4730';
+            ctx.fillRect(x, canvas.height - height, 18, height - 26);
+            const leafGradient = ctx.createLinearGradient(0, canvas.height - height, 0, canvas.height - height + 90);
+            leafGradient.addColorStop(0, '#7dbd6a');
+            leafGradient.addColorStop(1, '#5c9b52');
+            ctx.fillStyle = leafGradient;
+            ctx.beginPath();
+            ctx.ellipse(x + 9, canvas.height - height + 14, 55, 38, 0, 0, Math.PI * 2);
+            ctx.ellipse(x - 10, canvas.height - height + 36, 48, 32, 0, 0, Math.PI * 2);
+            ctx.ellipse(x + 30, canvas.height - height + 40, 50, 30, 0, 0, Math.PI * 2);
+            ctx.fill();
+            ctx.restore();
+        };
+        drawTree(canvas.width * 0.14, 120);
+        drawTree(canvas.width * 0.46, 140);
+        drawTree(canvas.width * 0.78, 126);
+
+        // Grass texture
+        ctx.strokeStyle = 'rgba(63, 94, 51, 0.4)';
+        ctx.lineWidth = 1.5;
+        const sway = Math.sin(Date.now() / 600);
+        for (let x = 8; x < canvas.width; x += 24) {
+            ctx.beginPath();
+            ctx.moveTo(x, canvas.height - 14);
+            ctx.lineTo(x + 4, canvas.height - 24 - (Math.sin(x * 0.08 + Date.now() / 400) + sway) * 4);
+            ctx.stroke();
+        }
+
+        // Player shadow
+        ctx.fillStyle = 'rgba(0, 0, 0, 0.15)';
+        ctx.beginPath();
+        ctx.ellipse(player.x + 30, player.y + 104, 34, 12, 0, 0, Math.PI * 2);
+        ctx.fill();
+
+        const bearLight = '#f8cf78';
+        const bearShade = '#e2ad57';
+
+        // Pooh ears with inner shading
+        const earGradient = ctx.createLinearGradient(player.x + 12, player.y + 2, player.x + 48, player.y + 18);
+        earGradient.addColorStop(0, bearLight);
+        earGradient.addColorStop(1, bearShade);
+        ctx.fillStyle = earGradient;
+        ctx.beginPath();
+        ctx.arc(player.x + 18, player.y + 10, 8, 0, Math.PI * 2);
+        ctx.arc(player.x + 42, player.y + 10, 8, 0, Math.PI * 2);
+        ctx.fill();
+        ctx.fillStyle = 'rgba(255, 239, 207, 0.7)';
+        ctx.beginPath();
+        ctx.arc(player.x + 18, player.y + 10, 4.5, 0, Math.PI * 2);
+        ctx.arc(player.x + 42, player.y + 10, 4.5, 0, Math.PI * 2);
+        ctx.fill();
+
+        // Pooh head with softer muzzle
+        const headGradient = ctx.createLinearGradient(player.x + 14, player.y + 2, player.x + 50, player.y + 44);
+        headGradient.addColorStop(0, bearLight);
+        headGradient.addColorStop(1, bearShade);
+        ctx.fillStyle = headGradient;
+        ctx.beginPath();
+        ctx.arc(player.x + 30, player.y + 26, 20, 0, Math.PI * 2);
+        ctx.fill();
+
+        ctx.fillStyle = '#f9dd98';
+        ctx.beginPath();
+        ctx.ellipse(player.x + 30, player.y + 30, 15, 12, 0, 0, Math.PI * 2);
+        ctx.fill();
+
+        // Face
+        ctx.fillStyle = '#2b1810';
+        ctx.beginPath();
+        ctx.arc(player.x + 23, player.y + 22, 3.2, 0, Math.PI * 2);
+        ctx.arc(player.x + 37, player.y + 22, 3.2, 0, Math.PI * 2);
+        ctx.fill();
+
+        ctx.beginPath();
+        ctx.arc(player.x + 30, player.y + 28, 3.6, 0, Math.PI * 2);
+        ctx.fill();
+        ctx.fillStyle = 'rgba(255, 255, 255, 0.7)';
+        ctx.beginPath();
+        ctx.arc(player.x + 25, player.y + 20, 1.1, 0, Math.PI * 2);
+        ctx.arc(player.x + 39, player.y + 20, 1.1, 0, Math.PI * 2);
+        ctx.fill();
+
+        ctx.beginPath();
+        ctx.arc(player.x + 30, player.y + 34, 8, 0, Math.PI);
+        ctx.strokeStyle = '#2b1810';
+        ctx.lineWidth = 1.6;
+        ctx.stroke();
+
+        // Body + shirt
+        ctx.fillStyle = bearLight;
+        ctx.beginPath();
+        ctx.roundRect(player.x + 10, player.y + 38, 40, 36, 10);
+        ctx.fill();
+
+        const shirtGradient = ctx.createLinearGradient(player.x + 10, player.y + 42, player.x + 50, player.y + 70);
+        shirtGradient.addColorStop(0, '#f05b4c');
+        shirtGradient.addColorStop(1, '#c4251f');
+        ctx.fillStyle = shirtGradient;
+        ctx.beginPath();
+        ctx.roundRect(player.x + 8, player.y + 42, 44, 20, 8);
+        ctx.fill();
+        ctx.strokeStyle = 'rgba(255,255,255,0.35)';
+        ctx.lineWidth = 1.4;
+        ctx.beginPath();
+        ctx.moveTo(player.x + 12, player.y + 48);
+        ctx.quadraticCurveTo(player.x + 30, player.y + 44, player.x + 48, player.y + 50);
+        ctx.stroke();
+
+        // Arms
+        ctx.fillStyle = bearLight;
+        ctx.beginPath();
+        ctx.roundRect(player.x + 4, player.y + 46, 12, 14, 4);
+        ctx.roundRect(player.x + 44, player.y + 46, 12, 14, 4);
+        ctx.fill();
+
+        // Woven honey basket
+        const basketTopY = player.y + 66;
+        const basketWidth = 64;
+        const basketHeight = 36;
+        const basketX = player.x - 2;
+        const basketGradient = ctx.createLinearGradient(basketX, basketTopY, basketX, basketTopY + basketHeight);
+        basketGradient.addColorStop(0, '#c89b5b');
+        basketGradient.addColorStop(1, '#9c7446');
+        ctx.fillStyle = basketGradient;
+        ctx.beginPath();
+        ctx.roundRect(basketX, basketTopY, basketWidth, basketHeight, 12);
+        ctx.fill();
+
+        // Basket weave
+        ctx.strokeStyle = 'rgba(255, 236, 200, 0.5)';
+        ctx.lineWidth = 3;
+        for (let i = 6; i < basketWidth; i += 12) {
+            ctx.beginPath();
+            ctx.moveTo(basketX + i, basketTopY + 6);
+            ctx.lineTo(basketX + i - 8, basketTopY + basketHeight - 8);
+            ctx.stroke();
+        }
+        ctx.strokeStyle = 'rgba(86, 52, 24, 0.4)';
+        for (let j = basketTopY + 10; j < basketTopY + basketHeight - 4; j += 10) {
+            ctx.beginPath();
+            ctx.moveTo(basketX + 6, j);
+            ctx.quadraticCurveTo(basketX + basketWidth / 2, j + 4, basketX + basketWidth - 6, j);
+            ctx.stroke();
+        }
+
+        // Basket rim & handle
+        ctx.fillStyle = '#8b6439';
+        ctx.beginPath();
+        ctx.ellipse(player.x + 30, basketTopY + 4, 32, 8, 0, 0, Math.PI * 2);
+        ctx.fill();
+
+        ctx.strokeStyle = '#7b5734';
+        ctx.lineWidth = 5;
+        ctx.beginPath();
+        ctx.moveTo(player.x + 10, basketTopY + 8);
+        ctx.quadraticCurveTo(player.x + 30, basketTopY - 18, player.x + 50, basketTopY + 8);
+        ctx.stroke();
+        ctx.strokeStyle = '#dcb07c';
+        ctx.lineWidth = 2;
+        ctx.beginPath();
+        ctx.moveTo(player.x + 14, basketTopY + 6);
+        ctx.quadraticCurveTo(player.x + 30, basketTopY - 10, player.x + 46, basketTopY + 6);
+        ctx.stroke();
+
+        // Honey drops
+        drops.forEach(drop => {
+            const honeyGlow = ctx.createRadialGradient(drop.x + 10, drop.y + 14, 2, drop.x + 10, drop.y + 14, 16);
+            honeyGlow.addColorStop(0, 'rgba(244, 169, 68, 0.8)');
+            honeyGlow.addColorStop(1, 'rgba(244, 169, 68, 0)');
+            ctx.fillStyle = honeyGlow;
+            ctx.beginPath();
+            ctx.arc(drop.x + 10, drop.y + 14, 16, 0, Math.PI * 2);
+            ctx.fill();
+
+            ctx.fillStyle = '#f4a944';
+            ctx.beginPath();
+            ctx.ellipse(drop.x + 10, drop.y + 15, 10, 15, 0, 0, Math.PI * 2);
+            ctx.fill();
+
+            ctx.fillStyle = '#fff5d6';
+            ctx.beginPath();
+            ctx.ellipse(drop.x + 8, drop.y + 10, 3, 5, 0, 0, Math.PI * 2);
+            ctx.fill();
+        });
+
+        // Bees
+        bees.forEach(bee => {
+            // motion trail
+            ctx.fillStyle = 'rgba(0,0,0,0.06)';
+            ctx.beginPath();
+            ctx.ellipse(bee.x + 8, bee.y + 12, 12, 8, 0, 0, Math.PI * 2);
+            ctx.fill();
+
+            ctx.fillStyle = '#f4a944';
+            ctx.beginPath();
+            ctx.roundRect(bee.x + 4, bee.y + 4, 24, 18, 6);
+            ctx.fill();
+
+            ctx.strokeStyle = '#2b1810';
+            ctx.lineWidth = 2;
+            ctx.beginPath();
+            ctx.moveTo(bee.x + 10, bee.y + 5);
+            ctx.lineTo(bee.x + 10, bee.y + 22);
+            ctx.moveTo(bee.x + 17, bee.y + 5);
+            ctx.lineTo(bee.x + 17, bee.y + 22);
+            ctx.moveTo(bee.x + 24, bee.y + 5);
+            ctx.lineTo(bee.x + 24, bee.y + 22);
+            ctx.stroke();
+
+            const wingGradient = ctx.createLinearGradient(bee.x + 8, bee.y - 2, bee.x + 22, bee.y + 10);
+            wingGradient.addColorStop(0, 'rgba(255, 255, 255, 0.9)');
+            wingGradient.addColorStop(1, 'rgba(180, 220, 255, 0.5)');
+            ctx.fillStyle = wingGradient;
+            ctx.beginPath();
+            ctx.ellipse(bee.x + 12, bee.y + 2, 10, 6, -0.35, 0, Math.PI * 2);
+            ctx.ellipse(bee.x + 22, bee.y + 2, 10, 6, 0.35, 0, Math.PI * 2);
+            ctx.fill();
+
+            // stinger
+            ctx.fillStyle = '#2b1810';
+            ctx.beginPath();
+            ctx.moveTo(bee.x + 28, bee.y + 12);
+            ctx.lineTo(bee.x + 34, bee.y + 12);
+            ctx.lineTo(bee.x + 28, bee.y + 16);
+            ctx.closePath();
+            ctx.fill();
+        });
+
+        // Power-ups
+        powerups.forEach(power => {
+            ctx.fillStyle = power.color;
+            ctx.fillRect(power.x, power.y, power.width, power.height);
+            ctx.fillStyle = 'white';
+            ctx.font = '16px "Patrick Hand", sans-serif';
+            ctx.textAlign = 'center';
+            ctx.textBaseline = 'middle';
+            ctx.fillText(power.symbol, power.x + power.width / 2, power.y + power.height / 2 + 1);
+        });
+
+        // Sparkles on honey catch
+        sparkles.forEach(s => {
+            const alpha = Math.max(0, s.life / 22);
+            const radius = 10 + (22 - s.life) * 0.7;
+            const gradient = ctx.createRadialGradient(s.x, s.y, 0, s.x, s.y, radius);
+            gradient.addColorStop(0, `rgba(255, 245, 214, ${alpha})`);
+            gradient.addColorStop(0.4, `rgba(244, 169, 68, ${alpha * 0.9})`);
+            gradient.addColorStop(1, 'rgba(244, 169, 68, 0)');
+            ctx.fillStyle = gradient;
+            ctx.beginPath();
+            ctx.arc(s.x, s.y, radius, 0, Math.PI * 2);
+            ctx.fill();
+        });
+
+        if (hitFlash > 0) {
+            ctx.fillStyle = `rgba(211, 47, 47, ${Math.min(0.45, hitFlash / 20)})`;
+            ctx.fillRect(0, 0, canvas.width, canvas.height);
+            hitFlash--;
+        }
+
+        if (combo > 1) {
+            ctx.fillStyle = 'rgba(0,0,0,0.4)';
+            ctx.fillRect(canvas.width / 2 - 70, 10, 140, 32);
+            ctx.fillStyle = '#fffbe6';
+            ctx.font = '18px "Patrick Hand", sans-serif';
+            ctx.textAlign = 'center';
+            ctx.fillText(`Combo x${combo}`, canvas.width / 2, 32);
+        }
+    },
+
+    drawStaticBackground: function(targetCtx, w, h) {
+        if (!targetCtx) return;
+        // Sky gradient with sunrise warmth
+        const skyGradient = targetCtx.createLinearGradient(0, 0, 0, h);
+        skyGradient.addColorStop(0, '#d9f1ff');
+        skyGradient.addColorStop(0.28, '#addcff');
+        skyGradient.addColorStop(0.62, '#7fc4ff');
+        skyGradient.addColorStop(0.88, '#fbe7c8');
+        targetCtx.fillStyle = skyGradient;
+        targetCtx.fillRect(0, 0, w, h);
+
+        // Sun glow + soft rays
+        const sunX = w * 0.12;
+        const sunY = h * 0.16;
+        const sunGradient = targetCtx.createRadialGradient(sunX, sunY, 16, sunX, sunY, 110);
+        sunGradient.addColorStop(0, 'rgba(255, 237, 185, 0.98)');
+        sunGradient.addColorStop(0.45, 'rgba(255, 214, 143, 0.6)');
+        sunGradient.addColorStop(1, 'rgba(255, 224, 153, 0)');
+        targetCtx.fillStyle = sunGradient;
+        targetCtx.beginPath();
+        targetCtx.arc(sunX, sunY, 110, 0, Math.PI * 2);
+        targetCtx.fill();
+
+        for (let i = 0; i < 6; i++) {
+            targetCtx.save();
+            targetCtx.translate(sunX, sunY);
+            targetCtx.rotate((Math.PI / 8) * i - 0.3);
+            const rayGradient = targetCtx.createLinearGradient(0, 0, w * 0.32, 0);
+            rayGradient.addColorStop(0, 'rgba(255, 236, 185, 0.22)');
+            rayGradient.addColorStop(1, 'rgba(255, 236, 185, 0)');
+            targetCtx.fillStyle = rayGradient;
+            targetCtx.beginPath();
+            targetCtx.moveTo(0, -12);
+            targetCtx.lineTo(w * 0.32, -24);
+            targetCtx.lineTo(w * 0.32, 28);
+            targetCtx.closePath();
+            targetCtx.fill();
+            targetCtx.restore();
+        }
+
+        // Soft distant hills
+        const backHill = targetCtx.createLinearGradient(0, h - 160, 0, h);
+        backHill.addColorStop(0, '#b7d7a8');
+        backHill.addColorStop(1, '#9cc38a');
+        targetCtx.fillStyle = backHill;
+        targetCtx.beginPath();
+        targetCtx.moveTo(0, h - 110);
+        targetCtx.quadraticCurveTo(w * 0.25, h - 160, w * 0.55, h - 110);
+        targetCtx.quadraticCurveTo(w * 0.8, h - 80, w, h - 120);
+        targetCtx.lineTo(w, h);
+        targetCtx.lineTo(0, h);
+        targetCtx.closePath();
+        targetCtx.fill();
+
+        const frontHill = targetCtx.createLinearGradient(0, h - 120, 0, h);
+        frontHill.addColorStop(0, '#a3ce86');
+        frontHill.addColorStop(1, '#7fb76c');
+        targetCtx.fillStyle = frontHill;
+        targetCtx.beginPath();
+        targetCtx.moveTo(0, h - 70);
+        targetCtx.quadraticCurveTo(w * 0.22, h - 130, w * 0.5, h - 80);
+        targetCtx.quadraticCurveTo(w * 0.78, h - 40, w, h - 75);
+        targetCtx.lineTo(w, h);
+        targetCtx.lineTo(0, h);
+        targetCtx.closePath();
+        targetCtx.fill();
+
+        // Ground & path
+        const grassGradient = targetCtx.createLinearGradient(0, h - 60, 0, h);
+        grassGradient.addColorStop(0, '#72a95c');
+        grassGradient.addColorStop(1, '#5e924c');
+        targetCtx.fillStyle = grassGradient;
+        targetCtx.fillRect(0, h - 48, w, 48);
+
+        const pathGradient = targetCtx.createLinearGradient(0, h - 70, 0, h);
+        pathGradient.addColorStop(0, '#e2c9a5');
+        pathGradient.addColorStop(1, '#c8a979');
+        targetCtx.fillStyle = pathGradient;
+        targetCtx.beginPath();
+        targetCtx.moveTo(0, h - 38);
+        targetCtx.quadraticCurveTo(w * 0.25, h - 20, w * 0.5, h - 34);
+        targetCtx.quadraticCurveTo(w * 0.75, h - 48, w, h - 30);
+        targetCtx.lineTo(w, h);
+        targetCtx.lineTo(0, h);
+        targetCtx.closePath();
+        targetCtx.fill();
+
+        // Trees
+        const drawTree = (x, height) => {
+            targetCtx.save();
+            targetCtx.fillStyle = '#5d4730';
+            targetCtx.fillRect(x, h - height, 18, height - 26);
+            const leafGradient = targetCtx.createLinearGradient(0, h - height, 0, h - height + 90);
+            leafGradient.addColorStop(0, '#7dbd6a');
+            leafGradient.addColorStop(1, '#5c9b52');
+            targetCtx.fillStyle = leafGradient;
+            targetCtx.beginPath();
+            targetCtx.ellipse(x + 9, h - height + 14, 55, 38, 0, 0, Math.PI * 2);
+            targetCtx.ellipse(x - 10, h - height + 36, 48, 32, 0, 0, Math.PI * 2);
+            targetCtx.ellipse(x + 30, h - height + 40, 50, 30, 0, 0, Math.PI * 2);
+            targetCtx.fill();
+            targetCtx.restore();
+        };
+        drawTree(w * 0.14, 120);
+        drawTree(w * 0.46, 140);
+        drawTree(w * 0.78, 126);
+
+        // Grass texture
+        targetCtx.strokeStyle = 'rgba(63, 94, 51, 0.4)';
+        targetCtx.lineWidth = 1.5;
+        for (let x = 8; x < w; x += 24) {
+            targetCtx.beginPath();
+            targetCtx.moveTo(x, h - 14);
+            targetCtx.lineTo(x + 4, h - 24);
+            targetCtx.stroke();
+        }
+    },
+
+    updateDisplay: function() {
+        bestHoney = Math.max(bestHoney, honeyCollected);
+        bestCombo = Math.max(bestCombo, combo);
+        document.getElementById('score').textContent = score;
+        document.getElementById('honey').textContent = honeyCollected;
+        document.getElementById('time').textContent = timeLeft;
+        document.getElementById('combo').textContent = combo;
+        document.getElementById('bestHoney').textContent = bestHoney;
+        document.getElementById('bestCombo').textContent = bestCombo;
+        document.getElementById('gameHighScore').textContent = bestScore;
+
+        let heartsDisplay = '';
+        for (let i = 0; i < lives; i++) {
+            heartsDisplay += '❤️';
+        }
+        document.getElementById('lives').textContent = heartsDisplay || '💔';
+    },
+
+
+
+    updateStatus: function(message) {
+        const badge = document.getElementById('statusBadge');
+        if (badge) {
+            badge.textContent = message;
+        }
+    },
+
+    showOverlay: function(title, message, icon = '🍯', buttonText = 'Start') {
+        if (!this.overlay) return;
+        this.overlayTitle.textContent = title;
+        this.overlayMessage.innerHTML = message;
+        this.overlayIcon.textContent = icon;
+        if (this.overlayButton) {
+            this.overlayButton.textContent = buttonText;
+            setTimeout(() => this.overlayButton.focus(), 0);
+        }
+        this.previouslyFocused = document.activeElement;
+        this.overlay.classList.remove('hidden');
+    },
+
+    hideOverlay: function() {
+        if (this.overlay) {
+            this.overlay.classList.add('hidden');
+            if (this.previouslyFocused && this.previouslyFocused.focus) {
+                this.previouslyFocused.focus();
+            }
+        }
+    },
+
+    showAchievement: function(text) {
+        const toast = document.getElementById('achievementToast');
+        const detail = document.getElementById('achievementText');
+        if (!toast || !detail) return;
+        detail.textContent = text;
+        const ariaLog = document.getElementById('gameAriaLog');
+        if (ariaLog) ariaLog.textContent = `Achievement: ${text}`;
+        toast.style.display = 'flex';
+        setTimeout(() => {
+            toast.style.display = 'none';
+        }, 2400);
+    },
+
+    activatePowerup: function(power) {
+        switch (power.type) {
+            case 'shield':
+                activeEffects.shield = true;
+                this.updateStatus('Shield ready for one bee!');
+                break;
+            case 'magnet':
+                activeEffects.magnetUntil = Date.now() + 6000;
+                this.updateStatus('Honey magnet active!');
+                break;
+            case 'double':
+                activeEffects.doubleUntil = Date.now() + 6000;
+                this.updateStatus('Double honey for 6s!');
+                break;
+        }
+        this.showAchievement(power.note);
+    },
+
+    saveBestStats: function() {
+        try {
+            localStorage.setItem('hundredAcres.best', JSON.stringify({
+                score: bestScore,
+                honey: bestHoney,
+                combo: bestCombo
+            }));
+        } catch (e) {
+            console.warn('Unable to save best stats', e);
+        }
+    },
+
+    loadBestStats: function() {
+        try {
+            const saved = localStorage.getItem('hundredAcres.best');
+            if (saved) {
+                const parsed = JSON.parse(saved);
+                if (parsed && typeof parsed.score === 'number') bestScore = parsed.score;
+                if (parsed && typeof parsed.honey === 'number') bestHoney = parsed.honey;
+                if (parsed && typeof parsed.combo === 'number') bestCombo = parsed.combo;
+            }
+            document.getElementById('gameHighScore').textContent = bestScore;
+            document.getElementById('bestHoney').textContent = bestHoney;
+            document.getElementById('bestCombo').textContent = bestCombo;
+        } catch (e) {
+            console.warn('No saved stats', e);
+        }
+    }
+};
+
+// ===== GUESTBOOK & PAGE INIT =====
+document.addEventListener('DOMContentLoaded', () => {
+    const wishesForm = document.getElementById('wishesForm');
+    const wishFeedback = document.getElementById('wishFeedback');
+    const wishesDisplay = document.getElementById('wishesDisplay');
+    const wishesKey = 'hundredAcres.wishes';
+    let wishes = [];
+
+    const showWishFeedback = (msg, tone = 'info') => {
+        if (!wishFeedback) return;
+        wishFeedback.textContent = msg;
+        wishFeedback.style.color = tone === 'error' ? '#d32f2f' : 'var(--pooh-red)';
+    };
+
+    const escapeHTML = (str) => {
+        return str.replace(/[&<>"']/g, (m) => ({
+            '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;'
+        }[m]));
+    };
+
+    const renderWishes = () => {
+        if (!wishesDisplay) return;
+        wishesDisplay.innerHTML = '';
+        if (!wishes.length) {
+            wishesDisplay.innerHTML = '<div class="wish-empty">No wishes yet. Be the first to add one! ✨</div>';
+            return;
+        }
+
+        [...wishes].reverse().forEach((wish) => {
+            const card = document.createElement('div');
+            card.className = 'wish-card';
+            const date = new Date(wish.timestamp).toLocaleString([], { month: 'short', day: 'numeric', hour: '2-digit', minute: '2-digit' });
+            // Safer rendering for user content
+            card.innerHTML = `
+            <div class="wish-meta">💌 <span>${escapeHTML(wish.name)}</span> <span class="wish-time">${escapeHTML(date)}</span></div>
+            <div class="wish-message">"${escapeHTML(wish.message)}"</div>
+          `;
+            wishesDisplay.appendChild(card);
+        });
+    };
+
+    const saveWishes = () => {
+        try {
+            localStorage.setItem(wishesKey, JSON.stringify(wishes));
+        } catch (e) {
+            console.warn('Unable to save wishes', e);
+        }
+    };
+
+    const loadWishes = () => {
+        try {
+            const saved = localStorage.getItem(wishesKey);
+            if (saved) {
+                wishes = JSON.parse(saved);
+            }
+            renderWishes();
+        } catch (e) {
+            console.warn('Unable to load wishes', e);
+        }
+    };
+
+    if (wishesForm) {
+        wishesForm.addEventListener('submit', function(e) {
+            e.preventDefault();
+
+            const name = document.getElementById('guestName').value.trim();
+            const message = document.getElementById('wishMessage').value.trim();
+
+            if (!name || !message) {
+                showWishFeedback('Please share both your name and wish.', 'error');
+                return;
+            }
+
+            const entry = { name, message, timestamp: Date.now() };
+            wishes.push(entry);
+            saveWishes();
+            renderWishes();
+            showWishFeedback('Wish saved to the guestbook ✨');
+
+            document.getElementById('guestName').value = '';
+            document.getElementById('wishMessage').value = '';
+        });
+    }
+
+    // Initialize everything
+    loadWishes();
+    updateNavigation();
+    Game.init();
+    Game.loadBestStats();
+    initMobileOptimizations();
+
+});
+
+// === Enhanced Storybook Audio + Interaction Controller ===
+(function() {
+  'use strict';
+  const $ = (sel, scope = document) => scope.querySelector(sel);
+  const $$ = (sel, scope = document) => Array.from(scope.querySelectorAll(sel));
+
+  // Audio nodes
+  const ambientForest = $('#ambientForest');
+  const pageRustle1 = $('#pageRustle1');
+  const pageRustle2 = $('#pageRustle2');
+  const paperThump = $('#paperThump');
+  const bgMusic = $('#bgMusic');
+
+  // Controls
+  const musicToggleBtn = $('#musicToggle');
+  const nextBtn = $('#nextBtn');
+  const prevBtn = $('#prevBtn');
+
+  const SOUND_KEY = 'storybook.sound';
+  const prefersReducedMotion = window.matchMedia('(prefers-reduced-motion: reduce)').matches;
+
+  function safePlay(a){ if(!a) return; const p=a.play(); if(p&&p.catch) p.catch(()=>{}); }
+  function safePause(a){ if(!a) return; try{ a.pause(); }catch(_){} }
+
+  function isSoundOn(){ const v = localStorage.getItem(SOUND_KEY); return v === 'true'; }
+  function setSoundOn(v){ try{ localStorage.setItem(SOUND_KEY, String(v)); }catch(_){} }
+
+  function setVolumes(){
+    if (bgMusic) bgMusic.volume = 0.18;
+    if (ambientForest) ambientForest.volume = 0.12;
+    if (pageRustle1) pageRustle1.volume = 0.5;
+    if (pageRustle2) pageRustle2.volume = 0.5;
+    if (paperThump) paperThump.volume = 0.4;
+  }
+
+  function applySoundState(){
+    const on = isSoundOn();
+    [pageRustle1,pageRustle2,paperThump].forEach(a=>{ if(a) a.muted = !on; });
+    if (on){
+      if (bgMusic){ bgMusic.muted = false; safePlay(bgMusic); }
+      if (ambientForest){ ambientForest.muted = false; safePlay(ambientForest); }
+      if (musicToggleBtn){ musicToggleBtn.setAttribute('aria-pressed','true'); musicToggleBtn.textContent = '🔊 Sound On'; }
+    } else {
+      safePause(bgMusic); safePause(ambientForest);
+      if (musicToggleBtn){ musicToggleBtn.setAttribute('aria-pressed','false'); musicToggleBtn.textContent = '🔇 Music Off'; }
+    }
+  }
+
+  function toggleSound(){ setSoundOn(!isSoundOn()); applySoundState(); }
+  function randomRustle(){ safePlay(Math.random()<0.5?pageRustle1:pageRustle2); }
+
+  function wireNav(){
+    nextBtn?.addEventListener('click', ()=>{ if(!prefersReducedMotion && isSoundOn()) randomRustle(); });
+    prevBtn?.addEventListener('click', ()=>{ if(!prefersReducedMotion && isSoundOn()) randomRustle(); });
+    $$('.chapter-pill').forEach(btn=> btn.addEventListener('click', ()=>{ if(!prefersReducedMotion && isSoundOn()) randomRustle(); }));
+  }
+
+    function wireCharacters() {
+        document.querySelectorAll('.clickable-character').forEach(fig => {
+            fig.addEventListener('click', () => {
+                const character = fig.dataset.character;
+                const messageDiv = fig.querySelector('.character-message');
+
+                const messages = {
+                    pooh: "Oh, bother! I could use some help with this honey.",
+                    piglet: "Oh d-d-dear! I hope Baby Gunnar likes the decorations.",
+                    tigger: "Hoo-hoo-hoo! The wonderful thing about celebrations is they're wonderful!",
+                    roo: "Look at me! I'm bouncing for Baby Gunnar!",
+                    eeyore: "Thanks for noticing me. I suppose celebrations are nice... for some.",
+                    owl: "Ahem! As I was saying, the proper protocol for infant welcoming ceremonies...",
+                    gunnar: "Welcome to the world, little one!"
+                };
+
+                if (messageDiv && messages[character]) {
+                    messageDiv.textContent = messages[character];
+                    setTimeout(() => {
+                        messageDiv.textContent = '';
+                    }, 3000);
+                }
+
+                if (isSoundOn()) safePlay(paperThump);
+                fig.style.transform = 'scale(0.98)';
+                setTimeout(() => { fig.style.transform = 'scale(1)'; }, 140);
+            });
+        });
+    }
+
+  function duckAmbient(on){
+    if (ambientForest) ambientForest.volume = on ? 0.03 : 0.12;
+    if (bgMusic) bgMusic.volume = on ? 0.06 : 0.18;
+  }
+
+  function wireGame(){
+    $('#startBtn')?.addEventListener('click', ()=> duckAmbient(true));
+    $('#pauseBtn')?.addEventListener('click', ()=> duckAmbient(false));
+    $('#resetBtn')?.addEventListener('click', ()=> duckAmbient(false));
+  }
+
+  function init(){
+    setVolumes();
+    // Sync with existing music toggle: act as global sound switch
+    musicToggleBtn?.addEventListener('click', (e)=>{ e.preventDefault(); toggleSound(); });
+    // If original music setting is stored, initialize accordingly
+    if (localStorage.getItem(SOUND_KEY) === null) {
+      // derive from existing music flag if set
+      const musicFlag = localStorage.getItem('hundredAcres.music');
+      setSoundOn(musicFlag === 'on');
+    }
+    applySoundState();
+    wireNav();
+    wireCharacters();
+    wireGame();
+  }
+
+  if (document.readyState === 'loading') document.addEventListener('DOMContentLoaded', init); else init();
+})();
