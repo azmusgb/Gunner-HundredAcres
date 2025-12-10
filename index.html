@@ -4,6 +4,7 @@
 <head>
     <meta charset="UTF-8">
     <meta content="width=device-width, initial-scale=1.0, viewport-fit=cover" name="viewport">
+    <meta http-equiv="Content-Security-Policy" content="default-src 'self' data: https://cdnjs.cloudflare.com https://fonts.googleapis.com https://fonts.gstatic.com; script-src 'self' 'unsafe-inline'; style-src 'self' 'unsafe-inline' https://fonts.googleapis.com https://cdnjs.cloudflare.com; img-src 'self' data:; connect-src 'self'; font-src 'self' https://fonts.gstatic.com; frame-ancestors 'none'; form-action 'self'; upgrade-insecure-requests">
     <meta name="apple-mobile-web-app-capable" content="yes">
     <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
     <title>Baby Gunnar's Hundred Acre Wood Adventure</title>
@@ -71,6 +72,16 @@
             --radius-md: 12px;
             --radius-lg: 20px;
             --radius-full: 999px;
+
+            /* Spacing + Layout helpers */
+            --tap-size: 56px;
+            --edge-padding: clamp(0.75rem, 2vw, 1.5rem);
+            --breakpoint-tablet: 768px;
+            --breakpoint-mobile: 480px;
+
+            /* Animation tuning */
+            --motion-speed: 0.25s;
+            --fps-cap: 60;
 
             /* Game Constants */
             --bear-speed: 260px;
@@ -147,6 +158,10 @@
             margin-bottom: var(--space-md);
         }
 
+        @-webkit-keyframes spin {
+            0% { transform: rotate(0deg); }
+            100% { transform: rotate(360deg); }
+        }
         @keyframes spin {
             0% { transform: rotate(0deg); }
             100% { transform: rotate(360deg); }
@@ -490,12 +505,12 @@
             left: 0;
             right: 0;
             justify-content: space-between;
-            padding: 0 var(--space-lg);
+            padding: 0 var(--edge-padding);
         }
 
         .mobile-control-btn {
-            width: 60px;
-            height: 60px;
+            width: var(--tap-size);
+            height: var(--tap-size);
             border-radius: 50%;
             background: rgba(255, 255, 255, 0.9);
             border: 2px solid var(--color-gold);
@@ -503,6 +518,8 @@
             place-items: center;
             font-size: 1.5rem;
             color: var(--color-green);
+            touch-action: manipulation;
+            box-shadow: var(--shadow-soft);
         }
 
         /* 10. REGISTRY VIEW */
@@ -851,6 +868,70 @@
             border: 0;
         }
 
+        .game-instructions {
+            margin-top: var(--space-lg);
+            background: linear-gradient(135deg, #fff9ec, #fff3d9);
+            border: 2px dashed var(--color-gold);
+            border-radius: var(--radius-md);
+            padding: var(--space-md);
+            box-shadow: var(--shadow-soft);
+        }
+
+        .game-instructions summary {
+            font-family: var(--font-heading);
+            font-size: 1.2rem;
+            cursor: pointer;
+        }
+
+        .dialog-backdrop {
+            position: fixed;
+            inset: 0;
+            background: rgba(0, 0, 0, 0.45);
+            display: grid;
+            place-items: center;
+            z-index: 1200;
+        }
+
+        .dialog {
+            background: white;
+            padding: var(--space-lg);
+            border-radius: var(--radius-lg);
+            box-shadow: var(--shadow-heavy);
+            max-width: 380px;
+            width: calc(100% - 2 * var(--edge-padding));
+            border: 3px solid var(--color-gold);
+        }
+
+        .dialog-actions {
+            display: flex;
+            justify-content: flex-end;
+            gap: var(--space-sm);
+            margin-top: var(--space-md);
+        }
+
+        .fallback-alert {
+            background: #fff4f4;
+            color: var(--color-red);
+            border: 2px solid var(--color-red);
+            padding: var(--space-sm);
+            border-radius: var(--radius-md);
+            margin-bottom: var(--space-md);
+        }
+
+        .orientation-tip {
+            position: fixed;
+            bottom: var(--space-sm);
+            left: 50%;
+            transform: translateX(-50%);
+            background: rgba(0,0,0,0.75);
+            color: white;
+            padding: var(--space-sm) var(--space-md);
+            border-radius: var(--radius-full);
+            font-size: 0.95rem;
+            display: none;
+            z-index: 1100;
+        }
+
         /* 15. RESPONSIVE DESIGN */
         @media (max-width: 768px) {
             body {
@@ -1058,6 +1139,16 @@
                     <i class="fas fa-redo"></i> Restart
                 </button>
             </div>
+
+            <details class="game-instructions">
+                <summary>How to play</summary>
+                <ul style="margin-top: var(--space-sm); padding-left: var(--space-md);">
+                    <li>Use ← → (or A/D) on desktop, or the big honey buttons on mobile to move.</li>
+                    <li>Catch jars to score. Gold = big points, blue jars grant a shielded life.</li>
+                    <li>Avoid bees. Your streak and the timer increase difficulty as you improve.</li>
+                    <li>Tap Pause to confirm pausing; resume to keep your flow.</li>
+                </ul>
+            </details>
         </section>
 
         <!-- Registry View -->
@@ -1101,6 +1192,7 @@
             </header>
 
             <form class="wishes-form" id="wishesForm">
+                <input type="hidden" id="csrfTokenField" name="csrfToken" value="">
                 <div class="form-grid">
                     <div class="form-group">
                         <label for="guestName" class="form-label">Your Name</label>
@@ -1222,6 +1314,21 @@
 <button class="settings-toggle" id="settingsToggle" aria-label="Open settings">
     <i class="fas fa-cog"></i>
 </button>
+
+<!-- Pause confirmation dialog -->
+<div class="dialog-backdrop hidden" id="pauseDialog" role="dialog" aria-modal="true" aria-labelledby="pauseTitle">
+    <div class="dialog">
+        <h3 id="pauseTitle" style="margin-bottom: var(--space-sm);">Pause the game?</h3>
+        <p>We will stop the timer and bees until you resume.</p>
+        <div class="dialog-actions">
+            <button class="game-btn secondary" id="cancelPause">Keep playing</button>
+            <button class="game-btn primary" id="confirmPause">Pause now</button>
+        </div>
+    </div>
+</div>
+
+<div class="orientation-tip" id="orientationTip">Rotate for a wider playfield</div>
+<div id="errorBoundary" class="fallback-alert hidden" role="alert">Something went wrong. We restored the last safe state.</div>
     <!-- Footer -->
     <footer class="site-footer">
         <p>Made with 💙 and 🍯 for Baby Gunnar's special day</p>
@@ -1242,6 +1349,40 @@
         // ==========================================================================
         // BABY SHOWER APPLICATION - REFACTORED ARCHITECTURE
         // ==========================================================================
+
+        const SafeEvents = {
+            stack: [],
+            add(target, type, handler, options) {
+                if (!target) return;
+                target.addEventListener(type, handler, options);
+                this.stack.push({ target, type, handler, options });
+            },
+            removeAll(filterFn) {
+                this.stack = this.stack.filter(listener => {
+                    const shouldRemove = filterFn ? filterFn(listener) : true;
+                    if (shouldRemove) {
+                        const { target, type, handler, options } = listener;
+                        target.removeEventListener(type, handler, options);
+                    }
+                    return !shouldRemove;
+                });
+            }
+        };
+
+        const withErrorBoundary = (fn, fallback) => {
+            try {
+                return fn();
+            } catch (error) {
+                console.error(error);
+                const banner = document.getElementById('errorBoundary');
+                if (banner) {
+                    banner.classList.remove('hidden');
+                    banner.textContent = 'Something went wrong. We restored the last safe state.';
+                    setTimeout(() => banner.classList.add('hidden'), 4000);
+                }
+                if (fallback) fallback(error);
+            }
+        };
 
         // STATE MANAGEMENT
         class AppState {
@@ -1268,7 +1409,8 @@
                         animations: true,
                         sensitivity: 260
                     },
-                    wishes: []
+                    wishes: [],
+                    csrfToken: ''
                 };
                 this.listeners = [];
                 this.load();
@@ -1310,7 +1452,8 @@
                     localStorage.setItem('babyShowerState', JSON.stringify({
                         settings: this.state.settings,
                         game: { best: this.state.game.best },
-                        wishes: this.state.wishes
+                        wishes: this.state.wishes,
+                        csrfToken: this.state.csrfToken
                     }));
                 } catch (e) {
                     console.error('Failed to save state:', e);
@@ -1325,9 +1468,13 @@
                         this.state.settings = { ...this.state.settings, ...parsed.settings };
                         this.state.game.best = parsed.game?.best || 0;
                         this.state.wishes = parsed.wishes || [];
+                        this.state.csrfToken = parsed.csrfToken || crypto.randomUUID?.() || `${Date.now()}-${Math.random()}`;
+                    } else {
+                        this.state.csrfToken = crypto.randomUUID?.() || `${Date.now()}-${Math.random()}`;
                     }
                 } catch (e) {
                     console.error('Failed to load state:', e);
+                    this.state.csrfToken = crypto.randomUUID?.() || `${Date.now()}-${Math.random()}`;
                 }
             }
         }
@@ -1398,7 +1545,7 @@
 
             setupEventListeners() {
                 // Global keyboard handling
-                document.addEventListener('keydown', (e) => {
+                SafeEvents.add(document, 'keydown', (e) => {
                     const mode = this.state.get('mode');
 
                     if (mode === 'game') {
@@ -1414,19 +1561,20 @@
                     }
                 });
 
-                document.addEventListener('keyup', (e) => {
+                SafeEvents.add(document, 'keyup', (e) => {
                     if (this.state.get('mode') === 'game') {
                         this.components.game.handleKeyUp(e);
                     }
                 });
 
                 // Mobile orientation
-                window.addEventListener('orientationchange', () => {
+                SafeEvents.add(window, 'orientationchange', () => {
                     setTimeout(() => this.components.game?.resize(), 100);
+                    this.components.game?.showOrientationTip();
                 });
 
                 // Window resize
-                window.addEventListener('resize', () => {
+                SafeEvents.add(window, 'resize', () => {
                     this.components.game?.resize();
                 });
             }
@@ -1446,9 +1594,14 @@
             }
 
             setView(view, chapter = 1) {
+                const leavingGame = this.state.get('currentView') === 'game' && view !== 'game';
                 this.state.set('currentView', view);
                 this.state.set('currentChapter', chapter);
                 this.state.set('mode', view === 'game' ? 'game' : 'story');
+                if (leavingGame) {
+                    this.components.game.stop();
+                    this.components.game.detachControls();
+                }
                 this.updateUI();
             }
 
@@ -1528,15 +1681,18 @@
             }
 
             show(view) {
-                Object.values(this.views).forEach(v => v?.classList.remove('active'));
+                withErrorBoundary(() => {
+                    Object.values(this.views).forEach(v => v?.classList.remove('active'));
 
-                if (this.views[view]) {
-                    this.views[view].classList.add('active');
+                    if (this.views[view]) {
+                        this.views[view].classList.add('active');
 
-                    if (view === 'game') {
-                        this.app.components.game.init();
+                        if (view === 'game') {
+                            this.app.components.game.init();
+                            this.app.components.game.attachControls();
+                        }
                     }
-                }
+                });
             }
         }
 
@@ -1557,33 +1713,73 @@
 
                 this.keys = { left: false, right: false };
                 this.lastTime = 0;
+                this.lastRenderTime = 0;
+                this.frameInterval = 1000 / Math.max(30, parseInt(getComputedStyle(document.documentElement).getPropertyValue('--fps-cap')) || 60);
                 this.gameLoopId = null;
+                this.controlListeners = [];
+                this.controlsAttached = false;
+                this.backgroundCanvas = document.createElement('canvas');
+                this.backgroundCtx = this.backgroundCanvas.getContext('2d');
+                this.hitFlash = 0;
+                this.missFlash = 0;
+                this.active = false;
+                this.boundLoop = this.loop.bind(this);
+                this.pauseDialog = document.getElementById('pauseDialog');
 
                 this.initElements();
             }
 
             initElements() {
                 // Game controls
-                document.getElementById('startGame').addEventListener('click', () => this.start());
-                document.getElementById('pauseGame').addEventListener('click', () => this.pause());
-                document.getElementById('restartGame').addEventListener('click', () => this.reset());
+                this.bindControl(document.getElementById('startGame'), 'click', () => this.start());
+                this.bindControl(document.getElementById('pauseGame'), 'click', () => this.requestPause());
+                this.bindControl(document.getElementById('restartGame'), 'click', () => this.reset());
 
                 // Mobile controls
                 const mobileLeft = document.getElementById('mobileLeft');
                 const mobileRight = document.getElementById('mobileRight');
                 const mobilePause = document.getElementById('mobilePause');
 
-                mobileLeft.addEventListener('touchstart', (e) => { e.preventDefault(); this.keys.left = true; });
-                mobileLeft.addEventListener('touchend', (e) => { e.preventDefault(); this.keys.left = false; });
-                mobileRight.addEventListener('touchstart', (e) => { e.preventDefault(); this.keys.right = true; });
-                mobileRight.addEventListener('touchend', (e) => { e.preventDefault(); this.keys.right = false; });
-                mobilePause.addEventListener('click', () => this.pause());
+                this.bindControl(mobileLeft, 'touchstart', (e) => { e.preventDefault(); this.keys.left = true; }, { passive: false });
+                this.bindControl(mobileLeft, 'touchend', (e) => { e.preventDefault(); this.keys.left = false; }, { passive: false });
+                this.bindControl(mobileRight, 'touchstart', (e) => { e.preventDefault(); this.keys.right = true; }, { passive: false });
+                this.bindControl(mobileRight, 'touchend', (e) => { e.preventDefault(); this.keys.right = false; }, { passive: false });
+                this.bindControl(mobilePause, 'click', () => this.requestPause());
+
+                this.bindControl(document.getElementById('confirmPause'), 'click', () => this.pause());
+                this.bindControl(document.getElementById('cancelPause'), 'click', () => this.resume());
+            }
+
+            bindControl(target, type, handler, options) {
+                if (!target) return;
+                const record = { target, type, handler, options };
+                target.addEventListener(type, handler, options);
+                this.controlListeners.push(record);
+                SafeEvents.stack.push(record);
             }
 
             init() {
                 this.resize();
                 this.resetGameState();
                 this.updateHUD();
+                this.attachControls();
+            }
+
+            attachControls() {
+                if (this.controlsAttached) return;
+                this.controlsAttached = true;
+                this.bindControl(document, 'visibilitychange', () => {
+                    if (document.hidden) this.pause();
+                });
+                this.bindControl(window, 'blur', () => this.requestPause());
+                this.bindControl(window, 'resize', () => this.resize());
+            }
+
+            detachControls() {
+                if (!this.controlsAttached) return;
+                SafeEvents.removeAll(listener => this.controlListeners.includes(listener));
+                this.controlListeners = [];
+                this.controlsAttached = false;
             }
 
             resize() {
@@ -1593,6 +1789,10 @@
 
                 this.gameObjects.bear.x = this.canvas.width / 2;
                 this.gameObjects.bear.y = this.canvas.height * 0.85;
+                this.backgroundCanvas.width = this.canvas.width;
+                this.backgroundCanvas.height = this.canvas.height;
+                this.drawBackground(true);
+                this.showOrientationTip();
             }
 
             resetGameState() {
@@ -1635,21 +1835,36 @@
                 }
                 state.running = true;
                 state.paused = false;
+                this.active = true;
                 this.lastTime = performance.now();
-                this.gameLoopId = requestAnimationFrame(this.loop.bind(this));
+                this.lastRenderTime = this.lastTime;
+                cancelAnimationFrame(this.gameLoopId);
+                this.gameLoopId = requestAnimationFrame(this.boundLoop);
+            }
+
+            requestPause() {
+                const state = this.app.state.get('game');
+                if (!state.running || state.paused) return;
+                this.pauseDialog.classList.remove('hidden');
+                document.getElementById('confirmPause').focus();
             }
 
             pause() {
                 const state = this.app.state.get('game');
-                if (state.running) {
-                    state.paused = !state.paused;
-                    if (state.paused) {
-                        cancelAnimationFrame(this.gameLoopId);
-                    } else {
-                        this.lastTime = performance.now();
-                        this.gameLoopId = requestAnimationFrame(this.loop.bind(this));
-                    }
-                }
+                if (!state.running) return;
+                state.paused = true;
+                cancelAnimationFrame(this.gameLoopId);
+                this.pauseDialog.classList.add('hidden');
+            }
+
+            resume() {
+                const state = this.app.state.get('game');
+                if (!state.running) return;
+                this.pauseDialog.classList.add('hidden');
+                state.paused = false;
+                this.lastTime = performance.now();
+                this.lastRenderTime = this.lastTime;
+                this.gameLoopId = requestAnimationFrame(this.boundLoop);
             }
 
             reset() {
@@ -1661,16 +1876,34 @@
 
             loop(timestamp) {
                 if (!this.app.state.get('game.running') || this.app.state.get('game.paused')) return;
+                if (document.body.getAttribute('data-mode') !== 'game') {
+                    this.stop();
+                    return;
+                }
 
-                const dt = (timestamp - this.lastTime) / 1000;
+                const elapsed = timestamp - this.lastRenderTime;
+                if (elapsed < this.frameInterval) {
+                    this.gameLoopId = requestAnimationFrame(this.boundLoop);
+                    return;
+                }
+
+                const dt = Math.min(0.05, (timestamp - this.lastTime) / 1000);
                 this.lastTime = timestamp;
+                this.lastRenderTime = timestamp;
 
                 this.update(dt);
                 this.render();
 
                 if (this.app.state.get('game.running') && !this.app.state.get('game.paused')) {
-                    this.gameLoopId = requestAnimationFrame(this.loop.bind(this));
+                    this.gameLoopId = requestAnimationFrame(this.boundLoop);
                 }
+            }
+
+            stop() {
+                this.app.state.set('game.running', false);
+                this.app.state.set('game.paused', false);
+                cancelAnimationFrame(this.gameLoopId);
+                this.active = false;
             }
 
             update(dt) {
@@ -1694,7 +1927,7 @@
                 this.gameObjects.bear.x = Math.max(20, Math.min(this.canvas.width - 20, this.gameObjects.bear.x));
 
                 // Spawn objects
-                this.spawnObjects();
+                this.spawnObjects(dt);
 
                 // Update objects
                 this.updateObjects(dt);
@@ -1703,11 +1936,14 @@
                 this.updateHUD();
             }
 
-            spawnObjects() {
+            spawnObjects(dt) {
                 const settings = this.getDifficultySettings();
+                const scaling = 1 + Math.min(0.6, (this.app.state.get('game.streak') * 0.05) + (this.app.state.get('game.score') / 400));
+                const jarChance = settings.jarSpawn * scaling * (dt * 60);
+                const beeChance = settings.beeSpawn * scaling * (dt * 60);
 
                 // Spawn jars
-                if (Math.random() < settings.jarSpawn) {
+                if (Math.random() < jarChance) {
                     const rnd = Math.random();
                     let type = 'normal';
                     if (rnd < 0.1) type = 'gold';
@@ -1722,7 +1958,7 @@
                 }
 
                 // Spawn bees
-                if (Math.random() < settings.beeSpawn) {
+                if (Math.random() < beeChance) {
                     this.gameObjects.bees.push({
                         x: Math.random() < 0.5 ? -20 : this.canvas.width + 20,
                         y: Math.random() * this.canvas.height * 0.6 + 50,
@@ -1740,11 +1976,15 @@
                     const jar = this.gameObjects.jars[i];
                     jar.y += jar.vy * dt;
 
-                    const dx = jar.x - this.gameObjects.bear.x;
-                    const dy = jar.y - (this.gameObjects.bear.y - 20);
-                    const distance = Math.hypot(dx, dy);
+                    const bearRect = {
+                        x: this.gameObjects.bear.x - this.gameObjects.bear.width / 2,
+                        y: this.gameObjects.bear.y - this.gameObjects.bear.height,
+                        width: this.gameObjects.bear.width,
+                        height: this.gameObjects.bear.height
+                    };
+                    const jarRect = { x: jar.x - 10, y: jar.y - 20, width: 20, height: 40 };
 
-                    if (distance < 30) {
+                    if (this.isColliding(bearRect, jarRect)) {
                         // Jar caught
                         this.gameObjects.jars.splice(i, 1);
 
@@ -1752,8 +1992,15 @@
                         if (jar.type === 'gold') points = 30;
                         if (jar.type === 'shield') points = 15;
 
-                        state.score += points;
+                        const multiplier = 1 + Math.min(2, state.streak * 0.1);
+                        state.score += Math.round(points * multiplier);
                         state.streak++;
+
+                        if (jar.type === 'shield') {
+                            state.lives = Math.min(this.getLives(), state.lives + 1);
+                        }
+
+                        this.hitFlash = 0.8;
 
                         if (state.score > state.best) {
                             state.best = state.score;
@@ -1772,6 +2019,7 @@
                     if (jar.y > this.canvas.height + 50) {
                         this.gameObjects.jars.splice(i, 1);
                         state.streak = 0;
+                        this.missFlash = 0.6;
                     }
                 }
 
@@ -1780,14 +2028,19 @@
                     const bee = this.gameObjects.bees[i];
                     bee.x += bee.vx * dt;
 
-                    const dx = bee.x - this.gameObjects.bear.x;
-                    const dy = bee.y - this.gameObjects.bear.y;
-                    const distance = Math.hypot(dx, dy);
+                    const bearRect = {
+                        x: this.gameObjects.bear.x - this.gameObjects.bear.width / 2,
+                        y: this.gameObjects.bear.y - this.gameObjects.bear.height,
+                        width: this.gameObjects.bear.width,
+                        height: this.gameObjects.bear.height
+                    };
+                    const beeRect = { x: bee.x - 12, y: bee.y - 8, width: 24, height: 16 };
 
-                    if (distance < 25) {
+                    if (this.isColliding(bearRect, beeRect)) {
                         this.gameObjects.bees.splice(i, 1);
                         state.lives--;
                         state.streak = 0;
+                        this.missFlash = 1;
 
                         if (this.app.state.get('settings.sfx')) {
                             this.app.components.audio.play('bee');
@@ -1815,6 +2068,28 @@
                         this.gameObjects.particles.splice(i, 1);
                     }
                 }
+                while (this.gameObjects.particles.length > 120) {
+                    this.gameObjects.particles.shift();
+                }
+            }
+
+            isColliding(a, b) {
+                return (
+                    a.x < b.x + b.width &&
+                    a.x + a.width > b.x &&
+                    a.y < b.y + b.height &&
+                    a.y + a.height > b.y
+                );
+            }
+
+            showOrientationTip() {
+                const tip = document.getElementById('orientationTip');
+                if (!tip) return;
+                const shouldShow = window.innerWidth < 720 && window.innerWidth < window.innerHeight;
+                tip.style.display = shouldShow ? 'block' : 'none';
+                if (shouldShow) {
+                    setTimeout(() => tip.style.display = 'none', 2500);
+                }
             }
 
             createParticles(x, y, type) {
@@ -1838,9 +2113,7 @@
 
             gameOver() {
                 const state = this.app.state.get('game');
-                state.running = false;
-                cancelAnimationFrame(this.gameLoopId);
-
+                this.stop();
                 setTimeout(() => {
                     alert(`Game Over! Score: ${state.score}\nBest: ${state.best}`);
                 }, 100);
@@ -1849,7 +2122,7 @@
             render() {
                 this.ctx.clearRect(0, 0, this.canvas.width, this.canvas.height);
 
-                this.drawBackground();
+                this.ctx.drawImage(this.backgroundCanvas, 0, 0);
                 this.drawBear();
 
                 this.gameObjects.jars.forEach(jar => this.drawJar(jar));
@@ -1858,30 +2131,38 @@
                 if (this.app.state.get('settings.particles')) {
                     this.gameObjects.particles.forEach(p => this.drawParticle(p));
                 }
+
+                if (this.hitFlash > 0 || this.missFlash > 0) {
+                    this.ctx.fillStyle = this.hitFlash > 0 ? 'rgba(248, 191, 89, 0.25)' : 'rgba(220, 77, 63, 0.2)';
+                    this.ctx.fillRect(0, 0, this.canvas.width, this.canvas.height);
+                    this.hitFlash = Math.max(0, this.hitFlash - 0.05);
+                    this.missFlash = Math.max(0, this.missFlash - 0.05);
+                }
             }
 
-            drawBackground() {
-                const w = this.canvas.width;
-                const h = this.canvas.height;
+            drawBackground(cacheOnly = false) {
+                const ctx = cacheOnly ? this.backgroundCtx : this.ctx;
+                if (!ctx) return;
+                const w = cacheOnly ? this.backgroundCanvas.width : this.canvas.width;
+                const h = cacheOnly ? this.backgroundCanvas.height : this.canvas.height;
 
-                // Sky
-                this.ctx.fillStyle = '#87CEEB';
-                this.ctx.fillRect(0, 0, w, h * 0.7);
+                ctx.clearRect(0, 0, w, h);
+                ctx.fillStyle = '#87CEEB';
+                ctx.fillRect(0, 0, w, h * 0.7);
+                ctx.fillStyle = '#98FB98';
+                ctx.fillRect(0, h * 0.7, w, h * 0.3);
+                ctx.fillStyle = '#8B4513';
+                ctx.fillRect(w * 0.2, h * 0.5, 30, 100);
+                ctx.fillRect(w * 0.8, h * 0.5, 30, 100);
+                ctx.fillStyle = '#228B22';
+                ctx.beginPath();
+                ctx.arc(w * 0.215, h * 0.5, 60, 0, Math.PI * 2);
+                ctx.arc(w * 0.815, h * 0.5, 60, 0, Math.PI * 2);
+                ctx.fill();
 
-                // Grass
-                this.ctx.fillStyle = '#98FB98';
-                this.ctx.fillRect(0, h * 0.7, w, h * 0.3);
-
-                // Trees
-                this.ctx.fillStyle = '#8B4513';
-                this.ctx.fillRect(w * 0.2, h * 0.5, 30, 100);
-                this.ctx.fillRect(w * 0.8, h * 0.5, 30, 100);
-
-                this.ctx.fillStyle = '#228B22';
-                this.ctx.beginPath();
-                this.ctx.arc(w * 0.215, h * 0.5, 60, 0, Math.PI * 2);
-                this.ctx.arc(w * 0.815, h * 0.5, 60, 0, Math.PI * 2);
-                this.ctx.fill();
+                if (!cacheOnly) {
+                    this.ctx.drawImage(this.backgroundCanvas, 0, 0);
+                }
             }
 
             drawBear() {
@@ -2040,10 +2321,17 @@
             show() {
                 this.panel.classList.add('active');
                 this.loadToForm();
+                this.previousFocus = document.activeElement;
+                setTimeout(() => document.getElementById('difficultySelect')?.focus(), 50);
             }
 
             hide() {
                 this.panel.classList.remove('active');
+                if (this.previousFocus) {
+                    this.previousFocus.focus({ preventScroll: true });
+                } else {
+                    this.toggleBtn.focus({ preventScroll: true });
+                }
             }
 
             loadToForm() {
@@ -2144,6 +2432,7 @@
             constructor(app) {
                 this.app = app;
                 this.audioElements = {};
+                this.audioContext = null;
                 this.init();
             }
 
@@ -2170,11 +2459,11 @@
             }
 
             createFallbackAudio() {
-                const silentAudio = 'data:audio/wav;base64,UklGRigAAABXQVZFZm10IBIAAAABAAEAQB8AAEAfAAABAAgAZGF0YQAAAAA=';
+                this.silentAudio = 'data:audio/wav;base64,UklGRigAAABXQVZFZm10IBIAAAABAAEAQB8AAEAfAAABAAgAZGF0YQAAAAA=';
 
                 Object.values(this.audioElements).forEach(audio => {
                     if (!audio.src) {
-                        audio.src = silentAudio;
+                        audio.src = this.silentAudio;
                     }
                 });
             }
@@ -2189,8 +2478,25 @@
                 const audio = this.audioElements[sound];
                 if (audio && this.app.state.get('settings.sfx')) {
                     audio.currentTime = 0;
-                    audio.play().catch(() => {});
+                    audio.play().catch(() => this.playTone(sound));
                 }
+            }
+
+            playTone(type) {
+                if (!this.audioContext) {
+                    const AudioCtx = window.AudioContext || window.webkitAudioContext;
+                    this.audioContext = AudioCtx ? new AudioCtx() : null;
+                }
+                if (!this.audioContext) return;
+                const ctx = this.audioContext;
+                const oscillator = ctx.createOscillator();
+                const gain = ctx.createGain();
+                oscillator.type = type === 'bee' ? 'sawtooth' : 'sine';
+                oscillator.frequency.value = type === 'bee' ? 320 : 220;
+                gain.gain.value = 0.05 * (this.app.state.get('settings.volume') / 100);
+                oscillator.connect(gain).connect(ctx.destination);
+                oscillator.start();
+                oscillator.stop(ctx.currentTime + 0.2);
             }
 
             toggleMusic() {
@@ -2217,7 +2523,8 @@
             }
 
             init() {
-                this.form.addEventListener('submit', (e) => this.submitWish(e));
+                this.form.addEventListener('submit', (e) => withErrorBoundary(() => this.submitWish(e)));
+                this.display.addEventListener('click', (e) => this.handleWishActions(e));
                 this.wishMessage.addEventListener('input', () => this.updateCharCount());
                 this.updateCharCount();
                 this.loadWishes();
@@ -2239,6 +2546,11 @@
                 const name = document.getElementById('guestName').value.trim();
                 const relation = document.getElementById('guestRelation').value;
                 const message = this.wishMessage.value.trim();
+                const tokenField = document.getElementById('csrfTokenField');
+                if (!tokenField || tokenField.value !== this.app.state.get('csrfToken')) {
+                    alert('Session expired. Please reload to share your wish.');
+                    return;
+                }
 
                 if (!name || !message || message.length > 500) {
                     alert('Please fill in all fields and keep message under 500 characters.');
@@ -2247,16 +2559,16 @@
 
                 const wish = {
                     id: Date.now(),
-                    name,
+                    name: this.escapeText(name),
                     relation,
-                    message,
+                    message: this.escapeText(message),
                     date: new Date().toISOString()
                 };
 
                 const wishes = [...this.app.state.get('wishes'), wish];
                 this.app.state.set('wishes', wishes);
 
-                this.addWishToDisplay(wish);
+                this.renderWishes();
 
                 this.form.reset();
                 this.updateCharCount();
@@ -2264,30 +2576,35 @@
                 this.showConfirmation();
             }
 
-            addWishToDisplay(wish) {
-                const wishElement = document.createElement('div');
-                wishElement.className = 'wish-item';
-                wishElement.innerHTML = `
-                    <div style="background: white; padding: var(--space-md); border-radius: var(--radius-sm); margin-bottom: var(--space-sm); border-left: 4px solid var(--color-gold);">
-                        <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: var(--space-xs);">
-                            <strong style="color: var(--color-green);">${this.escapeHtml(wish.name)}</strong>
-                            <small style="color: var(--color-ink-muted);">${new Date(wish.date).toLocaleDateString()}</small>
-                        </div>
-                        <p style="margin-bottom: var(--space-xs);">${this.escapeHtml(wish.message)}</p>
-                        <small style="color: var(--color-blue);">${this.getRelationText(wish.relation)}</small>
-                    </div>
-                `;
-
-                this.display.appendChild(wishElement);
+            handleWishActions(event) {
+                const actionBtn = event.target.closest('[data-action]');
+                if (!actionBtn) return;
+                const id = parseInt(actionBtn.dataset.id, 10);
+                if (actionBtn.dataset.action === 'delete') {
+                    if (confirm('Remove this wish?')) {
+                        const filtered = this.app.state.get('wishes').filter(w => w.id !== id);
+                        this.app.state.set('wishes', filtered);
+                        this.renderWishes();
+                    }
+                }
+                if (actionBtn.dataset.action === 'edit') {
+                    const existing = this.app.state.get('wishes').find(w => w.id === id);
+                    if (!existing) return;
+                    const updatedMessage = prompt('Edit your wish', existing.message);
+                    if (!updatedMessage || updatedMessage.trim().length === 0 || updatedMessage.length > 500) return;
+                    const sanitized = this.escapeText(updatedMessage.trim());
+                    const nextWishes = this.app.state.get('wishes').map(w => w.id === id ? { ...w, message: sanitized } : w);
+                    this.app.state.set('wishes', nextWishes);
+                    this.renderWishes();
+                }
             }
 
             loadWishes() {
                 const wishes = this.app.state.get('wishes');
-                if (wishes.length > 0) {
-                    wishes.forEach(wish => this.addWishToDisplay(wish));
-                } else {
+                if (wishes.length === 0) {
                     this.addSampleWishes();
                 }
+                this.renderWishes();
             }
 
             addSampleWishes() {
@@ -2308,8 +2625,7 @@
                         date: now
                     }
                 ];
-
-                samples.forEach(wish => this.addWishToDisplay(wish));
+                this.app.state.set('wishes', samples);
             }
 
             getRelationText(relation) {
@@ -2322,10 +2638,61 @@
                 return relations[relation] || 'Guest';
             }
 
-            escapeHtml(text) {
+            escapeText(text) {
                 const div = document.createElement('div');
                 div.textContent = text;
-                return div.innerHTML;
+                return div.textContent;
+            }
+
+            renderWishes() {
+                this.display.querySelectorAll('.wish-item').forEach(el => el.remove());
+                const wishes = this.app.state.get('wishes');
+                wishes.forEach(wish => {
+                    const wrapper = document.createElement('div');
+                    wrapper.className = 'wish-item';
+                    const card = document.createElement('div');
+                    card.style.cssText = 'background: white; padding: var(--space-md); border-radius: var(--radius-sm); margin-bottom: var(--space-sm); border-left: 4px solid var(--color-gold);';
+
+                    const header = document.createElement('div');
+                    header.style.cssText = 'display: flex; justify-content: space-between; align-items: center; gap: var(--space-sm); margin-bottom: var(--space-xs); flex-wrap: wrap;';
+                    const nameEl = document.createElement('strong');
+                    nameEl.style.color = 'var(--color-green)';
+                    nameEl.textContent = wish.name;
+                    const dateEl = document.createElement('small');
+                    dateEl.style.color = 'var(--color-ink-muted)';
+                    dateEl.textContent = new Date(wish.date).toLocaleDateString();
+                    header.append(nameEl, dateEl);
+
+                    const messageEl = document.createElement('p');
+                    messageEl.style.marginBottom = 'var(--space-xs)';
+                    messageEl.textContent = wish.message;
+
+                    const footer = document.createElement('div');
+                    footer.style.cssText = 'display:flex; justify-content: space-between; align-items:center; gap: var(--space-sm); flex-wrap: wrap;';
+                    const relationEl = document.createElement('small');
+                    relationEl.style.color = 'var(--color-blue)';
+                    relationEl.textContent = this.getRelationText(wish.relation);
+
+                    const actions = document.createElement('div');
+                    const editBtn = document.createElement('button');
+                    editBtn.className = 'footer-btn';
+                    editBtn.dataset.action = 'edit';
+                    editBtn.dataset.id = wish.id;
+                    editBtn.type = 'button';
+                    editBtn.textContent = 'Edit';
+                    const deleteBtn = document.createElement('button');
+                    deleteBtn.className = 'footer-btn';
+                    deleteBtn.dataset.action = 'delete';
+                    deleteBtn.dataset.id = wish.id;
+                    deleteBtn.type = 'button';
+                    deleteBtn.textContent = 'Delete';
+                    actions.append(editBtn, deleteBtn);
+
+                    footer.append(relationEl, actions);
+                    card.append(header, messageEl, footer);
+                    wrapper.appendChild(card);
+                    this.display.appendChild(wrapper);
+                });
             }
 
             showConfirmation() {
@@ -2392,9 +2759,14 @@
         // INITIALIZE APPLICATION
         const app = new BabyShowerApp();
 
+        SafeEvents.add(window, 'beforeunload', () => SafeEvents.removeAll());
+
         document.addEventListener('DOMContentLoaded', () => {
-            app.init();
-            FooterActions.init(app);
+            withErrorBoundary(() => {
+                app.init();
+                FooterActions.init(app);
+                document.getElementById('csrfTokenField').value = app.state.get('csrfToken');
+            });
         });
 
         // Expose for debugging
