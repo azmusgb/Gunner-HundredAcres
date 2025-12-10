@@ -633,7 +633,7 @@
             gainNode.connect(audioContext.destination);
 
             oscillator.frequency.value = 200 * (i + 1);
-            oscillator.type = i % 2 === 0 ? 'sawtooth' : 'triangle';
+            oscillator.type = i % 2 === 0 ? 'sawtooth' : i === 1 ? 'triangle' : 'sawtooth';
 
             const startTime = audioContext.currentTime + i * 0.05;
             gainNode.gain.setValueAtTime(0, startTime);
@@ -2000,8 +2000,6 @@
     }
 
     // ==================== DRAWING FUNCTIONS ====================
-    // Replace the entire drawBear() function with this enhanced version:
-
     function drawBear() {
         const x = bear.x;
         const y = bear.y;
@@ -2079,8 +2077,6 @@
 
         ctx.restore();
     }
-
-// ==================== ENHANCED HEAD FUNCTION ====================
 
     function drawBearHead(anim) {
         // Head with classic Pooh shape
@@ -2265,8 +2261,6 @@
         }
     }
 
-// ==================== ENHANCED ARMS FUNCTION ====================
-
     function drawBearArms(anim) {
         // Walking arm animation
         const armSwing = anim.isMoving ? Math.sin(anim.walkCycle * 4) * 20 : 0;
@@ -2342,8 +2336,6 @@
         ctx.restore();
     }
 
-// ==================== ENHANCED JAR FUNCTION ====================
-
     function drawJarWithBear(anim) {
         // Jar body with honey level that changes with streak
         const honeyLevel = Math.min(0.7 + (gameState.streak * 0.02), 0.95);
@@ -2411,8 +2403,6 @@
         ctx.fill();
     }
 
-// ==================== ADDITIONAL POOH DETAILS ====================
-
     function drawPoohDetails(anim) {
         // Shirt buttons
         ctx.fillStyle = "#fbbf24"; // Yellow buttons
@@ -2449,8 +2439,6 @@
         ctx.ellipse(12, 42, 6, 4, 0, 0, Math.PI * 2);
         ctx.fill();
     }
-
-// ==================== SHIELD EFFECT (UPDATED) ====================
 
     function drawShieldEffect() {
         const pulse = 1 + Math.sin(performance.now() / 200) * 0.1;
@@ -2544,6 +2532,68 @@
 
             ctx.restore();
         }
+    }
+
+    function drawEvolutionHat(hatType) {
+        if (!hatType) return;
+
+        ctx.save();
+        ctx.translate(0, -40);
+
+        switch(hatType) {
+            case 'cap':
+                // Baseball cap
+                ctx.fillStyle = "#1e40af";
+                ctx.beginPath();
+                ctx.ellipse(0, -10, 20, 8, 0, 0, Math.PI * 2);
+                ctx.fill();
+                ctx.fillStyle = "#3b82f6";
+                ctx.beginPath();
+                ctx.roundRect(-15, -15, 30, 10, 5);
+                ctx.fill();
+                break;
+            case 'crown':
+                // Simple crown
+                ctx.fillStyle = "#fbbf24";
+                const points = 5;
+                const radius = 18;
+                for (let i = 0; i < points; i++) {
+                    const angle = (i * Math.PI * 2) / points - Math.PI/2;
+                    const x = Math.cos(angle) * radius;
+                    const y = Math.sin(angle) * radius;
+                    if (i === 0) {
+                        ctx.beginPath();
+                        ctx.moveTo(x, y);
+                    } else {
+                        ctx.lineTo(x, y);
+                    }
+                }
+                ctx.closePath();
+                ctx.fill();
+                break;
+            case 'majestic_crown':
+                // Fancy crown
+                ctx.fillStyle = "gold";
+                ctx.beginPath();
+                // Crown base
+                ctx.roundRect(-20, -10, 40, 8, 3);
+                // Crown spikes
+                for (let i = 0; i < 5; i++) {
+                    const x = -15 + i * 7.5;
+                    ctx.moveTo(x, -10);
+                    ctx.lineTo(x + 3.75, -20);
+                    ctx.lineTo(x + 7.5, -10);
+                }
+                ctx.fill();
+                // Jewels
+                ctx.fillStyle = "#ef4444";
+                ctx.beginPath();
+                ctx.arc(0, -5, 3, 0, Math.PI * 2);
+                ctx.fill();
+                break;
+        }
+
+        ctx.restore();
     }
 
     // ==================== GAME INITIALIZATION ====================
@@ -4340,51 +4390,12 @@
         window.addEventListener("resize", resizeCanvas);
         requestAnimationFrame(gameLoop);
         console.log("Honey Hunt Enhanced with Audio initialized successfully!");
-
-        // Add debug button for testing
-        const debugBtn = document.createElement('button');
-        debugBtn.textContent = 'Debug Settings';
-        debugBtn.style.position = 'fixed';
-        debugBtn.style.bottom = '10px';
-        debugBtn.style.right = '10px';
-        debugBtn.style.zIndex = '9999';
-        debugBtn.style.background = '#fbbf24';
-        debugBtn.style.color = '#1e293b';
-        debugBtn.style.padding = '10px';
-        debugBtn.style.border = 'none';
-        debugBtn.style.borderRadius = '5px';
-        debugBtn.style.fontWeight = 'bold';
-        debugBtn.style.cursor = 'pointer';
-        debugBtn.addEventListener('click', () => {
-            console.log('Settings State:', settingsState);
-            console.log('Game State:', gameState);
-            console.log('Settings Modal:', document.getElementById('settingsModal'));
-            console.log('Settings Toggle:', document.getElementById('settingsToggle'));
-            alert(`Settings Debug:\nMusic: ${settingsState.musicOn ? 'ON' : 'OFF'}\nSFX: ${settingsState.sfxOn ? 'ON' : 'OFF'}\nDifficulty: ${settingsState.difficulty}\n\nCheck console for more details.`);
-        });
-        document.body.appendChild(debugBtn);
     }
 
-    // DOM integration for settings button
-    document.addEventListener('DOMContentLoaded', function() {
-        console.log("DOM fully loaded, initializing game...");
-
-        // Connect the game settings button to the existing settings functionality
-        const gameSettingsButton = document.getElementById('gameSettingsButton');
-
-        if (gameSettingsButton) {
-            console.log("Found game settings button");
-            gameSettingsButton.addEventListener('click', function(e) {
-                e.preventDefault();
-                e.stopPropagation();
-                console.log("Game settings button clicked!");
-                openSettings();
-            });
-        } else {
-            console.log("Game settings button not found");
-        }
-
-        // Initialize the game
+    // Initialize the game when DOM is ready
+    if (document.readyState === 'loading') {
+        document.addEventListener('DOMContentLoaded', init);
+    } else {
         init();
-    });
+    }
 })();
