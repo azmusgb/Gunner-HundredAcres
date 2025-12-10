@@ -894,6 +894,50 @@
             flex-shrink: 0;
         }
 
+        .game-critique {
+            margin-top: 1.25rem;
+            padding: 1rem 1.1rem;
+            border-radius: 18px;
+            background: linear-gradient(135deg, #fffaf0, #fff4d6);
+            box-shadow: var(--shadow-tiny);
+            border: 1px solid rgba(244, 185, 68, 0.35);
+        }
+
+        .critique-header {
+            display: flex;
+            justify-content: space-between;
+            gap: 0.75rem;
+            align-items: baseline;
+            flex-wrap: wrap;
+        }
+
+        .critique-kicker {
+            font-size: 0.8rem;
+            text-transform: uppercase;
+            letter-spacing: 0.08em;
+            color: var(--ink-soft);
+            font-weight: 700;
+        }
+
+        .critique-summary {
+            margin: 0.15rem 0 0;
+            font-weight: 700;
+            font-size: 1rem;
+            color: #c27803;
+        }
+
+        .critique-list {
+            margin: 0.6rem 0 0;
+            padding-left: 1.1rem;
+            display: grid;
+            gap: 0.35rem;
+            color: var(--ink);
+        }
+
+        .critique-list li {
+            font-size: 0.9rem;
+        }
+
         /* =========================================
            9. REGISTRY + NURSERY DETAILS + WISHES
            ========================================= */
@@ -2674,6 +2718,15 @@
                         </button>
                     </div>
                 </div>
+                <div class="game-critique" aria-live="polite">
+                    <div class="critique-header">
+                        <div class="critique-kicker">Run critique</div>
+                        <p class="critique-summary" id="critiqueSummary">Finish a run to unlock tips</p>
+                    </div>
+                    <ul class="critique-list" id="critiqueList">
+                        <li>Collect honey and avoid bees to see how you did.</li>
+                    </ul>
+                </div>
 
                 <div class="game-description">
                     <h3>How to Play</h3>
@@ -3002,6 +3055,8 @@
         const mobileLeftBtn = document.getElementById('mobileLeftBtn');
         const mobileRightBtn = document.getElementById('mobileRightBtn');
         const mobilePauseBtn = document.getElementById('mobilePauseBtn');
+        const critiqueSummary = document.getElementById('critiqueSummary');
+        const critiqueList = document.getElementById('critiqueList');
 
         // Game state
         let gameState = {
@@ -3014,6 +3069,79 @@
             lives: 3,
             shieldTime: 0
         };
+
+        const defaultCritique = {
+            summary: 'Finish a run to unlock tips',
+            bullets: ['Collect honey and avoid bees to see how you did.']
+        };
+
+        const runStats = {
+            jarsCaught: 0,
+            goldCaught: 0,
+            shieldsCaught: 0,
+            beesBumped: 0,
+            maxStreak: 0
+        };
+
+        function resetRunStats() {
+            runStats.jarsCaught = 0;
+            runStats.goldCaught = 0;
+            runStats.shieldsCaught = 0;
+            runStats.beesBumped = 0;
+            runStats.maxStreak = 0;
+            renderCritique(defaultCritique.summary, defaultCritique.bullets);
+        }
+
+        function renderCritique(summary, bulletPoints) {
+            if (critiqueSummary) {
+                critiqueSummary.textContent = summary;
+            }
+
+            if (critiqueList) {
+                critiqueList.innerHTML = '';
+                bulletPoints.forEach((point) => {
+                    const li = document.createElement('li');
+                    li.textContent = point;
+                    critiqueList.appendChild(li);
+                });
+            }
+        }
+
+        function buildRunCritique() {
+            const bullets = [];
+
+            const summary = gameState.score >= 240
+                ? 'Sweet scoring spree!'
+                : gameState.score >= 160
+                    ? 'Solid honey haul!'
+                    : 'Warm-up jog complete — more honey awaits.';
+
+            const safetyNote = runStats.beesBumped === 0
+                ? 'Stayed sting-free—nimble dodging!'
+                : `Bee bumps: ${runStats.beesBumped}. Weaving and shields keep Pooh cozy.`;
+            bullets.push(safetyNote);
+
+            const streakNote = runStats.maxStreak >= 6
+                ? `Built a cozy combo of x${runStats.maxStreak}—keep chaining catches.`
+                : runStats.maxStreak >= 3
+                    ? `Nice combo rhythm at x${runStats.maxStreak}; keep jars flowing for bigger boosts.`
+                    : 'Try catching back-to-back honey to build a combo bonus.';
+            bullets.push(streakNote);
+
+            const haulNote = gameState.score >= 200
+                ? 'Honey haul was plentiful—sweet pace!'
+                : gameState.score >= 110
+                    ? 'Solid honey haul; chase a few more pots next run.'
+                    : 'Slide under falling honey more often to grow your haul.';
+            bullets.push(haulNote);
+
+            const shieldNote = runStats.shieldsCaught > 0
+                ? `Shields collected: ${runStats.shieldsCaught}. Great for shrugging off bees!`
+                : 'Snag blue jars for a shield when bees get busy.';
+            bullets.push(shieldNote);
+
+            return { summary, bullets };
+        }
 
         // Game objects
         const bear = {
@@ -3066,6 +3194,8 @@
             gameState.streak = 0;
             gameState.lives = difficulty.lives || 3;
             gameState.shieldTime = 0;
+
+            resetRunStats();
 
             // Update HUD
             updateHUD();
@@ -3133,6 +3263,9 @@
             // Show game over overlay
             gameOverOverlay.classList.add('visible');
             gameHUD.classList.remove('visible');
+
+            const critique = buildRunCritique();
+            renderCritique(critique.summary, critique.bullets);
         }
 
         // Resize canvas
@@ -3388,10 +3521,17 @@
                     jars.splice(i, 1);
                     gameState.score += jar.type === 'gold' ? 30 : jar.type === 'shield' ? 15 : 10;
                     gameState.streak++;
+                    runStats.jarsCaught++;
+                    if (jar.type === 'gold') {
+                        runStats.goldCaught++;
+                    }
 
                     if (jar.type === 'shield') {
+                        runStats.shieldsCaught++;
                         gameState.shieldTime = 5;
                     }
+
+                    runStats.maxStreak = Math.max(runStats.maxStreak, gameState.streak);
 
                     // Create particles if enabled
                     if (window.getGameSettings && window.getGameSettings().particles !== false) {
@@ -3441,6 +3581,7 @@
                     if (gameState.shieldTime > 0) {
                         gameState.shieldTime = 0;
                     } else {
+                        runStats.beesBumped++;
                         gameState.lives--;
                         gameState.streak = 0;
 
