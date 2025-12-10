@@ -1,2957 +1,1990 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
-    <meta charset="UTF-8" />
-    <title>Honey Hunt — Storybook Edition</title>
-    <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover" />
-    <meta name="description" content="Collect honey, dodge bees, stack streaks, and unlock power-ups in this cozy Hundred Acre Wood–inspired honey hunt." />
-    <meta name="color-scheme" content="light dark" />
-    <meta name="theme-color" content="#ffb23a" />
-    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.1/css/all.min.css" />
-    <link href="https://fonts.googleapis.com/css2?family=Patrick+Hand&display=swap" rel="stylesheet">
-    <style>
-        *,
-        *::before,
-        *::after {
-            box-sizing: border-box;
+    <meta charset="UTF-8">
+    <meta content="width=device-width, initial-scale=1.0, viewport-fit=cover" name="viewport">
+    <title>Baby Gunnar's Hundred Acre Wood Adventure</title>
+    <meta content="A storybook-style Hundred Acre Wood adventure with a honey-catching game to celebrate Baby Gunnar."
+          name="description">
+    <meta content="#f4a944" name="theme-color">
+    <meta content="light dark" name="color-scheme">
+    <meta content="Baby Gunnar's Hundred Acre Wood Shower" property="og:title">
+    <meta content="A sweet storybook and honey-catching game—read, play, and leave your wishes."
+          property="og:description">
+    <meta content="icons/icon.svg" property="og:image">
+    <meta content="website" property="og:type">
+    <link href="styles.css" rel="stylesheet">
+<link rel="stylesheet" href="styles.css">
+
+<style>
+    /* =========================================
+       1. ROOT + GLOBAL LAYOUT
+       ========================================= */
+    :root {
+        --bg: #fff9ec;
+        --bg-soft: #fff4dd;
+        --ink: #3b2604;
+        --ink-soft: #5a4330;
+        --accent: #f4b944;
+        --accent-soft: #ffe4a8;
+        --accent-strong: #f59e0b;
+        --border-soft: rgba(0, 0, 0, 0.06);
+        --card-bg: #ffffff;
+        --card-radius: 24px;
+        --shadow-soft: 0 18px 40px rgba(0, 0, 0, 0.16);
+        --shadow-subtle: 0 8px 20px rgba(0, 0, 0, 0.08);
+        --shadow-tiny: 0 2px 6px rgba(0, 0, 0, 0.08);
+        --transition-fast: 0.18s ease-out;
+        --transition-med: 0.28s ease;
+        --page-max-width: 1120px;
+        --page-padding-x: 1.5rem;
+        --page-padding-y: 1.5rem;
+        --font-body: system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
+        --font-title: "Playfair Display", "Georgia", serif;
+    }
+
+    *,
+    *::before,
+    *::after {
+        box-sizing: border-box;
+    }
+
+    html,
+    body {
+        margin: 0;
+        padding: 0;
+    }
+
+    body {
+        min-height: 100vh;
+        font-family: var(--font-body);
+        color: var(--ink);
+        background: radial-gradient(circle at top, #fff4d4 0, #ffe5b0 28%, #ffe7c4 48%, #fff9ec 100%);
+        -webkit-font-smoothing: antialiased;
+    }
+
+    /* A11y helper */
+    .sr-only {
+        position: absolute;
+        width: 1px;
+        height: 1px;
+        padding: 0;
+        margin: -1px;
+        overflow: hidden;
+        clip: rect(0, 0, 0, 0);
+        border: 0;
+    }
+
+    /* Simple text utilities */
+    .divider {
+        text-align: center;
+        margin: 2rem 0;
+        font-size: 0.95rem;
+        opacity: 0.8;
+    }
+
+    /* =========================================
+       2. DECORATIVE SCENE + CLOUDS
+       ========================================= */
+    .enhanced-scene {
+        position: fixed;
+        inset: 0;
+        pointer-events: none;
+        background:
+                radial-gradient(circle at top left, rgba(255, 255, 255, 0.8), transparent 55%),
+                radial-gradient(circle at top right, rgba(255, 243, 205, 0.8), transparent 50%),
+                radial-gradient(circle at bottom, rgba(255, 220, 185, 0.9), transparent 60%);
+        opacity: 0.6;
+        z-index: -2;
+    }
+
+    .cloud-layer {
+        position: fixed;
+        top: 0;
+        left: 0;
+        width: 100%;
+        pointer-events: none;
+        display: flex;
+        justify-content: space-around;
+        padding-top: 0.5rem;
+        font-size: 1.8rem;
+        opacity: 0.45;
+        z-index: -1;
+    }
+
+    .cloud {
+        animation: floatClouds 24s linear infinite;
+    }
+
+    .cloud:nth-child(2) {
+        animation-delay: -8s;
+    }
+
+    .cloud:nth-child(3) {
+        animation-delay: -16s;
+    }
+
+    @keyframes floatClouds {
+        0% {
+            transform: translate3d(-10px, 0, 0);
+        }
+        50% {
+            transform: translate3d(10px, 4px, 0);
+        }
+        100% {
+            transform: translate3d(-10px, 0, 0);
+        }
+    }
+
+    /* =========================================
+       3. HERO / MASTHEAD
+       ========================================= */
+    .masthead-hero {
+        position: relative;
+        padding-bottom: 2rem;
+        color: var(--ink);
+    }
+
+    .hero-banner {
+        position: relative;
+        isolation: isolate;
+        max-width: 1200px;
+        margin: 0 auto 1.5rem;
+        border-radius: 32px;
+        overflow: hidden;
+        box-shadow: var(--shadow-soft);
+        background: linear-gradient(135deg, #ffe5b0, #ffd1a3);
+    }
+
+    .hero-image-container {
+        position: relative;
+        width: 100%;
+        height: min(60vh, 520px);
+        overflow: hidden;
+    }
+
+    .hero-banner__img {
+        width: 100%;
+        height: 100%;
+        object-fit: cover;
+        filter: saturate(1.05) contrast(1.03);
+        transform: scale(1.02);
+        transform-origin: center;
+    }
+
+    /* Corner emojis */
+    .hero-corner-decoration {
+        position: absolute;
+        font-size: 1.8rem;
+        filter: drop-shadow(0 2px 4px rgba(0, 0, 0, 0.16));
+    }
+
+    .hero-corner-decoration.top-left {
+        top: 10px;
+        left: 14px;
+    }
+
+    .hero-corner-decoration.top-right {
+        top: 10px;
+        right: 14px;
+    }
+
+    .hero-corner-decoration.bottom-left {
+        bottom: 10px;
+        left: 14px;
+    }
+
+    .hero-corner-decoration.bottom-right {
+        bottom: 10px;
+        right: 14px;
+    }
+
+    /* Title overlay */
+    .hero-title-container {
+        position: absolute;
+        inset: auto 0 0;
+        display: flex;
+        justify-content: center;
+        padding: 1.25rem 1.5rem 1.6rem;
+        pointer-events: none;
+    }
+
+    .title-background {
+        pointer-events: auto;
+        max-width: 720px;
+        width: 100%;
+        padding: 1.25rem 1.5rem 1.5rem;
+        border-radius: 24px 24px 0 0;
+        background: linear-gradient(
+                135deg,
+                rgba(255, 255, 255, 0.99),
+                rgba(255, 248, 225, 0.9)
+        );
+        box-shadow: 0 -10px 30px rgba(0, 0, 0, 0.18);
+        border: 1px solid rgba(255, 255, 255, 0.9);
+        border-bottom: none;
+    }
+
+    .masthead-title {
+        margin: 0 0 0.5rem;
+        font-family: var(--font-title);
+        letter-spacing: 0.04em;
+        text-align: center;
+    }
+
+    .title-line {
+        display: block;
+    }
+
+    .title-line--primary {
+        font-size: clamp(1.3rem, 2vw + 1rem, 1.6rem);
+        text-transform: uppercase;
+        letter-spacing: 0.25em;
+        opacity: 0.9;
+    }
+
+    .title-line--secondary {
+        font-size: clamp(1.9rem, 3vw + 1.2rem, 2.4rem);
+        font-weight: 700;
+    }
+
+    .title-underline {
+        display: flex;
+        justify-content: center;
+        gap: 0.25rem;
+        margin-bottom: 0.35rem;
+    }
+
+    .underline-dot {
+        font-size: 0.95rem;
+        color: var(--accent-strong);
+    }
+
+    .hero-subtitle {
+        margin: 0;
+        text-align: center;
+        font-size: 0.95rem;
+        color: var(--ink-soft);
+    }
+
+    /* Sparkles / bunting / sheen */
+    .hero-sparkles {
+        position: absolute;
+        inset: 0;
+        pointer-events: none;
+        background:
+                radial-gradient(circle at 10% 10%, rgba(255, 255, 255, 0.7), transparent 60%),
+                radial-gradient(circle at 90% 30%, rgba(255, 225, 173, 0.7), transparent 55%);
+        mix-blend-mode: screen;
+        opacity: 0.6;
+        z-index: -1;
+    }
+
+    .hero-bunting {
+        max-width: 1200px;
+        margin: 0.25rem auto 0;
+        display: flex;
+        justify-content: center;
+        gap: 0.5rem;
+        font-size: 1.4rem;
+    }
+
+    .hero-sheen {
+        position: absolute;
+        inset: 0;
+        pointer-events: none;
+        background: linear-gradient(
+                135deg,
+                rgba(255, 255, 255, 0.16),
+                transparent 60%
+        );
+        mix-blend-mode: screen;
+        opacity: 0.8;
+    }
+
+    /* Hero inner panel */
+    .masthead-hero-inner {
+        max-width: var(--page-max-width);
+        margin: 0.5rem auto 0;
+        padding: 0 1.25rem;
+    }
+
+    .hero-panel {
+        margin-top: 1.5rem;
+        padding: 1.75rem 1.5rem;
+        border-radius: var(--card-radius);
+        background: rgba(255, 255, 255, 0.96);
+        box-shadow: var(--shadow-subtle);
+        border: 1px solid rgba(255, 255, 255, 0.8);
+    }
+
+    /* =========================================
+       4. HERO BADGE + DETAIL GRID + CTA
+       ========================================= */
+    .hero-badge {
+        display: grid;
+        grid-template-columns: auto minmax(0, 1.5fr);
+        gap: 1rem;
+        padding: 1rem 1.25rem;
+        border-radius: 999px;
+        background: linear-gradient(135deg, #fffaf0, #ffe8bb);
+        align-items: center;
+        border: 1px solid rgba(244, 185, 68, 0.3);
+        margin-bottom: 1.5rem;
+    }
+
+    .badge-icon {
+        display: flex;
+        align-items: center;
+        justify-content: center;
+    }
+
+    .badge-icon-inner {
+        width: 48px;
+        height: 48px;
+        border-radius: 999px;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        background: radial-gradient(circle at 30% 20%, #fff9e8, #f4b944);
+        box-shadow: var(--shadow-tiny);
+        font-size: 1.6rem;
+    }
+
+    .badge-copy {
+        min-width: 0;
+    }
+
+    .badge-eyebrow {
+        margin: 0;
+        text-transform: uppercase;
+        letter-spacing: 0.16em;
+        font-size: 0.7rem;
+        opacity: 0.7;
+    }
+
+    .badge-label {
+        margin: 0.15rem 0 0;
+        font-size: 0.9rem;
+        font-weight: 600;
+    }
+
+    .badge-title {
+        margin: 0.15rem 0 0;
+        font-size: 1rem;
+        font-weight: 700;
+    }
+
+    .badge-meta {
+        display: flex;
+        gap: 0.5rem;
+        flex-wrap: wrap;
+        justify-content: flex-end;
+        align-items: center;
+        font-size: 0.8rem;
+    }
+
+    .badge-pill {
+        display: inline-flex;
+        align-items: center;
+        gap: 0.4rem;
+        border-radius: 999px;
+        padding: 0.3rem 0.7rem;
+        background: rgba(255, 255, 255, 0.92);
+        border: 1px solid rgba(255, 255, 255, 0.9);
+        box-shadow: 0 2px 6px rgba(244, 185, 68, 0.25);
+    }
+
+    .pill-icon {
+        font-size: 1rem;
+    }
+
+    .pill-text {
+        white-space: nowrap;
+    }
+
+    /* Detail grid */
+    .hero-details-grid {
+        display: grid;
+        grid-template-columns: repeat(3, minmax(0, 1fr));
+        gap: 1rem;
+        margin-bottom: 1.5rem;
+    }
+
+    .hero-detail {
+        display: flex;
+        gap: 0.75rem;
+        padding: 0.85rem 1rem;
+        border-radius: 16px;
+        background: #fffdfa;
+        box-shadow: 0 4px 12px rgba(244, 185, 68, 0.12);
+    }
+
+    .detail-icon {
+        font-size: 1.5rem;
+    }
+
+    .detail-title {
+        margin: 0;
+        font-size: 0.95rem;
+        font-weight: 600;
+    }
+
+    .detail-text {
+        margin: 0.15rem 0 0;
+        font-size: 0.85rem;
+        color: var(--ink-soft);
+    }
+
+    /* Hero CTAs */
+    .hero-actions {
+        display: flex;
+        flex-wrap: wrap;
+        gap: 0.75rem;
+        margin-bottom: 1rem;
+    }
+
+    .hero-action-btn {
+        border-radius: 999px;
+        border: none;
+        padding: 0.6rem 1.1rem;
+        font-size: 0.9rem;
+        font-weight: 600;
+        display: inline-flex;
+        align-items: center;
+        gap: 0.4rem;
+        cursor: pointer;
+        transition: transform var(--transition-fast), box-shadow var(--transition-fast), background var(--transition-fast);
+    }
+
+    .hero-action-btn .btn-icon {
+        font-size: 1.1rem;
+    }
+
+    .hero-action-btn.primary {
+        background: linear-gradient(135deg, #f4b944, #f59e0b);
+        color: #3b2604;
+        box-shadow: 0 8px 18px rgba(244, 185, 68, 0.6);
+    }
+
+    .hero-action-btn.secondary {
+        background: #ffffff;
+        color: var(--ink);
+        box-shadow: var(--shadow-tiny);
+        border: 1px solid rgba(0, 0, 0, 0.06);
+    }
+
+    .hero-action-btn.ghost {
+        background: transparent;
+        color: var(--ink-soft);
+        border: 1px dashed rgba(0, 0, 0, 0.16);
+    }
+
+    .hero-action-btn:hover {
+        transform: translateY(-1px);
+        box-shadow: 0 10px 22px rgba(0, 0, 0, 0.14);
+    }
+
+    /* Orientation hint */
+    .orientation-hint {
+        display: flex;
+        align-items: center;
+        gap: 0.6rem;
+        padding-top: 0.5rem;
+        border-top: 1px dashed rgba(0, 0, 0, 0.08);
+        margin-top: 0.5rem;
+        font-size: 0.83rem;
+        color: var(--ink-soft);
+    }
+
+    .hint-icon {
+        font-size: 1.4rem;
+    }
+
+    /* =========================================
+       5. CHAPTER TRACKER (complements your inline)
+       ========================================= */
+    .tracker-label {
+        font-size: 0.8rem;
+        text-transform: uppercase;
+        letter-spacing: 0.16em;
+        opacity: 0.7;
+    }
+
+    /* Progress bar */
+    .book-progress {
+        position: relative;
+        flex: 1;
+        height: 0.4rem;
+        border-radius: 999px;
+        background: rgba(0, 0, 0, 0.06);
+        overflow: hidden;
+    }
+
+    .book-progress .progress-fill {
+        width: 0%;
+        height: 100%;
+        border-radius: inherit;
+        background: linear-gradient(90deg, #f4b944, #f97316);
+        transition: width 0.25s ease-out;
+    }
+
+    /* Sparkle accent */
+    .sparkle {
+        position: relative;
+    }
+
+    .sparkle::after {
+        content: "";
+        position: absolute;
+        inset: -2px;
+        border-radius: inherit;
+        border: 1px solid rgba(255, 255, 255, 0.7);
+        opacity: 0;
+        pointer-events: none;
+        animation: sparklePulse 2.8s ease-in-out infinite;
+    }
+
+    .chapter-pill.active.sparkle::after {
+        opacity: 1;
+    }
+
+    @keyframes sparklePulse {
+        0%,
+        100% {
+            transform: scale(1);
+            opacity: 0.4;
+        }
+        50% {
+            transform: scale(1.03);
+            opacity: 1;
+        }
+    }
+
+    /* =========================================
+       6. BOOK LAYOUT + PAGES
+       ========================================= */
+    .book-container {
+        max-width: var(--page-max-width);
+        margin: 1.25rem auto 3rem;
+        padding: 0 var(--page-padding-x);
+    }
+
+    .book {
+        margin-top: 1rem;
+        border-radius: var(--card-radius);
+        background: #fffdf8;
+        box-shadow: var(--shadow-soft);
+        border: 1px solid rgba(255, 255, 255, 0.9);
+        overflow: hidden;
+    }
+
+    .pages-wrapper {
+        position: relative;
+        padding: var(--page-padding-y) var(--page-padding-x);
+    }
+
+    /* Page cards */
+    .page {
+        display: none;
+        opacity: 0;
+        transform: translateY(4px);
+        transition: opacity var(--transition-med), transform var(--transition-med);
+    }
+
+    .page.active {
+        display: block;
+        opacity: 1;
+        transform: translateY(0);
+    }
+
+    .chapter-header {
+        text-align: center;
+        margin-bottom: 1.5rem;
+        position: relative;
+    }
+
+    .chapter-number {
+        margin: 0;
+        font-size: 0.85rem;
+        text-transform: uppercase;
+        letter-spacing: 0.22em;
+        opacity: 0.7;
+    }
+
+    .chapter-title {
+        margin: 0.4rem 0 0.25rem;
+        font-family: var(--font-title);
+        font-size: 1.6rem;
+    }
+
+    .chapter-subtitle {
+        margin: 0;
+        font-size: 0.95rem;
+        color: var(--ink-soft);
+    }
+
+    .honey-drip {
+        position: absolute;
+        bottom: -0.4rem;
+        left: 50%;
+        transform: translateX(-50%);
+        width: 110px;
+        height: 12px;
+        border-radius: 999px;
+        background: linear-gradient(90deg, #fbbf24, #f97316);
+        opacity: 0.5;
+    }
+
+    /* Page body */
+    .page-content {
+        margin-top: 1.75rem;
+    }
+
+    .story-text {
+        margin: 0 0 1rem;
+        line-height: 1.7;
+        font-size: 0.98rem;
+    }
+
+    /* =========================================
+       7. FIGURES / CHARACTER CARDS
+       ========================================= */
+    .chapter-illustrations {
+        display: flex;
+        flex-wrap: wrap;
+        gap: 1rem;
+        margin: 1.25rem 0 1.5rem;
+    }
+
+    .storybook-figure {
+        flex: 1 1 180px;
+        min-width: 0;
+        padding: 0.75rem 0.85rem;
+        border-radius: 18px;
+        background: #ffffff;
+        box-shadow: var(--shadow-tiny);
+        display: flex;
+        align-items: center;
+        gap: 0.75rem;
+    }
+
+    .storybook-figure img {
+        border-radius: 16px;
+        background: #fff6dc;
+        box-shadow: 0 4px 12px rgba(0, 0, 0, 0.16);
+    }
+
+    .figure-copy {
+        min-width: 0;
+    }
+
+    .figure-name {
+        font-weight: 600;
+        font-size: 0.9rem;
+    }
+
+    .figure-note {
+        margin: 0.15rem 0 0;
+        font-size: 0.8rem;
+        color: var(--ink-soft);
+    }
+
+    /* Theme tints */
+    .figure-theme-honey {
+        background: linear-gradient(135deg, #fff7dd, #ffe7b8);
+    }
+
+    .figure-theme-forest {
+        background: linear-gradient(135deg, #e5f4dd, #f3ffe3);
+    }
+
+    .figure-theme-sky {
+        background: linear-gradient(135deg, #e5f4ff, #f3f9ff);
+    }
+
+    /* Clickable characters */
+    .clickable-character {
+        cursor: pointer;
+        transition: transform var(--transition-fast), box-shadow var(--transition-fast);
+    }
+
+    .clickable-character:hover {
+        transform: translateY(-2px);
+        box-shadow: 0 10px 22px rgba(0, 0, 0, 0.18);
+    }
+
+    /* Character message bubble */
+    .character-message {
+        margin-top: 0.5rem;
+        font-size: 0.8rem;
+        color: var(--ink);
+    }
+
+    /* Dialogue bubbles in narrative */
+    .dialogue-bubble {
+        position: relative;
+        margin: 1rem 0 1.25rem;
+        padding: 0.7rem 0.9rem;
+        border-radius: 16px;
+        font-size: 0.9rem;
+        line-height: 1.4;
+    }
+
+    .dialogue-piglet {
+        background: #fff0f5;
+    }
+
+    .dialogue-pooh {
+        background: #fff5dd;
+    }
+
+    .dialogue-bubble .speaker {
+        display: block;
+        margin-top: 0.3rem;
+        font-size: 0.8rem;
+        opacity: 0.8;
+    }
+
+    .bubble-arrow {
+        position: absolute;
+        left: 18px;
+        bottom: 100%;
+        width: 12px;
+        height: 12px;
+        background: inherit;
+        transform: translateY(1px) rotate(45deg);
+    }
+
+    /* =========================================
+       8. GAME EMBED + TIPS
+       ========================================= */
+    .game-embed {
+        margin: 1.5rem auto;
+        max-width: 960px;
+        width: 100%;
+        border-radius: 24px;
+        overflow: hidden;
+        background: #000;
+        box-shadow: var(--shadow-soft);
+        border: 2px solid rgba(0, 0, 0, 0.08);
+    }
+
+    /* Let the iframe fill the card; height tuned for mobile/desktop */
+    .game-embed__frame {
+        display: block;
+        width: 100%;
+        height: min(70vh, 640px);
+        border: none;
+    }
+
+    /* Game description */
+    .game-description {
+        margin-top: 1.5rem;
+    }
+
+    .game-description h3 {
+        margin: 0 0 0.5rem;
+    }
+
+    .game-tips {
+        display: grid;
+        grid-template-columns: repeat(auto-fit, minmax(180px, 1fr));
+        gap: 0.9rem;
+        margin-top: 0.75rem;
+    }
+
+    .tip {
+        display: flex;
+        gap: 0.5rem;
+        padding: 0.7rem 0.8rem;
+        border-radius: 16px;
+        background: #fffdfa;
+        box-shadow: var(--shadow-tiny);
+        font-size: 0.85rem;
+    }
+
+    .tip-icon {
+        font-size: 1.2rem;
+        flex-shrink: 0;
+    }
+
+    /* =========================================
+       9. REGISTRY + NURSERY DETAILS + WISHES
+       ========================================= */
+    .registry-container {
+        margin: 2rem 0 1.75rem;
+    }
+
+    .registry-section {
+        padding: 1.25rem 1.3rem;
+        border-radius: 22px;
+        background: linear-gradient(135deg, #fffaf3, #ffeede);
+        box-shadow: var(--shadow-subtle);
+    }
+
+    .registry-header {
+        display: flex;
+        gap: 0.8rem;
+        align-items: center;
+        margin-bottom: 1rem;
+    }
+
+    .registry-icon {
+        font-size: 1.8rem;
+    }
+
+    .registry-subtitle {
+        margin: 0.2rem 0 0;
+        font-size: 0.9rem;
+        color: var(--ink-soft);
+    }
+
+    .registry-grid {
+        display: grid;
+        grid-template-columns: minmax(0, 1.4fr) minmax(0, 1.2fr);
+        gap: 1rem;
+    }
+
+    .registry-card {
+        display: flex;
+        gap: 0.75rem;
+        padding: 0.9rem 1rem;
+        border-radius: 18px;
+        background: #ffffff;
+        text-decoration: none;
+        color: inherit;
+        box-shadow: var(--shadow-tiny);
+        transition: transform var(--transition-fast), box-shadow var(--transition-fast);
+    }
+
+    .registry-card:hover {
+        transform: translateY(-2px);
+        box-shadow: 0 10px 24px rgba(0, 0, 0, 0.18);
+    }
+
+    .registry-card .card-icon {
+        font-size: 1.5rem;
+    }
+
+    .registry-card .card-content h4 {
+        margin: 0 0 0.2rem;
+        font-size: 0.95rem;
+    }
+
+    .registry-card .card-content p {
+        margin: 0;
+        font-size: 0.85rem;
+        color: var(--ink-soft);
+    }
+
+    .registry-card .card-link {
+        display: inline-block;
+        margin-top: 0.3rem;
+        font-size: 0.8rem;
+        color: #b45309;
+    }
+
+    .gift-idea-card {
+        flex-direction: column;
+    }
+
+    .gift-ideas {
+        margin: 0.25rem 0 0;
+        padding-left: 1.1rem;
+        font-size: 0.85rem;
+    }
+
+    /* Nursery details grid */
+    .nursery-details {
+        margin: 2rem 0 1.75rem;
+    }
+
+    .nursery-details h3 {
+        display: flex;
+        align-items: center;
+        gap: 0.4rem;
+    }
+
+    .details-grid {
+        display: grid;
+        grid-template-columns: repeat(auto-fit, minmax(190px, 1fr));
+        gap: 1rem;
+        margin-top: 0.9rem;
+    }
+
+    .detail-card {
+        padding: 0.85rem 1rem;
+        border-radius: 18px;
+        background: #ffffff;
+        box-shadow: var(--shadow-tiny);
+        display: flex;
+        gap: 0.7rem;
+    }
+
+    .detail-card .detail-icon {
+        font-size: 1.4rem;
+    }
+
+    /* Wishes section */
+    .wishes-section {
+        margin: 1.75rem 0 1.5rem;
+    }
+
+    .wishes-header h3 {
+        margin-bottom: 0.3rem;
+    }
+
+    .wishes-header p {
+        margin: 0;
+        font-size: 0.9rem;
+        color: var(--ink-soft);
+    }
+
+    .wishes-form-container {
+        margin-top: 1rem;
+    }
+
+    .enhanced-form {
+        padding: 1rem 1rem 1.1rem;
+        border-radius: 18px;
+        background: #fffdf8;
+        box-shadow: var(--shadow-tiny);
+    }
+
+    .form-grid {
+        display: grid;
+        grid-template-columns: repeat(2, minmax(0, 1fr));
+        gap: 0.75rem;
+        margin-bottom: 0.75rem;
+    }
+
+    .form-field label {
+        display: block;
+        margin-bottom: 0.15rem;
+        font-size: 0.85rem;
+        font-weight: 600;
+    }
+
+    .form-field input,
+    .form-field select,
+    .form-field textarea {
+        width: 100%;
+        padding: 0.55rem 0.6rem;
+        border-radius: 10px;
+        border: 1px solid rgba(0, 0, 0, 0.14);
+        font-family: inherit;
+        font-size: 0.9rem;
+        background: rgba(255, 255, 255, 0.96);
+    }
+
+    .form-field textarea {
+        resize: vertical;
+    }
+
+    .character-count {
+        margin-top: 0.25rem;
+        font-size: 0.75rem;
+        text-align: right;
+        color: var(--ink-soft);
+    }
+
+    .form-actions {
+        margin-top: 0.6rem;
+        display: flex;
+        flex-wrap: wrap;
+        gap: 0.75rem;
+        align-items: center;
+    }
+
+    .submit-btn {
+        border-radius: 999px;
+        border: none;
+        padding: 0.55rem 1.1rem;
+        background: linear-gradient(135deg, #f4b944, #f59e0b);
+        color: #3b2604;
+        font-weight: 600;
+        cursor: pointer;
+        display: inline-flex;
+        align-items: center;
+        gap: 0.4rem;
+        box-shadow: 0 6px 16px rgba(244, 185, 68, 0.6);
+        transition: transform var(--transition-fast), box-shadow var(--transition-fast);
+    }
+
+    .submit-btn:hover {
+        transform: translateY(-1px);
+        box-shadow: 0 10px 22px rgba(244, 185, 68, 0.7);
+    }
+
+    .form-feedback {
+        font-size: 0.8rem;
+        color: var(--ink-soft);
+    }
+
+    /* Sample wishes */
+    .sample-wishes {
+        margin-top: 1rem;
+    }
+
+    .wish-examples {
+        display: grid;
+        grid-template-columns: repeat(auto-fit, minmax(190px, 1fr));
+        gap: 0.8rem;
+    }
+
+    .wish-example {
+        margin: 0;
+        padding: 0.7rem 0.9rem;
+        border-radius: 14px;
+        background: #ffffff;
+        box-shadow: var(--shadow-tiny);
+        font-size: 0.85rem;
+    }
+
+    .wish-example cite {
+        display: block;
+        margin-top: 0.3rem;
+        font-size: 0.8rem;
+        opacity: 0.8;
+    }
+
+    /* Dynamic wishes display */
+    .wishes-display {
+        margin-top: 1.25rem;
+        display: grid;
+        grid-template-columns: repeat(auto-fit, minmax(210px, 1fr));
+        gap: 0.9rem;
+    }
+
+    .wishes-display .wish-card {
+        padding: 0.8rem 0.9rem;
+        border-radius: 16px;
+        background: #fffdfa;
+        box-shadow: var(--shadow-tiny);
+        font-size: 0.9rem;
+    }
+
+    /* =========================================
+       10. CHAPTER 4 CELEBRATION / COUNTDOWN
+       ========================================= */
+    .welcome-panel {
+        margin: 1.75rem 0 1.5rem;
+        padding: 1rem 1.1rem;
+        border-radius: 20px;
+        background: linear-gradient(135deg, #fff6dd, #ffe4b2);
+        display: flex;
+        align-items: center;
+        gap: 0.8rem;
+    }
+
+    .welcome-icon {
+        font-size: 1.7rem;
+    }
+
+    .welcome-heading {
+        margin: 0;
+    }
+
+    .welcome-subtitle {
+        margin: 0.2rem 0 0;
+        font-size: 0.9rem;
+        color: var(--ink-soft);
+    }
+
+    /* Countdown */
+    .countdown-section {
+        margin: 1.5rem 0 1.75rem;
+    }
+
+    .countdown-display {
+        display: flex;
+        gap: 1rem;
+        margin: 0.7rem 0;
+    }
+
+    .countdown-item {
+        flex: 0 0 90px;
+        padding: 0.7rem 0.8rem;
+        border-radius: 16px;
+        background: #ffffff;
+        box-shadow: var(--shadow-tiny);
+        text-align: center;
+    }
+
+    .countdown-number {
+        display: block;
+        font-size: 1.35rem;
+        font-weight: 700;
+    }
+
+    .countdown-label {
+        font-size: 0.8rem;
+        opacity: 0.8;
+    }
+
+    .countdown-note {
+        margin: 0;
+        font-size: 0.9rem;
+        color: var(--ink-soft);
+    }
+
+    /* Honey jar hopes */
+    .honey-jar-interactive {
+        margin: 1.75rem 0 1.5rem;
+        padding: 1rem 1.1rem;
+        border-radius: 20px;
+        background: #fffdf5;
+        box-shadow: var(--shadow-tiny);
+    }
+
+    .honey-jar-interactive h3 {
+        margin: 0.3rem 0 0.3rem;
+    }
+
+    .honey-jar-interactive p {
+        margin: 0 0 0.6rem;
+    }
+
+    /* Generic button used here */
+    .btn {
+        border-radius: 999px;
+        border: 1px solid rgba(0, 0, 0, 0.14);
+        padding: 0.5rem 1.1rem;
+        font-size: 0.9rem;
+        font-weight: 600;
+        cursor: pointer;
+        background: #ffffff;
+        box-shadow: var(--shadow-tiny);
+        transition: transform var(--transition-fast), box-shadow var(--transition-fast), background var(--transition-fast);
+    }
+
+    .btn.primary {
+        border-color: transparent;
+        background: linear-gradient(135deg, #f4b944, #f59e0b);
+        color: #3b2604;
+        box-shadow: 0 6px 16px rgba(244, 185, 68, 0.6);
+    }
+
+    .btn.primary:hover {
+        transform: translateY(-1px);
+        box-shadow: 0 10px 22px rgba(244, 185, 68, 0.7);
+    }
+
+    /* Final quote */
+    .final-thought {
+        margin-top: 1.5rem;
+        padding-top: 1rem;
+        border-top: 1px dashed rgba(0, 0, 0, 0.12);
+    }
+
+    .final-thought blockquote {
+        margin: 0;
+        font-size: 0.95rem;
+        font-style: italic;
+    }
+
+    .final-thought cite {
+        font-style: normal;
+    }
+
+    .final-thought .signature {
+        margin-top: 0.6rem;
+        font-size: 0.9rem;
+    }
+
+    /* =========================================
+       11. NAVIGATION BUTTONS (Prev / Next)
+       ========================================= */
+    .chapter-nav {
+        display: flex;
+        align-items: center;
+        justify-content: space-between;
+        gap: 0.75rem;
+        padding: 0.85rem 1.25rem 1.1rem;
+        border-top: 1px solid rgba(0, 0, 0, 0.06);
+        background: rgba(255, 255, 255, 0.96);
+    }
+
+    .chapter-nav-btn {
+        border-radius: 999px;
+        border: 1px solid rgba(0, 0, 0, 0.18);
+        padding: 0.45rem 0.9rem;
+        font-size: 0.9rem;
+        cursor: pointer;
+        background: #ffffff;
+        box-shadow: var(--shadow-tiny);
+        transition: transform var(--transition-fast), box-shadow var(--transition-fast), background var(--transition-fast);
+    }
+
+    .chapter-nav-btn.next {
+        border-color: transparent;
+        background: linear-gradient(135deg, #f4b944, #f59e0b);
+        color: #3b2604;
+    }
+
+    .chapter-nav-btn:hover {
+        transform: translateY(-1px);
+        box-shadow: 0 8px 18px rgba(0, 0, 0, 0.16);
+    }
+
+    .chapter-indicator {
+        font-size: 0.9rem;
+        color: var(--ink-soft);
+    }
+
+    /* =========================================
+       12. FOOTER
+       ========================================= */
+    .site-footer {
+        max-width: var(--page-max-width);
+        margin: 0 auto 2rem;
+        padding: 1.25rem var(--page-padding-x) 0;
+        text-align: center;
+        font-size: 0.85rem;
+        color: var(--ink-soft);
+    }
+
+    .footer-links {
+        margin-top: 0.5rem;
+        display: flex;
+        justify-content: center;
+        gap: 0.75rem;
+        flex-wrap: wrap;
+    }
+
+    .footer-link {
+        border-radius: 999px;
+        border: 1px solid rgba(0, 0, 0, 0.16);
+        padding: 0.35rem 0.8rem;
+        font-size: 0.8rem;
+        background: #ffffff;
+        cursor: pointer;
+        box-shadow: var(--shadow-tiny);
+    }
+
+    /* =========================================
+       13. RESPONSIVE TWEAKS
+       ========================================= */
+    @media (max-width: 900px) {
+        .hero-banner {
+            border-radius: 0;
+            box-shadow: none;
         }
 
-        :root {
-            --bg-grad-1: #fff8e1;
-            --bg-grad-2: #ffe0b2;
-            --panel: #ffffff;
-            --panel-soft: #fff8e6;
-            --panel-border: #fbc02d;
-            --ink: #2c1810;
-            --muted: #6b5c4a;
-            --muted-soft: #8b7b66;
-            --accent: #ff9d00;
-            --accent-hover: #ff8a00;
-            --accent-soft: rgba(255, 184, 77, 0.3);
-            --danger: #f97373;
-            --good: #22c55e;
-            --radius-lg: 24px;
-            --radius-pill: 999px;
-            --space-1: 4px;
-            --space-2: 8px;
-            --space-3: 12px;
-            --space-4: 16px;
-            --space-5: 24px;
-            --font-xs: 0.72rem;
-            --font-sm: 0.8rem;
-            --font-md: 0.9rem;
-            --font-lg: 1rem;
-            --font-xl: 1.25rem;
-            --font-2xl: 1.5rem;
-            --shadow-soft: 0 12px 30px rgba(0, 0, 0, 0.18);
-            --shadow-halo: 0 0 0 1px rgba(255, 255, 255, 0.7);
+        .hero-image-container {
+            height: min(50vh, 420px);
         }
 
-        body {
-            margin: 0;
-            min-height: 100vh;
-            font-family: 'Patrick Hand', system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
-            color: var(--ink);
-            background:
-                radial-gradient(circle at top left, rgba(251, 191, 36, 0.55), transparent 55%),
-                radial-gradient(circle at bottom right, rgba(59, 130, 246, 0.45), transparent 55%),
-                linear-gradient(to bottom, var(--bg-grad-1), var(--bg-grad-2));
-            display: flex;
-            justify-content: center;
+        .hero-title-container {
+            padding-inline: 1rem;
+        }
+
+        .title-background {
+            border-radius: 20px 20px 0 0;
+        }
+
+        .hero-panel {
+            margin-top: 1rem;
+            padding: 1.25rem 1rem 1.4rem;
+        }
+
+        .hero-badge {
+            grid-template-columns: 1fr;
+            border-radius: 20px;
+        }
+
+        .hero-details-grid {
+            grid-template-columns: minmax(0, 1fr);
+        }
+
+        .registry-grid {
+            grid-template-columns: minmax(0, 1fr);
+        }
+    }
+
+    @media (max-width: 768px) {
+        .book-container {
+            padding-inline: 1rem;
+        }
+
+        .pages-wrapper {
+            padding-inline: 1rem;
+        }
+
+        .form-grid {
+            grid-template-columns: minmax(0, 1fr);
+        }
+
+        .chapter-illustrations {
+            flex-direction: column;
+        }
+
+        .hero-actions {
+            flex-direction: column;
             align-items: stretch;
-            padding: var(--space-3);
         }
 
-        body.dark {
-            --bg-grad-1: #020617;
-            --bg-grad-2: #0b1020;
-            --panel: #020617;
-            --panel-soft: #020617;
-            --panel-border: #1f2937;
-            --ink: #f9fafb;
-            --muted: #9ca3af;
-            --muted-soft: #6b7280;
-            --accent: #fbbf24;
-            --accent-hover: #f59e0b;
-            background:
-                radial-gradient(circle at top left, rgba(59, 130, 246, 0.55), transparent 55%),
-                radial-gradient(circle at bottom right, rgba(248, 250, 252, 0.12), transparent 55%),
-                radial-gradient(circle at center, rgba(15, 23, 42, 0.9), #020617);
-        }
-
-        body:focus-visible {
-            outline: none;
-        }
-
-        button {
-            font-family: 'Patrick Hand', sans-serif;
-        }
-
-        .app {
-            width: 100%;
-            max-width: 960px;
-            margin: 0 auto;
-            display: flex;
-            flex-direction: column;
-            gap: var(--space-3);
-        }
-
-        .topbar {
-            display: flex;
-            align-items: center;
-            justify-content: space-between;
-            gap: var(--space-3);
-            padding: var(--space-3);
-            border-radius: var(--radius-lg);
-            background: linear-gradient(120deg, rgba(255, 255, 255, 0.98), rgba(255, 250, 235, 0.98));
-            border: 1px solid rgba(250, 204, 21, 0.5);
-            box-shadow: var(--shadow-soft);
-        }
-
-        body.dark .topbar {
-            background: radial-gradient(circle at top left, rgba(15, 23, 42, 0.98), rgba(15, 23, 42, 0.96));
-            border-color: rgba(148, 163, 184, 0.7);
-        }
-
-        .title {
-            display: flex;
-            align-items: center;
-            gap: var(--space-2);
-            min-width: 0;
-        }
-
-        .title-icon {
-            font-size: 1.6rem;
-            color: #fbbf24;
-            text-shadow: 0 0 10px rgba(250, 204, 21, 0.9);
-        }
-
-        .title-main {
-            font-weight: 700;
-            font-size: var(--font-xl);
-            letter-spacing: 0.03em;
-            white-space: nowrap;
-        }
-
-        .title-sub {
-            font-size: var(--font-xs);
-            color: var(--muted);
-            white-space: nowrap;
-        }
-
-        .title-text {
-            display: flex;
-            flex-direction: column;
-            gap: 2px;
-            overflow: hidden;
-        }
-
-        .title-text span {
-            text-overflow: ellipsis;
-            overflow: hidden;
-        }
-
-        .topbar-buttons {
-            display: flex;
-            flex-wrap: wrap;
-            gap: var(--space-2);
-            justify-content: flex-end;
-        }
-
-        .btn {
-            border: 0;
-            border-radius: var(--radius-pill);
-            padding: 6px 12px;
-            font-size: var(--font-sm);
-            display: inline-flex;
-            align-items: center;
-            gap: 6px;
-            cursor: pointer;
-            background: rgba(255, 255, 255, 0.9);
-            color: var(--ink);
-            box-shadow: 0 1px 0 rgba(255, 255, 255, 0.7), 0 6px 14px rgba(0, 0, 0, 0.15);
-            transition: transform 0.2s cubic-bezier(0.34, 1.56, 0.64, 1),
-                        box-shadow 0.2s ease,
-                        background 0.2s ease,
-                        color 0.2s ease;
-            position: relative;
-            overflow: hidden;
-        }
-
-        .btn::before {
-            content: "";
-            position: absolute;
-            top: 50%;
-            left: 50%;
-            width: 0;
-            height: 0;
-            border-radius: 50%;
-            background: rgba(255, 255, 255, 0.4);
-            transform: translate(-50%, -50%);
-            transition: width 0.6s ease, height 0.6s ease;
-        }
-
-        .btn:hover::before {
-            width: 300px;
-            height: 300px;
-        }
-
-        .btn.small {
-            padding: 4px 10px;
-            font-size: var(--font-xs);
-        }
-
-        .btn.primary {
-            background: linear-gradient(135deg, var(--accent), var(--accent-hover));
-            color: #1f1306;
-            box-shadow: 0 1px 0 rgba(255, 255, 255, 0.3), 0 8px 16px rgba(251, 146, 60, 0.4);
-        }
-
-        .btn.secondary {
-            background: rgba(255, 255, 255, 0.9);
-        }
-
-        body.dark .btn.secondary {
-            background: rgba(15, 23, 42, 0.95);
-            color: #e5e7eb;
-        }
-
-        .btn:hover {
-            transform: translateY(-2px) scale(1.02);
-            box-shadow: 0 12px 28px rgba(0, 0, 0, 0.3);
-        }
-
-        .btn.primary:hover {
-            box-shadow: 0 1px 0 rgba(255, 255, 255, 0.3), 0 12px 32px rgba(251, 146, 60, 0.6);
-        }
-
-        .btn:active {
-            transform: translateY(0) scale(0.98);
-            box-shadow: 0 4px 12px rgba(0, 0, 0, 0.2);
-        }
-
-        .btn i {
-            font-size: 0.9em;
-            position: relative;
-            z-index: 1;
-        }
-
-        .btn span {
-            position: relative;
-            z-index: 1;
-        }
-
-        .game-layout {
-            flex: 1;
-            display: flex;
-            flex-direction: column;
-            gap: var(--space-3);
-            align-items: center;
+        .hero-action-btn {
             justify-content: center;
         }
 
-        .viewport-shell {
-            width: 100%;
-            max-width: 520px;
-            margin: 0 auto;
-            display: flex;
-            flex-direction: column;
-            gap: var(--space-2);
-            align-items: center;
+        .game-embed__frame {
+            height: 70vh;
         }
 
-        .game-card {
-            width: 100%;
-            border-radius: var(--radius-lg);
-            padding: var(--space-3);
-            background: radial-gradient(circle at top, rgba(255, 253, 245, 0.98), rgba(255, 243, 205, 0.98));
-            border: 1px solid var(--panel-border);
-            box-shadow: var(--shadow-soft);
-        }
-
-        body.dark .game-card {
-            background: radial-gradient(circle at top, rgba(15, 23, 42, 0.98), rgba(15, 23, 42, 0.96));
-            border-color: rgba(148, 163, 184, 0.75);
-        }
-
-        .game-container {
-            position: relative;
-            width: 100%;
-            border-radius: 20px;
-            overflow: hidden;
-            border: 1px solid rgba(250, 204, 21, 0.7);
-            background: linear-gradient(to top, #fef3c7, #fffbeb);
-            aspect-ratio: 9 / 14;
-            box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.75);
-            touch-action: none;
-        }
-
-        body.dark .game-container {
-            background: radial-gradient(circle at top, #1f2937, #020617);
-            border-color: rgba(148, 163, 184, 0.75);
-            box-shadow: inset 0 1px 0 rgba(15, 23, 42, 1);
-        }
-
-        .hud {
-            position: absolute;
-            z-index: 2;
-            left: 50%;
-            top: 6px;
-            transform: translateX(-50%);
-            width: calc(100% - 16px);
-            display: grid;
-            grid-template-columns: repeat(4, minmax(0, 1fr));
-            gap: 4px;
-            padding: 4px 8px;
-            border-radius: 999px;
-            background: linear-gradient(135deg, rgba(255, 255, 255, 0.9), rgba(255, 248, 220, 0.95));
-            box-shadow: 0 8px 20px rgba(0, 0, 0, 0.25), var(--shadow-halo);
-            border: 1px solid rgba(255, 255, 255, 0.8);
-            font-size: var(--font-xs);
-            align-items: center;
-        }
-
-        body.dark .hud {
-            background: radial-gradient(circle at top, rgba(15, 23, 42, 0.98), rgba(15, 23, 42, 0.98));
-            border-color: rgba(148, 163, 184, 0.8);
-            box-shadow: 0 10px 26px rgba(0, 0, 0, 0.7), 0 0 0 1px rgba(15, 23, 42, 0.9);
-        }
-
-        .hud-item {
-            display: flex;
-            flex-direction: column;
-            align-items: center;
-            line-height: 1.1;
-            min-width: 0;
-        }
-
-        .hud-label {
-            opacity: 0.75;
-            font-size: 0.7em;
-            text-transform: uppercase;
-            letter-spacing: 0.08em;
-        }
-
-        .hud-value {
-            font-weight: 700;
-            font-size: 0.9em;
-            white-space: nowrap;
-        }
-
-        .hud-item.streak .hud-value {
-            color: #f97316;
-        }
-
-        .streak-badge {
-            margin-top: 2px;
-            padding: 0 6px;
-            border-radius: var(--radius-pill);
-            font-size: 0.65em;
-            text-transform: uppercase;
-            letter-spacing: 0.08em;
-            background: linear-gradient(135deg, rgba(254, 243, 199, 0.95), rgba(253, 224, 71, 0.95));
-            color: #c2410c;
-            font-weight: 700;
-            box-shadow: 0 2px 8px rgba(249, 115, 22, 0.4);
-            opacity: 0;
-            transform: scale(0.7);
-            transform-origin: center;
-            transition: opacity 0.3s cubic-bezier(0.34, 1.56, 0.64, 1),
-                        transform 0.3s cubic-bezier(0.34, 1.56, 0.64, 1);
-        }
-
-        .streak-badge.visible {
-            opacity: 1;
-            transform: scale(1);
-            animation: badgePulse 1.5s ease-in-out infinite;
-        }
-
-        @keyframes badgePulse {
-            0%, 100% { transform: scale(1); }
-            50% { transform: scale(1.05); }
-        }
-
-        .combo-indicator {
-            position: absolute;
-            z-index: 2;
-            top: 50%;
-            left: 50%;
-            transform: translate(-50%, -50%) scale(0.7);
-            padding: 12px 24px;
-            border-radius: var(--radius-pill);
-            background: linear-gradient(135deg, rgba(255, 255, 255, 0.98), rgba(255, 237, 213, 0.98));
-            color: #b45309;
-            font-weight: 700;
-            font-size: 1.1rem;
-            letter-spacing: 0.12em;
-            text-transform: uppercase;
-            box-shadow: 0 12px 40px rgba(251, 146, 60, 0.6), 0 0 0 2px rgba(251, 146, 60, 0.3);
-            opacity: 0;
-            pointer-events: none;
-            transition: opacity 0.2s ease-out, transform 0.3s cubic-bezier(0.34, 1.56, 0.64, 1);
-            animation: comboPulse 0.5s ease-out;
-        }
-
-        .combo-indicator.visible {
-            opacity: 1;
-            transform: translate(-50%, -50%) scale(1.15);
-            animation: comboPopIn 0.6s cubic-bezier(0.34, 1.56, 0.64, 1);
-        }
-
-        @keyframes comboPopIn {
-            0% {
-                transform: translate(-50%, -50%) scale(0.3) rotate(-5deg);
-                opacity: 0;
-            }
-            50% {
-                transform: translate(-50%, -50%) scale(1.25) rotate(2deg);
-            }
-            100% {
-                transform: translate(-50%, -50%) scale(1.15) rotate(0deg);
-                opacity: 1;
-            }
-        }
-
-        @keyframes comboPulse {
-            0%, 100% { box-shadow: 0 12px 40px rgba(251, 146, 60, 0.6), 0 0 0 2px rgba(251, 146, 60, 0.3); }
-            50% { box-shadow: 0 12px 50px rgba(251, 146, 60, 0.8), 0 0 0 3px rgba(251, 146, 60, 0.5); }
-        }
-
-        .powerup-indicator {
-            position: absolute;
-            bottom: 10px;
-            right: 10px;
-            z-index: 2;
-            display: flex;
-            align-items: center;
-            gap: 6px;
-            padding: 6px 14px;
-            border-radius: var(--radius-pill);
-            background: linear-gradient(135deg, rgba(34, 197, 94, 0.98), rgba(22, 163, 74, 0.98));
-            color: #ecfdf3;
-            font-size: var(--font-xs);
-            font-weight: 600;
-            box-shadow: 0 8px 24px rgba(22, 163, 74, 0.6), 0 0 0 2px rgba(134, 239, 172, 0.4);
-            opacity: 0;
-            transform: translateY(10px) scale(0.9);
-            pointer-events: none;
-            transition: opacity 0.3s cubic-bezier(0.34, 1.56, 0.64, 1),
-                        transform 0.3s cubic-bezier(0.34, 1.56, 0.64, 1);
-        }
-
-        .powerup-indicator.visible {
-            opacity: 1;
-            transform: translateY(0) scale(1);
-            animation: shieldPulse 2s ease-in-out infinite;
-        }
-
-        .powerup-indicator i {
-            font-size: 0.9em;
-            animation: shieldSpin 3s linear infinite;
-        }
-
-        @keyframes shieldPulse {
-            0%, 100% { box-shadow: 0 8px 24px rgba(22, 163, 74, 0.6), 0 0 0 2px rgba(134, 239, 172, 0.4); }
-            50% { box-shadow: 0 8px 32px rgba(22, 163, 74, 0.8), 0 0 0 3px rgba(134, 239, 172, 0.6); }
-        }
-
-        @keyframes shieldSpin {
-            0% { transform: rotate(0deg); }
-            100% { transform: rotate(360deg); }
-        }
-
-        .overlay {
-            position: absolute;
-            inset: 0;
-            z-index: 3;
-            display: flex;
-            align-items: center;
-            justify-content: center;
-            padding: var(--space-3);
-            background: radial-gradient(circle at top, rgba(248, 250, 252, 0.96), rgba(248, 250, 252, 0.7));
-            backdrop-filter: blur(8px);
-            opacity: 0;
-            pointer-events: none;
-            transition: opacity 0.3s ease-out, backdrop-filter 0.3s ease-out;
-        }
-
-        body.dark .overlay {
-            background: radial-gradient(circle at top, rgba(15, 23, 42, 0.96), rgba(15, 23, 42, 0.86));
-        }
-
-        .overlay.visible {
-            opacity: 1;
-            pointer-events: auto;
-        }
-
-        .overlay-card {
-            width: 100%;
-            max-width: 320px;
-            border-radius: 20px;
-            padding: var(--space-4);
-            background: rgba(255, 255, 255, 0.98);
-            border: 1px solid rgba(250, 204, 21, 0.7);
-            box-shadow: var(--shadow-soft), 0 0 0 1px rgba(255, 255, 255, 0.5);
-            text-align: center;
-            transform: scale(0.9);
-            transition: transform 0.3s cubic-bezier(0.34, 1.56, 0.64, 1);
-        }
-
-        .overlay.visible .overlay-card {
-            transform: scale(1);
-        }
-
-        body.dark .overlay-card {
-            background: rgba(15, 23, 42, 0.98);
-            border-color: rgba(148, 163, 184, 0.85);
-        }
-
-        .overlay-title {
-            font-size: var(--font-2xl);
-            margin-bottom: var(--space-2);
-        }
-
-        .overlay-sub {
-            font-size: var(--font-sm);
-            color: var(--muted);
-            margin-bottom: var(--space-3);
-        }
-
-        body.dark .overlay-sub {
-            color: var(--muted-soft);
-        }
-
-        .overlay-stats {
-            display: flex;
-            justify-content: center;
-            gap: var(--space-4);
-            margin-bottom: var(--space-3);
-            font-size: var(--font-sm);
-        }
-
-        .overlay-stat-label {
-            font-size: 0.7rem;
-            text-transform: uppercase;
-            letter-spacing: 0.08em;
-            opacity: 0.7;
-        }
-
-        .overlay-stat-value {
-            font-weight: 700;
-            font-size: 1rem;
-        }
-
-        .controls-region {
-            width: 100%;
-            max-width: 520px;
-            padding: 0 var(--space-1);
-            display: flex;
-            flex-direction: column;
-            align-items: center;
-            gap: var(--space-1);
-        }
-
-        .controls-bar {
-            width: 100%;
-            border-radius: 999px;
-            padding: var(--space-2) var(--space-3);
-            background: rgba(255, 255, 255, 0.92);
-            border: 1px solid rgba(250, 204, 21, 0.5);
-            box-shadow: var(--shadow-soft);
-            display: flex;
-            align-items: center;
-            justify-content: space-between;
-            gap: var(--space-2);
-        }
-
-        body.dark .controls-bar {
-            background: rgba(15, 23, 42, 0.98);
-            border-color: rgba(148, 163, 184, 0.7);
-        }
-
-        .dpad {
-            display: grid;
-            grid-template-areas:
-                ". up ."
-                "left center right"
-                ". down .";
-            grid-template-columns: repeat(3, 40px);
-            grid-template-rows: repeat(3, 32px);
-            gap: 4px;
-            align-items: center;
+        .countdown-display {
             justify-content: center;
         }
-            align-items: center;
-            justify-content: center;
-        }
+    }
 
-        .pad-btn {
-            width: 40px;
-            height: 32px;
-            border-radius: 999px;
-            border: 0;
-            background: rgba(251, 191, 36, 0.2);
-            box-shadow: 0 4px 10px rgba(0, 0, 0, 0.18);
-            display: inline-flex;
-            align-items: center;
-            justify-content: center;
-            cursor: pointer;
-            color: var(--ink);
-            font-size: 0.9rem;
-            transition: transform 0.1s ease, box-shadow 0.1s ease, background 0.1s ease;
-        }
+</style>
 
-        .pad-btn:active,
-        .pad-btn[aria-pressed="true"] {
-            transform: translateY(1px);
-            box-shadow: 0 2px 6px rgba(0, 0, 0, 0.18);
-            background: rgba(251, 191, 36, 0.35);
-        }
-
-        body.dark .pad-btn {
-            background: rgba(15, 23, 42, 0.96);
-            color: #e5e7eb;
-        }
-
-        .pad-up { grid-area: up; }
-        .pad-down { grid-area: down; }
-        .pad-left { grid-area: left; }
-        .pad-right { grid-area: right; }
-
-        .pad-center {
-            grid-area: center;
-            width: 30px;
-            height: 30px;
-            border-radius: 999px;
-            border: 1px dashed rgba(250, 204, 21, 0.5);
-            background: rgba(255, 255, 255, 0.85);
-        }
-
-        .controls-right {
-            display: flex;
-            align-items: center;
-            gap: var(--space-2);
-        }
-
-        .caption {
-            font-size: var(--font-xs);
-            color: var(--muted);
-            text-align: center;
-        }
-
-        body.dark .caption {
-            color: var(--muted-soft);
-        }
-
-        .help-toggle {
-            font-size: var(--font-xs);
-            border-radius: var(--radius-pill);
-            border: 0;
-            padding: 3px 10px;
-            background: rgba(255, 255, 255, 0.9);
-            color: var(--ink);
-            cursor: pointer;
-            display: inline-flex;
-            align-items: center;
-            gap: 4px;
-            box-shadow: 0 4px 12px rgba(0, 0, 0, 0.15);
-        }
-
-        body.dark .help-toggle {
-            background: rgba(15, 23, 42, 0.98);
-            color: #e5e7eb;
-        }
-
-        .help-toggle i {
-            font-size: 0.9em;
-        }
-
-        .help-panel {
-            width: 100%;
-            max-width: 520px;
-            margin-top: 4px;
-            border-radius: 18px;
-            background: rgba(255, 255, 255, 0.97);
-            border: 1px solid rgba(250, 204, 21, 0.55);
-            box-shadow: 0 12px 24px rgba(0, 0, 0, 0.2);
-            padding: var(--space-3);
-            font-size: var(--font-sm);
-            color: var(--muted);
-            max-height: 0;
-            overflow: hidden;
-            opacity: 0;
-            transform: translateY(-4px);
-            transition: max-height 0.24s ease, opacity 0.24s ease, transform 0.24s ease;
-        }
-
-        body.dark .help-panel {
-            background: rgba(15, 23, 42, 0.98);
-            border-color: rgba(148, 163, 184, 0.8);
-            color: var(--muted-soft);
-        }
-
-        .help-panel.visible {
-            max-height: 260px;
-            opacity: 1;
-            transform: translateY(0);
-        }
-
-        .help-columns {
-            display: grid;
-            grid-template-columns: 1.3fr 1fr;
-            gap: var(--space-3);
-        }
-
-        .help-heading {
-            font-weight: 700;
-            margin-bottom: 4px;
-            font-size: var(--font-md);
-        }
-
-        .help-list {
-            list-style: none;
-            padding-left: 0;
-            margin: 0;
-            display: grid;
-            gap: 2px;
-        }
-
-        .help-list li::before {
-            content: "•";
-            color: #f59e0b;
-            margin-right: 6px;
-        }
-
-        .settings-backdrop {
-            position: fixed;
-            inset: 0;
-            background: rgba(15, 23, 42, 0.65);
-            display: flex;
-            align-items: center;
-            justify-content: center;
-            opacity: 0;
-            pointer-events: none;
-            transition: opacity 0.2s ease-out;
-            z-index: 40;
-        }
-
-        .settings-backdrop.visible {
-            opacity: 1;
-            pointer-events: auto;
-        }
-
-        .settings-panel {
-            width: min(360px, 100% - 32px);
-            border-radius: 20px;
-            padding: var(--space-4);
-            background: rgba(255, 255, 255, 0.98);
-            border: 1px solid rgba(250, 204, 21, 0.7);
-            box-shadow: var(--shadow-soft);
-        }
-
-        body.dark .settings-panel {
-            background: rgba(15, 23, 42, 0.98);
-            border-color: rgba(148, 163, 184, 0.8);
-        }
-
-        .settings-header {
-            display: flex;
-            align-items: center;
-            justify-content: space-between;
-            margin-bottom: var(--space-3);
-            gap: var(--space-2);
-        }
-
-        .settings-title {
-            font-size: var(--font-lg);
-            font-weight: 600;
-        }
-
-        .settings-row {
-            display: flex;
-            align-items: center;
-            justify-content: space-between;
-            gap: var(--space-2);
-            margin-bottom: var(--space-3);
-            font-size: var(--font-sm);
-        }
-
-        .settings-label {
-            display: flex;
-            flex-direction: column;
-            gap: 2px;
-        }
-
-        .settings-label span:last-child {
-            font-size: var(--font-xs);
-            color: var(--muted);
-        }
-
-        body.dark .settings-label span:last-child {
-            color: var(--muted-soft);
-        }
-
-        .toggle {
-            position: relative;
-            width: 42px;
-            height: 22px;
-            border-radius: 999px;
-            background: rgba(148, 163, 184, 0.6);
-            cursor: pointer;
-            flex-shrink: 0;
-        }
-
-        .toggle-knob {
-            position: absolute;
-            top: 2px;
-            left: 2px;
-            width: 18px;
-            height: 18px;
-            border-radius: 50%;
-            background: #f9fafb;
-            box-shadow: 0 2px 6px rgba(0, 0, 0, 0.25);
-            transition: transform 0.18s ease-out, background 0.18s ease-out;
-        }
-
-        .toggle[data-on="true"] {
-            background: rgba(34, 197, 94, 0.9);
-        }
-
-        .toggle[data-on="true"] .toggle-knob {
-            transform: translateX(20px);
-        }
-
-        .difficulty-pill {
-            display: inline-flex;
-            border-radius: 999px;
-            padding: 2px;
-            background: rgba(248, 250, 252, 0.9);
-            border: 1px solid rgba(148, 163, 184, 0.7);
-            gap: 2px;
-        }
-
-        .difficulty-pill button {
-            border: 0;
-            border-radius: 999px;
-            padding: 4px 8px;
-            font-size: var(--font-xs);
-            background: transparent;
-            cursor: pointer;
-            color: var(--muted);
-        }
-
-        .difficulty-pill button.active {
-            background: rgba(251, 191, 36, 0.2);
-            color: var(--ink);
-            font-weight: 600;
-        }
-
-        .settings-footer {
-            margin-top: var(--space-2);
-            display: flex;
-            justify-content: space-between;
-            align-items: center;
-            font-size: var(--font-xs);
-            color: var(--muted);
-        }
-
-        .settings-footer button {
-            font-size: var(--font-xs);
-        }
-
-        .sr-only {
-            position: absolute;
-            width: 1px;
-            height: 1px;
-            padding: 0;
-            margin: -1px;
-            overflow: hidden;
-            clip: rect(0, 0, 0, 0);
-            border: 0;
-        }
-
-        @media (max-width: 640px) {
-            body {
-                padding: 6px;
-                -webkit-tap-highlight-color: transparent;
-            }
-
-            .app {
-                gap: 8px;
-            }
-
-            .topbar {
-                padding: 10px 12px;
-                border-radius: 18px;
-                flex-wrap: nowrap;
-                gap: 10px;
-            }
-
-            .title-text {
-                min-width: 0;
-                flex-shrink: 1;
-            }
-
-            .title-main {
-                font-size: 1.1rem;
-                white-space: nowrap;
-                overflow: hidden;
-                text-overflow: ellipsis;
-            }
-
-            .title-sub {
-                display: none;
-            }
-
-            .topbar-buttons {
-                gap: 6px;
-                flex-wrap: nowrap;
-            }
-
-            .btn.small {
-                padding: 6px 10px;
-                font-size: 0.75rem;
-                min-width: fit-content;
-            }
-
-            .btn.small span {
-                display: none;
-            }
-
-            .btn.small i {
-                margin-right: 0;
-                font-size: 1rem;
-            }
-
-            .btn.small.primary span {
-                display: inline;
-                font-size: 0.75rem;
-                margin-left: 4px;
-            }
-
-            .game-card {
-                padding: 10px;
-                border-radius: 18px;
-            }
-
-            .hud {
-                grid-template-columns: repeat(4, 1fr);
-                gap: 6px;
-                padding: 8px 12px;
-                font-size: 0.8rem;
-                top: 8px;
-                width: calc(100% - 20px);
-                border-radius: 16px;
-            }
-
-            .hud-label {
-                font-size: 0.6rem;
-            }
-
-            .hud-value {
-                font-size: 0.9rem;
-            }
-
-            .streak-badge {
-                font-size: 0.55rem;
-                padding: 2px 6px;
-            }
-
-            .combo-indicator {
-                font-size: 0.95rem;
-                padding: 8px 16px;
-            }
-
-            .controls-bar {
-                padding: 12px 16px;
-                border-radius: 20px;
-            }
-
-            .dpad {
-                grid-template-columns: repeat(3, 36px);
-                grid-template-rows: repeat(3, 28px);
-            }
-
-            .pad-btn {
-                width: 36px;
-                height: 28px;
-                font-size: 0.8rem;
-            }
-
-            .pad-center {
-                width: 26px;
-                height: 26px;
-            }
-
-            .caption {
-                font-size: 0.7rem;
-                padding: 0 8px;
-                line-height: 1.3;
-            }
-
-            .help-toggle {
-                padding: 6px 12px;
-                font-size: 0.75rem;
-            }
-
-            .help-panel {
-                border-radius: 16px;
-                padding: 12px;
-                font-size: 0.8rem;
-            }
-
-            .help-panel.visible {
-                max-height: 280px;
-                overflow-y: auto;
-                -webkit-overflow-scrolling: touch;
-            }
-
-            .help-columns {
-                grid-template-columns: 1fr;
-                gap: 12px;
-            }
-
-            .help-heading {
-                font-size: 0.9rem;
-                margin-bottom: 6px;
-            }
-
-            .overlay-card {
-                padding: 20px 16px;
-                border-radius: 18px;
-                margin: 0 12px;
-            }
-
-            .overlay-title {
-                font-size: 1.3rem;
-                margin-bottom: 8px;
-            }
-
-            .overlay-sub {
-                font-size: 0.85rem;
-                margin-bottom: 16px;
-                line-height: 1.4;
-            }
-
-            .overlay-stats {
-                gap: 20px;
-                margin-bottom: 20px;
-            }
-
-            .overlay-stat-value {
-                font-size: 1.1rem;
-            }
-
-            .settings-panel {
-                width: calc(100% - 24px);
-                max-width: 340px;
-                padding: 16px;
-            }
-
-            .settings-title {
-                font-size: 1.1rem;
-            }
-
-            .settings-row {
-                margin-bottom: 16px;
-            }
-
-            .settings-label span:first-child {
-                font-size: 0.9rem;
-            }
-
-            .difficulty-pill button {
-                padding: 6px 10px;
-                font-size: 0.75rem;
-            }
-        }
-
-        @media (max-width: 380px) {
-            .topbar {
-                padding: 8px 10px;
-            }
-
-            .title-main {
-                font-size: 1rem;
-            }
-
-            .title-icon {
-                font-size: 1.4rem;
-            }
-
-            .btn.small {
-                padding: 5px 8px;
-            }
-
-            .hud {
-                grid-template-columns: repeat(2, 1fr);
-                row-gap: 4px;
-                padding: 6px 10px;
-            }
-
-            .hud-item {
-                min-height: 32px;
-            }
-
-            .controls-bar {
-                padding: 10px 14px;
-            }
-
-            .dpad {
-                grid-template-columns: repeat(3, 32px);
-                grid-template-rows: repeat(3, 26px);
-            }
-
-            .pad-btn {
-                width: 32px;
-                height: 26px;
-                font-size: 0.75rem;
-            }
-
-            .pad-center {
-                width: 24px;
-                height: 24px;
-            }
-
-            .overlay-card {
-                padding: 16px 14px;
-            }
-
-            .help-panel.visible {
-                max-height: 240px;
-            }
-        }
-
-        @media (max-height: 500px) and (orientation: landscape) {
-            body {
-                padding: 4px;
-            }
-
-            .app {
-                flex-direction: row;
-                gap: 8px;
-            }
-
-            .game-layout {
-                flex: 1;
-            }
-
-            .topbar {
-                flex-direction: column;
-                padding: 10px;
-                min-width: 120px;
-                max-width: 140px;
-            }
-
-            .title {
-                flex-direction: column;
-                text-align: center;
-            }
-
-            .title-text {
-                align-items: center;
-            }
-
-            .topbar-buttons {
-                flex-direction: column;
-                width: 100%;
-            }
-
-            .btn.small {
-                width: 100%;
-                justify-content: center;
-            }
-
-            .btn.small span {
-                display: inline !important;
-                font-size: 0.7rem;
-            }
-
-            .game-container {
-                aspect-ratio: 4 / 3;
-            }
-
-            .controls-region {
-                max-width: 140px;
-            }
-
-            .controls-bar {
-                flex-direction: column;
-                height: fit-content;
-            }
-
-            .dpad {
-                order: 2;
-            }
-
-            .controls-right {
-                order: 1;
-                margin-bottom: 10px;
-            }
-
-            .caption {
-                display: none;
-            }
-
-            .help-toggle {
-                display: none;
-            }
-        }
-
-        @media screen and (max-width: 768px) {
-            input,
-            select,
-            textarea {
-                font-size: 16px;
-            }
-
-            button {
-                cursor: pointer;
-                -webkit-user-select: none;
-                user-select: none;
-            }
-        }
-
-        @media (hover: none) and (pointer: coarse) {
-            .btn:hover {
-                transform: none;
-            }
-
-            .btn:active {
-                transform: scale(0.95);
-                transition: transform 0.1s ease;
-            }
-
-            .pad-btn:active {
-                transform: scale(0.9);
-            }
-        }
-
-        @supports (padding: max(0px)) {
-            body {
-                padding-left: max(8px, env(safe-area-inset-left));
-                padding-right: max(8px, env(safe-area-inset-right));
-                padding-top: max(8px, env(safe-area-inset-top));
-                padding-bottom: max(8px, env(safe-area-inset-bottom));
-            }
-
-            .topbar {
-                padding-left: max(12px, env(safe-area-inset-left));
-                padding-right: max(12px, env(safe-area-inset-right));
-            }
-
-            .game-card {
-                padding-left: max(10px, env(safe-area-inset-left));
-                padding-right: max(10px, env(safe-area-inset-right));
-            }
-        }
-
-        .game-container {
-            overscroll-behavior: none;
-        }
-
-        * {
-            -webkit-overflow-scrolling: touch;
-        }
-
-        .btn:focus-visible,
-        .pad-btn:focus-visible {
-            outline: 3px solid var(--accent);
-            outline-offset: 2px;
-        }
-
-        .game-container:hover .hud {
-            box-shadow: 0 8px 20px rgba(0, 0, 0, 0.25), 0 0 0 1px rgba(255, 255, 255, 0.8),
-                        0 0 10px rgba(251, 191, 36, 0.4);
-            transition: box-shadow 0.2s ease;
-        }
-
-        .hud-item:hover .hud-value {
-            transform: scale(1.05);
-            transition: transform 0.15s ease;
-        }
-
-        .hud-item:hover .hud-label {
-            opacity: 0.9;
-        }
-
-        body { transition: background 0.4s ease, color 0.3s ease; }
-        .topbar, .game-card, .controls-bar, .help-panel, .settings-panel, .overlay-card {
-            transition: background 0.4s ease, border-color 0.4s ease;
-        }
-
-        .pad-btn:active { transform: translateY(1px) scale(0.95); box-shadow: 0 1px 3px rgba(0,0,0,0.2); }
-
-        .btn:focus-visible, .pad-btn:focus-visible, .diff-btn:focus-visible {
-            outline: 3px solid var(--accent); outline-offset: 2px; box-shadow: 0 0 0 4px rgba(251, 191, 36, 0.2);
-        }
-
-        .game-container:hover .hud { box-shadow: 0 8px 20px rgba(0,0,0,0.25), 0 0 0 1px rgba(255,255,255,0.8), 0 0 8px rgba(251,191,36,0.3); }
-
-        .hud-value { transition: transform 0.15s ease, color 0.2s ease; }
-        .hud-value.changed { transform: scale(1.1); animation: scorePop 0.3s ease; }
-        @keyframes scorePop { 0%,100% { transform: scale(1); } 50% { transform: scale(1.15); } }
-
-        .btn.loading::after {
-            content: ""; position: absolute; inset: 0; background: linear-gradient(90deg, transparent, rgba(255,255,255,0.3), transparent);
-            animation: shimmer 1.5s infinite; border-radius: inherit;
-        }
-        @keyframes shimmer { 0% { transform: translateX(-100%); } 100% { transform: translateX(100%); } }
-
-        .hud-item.lives .hud-value::after {
-            content: ""; display: inline-block; width: 6px; height: 6px; background: #22c55e; border-radius: 50%;
-            margin-left: 4px; animation: pulse 2s infinite; vertical-align: middle;
-        }
-        @keyframes pulse { 0%,100% { opacity: 0.5; transform: scale(1); } 50% { opacity: 1; transform: scale(1.3); } }
-
-        #timeValue.warning { color: #f97373; animation: pulseWarning 1s infinite; }
-        @keyframes pulseWarning { 0%,100% { opacity: 1; } 50% { opacity: 0.7; } }
-
-        .hud-item.streak .hud-value { text-shadow: 0 0 8px rgba(249,115,22,0.4); }
-
-        .settings-backdrop { backdrop-filter: blur(4px); -webkit-backdrop-filter: blur(4px); }
-
-        .btn:not(:active):hover { transform: translateY(-2px) scale(1.02); }
-
-        .btn:disabled { opacity: 0.6; cursor: not-allowed; transform: none !important; }
-
-        ::selection { background: rgba(251,191,36,0.4); color: var(--ink); }
-
-        .overlay-card { transition: transform 0.25s cubic-bezier(0.34,1.56,0.64,1), opacity 0.2s ease; }
-
-        ::-webkit-scrollbar { width: 8px; height: 8px; }
-        ::-webkit-scrollbar-track { background: rgba(251,191,36,0.1); border-radius: 4px; }
-        ::-webkit-scrollbar-thumb { background: rgba(251,191,36,0.5); border-radius: 4px; }
-        ::-webkit-scrollbar-thumb:hover { background: rgba(251,191,36,0.7); }
-    </style>
+    <link as="image" href="Images/Characters/Gunnar.png" rel="preload">
 </head>
 <body>
-<div class="app">
-    <header class="topbar">
-        <div class="title">
-            <span class="title-icon" aria-hidden="true">🍯</span>
-            <div class="title-text">
-                <span class="title-main">Honey Hunt</span>
-                <span class="title-sub">Catch the honey, dodge the bees, stack the streaks.</span>
-            </div>
-        </div>
-        <div class="topbar-buttons">
-            <button id="themeToggle" class="btn small secondary" type="button" aria-pressed="false">
-                <i class="fas fa-moon" aria-hidden="true"></i>
-                <span>Theme</span>
-            </button>
-            <button id="fullscreenToggle" class="btn small secondary" type="button">
-                <i class="fas fa-up-right-and-down-left-from-center" aria-hidden="true"></i>
-                <span>Fullscreen</span>
-            </button>
-            <button id="helpToggle" class="btn small secondary" type="button" aria-expanded="false" aria-controls="helpPanel">
-                <i class="fas fa-question-circle" aria-hidden="true"></i>
-                <span>Help</span>
-            </button>
-            <button id="settingsToggle" class="btn small primary" type="button" aria-expanded="false" aria-controls="settingsPanel">
-                <i class="fas fa-sliders-h" aria-hidden="true"></i>
-                <span>Settings</span>
-            </button>
-        </div>
-    </header>
-    <main class="game-layout">
-        <div class="viewport-shell">
-            <section class="game-card" aria-label="Honey Hunt game">
-                <div class="game-container" id="gameContainer">
-                    <div class="hud" aria-live="polite">
-                        <div class="hud-item">
-                            <span class="hud-label">Score</span>
-                            <span id="scoreValue" class="hud-value">0</span>
-                        </div>
-                        <div class="hud-item">
-                            <span class="hud-label">Best</span>
-                            <span id="bestValue" class="hud-value">0</span>
-                        </div>
-                        <div class="hud-item">
-                            <span class="hud-label">Time</span>
-                            <span id="timeValue" class="hud-value">60</span>
-                        </div>
-                        <div class="hud-item streak">
-                            <span class="hud-label">Streak</span>
-                            <span id="streakValue" class="hud-value">0</span>
-                            <span id="streakBadge" class="streak-badge">Combo!</span>
-                        </div>
-                    </div>
-                    <div id="comboIndicator" class="combo-indicator">x2 Combo!</div>
-                    <div id="powerupIndicator" class="powerup-indicator" aria-hidden="true">
-                        <i class="fas fa-bolt" aria-hidden="true"></i>
-                        <span>Shield active</span>
-                    </div>
-                    <canvas id="gameCanvas" aria-label="Honey Hunt playfield" role="img"></canvas>
-                    <div id="startOverlay" class="overlay visible" aria-hidden="false">
-                        <div class="overlay-card">
-                            <h2 class="overlay-title">Ready to hunt?</h2>
-                            <p class="overlay-sub">
-                                Move your bear left and right to catch honey jars and dodge bees.
-                                Chain catches for big combos.
-                            </p>
-                            <div class="overlay-stats">
-                                <div>
-                                    <div class="overlay-stat-label">Best</div>
-                                    <div id="overlayBest" class="overlay-stat-value">0</div>
-                                </div>
-                                <div>
-                                    <div class="overlay-stat-label">Games</div>
-                                    <div id="overlayGames" class="overlay-stat-value">0</div>
-                                </div>
-                            </div>
-                            <button id="startButton" class="btn primary" type="button">
-                                <i class="fas fa-play" aria-hidden="true"></i>
-                                <span>Start</span>
-                            </button>
-                        </div>
-                    </div>
-                    <div id="pauseOverlay" class="overlay" aria-hidden="true">
-                        <div class="overlay-card">
-                            <h2 class="overlay-title">Paused</h2>
-                            <p class="overlay-sub">Stretch your paws. The bees will wait (for now).</p>
-                            <button id="resumeButton" class="btn primary" type="button">
-                                <i class="fas fa-play" aria-hidden="true"></i>
-                                <span>Resume</span>
-                            </button>
-                        </div>
-                    </div>
-                    <div id="gameOverOverlay" class="overlay" aria-hidden="true">
-                        <div class="overlay-card">
-                            <h2 class="overlay-title">Game over</h2>
-                            <p class="overlay-sub">The bees won this round, but the honey's still out there.</p>
-                            <div class="overlay-stats">
-                                <div>
-                                    <div class="overlay-stat-label">Score</div>
-                                    <div id="finalScore" class="overlay-stat-value">0</div>
-                                </div>
-                                <div>
-                                    <div class="overlay-stat-label">Best</div>
-                                    <div id="finalBest" class="overlay-stat-value">0</div>
-                                </div>
-                            </div>
-                            <button id="restartButton" class="btn primary" type="button">
-                                <i class="fas fa-rotate-right" aria-hidden="true"></i>
-                                <span>Play again</span>
-                            </button>
-                        </div>
-                    </div>
-                </div>
-            </section>
-            <section class="controls-region" aria-label="On-screen controls">
-                <div class="controls-bar">
-                    <div class="dpad" aria-hidden="false">
-                        <div class="pad-center"></div>
-                        <button id="btnUp" class="pad-btn pad-up" type="button" aria-label="Nudge up">
-                            <i class="fas fa-chevron-up" aria-hidden="true"></i>
-                        </button>
-                        <button id="btnDown" class="pad-btn pad-down" type="button" aria-label="Nudge down">
-                            <i class="fas fa-chevron-down" aria-hidden="true"></i>
-                        </button>
-                        <button id="btnLeft" class="pad-btn pad-left" type="button" aria-label="Move left">
-                            <i class="fas fa-chevron-left" aria-hidden="true"></i>
-                        </button>
-                        <button id="btnRight" class="pad-btn pad-right" type="button" aria-label="Move right">
-                            <i class="fas fa-chevron-right" aria-hidden="true"></i>
-                        </button>
-                    </div>
-                    <div class="controls-right">
-                        <button id="pauseButton" class="btn small secondary" type="button">
-                            <i class="fas fa-pause" aria-hidden="true"></i>
-                            <span>Pause</span>
-                        </button>
-                    </div>
-                </div>
-                <p class="caption">
-                    Use the arrows or ⬅ ➡ keys · Space / P = pause &amp; resume
-                </p>
-            </section>
-            <button id="helpToggleSecondary" class="help-toggle" type="button" aria-expanded="false" aria-controls="helpPanel">
-                <i class="fas fa-lightbulb" aria-hidden="true"></i>
-                <span>Quick tips</span>
-            </button>
-            <section id="helpPanel" class="help-panel" aria-label="How to play Honey Hunt" aria-hidden="true">
-                <div class="help-columns">
-                    <div>
-                        <div class="help-heading">How to play</div>
-                        <ul class="help-list">
-                            <li>Move your bear with the arrow keys or on-screen pads.</li>
-                            <li>Catching honey jars adds score. Golden jars give bonus points.</li>
-                            <li>Hitting a bee costs a life and breaks your streak.</li>
-                            <li>Blue jars grant a temporary shield that blocks one bee.</li>
-                            <li>Finish the 60 second hunt with the highest score you can.</li>
-                        </ul>
-                    </div>
-                    <div>
-                        <div class="help-heading">Scoring &amp; streaks</div>
-                        <ul class="help-list">
-                            <li>Each jar adds points; combos increase the value of each catch.</li>
-                            <li>Keep catching jars without missing to grow your streak meter.</li>
-                            <li>Streaks unlock big combo bursts. Watch the Combo indicator.</li>
-                            <li>Your best score is saved on this device between games.</li>
-                        </ul>
-                    </div>
-                </div>
-            </section>
-        </div>
-    </main>
+<!-- Decorative Elements -->
+<div aria-hidden="true" class="enhanced-scene" id="enhancedScene"></div>
+<div aria-hidden="true" class="cloud-layer">
+    <div class="cloud">☁️</div>
+    <div class="cloud">☁️</div>
+    <div class="cloud">☁️</div>
 </div>
-<div id="settingsModal" class="settings-backdrop" role="dialog" aria-modal="true" aria-labelledby="settingsTitle">
-    <div class="settings-panel" id="settingsPanel" tabindex="-1">
-        <div class="settings-header">
-            <div class="settings-title" id="settingsTitle">Game settings</div>
-            <button id="settingsClose" class="btn small secondary" type="button">
-                <i class="fas fa-times" aria-hidden="true"></i>
-                <span>Close</span>
-            </button>
+<!-- Hero Header -->
+<header class="masthead-hero hero-enhancements">
+    <!-- Hero Banner with Image and Title Overlay -->
+    <div class="hero-banner">
+        <div class="hero-image-container">
+            <picture>
+                <source sizes="100vw"
+                        srcset="Images/Characters/Gunnar.png 800w, Images/Characters/Gunnar.png 1200w, Images/Characters/Gunnar.png 1600w">
+                <img alt="Baby Gunnar with Hundred Acre Wood friends in the Hundred Acre Wood" class="hero-banner__img" height="900" loading="eager"
+                     src="Images/Characters/Gunnar.png" width="1600">
+            </picture>
+            <!-- Decorative corner elements -->
+            <div aria-hidden="true" class="hero-corner-decoration top-left">🌿</div>
+            <div aria-hidden="true" class="hero-corner-decoration top-right">🍯</div>
+            <div aria-hidden="true" class="hero-corner-decoration bottom-left">💛</div>
+            <div aria-hidden="true" class="hero-corner-decoration bottom-right">🐝</div>
         </div>
-        <div class="settings-row">
-            <div class="settings-label">
-                <span>Music</span>
-                <span>Background tune while you play.</span>
+        <!-- Title Container with Background -->
+        <div class="hero-title-container">
+            <div class="title-background">
+                <h1 class="masthead-title">
+                    <span class="title-line title-line--primary">Baby Gunnar's</span>
+                    <span class="title-line title-line--secondary">Hundred Acre Wood Shower</span>
+                </h1>
+                <div aria-hidden="true" class="title-underline">
+                    <span class="underline-dot">•</span>
+                    <span class="underline-dot">•</span>
+                    <span class="underline-dot">•</span>
+                </div>
+                <p class="hero-subtitle">A storybook celebration with Pooh & friends</p>
             </div>
-            <button id="musicToggle" class="toggle" type="button" data-on="true" aria-pressed="true">
-                <span class="toggle-knob"></span>
-                <span class="sr-only">Toggle music</span>
-            </button>
-        </div>
-        <div class="settings-row">
-            <div class="settings-label">
-                <span>Sound effects</span>
-                <span>Jar catches, bees, and combo pops.</span>
-            </div>
-            <button id="sfxToggle" class="toggle" type="button" data-on="true" aria-pressed="true">
-                <span class="toggle-knob"></span>
-                <span class="sr-only">Toggle sound effects</span>
-            </button>
-        </div>
-        <div class="settings-row">
-            <div class="settings-label">
-                <span>Difficulty</span>
-                <span>Changes jar speed and bee frequency.</span>
-            </div>
-            <div class="difficulty-pill" role="radiogroup" aria-label="Difficulty">
-                <button type="button" class="diff-btn" data-level="0">Chill</button>
-                <button type="button" class="diff-btn active" data-level="1">Classic</button>
-                <button type="button" class="diff-btn" data-level="2">Spicy</button>
-            </div>
-        </div>
-        <div class="settings-footer">
-            <span>High score: <strong id="settingsBest">0</strong></span>
-            <button id="resetProgress" class="btn small secondary" type="button">
-                <i class="fas fa-broom" aria-hidden="true"></i>
-                <span>Reset progress</span>
-            </button>
         </div>
     </div>
-</div>
-<div id="liveRegion" class="sr-only" aria-live="polite" aria-atomic="true"></div>
-
+    <!-- Decorative Elements -->
+    <div aria-hidden="true" class="hero-sparkles" id="heroSparkles"></div>
+    <div aria-hidden="true" class="hero-bunting">
+        <span>✨</span><span>🎈</span><span>🍯</span><span>💝</span><span>🧸</span><span>📖</span><span>✨</span>
+    </div>
+    <div aria-hidden="true" class="hero-sheen"></div>
+    <!-- Hero Info Panel -->
+    <div class="masthead-hero-inner">
+        <section class="hero-panel">
+            <!-- Event Badge -->
+            <div class="hero-badge">
+                <div aria-hidden="true" class="badge-icon">
+                    <div class="badge-icon-inner">🎉</div>
+                </div>
+                <div class="badge-copy">
+                    <p class="badge-eyebrow">A Very Special</p>
+                    <p class="badge-label">Hundred Acre Gathering</p>
+                    <p class="badge-title">Virtual Baby Shower Celebration</p>
+                </div>
+                <div class="badge-meta">
+                    <time class="badge-pill date" datetime="2025-06-15">
+                        <span aria-hidden="true" class="pill-icon">📅</span>
+                        <span class="pill-text">June 15, 2025</span>
+                    </time>
+                    <div class="badge-pill location">
+                        <span aria-hidden="true" class="pill-icon">📍</span>
+                        <span class="pill-text">Online Celebration</span>
+                    </div>
+                </div>
+            </div>
+            <!-- Hero Details Grid -->
+            <div class="hero-details-grid">
+                <div class="hero-detail">
+                    <div aria-hidden="true" class="detail-icon">📚</div>
+                    <div class="detail-content">
+                        <h4 class="detail-title">Interactive Storybook</h4>
+                        <p class="detail-text">Read through four charming chapters</p>
+                    </div>
+                </div>
+                <div class="hero-detail">
+                    <div aria-hidden="true" class="detail-icon">🎮</div>
+                    <div class="detail-content">
+                        <h4 class="detail-title">Honey Game</h4>
+                        <p class="detail-text">Help Pooh catch honey pots</p>
+                    </div>
+                </div>
+                <div class="hero-detail">
+                    <div aria-hidden="true" class="detail-icon">🎁</div>
+                    <div class="detail-content">
+                        <h4 class="detail-title">Gift Registry</h4>
+                        <p class="detail-text">Share your wishes & blessings</p>
+                    </div>
+                </div>
+            </div>
+            <!-- Quick Actions -->
+            <div class="hero-actions">
+                <button class="hero-action-btn primary" onclick="scrollToChapter(1)">
+                    <span aria-hidden="true" class="btn-icon">📖</span>
+                    <span class="btn-text">Begin the Story</span>
+                </button>
+                <button class="hero-action-btn secondary" onclick="scrollToChapter(2)">
+                    <span aria-hidden="true" class="btn-icon">🍯</span>
+                    <span class="btn-text">Play Honey Game</span>
+                </button>
+                <button class="hero-action-btn ghost" onclick="scrollToChapter(3)">
+                    <span aria-hidden="true" class="btn-icon">💝</span>
+                    <span class="btn-text">View Registry</span>
+                </button>
+            </div>
+            <!-- Orientation Hint -->
+            <div class="orientation-hint">
+                <div aria-hidden="true" class="hint-icon">📱</div>
+                <p class="hint-text">For the best experience: Rotate for wider game view, or stay in portrait for lovely
+                    story reading.</p>
+            </div>
+        </section>
+    </div>
+</header>
+<!-- Main Content -->
+<main class="book-container" id="storybook">
+    <!-- Chapter Navigation -->
+    <nav aria-label="Story chapters" class="chapter-tracker">
+        <h2 class="sr-only">Chapter navigation</h2>
+        <div class="tracker-row">
+            <div class="tracker-label">Story path</div>
+            <div aria-valuemax="100" aria-valuemin="0" aria-valuenow="0" class="book-progress" role="progressbar">
+                <div class="progress-fill" id="progressFill"></div>
+            </div>
+        </div>
+        <div class="chapter-pill-row">
+            <button aria-current="page" class="chapter-pill sparkle active" data-chapter-target="1">
+                <span class="pill-number">1</span>
+                <span class="pill-text">
+               <span class="pill-title">Welcome</span>
+               <span class="pill-detail">Invitation arrives</span>
+               </span>
+            </button>
+            <button class="chapter-pill sparkle" data-chapter-target="2">
+                <span class="pill-number">2</span>
+                <span class="pill-text">
+               <span class="pill-title">Honey Hunt</span>
+               <span class="pill-detail">Play the game</span>
+               </span>
+            </button>
+            <button class="chapter-pill sparkle" data-chapter-target="3">
+                <span class="pill-number">3</span>
+                <span class="pill-text">
+               <span class="pill-title">Gifts & Wishes</span>
+               <span class="pill-detail">Registry & guestbook</span>
+               </span>
+            </button>
+            <button class="chapter-pill sparkle" data-chapter-target="4">
+                <span class="pill-number">4</span>
+                <span class="pill-text">
+               <span class="pill-title">Celebration</span>
+               <span class="pill-detail">Welcome Gunnar</span>
+               </span>
+            </button>
+        </div>
+    </nav>
+    <!-- Story Pages -->
+    <div class="book">
+        <div class="pages-wrapper">
+            <!-- Chapter 1 -->
+            <article class="page active" data-chapter="1">
+                <header class="chapter-header">
+                    <p class="chapter-number">Chapter One</p>
+                    <h2 class="chapter-title">A Special Day in the Hundred Acre Wood</h2>
+                    <p class="chapter-subtitle">An Invitation to Celebrate</p>
+                    <span aria-hidden="true" class="honey-drip"></span>
+                </header>
+                <div class="page-content">
+                    <p class="story-text">One fine spring day, in a corner of the Hundred Acre Wood where the sun shines
+                        warmly through the trees and the flowers bloom in cheerful colors, something wonderful was
+                        happening. All the forest friends were gathering, for there was to be a celebration unlike any
+                        other.</p>
+                    <p class="story-text">"What sort of celebration?" you might ask. Well, it was the very best sort—the
+                        kind that welcomes a new little friend to the world. A baby boy named Gunnar James was soon to
+                        arrive, and everyone in the Hundred Acre Wood wanted to share in the joy.</p>
+                    <div class="chapter-illustrations">
+                        <figure class="storybook-figure figure-theme-honey clickable-character" data-character="pooh">
+                            <img alt="Winnie the Pooh holding a honey pot" height="96"
+                                 loading="eager" src="Images/Characters/honey-bear.png" width="96">
+                            <figcaption class="figure-copy">
+                                <div class="figure-name">Pooh brings the first pot</div>
+                                <p class="figure-note">"A baby celebration needs extra honey," he whispered as he dusted
+                                    off the lid.</p>
+                            </figcaption>
+                            <div aria-live="polite" class="character-message"></div>
+                        </figure>
+                        <figure class="storybook-figure figure-theme-sky clickable-character" data-character="piglet">
+                            <img alt="Piglet carrying a welcome banner" height="96" loading="eager"
+                                 src="Images/Characters/piglet.png" width="96">
+                            <figcaption class="figure-copy">
+                                <div class="figure-name">Piglet pins up the banner</div>
+                                <p class="figure-note">He fluttered through the clearing making sure every friend felt
+                                    warmly invited.</p>
+                            </figcaption>
+                            <div aria-live="polite" class="character-message"></div>
+                        </figure>
+                    </div>
+                    <p class="story-text">Winnie the Pooh, being a Bear of Very Little Brain but a Very Big Heart, knew
+                        that the most important thing for any celebration was honey. And not just a little honey, but
+                        lots and lots of it. After all, welcoming Baby Gunnar was a Very Important Matter.</p>
+                    <p class="story-text">"But first," thought Pooh, looking up at his honey pots on the high shelf,
+                        "we'll need to gather more honey. Won't you help?"</p>
+                    <div aria-hidden="true" class="divider">🌳 ✿ 🐝 ✿ 🌳</div>
+                </div>
+            </article>
+            <!-- Chapter 2: Game -->
+            <article class="page" data-chapter="2" id="honey-game">
+                <header class="chapter-header">
+                    <p class="chapter-number">Chapter Two</p>
+                    <h2 class="chapter-title">Pooh's Honey Gathering Adventure</h2>
+                    <p class="chapter-subtitle">A Game of Skill and Sweetness</p>
+                    <span aria-hidden="true" class="honey-drip"></span>
+                </header>
+                <div class="chapter-illustrations">
+                    <figure class="storybook-figure figure-theme-forest clickable-character" data-character="tigger">
+                        <img alt="Tigger bouncing" height="96" loading="lazy" src="Images/Characters/tigger.png"
+                             width="96">
+                        <figcaption class="figure-copy">
+                            <div class="figure-name">Tigger stakes out the course</div>
+                            <p class="figure-note">He marked the path with springy footprints so every honey pot feels
+                                like an adventure to catch.</p>
+                        </figcaption>
+                        <div aria-live="polite" class="character-message"></div>
+                    </figure>
+                    <figure class="storybook-figure figure-theme-honey clickable-character" data-character="roo">
+                        <img alt="Roo cheering" height="96" loading="lazy" src="Images/Characters/roo.png" width="96">
+                        <figcaption class="figure-copy">
+                            <div class="figure-name">Roo cheers from the sidelines</div>
+                            <p class="figure-note">"Mind the bees!" he giggled, handing out cozy scarves.</p>
+                        </figcaption>
+                        <div aria-live="polite" class="character-message"></div>
+                    </figure>
+                </div>
+                <!-- Game iframe -->
+                <div class="game-embed">
+                    <iframe
+                            allowfullscreen
+                            class="game-embed__frame"
+                            loading="lazy"
+                            src="game.html"
+                            title="Honey Hunt Game">
+                    </iframe>
+                </div>
+                <div class="game-description">
+                    <h3>How to Play</h3>
+                    <p>Help Winnie the Pooh collect honey pots while avoiding bees! Move left and right with arrow keys
+                        or on-screen controls. Chain catches to build combos for higher scores. Watch for special jars
+                        that grant shields!</p>
+                    <div class="game-tips">
+                        <div class="tip">
+                            <span class="tip-icon">🎯</span>
+                            <p><strong>Goal:</strong> Score as many points as you can in 60 seconds!</p>
+                        </div>
+                        <div class="tip">
+                            <span class="tip-icon">🛡️</span>
+                            <p><strong>Blue Jars:</strong> Give temporary shield protection</p>
+                        </div>
+                        <div class="tip">
+                            <span class="tip-icon">🏆</span>
+                            <p><strong>Golden Jars:</strong> Worth bonus points</p>
+                        </div>
+                    </div>
+                </div>
+            </article>
+            <!-- Chapter 3: Gifts & Wishes -->
+            <article class="page" data-chapter="3">
+                <header class="chapter-header">
+                    <p class="chapter-number">Chapter Three</p>
+                    <h2 class="chapter-title">Gifts from the Heart</h2>
+                    <p class="chapter-subtitle">Preparing for Baby Gunnar's Arrival</p>
+                    <span aria-hidden="true" class="honey-drip"></span>
+                </header>
+                <div class="page-content">
+                    <section class="story-section">
+                        <p class="story-text">Back in the Hundred Acre Wood, Pooh sat thoughtfully by his honey pots.
+                            "Honey is wonderful," he mused, "but I wonder what else a growing bear—oh, I mean baby—might
+                            need?"</p>
+                        <p class="story-text">Just then, Piglet came scurrying up, holding something soft. "I was
+                            thinking, Pooh," he said in his small voice, "perhaps something cozy for chilly
+                            evenings?"</p>
+                        <div class="dialogue-bubble dialogue-piglet">
+                            <div class="bubble-arrow"></div>
+                            <p>"Something soft and warm, for when the wind howls!"</p>
+                            <span class="speaker">— Piglet</span>
+                        </div>
+                    </section>
+                    <div class="chapter-illustrations">
+                        <figure class="storybook-figure figure-theme-forest clickable-character"
+                                data-character="piglet">
+                            <img alt="Piglet with blanket" height="96" loading="lazy" src="Images/Characters/piglet.png"
+                                 width="96">
+                            <figcaption class="figure-copy">
+                                <div class="figure-name">Piglet's Cozy Corner</div>
+                                <p class="figure-note">Found the snuggliest blanket in all the Wood.</p>
+                            </figcaption>
+                            <div aria-live="polite" class="character-message"></div>
+                        </figure>
+                        <figure class="storybook-figure figure-theme-honey clickable-character" data-character="pooh">
+                            <img alt="Pooh thinking" height="96" loading="lazy" src="Images/Characters/honey-bear.png"
+                                 width="96">
+                            <figcaption class="figure-copy">
+                                <div class="figure-name">Pooh's Pondering</div>
+                                <p class="figure-note">Thinking of practical things (between honey snacks).</p>
+                            </figcaption>
+                            <div aria-live="polite" class="character-message"></div>
+                        </figure>
+                        <figure class="storybook-figure figure-theme-sky clickable-character" data-character="tigger">
+                            <img alt="Tigger bouncing" height="96" loading="lazy" src="Images/Characters/tigger.png"
+                                 width="96">
+                            <figcaption class="figure-copy">
+                                <div class="figure-name">Tigger's Toys</div>
+                                <p class="figure-note">Bounced in with the bounciest ideas!</p>
+                            </figcaption>
+                            <div aria-live="polite" class="character-message"></div>
+                        </figure>
+                    </div>
+                    <section class="story-section">
+                        <p class="story-text">Soon, all the friends had gathered with their ideas. Tigger bounced about
+                            toys that bounce, Eeyore suggested "something useful that won't blow away," and Rabbit began
+                            making a very organized list.</p>
+                        <div class="dialogue-bubble dialogue-pooh">
+                            <div class="bubble-arrow"></div>
+                            <p>"The most important thing," said Pooh wisely, "is that Baby Gunnar knows he is surrounded
+                                by love. But if you'd like to bring something special, his parents have shared a few
+                                ideas that would be helpful."</p>
+                            <span class="speaker">— Pooh Bear</span>
+                        </div>
+                    </section>
+                    <div class="registry-container">
+                        <aside class="registry-section">
+                            <div class="registry-header">
+                                <div aria-hidden="true" class="registry-icon">🎁</div>
+                                <div>
+                                    <h3>Baby Gunnar's Registry</h3>
+                                    <p class="registry-subtitle">Your presence is the greatest present, but if you'd
+                                        like to contribute to his woodland adventures:</p>
+                                </div>
+                            </div>
+                            <div class="registry-grid">
+                                <a class="registry-card" href="https://my.babylist.com/lea-hardesty" rel="noopener"
+                                   target="_blank">
+                                    <div class="card-icon">🎯</div>
+                                    <div class="card-content">
+                                        <h4>babylist Registry</h4>
+                                        <p>For everyday essentials and nursery items</p>
+                                        <span class="card-link">Browse registry →</span>
+                                    </div>
+                                </a>
+                                <div class="registry-card gift-idea-card">
+                                    <div class="card-icon">💝</div>
+                                    <div class="card-content">
+                                        <h4>Gift Ideas</h4>
+                                        <ul class="gift-ideas">
+                                            <li>Board books & stories</li>
+                                            <li>Woodland-themed clothing</li>
+                                            <li>Soft blankets & swaddles</li>
+                                            <li>Diapers & essentials</li>
+                                        </ul>
+                                    </div>
+                                </div>
+                            </div>
+                        </aside>
+                    </div>
+                    <section class="nursery-details">
+                        <h3><span aria-hidden="true">🧸</span> Nursery Details</h3>
+                        <div class="details-grid">
+                            <div class="detail-card">
+                                <div class="detail-icon">🎨</div>
+                                <div class="detail-content">
+                                    <h4>Theme</h4>
+                                    <p>Hundred Acre Wood Adventures</p>
+                                    <small>Featuring Winnie the Pooh & friends</small>
+                                </div>
+                            </div>
+                            <div class="detail-card">
+                                <div class="detail-icon">🌈</div>
+                                <div class="detail-content">
+                                    <h4>Colors</h4>
+                                    <p>Honey gold, Pooh red, sage green, cream</p>
+                                    <small>Soft & soothing woodland palette</small>
+                                </div>
+                            </div>
+                            <div class="detail-card">
+                                <div class="detail-icon">📚</div>
+                                <div class="detail-content">
+                                    <h4>Favorite Items</h4>
+                                    <p>Swaddles, sleepers, board books, cozy blankets</p>
+                                </div>
+                            </div>
+                            <div class="detail-card">
+                                <div class="detail-icon">📍</div>
+                                <div class="detail-content">
+                                    <h4>Location</h4>
+                                    <p>Arizona</p>
+                                    <small>Where adventures begin</small>
+                                </div>
+                            </div>
+                        </div>
+                    </section>
+                    <section class="wishes-section">
+                        <div class="wishes-header">
+                            <h3>Share Your Wishes <span aria-hidden="true">✨</span></h3>
+                            <p>Leave wisdom, well-wishes, or favorite childhood memories for Gunnar's storybook</p>
+                        </div>
+                        <div class="wishes-form-container">
+                            <form class="enhanced-form" id="wishesForm">
+                                <div class="form-grid">
+                                    <div class="form-field">
+                                        <label for="guestName">Your Name</label>
+                                        <input id="guestName" placeholder="How should we call you?" required
+                                               type="text">
+                                    </div>
+                                    <div class="form-field">
+                                        <label for="guestRelation">Your Relation</label>
+                                        <select id="guestRelation">
+                                            <option value="">Choose one...</option>
+                                            <option value="family">Family</option>
+                                            <option value="friend">Friend</option>
+                                            <option value="colleague">Colleague</option>
+                                            <option value="woodland-friend">Woodland Friend</option>
+                                        </select>
+                                    </div>
+                                </div>
+                                <div class="form-field">
+                                    <label for="wishMessage">Your Message</label>
+                                    <textarea id="wishMessage" placeholder="What wisdom or wishes would you like to share with Baby Gunnar?..."
+                                              required
+                                              rows="4"></textarea>
+                                    <div class="character-count">0/500 characters</div>
+                                </div>
+                                <div class="form-actions">
+                                    <button class="submit-btn" type="submit">
+                                        <span aria-hidden="true">📝</span> Add to Gunnar's Storybook
+                                    </button>
+                                    <div aria-live="polite" class="form-feedback" id="wishFeedback" role="status"></div>
+                                </div>
+                            </form>
+                        </div>
+                        <div class="sample-wishes">
+                            <h4>Wishes from the Wood:</h4>
+                            <div class="wish-examples">
+                                <blockquote class="wish-example">
+                                    <p>"May your days be filled with wonder and your nights with sweet dreams."</p>
+                                    <cite>— Owl</cite>
+                                </blockquote>
+                                <blockquote class="wish-example">
+                                    <p>"Remember: even the smallest creatures can have the biggest hearts."</p>
+                                    <cite>— Piglet</cite>
+                                </blockquote>
+                            </div>
+                        </div>
+                    </section>
+                    <div class="wishes-display" id="wishesDisplay">
+                        <!-- Dynamic wishes will appear here -->
+                    </div>
+                </div>
+            </article>
+            <!-- Chapter 4: Celebration -->
+            <article class="page" data-chapter="4">
+                <header class="chapter-header">
+                    <p class="chapter-number">Chapter Four</p>
+                    <h2 class="chapter-title">The Gathering</h2>
+                    <p class="chapter-subtitle">Celebrating What's to Come</p>
+                    <span aria-hidden="true" class="honey-drip"></span>
+                </header>
+                <div class="page-content">
+                    <p class="story-text">As the sun began to set over the Hundred Acre Wood, casting long golden
+                        shadows through the trees, Pooh and his friends gathered to celebrate the coming arrival of Baby
+                        Gunnar.</p>
+                    <div class="chapter-illustrations">
+                        <figure class="storybook-figure figure-theme-honey clickable-character" data-character="pooh">
+                            <img alt="Pooh with honey pot" height="96" loading="lazy" src="Images/Characters/honey-bear.png"
+                                 width="96">
+                            <figcaption class="figure-copy">
+                                <div class="figure-name">Pooh's special pot</div>
+                                <p class="figure-note">He saved one golden pot for Gunnar's first visit.</p>
+                            </figcaption>
+                            <div aria-live="polite" class="character-message"></div>
+                        </figure>
+                        <figure class="storybook-figure figure-theme-sky clickable-character" data-character="gunnar">
+                            <img alt="Baby Gunnar" height="96" loading="lazy" src="Images/Characters/Gunnar.png"
+                                 width="96">
+                            <figcaption class="figure-copy">
+                                <div class="figure-name">Coming Soon</div>
+                                <p class="figure-note">The Hundred Acre Wood awaits its newest friend.</p>
+                            </figcaption>
+                            <div aria-live="polite" class="character-message"></div>
+                        </figure>
+                    </div>
+                    <p class="story-text">With honey gathered, gifts prepared, and wishes shared, everyone in the
+                        Hundred Acre Wood looked forward to the day they would meet Baby Gunnar. For as Pooh always
+                        said, "How lucky I am to have something to look forward to."</p>
+                    <div class="welcome-panel">
+                        <div aria-hidden="true" class="welcome-icon">🌟</div>
+                        <h3 class="welcome-heading">We Can't Wait to Meet You!</h3>
+                        <p class="welcome-subtitle">Baby Gunnar, your adventure in the Hundred Acre Wood is about to
+                            begin</p>
+                    </div>
+                    <section class="countdown-section">
+                        <h3>Until We Meet 🐻</h3>
+                        <div class="countdown-display">
+                            <div class="countdown-item">
+                                <span class="countdown-number" id="days">--</span>
+                                <span class="countdown-label">Days</span>
+                            </div>
+                            <div class="countdown-item">
+                                <span class="countdown-number" id="hours">--</span>
+                                <span class="countdown-label">Hours</span>
+                            </div>
+                        </div>
+                        <p class="countdown-note">Expected arrival:
+                            <time datetime="2025-08">Late August 2025</time>
+                        </p>
+                    </section>
+                    <div class="honey-jar-interactive">
+                        <div aria-hidden="true">🍯</div>
+                        <h3>Gunnar's Honey Jar of Hopes</h3>
+                        <p>Share your hopes and dreams for Baby Gunnar's future adventures.</p>
+                        <button class="btn primary" id="addHopeBtn">➕ Add Your Hope</button>
+                    </div>
+                    <aside class="final-thought">
+                        <blockquote>
+                            <p>"Sometimes the smallest things take up the most room in your heart."<br>
+                                <cite>— Winnie the Pooh</cite>
+                            </p>
+                        </blockquote>
+                        <p class="signature">With love from all your friends in the Hundred Acre Wood</p>
+                    </aside>
+                </div>
+            </article>
+        </div>
+        <!-- Navigation -->
+        <nav aria-label="Page navigation" class="chapter-nav">
+            <button class="chapter-nav-btn" id="prevBtn">← Previous</button>
+            <div class="chapter-indicator" id="pageIndicator">Chapter 1 of 4</div>
+            <button class="chapter-nav-btn next" id="nextBtn">Next →</button>
+        </nav>
+    </div>
+</main>
+<!-- Footer -->
+<footer class="site-footer">
+    <p>Made with 💙 and 🍯 for Baby Gunnar's special day</p>
+    <div class="footer-links">
+        <button class="footer-link" id="printPageBtn">🖨 Print</button>
+        <button class="footer-link" id="sharePageBtn">📤 Share</button>
+        <button class="footer-link" id="toggleAnimationsBtn">🎭 Animations</button>
+    </div>
+</footer>
+<!-- Audio Elements -->
+<audio id="bgMusic" loop preload="auto" src="media/hundred-acre-lullaby.mp3"></audio>
+<audio id="honeySound" preload="auto">
+    <source src="https://assets.mixkit.co/sfx/preview/mixkit-winning-chimes-2015.mp3">
+</audio>
+<audio id="pageSound" preload="auto">
+    <source src="https://assets.mixkit.co/sfx/preview/mixkit-page-turn-single-1100.mp3">
+</audio>
+<audio id="pageRustle1" preload="auto">
+    <source src="https://assets.mixkit.co/sfx/preview/mixkit-page-turn-single-1100.mp3">
+</audio>
+<audio id="pageRustle2" preload="auto">
+    <source src="https://assets.mixkit.co/sfx/preview/mixkit-page-turn-medium-1103.mp3">
+</audio>
+<audio id="paperThump" preload="auto">
+    <source src="https://assets.mixkit.co/sfx/preview/mixkit-soft-ui-click-2577.mp3">
+</audio>
+<audio id="ambientForest" loop preload="auto">
+    <source src="https://assets.mixkit.co/sfx/preview/mixkit-forest-birds-ambience-121.mp3">
+</audio>
 <script>
-(function() {
-    "use strict";
+// Storybook chapter navigation
+document.addEventListener("DOMContentLoaded", () => {
+  const pages = [...document.querySelectorAll(".page")];
+  const nextBtn = document.getElementById("nextBtn");
+  const prevBtn = document.getElementById("prevBtn");
+  const indicator = document.getElementById("pageIndicator");
+  const progress = document.getElementById("progressFill");
+  const total = pages.length;
+  let current = 0;
 
-    const STORAGE_KEYS = {
-        BEST: "honeyHunt_bestScore_v2",
-        GAMES: "honeyHunt_gamesPlayed_v2",
-        SETTINGS: "honeyHunt_settings_v2",
-        THEME: "honeyHunt_theme_v2"
-    };
+  function updateUI() {
+    pages.forEach((page, i) => page.classList.toggle("active", i === current));
+    indicator.textContent = `Chapter ${current + 1} of ${total}`;
+    progress.style.width = `${((current + 1) / total) * 100}%`;
+    document
+      .querySelectorAll("[data-chapter-target]")
+      .forEach((btn) =>
+        btn.classList.toggle(
+          "active",
+          parseInt(btn.dataset.chapterTarget, 10) === current + 1
+        )
+      );
 
-    const GAME_DURATION = 60;
-    const MAX_LIVES = 3;
-
-    const gameContainer = document.getElementById("gameContainer");
-    const canvas = document.getElementById("gameCanvas");
-    const ctx = canvas.getContext("2d");
-
-    if (ctx && typeof ctx.roundRect !== "function") {
-        ctx.roundRect = function (x, y, width, height, radius) {
-            let r = typeof radius === "number" ? radius : 0;
-            const maxR = Math.min(width, height) / 2;
-            r = Math.max(0, Math.min(r, maxR));
-
-            this.beginPath();
-            this.moveTo(x + r, y);
-            this.lineTo(x + width - r, y);
-            this.quadraticCurveTo(x + width, y, x + width, y + r);
-            this.lineTo(x + width, y + height - r);
-            this.quadraticCurveTo(x + width, y + height, x + width - r, y + height);
-            this.lineTo(x + r, y + height);
-            this.quadraticCurveTo(x, y + height, x, y + height - r);
-            this.lineTo(x, y + r);
-            this.quadraticCurveTo(x, y, x + r, y);
-        };
+    // Play page-turn sound if available
+    const sound = document.getElementById("pageSound");
+    if (sound) {
+      sound.currentTime = 0;
+      sound.play().catch(() => {});
     }
 
-    const scoreValue = document.getElementById("scoreValue");
-    const bestValue = document.getElementById("bestValue");
-    const timeValue = document.getElementById("timeValue");
-    const streakValue = document.getElementById("streakValue");
-    const streakBadge = document.getElementById("streakBadge");
-    const comboIndicator = document.getElementById("comboIndicator");
-    const powerupIndicator = document.getElementById("powerupIndicator");
+    // Smooth scroll
+    pages[current].scrollIntoView({ behavior: "smooth", block: "start" });
+  }
 
-    const startOverlay = document.getElementById("startOverlay");
-    const pauseOverlay = document.getElementById("pauseOverlay");
-    const gameOverOverlay = document.getElementById("gameOverOverlay");
-    const startButton = document.getElementById("startButton");
-    const resumeButton = document.getElementById("resumeButton");
-    const restartButton = document.getElementById("restartButton");
-    const overlayBest = document.getElementById("overlayBest");
-    const overlayGames = document.getElementById("overlayGames");
-    const finalScore = document.getElementById("finalScore");
-    const finalBest = document.getElementById("finalBest");
-
-    const btnLeft = document.getElementById("btnLeft");
-    const btnRight = document.getElementById("btnRight");
-    const btnUp = document.getElementById("btnUp");
-    const btnDown = document.getElementById("btnDown");
-    const pauseButton = document.getElementById("pauseButton");
-
-    const helpToggle = document.getElementById("helpToggle");
-    const helpToggleSecondary = document.getElementById("helpToggleSecondary");
-    const helpPanel = document.getElementById("helpPanel");
-
-    const settingsToggle = document.getElementById("settingsToggle");
-    const settingsModal = document.getElementById("settingsModal");
-    const settingsPanel = document.getElementById("settingsPanel");
-    const settingsClose = document.getElementById("settingsClose");
-    const musicToggle = document.getElementById("musicToggle");
-    const sfxToggle = document.getElementById("sfxToggle");
-    const diffButtons = Array.from(document.querySelectorAll(".diff-btn"));
-    const resetProgress = document.getElementById("resetProgress");
-    const settingsBest = document.getElementById("settingsBest");
-
-    const themeToggle = document.getElementById("themeToggle");
-    const fullscreenToggle = document.getElementById("fullscreenToggle");
-
-    const liveRegion = document.getElementById("liveRegion");
-
-    const keys = {
-        left: false,
-        right: false
-    };
-
-    let settingsState = {
-        musicOn: false,
-        sfxOn: false,
-        difficulty: 1
-    };
-
-    let gameState = {
-        running: false,
-        paused: false,
-        timeLeft: GAME_DURATION,
-        score: 0,
-        best: 0,
-        gamesPlayed: 0,
-        streak: 0,
-        lives: MAX_LIVES,
-        shieldTime: 0
-    };
-
-    const world = {
-        width: 0,
-        height: 0
-    };
-
-    const bear = {
-        x: 0,
-        y: 0,
-        width: 70,
-        height: 110,
-        speed: 280,
-        vx: 0,
-        dir: 0
-    };
-
-    const jars = [];
-    const bees = [];
-    const scorePopups = [];
-    const sparkles = [];
-    let bgCanvas = null, bgCtx = null;
-
-    let lastTimestamp = 0;
-    let jarSpawnTimer = 0;
-    let beeSpawnTimer = 0;
-    let hitFlash = 0;
-
-    let frameCount = 0;
-    let lastFrameTime = performance.now();
-
-    function clamp(value, min, max) {
-        return Math.max(min, Math.min(max, value));
+  nextBtn?.addEventListener("click", () => {
+    if (current < total - 1) {
+      current++;
+      updateUI();
     }
+  });
 
-    function rand(min, max) {
-        return Math.random() * (max - min) + min;
+  prevBtn?.addEventListener("click", () => {
+    if (current > 0) {
+      current--;
+      updateUI();
     }
-
-    function announceToScreenReader(message) {
-        if (!liveRegion) return;
-        liveRegion.textContent = message;
-
-        setTimeout(() => {
-            liveRegion.setAttribute("aria-live", "off");
-            setTimeout(() => {
-                liveRegion.setAttribute("aria-live", "polite");
-            }, 100);
-        }, 100);
-    }
-
-    function updateButtonStates() {
-        const themeBtn = document.getElementById("themeToggle");
-        if (!themeBtn) return;
-        const isDark = document.body.classList.contains("dark");
-        themeBtn.innerHTML = isDark
-            ? '<i class="fas fa-sun" aria-hidden="true"></i><span class="sr-only">Switch to light theme</span>'
-            : '<i class="fas fa-moon" aria-hidden="true"></i><span class="sr-only">Switch to dark theme</span>';
-    }
-
-    function loadPersistedState() {
-        try {
-            const best = Number(localStorage.getItem(STORAGE_KEYS.BEST) || "0");
-            const games = Number(localStorage.getItem(STORAGE_KEYS.GAMES) || "0");
-            gameState.best = isFinite(best) ? best : 0;
-            gameState.gamesPlayed = isFinite(games) ? games : 0;
-
-            const savedSettings = localStorage.getItem(STORAGE_KEYS.SETTINGS);
-            if (savedSettings) {
-                const parsed = JSON.parse(savedSettings);
-                settingsState = Object.assign(settingsState, parsed);
-            }
-
-            const savedTheme = localStorage.getItem(STORAGE_KEYS.THEME);
-            if (savedTheme === "dark") {
-                document.body.classList.add("dark");
-            }
-        } catch (e) {
-            console.warn("Failed to load saved state", e);
-        }
-    }
-
-    function saveProgress() {
-        try {
-            localStorage.setItem(STORAGE_KEYS.BEST, String(gameState.best));
-            localStorage.setItem(STORAGE_KEYS.GAMES, String(gameState.gamesPlayed));
-            localStorage.setItem(STORAGE_KEYS.SETTINGS, JSON.stringify(settingsState));
-        } catch (e) {
-            console.warn("Failed to save progress", e);
-        }
-    }
-
-    function resizeCanvas() {
-        const isMobile = window.innerWidth <= 640;
-
-        if (isMobile) {
-            const viewportHeight = window.innerHeight;
-            const availableHeight = viewportHeight * 0.7;
-            gameContainer.style.height = availableHeight + "px";
-        } else {
-            gameContainer.style.height = "";
-        }
-
-        const rect = gameContainer.getBoundingClientRect();
-        const dpr = Math.min(window.devicePixelRatio || 1, 2);
-        const width = rect.width;
-        const height = rect.height;
-
-        canvas.style.width = width + "px";
-        canvas.style.height = height + "px";
-        canvas.width = width * dpr;
-        canvas.height = height * dpr;
-        ctx.setTransform(dpr, 0, 0, dpr, 0, 0);
-
-        world.width = width;
-        world.height = height;
-
-        bear.y = world.height - bear.height - (isMobile ? 30 : 40);
-        bear.x = clamp(bear.x || world.width / 2 - bear.width / 2, 30, world.width - bear.width - 30);
-
-        bgCanvas = document.createElement("canvas");
-        bgCtx = bgCanvas.getContext("2d");
-        drawStaticBackground();
-    }
-
-    function resetGameState() {
-        gameState.running = false;
-        gameState.paused = false;
-        gameState.timeLeft = GAME_DURATION;
-        gameState.score = 0;
-        gameState.streak = 0;
-        gameState.lives = MAX_LIVES;
-        gameState.shieldTime = 0;
-        jars.length = 0;
-        bees.length = 0;
-        scorePopups.length = 0;
-        sparkles.length = 0;
-        jarSpawnTimer = 0;
-        beeSpawnTimer = 0;
-        hitFlash = 0;
-
-        bear.x = world.width / 2 - bear.width / 2;
-        bear.y = world.height - bear.height - 40;
-    }
-
-    function difficultyConfig() {
-        if (settingsState.difficulty === 0) {
-            return {
-                jarRate: 0.9,
-                beeRate: 2.2,
-                fallSpeed: 150
-            };
-        } else if (settingsState.difficulty === 2) {
-            return {
-                jarRate: 0.55,
-                beeRate: 1.3,
-                fallSpeed: 220
-            };
-        }
-        return {
-            jarRate: 0.7,
-            beeRate: 1.7,
-            fallSpeed: 190
-        };
-    }
-
-    function spawnJar() {
-        const { fallSpeed } = difficultyConfig();
-        const x = rand(30, world.width - 30);
-        const kindRand = Math.random();
-        let type = "normal";
-        let value = 10;
-        if (kindRand > 0.85) {
-            type = "gold";
-            value = 30;
-        } else if (kindRand > 0.7) {
-            type = "shield";
-            value = 15;
-        }
-
-        jars.push({
-            x,
-            y: -20,
-            width: 20,
-            height: 30,
-            vy: fallSpeed + rand(-20, 20),
-            type,
-            value
-        });
-    }
-
-    function spawnBee() {
-        const { fallSpeed } = difficultyConfig();
-        const x = rand(30, world.width - 30);
-        bees.push({
-            x,
-            y: -30,
-            width: 30,
-            height: 25,
-            vy: fallSpeed * 0.7,
-            radius: 14,
-            wingPhase: Math.random() * Math.PI * 2
-        });
-    }
-
-    function updateEntities(dt) {
-        const { jarRate, beeRate } = difficultyConfig();
-
-        jarSpawnTimer += dt;
-        beeSpawnTimer += dt;
-
-        const jarInterval = jarRate;
-        const beeInterval = beeRate;
-
-        while (jarSpawnTimer > jarInterval) {
-            jarSpawnTimer -= jarInterval;
-            spawnJar();
-        }
-
-        while (beeSpawnTimer > beeInterval) {
-            beeSpawnTimer -= beeInterval;
-            spawnBee();
-        }
-
-        const targetDir = (keys.left ? -1 : 0) + (keys.right ? 1 : 0);
-        bear.dir = targetDir;
-        bear.vx = bear.dir * bear.speed;
-        bear.x = clamp(bear.x + bear.vx * dt, 20, world.width - bear.width - 20);
-
-        for (let i = jars.length - 1; i >= 0; i--) {
-            const jar = jars[i];
-            jar.y += jar.vy * dt;
-            if (jar.y - 30 > world.height + 40) {
-                jars.splice(i, 1);
-                gameState.streak = 0;
-            }
-        }
-
-        for (let i = bees.length - 1; i >= 0; i--) {
-            const bee = bees[i];
-            bee.y += bee.vy * dt;
-            bee.wingPhase += dt * 8;
-
-            if (bee.y > world.height + 40) {
-                bees.splice(i, 1);
-            }
-        }
-
-        for (let i = sparkles.length - 1; i >= 0; i--) {
-            const s = sparkles[i];
-            s.life--;
-            s.y += 0.5;
-            if (s.life <= 0) sparkles.splice(i, 1);
-        }
-
-        if (gameState.shieldTime > 0) {
-            gameState.shieldTime -= dt;
-            if (gameState.shieldTime <= 0) {
-                gameState.shieldTime = 0;
-                powerupIndicator.classList.remove("visible");
-            }
-        }
-
-        if (hitFlash > 0) {
-            hitFlash -= dt * 30;
-        }
-    }
-
-    function addScorePopup(amount, x, y, color) {
-        scorePopups.push({
-            amount: amount > 0 ? "+" + amount : String(amount),
-            x,
-            y,
-            color,
-            start: performance.now(),
-            duration: 650
-        });
-    }
-
-    function createSparkles(x, y, color, count = 8) {
-        for (let i = 0; i < count; i++) {
-            const angle = (Math.PI * 2 * i) / count + Math.random() * 0.3;
-            const speed = 80 + Math.random() * 60;
-            sparkles.push({
-                x,
-                y,
-                vx: Math.cos(angle) * speed,
-                vy: Math.sin(angle) * speed - 50,
-                color,
-                life: 22,
-                radius: 2 + Math.random() * 2
-            });
-        }
-    }
-
-    function handleCollisions() {
-        for (let i = jars.length - 1; i >= 0; i--) {
-            const jar = jars[i];
-            const bearCenterX = bear.x + bear.width / 2;
-            const bearCenterY = bear.y + 50;
-
-            const dx = jar.x + 10 - bearCenterX;
-            const dy = jar.y + 15 - bearCenterY;
-            const dist = Math.sqrt(dx * dx + dy * dy);
-
-            if (dist < 25) {
-                jars.splice(i, 1);
-                let mult = 1 + Math.min(gameState.streak * 0.05, 1.5);
-                let gain = Math.round(jar.value * mult);
-                gameState.score += gain;
-                gameState.streak += 1;
-
-                const popColor = jar.type === "gold"
-                    ? "#f97316"
-                    : jar.type === "shield"
-                        ? "#38bdf8"
-                        : "#0f766e";
-                addScorePopup(gain, bearCenterX, bear.y - 20, popColor);
-                createSparkles(jar.x + 10, jar.y + 15, popColor, jar.type === "gold" ? 12 : 8);
-                showComboIfNeeded();
-
-                if (jar.type === "shield") {
-                    gameState.shieldTime = 5;
-                    powerupIndicator.classList.add("visible");
-                    announceToScreenReader("Shield active for five seconds.");
-                }
-            }
-        }
-
-        for (let i = bees.length - 1; i >= 0; i--) {
-            const bee = bees[i];
-            const bearCenterX = bear.x + bear.width / 2;
-            const bearCenterY = bear.y + 50;
-
-            const dx = bee.x + 15 - bearCenterX;
-            const dy = bee.y + 12 - bearCenterY;
-            const dist = Math.sqrt(dx * dx + dy * dy);
-
-            if (dist < 30) {
-                if (gameState.shieldTime > 0) {
-                    gameState.shieldTime = 0;
-                    powerupIndicator.classList.remove("visible");
-                    addScorePopup(0, bearCenterX, bear.y - 20, "#e5e7eb");
-                    createSparkles(bee.x + 15, bee.y + 12, "#38bdf8", 10);
-                    announceToScreenReader("Bee blocked by shield.");
-                } else {
-                    gameState.lives -= 1;
-                    gameState.streak = 0;
-                    hitFlash = 16;
-                    createSparkles(bearCenterX, bearCenterY, "#ef4444", 16);
-                    announceToScreenReader("Bee hit. Lives left: " + gameState.lives);
-                    if (gameState.lives <= 0) {
-                        endGame();
-                        return;
-                    }
-                }
-                bees.splice(i, 1);
-            }
-        }
-    }
-
-    function showComboIfNeeded() {
-        streakValue.textContent = String(gameState.streak);
-        if (gameState.streak >= 5) {
-            streakBadge.textContent = "Combo!";
-            streakBadge.classList.add("visible");
-        } else {
-            streakBadge.classList.remove("visible");
-        }
-
-        if (gameState.streak > 0 && gameState.streak % 10 === 0) {
-            comboIndicator.textContent = "x" + (1 + Math.floor(gameState.streak / 10)) + " Combo!";
-            comboIndicator.classList.add("visible");
-            setTimeout(() => comboIndicator.classList.remove("visible"), 700);
-        }
-    }
-
-    function drawStaticBackground() {
-        if (!bgCtx) return;
-        const w = world.width;
-        const h = world.height;
-
-        bgCanvas.width = w;
-        bgCanvas.height = h;
-
-        const horizonBack = h * 0.40;
-        const horizonFront = h * 0.58;
-        const groundTop = h * 0.72;
-
-        const skyGradient = bgCtx.createLinearGradient(0, 0, 0, h);
-        skyGradient.addColorStop(0, "#d9f1ff");
-        skyGradient.addColorStop(0.35, "#addcff");
-        skyGradient.addColorStop(0.7, "#7fc4ff");
-        skyGradient.addColorStop(1, "#fbe7c8");
-        bgCtx.fillStyle = skyGradient;
-        bgCtx.fillRect(0, 0, w, h);
-
-        const sunX = w * 0.12;
-        const sunY = horizonBack * 0.55;
-        const sunGradient = bgCtx.createRadialGradient(sunX, sunY, 16, sunX, sunY, 110);
-        sunGradient.addColorStop(0, "rgba(255, 237, 185, 0.98)");
-        sunGradient.addColorStop(0.45, "rgba(255, 214, 143, 0.6)");
-        sunGradient.addColorStop(1, "rgba(255, 224, 153, 0)");
-        bgCtx.fillStyle = sunGradient;
-        bgCtx.beginPath();
-        bgCtx.arc(sunX, sunY, 110, 0, Math.PI * 2);
-        bgCtx.fill();
-
-        const backHill = bgCtx.createLinearGradient(0, horizonBack - 40, 0, groundTop);
-        backHill.addColorStop(0, "#b7d7a8");
-        backHill.addColorStop(1, "#9cc38a");
-        bgCtx.fillStyle = backHill;
-        bgCtx.beginPath();
-        bgCtx.moveTo(0, horizonBack + 20);
-        bgCtx.quadraticCurveTo(w * 0.25, horizonBack - 20, w * 0.55, horizonBack + 10);
-        bgCtx.quadraticCurveTo(w * 0.8, horizonBack + 40, w, horizonBack);
-        bgCtx.lineTo(w, groundTop);
-        bgCtx.lineTo(0, groundTop);
-        bgCtx.closePath();
-        bgCtx.fill();
-
-        const frontHill = bgCtx.createLinearGradient(0, horizonFront - 30, 0, groundTop);
-        frontHill.addColorStop(0, "#a3ce86");
-        frontHill.addColorStop(1, "#7fb76c");
-        bgCtx.fillStyle = frontHill;
-        bgCtx.beginPath();
-        bgCtx.moveTo(0, horizonFront + 15);
-        bgCtx.quadraticCurveTo(w * 0.22, horizonFront - 25, w * 0.5, horizonFront + 10);
-        bgCtx.quadraticCurveTo(w * 0.78, horizonFront + 45, w, horizonFront);
-        bgCtx.lineTo(w, groundTop);
-        bgCtx.lineTo(0, groundTop);
-        bgCtx.closePath();
-        bgCtx.fill();
-
-        const grassGradient = bgCtx.createLinearGradient(0, groundTop, 0, h);
-        grassGradient.addColorStop(0, "#72a95c");
-        grassGradient.addColorStop(1, "#5e924c");
-        bgCtx.fillStyle = grassGradient;
-        bgCtx.fillRect(0, groundTop, w, h - groundTop);
-
-        const pathGradient = bgCtx.createLinearGradient(0, groundTop, 0, h);
-        pathGradient.addColorStop(0, "#e2c9a5");
-        pathGradient.addColorStop(1, "#c8a979");
-        bgCtx.fillStyle = pathGradient;
-        bgCtx.beginPath();
-        bgCtx.moveTo(0, groundTop - 10);
-        bgCtx.quadraticCurveTo(w * 0.25, groundTop + 6, w * 0.5, groundTop - 4);
-        bgCtx.quadraticCurveTo(w * 0.75, groundTop - 16, w, groundTop + 4);
-        bgCtx.lineTo(w, h);
-        bgCtx.lineTo(0, h);
-        bgCtx.closePath();
-        bgCtx.fill();
-
-        const drawTree = (x, trunkHeightFactor) => {
-            const trunkHeight = h * trunkHeightFactor;
-            const trunkBottom = groundTop;
-            const trunkTop = trunkBottom - trunkHeight;
-
-            bgCtx.save();
-            bgCtx.fillStyle = "#5d4730";
-            bgCtx.fillRect(x, trunkTop, 18, trunkHeight - 18);
-
-            const leafGradient = bgCtx.createLinearGradient(0, trunkTop - 40, 0, trunkTop + 40);
-            leafGradient.addColorStop(0, "#7dbd6a");
-            leafGradient.addColorStop(1, "#5c9b52");
-            bgCtx.fillStyle = leafGradient;
-            bgCtx.beginPath();
-            bgCtx.ellipse(x + 9, trunkTop - 26, 55, 38, 0, 0, Math.PI * 2);
-            bgCtx.ellipse(x - 10, trunkTop - 4, 48, 32, 0, 0, Math.PI * 2);
-            bgCtx.ellipse(x + 30, trunkTop, 50, 30, 0, 0, Math.PI * 2);
-            bgCtx.fill();
-            bgCtx.restore();
-        };
-
-        drawTree(w * 0.14, 0.19);
-        drawTree(w * 0.46, 0.23);
-        drawTree(w * 0.78, 0.20);
-
-        bgCtx.strokeStyle = "rgba(63, 94, 51, 0.4)";
-        bgCtx.lineWidth = 1.5;
-        for (let x = 8; x < w; x += 24) {
-            bgCtx.beginPath();
-            bgCtx.moveTo(x, groundTop + 16);
-            bgCtx.lineTo(x + 4, groundTop + 6);
-            bgCtx.stroke();
-        }
-    }
-
-    function drawClouds() {
-        const time = Date.now();
-        const cloudDrift = Math.sin(time / 3200) * 12;
-
-        const drawCloud = (x, y, scale = 1, opacity = 0.9) => {
-            ctx.save();
-            ctx.globalAlpha = opacity;
-            const cloudGradient = ctx.createLinearGradient(x, y - 24 * scale, x, y + 28 * scale);
-            cloudGradient.addColorStop(0, "#ffffff");
-            cloudGradient.addColorStop(1, "#e3f0ff");
-            ctx.fillStyle = cloudGradient;
-            ctx.beginPath();
-            ctx.ellipse(x, y, 26 * scale, 18 * scale, 0, 0, Math.PI * 2);
-            ctx.ellipse(x + 18 * scale, y - 8 * scale, 22 * scale, 16 * scale, 0, 0, Math.PI * 2);
-            ctx.ellipse(x + 36 * scale, y + 2 * scale, 24 * scale, 17 * scale, 0, 0, Math.PI * 2);
-            ctx.ellipse(x - 18 * scale, y + 4 * scale, 18 * scale, 14 * scale, 0, 0, Math.PI * 2);
-            ctx.fill();
-            ctx.restore();
-        };
-
-        drawCloud(world.width * 0.22 + cloudDrift, world.height * 0.2, 1.12, 0.9);
-        drawCloud(world.width * 0.55 - cloudDrift * 0.6, world.height * 0.14 + 6, 0.94, 0.78);
-        drawCloud(world.width * 0.78 + cloudDrift * 0.4, world.height * 0.24, 1.26, 0.85);
-    }
-
-    function drawBear() {
-        const x = bear.x;
-        const y = bear.y;
-
-        ctx.save();
-        ctx.translate(x, y);
-
-        ctx.fillStyle = "rgba(0, 0, 0, 0.15)";
-        ctx.beginPath();
-        ctx.ellipse(35, 124, 44, 14, 0, 0, Math.PI * 2);
-        ctx.fill();
-
-        const bearLight = "#f8cf78";
-        const bearShade = "#e2ad57";
-
-        const earGradient = ctx.createLinearGradient(14, 4, 56, 22);
-        earGradient.addColorStop(0, bearLight);
-        earGradient.addColorStop(1, bearShade);
-        ctx.fillStyle = earGradient;
-        ctx.beginPath();
-        ctx.arc(21, 12, 10, 0, Math.PI * 2);
-        ctx.arc(49, 12, 10, 0, Math.PI * 2);
-        ctx.fill();
-
-        ctx.fillStyle = "rgba(255, 239, 207, 0.7)";
-        ctx.beginPath();
-        ctx.arc(21, 12, 5.5, 0, Math.PI * 2);
-        ctx.arc(49, 12, 5.5, 0, Math.PI * 2);
-        ctx.fill();
-
-        const headGradient = ctx.createLinearGradient(16, 4, 60, 54);
-        headGradient.addColorStop(0, bearLight);
-        headGradient.addColorStop(1, bearShade);
-        ctx.fillStyle = headGradient;
-        ctx.beginPath();
-        ctx.arc(35, 32, 25, 0, Math.PI * 2);
-        ctx.fill();
-
-        ctx.fillStyle = "#f9dd98";
-        ctx.beginPath();
-        ctx.ellipse(35, 38, 18, 15, 0, 0, Math.PI * 2);
-        ctx.fill();
-
-        ctx.fillStyle = "#2b1810";
-        ctx.beginPath();
-        ctx.arc(27, 27, 4, 0, Math.PI * 2);
-        ctx.arc(43, 27, 4, 0, Math.PI * 2);
-        ctx.fill();
-
-        ctx.beginPath();
-        ctx.arc(35, 34, 4.5, 0, Math.PI * 2);
-        ctx.fill();
-
-        ctx.fillStyle = "rgba(255, 255, 255, 0.7)";
-        ctx.beginPath();
-        ctx.arc(29, 25, 1.4, 0, Math.PI * 2);
-        ctx.arc(45, 25, 1.4, 0, Math.PI * 2);
-        ctx.fill();
-
-        ctx.beginPath();
-        ctx.arc(35, 42, 10, 0, Math.PI);
-        ctx.strokeStyle = "#2b1810";
-        ctx.lineWidth = 2;
-        ctx.stroke();
-
-        ctx.fillStyle = bearLight;
-        ctx.beginPath();
-        ctx.roundRect(12, 48, 46, 44, 12);
-        ctx.fill();
-
-        const shirtGradient = ctx.createLinearGradient(12, 52, 58, 86);
-        shirtGradient.addColorStop(0, "#f05b4c");
-        shirtGradient.addColorStop(1, "#c4251f");
-        ctx.fillStyle = shirtGradient;
-        ctx.beginPath();
-        ctx.roundRect(10, 52, 50, 25, 10);
-        ctx.fill();
-
-        ctx.strokeStyle = "rgba(255,255,255,0.35)";
-        ctx.lineWidth = 1.6;
-        ctx.beginPath();
-        ctx.moveTo(14, 58);
-        ctx.quadraticCurveTo(35, 54, 56, 60);
-        ctx.stroke();
-
-        ctx.fillStyle = bearLight;
-        ctx.beginPath();
-        ctx.roundRect(5, 56, 14, 18, 5);
-        ctx.roundRect(51, 56, 14, 18, 5);
-        ctx.fill();
-
-        const basketTopY = 82;
-        const basketWidth = 74;
-        const basketHeight = 44;
-        const basketX = -2;
-        const basketGradient = ctx.createLinearGradient(basketX, basketTopY, basketX, basketTopY + basketHeight);
-        basketGradient.addColorStop(0, "#c89b5b");
-        basketGradient.addColorStop(1, "#9c7446");
-        ctx.fillStyle = basketGradient;
-        ctx.beginPath();
-        ctx.roundRect(basketX, basketTopY, basketWidth, basketHeight, 14);
-        ctx.fill();
-
-        ctx.strokeStyle = "rgba(255, 236, 200, 0.5)";
-        ctx.lineWidth = 4;
-        for (let i = 7; i < basketWidth; i += 14) {
-            ctx.beginPath();
-            ctx.moveTo(basketX + i, basketTopY + 7);
-            ctx.lineTo(basketX + i - 10, basketTopY + basketHeight - 10);
-            ctx.stroke();
-        }
-        ctx.strokeStyle = "rgba(86, 52, 24, 0.4)";
-        ctx.lineWidth = 2;
-        for (let j = basketTopY + 12; j < basketTopY + basketHeight - 4; j += 12) {
-            ctx.beginPath();
-            ctx.moveTo(basketX + 7, j);
-            ctx.quadraticCurveTo(basketX + basketWidth / 2, j + 5, basketX + basketWidth - 7, j);
-            ctx.stroke();
-        }
-
-        ctx.fillStyle = "#8b6439";
-        ctx.beginPath();
-        ctx.ellipse(35, basketTopY + 5, 38, 10, 0, 0, Math.PI * 2);
-        ctx.fill();
-
-        ctx.strokeStyle = "#7b5734";
-        ctx.lineWidth = 6;
-        ctx.beginPath();
-        ctx.moveTo(12, basketTopY + 10);
-        ctx.quadraticCurveTo(35, basketTopY - 22, 58, basketTopY + 10);
-        ctx.stroke();
-        ctx.strokeStyle = "#dcb07c";
-        ctx.lineWidth = 3;
-        ctx.beginPath();
-        ctx.moveTo(16, basketTopY + 8);
-        ctx.quadraticCurveTo(35, basketTopY - 12, 54, basketTopY + 8);
-        ctx.stroke();
-
-        if (gameState.shieldTime > 0) {
-            const pulse = 1 + Math.sin(performance.now() / 200) * 0.08;
-            ctx.strokeStyle = "rgba(56, 189, 248, 0.85)";
-            ctx.lineWidth = 4;
-            ctx.save();
-            ctx.scale(pulse, pulse);
-            ctx.beginPath();
-            ctx.arc(35, 32, 48, 0, Math.PI * 2);
-            ctx.stroke();
-            ctx.restore();
-        }
-
-        ctx.restore();
-    }
-
-    function drawJars() {
-        for (const jar of jars) {
-            ctx.save();
-            ctx.translate(jar.x, jar.y);
-
-            let bodyColor = "#f4a944";
-            let glowColor = "rgba(244, 169, 68, 0.8)";
-            if (jar.type === "gold") {
-                bodyColor = "#f97316";
-                glowColor = "rgba(249, 115, 22, 0.7)";
-            }
-            if (jar.type === "shield") {
-                bodyColor = "#38bdf8";
-                glowColor = "rgba(56, 189, 248, 0.7)";
-            }
-
-            const honeyGlow = ctx.createRadialGradient(10, 14, 2, 10, 14, 16);
-            honeyGlow.addColorStop(0, glowColor);
-            honeyGlow.addColorStop(1, "rgba(244, 169, 68, 0)");
-            ctx.fillStyle = honeyGlow;
-            ctx.beginPath();
-            ctx.arc(10, 14, 16, 0, Math.PI * 2);
-            ctx.fill();
-
-            ctx.fillStyle = bodyColor;
-            ctx.beginPath();
-            ctx.ellipse(10, 15, 10, 15, 0, 0, Math.PI * 2);
-            ctx.fill();
-
-            ctx.fillStyle = "#fff5d6";
-            ctx.beginPath();
-            ctx.ellipse(8, 10, 3, 5, 0, 0, Math.PI * 2);
-            ctx.fill();
-
-            ctx.restore();
-        }
-    }
-
-    function drawBees() {
-        for (const bee of bees) {
-            ctx.save();
-            ctx.translate(bee.x, bee.y);
-
-            ctx.fillStyle = "rgba(0,0,0,0.06)";
-            ctx.beginPath();
-            ctx.ellipse(8, 12, 12, 8, 0, 0, Math.PI * 2);
-            ctx.fill();
-
-            ctx.fillStyle = "#f4a944";
-            ctx.beginPath();
-            ctx.roundRect(4, 4, 24, 18, 6);
-            ctx.fill();
-
-            ctx.strokeStyle = "#2b1810";
-            ctx.lineWidth = 2;
-            ctx.beginPath();
-            ctx.moveTo(10, 5);
-            ctx.lineTo(10, 22);
-            ctx.moveTo(17, 5);
-            ctx.lineTo(17, 22);
-            ctx.moveTo(24, 5);
-            ctx.lineTo(24, 22);
-            ctx.stroke();
-
-            const wingFlap = Math.sin(bee.wingPhase) * 0.3;
-            const wingGradient = ctx.createLinearGradient(8, -2, 22, 10);
-            wingGradient.addColorStop(0, "rgba(255, 255, 255, 0.9)");
-            wingGradient.addColorStop(1, "rgba(180, 220, 255, 0.5)");
-            ctx.fillStyle = wingGradient;
-
-            ctx.save();
-            ctx.translate(12, 2);
-            ctx.rotate(-0.35 + wingFlap);
-            ctx.beginPath();
-            ctx.ellipse(0, 0, 10, 6, 0, 0, Math.PI * 2);
-            ctx.fill();
-            ctx.restore();
-
-            ctx.save();
-            ctx.translate(22, 2);
-            ctx.rotate(0.35 - wingFlap);
-            ctx.beginPath();
-            ctx.ellipse(0, 0, 10, 6, 0, 0, Math.PI * 2);
-            ctx.fill();
-            ctx.restore();
-
-            ctx.fillStyle = "#2b1810";
-            ctx.beginPath();
-            ctx.moveTo(28, 12);
-            ctx.lineTo(34, 12);
-            ctx.lineTo(28, 16);
-            ctx.closePath();
-            ctx.fill();
-
-            ctx.restore();
-        }
-    }
-
-    function drawSparkles() {
-        for (const s of sparkles) {
-            const alpha = Math.max(0, s.life / 22);
-            const radius = 10 + (22 - s.life) * 0.7;
-            const gradient = ctx.createRadialGradient(s.x, s.y, 0, s.x, s.y, radius);
-            gradient.addColorStop(0, `rgba(255, 245, 214, ${alpha})`);
-            gradient.addColorStop(0.4, `rgba(244, 169, 68, ${alpha * 0.9})`);
-            gradient.addColorStop(1, "rgba(244, 169, 68, 0)");
-            ctx.fillStyle = gradient;
-            ctx.beginPath();
-            ctx.arc(s.x, s.y, radius, 0, Math.PI * 2);
-            ctx.fill();
-        }
-    }
-
-    function drawScorePopups() {
-        const now = performance.now();
-        for (let i = scorePopups.length - 1; i >= 0; i--) {
-            const p = scorePopups[i];
-            const t = (now - p.start) / p.duration;
-            if (t >= 1) {
-                scorePopups.splice(i, 1);
-                continue;
-            }
-            const easeOut = 1 - Math.pow(1 - t, 3);
-            const y = p.y - easeOut * 40;
-            const alpha = 1 - Math.pow(t, 2);
-            const scale = 1 + Math.sin(t * Math.PI) * 0.2;
-
-            ctx.save();
-            ctx.globalAlpha = alpha;
-            ctx.translate(p.x, y);
-            ctx.scale(scale, scale);
-            ctx.fillStyle = p.color;
-            ctx.strokeStyle = "rgba(255, 255, 255, 0.9)";
-            ctx.lineWidth = 3;
-            ctx.font = 'bold 18px "Patrick Hand", sans-serif';
-            ctx.textAlign = "center";
-            ctx.textBaseline = "middle";
-            ctx.strokeText(p.amount, 0, 0);
-            ctx.fillText(p.amount, 0, 0);
-            ctx.restore();
-        }
-    }
-
-    function render() {
-        ctx.clearRect(0, 0, world.width, world.height);
-
-        if (bgCanvas) {
-            ctx.drawImage(bgCanvas, 0, 0);
-        }
-
-        drawClouds();
-        drawJars();
-        drawBees();
-        drawSparkles();
-        drawBear();
-        drawScorePopups();
-
-        if (hitFlash > 0) {
-            ctx.fillStyle = `rgba(211, 47, 47, ${Math.min(0.45, hitFlash / 20)})`;
-            ctx.fillRect(0, 0, world.width, world.height);
-        }
-
-        if (gameState.streak > 1) {
-            ctx.fillStyle = "rgba(0,0,0,0.4)";
-            ctx.fillRect(world.width / 2 - 70, 10, 140, 32);
-            ctx.fillStyle = "#fffbe6";
-            ctx.font = '18px "Patrick Hand", sans-serif';
-            ctx.textAlign = "center";
-            ctx.fillText(`Combo x${gameState.streak}`, world.width / 2, 32);
-        }
-    }
-
-    function updateHud() {
-        scoreValue.textContent = String(gameState.score);
-        bestValue.textContent = String(gameState.best);
-        timeValue.textContent = String(Math.max(0, Math.floor(gameState.timeLeft)));
-        streakValue.textContent = String(gameState.streak);
-    }
-
-    function optimizedGameLoop(timestamp) {
-        frameCount++;
-        const elapsed = timestamp - lastFrameTime;
-
-        const targetFPS = 60;
-        const frameInterval = 1000 / targetFPS;
-
-        if (elapsed > frameInterval) {
-            lastFrameTime = timestamp - (elapsed % frameInterval);
-
-            if (!lastTimestamp) lastTimestamp = timestamp;
-            const dt = (timestamp - lastTimestamp) / 1000;
-            lastTimestamp = timestamp;
-
-            if (gameState.running && !gameState.paused) {
-                gameState.timeLeft -= dt;
-                if (gameState.timeLeft <= 0) {
-                    gameState.timeLeft = 0;
-                    endGame();
-                } else {
-                    updateEntities(dt);
-                    handleCollisions();
-                }
-                updateHud();
-            }
-
-            render();
-        }
-
-        requestAnimationFrame(optimizedGameLoop);
-    }
-
-    function showOverlay(overlay) {
-        [startOverlay, pauseOverlay, gameOverOverlay].forEach(function(el) {
-            if (!el) return;
-            const isTarget = el === overlay;
-            el.classList.toggle("visible", isTarget);
-            el.setAttribute("aria-hidden", String(!isTarget));
-        });
-    }
-
-    function hideOverlay(overlay) {
-        if (!overlay) return;
-        overlay.classList.remove("visible");
-        overlay.setAttribute("aria-hidden", "true");
-    }
-
-    function startGame() {
-        resetGameState();
-        gameState.running = true;
-        hideOverlay(startOverlay);
-        hideOverlay(gameOverOverlay);
-        hideOverlay(pauseOverlay);
-        announceToScreenReader("Game started. Catch the honey and avoid the bees.");
-    }
-
-    function pauseGame() {
-        if (!gameState.running) return;
-        gameState.paused = true;
-        showOverlay(pauseOverlay);
-        announceToScreenReader("Game paused.");
-    }
-
-    function resumeGame() {
-        if (!gameState.running) return;
-        gameState.paused = false;
-        hideOverlay(pauseOverlay);
-        announceToScreenReader("Game resumed.");
-    }
-
-    function endGame() {
-        if (!gameState.running) return;
-        gameState.running = false;
-        gameState.paused = false;
-        gameState.gamesPlayed += 1;
-
-        if (gameState.score > gameState.best) {
-            gameState.best = gameState.score;
-            announceToScreenReader("New high score " + gameState.best + ".");
-        } else {
-            announceToScreenReader("Final score " + gameState.score + ".");
-        }
-
-        saveProgress();
-        finalScore.textContent = String(gameState.score);
-        finalBest.textContent = String(gameState.best);
-        overlayBest.textContent = String(gameState.best);
-        overlayGames.textContent = String(gameState.gamesPlayed);
-
-        showOverlay(gameOverOverlay);
-    }
-
-    function toggleHelp() {
-        const isOpen = helpPanel.classList.toggle("visible");
-        helpPanel.setAttribute("aria-hidden", String(!isOpen));
-        helpToggle.setAttribute("aria-expanded", String(isOpen));
-        helpToggleSecondary.setAttribute("aria-expanded", String(isOpen));
-    }
-
-    function openSettings() {
-        settingsModal.classList.add("visible");
-        settingsToggle.setAttribute("aria-expanded", "true");
-        settingsBest.textContent = String(gameState.best);
-        settingsPanel.focus();
-    }
-
-    function closeSettings() {
-        settingsModal.classList.remove("visible");
-        settingsToggle.setAttribute("aria-expanded", "false");
-    }
-
-    function applySettingsToUi() {
-        musicToggle.dataset.on = settingsState.musicOn ? "true" : "false";
-        musicToggle.setAttribute("aria-pressed", String(settingsState.musicOn));
-        sfxToggle.dataset.on = settingsState.sfxOn ? "true" : "false";
-        sfxToggle.setAttribute("aria-pressed", String(settingsState.sfxOn));
-
-        diffButtons.forEach(btn => {
-            const level = Number(btn.dataset.level);
-            btn.classList.toggle("active", level === settingsState.difficulty);
-        });
-    }
-
-    function initTheme() {
-        const isDark = document.body.classList.contains("dark");
-        themeToggle.setAttribute("aria-pressed", String(isDark));
-        updateButtonStates();
-    }
-
-    function isFullscreen() {
-        return (
-            document.fullscreenElement ||
-            document.webkitFullscreenElement ||
-            document.mozFullScreenElement ||
-            document.msFullscreenElement
-        );
-    }
-
-    function enterFullscreen(el) {
-        if (el.requestFullscreen) {
-            el.requestFullscreen();
-        } else if (el.webkitRequestFullscreen) {
-            el.webkitRequestFullscreen();
-        } else if (el.mozRequestFullScreen) {
-            el.mozRequestFullScreen();
-        } else if (el.msRequestFullscreen) {
-            el.msRequestFullscreen();
-        }
-    }
-
-    function exitFullscreen() {
-        if (document.exitFullscreen) {
-            document.exitFullscreen();
-        } else if (document.webkitExitFullscreen) {
-            document.webkitExitFullscreen();
-        } else if (document.mozCancelFullScreen) {
-            document.mozCancelFullScreen();
-        } else if (document.msExitFullscreen) {
-            document.msExitFullscreen();
-        }
-    }
-
-    function updateFullscreenButton() {
-        const fs = isFullscreen();
-        const icon = fs ? "fa-down-left-and-up-right-to-center" : "fa-up-right-and-down-left-from-center";
-        const text = fs ? "Exit Fullscreen" : "Fullscreen";
-        fullscreenToggle.innerHTML = `<i class="fas ${icon}" aria-hidden="true"></i><span>${text}</span>`;
-    }
-
-    function initFullscreen() {
-        fullscreenToggle.addEventListener("click", () => {
-            if (isFullscreen()) {
-                exitFullscreen();
-            } else {
-                enterFullscreen(gameContainer);
-            }
-        });
-
-        ["fullscreenchange", "webkitfullscreenchange", "mozfullscreenchange", "MSFullscreenChange"]
-            .forEach(evt => {
-                document.addEventListener(evt, () => {
-                    updateFullscreenButton();
-                    resizeCanvas();
-                });
-            });
-
-        updateFullscreenButton();
-
-        document.addEventListener("keydown", (e) => {
-            if (e.key === "F11") {
-                e.preventDefault();
-                if (isFullscreen()) {
-                    exitFullscreen();
-                } else {
-                    enterFullscreen(gameContainer);
-                }
-            }
-        });
-    }
-
-    function handleKeyDown(e) {
-        if (e.key === "ArrowLeft") {
-            keys.left = true;
-        } else if (e.key === "ArrowRight") {
-            keys.right = true;
-        } else if (e.key === " " || e.code === "Space") {
-            e.preventDefault();
-            if (!gameState.running) {
-                startGame();
-            } else if (gameState.paused) {
-                resumeGame();
-            } else {
-                pauseGame();
-            }
-        } else if (e.key === "p" || e.key === "P") {
-            e.preventDefault();
-            if (gameState.running && !gameState.paused) {
-                pauseGame();
-            } else if (gameState.paused) {
-                resumeGame();
-            }
-        } else if (e.key === "Escape") {
-            if (settingsModal.classList.contains("visible")) {
-                closeSettings();
-                e.preventDefault();
-            }
-            if (helpPanel.classList.contains("visible")) {
-                toggleHelp();
-                e.preventDefault();
-            }
-            if (isFullscreen()) {
-                exitFullscreen();
-                e.preventDefault();
-            }
-        }
-    }
-
-    function handleKeyUp(e) {
-        if (e.key === "ArrowLeft") {
-            keys.left = false;
-        } else if (e.key === "ArrowRight") {
-            keys.right = false;
-        }
-    }
-
-    function bindPadButton(btn, direction) {
-        if (!btn) return;
-
-        const set = (pressed) => {
-            btn.setAttribute("aria-pressed", String(pressed));
-            if (direction === "left") {
-                keys.left = pressed;
-            } else if (direction === "right") {
-                keys.right = pressed;
-            }
-        };
-
-        btn.addEventListener("mousedown", (e) => {
-            e.preventDefault();
-            set(true);
-        });
-
-        btn.addEventListener("mouseup", (e) => {
-            e.preventDefault();
-            set(false);
-        });
-
-        btn.addEventListener("mouseleave", () => set(false));
-
-        btn.addEventListener("touchstart", (e) => {
-            e.preventDefault();
-            set(true);
-        }, { passive: false });
-
-        btn.addEventListener("touchend", (e) => {
-            e.preventDefault();
-            set(false);
-        }, { passive: false });
-
-        btn.addEventListener("touchcancel", () => set(false));
-    }
-
-    function initControls() {
-        window.addEventListener("keydown", handleKeyDown);
-        window.addEventListener("keyup", handleKeyUp);
-
-        bindPadButton(btnLeft, "left");
-        bindPadButton(btnRight, "right");
-
-        pauseButton.addEventListener("click", () => {
-            if (!gameState.running) return;
-            if (gameState.paused) {
-                resumeGame();
-            } else {
-                pauseGame();
-            }
-        });
-
-        helpToggle.addEventListener("click", toggleHelp);
-        helpToggleSecondary.addEventListener("click", toggleHelp);
-    }
-
-    function initTouchControls() {
-        document.querySelectorAll(".pad-btn, .btn").forEach(btn => {
-            btn.addEventListener("contextmenu", e => e.preventDefault());
-        });
-
-        let touchStartX = 0;
-        let touchStartY = 0;
-
-        gameContainer.addEventListener("touchstart", (e) => {
-            e.preventDefault();
-            const touch = e.touches[0];
-            touchStartX = touch.clientX;
-            touchStartY = touch.clientY;
-
-            if (!gameState.running && e.target === gameContainer) {
-                startGame();
-            }
-        }, { passive: false });
-
-        gameContainer.addEventListener("touchmove", (e) => {
-            e.preventDefault();
-            if (!gameState.running || gameState.paused) return;
-
-            const touch = e.touches[0];
-            const deltaX = touch.clientX - touchStartX;
-            const deltaY = touch.clientY - touchStartY;
-
-            if (Math.abs(deltaX) > 20) {
-                keys.left = deltaX < 0;
-                keys.right = deltaX > 0;
-                touchStartX = touch.clientX;
-            }
-
-            if (Math.abs(deltaY) > 30) {
-            }
-        }, { passive: false });
-
-        gameContainer.addEventListener("touchend", (e) => {
-            e.preventDefault();
-            keys.left = false;
-            keys.right = false;
-        }, { passive: false });
-
-        const vibrateOnPress = (duration = 10) => {
-            if ("vibrate" in navigator) {
-                navigator.vibrate(duration);
-            }
-        };
-
-        document.querySelectorAll(".btn, .pad-btn").forEach(button => {
-            button.addEventListener("touchstart", () => {
-                vibrateOnPress(5);
-            }, { passive: true });
-        });
-    }
-
-    function initSettings() {
-        settingsToggle.addEventListener("click", openSettings);
-        settingsClose.addEventListener("click", closeSettings);
-        settingsModal.addEventListener("click", (e) => {
-            if (e.target === settingsModal) {
-                closeSettings();
-            }
-        });
-
-        musicToggle.addEventListener("click", () => {
-            settingsState.musicOn = !settingsState.musicOn;
-            applySettingsToUi();
-            saveProgress();
-            announceToScreenReader("Music " + (settingsState.musicOn ? "enabled" : "disabled") + ".");
-        });
-
-        sfxToggle.addEventListener("click", () => {
-            settingsState.sfxOn = !settingsState.sfxOn;
-            applySettingsToUi();
-            saveProgress();
-            announceToScreenReader("Sound effects " + (settingsState.sfxOn ? "enabled" : "disabled") + ".");
-        });
-
-        diffButtons.forEach(btn => {
-            btn.addEventListener("click", () => {
-                const level = Number(btn.dataset.level);
-                settingsState.difficulty = level;
-                applySettingsToUi();
-                saveProgress();
-                announceToScreenReader("Difficulty set to " + btn.textContent + ".");
-            });
-        });
-
-        resetProgress.addEventListener("click", () => {
-            if (confirm("Reset all progress? This will delete your high score and games played.")) {
-                gameState.best = 0;
-                gameState.gamesPlayed = 0;
-                saveProgress();
-                settingsBest.textContent = "0";
-                bestValue.textContent = "0";
-                overlayBest.textContent = "0";
-                overlayGames.textContent = "0";
-                announceToScreenReader("Progress reset.");
-            }
-        });
-    }
-
-    function initTopbar() {
-        themeToggle.addEventListener("click", () => {
-            const isDark = document.body.classList.toggle("dark");
-            localStorage.setItem(STORAGE_KEYS.THEME, isDark ? "dark" : "light");
-            initTheme();
-        });
-        initTheme();
-        initFullscreen();
-    }
-
-    function initOverlays() {
-        const bindStartLike = (btn, fn) => {
-            if (!btn) return;
-            btn.addEventListener("click", fn);
-            btn.addEventListener("touchstart", (e) => {
-                e.preventDefault();
-                fn();
-            }, { passive: false });
-        };
-
-        bindStartLike(startButton, startGame);
-        bindStartLike(resumeButton, resumeGame);
-        bindStartLike(restartButton, startGame);
-
-        overlayBest.textContent = String(gameState.best);
-        overlayGames.textContent = String(gameState.gamesPlayed);
-    }
-
-    function init() {
-        try {
-            loadPersistedState();
-            resizeCanvas();
-            updateHud();
-            applySettingsToUi();
-            initControls();
-            initTouchControls();
-            initSettings();
-            initTopbar();
-            initOverlays();
-            window.addEventListener("resize", resizeCanvas);
-            requestAnimationFrame(optimizedGameLoop);
-        } catch (err) {
-            console.error("Honey Hunt init failed:", err);
-            announceToScreenReader("Something went wrong initializing the game.");
-        }
-    }
-
-    if (document.readyState === "loading") {
-        document.addEventListener("DOMContentLoaded", init);
-    } else {
-        init();
-    }
-})();
+  });
+
+  // Allow clicking chapter pills directly
+  document.querySelectorAll("[data-chapter-target]").forEach((btn) => {
+    btn.addEventListener("click", () => {
+      const target = parseInt(btn.dataset.chapterTarget, 10) - 1;
+      if (!isNaN(target) && target >= 0 && target < total) {
+        current = target;
+        updateUI();
+      }
+    });
+  });
+
+  // Optional keyboard navigation
+  document.addEventListener("keydown", (e) => {
+    if (e.key === "ArrowRight") nextBtn?.click();
+    if (e.key === "ArrowLeft") prevBtn?.click();
+  });
+
+  // Initialize
+  updateUI();
+});
 </script>
+<script defer src="script.js"></script>
 </body>
 </html>
