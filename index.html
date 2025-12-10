@@ -2678,16 +2678,18 @@ body {
             vibrationToggle.checked = currentSettings.vibration;
             mobileControlsToggle.checked = currentSettings.mobileControls;
 
-            // Set active theme
+            // Normalize the stored theme value and sync the UI selection
+            const themeChoice = ['light', 'dark', 'auto'].includes(currentSettings.theme)
+                ? currentSettings.theme
+                : defaultSettings.theme;
+            currentSettings.theme = themeChoice;
+
             themeOptions.forEach(option => {
-                option.classList.remove('active');
-                if (option.dataset.theme === currentSettings.theme) {
-                    option.classList.add('active');
-                }
+                option.classList.toggle('active', option.dataset.theme === themeChoice);
             });
 
             // Apply theme to document
-            applyTheme(currentSettings.theme);
+            applyTheme(themeChoice);
         }
 
         // Apply settings to game
@@ -2822,6 +2824,8 @@ body {
 
         // Collect settings from UI
         function collectSettingsFromUI() {
+            const activeTheme = document.querySelector('.theme-option.active');
+
             return {
                 difficulty: difficultySelect.value,
                 music: musicToggle.checked,
@@ -2832,7 +2836,7 @@ body {
                 sensitivity: parseInt(sensitivitySlider.value),
                 vibration: vibrationToggle.checked,
                 mobileControls: mobileControlsToggle.checked,
-                theme: document.querySelector('.theme-option.active').dataset.theme
+                theme: activeTheme ? activeTheme.dataset.theme : defaultSettings.theme
             };
         }
 
