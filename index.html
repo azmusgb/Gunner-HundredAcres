@@ -1,3 +1,4 @@
+
 <!DOCTYPE html>
 <html lang="en">
 <head>
@@ -15,16 +16,16 @@
           property="og:description">
     <meta content="icons/icon.svg" property="og:image">
     <meta content="website" property="og:type">
-    
-    <!-- Fonts -->
-    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.1/css/all.min.css" 
-          integrity="sha512-DTOQO9RWCH3ppGqcWaEA1BIZOC6xxalwEsw9c2QQeAIftl+Vegovlnee1c9QX4TctnWMn13TZye+giMm8e2LwA==" 
+
+    <!-- Fonts & Icons -->
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.1/css/all.min.css"
+          integrity="sha512-DTOQO9RWCH3ppGqcWaEA1BIZOC6xxalwEsw9c2QQeAIftl+Vegovlnee1c9QX4TctnWMn13TZye+giMm8e2LwA=="
           crossorigin="anonymous" referrerpolicy="no-referrer">
     <link rel="preconnect" href="https://fonts.googleapis.com">
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
     <link href="https://fonts.googleapis.com/css2?family=EB+Garamond:wght@400;500;600&family=Patrick+Hand&display=swap"
           rel="stylesheet">
-    
+
     <style>
         /* ==========================================================================
            BABY GUNNAR'S HUNDRED ACRE WOOD - REFACTORED DESIGN
@@ -40,7 +41,7 @@
             --color-green: #5D7D4F;
             --color-green-light: #8B9D77;
             --color-blue: #6BA3D4;
-            
+
             /* Neutrals */
             --color-parchment: #F6ECD6;
             --color-parchment-dark: #E8DCC5;
@@ -48,29 +49,29 @@
             --color-ink-muted: #6B4A32;
             --color-white: #FFFCF7;
             --color-black: #1A1A1A;
-            
+
             /* Layout */
             --space-xs: 0.5rem;
             --space-sm: 1rem;
             --space-md: 1.5rem;
             --space-lg: 2.5rem;
             --space-xl: 3rem;
-            
+
             /* Typography */
             --font-body: 'EB Garamond', 'Georgia', serif;
             --font-heading: 'Patrick Hand', cursive;
             --font-ui: -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
-            
+
             /* Effects */
             --shadow-soft: 0 4px 12px rgba(0, 0, 0, 0.08);
             --shadow-medium: 0 8px 24px rgba(0, 0, 0, 0.12);
             --shadow-heavy: 0 16px 48px rgba(0, 0, 0, 0.16);
-            
+
             --radius-sm: 8px;
             --radius-md: 12px;
             --radius-lg: 20px;
             --radius-full: 999px;
-            
+
             /* Game Constants */
             --bear-speed: 260px;
             --jar-spawn-rate: 0.02;
@@ -103,29 +104,36 @@
             position: relative;
         }
 
-        /* 3. MODE INDICATOR */
+        /* 3. MODE INDICATOR (game/story view toggling hooks if needed later) */
         [data-mode="game"] .story-elements { display: none !important; }
         [data-mode="story"] .game-elements { display: none !important; }
-        [data-mode="settings"] :not(.settings-elements) { filter: blur(2px); }
+
+        /* Instead of blurring everything, blur specific main areas when settings are open */
+        body[data-mode="settings"] .hero-container,
+        body[data-mode="settings"] .main-nav,
+        body[data-mode="settings"] .content-container,
+        body[data-mode="settings"] .site-footer {
+            filter: blur(3px);
+            pointer-events: none;
+            user-select: none;
+        }
 
         /* 4. LOADING STATE */
         .loading-overlay {
             position: fixed;
-            top: 0;
-            left: 0;
-            right: 0;
-            bottom: 0;
+            inset: 0;
             background: var(--color-parchment);
             display: flex;
             flex-direction: column;
             align-items: center;
             justify-content: center;
             z-index: 9999;
-            transition: opacity 0.3s ease;
+            transition: opacity 0.3s ease, visibility 0.3s ease;
         }
 
         .loading-overlay.hidden {
             opacity: 0;
+            visibility: hidden;
             pointer-events: none;
         }
 
@@ -168,9 +176,8 @@
 
         .hero-content {
             position: absolute;
+            inset-inline: 0;
             bottom: 0;
-            left: 0;
-            right: 0;
             background: linear-gradient(to top, rgba(255, 255, 255, 0.95), rgba(255, 248, 225, 0.85));
             padding: var(--space-lg);
             text-align: center;
@@ -197,7 +204,8 @@
             background: white;
             border-radius: var(--radius-lg);
             padding: var(--space-md);
-            margin-bottom: var(--space-lg);
+            margin: 0 auto var(--space-lg);
+            max-width: 1200px;
             box-shadow: var(--shadow-medium);
             border: 2px solid var(--color-gold);
             position: sticky;
@@ -307,7 +315,7 @@
             );
             border-radius: 8px 24px 24px 8px;
             padding: 40px;
-            box-shadow: 
+            box-shadow:
                 inset 0 1px 0 rgba(255, 255, 255, 0.6),
                 inset 0 -1px 0 rgba(0, 0, 0, 0.1),
                 0 20px 60px rgba(0, 0, 0, 0.3),
@@ -329,7 +337,7 @@
                 rgba(139, 111, 71, 0.8) 100%
             );
             border-radius: 4px;
-            box-shadow: 
+            box-shadow:
                 inset 2px 0 4px rgba(0, 0, 0, 0.3),
                 inset -2px 0 4px rgba(255, 255, 255, 0.2),
                 5px 0 15px rgba(0, 0, 0, 0.2);
@@ -346,7 +354,7 @@
             );
             padding: 40px;
             border-radius: 4px;
-            box-shadow: 
+            box-shadow:
                 inset 0 0 0 1px rgba(139, 111, 71, 0.2),
                 inset 0 0 40px rgba(139, 111, 71, 0.1),
                 0 4px 20px rgba(0, 0, 0, 0.1);
@@ -442,6 +450,7 @@
             display: flex;
             justify-content: center;
             gap: var(--space-md);
+            flex-wrap: wrap;
         }
 
         .game-btn {
@@ -594,6 +603,7 @@
             font-family: var(--font-body);
             font-size: 1rem;
             transition: all 0.3s ease;
+            resize: vertical;
         }
 
         .form-input:focus {
@@ -699,6 +709,11 @@
             padding: var(--space-sm);
             background: var(--color-parchment);
             border-radius: var(--radius-sm);
+            gap: var(--space-sm);
+        }
+
+        .settings-option span {
+            font-family: var(--font-ui);
         }
 
         .toggle-switch {
@@ -717,10 +732,7 @@
         .toggle-slider {
             position: absolute;
             cursor: pointer;
-            top: 0;
-            left: 0;
-            right: 0;
-            bottom: 0;
+            inset: 0;
             background-color: #ccc;
             transition: .4s;
             border-radius: 24px;
@@ -744,6 +756,43 @@
 
         input:checked + .toggle-slider:before {
             transform: translateX(26px);
+        }
+
+        .settings-actions {
+            display: flex;
+            justify-content: flex-end;
+            gap: var(--space-sm);
+            margin-top: var(--space-lg);
+            flex-wrap: wrap;
+        }
+
+        /* Settings toggle button (gear) */
+        .settings-toggle {
+            position: fixed;
+            top: 20px;
+            right: 20px;
+            width: 44px;
+            height: 44px;
+            border-radius: 50%;
+            border: 2px solid var(--color-gold);
+            background: white;
+            display: grid;
+            place-items: center;
+            cursor: pointer;
+            box-shadow: var(--shadow-soft);
+            z-index: 1002;
+            transition: transform 0.2s ease, box-shadow 0.2s ease, background 0.2s ease;
+        }
+
+        .settings-toggle i {
+            color: var(--color-ink-muted);
+            font-size: 1.2rem;
+        }
+
+        .settings-toggle:hover {
+            background: #FFF9E6;
+            transform: translateY(-1px) rotate(15deg);
+            box-shadow: var(--shadow-medium);
         }
 
         /* 13. FOOTER */
@@ -772,6 +821,9 @@
             font-weight: 500;
             cursor: pointer;
             transition: all 0.3s ease;
+            display: inline-flex;
+            align-items: center;
+            gap: var(--space-xs);
         }
 
         .footer-btn:hover {
@@ -805,32 +857,36 @@
                 padding: var(--space-sm);
                 font-size: 16px;
             }
-            
+
             .hero-image {
                 height: 300px;
             }
-            
+
             .story-view {
                 padding: 20px;
             }
-            
+
             .story-content {
                 padding: 20px;
             }
-            
+
             .game-hud {
                 grid-template-columns: repeat(3, 1fr);
             }
-            
+
             .mobile-controls {
                 display: flex;
             }
-            
+
             .settings-panel {
                 width: 100%;
                 right: -100%;
             }
-            
+
+            .game-controls {
+                flex-wrap: wrap;
+            }
+
             .nav-buttons {
                 flex-wrap: nowrap;
                 overflow-x: auto;
@@ -841,15 +897,15 @@
             .hero-image {
                 height: 250px;
             }
-            
+
             .hero-title {
                 font-size: 2rem;
             }
-            
+
             .game-hud {
                 grid-template-columns: repeat(2, 1fr);
             }
-            
+
             .registry-grid {
                 grid-template-columns: 1fr;
             }
@@ -864,11 +920,11 @@
                 --color-ink-muted: #C8B9A0;
                 --color-white: #1A1A1A;
             }
-            
+
             body {
                 background: linear-gradient(135deg, #1A1610 0%, #2A241C 50%, #3A342C 100%);
             }
-            
+
             .story-view {
                 background: linear-gradient(
                     90deg,
@@ -880,86 +936,27 @@
                     rgba(74, 62, 42, 0.8) 100%
                 );
             }
+
+            .main-nav,
+            .registry-view,
+            .game-view,
+            .wishes-view,
+            .settings-panel,
+            .wishes-form {
+                background: #2A241C;
+                color: var(--color-ink);
+            }
         }
     </style>
 </head>
-<body>
+<body data-mode="story">
     <!-- Loading Overlay -->
     <div class="loading-overlay" id="loadingOverlay">
         <div class="loading-spinner"></div>
         <p>Entering the Hundred Acre Wood...</p>
     </div>
 
-    <!-- Settings Button -->
-    <button class="settings-toggle" id="settingsToggle" aria-label="Open settings">
-        <i class="fas fa-cog"></i>
-    </button>
 
-    <!-- Settings Panel -->
-    <div class="settings-panel" id="settingsPanel">
-        <div class="settings-header">
-            <h2 class="settings-title">Game Settings</h2>
-            <button class="close-settings" id="closeSettings">×</button>
-        </div>
-        
-        <section class="settings-section">
-            <h3 class="settings-section-title"><i class="fas fa-gamepad"></i> Difficulty</h3>
-            <div class="settings-option">
-                <span>Level</span>
-                <select id="difficultySelect" class="form-input">
-                    <option value="easy">Easy</option>
-                    <option value="medium" selected>Medium</option>
-                    <option value="hard">Hard</option>
-                    <option value="expert">Expert</option>
-                </select>
-            </div>
-        </section>
-        
-        <section class="settings-section">
-            <h3 class="settings-section-title"><i class="fas fa-volume-up"></i> Sound</h3>
-            <div class="settings-option">
-                <span>Background Music</span>
-                <label class="toggle-switch">
-                    <input type="checkbox" id="musicToggle" checked>
-                    <span class="toggle-slider"></span>
-                </label>
-            </div>
-            <div class="settings-option">
-                <span>Sound Effects</span>
-                <label class="toggle-switch">
-                    <input type="checkbox" id="sfxToggle" checked>
-                    <span class="toggle-slider"></span>
-                </label>
-            </div>
-            <div class="settings-option">
-                <span>Volume</span>
-                <input type="range" id="volumeSlider" min="0" max="100" value="80" class="form-input">
-            </div>
-        </section>
-        
-        <section class="settings-section">
-            <h3 class="settings-section-title"><i class="fas fa-palette"></i> Appearance</h3>
-            <div class="settings-option">
-                <span>Particle Effects</span>
-                <label class="toggle-switch">
-                    <input type="checkbox" id="particlesToggle" checked>
-                    <span class="toggle-slider"></span>
-                </label>
-            </div>
-            <div class="settings-option">
-                <span>Animations</span>
-                <label class="toggle-switch">
-                    <input type="checkbox" id="animationsToggle" checked>
-                    <span class="toggle-slider"></span>
-                </label>
-            </div>
-        </section>
-        
-        <div class="settings-actions">
-            <button class="game-btn secondary" id="resetSettings">Reset Defaults</button>
-            <button class="game-btn primary" id="saveSettings">Save Settings</button>
-        </div>
-    </div>
 
     <!-- Hero Section -->
     <header class="hero-container">
@@ -967,7 +964,7 @@
             <img src="data:image/svg+xml;base64,PHN2ZyB3aWR0aD0iODAwIiBoZWlnaHQ9IjQwMCIgZmlsbD0ibm9uZSIgeG1sbnM9Imh0dHA6Ly93d3cudzMub3JnLzIwMDAvc3ZnIj48cmVjdCB3aWR0aD0iODAwIiBoZWlnaHQ9IjQwMCIgZmlsbD0iI0ZGQ0Y4NyIvPjx0ZXh0IHg9IjQwMCIgeT0iMjAwIiBmb250LWZhbWlseT0iQXJpYWwiIGZvbnQtc2l6ZT0iMjQiIHRleHQtYW5jaG9yPSJtaWRkbGUiIGZpbGw9IiM1RDdENEYiPkJhYnkgR3VubmFyJ3MgSHVuZHJlZCBBY3JlIFdvb2Q8L3RleHQ+PC9zdmc+" alt="Baby Gunnar's Hundred Acre Wood" class="hero-image">
             <div class="hero-content">
                 <h1 class="hero-title">Baby Gunnar's Hundred Acre Wood Shower</h1>
-                <p class="hero-subtitle">A storybook celebration with Pooh & friends</p>
+                <p class="hero-subtitle">A storybook celebration with Pooh &amp; friends</p>
             </div>
         </div>
     </header>
@@ -1003,7 +1000,7 @@
     <!-- Main Content -->
     <main class="content-container">
         <!-- Story View -->
-        <div class="content-view story-view active" id="storyView">
+        <section class="content-view story-view active" id="storyView" aria-label="Story view">
             <div class="story-content">
                 <header class="story-header">
                     <h2 class="story-title">A Special Day in the Hundred Acre Wood</h2>
@@ -1014,20 +1011,20 @@
                 <p class="story-text">Winnie the Pooh, being a Bear of Very Little Brain but a Very Big Heart, knew that the most important thing for any celebration was honey. And not just a little honey, but lots and lots of it. After all, welcoming Baby Gunnar was a Very Important Matter.</p>
                 <p class="story-text">"But first," thought Pooh, looking up at his honey pots on the high shelf, "we'll need to gather more honey. Won't you help?"</p>
             </div>
-        </div>
+        </section>
 
         <!-- Game View -->
-        <div class="content-view game-view" id="gameView">
+        <section class="content-view game-view" id="gameView" aria-label="Honey game view">
             <div class="game-canvas-container">
                 <canvas id="gameCanvas"></canvas>
                 <div class="mobile-controls">
-                    <button class="mobile-control-btn" id="mobileLeft"><i class="fas fa-arrow-left"></i></button>
-                    <button class="mobile-control-btn" id="mobilePause"><i class="fas fa-pause"></i></button>
-                    <button class="mobile-control-btn" id="mobileRight"><i class="fas fa-arrow-right"></i></button>
+                    <button class="mobile-control-btn" id="mobileLeft" aria-label="Move left"><i class="fas fa-arrow-left"></i></button>
+                    <button class="mobile-control-btn" id="mobilePause" aria-label="Pause game"><i class="fas fa-pause"></i></button>
+                    <button class="mobile-control-btn" id="mobileRight" aria-label="Move right"><i class="fas fa-arrow-right"></i></button>
                 </div>
             </div>
-            
-            <div class="game-hud">
+
+            <div class="game-hud" aria-label="Game statistics">
                 <div class="hud-item">
                     <span class="hud-label">Score</span>
                     <span class="hud-value" id="scoreValue">0</span>
@@ -1049,8 +1046,8 @@
                     <span class="hud-value" id="streakValue">0</span>
                 </div>
             </div>
-            
-            <div class="game-controls">
+
+            <div class="game-controls" aria-label="Game controls">
                 <button class="game-btn primary" id="startGame">
                     <i class="fas fa-play"></i> Start Game
                 </button>
@@ -1061,48 +1058,48 @@
                     <i class="fas fa-redo"></i> Restart
                 </button>
             </div>
-        </div>
+        </section>
 
         <!-- Registry View -->
-        <div class="content-view registry-view" id="registryView">
+        <section class="content-view registry-view" id="registryView" aria-label="Registry view">
             <header class="registry-header">
                 <h2 class="registry-title">Baby Gunnar's Registry</h2>
                 <p>Your presence is the greatest present, but if you'd like to contribute to his woodland adventures:</p>
             </header>
-            
+
             <div class="registry-grid">
                 <a href="https://my.babylist.com/lea-hardesty" class="registry-card" target="_blank" rel="noopener">
                     <div class="card-icon">🎯</div>
-                    <h3 class="card-title">babylist Registry</h3>
+                    <h3 class="card-title">Babylist Registry</h3>
                     <p>For everyday essentials and nursery items</p>
                 </a>
-                
+
                 <div class="registry-card">
                     <div class="card-icon">💝</div>
                     <h3 class="card-title">Gift Ideas</h3>
                     <ul style="list-style: none; padding-left: 0;">
-                        <li>📚 Board books & stories</li>
+                        <li>📚 Board books &amp; stories</li>
                         <li>🧸 Woodland-themed clothing</li>
-                        <li>🛏️ Soft blankets & swaddles</li>
-                        <li>👶 Diapers & essentials</li>
+                        <li>🛏️ Soft blankets &amp; swaddles</li>
+                        <li>👶 Diapers &amp; essentials</li>
                     </ul>
                 </div>
             </div>
-            
+
             <div style="margin-top: var(--space-xl); text-align: center;">
                 <h3>Nursery Details</h3>
                 <p>Theme: Hundred Acre Wood Adventures • Colors: Honey gold, Pooh red, sage green</p>
                 <p>Location: Arizona • Expected: Late August 2025</p>
             </div>
-        </div>
+        </section>
 
         <!-- Wishes View -->
-        <div class="content-view wishes-view" id="wishesView">
+        <section class="content-view wishes-view" id="wishesView" aria-label="Guest wishes view">
             <header class="registry-header">
                 <h2 class="registry-title">Share Your Wishes</h2>
                 <p>Leave wisdom, well-wishes, or favorite childhood memories for Gunnar's storybook</p>
             </header>
-            
+
             <form class="wishes-form" id="wishesForm">
                 <div class="form-grid">
                     <div class="form-group">
@@ -1120,7 +1117,7 @@
                         </select>
                     </div>
                 </div>
-                
+
                 <div class="form-group">
                     <label for="wishMessage" class="form-label">Your Message</label>
                     <textarea id="wishMessage" class="form-input" rows="4" placeholder="What wisdom or wishes would you like to share with Baby Gunnar?..." required></textarea>
@@ -1128,19 +1125,19 @@
                         <span id="charCount">0</span>/500 characters
                     </div>
                 </div>
-                
+
                 <div style="text-align: center; margin-top: var(--space-lg);">
                     <button type="submit" class="submit-btn">
                         <i class="fas fa-book"></i> Add to Gunnar's Storybook
                     </button>
                 </div>
             </form>
-            
+
             <div id="wishesDisplay" style="margin-top: var(--space-xl);">
                 <h3 style="text-align: center; margin-bottom: var(--space-lg);">Wishes from the Wood</h3>
                 <!-- Wishes will appear here -->
             </div>
-        </div>
+        </section>
     </main>
 
     <!-- Footer -->
@@ -1152,1173 +1149,1174 @@
             <button class="footer-btn" id="toggleMusicBtn"><i class="fas fa-music"></i> Music</button>
         </div>
     </footer>
-<audio id="bgMusic" loop>
-    <!-- Fallback silent audio -->
-</audio>
-<audio id="honeySound" preload="auto"></audio>
-<audio id="pageSound" preload="auto"></audio>
-<audio id="beeSound" preload="auto"></audio>
 
-<script>
-    // ==========================================================================
-    // BABY SHOWER APPLICATION - REFACTORED ARCHITECTURE
-    // ==========================================================================
+    <!-- Audio Elements -->
+    <audio id="bgMusic" loop></audio>
+    <audio id="honeySound" preload="auto"></audio>
+    <audio id="pageSound" preload="auto"></audio>
+    <audio id="beeSound" preload="auto"></audio>
 
-    // STATE MANAGEMENT
-    class AppState {
-        constructor() {
-            this.state = {
-                currentView: 'story',
-                currentChapter: 1,
-                mode: 'story', // 'story', 'game', 'settings'
-                game: {
-                    score: 0,
-                    best: 0,
-                    running: false,
-                    paused: false,
-                    timeLeft: 60,
-                    lives: 3,
-                    streak: 0
-                },
-                settings: {
-                    difficulty: 'medium',
-                    music: true,
-                    sfx: true,
-                    volume: 80,
-                    particles: true,
-                    animations: true,
-                    sensitivity: 260
-                },
-                wishes: []
-            };
-            this.listeners = [];
-            this.load();
-        }
+    <script>
+        // ==========================================================================
+        // BABY SHOWER APPLICATION - REFACTORED ARCHITECTURE
+        // ==========================================================================
 
-        set(path, value) {
-            const paths = path.split('.');
-            let obj = this.state;
-            for (let i = 0; i < paths.length - 1; i++) {
-                obj = obj[paths[i]];
+        // STATE MANAGEMENT
+        class AppState {
+            constructor() {
+                this.state = {
+                    currentView: 'story',
+                    currentChapter: 1,
+                    mode: 'story', // 'story', 'game', 'settings'
+                    game: {
+                        score: 0,
+                        best: 0,
+                        running: false,
+                        paused: false,
+                        timeLeft: 60,
+                        lives: 3,
+                        streak: 0
+                    },
+                    settings: {
+                        difficulty: 'medium',
+                        music: true,
+                        sfx: true,
+                        volume: 80,
+                        particles: true,
+                        animations: true,
+                        sensitivity: 260
+                    },
+                    wishes: []
+                };
+                this.listeners = [];
+                this.load();
             }
-            obj[paths[paths.length - 1]] = value;
-            this.save();
-            this.notify(path, value);
-        }
 
-        get(path) {
-            return path.split('.').reduce((obj, key) => obj?.[key], this.state);
-        }
-
-        on(path, callback) {
-            this.listeners.push({ path, callback });
-        }
-
-        notify(path, value) {
-            this.listeners.forEach(({ path: listenerPath, callback }) => {
-                if (path.startsWith(listenerPath) || listenerPath === '*') {
-                    callback(path, value);
-                }
-            });
-        }
-
-        save() {
-            try {
-                localStorage.setItem('babyShowerState', JSON.stringify({
-                    settings: this.state.settings,
-                    game: { best: this.state.game.best },
-                    wishes: this.state.wishes
-                }));
-            } catch (e) {
-                console.error('Failed to save state:', e);
-            }
-        }
-
-        load() {
-            try {
-                const saved = localStorage.getItem('babyShowerState');
-                if (saved) {
-                    const parsed = JSON.parse(saved);
-                    this.state.settings = { ...this.state.settings, ...parsed.settings };
-                    this.state.game.best = parsed.game?.best || 0;
-                    this.state.wishes = parsed.wishes || [];
-                }
-            } catch (e) {
-                console.error('Failed to load state:', e);
-            }
-        }
-    }
-
-    // EVENT BUS FOR COMPONENT COMMUNICATION
-    class EventBus {
-        constructor() {
-            this.events = {};
-        }
-
-        emit(event, data) {
-            if (this.events[event]) {
-                this.events[event].forEach(callback => callback(data));
-            }
-        }
-
-        on(event, callback) {
-            if (!this.events[event]) this.events[event] = [];
-            this.events[event].push(callback);
-        }
-
-        off(event, callback) {
-            if (this.events[event]) {
-                this.events[event] = this.events[event].filter(cb => cb !== callback);
-            }
-        }
-    }
-
-    // APPLICATION ORCHESTRATOR
-    class BabyShowerApp {
-        constructor() {
-            this.state = new AppState();
-            this.events = new EventBus();
-            this.components = {};
-            this.initialized = false;
-        }
-
-        async init() {
-            if (this.initialized) return;
-            
-            // Initialize components
-            this.components.navigation = new Navigation(this);
-            this.components.views = new ViewManager(this);
-            this.components.game = new HoneyGame(this);
-            this.components.settings = new SettingsManager(this);
-            this.components.audio = new AudioManager(this);
-            this.components.wishes = new WishesManager(this);
-            
-            // Set up event listeners
-            this.setupEventListeners();
-            
-            // Update UI with initial state
-            this.updateUI();
-            
-            // Hide loading overlay
-            setTimeout(() => {
-                document.getElementById('loadingOverlay').classList.add('hidden');
-                this.initialized = true;
-            }, 500);
-        }
-
-        setupEventListeners() {
-            // Global keyboard handling
-            document.addEventListener('keydown', (e) => {
-                const mode = this.state.get('mode');
-                
-                if (mode === 'game') {
-                    this.components.game.handleKeyDown(e);
-                } else if (mode === 'story') {
-                    if (e.key === 'ArrowRight') this.nextChapter();
-                    if (e.key === 'ArrowLeft') this.prevChapter();
-                }
-                
-                // Escape closes settings
-                if (e.key === 'Escape' && mode === 'settings') {
-                    this.closeSettings();
-                }
-            });
-
-            document.addEventListener('keyup', (e) => {
-                if (this.state.get('mode') === 'game') {
-                    this.components.game.handleKeyUp(e);
-                }
-            });
-
-            // Mobile orientation
-            window.addEventListener('orientationchange', () => {
-                setTimeout(() => this.components.game?.resize(), 100);
-            });
-
-            // Window resize
-            window.addEventListener('resize', () => {
-                this.components.game?.resize();
-            });
-        }
-
-        updateUI() {
-            const view = this.state.get('currentView');
-            const chapter = this.state.get('currentChapter');
-            
-            // Update navigation
-            this.components.navigation.update(chapter);
-            
-            // Update view
-            this.components.views.show(view);
-            
-            // Update mode
-            document.body.setAttribute('data-mode', this.state.get('mode'));
-        }
-
-        setView(view, chapter = 1) {
-            this.state.set('currentView', view);
-            this.state.set('currentChapter', chapter);
-            this.state.set('mode', view === 'game' ? 'game' : 'story');
-            this.updateUI();
-        }
-
-        nextChapter() {
-            const chapters = ['story', 'game', 'registry', 'wishes'];
-            const current = this.state.get('currentView');
-            const index = chapters.indexOf(current);
-            
-            if (index < chapters.length - 1) {
-                this.setView(chapters[index + 1], index + 2);
-            }
-        }
-
-        prevChapter() {
-            const chapters = ['story', 'game', 'registry', 'wishes'];
-            const current = this.state.get('currentView');
-            const index = chapters.indexOf(current);
-            
-            if (index > 0) {
-                this.setView(chapters[index - 1], index);
-            }
-        }
-
-        openSettings() {
-            this.state.set('mode', 'settings');
-            this.components.settings.show();
-        }
-
-        closeSettings() {
-            this.state.set('mode', this.state.get('currentView') === 'game' ? 'game' : 'story');
-            this.components.settings.hide();
-        }
-    }
-
-    // NAVIGATION COMPONENT
-    class Navigation {
-        constructor(app) {
-            this.app = app;
-            this.navButtons = document.querySelectorAll('.nav-button');
-            this.progressFill = document.getElementById('navProgress');
-            this.init();
-        }
-
-        init() {
-            this.navButtons.forEach(btn => {
-                btn.addEventListener('click', () => {
-                    const view = btn.dataset.view;
-                    const chapter = parseInt(btn.dataset.chapter);
-                    this.app.setView(view, chapter);
-                });
-            });
-        }
-
-        update(chapter) {
-            // Update progress
-            const progress = (chapter / 4) * 100;
-            this.progressFill.style.width = `${progress}%`;
-            
-            // Update active button
-            this.navButtons.forEach(btn => {
-                const btnChapter = parseInt(btn.dataset.chapter);
-                btn.classList.toggle('active', btnChapter === chapter);
-            });
-        }
-    }
-
-    // VIEW MANAGER COMPONENT
-    class ViewManager {
-        constructor(app) {
-            this.app = app;
-            this.views = {
-                story: document.getElementById('storyView'),
-                game: document.getElementById('gameView'),
-                registry: document.getElementById('registryView'),
-                wishes: document.getElementById('wishesView')
-            };
-        }
-
-        show(view) {
-            // Hide all views
-            Object.values(this.views).forEach(v => v?.classList.remove('active'));
-            
-            // Show requested view
-            if (this.views[view]) {
-                this.views[view].classList.add('active');
-                
-                // Initialize game if showing game view
-                if (view === 'game') {
-                    this.app.components.game.init();
-                }
-            }
-        }
-    }
-
-    // GAME COMPONENT
-    class HoneyGame {
-        constructor(app) {
-            this.app = app;
-            this.canvas = document.getElementById('gameCanvas');
-            this.ctx = this.canvas.getContext('2d');
-            this.container = document.querySelector('.game-canvas-container');
-            
-            this.gameObjects = {
-                bear: { x: 0, y: 0, width: 40, height: 60, vx: 0 },
-                jars: [],
-                bees: [],
-                particles: []
-            };
-            
-            this.keys = { left: false, right: false };
-            this.lastTime = 0;
-            this.gameLoopId = null;
-            
-            this.initElements();
-        }
-
-        initElements() {
-            // Game controls
-            document.getElementById('startGame').addEventListener('click', () => this.start());
-            document.getElementById('pauseGame').addEventListener('click', () => this.pause());
-            document.getElementById('restartGame').addEventListener('click', () => this.reset());
-            
-            // Mobile controls
-            document.getElementById('mobileLeft').addEventListener('touchstart', () => this.keys.left = true);
-            document.getElementById('mobileLeft').addEventListener('touchend', () => this.keys.left = false);
-            document.getElementById('mobileRight').addEventListener('touchstart', () => this.keys.right = true);
-            document.getElementById('mobileRight').addEventListener('touchend', () => this.keys.right = false);
-            document.getElementById('mobilePause').addEventListener('click', () => this.pause());
-        }
-
-        init() {
-            this.resize();
-            this.resetGameState();
-            this.updateHUD();
-        }
-
-        resize() {
-            const rect = this.container.getBoundingClientRect();
-            this.canvas.width = rect.width;
-            this.canvas.height = rect.height;
-            
-            // Reposition bear
-            this.gameObjects.bear.x = this.canvas.width / 2;
-            this.gameObjects.bear.y = this.canvas.height * 0.85;
-        }
-
-        resetGameState() {
-            const state = this.app.state.get('game');
-            state.score = 0;
-            state.timeLeft = this.getTimeLimit();
-            state.lives = this.getLives();
-            state.streak = 0;
-            
-            this.gameObjects.jars = [];
-            this.gameObjects.bees = [];
-            this.gameObjects.particles = [];
-            
-            this.updateHUD();
-        }
-
-        getDifficultySettings() {
-            const difficulty = this.app.state.get('settings.difficulty');
-            const settings = {
-                easy: { jarSpawn: 0.015, jarSpeed: 100, beeSpawn: 0.008, beeSpeed: 80, time: 90, lives: 4 },
-                medium: { jarSpawn: 0.02, jarSpeed: 150, beeSpawn: 0.01, beeSpeed: 100, time: 60, lives: 3 },
-                hard: { jarSpawn: 0.025, jarSpeed: 180, beeSpawn: 0.015, beeSpeed: 120, time: 45, lives: 2 },
-                expert: { jarSpawn: 0.03, jarSpeed: 200, beeSpawn: 0.02, beeSpeed: 150, time: 30, lives: 1 }
-            };
-            return settings[difficulty] || settings.medium;
-        }
-
-        getTimeLimit() {
-            return this.getDifficultySettings().time;
-        }
-
-        getLives() {
-            return this.getDifficultySettings().lives;
-        }
-
-        start() {
-            const state = this.app.state.get('game');
-            state.running = true;
-            state.paused = false;
-            this.lastTime = performance.now();
-            this.gameLoopId = requestAnimationFrame(this.loop.bind(this));
-        }
-
-        pause() {
-            const state = this.app.state.get('game');
-            if (state.running) {
-                state.paused = !state.paused;
-                if (state.paused) {
-                    cancelAnimationFrame(this.gameLoopId);
+            set(path, value) {
+                const paths = path.split('.');
+                if (paths.length === 1 && path === 'settings') {
+                    this.state.settings = { ...this.state.settings, ...value };
                 } else {
-                    this.lastTime = performance.now();
+                    let obj = this.state;
+                    for (let i = 0; i < paths.length - 1; i++) {
+                        obj = obj[paths[i]];
+                    }
+                    obj[paths[paths.length - 1]] = value;
+                }
+                this.save();
+                this.notify(path, value);
+            }
+
+            get(path) {
+                return path.split('.').reduce((obj, key) => obj?.[key], this.state);
+            }
+
+            on(path, callback) {
+                this.listeners.push({ path, callback });
+            }
+
+            notify(path, value) {
+                this.listeners.forEach(({ path: listenerPath, callback }) => {
+                    if (listenerPath === '*' || path.startsWith(listenerPath)) {
+                        callback(path, value);
+                    }
+                });
+            }
+
+            save() {
+                try {
+                    localStorage.setItem('babyShowerState', JSON.stringify({
+                        settings: this.state.settings,
+                        game: { best: this.state.game.best },
+                        wishes: this.state.wishes
+                    }));
+                } catch (e) {
+                    console.error('Failed to save state:', e);
+                }
+            }
+
+            load() {
+                try {
+                    const saved = localStorage.getItem('babyShowerState');
+                    if (saved) {
+                        const parsed = JSON.parse(saved);
+                        this.state.settings = { ...this.state.settings, ...parsed.settings };
+                        this.state.game.best = parsed.game?.best || 0;
+                        this.state.wishes = parsed.wishes || [];
+                    }
+                } catch (e) {
+                    console.error('Failed to load state:', e);
+                }
+            }
+        }
+
+        // EVENT BUS FOR COMPONENT COMMUNICATION (hookable if needed)
+        class EventBus {
+            constructor() {
+                this.events = {};
+            }
+
+            emit(event, data) {
+                if (this.events[event]) {
+                    this.events[event].forEach(callback => callback(data));
+                }
+            }
+
+            on(event, callback) {
+                if (!this.events[event]) this.events[event] = [];
+                this.events[event].push(callback);
+            }
+
+            off(event, callback) {
+                if (this.events[event]) {
+                    this.events[event] = this.events[event].filter(cb => cb !== callback);
+                }
+            }
+        }
+
+        // APPLICATION ORCHESTRATOR
+        class BabyShowerApp {
+            constructor() {
+                this.state = new AppState();
+                this.events = new EventBus();
+                this.components = {};
+                this.initialized = false;
+            }
+
+            async init() {
+                if (this.initialized) return;
+
+                try {
+                    // Initialize components in a safe order
+                    this.components.navigation = new Navigation(this);
+                    this.components.views      = new ViewManager(this);
+                    this.components.game       = new HoneyGame(this);
+                    this.components.audio      = new AudioManager(this);      // audio before settings
+                    this.components.settings   = new SettingsManager(this);
+                    this.components.wishes     = new WishesManager(this);
+
+                    // Set up event listeners
+                    this.setupEventListeners();
+
+                    // Update UI with initial state
+                    this.updateUI();
+
+                    // Hide loading overlay
+                    setTimeout(() => {
+                        const overlay = document.getElementById('loadingOverlay');
+                        if (overlay) overlay.classList.add('hidden');
+                        this.initialized = true;
+                    }, 500);
+                } catch (err) {
+                    console.error('Initialization error:', err);
+                    const overlay = document.getElementById('loadingOverlay');
+                    if (overlay) overlay.classList.add('hidden');
+                }
+            }
+
+            setupEventListeners() {
+                // Global keyboard handling
+                document.addEventListener('keydown', (e) => {
+                    const mode = this.state.get('mode');
+
+                    if (mode === 'game') {
+                        this.components.game.handleKeyDown(e);
+                    } else if (mode === 'story') {
+                        if (e.key === 'ArrowRight') this.nextChapter();
+                        if (e.key === 'ArrowLeft') this.prevChapter();
+                    }
+
+                    // Escape closes settings
+                    if (e.key === 'Escape' && mode === 'settings') {
+                        this.closeSettings();
+                    }
+                });
+
+                document.addEventListener('keyup', (e) => {
+                    if (this.state.get('mode') === 'game') {
+                        this.components.game.handleKeyUp(e);
+                    }
+                });
+
+                // Mobile orientation
+                window.addEventListener('orientationchange', () => {
+                    setTimeout(() => this.components.game?.resize(), 100);
+                });
+
+                // Window resize
+                window.addEventListener('resize', () => {
+                    this.components.game?.resize();
+                });
+            }
+
+            updateUI() {
+                const view = this.state.get('currentView');
+                const chapter = this.state.get('currentChapter');
+
+                // Update navigation
+                this.components.navigation.update(chapter);
+
+                // Update view
+                this.components.views.show(view);
+
+                // Update mode
+                document.body.setAttribute('data-mode', this.state.get('mode'));
+            }
+
+            setView(view, chapter = 1) {
+                this.state.set('currentView', view);
+                this.state.set('currentChapter', chapter);
+                this.state.set('mode', view === 'game' ? 'game' : 'story');
+                this.updateUI();
+            }
+
+            nextChapter() {
+                const chapters = ['story', 'game', 'registry', 'wishes'];
+                const current = this.state.get('currentView');
+                const index = chapters.indexOf(current);
+
+                if (index < chapters.length - 1) {
+                    this.setView(chapters[index + 1], index + 2);
+                }
+            }
+
+            prevChapter() {
+                const chapters = ['story', 'game', 'registry', 'wishes'];
+                const current = this.state.get('currentView');
+                const index = chapters.indexOf(current);
+
+                if (index > 0) {
+                    this.setView(chapters[index - 1], index);
+                }
+            }
+
+            openSettings() {
+                this.state.set('mode', 'settings');
+                this.components.settings.show();
+            }
+
+            closeSettings() {
+                const fallbackMode = this.state.get('currentView') === 'game' ? 'game' : 'story';
+                this.state.set('mode', fallbackMode);
+                this.components.settings.hide();
+            }
+        }
+
+        // NAVIGATION COMPONENT
+        class Navigation {
+            constructor(app) {
+                this.app = app;
+                this.navButtons = document.querySelectorAll('.nav-button');
+                this.progressFill = document.getElementById('navProgress');
+                this.init();
+            }
+
+            init() {
+                this.navButtons.forEach(btn => {
+                    btn.addEventListener('click', () => {
+                        const view = btn.dataset.view;
+                        const chapter = parseInt(btn.dataset.chapter, 10);
+                        this.app.setView(view, chapter);
+                    });
+                });
+            }
+
+            update(chapter) {
+                const totalChapters = 4;
+                const progress = (chapter / totalChapters) * 100;
+                this.progressFill.style.width = `${progress}%`;
+
+                this.navButtons.forEach(btn => {
+                    const btnChapter = parseInt(btn.dataset.chapter, 10);
+                    btn.classList.toggle('active', btnChapter === chapter);
+                });
+            }
+        }
+
+        // VIEW MANAGER COMPONENT
+        class ViewManager {
+            constructor(app) {
+                this.app = app;
+                this.views = {
+                    story: document.getElementById('storyView'),
+                    game: document.getElementById('gameView'),
+                    registry: document.getElementById('registryView'),
+                    wishes: document.getElementById('wishesView')
+                };
+            }
+
+            show(view) {
+                Object.values(this.views).forEach(v => v?.classList.remove('active'));
+
+                if (this.views[view]) {
+                    this.views[view].classList.add('active');
+
+                    if (view === 'game') {
+                        this.app.components.game.init();
+                    }
+                }
+            }
+        }
+
+        // GAME COMPONENT
+        class HoneyGame {
+            constructor(app) {
+                this.app = app;
+                this.canvas = document.getElementById('gameCanvas');
+                this.ctx = this.canvas.getContext('2d');
+                this.container = document.querySelector('.game-canvas-container');
+
+                this.gameObjects = {
+                    bear: { x: 0, y: 0, width: 40, height: 60, vx: 0 },
+                    jars: [],
+                    bees: [],
+                    particles: []
+                };
+
+                this.keys = { left: false, right: false };
+                this.lastTime = 0;
+                this.gameLoopId = null;
+
+                this.initElements();
+            }
+
+            initElements() {
+                // Game controls
+                document.getElementById('startGame').addEventListener('click', () => this.start());
+                document.getElementById('pauseGame').addEventListener('click', () => this.pause());
+                document.getElementById('restartGame').addEventListener('click', () => this.reset());
+
+                // Mobile controls
+                const mobileLeft = document.getElementById('mobileLeft');
+                const mobileRight = document.getElementById('mobileRight');
+                const mobilePause = document.getElementById('mobilePause');
+
+                mobileLeft.addEventListener('touchstart', (e) => { e.preventDefault(); this.keys.left = true; });
+                mobileLeft.addEventListener('touchend', (e) => { e.preventDefault(); this.keys.left = false; });
+                mobileRight.addEventListener('touchstart', (e) => { e.preventDefault(); this.keys.right = true; });
+                mobileRight.addEventListener('touchend', (e) => { e.preventDefault(); this.keys.right = false; });
+                mobilePause.addEventListener('click', () => this.pause());
+            }
+
+            init() {
+                this.resize();
+                this.resetGameState();
+                this.updateHUD();
+            }
+
+            resize() {
+                const rect = this.container.getBoundingClientRect();
+                this.canvas.width = rect.width;
+                this.canvas.height = rect.height;
+
+                this.gameObjects.bear.x = this.canvas.width / 2;
+                this.gameObjects.bear.y = this.canvas.height * 0.85;
+            }
+
+            resetGameState() {
+                const state = this.app.state.get('game');
+                state.score = 0;
+                state.timeLeft = this.getTimeLimit();
+                state.lives = this.getLives();
+                state.streak = 0;
+
+                this.gameObjects.jars = [];
+                this.gameObjects.bees = [];
+                this.gameObjects.particles = [];
+
+                this.updateHUD();
+            }
+
+            getDifficultySettings() {
+                const difficulty = this.app.state.get('settings.difficulty');
+                const settings = {
+                    easy:   { jarSpawn: 0.015, jarSpeed: 100, beeSpawn: 0.008, beeSpeed: 80,  time: 90, lives: 4 },
+                    medium: { jarSpawn: 0.02,  jarSpeed: 150, beeSpawn: 0.01,  beeSpeed: 100, time: 60, lives: 3 },
+                    hard:   { jarSpawn: 0.025, jarSpeed: 180, beeSpawn: 0.015, beeSpeed: 120, time: 45, lives: 2 },
+                    expert: { jarSpawn: 0.03,  jarSpeed: 200, beeSpawn: 0.02,  beeSpeed: 150, time: 30, lives: 1 }
+                };
+                return settings[difficulty] || settings.medium;
+            }
+
+            getTimeLimit() {
+                return this.getDifficultySettings().time;
+            }
+
+            getLives() {
+                return this.getDifficultySettings().lives;
+            }
+
+            start() {
+                const state = this.app.state.get('game');
+                if (!state.running) {
+                    this.resetGameState();
+                }
+                state.running = true;
+                state.paused = false;
+                this.lastTime = performance.now();
+                this.gameLoopId = requestAnimationFrame(this.loop.bind(this));
+            }
+
+            pause() {
+                const state = this.app.state.get('game');
+                if (state.running) {
+                    state.paused = !state.paused;
+                    if (state.paused) {
+                        cancelAnimationFrame(this.gameLoopId);
+                    } else {
+                        this.lastTime = performance.now();
+                        this.gameLoopId = requestAnimationFrame(this.loop.bind(this));
+                    }
+                }
+            }
+
+            reset() {
+                this.resetGameState();
+                if (this.app.state.get('game.running')) {
+                    this.start();
+                }
+            }
+
+            loop(timestamp) {
+                if (!this.app.state.get('game.running') || this.app.state.get('game.paused')) return;
+
+                const dt = (timestamp - this.lastTime) / 1000;
+                this.lastTime = timestamp;
+
+                this.update(dt);
+                this.render();
+
+                if (this.app.state.get('game.running') && !this.app.state.get('game.paused')) {
                     this.gameLoopId = requestAnimationFrame(this.loop.bind(this));
                 }
             }
-        }
 
-        reset() {
-            this.resetGameState();
-            if (this.app.state.get('game.running')) {
-                this.start();
-            }
-        }
+            update(dt) {
+                const state = this.app.state.get('game');
 
-        loop(timestamp) {
-            if (!this.app.state.get('game.running') || this.app.state.get('game.paused')) return;
-            
-            const dt = (timestamp - this.lastTime) / 1000;
-            this.lastTime = timestamp;
-            
-            this.update(dt);
-            this.render();
-            
-            if (this.app.state.get('game.running') && !this.app.state.get('game.paused')) {
-                this.gameLoopId = requestAnimationFrame(this.loop.bind(this));
-            }
-        }
-
-        update(dt) {
-            const state = this.app.state.get('game');
-            
-            // Update time
-            state.timeLeft -= dt;
-            if (state.timeLeft <= 0) {
-                state.timeLeft = 0;
-                this.gameOver();
-                return;
-            }
-            
-            // Update bear position
-            const sensitivity = this.app.state.get('settings.sensitivity');
-            if (this.keys.left) this.gameObjects.bear.vx = -sensitivity;
-            else if (this.keys.right) this.gameObjects.bear.vx = sensitivity;
-            else this.gameObjects.bear.vx = 0;
-            
-            this.gameObjects.bear.x += this.gameObjects.bear.vx * dt;
-            this.gameObjects.bear.x = Math.max(20, Math.min(this.canvas.width - 20, this.gameObjects.bear.x));
-            
-            // Spawn objects
-            this.spawnObjects(dt);
-            
-            // Update objects
-            this.updateObjects(dt);
-            
-            // Update HUD
-            this.updateHUD();
-        }
-
-        spawnObjects(dt) {
-            const settings = this.getDifficultySettings();
-            
-            // Spawn jars
-            if (Math.random() < settings.jarSpawn) {
-                const type = Math.random() < 0.1 ? 'gold' : Math.random() < 0.15 ? 'shield' : 'normal';
-                this.gameObjects.jars.push({
-                    x: Math.random() * (this.canvas.width - 40) + 20,
-                    y: -20,
-                    vy: settings.jarSpeed + Math.random() * 50,
-                    type: type
-                });
-            }
-            
-            // Spawn bees
-            if (Math.random() < settings.beeSpawn) {
-                this.gameObjects.bees.push({
-                    x: Math.random() < 0.5 ? -20 : this.canvas.width + 20,
-                    y: Math.random() * this.canvas.height * 0.6 + 50,
-                    vx: (Math.random() < 0.5 ? -1 : 1) * (settings.beeSpeed + Math.random() * 50),
-                    vy: 0
-                });
-            }
-        }
-
-        updateObjects(dt) {
-            const state = this.app.state.get('game');
-            
-            // Update jars
-            for (let i = this.gameObjects.jars.length - 1; i >= 0; i--) {
-                const jar = this.gameObjects.jars[i];
-                jar.y += jar.vy * dt;
-                
-                // Check collision with bear
-                const dx = jar.x - this.gameObjects.bear.x;
-                const dy = jar.y - (this.gameObjects.bear.y - 20);
-                const distance = Math.sqrt(dx * dx + dy * dy);
-                
-                if (distance < 30) {
-                    // Jar caught
-                    this.gameObjects.jars.splice(i, 1);
-                    
-                    // Update score
-                    let points = 10;
-                    if (jar.type === 'gold') points = 30;
-                    if (jar.type === 'shield') points = 15;
-                    
-                    state.score += points;
-                    state.streak++;
-                    
-                    // Update best score
-                    if (state.score > state.best) {
-                        state.best = state.score;
-                        this.app.state.set('game.best', state.best);
-                    }
-                    
-                    // Play sound
-                    if (this.app.state.get('settings.sfx')) {
-                        this.app.components.audio.play('honey');
-                    }
-                    
-                    // Create particles
-                    if (this.app.state.get('settings.particles')) {
-                        this.createParticles(jar.x, jar.y, jar.type);
-                    }
+                // Update time
+                state.timeLeft -= dt;
+                if (state.timeLeft <= 0) {
+                    state.timeLeft = 0;
+                    this.gameOver();
+                    return;
                 }
-                
-                // Remove off-screen jars
-                if (jar.y > this.canvas.height + 50) {
-                    this.gameObjects.jars.splice(i, 1);
-                    state.streak = 0;
+
+                // Update bear position
+                const sensitivity = this.app.state.get('settings.sensitivity');
+                if (this.keys.left) this.gameObjects.bear.vx = -sensitivity;
+                else if (this.keys.right) this.gameObjects.bear.vx = sensitivity;
+                else this.gameObjects.bear.vx = 0;
+
+                this.gameObjects.bear.x += this.gameObjects.bear.vx * dt;
+                this.gameObjects.bear.x = Math.max(20, Math.min(this.canvas.width - 20, this.gameObjects.bear.x));
+
+                // Spawn objects
+                this.spawnObjects();
+
+                // Update objects
+                this.updateObjects(dt);
+
+                // Update HUD
+                this.updateHUD();
+            }
+
+            spawnObjects() {
+                const settings = this.getDifficultySettings();
+
+                // Spawn jars
+                if (Math.random() < settings.jarSpawn) {
+                    const rnd = Math.random();
+                    let type = 'normal';
+                    if (rnd < 0.1) type = 'gold';
+                    else if (rnd < 0.25) type = 'shield';
+
+                    this.gameObjects.jars.push({
+                        x: Math.random() * (this.canvas.width - 40) + 20,
+                        y: -20,
+                        vy: settings.jarSpeed + Math.random() * 50,
+                        type
+                    });
+                }
+
+                // Spawn bees
+                if (Math.random() < settings.beeSpawn) {
+                    this.gameObjects.bees.push({
+                        x: Math.random() < 0.5 ? -20 : this.canvas.width + 20,
+                        y: Math.random() * this.canvas.height * 0.6 + 50,
+                        vx: (Math.random() < 0.5 ? -1 : 1) * (settings.beeSpeed + Math.random() * 50),
+                        vy: 0
+                    });
                 }
             }
-            
-            // Update bees
-            for (let i = this.gameObjects.bees.length - 1; i >= 0; i--) {
-                const bee = this.gameObjects.bees[i];
-                bee.x += bee.vx * dt;
-                
-                // Check collision
-                const dx = bee.x - this.gameObjects.bear.x;
-                const dy = bee.y - this.gameObjects.bear.y;
-                const distance = Math.sqrt(dx * dx + dy * dy);
-                
-                if (distance < 25) {
-                    // Bee hit
-                    this.gameObjects.bees.splice(i, 1);
-                    state.lives--;
-                    state.streak = 0;
-                    
-                    if (state.lives <= 0) {
-                        this.gameOver();
-                        return;
+
+            updateObjects(dt) {
+                const state = this.app.state.get('game');
+
+                // Jars
+                for (let i = this.gameObjects.jars.length - 1; i >= 0; i--) {
+                    const jar = this.gameObjects.jars[i];
+                    jar.y += jar.vy * dt;
+
+                    const dx = jar.x - this.gameObjects.bear.x;
+                    const dy = jar.y - (this.gameObjects.bear.y - 20);
+                    const distance = Math.hypot(dx, dy);
+
+                    if (distance < 30) {
+                        // Jar caught
+                        this.gameObjects.jars.splice(i, 1);
+
+                        let points = 10;
+                        if (jar.type === 'gold') points = 30;
+                        if (jar.type === 'shield') points = 15;
+
+                        state.score += points;
+                        state.streak++;
+
+                        if (state.score > state.best) {
+                            state.best = state.score;
+                            this.app.state.set('game.best', state.best);
+                        }
+
+                        if (this.app.state.get('settings.sfx')) {
+                            this.app.components.audio.play('honey');
+                        }
+
+                        if (this.app.state.get('settings.particles')) {
+                            this.createParticles(jar.x, jar.y, jar.type);
+                        }
                     }
-                    
-                    if (this.app.state.get('settings.sfx')) {
-                        this.app.components.audio.play('bee');
+
+                    if (jar.y > this.canvas.height + 50) {
+                        this.gameObjects.jars.splice(i, 1);
+                        state.streak = 0;
                     }
                 }
-                
-                // Remove off-screen bees
-                if (bee.x < -50 || bee.x > this.canvas.width + 50) {
-                    this.gameObjects.bees.splice(i, 1);
+
+                // Bees
+                for (let i = this.gameObjects.bees.length - 1; i >= 0; i--) {
+                    const bee = this.gameObjects.bees[i];
+                    bee.x += bee.vx * dt;
+
+                    const dx = bee.x - this.gameObjects.bear.x;
+                    const dy = bee.y - this.gameObjects.bear.y;
+                    const distance = Math.hypot(dx, dy);
+
+                    if (distance < 25) {
+                        this.gameObjects.bees.splice(i, 1);
+                        state.lives--;
+                        state.streak = 0;
+
+                        if (this.app.state.get('settings.sfx')) {
+                            this.app.components.audio.play('bee');
+                        }
+
+                        if (state.lives <= 0) {
+                            this.gameOver();
+                            return;
+                        }
+                    }
+
+                    if (bee.x < -50 || bee.x > this.canvas.width + 50) {
+                        this.gameObjects.bees.splice(i, 1);
+                    }
+                }
+
+                // Particles
+                for (let i = this.gameObjects.particles.length - 1; i >= 0; i--) {
+                    const p = this.gameObjects.particles[i];
+                    p.x += p.vx * dt;
+                    p.y += p.vy * dt;
+                    p.life -= dt;
+
+                    if (p.life <= 0) {
+                        this.gameObjects.particles.splice(i, 1);
+                    }
                 }
             }
-            
-            // Update particles
-            for (let i = this.gameObjects.particles.length - 1; i >= 0; i--) {
-                const p = this.gameObjects.particles[i];
-                p.x += p.vx * dt;
-                p.y += p.vy * dt;
-                p.life -= dt;
-                
-                if (p.life <= 0) {
-                    this.gameObjects.particles.splice(i, 1);
+
+            createParticles(x, y, type) {
+                const color = type === 'gold'
+                    ? '#f59e0b'
+                    : type === 'shield'
+                        ? '#38bdf8'
+                        : '#fbbf24';
+
+                for (let i = 0; i < 10; i++) {
+                    this.gameObjects.particles.push({
+                        x,
+                        y,
+                        vx: (Math.random() - 0.5) * 200,
+                        vy: -100 - Math.random() * 100,
+                        color,
+                        life: 1
+                    });
+                }
+            }
+
+            gameOver() {
+                const state = this.app.state.get('game');
+                state.running = false;
+                cancelAnimationFrame(this.gameLoopId);
+
+                setTimeout(() => {
+                    alert(`Game Over! Score: ${state.score}\nBest: ${state.best}`);
+                }, 100);
+            }
+
+            render() {
+                this.ctx.clearRect(0, 0, this.canvas.width, this.canvas.height);
+
+                this.drawBackground();
+                this.drawBear();
+
+                this.gameObjects.jars.forEach(jar => this.drawJar(jar));
+                this.gameObjects.bees.forEach(bee => this.drawBee(bee));
+
+                if (this.app.state.get('settings.particles')) {
+                    this.gameObjects.particles.forEach(p => this.drawParticle(p));
+                }
+            }
+
+            drawBackground() {
+                const w = this.canvas.width;
+                const h = this.canvas.height;
+
+                // Sky
+                this.ctx.fillStyle = '#87CEEB';
+                this.ctx.fillRect(0, 0, w, h * 0.7);
+
+                // Grass
+                this.ctx.fillStyle = '#98FB98';
+                this.ctx.fillRect(0, h * 0.7, w, h * 0.3);
+
+                // Trees
+                this.ctx.fillStyle = '#8B4513';
+                this.ctx.fillRect(w * 0.2, h * 0.5, 30, 100);
+                this.ctx.fillRect(w * 0.8, h * 0.5, 30, 100);
+
+                this.ctx.fillStyle = '#228B22';
+                this.ctx.beginPath();
+                this.ctx.arc(w * 0.215, h * 0.5, 60, 0, Math.PI * 2);
+                this.ctx.arc(w * 0.815, h * 0.5, 60, 0, Math.PI * 2);
+                this.ctx.fill();
+            }
+
+            drawBear() {
+                const bear = this.gameObjects.bear;
+
+                this.ctx.save();
+                this.ctx.translate(bear.x, bear.y);
+
+                // Body
+                this.ctx.fillStyle = '#fbbf24';
+                this.ctx.beginPath();
+                this.ctx.ellipse(0, -10, 25, 35, 0, 0, Math.PI * 2);
+                this.ctx.fill();
+
+                // Head
+                this.ctx.beginPath();
+                this.ctx.arc(0, -48, 20, 0, Math.PI * 2);
+                this.ctx.fill();
+
+                // Ears
+                this.ctx.fillStyle = '#f59e0b';
+                this.ctx.beginPath();
+                this.ctx.arc(-12, -60, 8, 0, Math.PI * 2);
+                this.ctx.arc(12, -60, 8, 0, Math.PI * 2);
+                this.ctx.fill();
+
+                // Eyes
+                this.ctx.fillStyle = '#1f2937';
+                this.ctx.beginPath();
+                this.ctx.arc(-8, -52, 3, 0, Math.PI * 2);
+                this.ctx.arc(8, -52, 3, 0, Math.PI * 2);
+                this.ctx.fill();
+
+                // Mouth
+                this.ctx.strokeStyle = '#1f2937';
+                this.ctx.lineWidth = 2;
+                this.ctx.beginPath();
+                this.ctx.arc(0, -45, 6, 0.2, Math.PI - 0.2);
+                this.ctx.stroke();
+
+                // Honey jar
+                this.ctx.fillStyle = '#b45309';
+                this.ctx.fillRect(-20, 0, 40, 30);
+                this.ctx.fillStyle = '#f59e0b';
+                this.ctx.fillRect(-18, 2, 36, 26);
+
+                this.ctx.restore();
+            }
+
+            drawJar(jar) {
+                this.ctx.save();
+                this.ctx.translate(jar.x, jar.y);
+
+                let color = '#fbbf24';
+                if (jar.type === 'gold') color = '#f59e0b';
+                if (jar.type === 'shield') color = '#38bdf8';
+
+                this.ctx.fillStyle = color;
+                this.ctx.fillRect(-10, -20, 20, 40);
+
+                this.ctx.fillStyle = '#92400e';
+                this.ctx.fillRect(-12, -25, 24, 5);
+
+                this.ctx.fillStyle = '#d97706';
+                this.ctx.fillRect(-8, 0, 16, 15);
+
+                this.ctx.restore();
+            }
+
+            drawBee(bee) {
+                this.ctx.save();
+                this.ctx.translate(bee.x, bee.y);
+
+                this.ctx.fillStyle = '#fbbf24';
+                this.ctx.beginPath();
+                this.ctx.ellipse(0, 0, 12, 8, 0, 0, Math.PI * 2);
+                this.ctx.fill();
+
+                this.ctx.fillStyle = '#1f2937';
+                this.ctx.fillRect(-10, -2, 20, 4);
+
+                this.ctx.fillStyle = 'rgba(255, 255, 255, 0.7)';
+                this.ctx.beginPath();
+                this.ctx.ellipse(-6, -10, 8, 5, Math.PI / 4, 0, Math.PI * 2);
+                this.ctx.ellipse(6, -10, 8, 5, -Math.PI / 4, 0, Math.PI * 2);
+                this.ctx.fill();
+
+                this.ctx.restore();
+            }
+
+            drawParticle(p) {
+                this.ctx.save();
+                this.ctx.translate(p.x, p.y);
+                this.ctx.fillStyle = p.color;
+                this.ctx.globalAlpha = p.life;
+                this.ctx.fillRect(-2, -2, 4, 4);
+                this.ctx.restore();
+            }
+
+            updateHUD() {
+                const state = this.app.state.get('game');
+
+                document.getElementById('scoreValue').textContent = state.score;
+                document.getElementById('bestValue').textContent = state.best;
+                document.getElementById('timeValue').textContent = Math.max(0, Math.floor(state.timeLeft));
+                document.getElementById('livesValue').textContent = state.lives;
+                document.getElementById('streakValue').textContent = state.streak;
+            }
+
+            handleKeyDown(e) {
+                if (e.key === 'ArrowLeft' || e.key === 'a' || e.key === 'A') {
+                    e.preventDefault();
+                    this.keys.left = true;
+                } else if (e.key === 'ArrowRight' || e.key === 'd' || e.key === 'D') {
+                    e.preventDefault();
+                    this.keys.right = true;
+                } else if (e.key === ' ' || e.key === 'Spacebar') {
+                    e.preventDefault();
+                    this.pause();
+                }
+            }
+
+            handleKeyUp(e) {
+                if (e.key === 'ArrowLeft' || e.key === 'a' || e.key === 'A') {
+                    e.preventDefault();
+                    this.keys.left = false;
+                } else if (e.key === 'ArrowRight' || e.key === 'd' || e.key === 'D') {
+                    e.preventDefault();
+                    this.keys.right = false;
                 }
             }
         }
 
-        createParticles(x, y, type) {
-            const color = type === 'gold' ? '#f59e0b' : type === 'shield' ? '#38bdf8' : '#fbbf24';
-            
-            for (let i = 0; i < 10; i++) {
-                this.gameObjects.particles.push({
-                    x: x,
-                    y: y,
-                    vx: (Math.random() - 0.5) * 200,
-                    vy: -100 - Math.random() * 100,
-                    color: color,
-                    life: 1
-                });
+        // SETTINGS MANAGER
+        class SettingsManager {
+            constructor(app) {
+                this.app = app;
+                this.panel = document.getElementById('settingsPanel');
+                this.toggleBtn = document.getElementById('settingsToggle');
+                this.closeBtn = document.getElementById('closeSettings');
+                this.saveBtn = document.getElementById('saveSettings');
+                this.resetBtn = document.getElementById('resetSettings');
+
+                this.init();
             }
-        }
 
-        gameOver() {
-            const state = this.app.state.get('game');
-            state.running = false;
-            cancelAnimationFrame(this.gameLoopId);
-            
-            // Show game over message
-            setTimeout(() => {
-                alert(`Game Over! Score: ${state.score}\nBest: ${state.best}`);
-            }, 100);
-        }
+            init() {
+                this.toggleBtn.addEventListener('click', () => this.app.openSettings());
+                this.closeBtn.addEventListener('click', () => this.app.closeSettings());
+                this.saveBtn.addEventListener('click', () => this.save());
+                this.resetBtn.addEventListener('click', () => this.reset());
 
-        render() {
-            this.ctx.clearRect(0, 0, this.canvas.width, this.canvas.height);
-            
-            // Draw background
-            this.drawBackground();
-            
-            // Draw bear
-            this.drawBear();
-            
-            // Draw objects
-            this.gameObjects.jars.forEach(jar => this.drawJar(jar));
-            this.gameObjects.bees.forEach(bee => this.drawBee(bee));
-            
-            // Draw particles
-            if (this.app.state.get('settings.particles')) {
-                this.gameObjects.particles.forEach(p => this.drawParticle(p));
+                this.loadToForm();
             }
-        }
 
-        drawBackground() {
-            // Sky
-            this.ctx.fillStyle = '#87CEEB';
-            this.ctx.fillRect(0, 0, this.canvas.width, this.canvas.height * 0.7);
-            
-            // Grass
-            this.ctx.fillStyle = '#98FB98';
-            this.ctx.fillRect(0, this.canvas.height * 0.7, this.canvas.width, this.canvas.height * 0.3);
-            
-            // Trees
-            this.ctx.fillStyle = '#8B4513';
-            this.ctx.fillRect(this.canvas.width * 0.2, this.canvas.height * 0.5, 30, 100);
-            this.ctx.fillRect(this.canvas.width * 0.8, this.canvas.height * 0.5, 30, 100);
-            
-            this.ctx.fillStyle = '#228B22';
-            this.ctx.beginPath();
-            this.ctx.arc(this.canvas.width * 0.215, this.canvas.height * 0.5, 60, 0, Math.PI * 2);
-            this.ctx.arc(this.canvas.width * 0.815, this.canvas.height * 0.5, 60, 0, Math.PI * 2);
-            this.ctx.fill();
-        }
-
-        drawBear() {
-            const bear = this.gameObjects.bear;
-            
-            this.ctx.save();
-            this.ctx.translate(bear.x, bear.y);
-            
-            // Body
-            this.ctx.fillStyle = '#fbbf24';
-            this.ctx.beginPath();
-            this.ctx.ellipse(0, -10, 25, 35, 0, 0, Math.PI * 2);
-            this.ctx.fill();
-            
-            // Head
-            this.ctx.beginPath();
-            this.ctx.arc(0, -48, 20, 0, Math.PI * 2);
-            this.ctx.fill();
-            
-            // Ears
-            this.ctx.fillStyle = '#f59e0b';
-            this.ctx.beginPath();
-            this.ctx.arc(-12, -60, 8, 0, Math.PI * 2);
-            this.ctx.arc(12, -60, 8, 0, Math.PI * 2);
-            this.ctx.fill();
-            
-            // Face
-            this.ctx.fillStyle = '#1f2937';
-            this.ctx.beginPath();
-            this.ctx.arc(-8, -52, 3, 0, Math.PI * 2);
-            this.ctx.arc(8, -52, 3, 0, Math.PI * 2);
-            this.ctx.fill();
-            
-            // Mouth
-            this.ctx.strokeStyle = '#1f2937';
-            this.ctx.lineWidth = 2;
-            this.ctx.beginPath();
-            this.ctx.arc(0, -45, 6, 0.2, Math.PI - 0.2);
-            this.ctx.stroke();
-            
-            // Honey jar
-            this.ctx.fillStyle = '#b45309';
-            this.ctx.fillRect(-20, 0, 40, 30);
-            this.ctx.fillStyle = '#f59e0b';
-            this.ctx.fillRect(-18, 2, 36, 26);
-            
-            this.ctx.restore();
-        }
-
-        drawJar(jar) {
-            this.ctx.save();
-            this.ctx.translate(jar.x, jar.y);
-            
-            let color = '#fbbf24';
-            if (jar.type === 'gold') color = '#f59e0b';
-            if (jar.type === 'shield') color = '#38bdf8';
-            
-            // Jar body
-            this.ctx.fillStyle = color;
-            this.ctx.fillRect(-10, -20, 20, 40);
-            
-            // Jar lid
-            this.ctx.fillStyle = '#92400e';
-            this.ctx.fillRect(-12, -25, 24, 5);
-            
-            // Honey
-            this.ctx.fillStyle = '#d97706';
-            this.ctx.fillRect(-8, 0, 16, 15);
-            
-            this.ctx.restore();
-        }
-
-        drawBee(bee) {
-            this.ctx.save();
-            this.ctx.translate(bee.x, bee.y);
-            
-            // Body
-            this.ctx.fillStyle = '#fbbf24';
-            this.ctx.beginPath();
-            this.ctx.ellipse(0, 0, 12, 8, 0, 0, Math.PI * 2);
-            this.ctx.fill();
-            
-            // Stripes
-            this.ctx.fillStyle = '#1f2937';
-            this.ctx.fillRect(-10, -2, 20, 4);
-            
-            // Wings
-            this.ctx.fillStyle = 'rgba(255, 255, 255, 0.7)';
-            this.ctx.beginPath();
-            this.ctx.ellipse(-6, -10, 8, 5, Math.PI/4, 0, Math.PI * 2);
-            this.ctx.ellipse(6, -10, 8, 5, -Math.PI/4, 0, Math.PI * 2);
-            this.ctx.fill();
-            
-            this.ctx.restore();
-        }
-
-        drawParticle(p) {
-            this.ctx.save();
-            this.ctx.translate(p.x, p.y);
-            this.ctx.fillStyle = p.color;
-            this.ctx.globalAlpha = p.life;
-            this.ctx.fillRect(-2, -2, 4, 4);
-            this.ctx.restore();
-        }
-
-        updateHUD() {
-            const state = this.app.state.get('game');
-            
-            document.getElementById('scoreValue').textContent = state.score;
-            document.getElementById('bestValue').textContent = state.best;
-            document.getElementById('timeValue').textContent = Math.max(0, Math.floor(state.timeLeft));
-            document.getElementById('livesValue').textContent = state.lives;
-            document.getElementById('streakValue').textContent = state.streak;
-        }
-
-        handleKeyDown(e) {
-            if (e.key === 'ArrowLeft' || e.key === 'a' || e.key === 'A') {
-                e.preventDefault();
-                this.keys.left = true;
-            } else if (e.key === 'ArrowRight' || e.key === 'd' || e.key === 'D') {
-                e.preventDefault();
-                this.keys.right = true;
-            } else if (e.key === ' ' || e.key === 'Spacebar') {
-                e.preventDefault();
-                this.pause();
+            show() {
+                this.panel.classList.add('active');
+                this.loadToForm();
             }
-        }
 
-        handleKeyUp(e) {
-            if (e.key === 'ArrowLeft' || e.key === 'a' || e.key === 'A') {
-                e.preventDefault();
-                this.keys.left = false;
-            } else if (e.key === 'ArrowRight' || e.key === 'd' || e.key === 'D') {
-                e.preventDefault();
-                this.keys.right = false;
+            hide() {
+                this.panel.classList.remove('active');
             }
-        }
-    }
 
-    // SETTINGS MANAGER
-    class SettingsManager {
-        constructor(app) {
-            this.app = app;
-            this.panel = document.getElementById('settingsPanel');
-            this.toggleBtn = document.getElementById('settingsToggle');
-            this.closeBtn = document.getElementById('closeSettings');
-            this.saveBtn = document.getElementById('saveSettings');
-            this.resetBtn = document.getElementById('resetSettings');
-            
-            this.init();
-        }
+            loadToForm() {
+                const settings = this.app.state.get('settings');
 
-        init() {
-            this.toggleBtn.addEventListener('click', () => this.app.openSettings());
-            this.closeBtn.addEventListener('click', () => this.app.closeSettings());
-            this.saveBtn.addEventListener('click', () => this.save());
-            this.resetBtn.addEventListener('click', () => this.reset());
-            
-            // Load current settings to form
-            this.loadToForm();
-        }
+                document.getElementById('difficultySelect').value = settings.difficulty;
+                document.getElementById('musicToggle').checked = settings.music;
+                document.getElementById('sfxToggle').checked = settings.sfx;
+                document.getElementById('volumeSlider').value = settings.volume;
+                document.getElementById('particlesToggle').checked = settings.particles;
+                document.getElementById('animationsToggle').checked = settings.animations;
 
-        show() {
-            this.panel.classList.add('active');
-            this.loadToForm();
-        }
+                if (this.app.components.audio) {
+                    this.app.components.audio.updateVolume(settings.volume / 100);
+                }
+            }
 
-        hide() {
-            this.panel.classList.remove('active');
-        }
-
-        loadToForm() {
-            const settings = this.app.state.get('settings');
-            
-            document.getElementById('difficultySelect').value = settings.difficulty;
-            document.getElementById('musicToggle').checked = settings.music;
-            document.getElementById('sfxToggle').checked = settings.sfx;
-            document.getElementById('volumeSlider').value = settings.volume;
-            document.getElementById('particlesToggle').checked = settings.particles;
-            document.getElementById('animationsToggle').checked = settings.animations;
-            
-            // Update audio volume
-            this.app.components.audio.updateVolume(settings.volume / 100);
-        }
-
-        save() {
-            const settings = {
-                difficulty: document.getElementById('difficultySelect').value,
-                music: document.getElementById('musicToggle').checked,
-                sfx: document.getElementById('sfxToggle').checked,
-                volume: parseInt(document.getElementById('volumeSlider').value),
-                particles: document.getElementById('particlesToggle').checked,
-                animations: document.getElementById('animationsToggle').checked,
-                sensitivity: 260 // Default
-            };
-            
-            this.app.state.set('settings', settings);
-            this.app.closeSettings();
-            this.showNotification('Settings saved!');
-        }
-
-        reset() {
-            if (confirm('Reset all settings to defaults?')) {
-                const defaults = {
-                    difficulty: 'medium',
-                    music: true,
-                    sfx: true,
-                    volume: 80,
-                    particles: true,
-                    animations: true,
+            save() {
+                const settings = {
+                    difficulty: document.getElementById('difficultySelect').value,
+                    music: document.getElementById('musicToggle').checked,
+                    sfx: document.getElementById('sfxToggle').checked,
+                    volume: parseInt(document.getElementById('volumeSlider').value, 10),
+                    particles: document.getElementById('particlesToggle').checked,
+                    animations: document.getElementById('animationsToggle').checked,
                     sensitivity: 260
                 };
-                
-                this.app.state.set('settings', defaults);
-                this.loadToForm();
-                this.showNotification('Settings reset to defaults');
-            }
-        }
 
-        showNotification(message) {
-            const notification = document.createElement('div');
-            notification.textContent = message;
-            notification.style.cssText = `
-                position: fixed;
-                top: 20px;
-                left: 50%;
-                transform: translateX(-50%);
-                background: linear-gradient(135deg, #f4b944, #f59e0b);
-                color: #3b2604;
-                padding: 12px 24px;
-                border-radius: 999px;
-                font-weight: 600;
-                box-shadow: 0 8px 24px rgba(0, 0, 0, 0.3);
-                z-index: 1001;
-                animation: slideDown 0.3s ease, slideUp 0.3s ease 2s forwards;
-            `;
-            
-            document.body.appendChild(notification);
-            
-            // Add animation styles
-            const style = document.createElement('style');
-            style.textContent = `
-                @keyframes slideDown {
-                    from { transform: translateX(-50%) translateY(-20px); opacity: 0; }
-                    to { transform: translateX(-50%) translateY(0); opacity: 1; }
+                this.app.state.set('settings', settings);
+                this.app.closeSettings();
+                this.showNotification('Settings saved!');
+            }
+
+            reset() {
+                if (confirm('Reset all settings to defaults?')) {
+                    const defaults = {
+                        difficulty: 'medium',
+                        music: true,
+                        sfx: true,
+                        volume: 80,
+                        particles: true,
+                        animations: true,
+                        sensitivity: 260
+                    };
+
+                    this.app.state.set('settings', defaults);
+                    this.loadToForm();
+                    this.showNotification('Settings reset to defaults');
                 }
-                @keyframes slideUp {
-                    from { transform: translateX(-50%) translateY(0); opacity: 1; }
-                    to { transform: translateX(-50%) translateY(-20px); opacity: 0; }
+            }
+
+            showNotification(message) {
+                const notification = document.createElement('div');
+                notification.textContent = message;
+                notification.style.cssText = `
+                    position: fixed;
+                    top: 20px;
+                    left: 50%;
+                    transform: translateX(-50%);
+                    background: linear-gradient(135deg, #f4b944, #f59e0b);
+                    color: #3b2604;
+                    padding: 12px 24px;
+                    border-radius: 999px;
+                    font-weight: 600;
+                    box-shadow: 0 8px 24px rgba(0, 0, 0, 0.3);
+                    z-index: 1001;
+                    animation: slideDown 0.3s ease, slideUp 0.3s ease 2s forwards;
+                `;
+
+                document.body.appendChild(notification);
+
+                if (!document.getElementById('settingsNotificationStyles')) {
+                    const style = document.createElement('style');
+                    style.id = 'settingsNotificationStyles';
+                    style.textContent = `
+                        @keyframes slideDown {
+                            from { transform: translateX(-50%) translateY(-20px); opacity: 0; }
+                            to { transform: translateX(-50%) translateY(0); opacity: 1; }
+                        }
+                        @keyframes slideUp {
+                            from { transform: translateX(-50%) translateY(0); opacity: 1; }
+                            to { transform: translateX(-50%) translateY(-20px); opacity: 0; }
+                        }
+                    `;
+                    document.head.appendChild(style);
                 }
-            `;
-            document.head.appendChild(style);
-            
-            setTimeout(() => {
-                notification.remove();
-                style.remove();
-            }, 2300);
-        }
-    }
 
-    // AUDIO MANAGER
-    class AudioManager {
-        constructor(app) {
-            this.app = app;
-            this.audioElements = {};
-            this.init();
+                setTimeout(() => {
+                    notification.style.opacity = '0';
+                    notification.style.transition = 'opacity 0.3s ease';
+                    setTimeout(() => notification.remove(), 300);
+                }, 2000);
+            }
         }
 
-        init() {
-            // Create audio elements
-            this.audioElements.bgMusic = document.getElementById('bgMusic');
-            this.audioElements.honey = document.getElementById('honeySound');
-            this.audioElements.page = document.getElementById('pageSound');
-            this.audioElements.bee = document.getElementById('beeSound');
-            
-            // Create silent audio fallbacks
-            this.createFallbackAudio();
-            
-            // Set initial volume
-            this.updateVolume(this.app.state.get('settings.volume') / 100);
-            
-            // Handle user interaction for audio unlock
-            const unlockAudio = () => {
-                this.audioElements.bgMusic.play().then(() => {
-                    this.audioElements.bgMusic.pause();
-                    document.removeEventListener('click', unlockAudio);
-                    document.removeEventListener('keydown', unlockAudio);
-                }).catch(() => {});
-            };
-            
-            document.addEventListener('click', unlockAudio, { once: true });
-            document.addEventListener('keydown', unlockAudio, { once: true });
-        }
+        // AUDIO MANAGER
+        class AudioManager {
+            constructor(app) {
+                this.app = app;
+                this.audioElements = {};
+                this.init();
+            }
 
-        createFallbackAudio() {
-            // Create silent fallback audio
-            const silentAudio = 'data:audio/wav;base64,UklGRigAAABXQVZFZm10IBIAAAABAAEAQB8AAEAfAAABAAgAZGF0YQAAAAA=';
-            
-            Object.values(this.audioElements).forEach(audio => {
-                if (!audio.src) {
-                    audio.src = silentAudio;
+            init() {
+                this.audioElements.bgMusic = document.getElementById('bgMusic');
+                this.audioElements.honey   = document.getElementById('honeySound');
+                this.audioElements.page    = document.getElementById('pageSound');
+                this.audioElements.bee     = document.getElementById('beeSound');
+
+                this.createFallbackAudio();
+
+                this.updateVolume(this.app.state.get('settings.volume') / 100);
+
+                const unlockAudio = () => {
+                    this.audioElements.bgMusic.play().then(() => {
+                        this.audioElements.bgMusic.pause();
+                        document.removeEventListener('click', unlockAudio);
+                        document.removeEventListener('keydown', unlockAudio);
+                    }).catch(() => {});
+                };
+
+                document.addEventListener('click', unlockAudio, { once: true });
+                document.addEventListener('keydown', unlockAudio, { once: true });
+            }
+
+            createFallbackAudio() {
+                const silentAudio = 'data:audio/wav;base64,UklGRigAAABXQVZFZm10IBIAAAABAAEAQB8AAEAfAAABAAgAZGF0YQAAAAA=';
+
+                Object.values(this.audioElements).forEach(audio => {
+                    if (!audio.src) {
+                        audio.src = silentAudio;
+                    }
+                });
+            }
+
+            updateVolume(volume) {
+                Object.values(this.audioElements).forEach(audio => {
+                    audio.volume = volume;
+                });
+            }
+
+            play(sound) {
+                const audio = this.audioElements[sound];
+                if (audio && this.app.state.get('settings.sfx')) {
+                    audio.currentTime = 0;
+                    audio.play().catch(() => {});
                 }
-            });
-        }
-
-        updateVolume(volume) {
-            Object.values(this.audioElements).forEach(audio => {
-                audio.volume = volume;
-            });
-        }
-
-        play(sound) {
-            const audio = this.audioElements[sound];
-            if (audio && this.app.state.get('settings.sfx')) {
-                audio.currentTime = 0;
-                audio.play().catch(() => {});
             }
-        }
 
-        toggleMusic() {
-            const musicOn = this.app.state.get('settings.music');
-            this.app.state.set('settings.music', !musicOn);
-            
-            if (!musicOn) {
-                this.audioElements.bgMusic.play().catch(() => {});
-            } else {
-                this.audioElements.bgMusic.pause();
-            }
-        }
-    }
+            toggleMusic() {
+                const musicOn = this.app.state.get('settings.music');
+                const newValue = !musicOn;
+                this.app.state.set('settings.music', newValue);
 
-    // WISHES MANAGER
-    class WishesManager {
-        constructor(app) {
-            this.app = app;
-            this.form = document.getElementById('wishesForm');
-            this.display = document.getElementById('wishesDisplay');
-            this.charCount = document.getElementById('charCount');
-            this.init();
-        }
-
-        init() {
-            this.form.addEventListener('submit', (e) => this.submitWish(e));
-            this.wishMessage.addEventListener('input', () => this.updateCharCount());
-            this.loadWishes();
-        }
-
-        get wishMessage() {
-            return document.getElementById('wishMessage');
-        }
-
-        updateCharCount() {
-            const length = this.wishMessage.value.length;
-            this.charCount.textContent = length;
-            this.wishMessage.style.borderColor = length > 500 ? 'var(--color-red)' : 'var(--color-parchment-dark)';
-        }
-
-        submitWish(e) {
-            e.preventDefault();
-            
-            const name = document.getElementById('guestName').value.trim();
-            const relation = document.getElementById('guestRelation').value;
-            const message = this.wishMessage.value.trim();
-            
-            if (!name || !message || message.length > 500) {
-                alert('Please fill in all fields and keep message under 500 characters.');
-                return;
-            }
-            
-            const wish = {
-                id: Date.now(),
-                name: name,
-                relation: relation,
-                message: message,
-                date: new Date().toISOString()
-            };
-            
-            // Add to state
-            const wishes = [...this.app.state.get('wishes'), wish];
-            this.app.state.set('wishes', wishes);
-            
-            // Add to display
-            this.addWishToDisplay(wish);
-            
-            // Reset form
-            this.form.reset();
-            this.updateCharCount();
-            
-            // Show confirmation
-            this.showConfirmation();
-        }
-
-        addWishToDisplay(wish) {
-            const wishElement = document.createElement('div');
-            wishElement.className = 'wish-item';
-            wishElement.innerHTML = `
-                <div style="background: white; padding: var(--space-md); border-radius: var(--radius-sm); margin-bottom: var(--space-sm); border-left: 4px solid var(--color-gold);">
-                    <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: var(--space-xs);">
-                        <strong style="color: var(--color-green);">${this.escapeHtml(wish.name)}</strong>
-                        <small style="color: var(--color-ink-muted);">${new Date(wish.date).toLocaleDateString()}</small>
-                    </div>
-                    <p style="margin-bottom: var(--space-xs);">${this.escapeHtml(wish.message)}</p>
-                    <small style="color: var(--color-blue);">${this.getRelationText(wish.relation)}</small>
-                </div>
-            `;
-            
-            this.display.appendChild(wishElement);
-        }
-
-        loadWishes() {
-            const wishes = this.app.state.get('wishes');
-            wishes.forEach(wish => this.addWishToDisplay(wish));
-            
-            // Add sample wishes if empty
-            if (wishes.length === 0) {
-                this.addSampleWishes();
-            }
-        }
-
-        addSampleWishes() {
-            const samples = [
-                {
-                    id: 1,
-                    name: "Owl",
-                    relation: "woodland-friend",
-                    message: "May your days be filled with wonder and your nights with sweet dreams.",
-                    date: new Date().toISOString()
-                },
-                {
-                    id: 2,
-                    name: "Piglet",
-                    relation: "woodland-friend",
-                    message: "Remember: even the smallest creatures can have the biggest hearts.",
-                    date: new Date().toISOString()
-                }
-            ];
-            
-            samples.forEach(wish => this.addWishToDisplay(wish));
-        }
-
-        getRelationText(relation) {
-            const relations = {
-                'family': 'Family',
-                'friend': 'Friend',
-                'colleague': 'Colleague',
-                'woodland-friend': 'Woodland Friend'
-            };
-            return relations[relation] || 'Guest';
-        }
-
-        escapeHtml(text) {
-            const div = document.createElement('div');
-            div.textContent = text;
-            return div.innerHTML;
-        }
-
-        showConfirmation() {
-            const confirmation = document.createElement('div');
-            confirmation.textContent = 'Thank you for sharing your wishes!';
-            confirmation.style.cssText = `
-                position: fixed;
-                top: 50%;
-                left: 50%;
-                transform: translate(-50%, -50%);
-                background: white;
-                padding: var(--space-lg);
-                border-radius: var(--radius-md);
-                box-shadow: var(--shadow-heavy);
-                z-index: 1001;
-                text-align: center;
-                border: 3px solid var(--color-gold);
-            `;
-            
-            document.body.appendChild(confirmation);
-            
-            setTimeout(() => {
-                confirmation.style.opacity = '0';
-                confirmation.style.transition = 'opacity 0.3s ease';
-                setTimeout(() => confirmation.remove(), 300);
-            }, 2000);
-        }
-    }
-
-    // FOOTER ACTIONS
-    class FooterActions {
-        static init(app) {
-            document.getElementById('printBtn').addEventListener('click', () => this.printPage());
-            document.getElementById('shareBtn').addEventListener('click', () => this.sharePage());
-            document.getElementById('toggleMusicBtn').addEventListener('click', () => app.components.audio.toggleMusic());
-        }
-
-        static printPage() {
-            window.print();
-        }
-
-        static async sharePage() {
-            const shareData = {
-                title: 'Baby Gunnar\'s Hundred Acre Wood Shower',
-                text: 'Join the celebration in the Hundred Acre Wood!',
-                url: window.location.href
-            };
-            
-            try {
-                if (navigator.share) {
-                    await navigator.share(shareData);
+                if (newValue) {
+                    this.audioElements.bgMusic.play().catch(() => {});
                 } else {
-                    await navigator.clipboard.writeText(shareData.url);
-                    alert('Link copied to clipboard!');
+                    this.audioElements.bgMusic.pause();
                 }
-            } catch (err) {
-                console.log('Error sharing:', err);
             }
         }
-    }
 
-    // INITIALIZE APPLICATION
-    const app = new BabyShowerApp();
+        // WISHES MANAGER
+        class WishesManager {
+            constructor(app) {
+                this.app = app;
+                this.form = document.getElementById('wishesForm');
+                this.display = document.getElementById('wishesDisplay');
+                this.charCount = document.getElementById('charCount');
+                this.init();
+            }
 
-    // Wait for DOM to load
-    document.addEventListener('DOMContentLoaded', () => {
-        app.init();
-        FooterActions.init(app);
-    });
+            init() {
+                this.form.addEventListener('submit', (e) => this.submitWish(e));
+                this.wishMessage.addEventListener('input', () => this.updateCharCount());
+                this.updateCharCount();
+                this.loadWishes();
+            }
 
-    // Make app available globally for debugging
-    window.BabyShowerApp = app;
-</script>
+            get wishMessage() {
+                return document.getElementById('wishMessage');
+            }
+
+            updateCharCount() {
+                const length = this.wishMessage.value.length;
+                this.charCount.textContent = length;
+                this.wishMessage.style.borderColor = length > 500 ? 'var(--color-red)' : 'var(--color-parchment-dark)';
+            }
+
+            submitWish(e) {
+                e.preventDefault();
+
+                const name = document.getElementById('guestName').value.trim();
+                const relation = document.getElementById('guestRelation').value;
+                const message = this.wishMessage.value.trim();
+
+                if (!name || !message || message.length > 500) {
+                    alert('Please fill in all fields and keep message under 500 characters.');
+                    return;
+                }
+
+                const wish = {
+                    id: Date.now(),
+                    name,
+                    relation,
+                    message,
+                    date: new Date().toISOString()
+                };
+
+                const wishes = [...this.app.state.get('wishes'), wish];
+                this.app.state.set('wishes', wishes);
+
+                this.addWishToDisplay(wish);
+
+                this.form.reset();
+                this.updateCharCount();
+
+                this.showConfirmation();
+            }
+
+            addWishToDisplay(wish) {
+                const wishElement = document.createElement('div');
+                wishElement.className = 'wish-item';
+                wishElement.innerHTML = `
+                    <div style="background: white; padding: var(--space-md); border-radius: var(--radius-sm); margin-bottom: var(--space-sm); border-left: 4px solid var(--color-gold);">
+                        <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: var(--space-xs);">
+                            <strong style="color: var(--color-green);">${this.escapeHtml(wish.name)}</strong>
+                            <small style="color: var(--color-ink-muted);">${new Date(wish.date).toLocaleDateString()}</small>
+                        </div>
+                        <p style="margin-bottom: var(--space-xs);">${this.escapeHtml(wish.message)}</p>
+                        <small style="color: var(--color-blue);">${this.getRelationText(wish.relation)}</small>
+                    </div>
+                `;
+
+                this.display.appendChild(wishElement);
+            }
+
+            loadWishes() {
+                const wishes = this.app.state.get('wishes');
+                if (wishes.length > 0) {
+                    wishes.forEach(wish => this.addWishToDisplay(wish));
+                } else {
+                    this.addSampleWishes();
+                }
+            }
+
+            addSampleWishes() {
+                const now = new Date().toISOString();
+                const samples = [
+                    {
+                        id: 1,
+                        name: "Owl",
+                        relation: "woodland-friend",
+                        message: "May your days be filled with wonder and your nights with sweet dreams.",
+                        date: now
+                    },
+                    {
+                        id: 2,
+                        name: "Piglet",
+                        relation: "woodland-friend",
+                        message: "Remember: even the smallest creatures can have the biggest hearts.",
+                        date: now
+                    }
+                ];
+
+                samples.forEach(wish => this.addWishToDisplay(wish));
+            }
+
+            getRelationText(relation) {
+                const relations = {
+                    'family': 'Family',
+                    'friend': 'Friend',
+                    'colleague': 'Colleague',
+                    'woodland-friend': 'Woodland Friend'
+                };
+                return relations[relation] || 'Guest';
+            }
+
+            escapeHtml(text) {
+                const div = document.createElement('div');
+                div.textContent = text;
+                return div.innerHTML;
+            }
+
+            showConfirmation() {
+                const confirmation = document.createElement('div');
+                confirmation.textContent = 'Thank you for sharing your wishes!';
+                confirmation.style.cssText = `
+                    position: fixed;
+                    top: 50%;
+                    left: 50%;
+                    transform: translate(-50%, -50%);
+                    background: white;
+                    padding: var(--space-lg);
+                    border-radius: var(--radius-md);
+                    box-shadow: var(--shadow-heavy);
+                    z-index: 1001;
+                    text-align: center;
+                    border: 3px solid var(--color-gold);
+                `;
+
+                document.body.appendChild(confirmation);
+
+                setTimeout(() => {
+                    confirmation.style.opacity = '0';
+                    confirmation.style.transition = 'opacity 0.3s ease';
+                    setTimeout(() => confirmation.remove(), 300);
+                }, 2000);
+            }
+        }
+
+        // FOOTER ACTIONS
+        class FooterActions {
+            static init(app) {
+                document.getElementById('printBtn').addEventListener('click', () => this.printPage());
+                document.getElementById('shareBtn').addEventListener('click', () => this.sharePage());
+                document.getElementById('toggleMusicBtn').addEventListener('click', () => app.components.audio.toggleMusic());
+            }
+
+            static printPage() {
+                window.print();
+            }
+
+            static async sharePage() {
+                const shareData = {
+                    title: "Baby Gunnar's Hundred Acre Wood Shower",
+                    text: 'Join the celebration in the Hundred Acre Wood!',
+                    url: window.location.href
+                };
+
+                try {
+                    if (navigator.share) {
+                        await navigator.share(shareData);
+                    } else if (navigator.clipboard) {
+                        await navigator.clipboard.writeText(shareData.url);
+                        alert('Link copied to clipboard!');
+                    } else {
+                        alert(shareData.url);
+                    }
+                } catch (err) {
+                    console.log('Error sharing:', err);
+                }
+            }
+        }
+
+        // INITIALIZE APPLICATION
+        const app = new BabyShowerApp();
+
+        document.addEventListener('DOMContentLoaded', () => {
+            app.init();
+            FooterActions.init(app);
+        });
+
+        // Expose for debugging
+        window.BabyShowerApp = app;
+    </script>
 </body>
 </html>
