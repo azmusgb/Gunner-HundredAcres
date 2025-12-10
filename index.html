@@ -179,11 +179,20 @@
             overflow: hidden;
             box-shadow: var(--shadow-heavy);
             position: relative;
+            isolation: isolate;
+        }
+
+        .hero-banner::before {
+            content: '';
+            position: absolute;
+            inset: 0;
+            background: linear-gradient(180deg, rgba(20, 33, 20, 0.35) 0%, rgba(20, 33, 20, 0.55) 100%);
+            z-index: 1;
         }
 
         .hero-image {
             width: 100%;
-            height: 400px;
+            height: clamp(280px, 48vw, 460px);
             object-fit: cover;
             object-position: center;
             display: block;
@@ -193,23 +202,26 @@
             position: absolute;
             inset-inline: 0;
             bottom: 0;
-            background: linear-gradient(to top, rgba(255, 255, 255, 0.95), rgba(255, 248, 225, 0.85));
+            background: linear-gradient(to top, rgba(20, 20, 20, 0.35), rgba(20, 20, 20, 0.1));
             padding: var(--space-lg);
             text-align: center;
             border-top: 3px solid var(--color-gold);
+            z-index: 2;
+            color: white;
+            text-shadow: 0 4px 18px rgba(0, 0, 0, 0.25);
         }
 
         .hero-title {
             font-family: var(--font-heading);
             font-size: clamp(2.5rem, 5vw, 3.5rem);
-            color: var(--color-green);
+            color: #fff9ec;
             margin-bottom: var(--space-xs);
             line-height: 1.2;
         }
 
         .hero-subtitle {
             font-size: clamp(1rem, 2vw, 1.25rem);
-            color: var(--color-ink-muted);
+            color: #fef4d7;
             max-width: 600px;
             margin: 0 auto;
         }
@@ -229,18 +241,30 @@
         }
 
         .nav-tracker {
-            display: flex;
+            display: grid;
+            grid-template-columns: auto 1fr;
             align-items: center;
-            gap: var(--space-md);
+            gap: var(--space-sm);
             margin-bottom: var(--space-sm);
+        }
+
+        .nav-progress-meta {
+            grid-column: 1 / -1;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            font-family: var(--font-ui);
+            font-size: 0.95rem;
+            color: var(--color-ink-muted);
         }
 
         .nav-progress {
             flex: 1;
-            height: 8px;
-            background: var(--color-parchment-dark);
+            height: 12px;
+            background: linear-gradient(180deg, #f0e5cd 0%, #e6d6b5 100%);
             border-radius: var(--radius-full);
             overflow: hidden;
+            border: 1px solid var(--color-gold);
         }
 
         .nav-progress-fill {
@@ -249,12 +273,14 @@
             border-radius: var(--radius-full);
             transition: width 0.3s ease;
             width: 0%;
+            box-shadow: 0 0 0 1px rgba(0, 0, 0, 0.05) inset;
         }
 
         .nav-buttons {
             display: flex;
+            flex-wrap: wrap;
             gap: var(--space-xs);
-            overflow-x: auto;
+            row-gap: var(--space-sm);
             padding: var(--space-xs) 0;
         }
 
@@ -282,6 +308,28 @@
             background: linear-gradient(135deg, #FFF9E6, #FFEDCC);
             border-color: var(--color-gold);
             font-weight: 600;
+        }
+
+        .nav-compact {
+            display: none;
+            margin-top: var(--space-sm);
+            gap: var(--space-xs);
+            align-items: center;
+            font-family: var(--font-ui);
+        }
+
+        .nav-compact label {
+            font-weight: 600;
+            color: var(--color-ink-muted);
+        }
+
+        .nav-select {
+            width: 100%;
+            padding: var(--space-xs);
+            border-radius: var(--radius-md);
+            border: 2px solid var(--color-parchment-dark);
+            background: white;
+            font-family: var(--font-ui);
         }
 
         .nav-button-number {
@@ -319,61 +367,32 @@
 
         /* 8. STORY VIEW */
         .story-view {
-            background: linear-gradient(
-                90deg,
-                rgba(139, 111, 71, 0.8) 0%,
-                rgba(193, 154, 107, 0.9) 5%,
-                var(--color-parchment) 10%,
-                var(--color-parchment) 90%,
-                rgba(193, 154, 107, 0.9) 95%,
-                rgba(139, 111, 71, 0.8) 100%
-            );
-            border-radius: 8px 24px 24px 8px;
-            padding: 40px;
-            box-shadow:
-                inset 0 1px 0 rgba(255, 255, 255, 0.6),
-                inset 0 -1px 0 rgba(0, 0, 0, 0.1),
-                0 20px 60px rgba(0, 0, 0, 0.3),
-                0 0 0 1px rgba(139, 111, 71, 0.3);
+            background: linear-gradient(120deg, rgba(232, 212, 179, 0.85) 0%, rgba(246, 236, 214, 0.95) 60%, #fffaf0 100%);
+            border-radius: 16px;
+            padding: clamp(1.5rem, 2vw, 2.5rem);
+            box-shadow: 0 10px 35px rgba(0, 0, 0, 0.12);
             position: relative;
         }
 
         .story-view::before {
             content: '';
             position: absolute;
-            left: 30px;
-            top: 20px;
-            bottom: 20px;
-            width: 20px;
-            background: linear-gradient(
-                to right,
-                rgba(139, 111, 71, 0.8) 0%,
-                rgba(193, 154, 107, 0.9) 50%,
-                rgba(139, 111, 71, 0.8) 100%
-            );
-            border-radius: 4px;
-            box-shadow:
-                inset 2px 0 4px rgba(0, 0, 0, 0.3),
-                inset -2px 0 4px rgba(255, 255, 255, 0.2),
-                5px 0 15px rgba(0, 0, 0, 0.2);
-            z-index: 1;
+            inset: 16px;
+            border-radius: 12px;
+            border: 2px dashed rgba(193, 154, 107, 0.35);
+            pointer-events: none;
         }
 
         .story-content {
             position: relative;
             z-index: 2;
-            background: linear-gradient(
-                to bottom,
-                var(--color-parchment) 0%,
-                var(--color-parchment-dark) 100%
-            );
-            padding: 40px;
-            border-radius: 4px;
-            box-shadow:
-                inset 0 0 0 1px rgba(139, 111, 71, 0.2),
-                inset 0 0 40px rgba(139, 111, 71, 0.1),
-                0 4px 20px rgba(0, 0, 0, 0.1);
+            background: linear-gradient(to bottom, var(--color-parchment) 0%, var(--color-parchment-dark) 100%);
+            padding: clamp(1.5rem, 3vw, 2.5rem);
+            border-radius: 12px;
+            box-shadow: 0 8px 18px rgba(0, 0, 0, 0.08);
             min-height: 400px;
+            max-width: 72ch;
+            margin: 0 auto;
         }
 
         .story-header {
@@ -394,7 +413,7 @@
             font-size: 1.1rem;
             line-height: 1.8;
             margin-bottom: var(--space-md);
-            text-align: justify;
+            text-align: left;
         }
 
         .story-text:first-of-type::first-letter {
@@ -468,6 +487,14 @@
             flex-wrap: wrap;
         }
 
+        .game-tip {
+            text-align: center;
+            margin-top: var(--space-xs);
+            color: var(--color-ink-muted);
+            font-family: var(--font-ui);
+            font-size: 0.95rem;
+        }
+
         .game-btn {
             padding: var(--space-md) var(--space-lg);
             border: none;
@@ -506,6 +533,14 @@
             right: 0;
             justify-content: space-between;
             padding: 0 var(--edge-padding);
+        }
+
+        .mobile-controls-hint {
+            text-align: center;
+            font-size: 0.95rem;
+            color: var(--color-ink-muted);
+            margin-top: var(--space-sm);
+            display: none;
         }
 
         .mobile-control-btn {
@@ -563,6 +598,30 @@
             transform: translateY(-4px);
             box-shadow: var(--shadow-medium);
             border-color: var(--color-gold);
+        }
+
+        .card-cta {
+            display: inline-flex;
+            align-items: center;
+            gap: var(--space-xs);
+            margin-top: var(--space-sm);
+            padding: var(--space-xs) var(--space-sm);
+            border-radius: var(--radius-full);
+            border: 2px solid var(--color-gold);
+            background: white;
+            font-family: var(--font-ui);
+            font-weight: 600;
+            color: var(--color-green);
+            text-decoration: none;
+        }
+
+        .registry-panel {
+            margin-top: var(--space-xl);
+            padding: var(--space-lg);
+            border-radius: var(--radius-md);
+            background: #fffaf2;
+            border: 2px solid var(--color-gold-light);
+            box-shadow: var(--shadow-soft);
         }
 
         .card-icon {
@@ -627,6 +686,26 @@
             outline: none;
             border-color: var(--color-gold);
             box-shadow: 0 0 0 3px rgba(232, 164, 39, 0.1);
+        }
+
+        .form-feedback {
+            margin-top: var(--space-sm);
+            padding: var(--space-sm);
+            border-radius: var(--radius-sm);
+            font-family: var(--font-ui);
+            font-weight: 600;
+        }
+
+        .form-feedback.success {
+            background: #f2fbf4;
+            color: var(--color-green);
+            border: 2px solid var(--color-green-light);
+        }
+
+        .form-feedback.error {
+            background: #fff4f4;
+            color: var(--color-red);
+            border: 2px solid var(--color-red);
         }
 
         .submit-btn {
@@ -750,9 +829,10 @@
             position: absolute;
             cursor: pointer;
             inset: 0;
-            background-color: #ccc;
+            background: linear-gradient(135deg, #f5e7c6, #eed9a1);
             transition: .4s;
             border-radius: 24px;
+            box-shadow: inset 0 1px 2px rgba(0, 0, 0, 0.2);
         }
 
         .toggle-slider:before {
@@ -762,17 +842,48 @@
             width: 16px;
             left: 4px;
             bottom: 4px;
-            background-color: white;
+            background: linear-gradient(145deg, #fff9ec, #f2d69b);
             transition: .4s;
             border-radius: 50%;
+            box-shadow: 0 2px 6px rgba(0, 0, 0, 0.2);
         }
 
         input:checked + .toggle-slider {
-            background-color: var(--color-gold);
+            background: linear-gradient(135deg, var(--color-gold), var(--color-gold-dark));
         }
 
         input:checked + .toggle-slider:before {
             transform: translateX(26px);
+        }
+
+        input[type="range"] {
+            -webkit-appearance: none;
+            width: 100%;
+            height: 10px;
+            border-radius: 999px;
+            background: linear-gradient(90deg, #ffe8bc, #f3cc7f);
+            outline: none;
+            border: 1px solid var(--color-gold-light);
+        }
+
+        input[type="range"]::-webkit-slider-thumb {
+            -webkit-appearance: none;
+            appearance: none;
+            width: 22px;
+            height: 22px;
+            border-radius: 50%;
+            background: linear-gradient(135deg, var(--color-gold), var(--color-gold-dark));
+            border: 2px solid white;
+            box-shadow: 0 2px 8px rgba(0, 0, 0, 0.25);
+        }
+
+        input[type="range"]::-moz-range-thumb {
+            width: 22px;
+            height: 22px;
+            border-radius: 50%;
+            background: linear-gradient(135deg, var(--color-gold), var(--color-gold-dark));
+            border: 2px solid white;
+            box-shadow: 0 2px 8px rgba(0, 0, 0, 0.25);
         }
 
         .settings-actions {
@@ -792,13 +903,14 @@
             height: 44px;
             border-radius: 50%;
             border: 2px solid var(--color-gold);
-            background: white;
+            background: rgba(255, 255, 255, 0.9);
             display: grid;
             place-items: center;
             cursor: pointer;
             box-shadow: var(--shadow-soft);
             z-index: 1002;
-            transition: transform 0.2s ease, box-shadow 0.2s ease, background 0.2s ease;
+            transition: transform 0.2s ease, box-shadow 0.2s ease, background 0.2s ease, border-color 0.2s ease;
+            backdrop-filter: blur(8px) saturate(1.05);
         }
 
         .settings-toggle i {
@@ -810,13 +922,14 @@
             background: #FFF9E6;
             transform: translateY(-1px) rotate(15deg);
             box-shadow: var(--shadow-medium);
+            border-color: var(--color-gold-dark);
         }
 
         /* 13. FOOTER */
         .site-footer {
             text-align: center;
-            padding: var(--space-xl) 0;
-            margin-top: var(--space-xl);
+            padding: var(--space-lg) 0;
+            margin-top: var(--space-lg);
             border-top: 2px solid var(--color-gold-light);
             color: var(--color-ink-muted);
         }
@@ -959,6 +1072,10 @@
                 display: flex;
             }
 
+            .mobile-controls-hint {
+                display: block;
+            }
+
             .settings-panel {
                 width: 100%;
                 right: -100%;
@@ -969,8 +1086,20 @@
             }
 
             .nav-buttons {
-                flex-wrap: nowrap;
-                overflow-x: auto;
+                flex-wrap: wrap;
+                justify-content: center;
+                overflow: visible;
+            }
+        }
+
+        @media (max-width: 640px) {
+            .nav-buttons {
+                display: none;
+            }
+
+            .nav-compact {
+                display: grid;
+                grid-template-columns: auto 1fr;
             }
         }
 
@@ -1053,9 +1182,13 @@
     <!-- Navigation -->
     <nav class="main-nav" aria-label="Story chapters">
         <div class="nav-tracker">
-            <span>Progress:</span>
+            <span aria-hidden="true">Progress:</span>
             <div class="nav-progress">
                 <div class="nav-progress-fill" id="navProgress"></div>
+            </div>
+            <div class="nav-progress-meta" aria-live="polite">
+                <span>Journey tracker</span>
+                <span id="navProgressLabel">Step 1 of 4</span>
             </div>
         </div>
         <div class="nav-buttons">
@@ -1075,6 +1208,15 @@
                 <span class="nav-button-number">4</span>
                 <span>Wishes</span>
             </button>
+        </div>
+        <div class="nav-compact">
+            <label for="navSelect">Jump to</label>
+            <select id="navSelect" class="nav-select" aria-label="Jump to section">
+                <option value="story">Welcome</option>
+                <option value="game">Honey Game</option>
+                <option value="registry">Registry</option>
+                <option value="wishes">Wishes</option>
+            </select>
         </div>
     </nav>
 
@@ -1104,6 +1246,7 @@
                     <button class="mobile-control-btn" id="mobileRight" aria-label="Move right"><i class="fas fa-arrow-right"></i></button>
                 </div>
             </div>
+            <div class="mobile-controls-hint" id="mobileControlHint">On phones, the honey buttons above stay visible for easy play.</div>
 
             <div class="game-hud" aria-label="Game statistics">
                 <div class="hud-item">
@@ -1140,6 +1283,8 @@
                 </button>
             </div>
 
+            <p class="game-tip">Tip: use ← → or A/D on desktop, and the on-screen honey buttons will appear automatically on phones.</p>
+
             <details class="game-instructions">
                 <summary>How to play</summary>
                 <ul style="margin-top: var(--space-sm); padding-left: var(--space-md);">
@@ -1174,13 +1319,14 @@
                         <li>🛏️ Soft blankets &amp; swaddles</li>
                         <li>👶 Diapers &amp; essentials</li>
                     </ul>
+                    <a class="card-cta" href="https://www.pinterest.com/search/pins/?q=hundred%20acre%20wood%20nursery" target="_blank" rel="noopener">Explore inspiration <i class="fas fa-arrow-up-right-from-square"></i></a>
                 </div>
             </div>
 
-            <div style="margin-top: var(--space-xl); text-align: center;">
-                <h3>Nursery Details</h3>
-                <p>Theme: Hundred Acre Wood Adventures • Colors: Honey gold, Pooh red, sage green</p>
-                <p>Location: Arizona • Expected: Late August 2025</p>
+            <div class="registry-panel">
+                <h3 style="text-align: center; margin-bottom: var(--space-sm);">Nursery Details</h3>
+                <p style="text-align: center;">Theme: Hundred Acre Wood Adventures • Colors: Honey gold, Pooh red, sage green</p>
+                <p style="text-align: center;">Location: Arizona • Expected: Late August 2025</p>
             </div>
         </section>
 
@@ -1205,17 +1351,20 @@
                             <option value="friend">Friend</option>
                             <option value="colleague">Colleague</option>
                             <option value="woodland-friend">Woodland Friend</option>
+                            <option value="prefer-not">Prefer not to say</option>
                         </select>
                     </div>
                 </div>
 
                 <div class="form-group">
                     <label for="wishMessage" class="form-label">Your Message</label>
-                    <textarea id="wishMessage" class="form-input" rows="4" placeholder="What wisdom or wishes would you like to share with Baby Gunnar?..." required></textarea>
+                    <textarea id="wishMessage" class="form-input" rows="4" maxlength="500" aria-describedby="charCount wishFeedback" placeholder="What wisdom or wishes would you like to share with Baby Gunnar?..." required></textarea>
                     <div style="text-align: right; font-size: 0.9rem; color: var(--color-ink-muted); margin-top: var(--space-xs);">
                         <span id="charCount">0</span>/500 characters
                     </div>
                 </div>
+
+                <div id="wishFeedback" class="form-feedback hidden" role="status" aria-live="polite"></div>
 
                 <div style="text-align: center; margin-top: var(--space-lg);">
                     <button type="submit" class="submit-btn">
@@ -1636,6 +1785,8 @@
                 this.app = app;
                 this.navButtons = document.querySelectorAll('.nav-button');
                 this.progressFill = document.getElementById('navProgress');
+                this.progressLabel = document.getElementById('navProgressLabel');
+                this.navSelect = document.getElementById('navSelect');
                 this.init();
             }
 
@@ -1647,6 +1798,14 @@
                         this.app.setView(view, chapter);
                     });
                 });
+
+                if (this.navSelect) {
+                    this.navSelect.addEventListener('change', (e) => {
+                        const view = e.target.value;
+                        const chapter = this.getChapterFromView(view);
+                        this.app.setView(view, chapter);
+                    });
+                }
             }
 
             update(chapter) {
@@ -1654,10 +1813,34 @@
                 const progress = (chapter / totalChapters) * 100;
                 this.progressFill.style.width = `${progress}%`;
 
+                if (this.progressLabel) {
+                    this.progressLabel.textContent = `Step ${chapter} of ${totalChapters} (${Math.round(progress)}%)`;
+                }
+
                 this.navButtons.forEach(btn => {
                     const btnChapter = parseInt(btn.dataset.chapter, 10);
                     btn.classList.toggle('active', btnChapter === chapter);
                 });
+
+                if (this.navSelect) {
+                    const view = this.getViewFromChapter(chapter);
+                    this.navSelect.value = view;
+                }
+            }
+
+            getViewFromChapter(chapter) {
+                const chapters = {
+                    1: 'story',
+                    2: 'game',
+                    3: 'registry',
+                    4: 'wishes'
+                };
+                return chapters[chapter] || 'story';
+            }
+
+            getChapterFromView(view) {
+                const lookup = { story: 1, game: 2, registry: 3, wishes: 4 };
+                return lookup[view] || 1;
             }
         }
 
@@ -2525,6 +2708,7 @@
                 this.form = document.getElementById('wishesForm');
                 this.display = document.getElementById('wishesDisplay');
                 this.charCount = document.getElementById('charCount');
+                this.feedback = document.getElementById('wishFeedback');
                 this.init();
             }
 
@@ -2553,7 +2737,7 @@
                 const message = this.wishMessage.value.trim();
 
                 if (!name || !message || message.length > 500) {
-                    alert('Please fill in all fields and keep message under 500 characters.');
+                    this.setFeedback('Please add your name, message, and keep it under 500 characters.', 'error');
                     return;
                 }
 
@@ -2610,7 +2794,8 @@
                     'family': 'Family',
                     'friend': 'Friend',
                     'colleague': 'Colleague',
-                    'woodland-friend': 'Woodland Friend'
+                    'woodland-friend': 'Woodland Friend',
+                    'prefer-not': 'Prefer not to say'
                 };
                 return relations[relation] || 'Guest';
             }
@@ -2657,29 +2842,20 @@
             }
 
             showConfirmation() {
-                const confirmation = document.createElement('div');
-                confirmation.textContent = 'Thank you for sharing your wishes!';
-                confirmation.style.cssText = `
-                    position: fixed;
-                    top: 50%;
-                    left: 50%;
-                    transform: translate(-50%, -50%);
-                    background: white;
-                    padding: var(--space-lg);
-                    border-radius: var(--radius-md);
-                    box-shadow: var(--shadow-heavy);
-                    z-index: 1001;
-                    text-align: center;
-                    border: 3px solid var(--color-gold);
-                `;
+                this.setFeedback('Thank you for sharing your wishes!', 'success');
+            }
 
-                document.body.appendChild(confirmation);
-
-                setTimeout(() => {
-                    confirmation.style.opacity = '0';
-                    confirmation.style.transition = 'opacity 0.3s ease';
-                    setTimeout(() => confirmation.remove(), 300);
-                }, 2000);
+            setFeedback(message, type = 'success') {
+                if (!this.feedback) return;
+                if (this.feedbackTimeout) {
+                    clearTimeout(this.feedbackTimeout);
+                }
+                this.feedback.textContent = message;
+                this.feedback.classList.remove('hidden', 'success', 'error');
+                this.feedback.classList.add(type === 'error' ? 'error' : 'success');
+                this.feedbackTimeout = setTimeout(() => {
+                    this.feedback.classList.add('hidden');
+                }, 4000);
             }
         }
 
