@@ -3695,13 +3695,28 @@
         const prevBtn = document.getElementById("prevBtn");
         const indicator = document.getElementById("pageIndicator");
         const progress = document.getElementById("progressFill");
+        const pageTurnSound = document.getElementById("pageSound");
         const total = pages.length;
         let current = 0;
+
+        function playPageTurn() {
+            const settings = typeof window.getGameSettings === 'function'
+                ? window.getGameSettings()
+                : null;
+
+            const allowSfx = settings ? settings.sfx !== false : true;
+
+            if (!allowSfx || !pageTurnSound) return;
+
+            pageTurnSound.currentTime = 0;
+            pageTurnSound.play().catch(() => {});
+        }
 
         function scrollToChapter(chapter) {
             const target = chapter - 1;
             if (!isNaN(target) && target >= 0 && target < total) {
                 current = target;
+                playPageTurn();
                 updateUI();
             }
         }
@@ -3746,6 +3761,7 @@
         nextBtn?.addEventListener("click", () => {
             if (current < total - 1) {
                 current++;
+                playPageTurn();
                 updateUI();
             }
         });
@@ -3753,6 +3769,7 @@
         prevBtn?.addEventListener("click", () => {
             if (current > 0) {
                 current--;
+                playPageTurn();
                 updateUI();
             }
         });
@@ -3763,6 +3780,7 @@
                 const target = parseInt(btn.dataset.chapterTarget, 10) - 1;
                 if (!isNaN(target) && target >= 0 && target < total) {
                     current = target;
+                    playPageTurn();
                     updateUI();
                 }
             });
@@ -3812,6 +3830,12 @@
         const mobileControlsToggle = document.getElementById('mobileControlsToggle');
         const themeOptions = document.querySelectorAll('.theme-option');
 
+        // Audio elements
+        const bgMusic = document.getElementById('bgMusic');
+        const ambientForest = document.getElementById('ambientForest');
+        const honeySound = document.getElementById('honeySound');
+        const pageSound = document.getElementById('pageSound');
+
         // Default settings
         const defaultSettings = {
             difficulty: 'medium',
@@ -3828,6 +3852,16 @@
 
         // Current settings
         let currentSettings = { ...defaultSettings };
+        let audioPrimed = false;
+
+        const primeAudio = () => {
+            audioPrimed = true;
+            applySettingsToGame();
+        };
+
+        // Ensure browsers allow playback after the first interaction
+        document.addEventListener('pointerdown', primeAudio, { once: true });
+        document.addEventListener('keydown', primeAudio, { once: true });
 
         // Load saved settings from localStorage
         function loadSettings() {
@@ -3932,6 +3966,9 @@
                 audio.volume = volume;
             });
 
+            if (honeySound) honeySound.muted = !currentSettings.sfx;
+            if (pageSound) pageSound.muted = !currentSettings.sfx;
+
             // Apply theme
             applyTheme(currentSettings.theme);
 
@@ -3949,11 +3986,9 @@
             }
 
             // Toggle music
-            const bgMusic = document.getElementById('bgMusic');
-            const ambientForest = document.getElementById('ambientForest');
-
             if (bgMusic) {
-                if (currentSettings.music) {
+                bgMusic.muted = !currentSettings.music;
+                if (currentSettings.music && audioPrimed) {
                     bgMusic.play().catch(e => console.log('Audio play failed:', e));
                 } else {
                     bgMusic.pause();
@@ -3961,7 +3996,8 @@
             }
 
             if (ambientForest) {
-                if (currentSettings.music) {
+                ambientForest.muted = !currentSettings.music;
+                if (currentSettings.music && audioPrimed) {
                     ambientForest.play().catch(e => console.log('Audio play failed:', e));
                 } else {
                     ambientForest.pause();
