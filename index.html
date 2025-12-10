@@ -1992,6 +1992,28 @@ body {
         const honeySound = document.getElementById('honeySound');
         const pageSound = document.getElementById('pageSound');
 
+        function applyMobileViewportFix() {
+            const viewportMeta = document.querySelector('meta[name="viewport"]');
+            if (viewportMeta) {
+                // This fixes the skinny layout issue on iPhones
+                viewportMeta.content = 'width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover';
+            }
+
+            // Force body to full width
+            document.body.style.width = '100vw';
+            document.body.style.maxWidth = '100vw';
+            document.body.style.overflowX = 'hidden';
+
+            // Force all main containers to full width
+            const containers = document.querySelectorAll('.container, .book-container, .masthead-hero, .hero-panel');
+            containers.forEach(container => {
+                container.style.width = '100%';
+                container.style.maxWidth = '100%';
+                container.style.marginLeft = '0';
+                container.style.marginRight = '0';
+            });
+        }
+
         // Default settings
         const defaultSettings = {
             difficulty: 'medium',
@@ -2009,6 +2031,13 @@ body {
         // Current settings
         let currentSettings = { ...defaultSettings };
         let audioPrimed = false;
+
+        // Call viewport fix early
+        applyMobileViewportFix();
+        window.addEventListener('resize', applyMobileViewportFix);
+        window.addEventListener('orientationchange', () => {
+            setTimeout(applyMobileViewportFix, 100);
+        });
 
         const primeAudio = () => {
             audioPrimed = true;
@@ -2344,46 +2373,5 @@ body {
 <audio id="ambientForest" loop preload="auto">
     <source src="https://assets.mixkit.co/sfx/preview/mixkit-forest-birds-ambience-121.mp3">
 </audio>
-<script>
-// iPhone width detection and fix
-(function() {
-  "use strict";
-  
-  function isiPhone() {
-    return /iPhone|iPod/.test(navigator.userAgent) && !window.MSStream;
-  }
-  
-  function fixiPhoneWidth() {
-    if (!isiPhone()) return;
-    
-    // Force viewport meta tag
-    var viewport = document.querySelector('meta[name="viewport"]');
-    if (viewport) {
-      viewport.content = 'width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover';
-    }
-    
-    // Apply iPhone-specific styles
-    document.body.classList.add('iphone-device');
-    
-    // Force repaint
-    document.body.style.display = 'none';
-    document.body.offsetHeight; // trigger reflow
-    document.body.style.display = '';
-    
-    console.log('iPhone width fix applied');
-  }
-  
-  // Run on load and resize
-  if (document.readyState === 'loading') {
-    document.addEventListener('DOMContentLoaded', fixiPhoneWidth);
-  } else {
-    fixiPhoneWidth();
-  }
-  
-  window.addEventListener('resize', fixiPhoneWidth);
-  window.addEventListener('orientationchange', function() {
-    setTimeout(fixiPhoneWidth, 100);
-  });
-</script>
 </body>
 </html>
