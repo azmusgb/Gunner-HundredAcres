@@ -1889,24 +1889,6 @@
 
     // ==================== QUICK WINS: BEAR EVOLUTION ====================
 
-
-    function showEvolutionUpgrade(level) {
-        const evolution = BEAR_EVOLUTIONS[level];
-        if (!evolution) return;
-
-        const evolutionDisplay = document.getElementById("evolutionDisplay");
-        if (!evolutionDisplay) {
-            const display = document.createElement("div");
-            display.id = "evolutionDisplay";
-            display.className = "evolution-display";
-            gameContainer.appendChild(display);
-        }
-
-        const display = document.getElementById("evolutionDisplay");
-        display.innerHTML = `
-        <span class="evolution-level">${level + 1}</span>
-        <span class="evolution-name">${evolution.name} Bear</span>
-        <span class="evolution-icon">${level === 0 ?
     function showEvolutionUpgrade(level) {
         const evolution = BEAR_EVOLUTIONS[level];
         if (!evolution) return;
@@ -1941,18 +1923,6 @@
         showNotification(`Evolved to ${evolution.name}!`, "#fbbf24");
         triggerHaptic("evolution");
         playEvolutionSound();
-    }
-
-    // Helper function to darken colors
-    function darkenColor(color, percent) {
-        const num = parseInt(color.replace("#", ""), 16);
-        const amt = Math.round(2.55 * percent);
-        const R = (num >> 16) - amt;
-        const G = (num >> 8 & 0x00FF) - amt;
-        const B = (num & 0x0000FF) - amt;
-        return "#" + (0x1000000 + (R < 255 ? R < 1 ? 0 : R : 255) * 0x10000 +
-            (G < 255 ? G < 1 ? 0 : G : 255) * 0x100 +
-            (B < 255 ? B < 1 ? 0 : B : 255)).toString(16).slice(1);
     }
 
     // ==================== QUICK WINS: ACHIEVEMENT SYSTEM ====================
@@ -3546,7 +3516,23 @@
             sessionMood.textContent = mood;
         }
     }
-
+function updateBearEvolution() {
+    let newEvolution = 0;
+    
+    // Find the highest evolution level the player qualifies for
+    for (let i = BEAR_EVOLUTIONS.length - 1; i >= 0; i--) {
+        if (gameState.score >= BEAR_EVOLUTIONS[i].score) {
+            newEvolution = i;
+            break;
+        }
+    }
+    
+    // If player reached a new evolution level
+    if (newEvolution > gameState.currentEvolution) {
+        gameState.currentEvolution = newEvolution;
+        showEvolutionUpgrade(newEvolution);
+    }
+}
     function gameLoop(timestamp) {
         if (!lastTimestamp) lastTimestamp = timestamp;
         const dt = (timestamp - lastTimestamp) / 1000;
