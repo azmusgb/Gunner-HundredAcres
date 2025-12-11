@@ -21,35 +21,21 @@
         const el = document.getElementById(id);
         if (el) return el;
     }
-
-    // If in development mode, log warning but create placeholder
-    if (ids.length > 0) {
-        console.warn(
-            "[Honey Hunt] Creating placeholder for missing element(s):",
-            ids.join(", ")
-        );
-        
-        // Create a safe placeholder element
-        const placeholder = document.createElement("div");
-        placeholder.id = `placeholder-${ids[0]}`;
-        placeholder.style.cssText = "display: none !important; visibility: hidden !important;";
-        placeholder.setAttribute("aria-hidden", "true");
-        
-        // Try to add to body, but only if body exists
-        if (document.body) {
-            document.body.appendChild(placeholder);
-        } else {
-            // If body doesn't exist yet, wait for DOMContentLoaded
-            document.addEventListener("DOMContentLoaded", () => {
-                if (!document.getElementById(placeholder.id)) {
-                    document.body.appendChild(placeholder);
-                }
-            });
-        }
-        
-        return placeholder;
-    }
-
+    
+    // Create a more functional placeholder
+    const placeholder = document.createElement('div');
+    placeholder.id = `placeholder-${ids[0] || 'missing'}`;
+    placeholder.style.cssText = 'display: none !important;';
+    
+    // Add basic element methods
+    placeholder.textContent = '';
+    placeholder.classList = { add: () => {}, remove: () => {}, toggle: () => {} };
+    placeholder.setAttribute = () => {};
+    placeholder.addEventListener = () => {};
+    placeholder.removeEventListener = () => {};
+    
+    return placeholder;
+}
     // Return a dummy element as last resort
     return { textContent: "", style: {} };
 }
@@ -113,6 +99,35 @@
     const sessionGames = getEl("sessionGames");
     const sessionMood = getEl("sessionMood");
 
+function gameLoop(timestamp) {
+    if (!lastTimestamp) lastTimestamp = timestamp;
+    const dt = (timestamp - lastTimestamp) / 1000;
+    lastTimestamp = timestamp;
+    
+    if (gameState.running && !gameState.paused) {
+        updateEntities(dt);
+        handleCollisions();
+        updateBearAnimation(dt);
+        updateParticles(dt);
+        updateBearTrail(dt);
+        updatePowerups(dt);
+        updateDynamicDifficulty();
+        checkAchievements();
+        updateDailyChallengeProgress();
+        
+        gameState.timeLeft -= dt;
+        if (gameState.timeLeft <= 0) {
+            endGame();
+        }
+    }
+    
+    updateHud();
+    render();
+    
+    if (gameState.running || particles.length > 0) {
+        requestAnimationFrame(gameLoop);
+    }
+}
     // ==================== ENHANCED AUDIO SYSTEM ====================
     let audioContext = null;
     let audioBuffers = {};
