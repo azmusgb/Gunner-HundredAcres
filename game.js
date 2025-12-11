@@ -4328,6 +4328,15 @@ function updateBearEvolution() {
 }
 
     // ==================== MAIN INITIALIZATION ====================
+    let hasInitialized = false;
+
+    function initOnce() {
+        if (hasInitialized) return;
+        hasInitialized = true;
+
+        init();
+    }
+
     function init() {
         console.log("Initializing Honey Hunt with Enhanced Features & Audio...");
         
@@ -4377,14 +4386,17 @@ function updateBearEvolution() {
     }
 
     // ==================== INITIALIZE THE GAME ====================
-    
-    // Check if we're running in a browser environment
-    if (typeof window !== 'undefined' && document.readyState === 'loading') {
-        // Wait for DOM to be ready
-        document.addEventListener('DOMContentLoaded', init);
-    } else {
-        // DOM is already ready or we're in a different environment
-        setTimeout(init, 0);
+
+    // Expose a safe initializer for the inline script in index.html
+    if (typeof window !== 'undefined') {
+        window.initHoneyHuntGame = initOnce;
+
+        if (document.readyState === 'loading') {
+            document.addEventListener('DOMContentLoaded', initOnce);
+        } else {
+            // DOM is already ready or we're in a different environment
+            setTimeout(initOnce, 0);
+        }
     }
 
 })(); 
