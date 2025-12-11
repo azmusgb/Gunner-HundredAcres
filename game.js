@@ -62,6 +62,8 @@
     const helpToggle = getEl("helpToggle");
     const helpToggleSecondary = getEl("helpToggleSecondary");
     const helpPanel = getEl("helpPanel");
+    const helpClose = getEl("helpClose");
+    const helpPanelPrimary = getEl("helpPanelPrimary");
 
     const settingsToggle = getEl("settingsToggle");
     const settingsModal = getEl("settingsModal");
@@ -3996,6 +3998,13 @@
     function initHelp() {
         if (helpToggle) helpToggle.addEventListener("click", toggleHelp);
         if (helpToggleSecondary) helpToggleSecondary.addEventListener("click", toggleHelp);
+        if (helpClose) helpClose.addEventListener("click", toggleHelp);
+        if (helpPanelPrimary) {
+            helpPanelPrimary.addEventListener("click", () => {
+                toggleHelp();
+                startGame();
+            });
+        }
     }
 
     // ==================== QUICK WINS: CSS INJECTION ====================
