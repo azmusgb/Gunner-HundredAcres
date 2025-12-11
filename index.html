@@ -949,6 +949,105 @@
             margin-right: 0.2rem;
         }
 
+        .session-banner {
+            display: flex;
+            gap: 10px;
+            flex-wrap: wrap;
+            padding: 0.25rem 0.75rem 0.5rem;
+        }
+
+        .session-chip {
+            background: linear-gradient(135deg, rgba(244, 185, 68, 0.15), rgba(244, 185, 68, 0.05));
+            border: 1px solid rgba(244, 185, 68, 0.4);
+            border-radius: 999px;
+            padding: 6px 12px;
+            font-weight: 700;
+            color: var(--ink);
+            box-shadow: var(--shadow-tiny);
+        }
+
+        .progress-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(220px, 1fr));
+            gap: 10px;
+            padding: 0 0.75rem 0.75rem;
+        }
+
+        .progress-card {
+            background: rgba(255, 255, 255, 0.92);
+            border: 1px solid rgba(0, 0, 0, 0.06);
+            border-radius: 12px;
+            padding: 10px 12px;
+            box-shadow: var(--shadow-subtle);
+        }
+
+        .progress-labels {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            font-weight: 700;
+            color: var(--ink);
+        }
+
+        .progress-subtitle {
+            font-size: 0.9rem;
+            color: var(--ink-soft);
+        }
+
+        .progress-track {
+            position: relative;
+            height: 10px;
+            border-radius: 999px;
+            background: rgba(0, 0, 0, 0.06);
+            overflow: hidden;
+            margin-top: 8px;
+        }
+
+        .progress-track.streak {
+            background: rgba(56, 189, 248, 0.12);
+        }
+
+        .progress-fill {
+            position: absolute;
+            inset: 0;
+            width: 0;
+            background: linear-gradient(90deg, #f59e0b 0%, #f97316 100%);
+            border-radius: inherit;
+            transition: width 0.2s ease;
+        }
+
+        .progress-track.streak .progress-fill {
+            background: linear-gradient(90deg, #38bdf8 0%, #0ea5e9 100%);
+        }
+
+        .progress-fill.low {
+            background: linear-gradient(90deg, #f97316 0%, #ef4444 100%);
+        }
+
+        .status-chips {
+            display: flex;
+            gap: 8px;
+            flex-wrap: wrap;
+            align-items: center;
+        }
+
+        .status-chip {
+            background: rgba(56, 189, 248, 0.08);
+            color: var(--ink);
+            border: 1px solid rgba(56, 189, 248, 0.5);
+            border-radius: 10px;
+            padding: 6px 10px;
+            font-weight: 700;
+            opacity: 0;
+            transform: translateY(-4px);
+            transition: opacity 0.2s ease, transform 0.2s ease;
+        }
+
+        .status-chip.visible {
+            opacity: 1;
+            transform: translateY(0);
+        }
+
         .honey-game-main {
             position: relative;
             flex: 1;
@@ -1579,6 +1678,7 @@
             overflow-y: auto;
             border: 3px solid #fbbf24;
             color: white;
+            position: relative;
         }
 
         .game-top-controls {
@@ -1587,7 +1687,9 @@
             right: 10px;
             display: flex;
             gap: 10px;
+            flex-wrap: wrap;
             z-index: 50;
+            align-items: center;
         }
 
         .btn-icon {
@@ -1603,6 +1705,23 @@
             cursor: pointer;
             font-size: 18px;
             backdrop-filter: blur(10px);
+        }
+
+        .modal-close {
+            position: absolute;
+            top: 12px;
+            right: 12px;
+            background: none;
+            border: none;
+            color: inherit;
+            font-size: 1.2rem;
+            cursor: pointer;
+        }
+
+        .help-actions {
+            display: flex;
+            justify-content: center;
+            margin: 10px 0;
         }
 
         .floating-score {
@@ -2181,8 +2300,14 @@
                                 <button id="helpToggle" class="btn-icon" aria-label="How to play">
                                     <span>❓</span>
                                 </button>
+                                <button id="themeToggle" class="btn-icon" aria-label="Toggle theme" aria-pressed="false">
+                                    <span>🌙</span>
+                                </button>
+                                <button id="fullscreenToggle" class="btn-icon" aria-label="Toggle fullscreen">
+                                    <span>⛶</span>
+                                </button>
                             </div>
-                            
+
                             <div class="honey-game-header">
                                 <div class="title">
                                     <span aria-hidden="true">🍯</span>
@@ -2204,6 +2329,35 @@
                                     <div class="hud-item">
                                         <span class="hud-label">Best</span><span id="hudBest">0</span>
                                     </div>
+                                </div>
+                            </div>
+                            <div class="session-banner" aria-live="polite">
+                                <span class="session-chip" id="sessionDifficulty">Classic mode</span>
+                                <span class="session-chip" id="sessionGames">0 lifetime runs</span>
+                                <span class="session-chip" id="sessionMood">Cozy start</span>
+                            </div>
+                            <div class="progress-grid" aria-hidden="false">
+                                <div class="progress-card">
+                                    <div class="progress-labels">
+                                        <span>Time</span>
+                                        <span id="timeSubtitle" class="progress-subtitle">60s to shine</span>
+                                    </div>
+                                    <div class="progress-track">
+                                        <span id="timeProgress" class="progress-fill"></span>
+                                    </div>
+                                </div>
+                                <div class="progress-card">
+                                    <div class="progress-labels">
+                                        <span>Streak</span>
+                                        <span id="streakSubtitle" class="progress-subtitle">Build that combo</span>
+                                    </div>
+                                    <div class="progress-track streak">
+                                        <span id="streakProgress" class="progress-fill"></span>
+                                    </div>
+                                </div>
+                                <div class="status-chips" aria-live="polite">
+                                    <span id="comboIndicator" class="status-chip">Combo ready!</span>
+                                    <span id="powerupIndicator" class="status-chip">Shield active</span>
                                 </div>
                             </div>
                             <div class="honey-game-main">
@@ -2311,6 +2465,7 @@
                     <div id="helpPanel" class="modal" aria-hidden="true">
                         <div class="modal-content">
                             <h2>How to Play</h2>
+                            <button id="helpClose" class="modal-close" aria-label="Close help">×</button>
                             <ul class="game-instructions">
                                 <li>Use ← → arrow keys or on-screen buttons to move Pooh</li>
                                 <li>Catch honey pots for points</li>
@@ -2319,6 +2474,9 @@
                                 <li>Special jars give power-ups</li>
                                 <li>Survive for 60 seconds!</li>
                             </ul>
+                            <div class="help-actions">
+                                <button id="helpPanelPrimary" class="btn primary">Let's play!</button>
+                            </div>
                             <button class="btn primary" onclick="document.getElementById('helpPanel').classList.remove('visible')">Got it!</button>
                         </div>
                     </div>
