@@ -4,3617 +4,1874 @@
     <meta charset="UTF-8">
     <meta content="width=device-width, initial-scale=1.0, viewport-fit=cover" name="viewport">
     <title>Baby Gunnar's Hundred Acre Wood Adventure</title>
-    <meta content="A storybook-style Hundred Acre Wood adventure with a honey-catching game to celebrate Baby Gunnar." name="description">
+    <meta content="A storybook-style Hundred Acre Wood adventure with a honey-catching game to celebrate Baby Gunnar."
+          name="description">
     <meta content="#f4a944" name="theme-color">
     <meta content="light dark" name="color-scheme">
     <meta content="Baby Gunnar's Hundred Acre Wood Shower" property="og:title">
-    <meta content="A sweet storybook and honey-catching game—read, play, and leave your wishes." property="og:description">
+    <meta content="A sweet storybook and honey-catching game—read, play, and leave your wishes."
+          property="og:description">
     <meta content="icons/icon.svg" property="og:image">
     <meta content="website" property="og:type">
-    
-    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
-    <link rel="preconnect" href="https://fonts.googleapis.com">
-    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-    <link href="https://fonts.googleapis.com/css2?family=Playfair+Display:wght@400;700&display=swap" rel="stylesheet">
+    <!-- Font Awesome for game icons -->
+    <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.1/css/all.min.css" rel="stylesheet">
     <link as="image" href="Images/Characters/Gunnar.png" rel="preload">
-<link rel="stylesheet" href="styles.css">
 
-  <style>
-/* =========================================
-   COMPLETE CONSOLIDATED CSS
-   ========================================= */
+    <link rel="stylesheet" href="styles.css">
 
-/* =========================================
-   1. ROOT + GLOBAL LAYOUT
-   ========================================= */
-:root {
-    --bg: #fff9ec;
-    --bg-soft: #fff4dd;
-    --ink: #3b2604;
-    --ink-soft: #5a4330;
-    --accent: #f4b944;
-    --accent-soft: #ffe4a8;
-    --accent-strong: #f59e0b;
-    --border-soft: rgba(0, 0, 0, 0.06);
-    --card-bg: #ffffff;
-    --card-radius: 24px;
-    --shadow-soft: 0 18px 40px rgba(0, 0, 0, 0.16);
-    --shadow-subtle: 0 8px 20px rgba(0, 0, 0, 0.08);
-    --shadow-tiny: 0 2px 6px rgba(0, 0, 0, 0.08);
-    --transition-fast: 0.18s ease-out;
-    --transition-med: 0.28s ease;
-    --page-max-width: 1120px;
-    --page-padding-x: 1.5rem;
-    --page-padding-y: 1.5rem;
-    --font-body: system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
-    --font-title: "Playfair Display", "Georgia", serif;
-    --space-sm: 0.75rem;
-    --space-md: 1.25rem;
-    --touch-min: 44px;
-    --touch-padding: 0.75rem;
-    
-    /* Additional variables from second block */
-    --parchment: #F6ECD6;
-    --parchment-dark: #E8DCC5;
-    --honey: #E8A427;
-    --forest-green: #5D7D4F;
-    --baby-blue: #6BA3D4;
-    --sky-wash: #E8F1F7;
-}
 
-*,
-*::before,
-*::after {
-    box-sizing: border-box;
-}
-
-html,
-body {
-    margin: 0;
-    padding: 0;
-    overflow-x: hidden;
-}
-
-body {
-    min-height: 100vh;
-    font-family: var(--font-body);
-    color: var(--ink);
-    background: radial-gradient(circle at top, #fff4d4 0, #ffe5b0 28%, #ffe7c4 48%, #fff9ec 100%);
-    -webkit-font-smoothing: antialiased;
-    padding-left: env(safe-area-inset-left, 1rem);
-    padding-right: env(safe-area-inset-right, 1rem);
-    padding-top: env(safe-area-inset-top, 0);
-    padding-bottom: env(safe-area-inset-bottom, 0);
-}
-
-/* Global touch targets */
-.hero-action-btn,
-.chapter-nav-btn,
-.footer-link,
-.submit-btn,
-.chapter-pill,
-.registry-card,
-.clickable-character,
-.btn {
-    position: relative;
-    min-height: var(--touch-min);
-    min-width: var(--touch-min);
-}
-
-.footer-link,
-.chapter-nav-btn {
-    padding: var(--touch-padding) calc(var(--touch-padding) * 1.5);
-}
-
-.hero-action-btn,
-.submit-btn {
-    display: inline-flex;
-    align-items: center;
-    justify-content: center;
-}
-
-.btn-icon,
-.pill-icon {
-    padding: 0.25rem;
-}
-
-/* A11y helper */
-.sr-only {
-    position: absolute;
-    width: 1px;
-    height: 1px;
-    padding: 0;
-    margin: -1px;
-    overflow: hidden;
-    clip: rect(0, 0, 0, 0);
-    border: 0;
-}
-
-/* Simple text utilities */
-.divider {
-    text-align: center;
-    margin: 2rem 0;
-    font-size: 0.95rem;
-    opacity: 0.8;
-}
-
-/* =========================================
-   2. DECORATIVE SCENE + CLOUDS
-   ========================================= */
-.enhanced-scene {
-    position: fixed;
-    inset: 0;
-    pointer-events: none;
-    background:
-        radial-gradient(circle at top left, rgba(255, 255, 255, 0.8), transparent 55%),
-        radial-gradient(circle at top right, rgba(255, 243, 205, 0.8), transparent 50%),
-        radial-gradient(circle at bottom, rgba(255, 220, 185, 0.9), transparent 60%);
-    opacity: 0.6;
-    z-index: -2;
-}
-
-.cloud-layer {
-    position: fixed;
-    top: 0;
-    left: 0;
-    width: 100%;
-    pointer-events: none;
-    display: flex;
-    justify-content: space-around;
-    padding-top: 0.5rem;
-    font-size: 1.8rem;
-    opacity: 0.45;
-    z-index: -1;
-}
-
-.cloud {
-    animation: floatClouds 24s linear infinite;
-}
-
-.cloud:nth-child(2) {
-    animation-delay: -8s;
-}
-
-.cloud:nth-child(3) {
-    animation-delay: -16s;
-}
-
-@keyframes floatClouds {
-    0% {
-        transform: translate3d(-10px, 0, 0);
-    }
-    50% {
-        transform: translate3d(10px, 4px, 0);
-    }
-    100% {
-        transform: translate3d(-10px, 0, 0);
-    }
-}
-
-/* =========================================
-   3. HERO / MASTHEAD
-   ========================================= */
-.masthead-hero {
-    position: relative;
-    padding-bottom: 2rem;
-    color: var(--ink);
-}
-
-.hero-banner {
-    position: relative;
-    isolation: isolate;
-    max-width: 900px;
-    margin: 0 auto 1.5rem;
-    border-radius: 32px;
-    overflow: visible;
-    box-shadow: var(--shadow-soft);
-    background: linear-gradient(135deg, #ffe5b0, #ffd1a3);
-}
-
-.hero-image-container {
-    position: relative;
-    width: 100%;
-    height: min(60vh, 520px);
-    overflow: visible;
-    display: flex;
-    align-items: center;
-    justify-content: center;
-}
-
-.hero-banner__img {
-    width: 85%;
-    max-width: 750px;
-    height: auto;
-    object-fit: contain;
-    filter: saturate(1.05) contrast(1.03);
-    transform-origin: center;
-    margin: 0 auto;
-    display: block;
-}
-
-/* Corner emojis */
-.hero-corner-decoration {
-    position: absolute;
-    font-size: 1.8rem;
-    filter: drop-shadow(0 2px 4px rgba(0, 0, 0, 0.16));
-}
-
-.hero-corner-decoration.top-left {
-    top: 10px;
-    left: 14px;
-}
-
-.hero-corner-decoration.top-right {
-    top: 10px;
-    right: 14px;
-}
-
-.hero-corner-decoration.bottom-left {
-    bottom: 10px;
-    left: 14px;
-}
-
-.hero-corner-decoration.bottom-right {
-    bottom: 10px;
-    right: 14px;
-}
-
-/* Title overlay */
-.hero-title-container {
-    position: absolute;
-    inset: auto 0 0;
-    display: flex;
-    justify-content: center;
-    padding: 1.25rem 1.5rem 1.6rem;
-    pointer-events: none;
-}
-
-.title-background {
-    pointer-events: auto;
-    max-width: 650px;
-    width: 100%;
-    padding: 1.25rem 1.5rem 1.5rem;
-    border-radius: 24px 24px 0 0;
-    background: linear-gradient(
-        135deg,
-        rgba(255, 255, 255, 0.99),
-        rgba(255, 248, 225, 0.9)
-    );
-    box-shadow: 0 -10px 30px rgba(0, 0, 0, 0.18);
-    border: 1px solid rgba(255, 255, 255, 0.9);
-    border-bottom: none;
-}
-
-.masthead-title {
-    margin: 0 0 0.5rem;
-    font-family: var(--font-title);
-    letter-spacing: 0.04em;
-    text-align: center;
-}
-
-.title-line {
-    display: block;
-}
-
-.title-line--primary {
-    font-size: clamp(1.3rem, 2vw + 1rem, 1.6rem);
-    text-transform: uppercase;
-    letter-spacing: 0.25em;
-    opacity: 0.9;
-}
-
-.title-line--secondary {
-    font-size: clamp(1.9rem, 3vw + 1.2rem, 2.4rem);
-    font-weight: 700;
-}
-
-.title-underline {
-    display: flex;
-    justify-content: center;
-    gap: 0.25rem;
-    margin-bottom: 0.35rem;
-}
-
-.underline-dot {
-    font-size: 0.95rem;
-    color: var(--accent-strong);
-}
-
-.hero-subtitle {
-    margin: 0;
-    text-align: center;
-    font-size: 0.95rem;
-    color: var(--ink-soft);
-}
-
-/* Sparkles / bunting / sheen */
-.hero-sparkles {
-    position: absolute;
-    inset: 0;
-    pointer-events: none;
-    background:
-        radial-gradient(circle at 10% 10%, rgba(255, 255, 255, 0.7), transparent 60%),
-        radial-gradient(circle at 90% 30%, rgba(255, 225, 173, 0.7), transparent 55%);
-    mix-blend-mode: screen;
-    opacity: 0.6;
-    z-index: -1;
-}
-
-.hero-bunting {
-    max-width: 1200px;
-    margin: 0.25rem auto 0;
-    display: flex;
-    justify-content: center;
-    gap: 0.5rem;
-    font-size: 1.4rem;
-}
-
-.hero-sheen {
-    position: absolute;
-    inset: 0;
-    pointer-events: none;
-    background: linear-gradient(
-        135deg,
-        rgba(255, 255, 255, 0.16),
-        transparent 60%
-    );
-    mix-blend-mode: screen;
-    opacity: 0.8;
-}
-
-/* Hero inner panel */
-.masthead-hero-inner {
-    max-width: var(--page-max-width);
-    margin: 0.5rem auto 0;
-    padding: 0 1.25rem;
-}
-
-.hero-panel {
-    margin-top: 1.5rem;
-    padding: 1.75rem 1.5rem;
-    border-radius: var(--card-radius);
-    background: rgba(255, 255, 255, 0.96);
-    box-shadow: var(--shadow-subtle);
-    border: 1px solid rgba(255, 255, 255, 0.8);
-}
-
-/* =========================================
-   4. HERO BADGE + DETAIL GRID + CTA
-   ========================================= */
-.hero-badge {
-    display: grid;
-    grid-template-columns: auto minmax(0, 1.5fr);
-    gap: 1rem;
-    padding: 1rem 1.25rem;
-    border-radius: 999px;
-    background: linear-gradient(135deg, #fffaf0, #ffe8bb);
-    align-items: center;
-    border: 1px solid rgba(244, 185, 68, 0.3);
-    margin-bottom: 1.5rem;
-}
-
-.badge-icon {
-    display: flex;
-    align-items: center;
-    justify-content: center;
-}
-
-.badge-icon-inner {
-    width: 48px;
-    height: 48px;
-    border-radius: 999px;
-    display: flex;
-    align-items: center;
-    justify-content: center;
-    background: radial-gradient(circle at 30% 20%, #fff9e8, #f4b944);
-    box-shadow: var(--shadow-tiny);
-    font-size: 1.6rem;
-}
-
-.badge-copy {
-    min-width: 0;
-}
-
-.badge-eyebrow {
-    margin: 0;
-    text-transform: uppercase;
-    letter-spacing: 0.16em;
-    font-size: 0.7rem;
-    opacity: 0.7;
-}
-
-.badge-label {
-    margin: 0.15rem 0 0;
-    font-size: 0.9rem;
-    font-weight: 600;
-}
-
-.badge-title {
-    margin: 0.15rem 0 0;
-    font-size: 1rem;
-    font-weight: 700;
-}
-
-.badge-meta {
-    display: flex;
-    gap: 0.5rem;
-    flex-wrap: wrap;
-    justify-content: flex-end;
-    align-items: center;
-    font-size: 0.8rem;
-}
-
-.badge-pill {
-    display: inline-flex;
-    align-items: center;
-    gap: 0.4rem;
-    border-radius: 999px;
-    padding: 0.3rem 0.7rem;
-    background: rgba(255, 255, 255, 0.92);
-    border: 1px solid rgba(255, 255, 255, 0.9);
-    box-shadow: 0 2px 6px rgba(244, 185, 68, 0.25);
-}
-
-.pill-icon {
-    font-size: 1rem;
-}
-
-.pill-text {
-    white-space: nowrap;
-}
-
-/* Detail grid */
-.hero-details-grid {
-    display: grid;
-    grid-template-columns: repeat(3, minmax(0, 1fr));
-    gap: 1rem;
-    margin-bottom: 1.5rem;
-}
-
-.hero-detail {
-    display: flex;
-    gap: 0.75rem;
-    padding: 0.85rem 1rem;
-    border-radius: 16px;
-    background: #fffdfa;
-    box-shadow: 0 4px 12px rgba(244, 185, 68, 0.12);
-}
-
-.detail-icon {
-    font-size: 1.5rem;
-}
-
-.detail-title {
-    margin: 0;
-    font-size: 0.95rem;
-    font-weight: 600;
-}
-
-.detail-text {
-    margin: 0.15rem 0 0;
-    font-size: 0.85rem;
-    color: var(--ink-soft);
-}
-
-/* Hero CTAs */
-.hero-actions {
-    display: flex;
-    flex-wrap: wrap;
-    gap: 0.75rem;
-    margin-bottom: 1rem;
-}
-
-.hero-action-btn {
-    border-radius: 999px;
-    border: none;
-    padding: 0.6rem 1.1rem;
-    font-size: 0.9rem;
-    font-weight: 600;
-    display: inline-flex;
-    align-items: center;
-    gap: 0.4rem;
-    cursor: pointer;
-    transition: transform var(--transition-fast), box-shadow var(--transition-fast), background var(--transition-fast);
-}
-
-.hero-action-btn .btn-icon {
-    font-size: 1.1rem;
-}
-
-.hero-action-btn.primary {
-    background: linear-gradient(135deg, #f4b944, #f59e0b);
-    color: #3b2604;
-    box-shadow: 0 8px 18px rgba(244, 185, 68, 0.6);
-}
-
-.hero-action-btn.secondary {
-    background: #ffffff;
-    color: var(--ink);
-    box-shadow: var(--shadow-tiny);
-    border: 1px solid rgba(0, 0, 0, 0.06);
-}
-
-.hero-action-btn.ghost {
-    background: transparent;
-    color: var(--ink-soft);
-    border: 1px dashed rgba(0, 0, 0, 0.16);
-}
-
-.hero-action-btn:hover {
-    transform: translateY(-1px);
-    box-shadow: 0 10px 22px rgba(0, 0, 0, 0.14);
-}
-
-/* Orientation hint */
-.orientation-hint {
-    display: flex;
-    align-items: center;
-    gap: 0.6rem;
-    padding-top: 0.5rem;
-    border-top: 1px dashed rgba(0, 0, 0, 0.08);
-    margin-top: 0.5rem;
-    font-size: 0.83rem;
-    color: var(--ink-soft);
-}
-
-.hint-icon {
-    font-size: 1.4rem;
-}
-
-/* =========================================
-   5. CHAPTER TRACKER
-   ========================================= */
-.chapter-tracker {
-    margin: 1rem 0 0.75rem;
-    max-width: var(--page-max-width);
-    margin: 0 auto;
-    padding: 1.25rem var(--page-padding-x);
-}
-
-.tracker-row {
-    display: flex;
-    align-items: center;
-    gap: 0.75rem;
-    margin-bottom: 0.75rem;
-}
-
-.tracker-label {
-    font-size: 0.8rem;
-    text-transform: uppercase;
-    letter-spacing: 0.16em;
-    opacity: 0.7;
-    white-space: nowrap;
-}
-
-/* Progress bar */
-.book-progress {
-    position: relative;
-    flex: 1;
-    height: 0.4rem;
-    border-radius: 999px;
-    background: rgba(0, 0, 0, 0.06);
-    overflow: hidden;
-}
-
-.book-progress .progress-fill {
-    width: 0%;
-    height: 100%;
-    border-radius: inherit;
-    background: linear-gradient(90deg, #f4b944, #f97316);
-    transition: width 0.25s ease-out;
-}
-
-.chapter-pill-row {
-    display: flex;
-    flex-wrap: wrap;
-    gap: 0.5rem;
-    margin-top: 0.25rem;
-}
-
-.chapter-pill {
-    display: inline-flex;
-    align-items: center;
-    gap: 0.5rem;
-    padding: 0.4rem 0.9rem;
-    border-radius: 999px;
-    border: 1px solid rgba(0, 0, 0, 0.08);
-    background: #ffffff;
-    box-shadow: var(--shadow-tiny);
-    cursor: pointer;
-    font-size: 0.85rem;
-    flex: 1;
-    min-width: 0;
-}
-
-.chapter-pill .pill-number {
-    display: inline-flex;
-    align-items: center;
-    justify-content: center;
-    width: 1.7rem;
-    height: 1.7rem;
-    border-radius: 999px;
-    background: #fff7dd;
-    font-weight: 700;
-    font-size: 0.85rem;
-}
-
-.chapter-pill .pill-text {
-    display: flex;
-    flex-direction: column;
-    align-items: flex-start;
-    flex: 1;
-    min-width: 0;
-}
-
-.chapter-pill .pill-title {
-    font-weight: 600;
-    font-size: 0.85rem;
-    display: block;
-}
-
-.chapter-pill .pill-detail {
-    font-size: 0.75rem;
-    opacity: 0.76;
-    display: block;
-}
-
-.chapter-pill.active {
-    border-color: #f4b944;
-    background: linear-gradient(135deg, #fff8dd, #ffe4af);
-}
-
-.chapter-pill:hover {
-    transform: translateY(-2px);
-    box-shadow: var(--shadow-tiny);
-}
-
-/* Sparkle accent */
-.sparkle {
-    position: relative;
-}
-
-.sparkle::after {
-    content: "";
-    position: absolute;
-    inset: -2px;
-    border-radius: inherit;
-    border: 1px solid rgba(255, 255, 255, 0.7);
-    opacity: 0;
-    pointer-events: none;
-    animation: sparklePulse 2.8s ease-in-out infinite;
-}
-
-.chapter-pill.active.sparkle::after {
-    opacity: 1;
-}
-
-@keyframes sparklePulse {
-    0%,
-    100% {
-        transform: scale(1);
-        opacity: 0.4;
-    }
-    50% {
-        transform: scale(1.03);
-        opacity: 1;
-    }
-}
-
-/* =========================================
-   6. BOOK LAYOUT + PAGES
-   ========================================= */
-.book-container {
-    max-width: var(--page-max-width);
-    margin: 1.25rem auto 3rem;
-    padding: 0 var(--page-padding-x);
-}
-
-.book {
-    margin-top: 1rem;
-    border-radius: var(--card-radius);
-    background: #fffdf8;
-    box-shadow: var(--shadow-soft);
-    border: 1px solid rgba(255, 255, 255, 0.9);
-    overflow: hidden;
-}
-
-.pages-wrapper {
-    position: relative;
-    padding: var(--page-padding-y) var(--page-padding-x);
-}
-
-/* Page cards */
-.page {
-    display: none;
-    opacity: 0;
-    transform: translateY(4px);
-    transition: opacity var(--transition-med), transform var(--transition-med);
-}
-
-.page.active {
-    display: block;
-    opacity: 1;
-    transform: translateY(0);
-}
-
-.chapter-header {
-    text-align: center;
-    margin-bottom: 1.5rem;
-    position: relative;
-}
-
-.chapter-number {
-    margin: 0;
-    font-size: 0.85rem;
-    text-transform: uppercase;
-    letter-spacing: 0.22em;
-    opacity: 0.7;
-}
-
-.chapter-title {
-    margin: 0.4rem 0 0.25rem;
-    font-family: var(--font-title);
-    font-size: 1.6rem;
-}
-
-.chapter-subtitle {
-    margin: 0;
-    font-size: 0.95rem;
-    color: var(--ink-soft);
-}
-
-.honey-drip {
-    position: absolute;
-    bottom: -0.4rem;
-    left: 50%;
-    transform: translateX(-50%);
-    width: 110px;
-    height: 12px;
-    border-radius: 999px;
-    background: linear-gradient(90deg, #fbbf24, #f97316);
-    opacity: 0.5;
-}
-
-/* Page body */
-.page-content {
-    margin-top: 1.75rem;
-}
-
-.story-text {
-    margin: 0 0 1rem;
-    line-height: 1.7;
-    font-size: 0.98rem;
-}
-
-/* =========================================
-   7. FIGURES / CHARACTER CARDS
-   ========================================= */
-.chapter-illustrations {
-    display: flex;
-    flex-wrap: wrap;
-    gap: 1rem;
-    margin: 1.25rem 0 1.5rem;
-}
-
-.storybook-figure {
-    flex: 1 1 180px;
-    min-width: 0;
-    padding: 0.75rem 0.85rem;
-    border-radius: 18px;
-    background: #ffffff;
-    box-shadow: var(--shadow-tiny);
-    display: flex;
-    align-items: center;
-    gap: 0.75rem;
-}
-
-.storybook-figure img {
-    border-radius: 16px;
-    background: #fff6dc;
-    box-shadow: 0 4px 12px rgba(0, 0, 0, 0.16);
-    max-width: 96px;
-    max-height: 96px;
-    width: 100%;
-    height: auto;
-}
-
-.figure-copy {
-    min-width: 0;
-}
-
-.figure-name {
-    font-weight: 600;
-    font-size: 0.9rem;
-}
-
-.figure-note {
-    margin: 0.15rem 0 0;
-    font-size: 0.8rem;
-    color: var(--ink-soft);
-}
-
-/* Theme tints */
-.figure-theme-honey {
-    background: linear-gradient(135deg, #fff7dd, #ffe7b8);
-}
-
-.figure-theme-forest {
-    background: linear-gradient(135deg, #e5f4dd, #f3ffe3);
-}
-
-.figure-theme-sky {
-    background: linear-gradient(135deg, #e5f4ff, #f3f9ff);
-}
-
-/* Clickable characters */
-.clickable-character {
-    cursor: pointer;
-    transition: transform var(--transition-fast), box-shadow var(--transition-fast);
-}
-
-.clickable-character:hover {
-    transform: translateY(-2px);
-    box-shadow: 0 10px 22px rgba(0, 0, 0, 0.18);
-}
-
-/* Character message bubble */
-.character-message {
-    margin-top: 0.5rem;
-    font-size: 0.8rem;
-    color: var(--ink);
-}
-
-/* Dialogue bubbles in narrative */
-.dialogue-bubble {
-    position: relative;
-    margin: 1rem 0 1.25rem;
-    padding: 0.7rem 0.9rem;
-    border-radius: 16px;
-    font-size: 0.9rem;
-    line-height: 1.4;
-}
-
-.dialogue-piglet {
-    background: #fff0f5;
-}
-
-.dialogue-pooh {
-    background: #fff5dd;
-}
-
-.dialogue-bubble .speaker {
-    display: block;
-    margin-top: 0.3rem;
-    font-size: 0.8rem;
-    opacity: 0.8;
-}
-
-.bubble-arrow {
-    position: absolute;
-    left: 18px;
-    bottom: 100%;
-    width: 12px;
-    height: 12px;
-    background: inherit;
-    transform: translateY(1px) rotate(45deg);
-}
-
-/* =========================================
-   8. GAME EMBED + HONEY GAME
-   ========================================= */
-.game-embed {
-    margin: 1.5rem auto;
-    max-width: 960px;
-    width: 100%;
-    border-radius: 24px;
-    overflow: hidden;
-    background: #000;
-    box-shadow: var(--shadow-soft);
-    border: 2px solid rgba(0, 0, 0, 0.08);
-    position: relative;
-    min-height: 320px;
-    aspect-ratio: 16 / 9;
-}
-
-.game-embed::before {
-    content: 'Loading game…';
-    position: absolute;
-    inset: 0;
-    background: linear-gradient(135deg, #ffe5b0, #ffd1a3);
-    display: flex;
-    align-items: center;
-    justify-content: center;
-    font-size: 1.2rem;
-    color: var(--ink);
-    z-index: 1;
-    opacity: 1;
-    transition: opacity 0.3s ease;
-}
-
-.game-embed.loaded::before {
-    opacity: 0;
-    pointer-events: none;
-}
-
-.game-embed__frame {
-    display: block;
-    width: 100%;
-    height: 100%;
-    min-height: min(70vh, 640px);
-    border: none;
-}
-
-/* Game inline container */
-.game-inline-container {
-    margin: 1.5rem auto;
-    max-width: 960px;
-    width: 100%;
-    border-radius: 24px;
-    overflow: hidden;
-    background: linear-gradient(to top, #fef3c7, #fffbeb);
-    box-shadow: var(--shadow-soft);
-    border: 2px solid rgba(0, 0, 0, 0.08);
-    height: min(70vh, 640px);
-    min-height: 400px;
-    position: relative;
-    aspect-ratio: 16/9;
-}
-
-#gameCanvas {
-    position: relative;
-    z-index: 2;
-    width: 100%;
-    height: 100%;
-    display: block;
-}
-
-/* Game HUD */
-.game-hud {
-    position: absolute;
-    z-index: 30;
-    left: 50%;
-    top: 12px;
-    transform: translateX(-50%);
-    width: calc(100% - 100px);
-    display: grid;
-    grid-template-columns: repeat(5, minmax(0, 1fr));
-    gap: 8px;
-    padding: 12px 20px;
-    border-radius: 999px;
-    background: linear-gradient(135deg, rgba(255, 255, 255, 0.95), rgba(255, 248, 220, 0.98));
-    box-shadow: 0 10px 32px rgba(0, 0, 0, 0.3);
-    border: 1px solid rgba(255, 255, 255, 0.9);
-    font-size: 0.85rem;
-    align-items: center;
-    backdrop-filter: blur(10px);
-    opacity: 0;
-    transition: opacity 0.3s ease;
-}
-
-.game-hud.visible {
-    opacity: 1;
-}
-
-.game-hud-item {
-    display: flex;
-    flex-direction: column;
-    align-items: center;
-    line-height: 1.1;
-    min-width: 0;
-}
-
-.game-hud-label {
-    opacity: 0.75;
-    font-size: 0.7em;
-    text-transform: uppercase;
-    letter-spacing: 0.08em;
-}
-
-.game-hud-value {
-    font-weight: 700;
-    font-size: 1.1em;
-    white-space: nowrap;
-}
-
-.streak-badge {
-    margin-top: 2px;
-    padding: 2px 10px;
-    border-radius: 999px;
-    font-size: 0.8em;
-    text-transform: uppercase;
-    letter-spacing: 0.08em;
-    background: linear-gradient(135deg, rgba(254, 243, 199, 0.95), rgba(253, 224, 71, 0.95));
-    color: #c2410c;
-    font-weight: 700;
-    box-shadow: 0 2px 8px rgba(249, 115, 22, 0.4);
-    opacity: 0;
-    transform: scale(0.7);
-    transition: opacity 0.3s ease, transform 0.3s ease;
-}
-
-.streak-badge.visible {
-    opacity: 1;
-    transform: scale(1);
-}
-
-/* Game backgrounds */
-.game-bg-horizon {
-    position: absolute;
-    inset: 0;
-    background:
-        radial-gradient(circle at 20% 15%, rgba(255, 255, 255, 0.9), transparent 60%),
-        radial-gradient(circle at 80% 10%, rgba(254, 240, 138, 0.9), transparent 60%),
-        linear-gradient(to bottom, #bfdbfe 0%, #e0f2fe 40%, transparent 60%);
-    opacity: 0.95;
-    pointer-events: none;
-    z-index: 0;
-}
-
-.game-bg-ground {
-    position: absolute;
-    left: -10%;
-    right: -10%;
-    bottom: -2%;
-    height: 20%;
-    background:
-        radial-gradient(circle at 20% 0, rgba(134, 239, 172, 0.95), transparent 55%),
-        radial-gradient(circle at 80% 0, rgba(74, 222, 128, 0.95), transparent 55%),
-        linear-gradient(to top, #65a30d, #4d7c0f);
-    box-shadow: 0 -16px 32px rgba(34, 197, 94, 0.6);
-    pointer-events: none;
-    z-index: 0;
-}
-
-/* Game overlays */
-.game-start-overlay,
-.game-overlay {
-    position: absolute;
-    inset: 0;
-    z-index: 100;
-    display: flex;
-    align-items: center;
-    justify-content: center;
-    background: radial-gradient(circle at top, rgba(248, 250, 252, 0.96), rgba(248, 250, 252, 0.7));
-    backdrop-filter: blur(8px);
-    opacity: 0;
-    pointer-events: none;
-    transition: opacity 0.3s ease-out;
-}
-
-.game-start-overlay {
-    opacity: 1;
-    pointer-events: auto;
-}
-
-.game-start-overlay.hidden,
-.game-overlay.visible {
-    opacity: 1;
-    pointer-events: auto;
-}
-
-.game-start-card,
-.game-overlay-card {
-    width: 100%;
-    max-width: 300px;
-    border-radius: 20px;
-    padding: 1.5rem;
-    background: rgba(255, 255, 255, 0.98);
-    border: 1px solid rgba(250, 204, 21, 0.7);
-    box-shadow: 0 12px 30px rgba(0, 0, 0, 0.18);
-    text-align: center;
-    transform: scale(0.9);
-    transition: transform 0.3s cubic-bezier(0.34, 1.56, 0.64, 1);
-}
-
-.game-start-overlay:not(.hidden) .game-start-card,
-.game-overlay.visible .game-overlay-card {
-    transform: scale(1);
-}
-
-.game-start-title {
-    font-size: 1.5rem;
-    margin-bottom: 0.5rem;
-    color: #f59e0b;
-}
-
-.game-start-subtitle {
-    font-size: 0.9rem;
-    color: var(--ink-soft);
-    margin-bottom: 1.5rem;
-}
-
-/* Mobile controls */
-.mobile-controls {
-    position: absolute;
-    bottom: 20px;
-    left: 0;
-    right: 0;
-    z-index: 40;
-    display: flex;
-    justify-content: space-between;
-    padding: 0 20px;
-    gap: 20px;
-    opacity: 0;
-    transition: opacity 0.3s ease;
-}
-
-.mobile-controls.visible {
-    opacity: 1;
-}
-
-.mobile-control-btn {
-    width: 60px;
-    height: 60px;
-    border-radius: 50%;
-    background: linear-gradient(135deg, rgba(255, 255, 255, 0.95), rgba(255, 248, 220, 0.98));
-    border: 1px solid rgba(250, 204, 21, 0.5);
-    font-size: 24px;
-    color: var(--ink);
-    display: flex;
-    align-items: center;
-    justify-content: center;
-    cursor: pointer;
-    box-shadow: 0 4px 12px rgba(0, 0, 0, 0.15);
-    transition: all 0.2s ease;
-}
-
-.mobile-control-btn:active {
-    transform: scale(0.95);
-    box-shadow: 0 2px 6px rgba(0, 0, 0, 0.1);
-}
-
-.mobile-control-pause {
-    background: linear-gradient(135deg, #fbbf24, #f59e0b);
-    color: #1f1306;
-}
-
-/* Game description */
-.game-description {
-    margin: 1.5rem auto;
-    padding: 1.5rem;
-    border-radius: 20px;
-    background: linear-gradient(135deg, #fffaf0, #ffe8bb);
-    border: 1px solid rgba(244, 185, 68, 0.3);
-}
-
-.game-description h3 {
-    margin: 0 0 1rem;
-    font-family: var(--font-title);
-    font-size: 1.4rem;
-    color: var(--ink);
-}
-
-.game-description p {
-    margin: 0 0 1.25rem;
-    line-height: 1.6;
-    font-size: 0.95rem;
-    color: var(--ink-soft);
-}
-
-.game-tips {
-    display: grid;
-    grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
-    gap: 1rem;
-    margin-top: 1.25rem;
-}
-
-.tip {
-    display: flex;
-    gap: 0.75rem;
-    padding: 0.9rem;
-    border-radius: 14px;
-    background: rgba(255, 255, 255, 0.9);
-    align-items: flex-start;
-}
-
-.tip-icon {
-    font-size: 1.2rem;
-    flex-shrink: 0;
-}
-
-.tip p {
-    margin: 0;
-    font-size: 0.9rem;
-    line-height: 1.5;
-}
-
-.tip strong {
-    color: var(--ink);
-    font-weight: 700;
-}
-
-/* =========================================
-   9. REGISTRY + NURSERY DETAILS + WISHES
-   ========================================= */
-.registry-container {
-    margin: 2rem 0 1.75rem;
-}
-
-.registry-section {
-    padding: 1.25rem 1.3rem;
-    border-radius: 22px;
-    background: linear-gradient(135deg, #fffaf3, #ffeede);
-    box-shadow: var(--shadow-subtle);
-}
-
-.registry-header {
-    display: flex;
-    gap: 0.8rem;
-    align-items: center;
-    margin-bottom: 1rem;
-}
-
-.registry-icon {
-    font-size: 1.8rem;
-}
-
-.registry-header h3 {
-    margin: 0 0 0.4rem;
-    font-family: var(--font-title);
-    font-size: 1.5rem;
-}
-
-.registry-subtitle {
-    margin: 0.2rem 0 0;
-    font-size: 0.9rem;
-    color: var(--ink-soft);
-    line-height: 1.5;
-}
-
-.registry-grid {
-    display: grid;
-    grid-template-columns: minmax(0, 1.4fr) minmax(0, 1.2fr);
-    gap: 1rem;
-    margin-top: 1.5rem;
-}
-
-.registry-card {
-    display: flex;
-    gap: 0.75rem;
-    padding: 0.9rem 1rem;
-    border-radius: 18px;
-    background: #ffffff;
-    text-decoration: none;
-    color: inherit;
-    box-shadow: var(--shadow-tiny);
-    transition: transform var(--transition-fast), box-shadow var(--transition-fast);
-}
-
-.registry-card:hover {
-    transform: translateY(-2px);
-    box-shadow: 0 10px 24px rgba(0, 0, 0, 0.18);
-}
-
-.registry-card .card-icon {
-    font-size: 1.5rem;
-}
-
-.registry-card .card-content {
-    flex: 1;
-    min-width: 0;
-}
-
-.registry-card .card-content h4 {
-    margin: 0 0 0.2rem;
-    font-size: 0.95rem;
-    font-weight: 700;
-}
-
-.registry-card .card-content p {
-    margin: 0;
-    font-size: 0.85rem;
-    color: var(--ink-soft);
-    line-height: 1.5;
-}
-
-.registry-card .card-link {
-    display: inline-block;
-    margin-top: 0.3rem;
-    font-size: 0.8rem;
-    color: #b45309;
-    font-weight: 600;
-    text-decoration: underline;
-    text-underline-offset: 3px;
-}
-
-.gift-idea-card {
-    flex-direction: column;
-}
-
-.gift-ideas {
-    margin: 0.25rem 0 0;
-    padding-left: 1.1rem;
-    font-size: 0.85rem;
-    list-style: none;
-}
-
-.gift-ideas li {
-    margin-bottom: 0.3rem;
-    padding-left: 0;
-    position: relative;
-}
-
-.gift-ideas li::before {
-    content: '🎁';
-    position: absolute;
-    left: -1.2rem;
-    font-size: 0.8rem;
-}
-
-/* Nursery details */
-.nursery-details {
-    margin: 2rem 0 1.75rem;
-    padding: 1.5rem;
-    border-radius: 20px;
-    background: linear-gradient(135deg, #f8f9ff, #f0f7ff);
-}
-
-.nursery-details h3 {
-    margin: 0 0 1.25rem;
-    font-family: var(--font-title);
-    font-size: 1.4rem;
-    display: flex;
-    align-items: center;
-    gap: 0.5rem;
-}
-
-.details-grid {
-    display: grid;
-    grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
-    gap: 1rem;
-}
-
-.detail-card {
-    display: flex;
-    gap: 0.9rem;
-    padding: 1rem;
-    border-radius: 16px;
-    background: white;
-    border: 1px solid rgba(0, 0, 0, 0.05);
-}
-
-.detail-card .detail-icon {
-    font-size: 1.4rem;
-    flex-shrink: 0;
-}
-
-.detail-card .detail-content {
-    flex: 1;
-    min-width: 0;
-}
-
-.detail-card h4 {
-    margin: 0 0 0.3rem;
-    font-size: 1rem;
-    font-weight: 700;
-}
-
-.detail-card p {
-    margin: 0;
-    font-size: 0.9rem;
-    line-height: 1.4;
-    color: var(--ink);
-}
-
-.detail-card small {
-    display: block;
-    margin-top: 0.2rem;
-    font-size: 0.8rem;
-    color: var(--ink-soft);
-}
-
-/* Wishes section */
-.wishes-section {
-    margin: 2.5rem 0;
-    padding: 1.75rem;
-    border-radius: 22px;
-    background: linear-gradient(135deg, #fffaf3, #ffeede);
-    border: 1px solid rgba(244, 185, 68, 0.2);
-}
-
-.wishes-header {
-    margin-bottom: 1.75rem;
-    text-align: center;
-}
-
-.wishes-header h3 {
-    margin: 0 0 0.5rem;
-    font-family: var(--font-title);
-    font-size: 1.5rem;
-    display: flex;
-    align-items: center;
-    justify-content: center;
-    gap: 0.5rem;
-}
-
-.wishes-header p {
-    margin: 0;
-    font-size: 0.95rem;
-    color: var(--ink-soft);
-    max-width: 600px;
-    margin: 0 auto;
-    line-height: 1.5;
-}
-
-.enhanced-form {
-    max-width: 600px;
-    margin: 0 auto;
-    padding: 1rem 1rem 1.1rem;
-    border-radius: 18px;
-    background: #fffdf8;
-    box-shadow: var(--shadow-tiny);
-}
-
-.form-grid {
-    display: grid;
-    grid-template-columns: repeat(2, minmax(0, 1fr));
-    gap: var(--space-md);
-    margin-bottom: 0.75rem;
-}
-
-.form-field {
-    margin-bottom: 1.25rem;
-}
-
-.form-field label {
-    display: block;
-    margin-bottom: 0.5rem;
-    font-weight: 600;
-    font-size: 0.9rem;
-    color: var(--ink);
-}
-
-.form-field input,
-.form-field select,
-.form-field textarea {
-    width: 100%;
-    padding: 0.55rem 0.6rem;
-    border-radius: 10px;
-    border: 1px solid rgba(0, 0, 0, 0.14);
-    font-family: inherit;
-    font-size: 0.9rem;
-    background: rgba(255, 255, 255, 0.96);
-    transition: border-color var(--transition-fast), box-shadow var(--transition-fast);
-}
-
-.form-field input:focus,
-.form-field select:focus,
-.form-field textarea:focus {
-    outline: none;
-    border-color: var(--accent);
-    box-shadow: 0 0 0 3px rgba(244, 185, 68, 0.2);
-}
-
-.form-field textarea {
-    resize: vertical;
-    min-height: 120px;
-    line-height: 1.6;
-}
-
-.character-count {
-    margin-top: 0.25rem;
-    font-size: 0.75rem;
-    text-align: right;
-    color: var(--ink-soft);
-}
-
-.form-actions {
-    margin-top: 0.6rem;
-    display: flex;
-    flex-wrap: wrap;
-    gap: 0.75rem;
-    align-items: center;
-}
-
-.submit-btn {
-    border-radius: 999px;
-    border: none;
-    padding: 0.55rem 1.1rem;
-    background: linear-gradient(135deg, #f4b944, #f59e0b);
-    color: #3b2604;
-    font-weight: 600;
-    cursor: pointer;
-    display: inline-flex;
-    align-items: center;
-    gap: 0.4rem;
-    box-shadow: 0 6px 16px rgba(244, 185, 68, 0.6);
-    transition: transform var(--transition-fast), box-shadow var(--transition-fast);
-}
-
-.submit-btn:hover {
-    transform: translateY(-1px);
-    box-shadow: 0 10px 22px rgba(244, 185, 68, 0.7);
-}
-
-.form-feedback {
-    font-size: 0.8rem;
-    color: var(--ink-soft);
-    min-height: 1.5rem;
-    text-align: center;
-}
-
-.form-feedback.success {
-    color: #38a169;
-}
-
-.form-feedback.error {
-    color: #e53e3e;
-}
-
-/* Sample wishes */
-.sample-wishes {
-    margin-top: 1rem;
-    padding-top: 1.75rem;
-    border-top: 1px dashed rgba(0, 0, 0, 0.1);
-}
-
-.sample-wishes h4 {
-    margin: 0 0 1rem;
-    font-size: 1.1rem;
-    color: var(--ink);
-}
-
-.wish-examples {
-    display: grid;
-    grid-template-columns: repeat(auto-fit, minmax(190px, 1fr));
-    gap: 0.8rem;
-}
-
-.wish-example {
-    margin: 0;
-    padding: 0.7rem 0.9rem;
-    border-radius: 14px;
-    background: #ffffff;
-    box-shadow: var(--shadow-tiny);
-    font-size: 0.85rem;
-    font-style: italic;
-    border-left: 4px solid var(--accent);
-}
-
-.wish-example p {
-    margin: 0 0 0.75rem;
-    font-size: 0.95rem;
-    line-height: 1.5;
-    color: var(--ink);
-}
-
-.wish-example cite {
-    display: block;
-    margin-top: 0.3rem;
-    font-size: 0.8rem;
-    opacity: 0.8;
-    font-style: normal;
-    font-weight: 600;
-    color: var(--ink-soft);
-}
-
-/* Dynamic wishes display */
-.wishes-display {
-    margin-top: 1.25rem;
-    display: grid;
-    grid-template-columns: repeat(auto-fit, minmax(210px, 1fr));
-    gap: 0.9rem;
-}
-
-.wishes-display .wish-card {
-    padding: 0.8rem 0.9rem;
-    border-radius: 16px;
-    background: #fffdfa;
-    box-shadow: var(--shadow-tiny);
-    font-size: 0.9rem;
-}
-
-.wish-card .wish-header {
-    display: flex;
-    align-items: center;
-    gap: 0.75rem;
-    margin-bottom: 0.75rem;
-    flex-wrap: wrap;
-}
-
-.wish-header strong {
-    font-size: 1rem;
-    color: var(--ink);
-}
-
-.wish-relation {
-    font-size: 0.85rem;
-    color: var(--ink-soft);
-    font-weight: 500;
-}
-
-.wish-card .wish-message {
-    margin: 0.5rem 0;
-    font-size: 0.95rem;
-    line-height: 1.6;
-    color: var(--ink);
-}
-
-.wish-card .wish-date {
-    font-size: 0.8rem;
-    color: var(--ink-soft);
-    text-align: right;
-}
-
-/* =========================================
-   10. CHAPTER 4 CELEBRATION / COUNTDOWN
-   ========================================= */
-.welcome-panel {
-    margin: 1.75rem 0 1.5rem;
-    padding: 1rem 1.1rem;
-    border-radius: 20px;
-    background: linear-gradient(135deg, #fff6dd, #ffe4b2);
-    display: flex;
-    align-items: center;
-    gap: 0.8rem;
-}
-
-.welcome-icon {
-    font-size: 1.7rem;
-}
-
-.welcome-heading {
-    margin: 0;
-    font-family: var(--font-title);
-    font-size: 1.5rem;
-}
-
-.welcome-subtitle {
-    margin: 0.2rem 0 0;
-    font-size: 0.9rem;
-    color: var(--ink-soft);
-}
-
-/* Countdown */
-.countdown-section {
-    margin: 1.5rem 0 1.75rem;
-    text-align: center;
-}
-
-.countdown-section h3 {
-    margin: 0 0 1.25rem;
-    font-family: var(--font-title);
-    font-size: 1.5rem;
-}
-
-.countdown-display {
-    display: flex;
-    gap: 1rem;
-    margin: 0.7rem 0;
-    justify-content: center;
-    flex-wrap: wrap;
-}
-
-.countdown-item {
-    flex: 0 0 90px;
-    padding: 0.7rem 0.8rem;
-    border-radius: 16px;
-    background: #ffffff;
-    box-shadow: var(--shadow-tiny);
-    text-align: center;
-}
-
-.countdown-number {
-    display: block;
-    font-size: 1.35rem;
-    font-weight: 700;
-    color: var(--accent-strong);
-}
-
-.countdown-label {
-    font-size: 0.8rem;
-    opacity: 0.8;
-    color: var(--ink-soft);
-    text-transform: uppercase;
-    letter-spacing: 0.1em;
-}
-
-.countdown-note {
-    margin: 0;
-    font-size: 0.9rem;
-    color: var(--ink-soft);
-}
-
-/* Honey jar hopes */
-.honey-jar-interactive {
-    margin: 1.75rem 0 1.5rem;
-    padding: 1rem 1.1rem;
-    border-radius: 20px;
-    background: #fffdf5;
-    box-shadow: var(--shadow-tiny);
-    text-align: center;
-}
-
-.honey-jar-interactive > div:first-child {
-    font-size: 2rem;
-    margin-bottom: 0.5rem;
-}
-
-.honey-jar-interactive h3 {
-    margin: 0.3rem 0 0.3rem;
-    font-family: var(--font-title);
-    font-size: 1.4rem;
-    color: var(--ink);
-}
-
-.honey-jar-interactive p {
-    margin: 0 0 0.6rem;
-    font-size: 0.95rem;
-    color: var(--ink-soft);
-    line-height: 1.5;
-}
-
-/* Generic button */
-.btn {
-    border-radius: 999px;
-    border: 1px solid rgba(0, 0, 0, 0.14);
-    padding: 0.5rem 1.1rem;
-    font-size: 0.9rem;
-    font-weight: 600;
-    cursor: pointer;
-    background: #ffffff;
-    box-shadow: var(--shadow-tiny);
-    transition: transform var(--transition-fast), box-shadow var(--transition-fast), background var(--transition-fast);
-    display: inline-flex;
-    align-items: center;
-    gap: 0.5rem;
-}
-
-.btn.primary {
-    border-color: transparent;
-    background: linear-gradient(135deg, #f4b944, #f59e0b);
-    color: #3b2604;
-    box-shadow: 0 6px 16px rgba(244, 185, 68, 0.6);
-}
-
-.btn.primary:hover {
-    transform: translateY(-1px);
-    box-shadow: 0 10px 22px rgba(244, 185, 68, 0.7);
-}
-
-.hopes-list {
-    margin: 0.5rem 0 0;
-    padding-left: 1.1rem;
-    font-size: 0.9rem;
-    list-style: none;
-    text-align: left;
-}
-
-.hopes-list li {
-    margin-bottom: 0.5rem;
-    padding: 0.5rem 0.75rem;
-    background: rgba(255, 255, 255, 0.8);
-    border-radius: 8px;
-    border-left: 3px solid var(--accent);
-}
-
-/* Final quote */
-.final-thought {
-    margin-top: 1.5rem;
-    padding-top: 1rem;
-    border-top: 1px dashed rgba(0, 0, 0, 0.12);
-    text-align: center;
-}
-
-.final-thought blockquote {
-    margin: 0 0 1rem;
-    font-size: 1.2rem;
-    font-style: italic;
-    color: var(--ink);
-    line-height: 1.6;
-}
-
-.final-thought blockquote p {
-    margin: 0 0 0.5rem;
-}
-
-.final-thought cite {
-    font-style: normal;
-    font-weight: 600;
-    color: var(--ink-soft);
-    font-size: 1rem;
-}
-
-.final-thought .signature {
-    margin-top: 0.6rem;
-    font-size: 0.9rem;
-    color: var(--ink-soft);
-    font-weight: 700;
-}
-
-/* =========================================
-   11. NAVIGATION BUTTONS
-   ========================================= */
-.chapter-nav {
-    display: flex;
-    align-items: center;
-    justify-content: space-between;
-    gap: 0.75rem;
-    padding: 0.85rem 1.25rem 1.1rem;
-    border-top: 1px solid rgba(0, 0, 0, 0.06);
-    background: rgba(255, 255, 255, 0.96);
-}
-
-.chapter-nav-btn {
-    border-radius: 999px;
-    border: 1px solid rgba(0, 0, 0, 0.18);
-    padding: 0.45rem 0.9rem;
-    font-size: 0.9rem;
-    cursor: pointer;
-    background: #ffffff;
-    box-shadow: var(--shadow-tiny);
-    transition: transform var(--transition-fast), box-shadow var(--transition-fast), background var(--transition-fast);
-    display: flex;
-    align-items: center;
-    justify-content: center;
-    min-height: var(--touch-min);
-}
-
-.chapter-nav-btn.next {
-    border-color: transparent;
-    background: linear-gradient(135deg, #f4b944, #f59e0b);
-    color: #3b2604;
-}
-
-.chapter-nav-btn:hover {
-    transform: translateY(-1px);
-    box-shadow: 0 8px 18px rgba(0, 0, 0, 0.16);
-}
-
-.chapter-indicator {
-    font-size: 0.9rem;
-    color: var(--ink-soft);
-    padding: 0.5rem 1rem;
-    background: rgba(255, 255, 255, 0.8);
-    border-radius: 999px;
-    border: 1px solid rgba(0, 0, 0, 0.06);
-}
-
-/* =========================================
-   12. FOOTER
-   ========================================= */
-.site-footer {
-    max-width: var(--page-max-width);
-    margin: 0 auto 2rem;
-    padding: 1.25rem var(--page-padding-x) 0;
-    text-align: center;
-    font-size: 0.85rem;
-    color: var(--ink-soft);
-    border-top: 1px solid rgba(0, 0, 0, 0.06);
-    padding-top: 2rem;
-}
-
-.site-footer > p:first-child {
-    margin: 0 0 1.25rem;
-    font-size: 1rem;
-}
-
-.footer-links {
-    margin-top: 0.5rem;
-    display: flex;
-    justify-content: center;
-    gap: 0.75rem;
-    flex-wrap: wrap;
-}
-
-.footer-link {
-    border-radius: 999px;
-    border: 1px solid rgba(0, 0, 0, 0.16);
-    padding: 0.35rem 0.8rem;
-    font-size: 0.8rem;
-    background: #ffffff;
-    cursor: pointer;
-    box-shadow: var(--shadow-tiny);
-    display: inline-flex;
-    align-items: center;
-    gap: 0.5rem;
-    transition: all var(--transition-fast);
-}
-
-.footer-link:hover {
-    background: var(--accent-soft);
-    border-color: var(--accent);
-    transform: translateY(-1px);
-}
-
-/* =========================================
-   13. SETTINGS PANEL
-   ========================================= */
-.settings-panel {
-    position: fixed;
-    top: 20px;
-    left: 20px;
-    z-index: 1000;
-}
-
-.settings-button {
-    width: 48px;
-    height: 48px;
-    border-radius: 50%;
-    background: linear-gradient(135deg, #f4b944, #f59e0b);
-    border: 2px solid rgba(255, 255, 255, 0.9);
-    color: #3b2604;
-    font-size: 1.5rem;
-    cursor: pointer;
-    display: flex;
-    align-items: center;
-    justify-content: center;
-    box-shadow: 0 8px 24px rgba(244, 185, 68, 0.6);
-    transition: all 0.3s ease;
-    position: relative;
-    z-index: 1001;
-}
-
-.settings-button:hover {
-    transform: rotate(30deg) scale(1.1);
-    box-shadow: 0 12px 32px rgba(244, 185, 68, 0.8);
-}
-
-.settings-overlay {
-    position: fixed;
-    inset: 0;
-    background: rgba(0, 0, 0, 0.5);
-    backdrop-filter: blur(8px);
-    z-index: 999;
-    display: flex;
-    align-items: center;
-    justify-content: center;
-    opacity: 0;
-    pointer-events: none;
-    transition: opacity 0.3s ease;
-}
-
-.settings-overlay.visible {
-    opacity: 1;
-    pointer-events: auto;
-}
-
-.settings-card {
-    width: 90%;
-    max-width: 500px;
-    max-height: 90vh;
-    overflow-y: auto;
-    background: #fffdf8;
-    border-radius: 24px;
-    padding: 2rem;
-    box-shadow: 0 20px 60px rgba(0, 0, 0, 0.3);
-    border: 2px solid #f4b944;
-    transform: translateY(20px);
-    transition: transform 0.3s ease;
-}
-
-.settings-overlay.visible .settings-card {
-    transform: translateY(0);
-}
-
-.settings-header {
-    display: flex;
-    justify-content: space-between;
-    align-items: center;
-    margin-bottom: 1.5rem;
-    padding-bottom: 1rem;
-    border-bottom: 2px solid #f4b944;
-}
-
-.settings-header h2 {
-    margin: 0;
-    color: #3b2604;
-    font-family: var(--font-title);
-    font-size: 1.8rem;
-}
-
-.close-settings {
-    background: none;
-    border: none;
-    font-size: 1.8rem;
-    color: #3b2604;
-    cursor: pointer;
-    padding: 0.5rem;
-    border-radius: 8px;
-    transition: background 0.2s ease;
-}
-
-.close-settings:hover {
-    background: rgba(244, 185, 68, 0.2);
-}
-
-.settings-section {
-    margin-bottom: 2rem;
-}
-
-.settings-section h3 {
-    display: flex;
-    align-items: center;
-    gap: 0.5rem;
-    margin: 0 0 1rem 0;
-    color: #3b2604;
-    font-size: 1.1rem;
-    font-family: var(--font-title);
-}
-
-.setting-option {
-    display: flex;
-    justify-content: space-between;
-    align-items: center;
-    padding: 0.8rem 0;
-    border-bottom: 1px solid rgba(0, 0, 0, 0.1);
-}
-
-.setting-label {
-    flex: 1;
-}
-
-.setting-label span {
-    display: block;
-    font-weight: 600;
-    margin-bottom: 0.2rem;
-    color: #3b2604;
-}
-
-.setting-label small {
-    font-size: 0.8rem;
-    color: #5a4330;
-    opacity: 0.8;
-}
-
-/* Toggle switches */
-.toggle-switch {
-    position: relative;
-    display: inline-block;
-    width: 60px;
-    height: 30px;
-}
-
-.toggle-switch input {
-    opacity: 0;
-    width: 0;
-    height: 0;
-}
-
-.toggle-slider {
-    position: absolute;
-    cursor: pointer;
-    top: 0;
-    left: 0;
-    right: 0;
-    bottom: 0;
-    background-color: #e0e0e0;
-    transition: .4s;
-    border-radius: 30px;
-}
-
-.toggle-slider:before {
-    position: absolute;
-    content: "";
-    height: 22px;
-    width: 22px;
-    left: 4px;
-    bottom: 4px;
-    background-color: white;
-    transition: .4s;
-    border-radius: 50%;
-}
-
-input:checked + .toggle-slider {
-    background-color: #f4b944;
-}
-
-input:checked + .toggle-slider:before {
-    transform: translateX(30px);
-}
-
-/* Select dropdowns */
-.setting-select {
-    padding: 0.5rem 0.75rem;
-    border-radius: 8px;
-    border: 2px solid #f4b944;
-    background: white;
-    color: #3b2604;
-    font-family: inherit;
-    font-size: 0.9rem;
-    min-width: 120px;
-    cursor: pointer;
-}
-
-.setting-select:focus {
-    outline: none;
-    box-shadow: 0 0 0 3px rgba(244, 185, 68, 0.3);
-}
-
-/* Range sliders */
-.setting-range {
-    flex: 1;
-    max-width: 200px;
-    height: 30px;
-    -webkit-appearance: none;
-    appearance: none;
-    background: #e0e0e0;
-    border-radius: 15px;
-    outline: none;
-}
-
-.setting-range::-webkit-slider-thumb {
-    -webkit-appearance: none;
-    appearance: none;
-    width: 30px;
-    height: 30px;
-    border-radius: 50%;
-    background: #f4b944;
-    cursor: pointer;
-    border: 3px solid white;
-    box-shadow: 0 2px 6px rgba(0, 0, 0, 0.2);
-}
-
-.setting-range-value {
-    min-width: 40px;
-    text-align: center;
-    font-weight: 600;
-    color: #3b2604;
-}
-
-/* Color themes */
-.theme-options {
-    display: flex;
-    gap: 1rem;
-    margin-top: 0.5rem;
-}
-
-.theme-option {
-    flex: 1;
-    padding: 0.8rem;
-    border-radius: 12px;
-    text-align: center;
-    cursor: pointer;
-    border: 2px solid transparent;
-    transition: all 0.3s ease;
-    background: #fff;
-    box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1);
-}
-
-.theme-option:hover {
-    transform: translateY(-2px);
-    box-shadow: 0 6px 16px rgba(0, 0, 0, 0.15);
-}
-
-.theme-option.active {
-    border-color: #f4b944;
-    background: #fffaf0;
-}
-
-.theme-option .icon {
-    font-size: 1.5rem;
-    margin-bottom: 0.5rem;
-    display: block;
-}
-
-.theme-option .name {
-    font-weight: 600;
-    color: #3b2604;
-    font-size: 0.9rem;
-}
-
-/* Settings actions */
-.settings-actions {
-    display: flex;
-    gap: 1rem;
-    margin-top: 2rem;
-    padding-top: 1rem;
-    border-top: 2px solid #f4b944;
-}
-
-.settings-btn {
-    flex: 1;
-    padding: 0.8rem 1.5rem;
-    border-radius: 12px;
-    border: none;
-    font-weight: 600;
-    cursor: pointer;
-    transition: all 0.3s ease;
-    display: flex;
-    align-items: center;
-    justify-content: center;
-    gap: 0.5rem;
-    font-family: inherit;
-}
-
-.settings-btn.primary {
-    background: linear-gradient(135deg, #f4b944, #f59e0b);
-    color: #3b2604;
-}
-
-.settings-btn.secondary {
-    background: #f0f0f0;
-    color: #3b2604;
-    border: 2px solid #ddd;
-}
-
-.settings-btn:hover {
-    transform: translateY(-2px);
-    box-shadow: 0 6px 16px rgba(0, 0, 0, 0.2);
-}
-
-/* Notifications */
-.notification {
-    position: fixed;
-    top: 20px;
-    left: 50%;
-    transform: translateX(-50%);
-    background: linear-gradient(135deg, #f4b944, #f59e0b);
-    color: #3b2604;
-    padding: 12px 24px;
-    border-radius: 999px;
-    font-weight: 600;
-    box-shadow: 0 8px 24px rgba(0, 0, 0, 0.3);
-    z-index: 1001;
-    animation: slideDown 0.3s ease, slideUp 0.3s ease 2s forwards;
-}
-
-@keyframes slideDown {
-    from { top: -100px; opacity: 0; }
-    to { top: 20px; opacity: 1; }
-}
-
-@keyframes slideUp {
-    from { top: 20px; opacity: 1; }
-    to { top: -100px; opacity: 0; }
-}
-
-/* =========================================
-   14. ANIMATIONS TOGGLE
-   ========================================= */
-body.animations-off .cloud {
-    animation: none !important;
-}
-
-body.animations-off .chapter-pill.sparkle::after {
-    display: none;
-}
-
-body.animations-off .hero-action-btn:hover,
-body.animations-off .chapter-nav-btn:hover,
-body.animations-off .footer-link:hover,
-body.animations-off .submit-btn:hover,
-body.animations-off .chapter-pill:hover,
-body.animations-off .registry-card:hover,
-body.animations-off .clickable-character:hover {
-    transform: none !important;
-}
-
-/* Global animation toggle hook */
-.no-animations {
-    scroll-behavior: auto;
-}
-
-.no-animations *,
-.no-animations *::before,
-.no-animations *::after {
-    animation: none !important;
-    transition: none !important;
-}
-
-/* =========================================
-   15. RESPONSIVE DESIGN
-   ========================================= */
-@media (max-width: 900px) {
-    .hero-banner {
-        border-radius: 0;
-        box-shadow: none;
-    }
-    
-    .hero-image-container {
-        height: min(50vh, 420px);
-    }
-    
-    .hero-title-container {
-        padding-inline: 1rem;
-    }
-    
-    .title-background {
-        border-radius: 20px 20px 0 0;
-    }
-    
-    .hero-panel {
-        margin-top: 1rem;
-        padding: 1.25rem 1rem 1.4rem;
-    }
-    
-    .hero-badge {
-        grid-template-columns: 1fr;
-        border-radius: 20px;
-    }
-    
-    .hero-details-grid {
-        grid-template-columns: minmax(0, 1fr);
-    }
-    
-    .registry-grid {
-        grid-template-columns: minmax(0, 1fr);
-    }
-    
-    .game-hud {
-        width: calc(100% - 80px);
-        grid-template-columns: repeat(3, minmax(0, 1fr));
-        row-gap: 2px;
-        padding: 3px 8px;
-    }
-}
-
-@media (max-width: 768px) {
-    .book-container {
-        padding-inline: 1rem;
-    }
-    
-    .pages-wrapper {
-        padding-inline: 1rem;
-    }
-    
-    .form-grid {
-        grid-template-columns: 1fr;
-        gap: var(--space-sm);
-    }
-    
-    input[type="text"],
-    input[type="email"],
-    input[type="tel"],
-    textarea,
-    select {
-        font-size: 16px !important;
-    }
-    
-    .form-field input,
-    .form-field select,
-    .form-field textarea {
-        padding: 0.75rem 0.85rem;
-        min-height: var(--touch-min);
-    }
-    
-    .chapter-illustrations {
-        flex-direction: column;
-    }
-    
-    .hero-actions {
-        flex-direction: column;
-        align-items: stretch;
-    }
-    
-    .hero-action-btn {
-        justify-content: center;
-        width: 100%;
-    }
-    
-    .countdown-display {
-        justify-content: center;
-    }
-    
-    .hud-row {
-        flex-wrap: wrap;
-    }
-    
-    .overlay-content {
-        padding: 1.5rem;
-        margin: 1rem;
-    }
-    
-    .modal-content {
-        padding: 20px;
-        margin: 1rem;
-    }
-    
-    .settings-panel {
-        top: 10px;
-        right: 10px;
-    }
-    
-    .settings-button {
-        width: 40px;
-        height: 40px;
-        font-size: 1.2rem;
-    }
-    
-    .game-hud {
-        top: 8px;
-        padding: 8px 12px;
-        font-size: 0.7rem;
-        width: calc(100% - 60px);
-    }
-    
-    .game-embed__frame {
-        height: 100%;
-    }
-    
-    .game-inline-container {
-        height: 60vh;
-        min-height: 300px;
-    }
-    
-    .mobile-controls {
-        display: flex;
-    }
-    
-    .settings-card {
-        padding: 1.5rem;
-        margin: 1rem;
-    }
-    
-    .setting-option {
-        flex-direction: column;
-        align-items: flex-start;
-        gap: 0.5rem;
-    }
-    
-    .setting-range {
-        max-width: 100%;
-    }
-    
-    .theme-options {
-        flex-direction: column;
-    }
-    
-    .settings-actions {
-        flex-direction: column;
-    }
-    
-    .hero-banner__img {
-        width: 90% !important;
-        max-width: 500px !important;
-    }
-    
-    .hero-banner {
-        max-width: 95%;
-    }
-}
-
-@media (max-width: 480px) {
-    .hero-actions {
-        flex-direction: column;
-    }
-    
-    .hero-action-btn {
-        width: 100%;
-        justify-content: center;
-    }
-    
-    .chapter-pill-row {
-        flex-direction: column;
-    }
-    
-    .chapter-pill {
-        width: 100%;
-    }
-    
-    .footer-links {
-        flex-direction: column;
-        align-items: center;
-    }
-    
-    .footer-link {
-        width: 200px;
-    }
-    
-    .chapter-nav {
-        flex-direction: column;
-        gap: 0.75rem;
-    }
-    
-    .chapter-nav-btn {
-        width: 100%;
-        justify-content: center;
-    }
-    
-    .chapter-indicator {
-        order: -1;
-    }
-}
-
-/* Mobile-specific hero image adjustments */
-.chapter-illustrations img[src*="Gunnar.png"] {
-    max-width: 150px;
-    height: auto;
-}
-
-/* =========================================
-   16. TOUCH CONTROLS
-   ========================================= */
-.touch-controls {
-    display: none;
-    position: absolute;
-    left: 50%;
-    bottom: 12px;
-    transform: translateX(-50%);
-    justify-content: space-between;
-    z-index: 3;
-    gap: 10px;
-    width: min(360px, 90%);
-}
-
-.touch-btn {
-    flex: 1;
-    padding: 10px 0;
-    border-radius: 14px;
-    border: 2px solid #f4a944;
-    background: rgba(255, 255, 255, 0.92);
-    font-size: 1.1rem;
-    font-weight: 700;
-    color: #2b1810;
-    box-shadow: 0 8px 16px rgba(0, 0, 0, 0.18);
-    cursor: pointer;
-    transition: transform 0.15s ease, box-shadow 0.2s ease;
-}
-
-@media (max-width: 600px) {
-    .touch-controls {
-        display: flex !important;
-    }
-}
-
-/* =========================================
-   17. PRINT STYLES
-   ========================================= */
-@media print {
-    .hero-action-btn,
-    .chapter-nav-btn,
-    .footer-link,
-    .submit-btn,
-    .chapter-pill,
-    .clickable-character {
-        border: 1px solid #ddd !important;
-        background: white !important;
-        color: black !important;
-        box-shadow: none !important;
-    }
-    
-    .enhanced-scene,
-    .cloud-layer,
-    .hero-sparkles,
-    .hero-sheen,
-    .hero-corner-decoration,
-    .honey-drip {
-        display: none !important;
-    }
-    
-    body {
-        background: white !important;
-    }
-    
-    .hero-banner {
-        box-shadow: none !important;
-        border: 1px solid #ddd !important;
-    }
-    
-    .game-embed {
-        display: none !important;
-    }
-}
-    </style>
-
-    <link as="image" href="Images/Characters/Gunnar.png" rel="preload">
+<!-- inline styles moved to styles.merged.css -->
 </head>
 <body>
-    <!-- Decorative Elements -->
-    <div class="enhanced-scene" aria-hidden="true" id="enhancedScene"></div>
-    <div class="cloud-layer" aria-hidden="true">
-        <div class="cloud">☁️</div>
-        <div class="cloud">☁️</div>
-        <div class="cloud">☁️</div>
-    </div>
+<!-- Decorative Elements -->
+<div aria-hidden="true" class="enhanced-scene" id="enhancedScene"></div>
+<div aria-hidden="true" class="cloud-layer">
+    <div class="cloud">☁️</div>
+    <div class="cloud">☁️</div>
+    <div class="cloud">☁️</div>
+</div>
 
-    <!-- Hero Header -->
-    <header class="masthead-hero hero-enhancements" role="banner">
-        <!-- Hero Banner with Image and Title Overlay -->
-        <div class="hero-banner">
-            <div class="hero-image-container">
-                <picture>
-                    <source sizes="100vw"
-                            srcset="Images/Characters/Gunnar.png 800w, Images/Characters/Gunnar.png 1200w, Images/Characters/Gunnar.png 1600w">
-                    <img class="hero-banner__img"
-                         src="Images/Characters/Gunnar.png"
-                         alt="Baby Gunnar with Hundred Acre Wood friends in the Hundred Acre Wood"
-                         width="1600"
-                         height="900"
-                         loading="eager">
-                </picture>
-                <!-- Decorative corner elements -->
-                <div class="hero-corner-decoration top-left" aria-hidden="true">🌳</div>
-                <div class="hero-corner-decoration top-right" aria-hidden="true">🍯</div>
-                <div class="hero-corner-decoration bottom-left" aria-hidden="true">❤️</div>
-                <div class="hero-corner-decoration bottom-right" aria-hidden="true">🐝</div>
-            </div>
-            
-            <!-- Title Container with Background -->
-            <div class="hero-title-container">
-                <div class="title-background">
-                    <h1 class="masthead-title">
-                        <span class="title-line title-line--primary">Baby Gunnar's</span>
-                        <span class="title-line title-line--secondary">Hundred Acre Wood Shower</span>
-                    </h1>
-                    <div class="title-underline" aria-hidden="true">
-                        <span class="underline-dot">•</span>
-                        <span class="underline-dot">•</span>
-                        <span class="underline-dot">•</span>
-                    </div>
-                    <p class="hero-subtitle">A storybook celebration with Pooh &amp; friends</p>
+<!-- Settings Panel -->
+<div class="settings-panel">
+    <button class="settings-button" id="settingsButton" aria-label="Open settings">
+        ⚙️
+    </button>
+</div>
+
+<div class="settings-overlay" id="settingsOverlay">
+    <div class="settings-card">
+        <div class="settings-header">
+            <h2>Game Settings</h2>
+            <button class="close-settings" id="closeSettings" aria-label="Close settings">×</button>
+        </div>
+
+        <!-- Game Difficulty -->
+        <section class="settings-section">
+            <h3><span class="icon">🎮</span> Game Difficulty</h3>
+            <div class="setting-option">
+                <div class="setting-label">
+                    <span>Difficulty Level</span>
+                    <small>Adjusts jar speed, bee frequency, and time limit</small>
                 </div>
+                <select class="setting-select" id="difficultySelect">
+                    <option value="easy">Easy</option>
+                    <option value="medium" selected>Medium</option>
+                    <option value="hard">Hard</option>
+                    <option value="expert">Expert</option>
+                </select>
+            </div>
+        </section>
+
+        <!-- Sound & Music -->
+        <section class="settings-section">
+            <h3><span class="icon">🔊</span> Sound & Music</h3>
+            <div class="setting-option">
+                <div class="setting-label">
+                    <span>Background Music</span>
+                    <small>Play soothing Hundred Acre Wood music</small>
+                </div>
+                <label class="toggle-switch">
+                    <input type="checkbox" id="musicToggle" checked>
+                    <span class="toggle-slider"></span>
+                </label>
+            </div>
+            <div class="setting-option">
+                <div class="setting-label">
+                    <span>Sound Effects</span>
+                    <small>Honey catches, bee buzzes, and game sounds</small>
+                </div>
+                <label class="toggle-switch">
+                    <input type="checkbox" id="sfxToggle" checked>
+                    <span class="toggle-slider"></span>
+                </label>
+            </div>
+            <div class="setting-option">
+                <div class="setting-label">
+                    <span>Volume Level</span>
+                    <small>Adjust overall volume</small>
+                </div>
+                <div style="display: flex; align-items: center; gap: 1rem;">
+                    <input type="range" class="setting-range" id="volumeSlider" min="0" max="100" value="80">
+                    <span class="setting-range-value" id="volumeValue">80%</span>
+                </div>
+            </div>
+        </section>
+
+        <!-- Visual Theme -->
+        <section class="settings-section">
+            <h3><span class="icon">🎨</span> Visual Theme</h3>
+            <div class="theme-options">
+                <div class="theme-option active" data-theme="light">
+                    <span class="icon">☀️</span>
+                    <span class="name">Light</span>
+                </div>
+                <div class="theme-option" data-theme="dark">
+                    <span class="icon">🌙</span>
+                    <span class="name">Dark</span>
+                </div>
+                <div class="theme-option" data-theme="auto">
+                    <span class="icon">⚙️</span>
+                    <span class="name">Auto</span>
+                </div>
+            </div>
+        </section>
+
+        <!-- Game Visuals -->
+        <section class="settings-section">
+            <h3><span class="icon">✨</span> Visual Effects</h3>
+            <div class="setting-option">
+                <div class="setting-label">
+                    <span>Particle Effects</span>
+                    <small>Show honey sparkles and catch effects</small>
+                </div>
+                <label class="toggle-switch">
+                    <input type="checkbox" id="particlesToggle" checked>
+                    <span class="toggle-slider"></span>
+                </label>
+            </div>
+            <div class="setting-option">
+                <div class="setting-label">
+                    <span>Animations</span>
+                    <small>Page transitions and character animations</small>
+                </div>
+                <label class="toggle-switch">
+                    <input type="checkbox" id="animationsToggle" checked>
+                    <span class="toggle-slider"></span>
+                </label>
+            </div>
+            <div class="setting-option">
+                <div class="setting-label">
+                    <span>Control Sensitivity</span>
+                    <small>Adjust bear movement speed</small>
+                </div>
+                <div style="display: flex; align-items: center; gap: 1rem;">
+                    <input type="range" class="setting-range" id="sensitivitySlider" min="50" max="400" value="260" step="10">
+                    <span class="setting-range-value" id="sensitivityValue">260</span>
+                </div>
+            </div>
+        </section>
+
+        <!-- Game Controls -->
+        <section class="settings-section">
+            <h3><span class="icon">🎯</span> Game Controls</h3>
+            <div class="setting-option">
+                <div class="setting-label">
+                    <span>Vibration (Mobile)</span>
+                    <small>Haptic feedback on mobile devices</small>
+                </div>
+                <label class="toggle-switch">
+                    <input type="checkbox" id="vibrationToggle">
+                    <span class="toggle-slider"></span>
+                </label>
+            </div>
+            <div class="setting-option">
+                <div class="setting-label">
+                    <span>Show Mobile Controls</span>
+                    <small>Display touch controls on mobile</small>
+                </div>
+                <label class="toggle-switch">
+                    <input type="checkbox" id="mobileControlsToggle" checked>
+                    <span class="toggle-slider"></span>
+                </label>
+            </div>
+        </section>
+
+        <!-- Actions -->
+        <div class="settings-actions">
+            <button class="settings-btn secondary" id="resetSettingsBtn">
+                <span>🔁</span> Reset to Defaults
+            </button>
+            <button class="settings-btn primary" id="applySettingsBtn">
+                <span>💾</span> Apply Settings
+            </button>
+        </div>
+    </div>
+</div>
+
+<!-- Hero Header -->
+<header class="masthead-hero hero-enhancements">
+    <!-- Hero Banner with Image and Title Overlay -->
+    <div class="hero-banner">
+        <div class="hero-image-container">
+            <picture>
+                <source sizes="80vw"
+                        srcset="Images/Characters/Gunnar.png 800w, Images/Characters/Gunnar.png 1200w, Images/Characters/Gunnar.png 1600w">
+                <img alt="Baby Gunnar with Hundred Acre Wood friends in the Hundred Acre Wood" class="hero-banner__img" height="900" loading="eager"
+                     src="Images/Characters/Gunnar.png" width="800">
+            </picture>
+            <!-- Decorative corner elements -->
+            <div aria-hidden="true" class="hero-corner-decoration top-left">🌿</div>
+            <div aria-hidden="true" class="hero-corner-decoration top-right">🍯</div>
+            <div aria-hidden="true" class="hero-corner-decoration bottom-left">💛</div>
+            <div aria-hidden="true" class="hero-corner-decoration bottom-right">🐝</div>
+        </div>
+        <!-- Title Container with Background -->
+        <div class="hero-title-container">
+            <div class="title-background">
+                <h1 class="masthead-title">
+                    <span class="title-line title-line--primary">Baby Gunnar's</span>
+                    <span class="title-line title-line--secondary">Hundred Acre Wood Shower</span>
+                </h1>
+                <div aria-hidden="true" class="title-underline">
+                    <span class="underline-dot">•</span>
+                    <span class="underline-dot">•</span>
+                    <span class="underline-dot">•</span>
+                </div>
+                <p class="hero-subtitle">A storybook celebration with Pooh & friends</p>
             </div>
         </div>
-        
-        <!-- Decorative Elements -->
-        <div class="hero-sparkles" aria-hidden="true" id="heroSparkles"></div>
-        <div class="hero-bunting" aria-hidden="true">
-            <span>✨</span><span>🎈</span><span>🍯</span><span>🎁</span><span>🧸</span><span>📚</span><span>✨</span>
+    </div>
+    <!-- Decorative Elements -->
+    <div aria-hidden="true" class="hero-sparkles" id="heroSparkles"></div>
+    <div aria-hidden="true" class="hero-bunting">
+        <span>✨</span><span>🎈</span><span>🍯</span><span>💝</span><span>🧸</span><span>📖</span><span>✨</span>
+    </div>
+    <div aria-hidden="true" class="hero-sheen"></div>
+    <!-- Hero Info Panel -->
+    <div class="masthead-hero-inner">
+        <section class="hero-panel">
+            <!-- Event Badge -->
+            <div class="hero-badge">
+                <div aria-hidden="true" class="badge-icon">
+                    <div class="badge-icon-inner">🎉</div>
+                </div>
+                <div class="badge-copy">
+                    <p class="badge-eyebrow">A Very Special</p>
+                    <p class="badge-label">Hundred Acre Gathering</p>
+                    <p class="badge-title">Virtual Baby Shower Celebration</p>
+                </div>
+                <div class="badge-meta">
+                    <time class="badge-pill date" datetime="2025-06-15">
+                        <span aria-hidden="true" class="pill-icon">📅</span>
+                        <span class="pill-text">June 15, 2025</span>
+                    </time>
+                    <div class="badge-pill location">
+                        <span aria-hidden="true" class="pill-icon">📍</span>
+                        <span class="pill-text">Online Celebration</span>
+                    </div>
+                </div>
+            </div>
+            <!-- Hero Details Grid -->
+            <div class="hero-details-grid">
+                <div class="hero-detail">
+                    <div aria-hidden="true" class="detail-icon">📚</div>
+                    <div class="detail-content">
+                        <h4 class="detail-title">Interactive Storybook</h4>
+                        <p class="detail-text">Read through four charming chapters</p>
+                    </div>
+                </div>
+                <div class="hero-detail">
+                    <div aria-hidden="true" class="detail-icon">🎮</div>
+                    <div class="detail-content">
+                        <h4 class="detail-title">Honey Game</h4>
+                        <p class="detail-text">Help Pooh catch honey pots</p>
+                    </div>
+                </div>
+                <div class="hero-detail">
+                    <div aria-hidden="true" class="detail-icon">🎁</div>
+                    <div class="detail-content">
+                        <h4 class="detail-title">Gift Registry</h4>
+                        <p class="detail-text">Share your wishes & blessings</p>
+                    </div>
+                </div>
+            </div>
+            <!-- Quick Actions -->
+            <div class="hero-actions">
+                <button class="hero-action-btn primary" onclick="scrollToChapter(1)">
+                    <span aria-hidden="true" class="btn-icon">📖</span>
+                    <span class="btn-text">Begin the Story</span>
+                </button>
+                <button class="hero-action-btn secondary" onclick="scrollToChapter(2)">
+                    <span aria-hidden="true" class="btn-icon">🍯</span>
+                    <span class="btn-text">Play Honey Game</span>
+                </button>
+                <button class="hero-action-btn ghost" onclick="scrollToChapter(3)">
+                    <span aria-hidden="true" class="btn-icon">💝</span>
+                    <span class="btn-text">View Registry</span>
+                </button>
+            </div>
+            <!-- Orientation Hint -->
+            <div class="orientation-hint">
+                <div aria-hidden="true" class="hint-icon">📱</div>
+                <p class="hint-text">For the best experience: Rotate for wider game view, or stay in portrait for lovely
+                    story reading.</p>
+            </div>
+        </section>
+    </div>
+</header>
+<!-- Main Content -->
+<main class="book-container" id="storybook">
+    <!-- Chapter Navigation -->
+    <nav aria-label="Story chapters" class="chapter-tracker">
+        <h2 class="sr-only">Chapter navigation</h2>
+        <div class="tracker-row">
+            <div class="tracker-label">Story path</div>
+            <div aria-valuemax="100" aria-valuemin="0" aria-valuenow="0" class="book-progress" role="progressbar">
+                <div class="progress-fill" id="progressFill"></div>
+            </div>
         </div>
-        <div class="hero-sheen" aria-hidden="true"></div>
-        
-        <!-- Hero Info Panel -->
-        <div class="masthead-hero-inner">
-            <section class="hero-panel">
-                <!-- Event Badge -->
-                <div class="hero-badge">
-                    <div class="badge-icon" aria-hidden="true">
-                        <div class="badge-icon-inner">🎉</div>
+        <div class="chapter-pill-row">
+            <button aria-current="page" class="chapter-pill sparkle active" data-chapter-target="1">
+                <span class="pill-number">1</span>
+                <span class="pill-text">
+               <span class="pill-title">Welcome</span>
+               <span class="pill-detail">Invitation arrives</span>
+               </span>
+            </button>
+            <button class="chapter-pill sparkle" data-chapter-target="2">
+                <span class="pill-number">2</span>
+                <span class="pill-text">
+               <span class="pill-title">Honey Hunt</span>
+               <span class="pill-detail">Play the game</span>
+               </span>
+            </button>
+            <button class="chapter-pill sparkle" data-chapter-target="3">
+                <span class="pill-number">3</span>
+                <span class="pill-text">
+               <span class="pill-title">Gifts & Wishes</span>
+               <span class="pill-detail">Registry & guestbook</span>
+               </span>
+            </button>
+            <button class="chapter-pill sparkle" data-chapter-target="4">
+                <span class="pill-number">4</span>
+                <span class="pill-text">
+               <span class="pill-title">Celebration</span>
+               <span class="pill-detail">Welcome Gunnar</span>
+               </span>
+            </button>
+        </div>
+    </nav>
+    <!-- Story Pages -->
+    <div class="book">
+        <div class="pages-wrapper">
+            <!-- Chapter 1 -->
+            <article class="page active" data-chapter="1">
+                <header class="chapter-header">
+                    <p class="chapter-number">Chapter One</p>
+                    <h2 class="chapter-title">A Special Day in the Hundred Acre Wood</h2>
+                    <p class="chapter-subtitle">An Invitation to Celebrate</p>
+                    <span aria-hidden="true" class="honey-drip"></span>
+                </header>
+                <div class="page-content">
+                    <p class="story-text">One fine spring day, in a corner of the Hundred Acre Wood where the sun shines
+                        warmly through the trees and the flowers bloom in cheerful colors, something wonderful was
+                        happening. All the forest friends were gathering, for there was to be a celebration unlike any
+                        other.</p>
+                    <p class="story-text">"What sort of celebration?" you might ask. Well, it was the very best sort—the
+                        kind that welcomes a new little friend to the world. A baby boy named Gunnar James was soon to
+                        arrive, and everyone in the Hundred Acre Wood wanted to share in the joy.</p>
+                    <div class="chapter-illustrations">
+                        <figure class="storybook-figure figure-theme-honey clickable-character" data-character="pooh">
+                            <img alt="Winnie the Pooh holding a honey pot" height="96"
+                                 loading="eager" src="Images/Characters/honey-bear.png" width="96">
+                            <figcaption class="figure-copy">
+                                <div class="figure-name">Pooh brings the first pot</div>
+                                <p class="figure-note">"A baby celebration needs extra honey," he whispered as he dusted
+                                    off the lid.</p>
+                            </figcaption>
+                            <div aria-live="polite" class="character-message"></div>
+                        </figure>
+                        <figure class="storybook-figure figure-theme-sky clickable-character" data-character="piglet">
+                            <img alt="Piglet carrying a welcome banner" height="96" loading="eager"
+                                 src="Images/Characters/piglet.png" width="96">
+                            <figcaption class="figure-copy">
+                                <div class="figure-name">Piglet pins up the banner</div>
+                                <p class="figure-note">He fluttered through the clearing making sure every friend felt
+                                    warmly invited.</p>
+                            </figcaption>
+                            <div aria-live="polite" class="character-message"></div>
+                        </figure>
                     </div>
-                    <div class="badge-copy">
-                        <p class="badge-eyebrow">A Very Special</p>
-                        <p class="badge-label">Hundred Acre Gathering</p>
-                        <p class="badge-title">Virtual Baby Shower Celebration</p>
-                    </div>
-                    <div class="badge-meta">
-                        <time class="badge-pill date" datetime="2025-06-15">
-                            <span class="pill-icon" aria-hidden="true">📅</span>
-                            <span class="pill-text">June 15, 2025</span>
-                        </time>
-                        <div class="badge-pill location">
-                            <span class="pill-icon" aria-hidden="true">📍</span>
-                            <span class="pill-text">Online Celebration</span>
-                        </div>
-                    </div>
+                    <p class="story-text">Winnie the Pooh, being a Bear of Very Little Brain but a Very Big Heart, knew
+                        that the most important thing for any celebration was honey. And not just a little honey, but
+                        lots and lots of it. After all, welcoming Baby Gunnar was a Very Important Matter.</p>
+                    <p class="story-text">"But first," thought Pooh, looking up at his honey pots on the high shelf,
+                        "we'll need to gather more honey. Won't you help?"</p>
+                    <div aria-hidden="true" class="divider">🌳 ✿ 🐝 ✿ 🌳</div>
                 </div>
-                
-                <!-- Hero Details Grid -->
-                <div class="hero-details-grid">
-                    <div class="hero-detail">
-                        <div class="detail-icon" aria-hidden="true">📚</div>
-                        <div class="detail-content">
-                            <h4 class="detail-title">Interactive Storybook</h4>
-                            <p class="detail-text">Read through four charming chapters</p>
-                        </div>
+            </article>
+            <!-- Chapter 2: Game -->
+            <section id="honey-game" class="page page--game" aria-label="Honey Hunt game">
+                <div class="page-content">
+                    <div class="game-embed__frame">
+                        <iframe
+                                src="game.html"
+                                title="Honey Hunt — Baby Gunnar’s Hundred Acre Wood"
+                                loading="lazy"
+                                class="game-frame"
+                        ></iframe>
                     </div>
-                    <div class="hero-detail">
-                        <div class="detail-icon" aria-hidden="true">🎮</div>
-                        <div class="detail-content">
-                            <h4 class="detail-title">Honey Game</h4>
-                            <p class="detail-text">Help Pooh catch honey pots</p>
-                        </div>
-                    </div>
-                    <div class="hero-detail">
-                        <div class="detail-icon" aria-hidden="true">🎁</div>
-                        <div class="detail-content">
-                            <h4 class="detail-title">Gift Registry</h4>
-                            <p class="detail-text">Share your wishes &amp; blessings</p>
-                        </div>
-                    </div>
-                </div>
-                
-                <!-- Quick Actions -->
-                <div class="hero-actions">
-                    <button class="hero-action-btn primary" type="button" onclick="scrollToChapter(1)">
-                        <span class="btn-icon" aria-hidden="true">📖</span>
-                        <span class="btn-text">Begin the Story</span>
-                    </button>
-                    <button class="hero-action-btn secondary" type="button" onclick="scrollToChapter(2)">
-                        <span class="btn-icon" aria-hidden="true">🍯</span>
-                        <span class="btn-text">Play Honey Game</span>
-                    </button>
-                    <button class="hero-action-btn ghost" type="button" onclick="scrollToChapter(3)">
-                        <span class="btn-icon" aria-hidden="true">🎁</span>
-                        <span class="btn-text">View Registry</span>
-                    </button>
-                </div>
-                
-                <!-- Orientation Hint -->
-                <div class="orientation-hint">
-                    <div class="hint-icon" aria-hidden="true">📱</div>
-                    <p class="hint-text">For the best experience: Rotate for wider game view, or stay in portrait for lovely story reading.</p>
                 </div>
             </section>
-        </div>
-    </header>
 
-    <!-- Main Content -->
-    <main class="book-container" id="storybook">
-        <!-- Chapter Navigation -->
-        <nav class="chapter-tracker" aria-label="Story chapters">
-            <h2 class="sr-only">Chapter navigation</h2>
-            <div class="tracker-row">
-                <div class="tracker-label">Story path</div>
-                <div class="book-progress" role="progressbar" aria-valuemin="0" aria-valuemax="100" aria-valuenow="0">
-                    <div class="progress-fill" id="progressFill"></div>
+
+            <!-- Chapter 2: Game -->
+            <article class="page" data-chapter="2" id="honey-game">
+                <header class="chapter-header">
+                    <p class="chapter-number">Chapter Two</p>
+                    <h2 class="chapter-title">Pooh's Honey Gathering Adventure</h2>
+                    <p class="chapter-subtitle">A Game of Skill and Sweetness</p>
+                    <span aria-hidden="true" class="honey-drip"></span>
+                </header>
+                <div class="chapter-illustrations">
+                    <figure class="storybook-figure figure-theme-forest clickable-character" data-character="tigger">
+                        <img alt="Tigger bouncing" height="96" loading="lazy" src="Images/Characters/tigger.png"
+                             width="96">
+                        <figcaption class="figure-copy">
+                            <div class="figure-name">Tigger stakes out the course</div>
+                            <p class="figure-note">He marked the path with springy footprints so every honey pot feels
+                                like an adventure to catch.</p>
+                        </figcaption>
+                        <div aria-live="polite" class="character-message"></div>
+                    </figure>
+                    <figure class="storybook-figure figure-theme-honey clickable-character" data-character="roo">
+                        <img alt="Roo cheering" height="96" loading="lazy" src="Images/Characters/roo.png" width="96">
+                        <figcaption class="figure-copy">
+                            <div class="figure-name">Roo cheers from the sidelines</div>
+                            <p class="figure-note">"Mind the bees!" he giggled, handing out cozy scarves.</p>
+                        </figcaption>
+                        <div aria-live="polite" class="character-message"></div>
+                    </figure>
                 </div>
-            </div>
-            <div class="chapter-pill-row">
-                <button class="chapter-pill sparkle active" type="button" data-chapter-target="1" aria-current="page">
-                    <span class="pill-number">1</span>
-                    <span class="pill-text">
-                        <span class="pill-title">Welcome</span>
-                        <span class="pill-detail">Invitation arrives</span>
-                    </span>
-                </button>
-                <button class="chapter-pill sparkle" type="button" data-chapter-target="2">
-                    <span class="pill-number">2</span>
-                    <span class="pill-text">
-                        <span class="pill-title">Honey Hunt</span>
-                        <span class="pill-detail">Play the game</span>
-                    </span>
-                </button>
-                <button class="chapter-pill sparkle" type="button" data-chapter-target="3">
-                    <span class="pill-number">3</span>
-                    <span class="pill-text">
-                        <span class="pill-title">Gifts &amp; Wishes</span>
-                        <span class="pill-detail">Registry &amp; guestbook</span>
-                    </span>
-                </button>
-                <button class="chapter-pill sparkle" type="button" data-chapter-target="4">
-                    <span class="pill-number">4</span>
-                    <span class="pill-text">
-                        <span class="pill-title">Celebration</span>
-                        <span class="pill-detail">Welcome Gunnar</span>
-                    </span>
-                </button>
-            </div>
-        </nav>
-        
-        <!-- Story Pages -->
-        <div class="book">
-            <div class="pages-wrapper">
-                <!-- Chapter 1 -->
-                <article class="page active" data-chapter="1">
-                    <header class="chapter-header">
-                        <p class="chapter-number">Chapter One</p>
-                        <h2 class="chapter-title">A Special Day in the Hundred Acre Wood</h2>
-                        <p class="chapter-subtitle">An Invitation to Celebrate</p>
-                        <span class="honey-drip" aria-hidden="true"></span>
-                    </header>
-                    <div class="page-content">
-                        <p class="story-text">One fine spring day, in a corner of the Hundred Acre Wood where the sun shines warmly through the trees and the flowers bloom in cheerful colors, something wonderful was happening. All the forest friends were gathering, for there was to be a celebration unlike any other.</p>
-                        <p class="story-text">"What sort of celebration?" you might ask. Well, it was the very best sort—the kind that welcomes a new little friend to the world. A baby boy named Gunnar James was soon to arrive, and everyone in the Hundred Acre Wood wanted to share in the joy.</p>
-                        <div class="chapter-illustrations">
-                            <figure class="storybook-figure figure-theme-honey clickable-character" data-character="pooh">
-                                <img src="Images/Characters/honey-bear.png"
-                                     alt="Winnie the Pooh holding a honey pot"
-                                     width="96"
-                                     height="96"
-                                     loading="eager">
-                                <figcaption class="figure-copy">
-                                    <div class="figure-name">Pooh brings the first pot</div>
-                                    <p class="figure-note">"A baby celebration needs extra honey," he whispered as he dusted off the lid.</p>
-                                </figcaption>
-                                <div class="character-message" aria-live="polite"></div>
-                            </figure>
-                            <figure class="storybook-figure figure-theme-sky clickable-character" data-character="piglet">
-                                <img src="Images/Characters/piglet.png"
-                                     alt="Piglet carrying a welcome banner"
-                                     width="96"
-                                     height="96"
-                                     loading="eager">
-                                <figcaption class="figure-copy">
-                                    <div class="figure-name">Piglet pins up the banner</div>
-                                    <p class="figure-note">He fluttered through the clearing making sure every friend felt warmly invited.</p>
-                                </figcaption>
-                                <div class="character-message" aria-live="polite"></div>
-                            </figure>
-                        </div>
-                        <p class="story-text">Winnie the Pooh, being a Bear of Very Little Brain but a Very Big Heart, knew that the most important thing for any celebration was honey. And not just a little honey, but lots and lots of it. After all, welcoming Baby Gunnar was a Very Important Matter.</p>
-                        <p class="story-text">"But first," thought Pooh, looking up at his honey pots on the high shelf, "we'll need to gather more honey. Won't you help?"</p>
-                        <div class="divider" aria-hidden="true">🌳 🌸 🐝 🌸 🌳</div>
+
+                <!-- Game Container -->
+                <div class="game-inline-container" id="gameInlineContainer">
+                    <!-- Game Settings Button -->
+                    <div class="game-settings-button">
+                        <button class="settings-button" id="gameSettingsButton" aria-label="Open game settings">
+                            ⚙️
+                        </button>
                     </div>
-                </article>
-                
-                <!-- Chapter 2: Game -->
-                <article class="page" data-chapter="2" id="honey-game">
-                    <header class="chapter-header">
-                        <p class="chapter-number">Chapter Two</p>
-                        <h2 class="chapter-title">Pooh's Honey Gathering Adventure</h2>
-                        <p class="chapter-subtitle">A Game of Skill and Sweetness</p>
-                        <span class="honey-drip" aria-hidden="true"></span>
-                    </header>
+
+                    <!-- Game Background -->
+                    <div class="game-bg-horizon"></div>
+                    <div class="game-bg-ground"></div>
+
+                    <!-- Game Start Overlay -->
+                    <div class="game-start-overlay" id="gameStartOverlay">
+                        <div class="game-start-card">
+                            <h2 class="game-start-title">Ready to Hunt Honey?</h2>
+                            <p class="game-start-subtitle">Help Pooh catch honey jars while avoiding bees!</p>
+                            <button class="btn primary" id="gameStartButton">
+                                <i aria-hidden="true" class="fas fa-play"></i>
+                                <span>Start Game</span>
+                            </button>
+                            <div style="margin-top: 1rem; font-size: 0.85rem; color: var(--ink-soft);">
+                                <p><strong>Controls:</strong></p>
+                                <p>← → Arrow Keys or A/D to move</p>
+                                <p>Space to pause</p>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- Game HUD -->
+                    <div aria-live="polite" class="game-hud" id="gameHUD">
+                        <div class="game-hud-item">
+                            <span class="game-hud-label">Score</span>
+                            <span class="game-hud-value" id="gameScoreValue">0</span>
+                        </div>
+                        <div class="game-hud-item">
+                            <span class="game-hud-label">Best</span>
+                            <span class="game-hud-value" id="gameBestValue">0</span>
+                        </div>
+                        <div class="game-hud-item">
+                            <span class="game-hud-label">Time</span>
+                            <span class="game-hud-value" id="gameTimeValue">60</span>
+                        </div>
+                        <div class="game-hud-item">
+                            <span class="game-hud-label">Lives</span>
+                            <span class="game-hud-value" id="gameLivesValue">♥♥♥</span>
+                        </div>
+                        <div class="game-hud-item">
+                            <span class="game-hud-label">Streak</span>
+                            <span class="game-hud-value" id="gameStreakValue">0</span>
+                            <span class="streak-badge" id="gameStreakBadge">Combo!</span>
+                        </div>
+                    </div>
+
+                    <!-- Game Canvas -->
+                    <canvas aria-label="Honey Hunt playfield" id="gameCanvas" role="img"></canvas>
+
+                    <!-- Game Pause Overlay -->
+                    <div class="game-overlay" id="gamePauseOverlay">
+                        <div class="game-overlay-card">
+                            <h2 class="game-start-title">Game Paused</h2>
+                            <p class="game-start-subtitle">The bees are waiting...</p>
+                            <button class="btn primary" id="gameResumeButton">
+                                <i aria-hidden="true" class="fas fa-play"></i>
+                                <span>Resume</span>
+                            </button>
+                        </div>
+                    </div>
+
+                    <!-- Game Over Overlay -->
+                    <div class="game-overlay" id="gameOverOverlay">
+                        <div class="game-overlay-card">
+                            <h2 class="game-start-title">Game Over!</h2>
+                            <div style="margin: 1rem 0;">
+                                <div style="font-size: 0.9rem; color: var(--ink-soft);">Final Score</div>
+                                <div style="font-size: 2rem; font-weight: bold; color: #f59e0b;" id="finalGameScore">0</div>
+                                <div style="font-size: 0.9rem; color: var(--ink-soft); margin-top: 0.5rem;">
+                                    Best: <span id="finalGameBest">0</span>
+                                </div>
+                            </div>
+                            <button class="btn primary" id="gameRestartButton">
+                                <i aria-hidden="true" class="fas fa-redo"></i>
+                                <span>Play Again</span>
+                            </button>
+                        </div>
+                    </div>
+
+                    <!-- Mobile Controls -->
+                    <div class="mobile-controls" id="mobileControls">
+                        <button class="mobile-control-btn" id="mobileLeftBtn">
+                            <i aria-hidden="true" class="fas fa-arrow-left"></i>
+                        </button>
+                        <button class="mobile-control-btn mobile-control-pause" id="mobilePauseBtn">
+                            <i aria-hidden="true" class="fas fa-pause"></i>
+                        </button>
+                        <button class="mobile-control-btn" id="mobileRightBtn">
+                            <i aria-hidden="true" class="fas fa-arrow-right"></i>
+                        </button>
+                    </div>
+                </div>
+
+                <div class="game-description">
+                    <h3>How to Play</h3>
+                    <p>Help Winnie the Pooh collect honey pots while avoiding bees! Move left and right with arrow keys
+                        or on-screen controls. Chain catches to build combos for higher scores. Watch for special jars
+                        that grant shields and power-ups!</p>
+                    <div class="game-tips">
+                        <div class="tip">
+                            <span class="tip-icon">🎯</span>
+                            <p><strong>Goal:</strong> Score as many points as you can in 60 seconds!</p>
+                        </div>
+                        <div class="tip">
+                            <span class="tip-icon">🛡️</span>
+                            <p><strong>Blue Jars:</strong> Give temporary shield protection</p>
+                        </div>
+                        <div class="tip">
+                            <span class="tip-icon">✨</span>
+                            <p><strong>Power-ups:</strong> Special jars give amazing abilities</p>
+                        </div>
+                    </div>
+                </div>
+            </article>
+            <!-- Chapter 3: Gifts & Wishes -->
+            <article class="page" data-chapter="3">
+                <header class="chapter-header">
+                    <p class="chapter-number">Chapter Three</p>
+                    <h2 class="chapter-title">Gifts from the Heart</h2>
+                    <p class="chapter-subtitle">Preparing for Baby Gunnar's Arrival</p>
+                    <span aria-hidden="true" class="honey-drip"></span>
+                </header>
+                <div class="page-content">
+                    <section class="story-section">
+                        <p class="story-text">Back in the Hundred Acre Wood, Pooh sat thoughtfully by his honey pots.
+                            "Honey is wonderful," he mused, "but I wonder what else a growing bear—oh, I mean baby—might
+                            need?"</p>
+                        <p class="story-text">Just then, Piglet came scurrying up, holding something soft. "I was
+                            thinking, Pooh," he said in his small voice, "perhaps something cozy for chilly
+                            evenings?"</p>
+                        <div class="dialogue-bubble dialogue-piglet">
+                            <div class="bubble-arrow"></div>
+                            <p>"Something soft and warm, for when the wind howls!"</p>
+                            <span class="speaker">— Piglet</span>
+                        </div>
+                    </section>
                     <div class="chapter-illustrations">
-                        <figure class="storybook-figure figure-theme-forest clickable-character" data-character="tigger">
-                            <img src="Images/Characters/tigger.png"
-                                 alt="Tigger bouncing"
-                                 width="96"
-                                 height="96"
-                                 loading="lazy">
+                        <figure class="storybook-figure figure-theme-forest clickable-character"
+                                data-character="piglet">
+                            <img alt="Piglet with blanket" height="96" loading="lazy" src="Images/Characters/piglet.png"
+                                 width="96">
                             <figcaption class="figure-copy">
-                                <div class="figure-name">Tigger stakes out the course</div>
-                                <p class="figure-note">He marked the path with springy footprints so every honey pot feels like an adventure to catch.</p>
+                                <div class="figure-name">Piglet's Cozy Corner</div>
+                                <p class="figure-note">Found the snuggliest blanket in all the Wood.</p>
                             </figcaption>
-                            <div class="character-message" aria-live="polite"></div>
+                            <div aria-live="polite" class="character-message"></div>
                         </figure>
-                        <figure class="storybook-figure figure-theme-honey clickable-character" data-character="roo">
-                            <img src="Images/Characters/roo.png"
-                                 alt="Roo cheering"
-                                 width="96"
-                                 height="96"
-                                 loading="lazy">
+                        <figure class="storybook-figure figure-theme-honey clickable-character" data-character="pooh">
+                            <img alt="Pooh thinking" height="96" loading="lazy" src="Images/Characters/honey-bear.png"
+                                 width="96">
                             <figcaption class="figure-copy">
-                                <div class="figure-name">Roo cheers from the sidelines</div>
-                                <p class="figure-note">"Mind the bees!" he giggled, handing out cozy scarves.</p>
+                                <div class="figure-name">Pooh's Pondering</div>
+                                <p class="figure-note">Thinking of practical things (between honey snacks).</p>
                             </figcaption>
-                            <div class="character-message" aria-live="polite"></div>
+                            <div aria-live="polite" class="character-message"></div>
+                        </figure>
+                        <figure class="storybook-figure figure-theme-sky clickable-character" data-character="tigger">
+                            <img alt="Tigger bouncing" height="96" loading="lazy" src="Images/Characters/tigger.png"
+                                 width="96">
+                            <figcaption class="figure-copy">
+                                <div class="figure-name">Tigger's Toys</div>
+                                <p class="figure-note">Bounced in with the bounciest ideas!</p>
+                            </figcaption>
+                            <div aria-live="polite" class="character-message"></div>
                         </figure>
                     </div>
-                    
-                    <!-- Embedded Honey Game -->
-                    <div class="game-embed" id="gameEmbed">
-                        <!-- Game Container -->
-                        <div id="gameContainer" class="game-container">
-                            <canvas id="gameCanvas" width="640" height="360" aria-label="Pooh catching honey pots"></canvas>
-                            
-                            <!-- Game HUD -->
-                            <div id="gameHUD" class="game-hud">
-                                <div class="game-hud-item">
-                                    <span class="game-hud-label">Score</span>
-                                    <span id="scoreValue" class="game-hud-value">0</span>
-                                </div>
-                                <div class="game-hud-item">
-                                    <span class="game-hud-label">Best</span>
-                                    <span id="bestValue" class="game-hud-value">0</span>
-                                </div>
-                                <div class="game-hud-item">
-                                    <span class="game-hud-label">Time</span>
-                                    <span id="timeValue" class="game-hud-value">60</span>
-                                </div>
-                                <div class="game-hud-item">
-                                    <span class="game-hud-label">Streak</span>
-                                    <span id="streakValue" class="game-hud-value">0</span>
-                                    <span id="streakBadge" class="streak-badge">Combo!</span>
-                                </div>
-                                <div class="game-hud-item">
-                                    <span class="game-hud-label">Lives</span>
-                                    <span id="livesValue" class="game-hud-value">♥♥♥</span>
-                                </div>
-                            </div>
-                            
-                            <!-- Game Overlays -->
-                            <div id="startOverlay" class="game-start-overlay">
-                                <div class="game-start-card">
-                                    <h2 class="game-start-title">Honey Hunt</h2>
-                                    <p class="game-start-subtitle">Help Pooh collect honey jars!</p>
-                                    <button id="startButton" class="btn primary">Start Game</button>
-                                </div>
-                            </div>
-                            
-                            <div id="pauseOverlay" class="game-overlay">
-                                <div class="game-overlay-card">
-                                    <h2>Game Paused</h2>
-                                    <button id="resumeButton" class="btn primary">Resume</button>
-                                </div>
-                            </div>
-                            
-                            <div id="gameOverOverlay" class="game-overlay">
-                                <div class="game-overlay-card">
-                                    <h2>Game Over!</h2>
-                                    <p>Final Score: <span id="finalScore">0</span></p>
-                                    <p>Best: <span id="finalBest">0</span></p>
-                                    <button id="restartButton" class="btn primary">Play Again</button>
-                                    <button id="restartButton2" class="btn secondary">Restart</button>
-                                </div>
-                            </div>
-                            
-                            <!-- Mobile Controls -->
-                            <div class="mobile-controls">
-                                <button id="btnLeft" class="mobile-control-btn">←</button>
-                                <button id="btnRight" class="mobile-control-btn">→</button>
-                                <button id="pauseBtn" class="mobile-control-pause">⏸️</button>
-                            </div>
-                            
-                            <!-- Power-up Indicators -->
-                            <div id="powerupIndicators" class="powerup-indicators"></div>
+                    <section class="story-section">
+                        <p class="story-text">Soon, all the friends had gathered with their ideas. Tigger bounced about
+                            toys that bounce, Eeyore suggested "something useful that won't blow away," and Rabbit began
+                            making a very organized list.</p>
+                        <div class="dialogue-bubble dialogue-pooh">
+                            <div class="bubble-arrow"></div>
+                            <p>"The most important thing," said Pooh wisely, "is that Baby Gunnar knows he is surrounded
+                                by love. But if you'd like to bring something special, his parents have shared a few
+                                ideas that would be helpful."</p>
+                            <span class="speaker">— Pooh Bear</span>
                         </div>
-                    </div>
-                    
-                    <div class="game-description">
-                        <h3>How to Play</h3>
-                        <p>Help Winnie the Pooh collect honey pots while avoiding bees! Move left and right with arrow keys or on-screen controls. Chain catches to build combos for higher scores. Watch for special jars that grant shields!</p>
-                        <div class="game-tips">
-                            <div class="tip">
-                                <span class="tip-icon">🎯</span>
-                                <p><strong>Goal:</strong> Score as many points as you can in 60 seconds!</p>
-                            </div>
-                            <div class="tip">
-                                <span class="tip-icon">🛡️</span>
-                                <p><strong>Blue Jars:</strong> Give temporary shield protection</p>
-                            </div>
-                            <div class="tip">
-                                <span class="tip-icon">🏆</span>
-                                <p><strong>Golden Jars:</strong> Worth bonus points</p>
-                            </div>
-                        </div>
-                    </div>
-                </article>
-                
-                <!-- Chapter 3: Gifts & Wishes -->
-                <article class="page" data-chapter="3">
-                    <header class="chapter-header">
-                        <p class="chapter-number">Chapter Three</p>
-                        <h2 class="chapter-title">Gifts from the Heart</h2>
-                        <p class="chapter-subtitle">Preparing for Baby Gunnar's Arrival</p>
-                        <span class="honey-drip" aria-hidden="true"></span>
-                    </header>
-                    <div class="page-content">
-                        <section class="story-section">
-                            <p class="story-text">Back in the Hundred Acre Wood, Pooh sat thoughtfully by his honey pots. "Honey is wonderful," he mused, "but I wonder what else a growing bear—oh, I mean baby—might need?"</p>
-                            <p class="story-text">Just then, Piglet came scurrying up, holding something soft. "I was thinking, Pooh," he said in his small voice, "perhaps something cozy for chilly evenings?"</p>
-                            <div class="dialogue-bubble dialogue-piglet">
-                                <div class="bubble-arrow"></div>
-                                <p>"Something soft and warm, for when the wind howls!"</p>
-                                <span class="speaker">— Piglet</span>
-                            </div>
-                        </section>
-                        
-                        <div class="chapter-illustrations">
-                            <figure class="storybook-figure figure-theme-forest clickable-character" data-character="piglet">
-                                <img src="Images/Characters/piglet.png"
-                                     alt="Piglet with blanket"
-                                     width="96"
-                                     height="96"
-                                     loading="lazy">
-                                <figcaption class="figure-copy">
-                                    <div class="figure-name">Piglet's Cozy Corner</div>
-                                    <p class="figure-note">Found the snuggliest blanket in all the Wood.</p>
-                                </figcaption>
-                                <div class="character-message" aria-live="polite"></div>
-                            </figure>
-                            <figure class="storybook-figure figure-theme-honey clickable-character" data-character="pooh">
-                                <img src="Images/Characters/honey-bear.png"
-                                     alt="Pooh thinking"
-                                     width="96"
-                                     height="96"
-                                     loading="lazy">
-                                <figcaption class="figure-copy">
-                                    <div class="figure-name">Pooh's Pondering</div>
-                                    <p class="figure-note">Thinking of practical things (between honey snacks).</p>
-                                </figcaption>
-                                <div class="character-message" aria-live="polite"></div>
-                            </figure>
-                            <figure class="storybook-figure figure-theme-sky clickable-character" data-character="tigger">
-                                <img src="Images/Characters/tigger.png"
-                                     alt="Tigger bouncing"
-                                     width="96"
-                                     height="96"
-                                     loading="lazy">
-                                <figcaption class="figure-copy">
-                                    <div class="figure-name">Tigger's Toys</div>
-                                    <p class="figure-note">Bounced in with the bounciest ideas!</p>
-                                </figcaption>
-                                <div class="character-message" aria-live="polite"></div>
-                            </figure>
-                        </div>
-                        
-                        <section class="story-section">
-                            <p class="story-text">Soon, all the friends had gathered with their ideas. Tigger bounced about toys that bounce, Eeyore suggested "something useful that won't blow away," and Rabbit began making a very organized list.</p>
-                            <div class="dialogue-bubble dialogue-pooh">
-                                <div class="bubble-arrow"></div>
-                                <p>"The most important thing," said Pooh wisely, "is that Baby Gunnar knows he is surrounded by love. But if you'd like to bring something special, his parents have shared a few ideas that would be helpful."</p>
-                                <span class="speaker">— Pooh Bear</span>
-                            </div>
-                        </section>
-                        
-                        <div class="registry-container">
-                            <aside class="registry-section">
-                                <div class="registry-header">
-                                    <div class="registry-icon" aria-hidden="true">🎁</div>
-                                    <div>
-                                        <h3>Baby Gunnar's Registry</h3>
-                                        <p class="registry-subtitle">Your presence is the greatest present, but if you'd like to contribute to his woodland adventures:</p>
-                                    </div>
+                    </section>
+                    <div class="registry-container">
+                        <aside class="registry-section">
+                            <div class="registry-header">
+                                <div aria-hidden="true" class="registry-icon">🎁</div>
+                                <div>
+                                    <h3>Baby Gunnar's Registry</h3>
+                                    <p class="registry-subtitle">Your presence is the greatest present, but if you'd
+                                        like to contribute to his woodland adventures:</p>
                                 </div>
-                                <div class="registry-grid">
-                                    <a class="registry-card" href="https://my.babylist.com/lea-hardesty" rel="noopener" target="_blank">
-                                        <div class="card-icon">🎯</div>
-                                        <div class="card-content">
-                                            <h4>babylist Registry</h4>
-                                            <p>For everyday essentials and nursery items</p>
-                                            <span class="card-link">Browse registry →</span>
-                                        </div>
-                                    </a>
-                                    <div class="registry-card gift-idea-card">
-                                        <div class="card-icon">💡</div>
-                                        <div class="card-content">
-                                            <h4>Gift Ideas</h4>
-                                            <ul class="gift-ideas">
-                                                <li>Board books &amp; stories</li>
-                                                <li>Woodland-themed clothing</li>
-                                                <li>Soft blankets &amp; swaddles</li>
-                                                <li>Diapers &amp; essentials</li>
-                                            </ul>
-                                        </div>
+                            </div>
+                            <div class="registry-grid">
+                                <a class="registry-card" href="https://my.babylist.com/lea-hardesty" rel="noopener"
+                                   target="_blank">
+                                    <div class="card-icon">🎯</div>
+                                    <div class="card-content">
+                                        <h4>babylist Registry</h4>
+                                        <p>For everyday essentials and nursery items</p>
+                                        <span class="card-link">Browse registry →</span>
                                     </div>
-                                </div>
-                            </aside>
-                        </div>
-                        
-                        <section class="nursery-details">
-                            <h3><span aria-hidden="true">🧸</span> Nursery Details</h3>
-                            <div class="details-grid">
-                                <div class="detail-card">
-                                    <div class="detail-icon">🎨</div>
-                                    <div class="detail-content">
-                                        <h4>Theme</h4>
-                                        <p>Hundred Acre Wood Adventures</p>
-                                        <small>Featuring Winnie the Pooh &amp; friends</small>
-                                    </div>
-                                </div>
-                                <div class="detail-card">
-                                    <div class="detail-icon">🌈</div>
-                                    <div class="detail-content">
-                                        <h4>Colors</h4>
-                                        <p>Honey gold, Pooh red, sage green, cream</p>
-                                        <small>Soft &amp; soothing woodland palette</small>
-                                    </div>
-                                </div>
-                                <div class="detail-card">
-                                    <div class="detail-icon">📚</div>
-                                    <div class="detail-content">
-                                        <h4>Favorite Items</h4>
-                                        <p>Swaddles, sleepers, board books, cozy blankets</p>
-                                    </div>
-                                </div>
-                                <div class="detail-card">
-                                    <div class="detail-icon">📍</div>
-                                    <div class="detail-content">
-                                        <h4>Location</h4>
-                                        <p>Arizona</p>
-                                        <small>Where adventures begin</small>
+                                </a>
+                                <div class="registry-card gift-idea-card">
+                                    <div class="card-icon">💝</div>
+                                    <div class="card-content">
+                                        <h4>Gift Ideas</h4>
+                                        <ul class="gift-ideas">
+                                            <li>Board books & stories</li>
+                                            <li>Woodland-themed clothing</li>
+                                            <li>Soft blankets & swaddles</li>
+                                            <li>Diapers & essentials</li>
+                                        </ul>
                                     </div>
                                 </div>
                             </div>
-                        </section>
-                        
-                        <section class="wishes-section">
-                            <div class="wishes-header">
-                                <h3>Share Your Wishes <span aria-hidden="true">✨</span></h3>
-                                <p>Leave wisdom, well-wishes, or favorite childhood memories for Gunnar's storybook</p>
-                            </div>
-                            <div class="wishes-form-container">
-                                <form class="enhanced-form" id="wishesForm">
-                                    <div class="form-grid">
-                                        <div class="form-field">
-                                            <label for="guestName">Your Name</label>
-                                            <input type="text" id="guestName" placeholder="How should we call you?" required maxlength="80">
-                                        </div>
-                                        <div class="form-field">
-                                            <label for="guestRelation">Your Relation</label>
-                                            <select id="guestRelation">
-                                                <option value="">Choose one...</option>
-                                                <option value="family">Family</option>
-                                                <option value="friend">Friend</option>
-                                                <option value="colleague">Colleague</option>
-                                                <option value="woodland-friend">Woodland Friend</option>
-                                            </select>
-                                        </div>
-                                    </div>
-                                    <div class="form-field">
-                                        <label for="wishMessage">Your Message</label>
-                                        <textarea id="wishMessage" 
-                                                  placeholder="What wisdom or wishes would you like to share with Baby Gunnar?..."
-                                                  required
-                                                  rows="4"
-                                                  maxlength="500"></textarea>
-                                        <div class="character-count" id="wishCharCount">0/500 characters</div>
-                                    </div>
-                                    <div class="form-actions">
-                                        <button class="submit-btn" type="submit">
-                                            <span aria-hidden="true">✏️</span> Add to Gunnar's Storybook
-                                        </button>
-                                        <div class="form-feedback" id="wishFeedback" role="status" aria-live="polite"></div>
-                                    </div>
-                                </form>
-                            </div>
-                            <div class="sample-wishes">
-                                <h4>Wishes from the Wood:</h4>
-                                <div class="wish-examples">
-                                    <blockquote class="wish-example">
-                                        <p>"May your days be filled with wonder and your nights with sweet dreams."</p>
-                                        <cite>— Owl</cite>
-                                    </blockquote>
-                                    <blockquote class="wish-example">
-                                        <p>"Remember: even the smallest creatures can have the biggest hearts."</p>
-                                        <cite>— Piglet</cite>
-                                    </blockquote>
-                                </div>
-                            </div>
-                        </section>
-                        <div class="wishes-display" id="wishesDisplay">
-                            <!-- Dynamic wishes will appear here -->
-                        </div>
-                    </div>
-                </article>
-                
-                <!-- Chapter 4: Celebration -->
-                <article class="page" data-chapter="4">
-                    <header class="chapter-header">
-                        <p class="chapter-number">Chapter Four</p>
-                        <h2 class="chapter-title">The Gathering</h2>
-                        <p class="chapter-subtitle">Celebrating What's to Come</p>
-                        <span class="honey-drip" aria-hidden="true"></span>
-                    </header>
-                    <div class="page-content">
-                        <p class="story-text">As the sun began to set over the Hundred Acre Wood, casting long golden shadows through the trees, Pooh and his friends gathered to celebrate the coming arrival of Baby Gunnar.</p>
-                        <div class="chapter-illustrations">
-                            <figure class="storybook-figure figure-theme-honey clickable-character" data-character="pooh">
-                                <img src="Images/Characters/honey-bear.png"
-                                     alt="Pooh with honey pot"
-                                     width="96"
-                                     height="96"
-                                     loading="lazy">
-                                <figcaption class="figure-copy">
-                                    <div class="figure-name">Pooh's special pot</div>
-                                    <p class="figure-note">He saved one golden pot for Gunnar's first visit.</p>
-                                </figcaption>
-                                <div class="character-message" aria-live="polite"></div>
-                            </figure>
-                            <figure class="storybook-figure figure-theme-sky clickable-character" data-character="gunnar">
-                                <img src="Images/Characters/Gunnar.png"
-                                     alt="Baby Gunnar"
-                                     width="96"
-                                     height="96"
-                                     loading="lazy">
-                                <figcaption class="figure-copy">
-                                    <div class="figure-name">Coming Soon</div>
-                                    <p class="figure-note">The Hundred Acre Wood awaits its newest friend.</p>
-                                </figcaption>
-                                <div class="character-message" aria-live="polite"></div>
-                            </figure>
-                        </div>
-                        <p class="story-text">With honey gathered, gifts prepared, and wishes shared, everyone in the Hundred Acre Wood looked forward to the day they would meet Baby Gunnar. For as Pooh always said, "How lucky I am to have something to look forward to."</p>
-                        
-                        <div class="welcome-panel">
-                            <div class="welcome-icon" aria-hidden="true">⭐</div>
-                            <h3 class="welcome-heading">We Can't Wait to Meet You!</h3>
-                            <p class="welcome-subtitle">Baby Gunnar, your adventure in the Hundred Acre Wood is about to begin</p>
-                        </div>
-                        
-                        <section class="countdown-section">
-                            <h3>Until We Meet Bear</h3>
-                            <div class="countdown-display">
-                                <div class="countdown-item">
-                                    <span class="countdown-number" id="days">--</span>
-                                    <span class="countdown-label">Days</span>
-                                </div>
-                                <div class="countdown-item">
-                                    <span class="countdown-number" id="hours">--</span>
-                                    <span class="countdown-label">Hours</span>
-                                </div>
-                            </div>
-                            <p class="countdown-note">Expected arrival: <time datetime="2025-08">Late August 2025</time></p>
-                        </section>
-                        
-                        <div class="honey-jar-interactive">
-                            <div aria-hidden="true">🍯</div>
-                            <h3>Gunnar's Honey Jar of Hopes</h3>
-                            <p>Share your hopes and dreams for Baby Gunnar's future adventures.</p>
-                            <button class="btn primary" id="addHopeBtn" type="button">➕ Add Your Hope</button>
-                            <ul class="hopes-list" id="hopesList"></ul>
-                        </div>
-                        
-                        <aside class="final-thought">
-                            <blockquote>
-                                <p>"Sometimes the smallest things take up the most room in your heart."<br>
-                                <cite>— Winnie the Pooh</cite></p>
-                            </blockquote>
-                            <p class="signature">With love from all your friends in the Hundred Acre Wood</p>
                         </aside>
                     </div>
-                </article>
-            </div>
-            
-            <!-- Navigation -->
-            <nav class="chapter-nav" aria-label="Page navigation">
-                <button class="chapter-nav-btn" id="prevBtn" type="button">Previous</button>
-                <div class="chapter-indicator" id="pageIndicator">Chapter 1 of 4</div>
-                <button class="chapter-nav-btn next" id="nextBtn" type="button">Next</button>
-            </nav>
-        </div>
-    </main>
-
-    <!-- Footer -->
-    <footer class="site-footer" role="contentinfo">
-        <p>Made with ❤️ and 🍯 for Baby Gunnar's special day</p>
-        <div class="footer-links">
-            <button class="footer-link" id="printPageBtn" type="button">Print</button>
-            <button class="footer-link" id="sharePageBtn" type="button">Share</button>
-            <button class="footer-link" id="toggleAnimationsBtn" type="button">Animations: On</button>
-        </div>
-    </footer>
-
-    <!-- Hidden Game UI Elements -->
-    <div id="overlayBest" style="display: none;">0</div>
-    <div id="overlayGames" style="display: none;">0</div>
-    <div id="settingsBest" style="display: none;">0</div>
-    
-    <!-- Game UI Buttons -->
-    <button id="helpToggle" style="display: none;">?</button>
-    <button id="helpToggleSecondary" style="display: none;">Help</button>
-    <button id="settingsToggle" style="display: none;">⚙️</button>
-    
-    <!-- Settings Modal -->
-    <div id="settingsModal" class="settings-overlay">
-        <div class="settings-card">
-            <div class="settings-header">
-                <h2>Game Settings</h2>
-                <button id="settingsClose" class="close-settings">×</button>
-            </div>
-            <div class="settings-section">
-                <h3>Audio</h3>
-                <div class="setting-option">
-                    <div class="setting-label">
-                        <span>Music</span>
-                        <small>Background music</small>
-                    </div>
-                    <button id="musicToggle" class="toggle-btn" data-on="true">
-                        <span class="toggle-switch">
-                            <input type="checkbox" checked>
-                            <span class="toggle-slider"></span>
-                        </span>
-                    </button>
-                </div>
-                <div class="setting-option">
-                    <div class="setting-label">
-                        <span>Sound Effects</span>
-                        <small>Game sounds</small>
-                    </div>
-                    <button id="sfxToggle" class="toggle-btn" data-on="true">
-                        <span class="toggle-switch">
-                            <input type="checkbox" checked>
-                            <span class="toggle-slider"></span>
-                        </span>
-                    </button>
-                </div>
-            </div>
-            <div class="settings-section">
-                <h3>Difficulty</h3>
-                <div class="setting-option">
-                    <button class="diff-btn" data-level="0">Chill</button>
-                    <button class="diff-btn active" data-level="1">Classic</button>
-                    <button class="diff-btn" data-level="2">Spicy</button>
-                </div>
-            </div>
-            <div class="settings-section">
-                <h3>Progress</h3>
-                <div class="setting-option">
-                    <span>Best Score: <span id="settingsBestDisplay">0</span></span>
-                    <button id="resetProgress" class="btn secondary">Reset Progress</button>
-                </div>
-            </div>
-        </div>
-    </div>
-    
-    <!-- Help Panel -->
-    <div id="helpPanel" class="help-panel" style="display: none;">
-        <div class="help-content">
-            <button id="helpClose" class="close-settings">×</button>
-            <h2>How to Play</h2>
-            <p>Use arrow keys or on-screen buttons to move Pooh left and right.</p>
-            <p>Catch honey jars for points, avoid bees!</p>
-        </div>
-    </div>
-    
-    <!-- Live Region for Screen Readers -->
-    <div id="liveRegion" aria-live="polite" style="position:absolute;left:-9999px;"></div>
-    
-    <!-- Progress Elements -->
-    <div id="timeProgress" style="display: none;"></div>
-    <div id="timeSubtitle" style="display: none;"></div>
-    <div id="streakProgress" style="display: none;"></div>
-    <div id="streakSubtitle" style="display: none;"></div>
-    <div id="sessionDifficulty" style="display: none;"></div>
-    <div id="sessionGames" style="display: none;"></div>
-    <div id="sessionMood" style="display: none;"></div>
-    
-    <!-- Combo Indicator -->
-    <div id="comboIndicator" style="display: none;">x1 Combo!</div>
-    <div id="powerupIndicator" style="display: none;">🛡️</div>
-    
-    <!-- Daily Challenge Panel -->
-    <div id="dailyChallengePanel" style="display: none;">
-        <div class="daily-challenge-title">Daily Challenge</div>
-        <div id="dailyChallengeText">Catch 30 gold jars</div>
-        <div class="daily-challenge-progress">
-            <div id="dailyChallengeProgress" class="daily-challenge-progress-fill"></div>
-        </div>
-        <div id="dailyChallengeReward" class="daily-challenge-reward">🎁 Reward: Golden Bear Skin</div>
-    </div>
-    
-    <!-- Evolution Display -->
-    <div id="evolutionDisplay" class="evolution-display" style="display: none;">
-        <span class="evolution-level">1</span>
-        <span class="evolution-name">Cub Bear</span>
-        <span class="evolution-icon">🐻</span>
-    </div>
-    
-    <!-- Audio Elements -->
-    <audio id="bgMusic" preload="auto" loop>
-        <source src="media/hundred-acre-lullaby.mp3" type="audio/mpeg">
-    </audio>
-    <!-- Add these elements before </body> -->
-
-<!-- Help panel primary button (if you want one) -->
-<div id="helpPanelPrimary" style="display: none;">
-    <button onclick="toggleHelp()">Quick Help</button>
-</div>
-
-<!-- Settings panel reference (this should match your modal) -->
-<div id="settingsPanel" style="display: none;">
-    <!-- This can remain empty as it's just a reference -->
-</div>
-
-<!-- Theme toggle button -->
-<button id="themeToggle" style="display: none;">
-    <i class="fas fa-moon"></i> Theme
-</button>
-
-<!-- Fullscreen toggle button -->
-<button id="fullscreenToggle" style="display: none;">
-    <i class="fas fa-expand"></i> Fullscreen
-</button>
-    <!-- JavaScript Files -->
-    <script src="game.js"></script>
-    
-    <!-- Main JavaScript -->
-    <script>
-        // Main JavaScript functionality
-        document.addEventListener("DOMContentLoaded", function() {
-            // Navigation system
-            const pages = document.querySelectorAll('.page');
-            const prevBtn = document.getElementById('prevBtn');
-            const nextBtn = document.getElementById('nextBtn');
-            const progressFill = document.getElementById('progressFill');
-            const pageIndicator = document.getElementById('pageIndicator');
-            const chapterPills = document.querySelectorAll('[data-chapter-target]');
-            
-            let currentPage = 0;
-            
-            function updateNavigation() {
-                // Update active page
-                pages.forEach((page, index) => {
-                    page.classList.toggle('active', index === currentPage);
-                });
-                
-                // Update progress bar
-                const progress = ((currentPage + 1) / pages.length) * 100;
-                progressFill.style.width = `${progress}%`;
-                progressFill.setAttribute('aria-valuenow', progress);
-                
-                // Update indicator
-                pageIndicator.textContent = `Chapter ${currentPage + 1} of ${pages.length}`;
-                
-                // Update chapter pills
-                chapterPills.forEach((pill, index) => {
-                    const isActive = index === currentPage;
-                    pill.classList.toggle('active', isActive);
-                    pill.setAttribute('aria-current', isActive ? 'page' : 'false');
-                });
-                
-                // Scroll to top of page
-                pages[currentPage].scrollIntoView({ behavior: 'smooth', block: 'start' });
-            }
-            
-            // Navigation button handlers
-            if (nextBtn) {
-                nextBtn.addEventListener('click', function() {
-                    if (currentPage < pages.length - 1) {
-                        currentPage++;
-                        updateNavigation();
-                    }
-                });
-            }
-            
-            if (prevBtn) {
-                prevBtn.addEventListener('click', function() {
-                    if (currentPage > 0) {
-                        currentPage--;
-                        updateNavigation();
-                    }
-                });
-            }
-            
-            // Chapter pill handlers
-            chapterPills.forEach(function(pill) {
-                pill.addEventListener('click', function() {
-                    const target = parseInt(pill.getAttribute('data-chapter-target')) - 1;
-                    currentPage = target;
-                    updateNavigation();
-                });
-            });
-            
-            // Make scrollToChapter available globally
-            window.scrollToChapter = function(chapterNumber) {
-                currentPage = chapterNumber - 1;
-                updateNavigation();
-            };
-            
-            // Clickable character functionality
-            const characterLines = {
-                pooh: [
-                    "Pooh smiles and thinks this is the kind of day that simply needs more honey.",
-                    "Pooh wonders if there's anything sweeter than welcoming a new little friend."
-                ],
-                piglet: [
-                    "Piglet feels a little fluttery, but mostly excited for Baby Gunnar.",
-                    "Piglet straightens the banner one more time, just to be sure."
-                ],
-                tigger: [
-                    "Tigger announces that baby celebrations are what Tiggers do best!",
-                    "Tigger promises to teach Gunnar the very bounciest bounces."
-                ],
-                roo: [
-                    "Roo practices tiny jumps, imagining the games they'll play someday.",
-                    "Roo says, \"I can't wait to show you all my favorite puddles!\""
-                ],
-                gunnar: [
-                    "Everyone is already saving their warmest hugs for you.",
-                    "Your story is just beginning, and the whole Wood is cheering."
-                ]
-            };
-            
-            document.querySelectorAll('.clickable-character').forEach(function(character) {
-                const charType = character.getAttribute('data-character');
-                const messageEl = character.querySelector('.character-message');
-                
-                character.addEventListener('click', function() {
-                    const lines = characterLines[charType] || ["A quiet, happy thought drifts through the leaves."];
-                    const randomLine = lines[Math.floor(Math.random() * lines.length)];
-                    messageEl.textContent = randomLine;
-                });
-            });
-            
-            // Wishes form functionality
-            const wishesForm = document.getElementById('wishesForm');
-            const wishesDisplay = document.getElementById('wishesDisplay');
-            const wishFeedback = document.getElementById('wishFeedback');
-            const wishCharCount = document.getElementById('wishCharCount');
-            const wishMessage = document.getElementById('wishMessage');
-            
-            // Load existing wishes from localStorage
-            function loadWishes() {
-                const savedWishes = localStorage.getItem('gunnarWishes');
-                if (savedWishes) {
-                    wishesDisplay.innerHTML = savedWishes;
-                }
-            }
-            
-            // Character counter
-            if (wishMessage) {
-                wishMessage.addEventListener('input', function() {
-                    const remaining = 500 - this.value.length;
-                    wishCharCount.textContent = `${this.value.length}/500 characters`;
-                });
-            }
-            
-            // Form submission
-            if (wishesForm) {
-                wishesForm.addEventListener('submit', function(e) {
-                    e.preventDefault();
-                    
-                    const name = document.getElementById('guestName').value.trim();
-                    const relation = document.getElementById('guestRelation').value;
-                    const message = document.getElementById('wishMessage').value.trim();
-                    
-                    if (!name || !message) {
-                        wishFeedback.textContent = 'Please fill in your name and message.';
-                        wishFeedback.style.color = '#e53e3e';
-                        return;
-                    }
-                    
-                    // Create wish element
-                    const wishElement = document.createElement('div');
-                    wishElement.className = 'wish-card';
-                    wishElement.innerHTML = `
-                        <div class="wish-header">
-                            <strong>${name}</strong>
-                            ${relation ? '<span class="wish-relation">• ' + relation + '</span>' : ''}
+                    <section class="nursery-details">
+                        <h3><span aria-hidden="true">🧸</span> Nursery Details</h3>
+                        <div class="details-grid">
+                            <div class="detail-card">
+                                <div class="detail-icon">🎨</div>
+                                <div class="detail-content">
+                                    <h4>Theme</h4>
+                                    <p>Hundred Acre Wood Adventures</p>
+                                    <small>Featuring Winnie the Pooh & friends</small>
+                                </div>
+                            </div>
+                            <div class="detail-card">
+                                <div class="detail-icon">🌈</div>
+                                <div class="detail-content">
+                                    <h4>Colors</h4>
+                                    <p>Honey gold, Pooh red, sage green, cream</p>
+                                    <small>Soft & soothing woodland palette</small>
+                                </div>
+                            </div>
+                            <div class="detail-card">
+                                <div class="detail-icon">📚</div>
+                                <div class="detail-content">
+                                    <h4>Favorite Items</h4>
+                                    <p>Swaddles, sleepers, board books, cozy blankets</p>
+                                </div>
+                            </div>
+                            <div class="detail-card">
+                                <div class="detail-icon">📍</div>
+                                <div class="detail-content">
+                                    <h4>Location</h4>
+                                    <p>Arizona</p>
+                                    <small>Where adventures begin</small>
+                                </div>
+                            </div>
                         </div>
-                        <div class="wish-message">${message.replace(/\n/g, '<br>')}</div>
-                        <div class="wish-date">${new Date().toLocaleDateString()}</div>
-                    `;
-                    
-                    // Add to display
-                    wishesDisplay.prepend(wishElement);
-                    
-                    // Save to localStorage
-                    saveWishes();
-                    
-                    // Clear form
-                    this.reset();
-                    wishCharCount.textContent = '0/500 characters';
-                    
-                    // Show success message
-                    wishFeedback.textContent = 'Thank you! Your wish has been added to Gunnar\'s storybook.';
-                    wishFeedback.style.color = '#38a169';
-                    
-                    // Clear feedback after 5 seconds
-                    setTimeout(function() {
-                        wishFeedback.textContent = '';
-                    }, 5000);
-                });
+                    </section>
+                    <section class="wishes-section">
+                        <div class="wishes-header">
+                            <h3>Share Your Wishes <span aria-hidden="true">✨</span></h3>
+                            <p>Leave wisdom, well-wishes, or favorite childhood memories for Gunnar's storybook</p>
+                        </div>
+                        <div class="wishes-form-container">
+                            <form class="enhanced-form" id="wishesForm">
+                                <div class="form-grid">
+                                    <div class="form-field">
+                                        <label for="guestName">Your Name</label>
+                                        <input id="guestName" placeholder="How should we call you?" required
+                                               type="text">
+                                    </div>
+                                    <div class="form-field">
+                                        <label for="guestRelation">Your Relation</label>
+                                        <select id="guestRelation">
+                                            <option value="">Choose one...</option>
+                                            <option value="family">Family</option>
+                                            <option value="friend">Friend</option>
+                                            <option value="colleague">Colleague</option>
+                                            <option value="woodland-friend">Woodland Friend</option>
+                                        </select>
+                                    </div>
+                                </div>
+                                <div class="form-field">
+                                    <label for="wishMessage">Your Message</label>
+                                    <textarea id="wishMessage" placeholder="What wisdom or wishes would you like to share with Baby Gunnar?..."
+                                              required
+                                              rows="4"></textarea>
+                                    <div class="character-count">0/500 characters</div>
+                                </div>
+                                <div class="form-actions">
+                                    <button class="submit-btn" type="submit">
+                                        <span aria-hidden="true">📝</span> Add to Gunnar's Storybook
+                                    </button>
+                                    <div aria-live="polite" class="form-feedback" id="wishFeedback" role="status"></div>
+                                </div>
+                            </form>
+                        </div>
+                        <div class="sample-wishes">
+                            <h4>Wishes from the Wood:</h4>
+                            <div class="wish-examples">
+                                <blockquote class="wish-example">
+                                    <p>"May your days be filled with wonder and your nights with sweet dreams."</p>
+                                    <cite>— Owl</cite>
+                                </blockquote>
+                                <blockquote class="wish-example">
+                                    <p>"Remember: even the smallest creatures can have the biggest hearts."</p>
+                                    <cite>— Piglet</cite>
+                                </blockquote>
+                            </div>
+                        </div>
+                    </section>
+                    <div class="wishes-display" id="wishesDisplay">
+                        <!-- Dynamic wishes will appear here -->
+                    </div>
+                </div>
+            </article>
+            <!-- Chapter 4: Celebration -->
+            <article class="page" data-chapter="4">
+                <header class="chapter-header">
+                    <p class="chapter-number">Chapter Four</p>
+                    <h2 class="chapter-title">The Gathering</h2>
+                    <p class="chapter-subtitle">Celebrating What's to Come</p>
+                    <span aria-hidden="true" class="honey-drip"></span>
+                </header>
+                <div class="page-content">
+                    <p class="story-text">As the sun began to set over the Hundred Acre Wood, casting long golden
+                        shadows through the trees, Pooh and his friends gathered to celebrate the coming arrival of Baby
+                        Gunnar.</p>
+                    <div class="chapter-illustrations">
+                        <figure class="storybook-figure figure-theme-honey clickable-character" data-character="pooh">
+                            <img alt="Pooh with honey pot" height="96" loading="lazy" src="Images/Characters/honey-bear.png"
+                                 width="96">
+                            <figcaption class="figure-copy">
+                                <div class="figure-name">Pooh's special pot</div>
+                                <p class="figure-note">He saved one golden pot for Gunnar's first visit.</p>
+                            </figcaption>
+                            <div aria-live="polite" class="character-message"></div>
+                        </figure>
+                        <figure class="storybook-figure figure-theme-sky clickable-character" data-character="gunnar">
+                            <img alt="Baby Gunnar" height="96" loading="lazy" src="Images/Characters/Gunnar.png"
+                                 width="96">
+                            <figcaption class="figure-copy">
+                                <div class="figure-name">Coming Soon</div>
+                                <p class="figure-note">The Hundred Acre Wood awaits its newest friend.</p>
+                            </figcaption>
+                            <div aria-live="polite" class="character-message"></div>
+                        </figure>
+                    </div>
+                    <p class="story-text">With honey gathered, gifts prepared, and wishes shared, everyone in the
+                        Hundred Acre Wood looked forward to the day they would meet Baby Gunnar. For as Pooh always
+                        said, "How lucky I am to have something to look forward to."</p>
+                    <div class="welcome-panel">
+                        <div aria-hidden="true" class="welcome-icon">🌟</div>
+                        <h3 class="welcome-heading">We Can't Wait to Meet You!</h3>
+                        <p class="welcome-subtitle">Baby Gunnar, your adventure in the Hundred Acre Wood is about to
+                            begin</p>
+                    </div>
+                    <section class="countdown-section">
+                        <h3>Until We Meet 🐻</h3>
+                        <div class="countdown-display">
+                            <div class="countdown-item">
+                                <span class="countdown-number" id="days">--</span>
+                                <span class="countdown-label">Days</span>
+                            </div>
+                            <div class="countdown-item">
+                                <span class="countdown-number" id="hours">--</span>
+                                <span class="countdown-label">Hours</span>
+                            </div>
+                        </div>
+                        <p class="countdown-note">Expected arrival:
+                            <time datetime="2025-08">Late August 2025</time>
+                        </p>
+                    </section>
+                    <div class="honey-jar-interactive">
+                        <div aria-hidden="true">🍯</div>
+                        <h3>Gunnar's Honey Jar of Hopes</h3>
+                        <p>Share your hopes and dreams for Baby Gunnar's future adventures.</p>
+                        <button class="btn primary" id="addHopeBtn">➕ Add Your Hope</button>
+                    </div>
+                    <aside class="final-thought">
+                        <blockquote>
+                            <p>"Sometimes the smallest things take up the most room in your heart."<br>
+                                <cite>— Winnie the Pooh</cite>
+                            </p>
+                        </blockquote>
+                        <p class="signature">With love from all your friends in the Hundred Acre Wood</p>
+                    </aside>
+                </div>
+            </article>
+        </div>
+        <!-- Navigation -->
+        <nav aria-label="Page navigation" class="chapter-nav">
+            <button class="chapter-nav-btn" id="prevBtn">← Previous</button>
+            <div class="chapter-indicator" id="pageIndicator">Chapter 1 of 4</div>
+            <button class="chapter-nav-btn next" id="nextBtn">Next →</button>
+        </nav>
+    </div>
+</main>
+<!-- Footer -->
+<footer class="site-footer">
+    <p>Made with 💙 and 🍯 for Baby Gunnar's special day</p>
+    <div class="footer-links">
+        <button class="footer-link" id="printPageBtn">🖨 Print</button>
+        <button class="footer-link" id="sharePageBtn">📤 Share</button>
+        <button class="footer-link" id="toggleAnimationsBtn">🎭 Animations</button>
+    </div>
+</footer>
+
+<!-- Game Script -->
+<script>
+    // Honey Hunt Game - Simplified Version
+    (function() {
+        "use strict";
+
+        // Game variables
+        const canvas = document.getElementById('gameCanvas');
+        const ctx = canvas.getContext('2d');
+        const gameContainer = document.getElementById('gameInlineContainer');
+        const gameStartOverlay = document.getElementById('gameStartOverlay');
+        const gameStartButton = document.getElementById('gameStartButton');
+        const gameHUD = document.getElementById('gameHUD');
+        const gamePauseOverlay = document.getElementById('gamePauseOverlay');
+        const gameOverOverlay = document.getElementById('gameOverOverlay');
+        const gameResumeButton = document.getElementById('gameResumeButton');
+        const gameRestartButton = document.getElementById('gameRestartButton');
+        const mobileControls = document.getElementById('mobileControls');
+        const mobileLeftBtn = document.getElementById('mobileLeftBtn');
+        const mobileRightBtn = document.getElementById('mobileRightBtn');
+        const mobilePauseBtn = document.getElementById('mobilePauseBtn');
+
+        // Game state
+        let gameState = {
+            running: false,
+            paused: false,
+            timeLeft: 60,
+            score: 0,
+            best: localStorage.getItem('honeyHuntBest') || 0,
+            streak: 0,
+            lives: 3,
+            shieldTime: 0
+        };
+
+        // Game objects
+        const bear = {
+            x: 0,
+            y: 0,
+            width: 40,
+            height: 60,
+            speed: 260,
+            vx: 0
+        };
+
+        const jars = [];
+        const bees = [];
+        const particles = [];
+
+        // Control keys
+        const keys = {
+            left: false,
+            right: false
+        };
+
+        // Initialize game
+        function initGame() {
+            // Set canvas size
+            resizeCanvas();
+
+            // Initialize bear position
+            bear.x = canvas.width / 2;
+            bear.y = canvas.height * 0.85;
+
+            // Apply sensitivity from settings
+            if (window.getGameSettings) {
+                const settings = window.getGameSettings();
+                bear.speed = settings.sensitivity || 260;
             }
-            
-            function saveWishes() {
-                localStorage.setItem('gunnarWishes', wishesDisplay.innerHTML);
-            }
-            
-            // Countdown functionality
-            function updateCountdown() {
-                const targetDate = new Date('2025-08-01').getTime();
-                const now = Date.now();
-                const difference = targetDate - now;
-                
-                if (difference > 0) {
-                    const days = Math.floor(difference / (1000 * 60 * 60 * 24));
-                    const hours = Math.floor((difference % (1000 * 60 * 60 * 24)) / (1000 * 60 * 60));
-                    
-                    const daysElement = document.getElementById('days');
-                    const hoursElement = document.getElementById('hours');
-                    
-                    if (daysElement) daysElement.textContent = days;
-                    if (hoursElement) hoursElement.textContent = hours;
+
+            // Clear arrays
+            jars.length = 0;
+            bees.length = 0;
+            particles.length = 0;
+
+            // Reset game state with difficulty settings
+            const difficulty = window.gameDifficulty || {
+                timeLimit: 60,
+                lives: 3
+            };
+
+            gameState.timeLeft = difficulty.timeLimit || 60;
+            gameState.score = 0;
+            gameState.streak = 0;
+            gameState.lives = difficulty.lives || 3;
+            gameState.shieldTime = 0;
+
+            // Update HUD
+            updateHUD();
+
+            // Show start overlay
+            gameStartOverlay.classList.remove('hidden');
+            gameHUD.classList.remove('visible');
+            mobileControls.classList.remove('visible');
+            gamePauseOverlay.classList.remove('visible');
+            gameOverOverlay.classList.remove('visible');
+
+            // Show mobile controls based on settings
+            if (window.getGameSettings) {
+                const settings = window.getGameSettings();
+                if (settings.mobileControls && ('ontouchstart' in window || navigator.maxTouchPoints > 0)) {
+                    mobileControls.classList.add('visible');
                 }
             }
-            
-            // Honey jar hopes
-            const addHopeBtn = document.getElementById('addHopeBtn');
-            const hopesList = document.getElementById('hopesList');
-            
-            if (addHopeBtn && hopesList) {
-                addHopeBtn.addEventListener('click', function() {
-                    const hope = prompt('What hope or dream would you like to share for Baby Gunnar?');
-                    if (hope && hope.trim()) {
-                        const li = document.createElement('li');
-                        li.textContent = hope.trim();
-                        hopesList.appendChild(li);
+        }
+
+        // Start game
+        function startGame() {
+            gameState.running = true;
+            gameState.paused = false;
+            gameStartOverlay.classList.add('hidden');
+            gameHUD.classList.add('visible');
+            gamePauseOverlay.classList.remove('visible');
+            gameOverOverlay.classList.remove('visible');
+
+            // Start game loop
+            lastTimestamp = performance.now();
+            requestAnimationFrame(gameLoop);
+        }
+
+        // Pause game
+        function pauseGame() {
+            if (!gameState.running) return;
+            gameState.paused = true;
+            gamePauseOverlay.classList.add('visible');
+        }
+
+        // Resume game
+        function resumeGame() {
+            if (!gameState.running) return;
+            gameState.paused = false;
+            gamePauseOverlay.classList.remove('visible');
+            lastTimestamp = performance.now();
+            requestAnimationFrame(gameLoop);
+        }
+
+        // End game
+        function endGame() {
+            gameState.running = false;
+
+            // Update best score
+            if (gameState.score > gameState.best) {
+                gameState.best = gameState.score;
+                localStorage.setItem('honeyHuntBest', gameState.best);
+            }
+
+            // Update final score display
+            document.getElementById('finalGameScore').textContent = gameState.score;
+            document.getElementById('finalGameBest').textContent = gameState.best;
+
+            // Show game over overlay
+            gameOverOverlay.classList.add('visible');
+            gameHUD.classList.remove('visible');
+        }
+
+        // Resize canvas
+        function resizeCanvas() {
+            const rect = gameContainer.getBoundingClientRect();
+            canvas.width = rect.width;
+            canvas.height = rect.height;
+        }
+
+        // Update HUD
+        function updateHUD() {
+            document.getElementById('gameScoreValue').textContent = gameState.score;
+            document.getElementById('gameBestValue').textContent = gameState.best;
+            document.getElementById('gameTimeValue').textContent = Math.max(0, Math.floor(gameState.timeLeft));
+            document.getElementById('gameStreakValue').textContent = gameState.streak;
+
+            // Update lives display
+            const livesValue = document.getElementById('gameLivesValue');
+            const full = "♥".repeat(gameState.lives);
+            const empty = "♡".repeat(3 - gameState.lives);
+            livesValue.textContent = full + empty;
+
+            // Update streak badge
+            const streakBadge = document.getElementById('gameStreakBadge');
+            if (gameState.streak >= 5) {
+                streakBadge.classList.add('visible');
+            } else {
+                streakBadge.classList.remove('visible');
+            }
+        }
+
+        // Draw functions
+        function drawBear() {
+            ctx.save();
+            ctx.translate(bear.x, bear.y);
+
+            // Draw bear body
+            ctx.fillStyle = '#fbbf24';
+            ctx.beginPath();
+            ctx.ellipse(0, -10, 25, 35, 0, 0, Math.PI * 2);
+            ctx.fill();
+
+            // Draw head
+            ctx.fillStyle = '#fbbf24';
+            ctx.beginPath();
+            ctx.arc(0, -48, 20, 0, Math.PI * 2);
+            ctx.fill();
+
+            // Draw ears
+            ctx.fillStyle = '#f59e0b';
+            ctx.beginPath();
+            ctx.arc(-12, -60, 8, 0, Math.PI * 2);
+            ctx.arc(12, -60, 8, 0, Math.PI * 2);
+            ctx.fill();
+
+            // Draw face
+            ctx.fillStyle = '#1f2937';
+            ctx.beginPath();
+            ctx.arc(-8, -52, 3, 0, Math.PI * 2);
+            ctx.arc(8, -52, 3, 0, Math.PI * 2);
+            ctx.fill();
+
+            // Draw mouth (smile)
+            ctx.strokeStyle = '#1f2937';
+            ctx.lineWidth = 2;
+            ctx.beginPath();
+            ctx.arc(0, -45, 6, 0.2, Math.PI - 0.2);
+            ctx.stroke();
+
+            // Draw honey jar
+            ctx.fillStyle = '#b45309';
+            ctx.fillRect(-20, 0, 40, 30);
+
+            ctx.fillStyle = '#f59e0b';
+            ctx.fillRect(-18, 2, 36, 26);
+
+            ctx.restore();
+
+            // Draw shield if active
+            if (gameState.shieldTime > 0) {
+                ctx.save();
+                ctx.translate(bear.x, bear.y - 10);
+
+                ctx.strokeStyle = '#38bdf8';
+                ctx.lineWidth = 3;
+                ctx.globalAlpha = 0.6;
+                ctx.beginPath();
+                ctx.arc(0, 0, 35, 0, Math.PI * 2);
+                ctx.stroke();
+
+                ctx.restore();
+            }
+        }
+
+        function drawJar(x, y, type = 'normal') {
+            ctx.save();
+            ctx.translate(x, y);
+
+            let color = '#fbbf24';
+            if (type === 'gold') color = '#f59e0b';
+            if (type === 'shield') color = '#38bdf8';
+
+            // Jar body
+            ctx.fillStyle = color;
+            ctx.fillRect(-10, -20, 20, 40);
+
+            // Jar lid
+            ctx.fillStyle = '#92400e';
+            ctx.fillRect(-12, -25, 24, 5);
+
+            // Honey inside
+            ctx.fillStyle = '#d97706';
+            ctx.fillRect(-8, 0, 16, 15);
+
+            ctx.restore();
+        }
+
+        function drawBee(x, y) {
+            ctx.save();
+            ctx.translate(x, y);
+
+            // Bee body
+            ctx.fillStyle = '#fbbf24';
+            ctx.beginPath();
+            ctx.ellipse(0, 0, 12, 8, 0, 0, Math.PI * 2);
+            ctx.fill();
+
+            // Bee stripes
+            ctx.fillStyle = '#1f2937';
+            ctx.fillRect(-10, -2, 20, 4);
+
+            // Bee wings
+            ctx.fillStyle = 'rgba(255, 255, 255, 0.7)';
+            ctx.beginPath();
+            ctx.ellipse(-6, -10, 8, 5, Math.PI/4, 0, Math.PI * 2);
+            ctx.ellipse(6, -10, 8, 5, -Math.PI/4, 0, Math.PI * 2);
+            ctx.fill();
+
+            ctx.restore();
+        }
+
+        // Game loop
+        let lastTimestamp = 0;
+
+        function gameLoop(timestamp) {
+            if (!gameState.running || gameState.paused) return;
+
+            const dt = (timestamp - lastTimestamp) / 1000;
+            lastTimestamp = timestamp;
+
+            // Update game state
+            updateGame(dt);
+
+            // Clear canvas
+            ctx.clearRect(0, 0, canvas.width, canvas.height);
+
+            // Draw game objects
+            drawBear();
+
+            // Draw jars
+            for (const jar of jars) {
+                drawJar(jar.x, jar.y, jar.type);
+            }
+
+            // Draw bees
+            for (const bee of bees) {
+                drawBee(bee.x, bee.y);
+            }
+
+            // Draw particles if enabled
+            if (window.getGameSettings && window.getGameSettings().particles !== false) {
+                for (const p of particles) {
+                    ctx.save();
+                    ctx.translate(p.x, p.y);
+                    ctx.fillStyle = p.color;
+                    ctx.globalAlpha = p.life;
+                    ctx.fillRect(-2, -2, 4, 4);
+                    ctx.restore();
+                }
+            }
+
+            // Continue game loop
+            if (gameState.running && !gameState.paused) {
+                requestAnimationFrame(gameLoop);
+            }
+        }
+
+        function updateGame(dt) {
+            // Update time
+            gameState.timeLeft -= dt;
+            if (gameState.timeLeft <= 0) {
+                gameState.timeLeft = 0;
+                endGame();
+                return;
+            }
+
+            // Update shield
+            if (gameState.shieldTime > 0) {
+                gameState.shieldTime -= dt;
+            }
+
+            // Use difficulty settings if available
+            const difficulty = window.gameDifficulty || {
+                jarSpawnRate: 0.02,
+                jarSpeed: { min: 150, max: 200 },
+                beeSpawnRate: 0.01,
+                beeSpeed: { min: 100, max: 150 },
+                timeLimit: 60,
+                lives: 3
+            };
+
+            // Spawn jars with difficulty settings
+            if (Math.random() < difficulty.jarSpawnRate) {
+                const type = Math.random() < 0.1 ? 'gold' : Math.random() < 0.15 ? 'shield' : 'normal';
+                jars.push({
+                    x: Math.random() * (canvas.width - 40) + 20,
+                    y: -20,
+                    vy: difficulty.jarSpeed.min + Math.random() * (difficulty.jarSpeed.max - difficulty.jarSpeed.min),
+                    type: type
+                });
+            }
+
+            // Spawn bees with difficulty settings
+            if (Math.random() < difficulty.beeSpawnRate) {
+                bees.push({
+                    x: Math.random() < 0.5 ? -20 : canvas.width + 20,
+                    y: Math.random() * canvas.height * 0.6 + 50,
+                    vx: (Math.random() < 0.5 ? -1 : 1) * (difficulty.beeSpeed.min + Math.random() * (difficulty.beeSpeed.max - difficulty.beeSpeed.min)),
+                    vy: 0
+                });
+            }
+
+            // Update bear position
+            if (keys.left) bear.vx = -bear.speed;
+            else if (keys.right) bear.vx = bear.speed;
+            else bear.vx = 0;
+
+            bear.x += bear.vx * dt;
+            bear.x = Math.max(20, Math.min(canvas.width - 20, bear.x));
+
+            // Update jars
+            for (let i = jars.length - 1; i >= 0; i--) {
+                const jar = jars[i];
+                jar.y += jar.vy * dt;
+
+                // Check collision with bear
+                const dx = jar.x - bear.x;
+                const dy = jar.y - (bear.y - 20);
+                const distance = Math.sqrt(dx * dx + dy * dy);
+
+                if (distance < 30) {
+                    // Jar caught!
+                    jars.splice(i, 1);
+                    gameState.score += jar.type === 'gold' ? 30 : jar.type === 'shield' ? 15 : 10;
+                    gameState.streak++;
+
+                    if (jar.type === 'shield') {
+                        gameState.shieldTime = 5;
                     }
-                });
+
+                    // Create particles if enabled
+                    if (window.getGameSettings && window.getGameSettings().particles !== false) {
+                        for (let j = 0; j < 10; j++) {
+                            particles.push({
+                                x: jar.x,
+                                y: jar.y,
+                                vx: (Math.random() - 0.5) * 200,
+                                vy: -100 - Math.random() * 100,
+                                color: jar.type === 'gold' ? '#f59e0b' : jar.type === 'shield' ? '#38bdf8' : '#fbbf24',
+                                life: 1
+                            });
+                        }
+                    }
+
+                    // Play sound if enabled
+                    if (window.getGameSettings && window.getGameSettings().sfx !== false) {
+                        const honeySound = document.getElementById('honeySound');
+                        if (honeySound) {
+                            honeySound.currentTime = 0;
+                            honeySound.play().catch(e => console.log('Sound play failed:', e));
+                        }
+                    }
+                }
+
+                // Remove off-screen jars
+                if (jar.y > canvas.height + 50) {
+                    jars.splice(i, 1);
+                    gameState.streak = 0;
+                }
             }
-            
-            // Footer actions
-            const printBtn = document.getElementById('printPageBtn');
-            if (printBtn) {
-                printBtn.addEventListener('click', function() {
-                    window.print();
-                });
-            }
-            
-            const shareBtn = document.getElementById('sharePageBtn');
-            if (shareBtn) {
-                shareBtn.addEventListener('click', function() {
-                    if (navigator.share) {
-                        navigator.share({
-                            title: document.title,
-                            text: 'Check out Baby Gunnar\'s Hundred Acre Wood Adventure!',
-                            url: window.location.href
-                        });
+
+            // Update bees
+            for (let i = bees.length - 1; i >= 0; i--) {
+                const bee = bees[i];
+                bee.x += bee.vx * dt;
+
+                // Check collision with bear
+                const dx = bee.x - bear.x;
+                const dy = bee.y - bear.y;
+                const distance = Math.sqrt(dx * dx + dy * dy);
+
+                if (distance < 25) {
+                    // Bee hit!
+                    bees.splice(i, 1);
+
+                    if (gameState.shieldTime > 0) {
+                        gameState.shieldTime = 0;
                     } else {
-                        navigator.clipboard.writeText(window.location.href);
-                        alert('Link copied to clipboard!');
+                        gameState.lives--;
+                        gameState.streak = 0;
+
+                        if (gameState.lives <= 0) {
+                            endGame();
+                            return;
+                        }
                     }
-                });
+                }
+
+                // Remove off-screen bees
+                if (bee.x < -50 || bee.x > canvas.width + 50) {
+                    bees.splice(i, 1);
+                }
             }
-            
-            const toggleAnimationsBtn = document.getElementById('toggleAnimationsBtn');
-            if (toggleAnimationsBtn) {
-                toggleAnimationsBtn.addEventListener('click', function() {
-                    document.body.classList.toggle('animations-off');
-                    this.textContent = document.body.classList.contains('animations-off') 
-                        ? 'Animations: Off' 
-                        : 'Animations: On';
-                });
+
+            // Update particles
+            for (let i = particles.length - 1; i >= 0; i--) {
+                const p = particles[i];
+                p.x += p.vx * dt;
+                p.y += p.vy * dt;
+                p.vy += 200 * dt;
+                p.life -= dt;
+
+                if (p.life <= 0) {
+                    particles.splice(i, 1);
+                }
             }
-            
-            // Initialize
-            loadWishes();
-            updateCountdown();
-            setInterval(updateCountdown, 3600000); // Update every hour
+
+            // Update HUD
+            updateHUD();
+        }
+
+        // Event listeners
+        gameStartButton.addEventListener('click', startGame);
+        gameResumeButton.addEventListener('click', resumeGame);
+        gameRestartButton.addEventListener('click', () => {
+            initGame();
+            startGame();
+        });        // Keyboard controls - FOR THE GAME
+        document.addEventListener('keydown', (e) => {
+            // Only handle game controls if we're in Chapter 2 AND game is running
+            const gamePage = document.querySelector('.page[data-chapter="2"]');
+            const isInGame = gamePage && gamePage.classList.contains('active');
+
+            if (isInGame && gameState.running && !gameState.paused) {
+                if (e.key === 'ArrowLeft' || e.key === 'a' || e.key === 'A') {
+                    e.preventDefault(); // Prevent chapter navigation
+                    keys.left = true;
+                } else if (e.key === 'ArrowRight' || e.key === 'd' || e.key === 'D') {
+                    e.preventDefault(); // Prevent chapter navigation
+                    keys.right = true;
+                } else if (e.key === ' ' || e.key === 'Spacebar') {
+                    e.preventDefault();
+                    pauseGame();
+                }
+            }
         });
-    </script>
+
+        document.addEventListener('keyup', (e) => {
+            const gamePage = document.querySelector('.page[data-chapter="2"]');
+            const isInGame = gamePage && gamePage.classList.contains('active');
+
+            if (isInGame) {
+                if (e.key === 'ArrowLeft' || e.key === 'a' || e.key === 'A') {
+                    e.preventDefault();
+                    keys.left = false;
+                } else if (e.key === 'ArrowRight' || e.key === 'd' || e.key === 'D') {
+                    e.preventDefault();
+                    keys.right = false;
+                }
+            }
+        });
+
+        // Mobile controls
+        mobileLeftBtn.addEventListener('touchstart', (e) => {
+            e.preventDefault();
+            keys.left = true;
+        });
+
+        mobileLeftBtn.addEventListener('touchend', (e) => {
+            e.preventDefault();
+            keys.left = false;
+        });
+
+        mobileRightBtn.addEventListener('touchstart', (e) => {
+            e.preventDefault();
+            keys.right = true;
+        });
+
+        mobileRightBtn.addEventListener('touchend', (e) => {
+            e.preventDefault();
+            keys.right = false;
+        });
+
+        mobilePauseBtn.addEventListener('click', pauseGame);
+
+        // Initialize game when page loads
+        window.addEventListener('load', initGame);
+        window.addEventListener('resize', resizeCanvas);
+
+        // Make game functions available to chapter navigation
+        window.initHoneyGame = initGame;
+        window.pauseHoneyGame = pauseGame;
+    })();
+
+    // Storybook chapter navigation
+    document.addEventListener("DOMContentLoaded", () => {
+        const pages = [...document.querySelectorAll(".page")];
+        const nextBtn = document.getElementById("nextBtn");
+        const prevBtn = document.getElementById("prevBtn");
+        const indicator = document.getElementById("pageIndicator");
+        const progress = document.getElementById("progressFill");
+        const total = pages.length;
+        let current = 0;
+
+        function scrollToChapter(chapter) {
+            const target = chapter - 1;
+            if (!isNaN(target) && target >= 0 && target < total) {
+                current = target;
+                updateUI();
+            }
+        }
+
+        function updateUI() {
+            pages.forEach((page, i) => {
+                const wasActive = page.classList.contains("active");
+                page.classList.toggle("active", i === current);
+
+                // Initialize game when Chapter 2 becomes active
+                if (i === 1 && i === current && !wasActive) {
+                    setTimeout(() => {
+                        if (typeof initHoneyGame === 'function') {
+                            initHoneyGame();
+                        }
+                    }, 300);
+                }
+
+                // Pause game when leaving Chapter 2
+                if (i === 1 && wasActive && i !== current) {
+                    if (typeof pauseHoneyGame === 'function') {
+                        pauseHoneyGame();
+                    }
+                }
+            });
+
+            indicator.textContent = `Chapter ${current + 1} of ${total}`;
+            progress.style.width = `${((current + 1) / total) * 100}%`;
+            document
+                .querySelectorAll("[data-chapter-target]")
+                .forEach((btn) =>
+                    btn.classList.toggle(
+                        "active",
+                        parseInt(btn.dataset.chapterTarget, 10) === current + 1
+                    )
+                );
+
+            // Smooth scroll to page
+            pages[current].scrollIntoView({ behavior: "smooth", block: "start" });
+        }
+
+        nextBtn?.addEventListener("click", () => {
+            if (current < total - 1) {
+                current++;
+                updateUI();
+            }
+        });
+
+        prevBtn?.addEventListener("click", () => {
+            if (current > 0) {
+                current--;
+                updateUI();
+            }
+        });
+
+        // Allow clicking chapter pills directly
+        document.querySelectorAll("[data-chapter-target]").forEach((btn) => {
+            btn.addEventListener("click", () => {
+                const target = parseInt(btn.dataset.chapterTarget, 10) - 1;
+                if (!isNaN(target) && target >= 0 && target < total) {
+                    current = target;
+                    updateUI();
+                }
+            });
+        });
+
+        // Optional keyboard navigation - only works when NOT in Chapter 2
+        document.addEventListener("keydown", (e) => {
+            // Check if we're in the game chapter
+            const gamePage = document.querySelector('.page[data-chapter="2"]');
+            const isInGame = gamePage && gamePage.classList.contains('active');
+
+            // Don't navigate chapters if we're in the game
+            if (isInGame) return;
+
+            if (e.key === "ArrowRight") nextBtn?.click();
+            if (e.key === "ArrowLeft") prevBtn?.click();
+        });
+
+        // Make scrollToChapter globally accessible
+        window.scrollToChapter = scrollToChapter;
+
+        // Initialize
+        updateUI();
+    });
+
+    // Settings Panel Functionality
+    (function() {
+        "use strict";
+
+        const settingsButton = document.getElementById('settingsButton');
+        const settingsOverlay = document.getElementById('settingsOverlay');
+        const closeSettings = document.getElementById('closeSettings');
+        const applySettingsBtn = document.getElementById('applySettingsBtn');
+        const resetSettingsBtn = document.getElementById('resetSettingsBtn');
+
+        // Settings elements
+        const difficultySelect = document.getElementById('difficultySelect');
+        const musicToggle = document.getElementById('musicToggle');
+        const sfxToggle = document.getElementById('sfxToggle');
+        const volumeSlider = document.getElementById('volumeSlider');
+        const volumeValue = document.getElementById('volumeValue');
+        const particlesToggle = document.getElementById('particlesToggle');
+        const animationsToggle = document.getElementById('animationsToggle');
+        const sensitivitySlider = document.getElementById('sensitivitySlider');
+        const sensitivityValue = document.getElementById('sensitivityValue');
+        const vibrationToggle = document.getElementById('vibrationToggle');
+        const mobileControlsToggle = document.getElementById('mobileControlsToggle');
+        const themeOptions = document.querySelectorAll('.theme-option');
+
+        // Default settings
+        const defaultSettings = {
+            difficulty: 'medium',
+            music: true,
+            sfx: true,
+            volume: 80,
+            particles: true,
+            animations: true,
+            sensitivity: 260,
+            vibration: false,
+            mobileControls: true,
+            theme: 'light'
+        };
+
+        // Current settings
+        let currentSettings = { ...defaultSettings };
+
+        // Load saved settings from localStorage
+        function loadSettings() {
+            const saved = localStorage.getItem('honeyGameSettings');
+            if (saved) {
+                try {
+                    currentSettings = { ...defaultSettings, ...JSON.parse(saved) };
+                    applySettingsToUI();
+                } catch (e) {
+                    console.error('Error loading settings:', e);
+                }
+            }
+            applySettingsToGame();
+        }
+
+        // Save settings to localStorage
+        function saveSettings() {
+            localStorage.setItem('honeyGameSettings', JSON.stringify(currentSettings));
+        }
+
+        // Apply settings to UI controls
+        function applySettingsToUI() {
+            difficultySelect.value = currentSettings.difficulty;
+            musicToggle.checked = currentSettings.music;
+            sfxToggle.checked = currentSettings.sfx;
+            volumeSlider.value = currentSettings.volume;
+            volumeValue.textContent = `${currentSettings.volume}%`;
+            particlesToggle.checked = currentSettings.particles;
+            animationsToggle.checked = currentSettings.animations;
+            sensitivitySlider.value = currentSettings.sensitivity;
+            sensitivityValue.textContent = currentSettings.sensitivity;
+            vibrationToggle.checked = currentSettings.vibration;
+            mobileControlsToggle.checked = currentSettings.mobileControls;
+
+            // Set active theme
+            themeOptions.forEach(option => {
+                option.classList.remove('active');
+                if (option.dataset.theme === currentSettings.theme) {
+                    option.classList.add('active');
+                }
+            });
+
+            // Apply theme to document
+            applyTheme(currentSettings.theme);
+        }
+
+        // Apply settings to game
+        function applySettingsToGame() {
+            // Apply difficulty
+            switch(currentSettings.difficulty) {
+                case 'easy':
+                    window.gameDifficulty = {
+                        jarSpawnRate: 0.015,
+                        jarSpeed: { min: 100, max: 180 },
+                        beeSpawnRate: 0.008,
+                        beeSpeed: { min: 80, max: 120 },
+                        timeLimit: 90,
+                        lives: 4
+                    };
+                    break;
+                case 'medium':
+                    window.gameDifficulty = {
+                        jarSpawnRate: 0.02,
+                        jarSpeed: { min: 150, max: 200 },
+                        beeSpawnRate: 0.01,
+                        beeSpeed: { min: 100, max: 150 },
+                        timeLimit: 60,
+                        lives: 3
+                    };
+                    break;
+                case 'hard':
+                    window.gameDifficulty = {
+                        jarSpawnRate: 0.025,
+                        jarSpeed: { min: 180, max: 250 },
+                        beeSpawnRate: 0.015,
+                        beeSpeed: { min: 120, max: 180 },
+                        timeLimit: 45,
+                        lives: 2
+                    };
+                    break;
+                case 'expert':
+                    window.gameDifficulty = {
+                        jarSpawnRate: 0.03,
+                        jarSpeed: { min: 200, max: 300 },
+                        beeSpawnRate: 0.02,
+                        beeSpeed: { min: 150, max: 220 },
+                        timeLimit: 30,
+                        lives: 1
+                    };
+                    break;
+            }
+
+            // Apply sensitivity to bear
+            if (window.bear) {
+                window.bear.speed = currentSettings.sensitivity;
+            }
+
+            // Apply volume to audio elements
+            const volume = currentSettings.volume / 100;
+            const audioElements = document.querySelectorAll('audio');
+            audioElements.forEach(audio => {
+                audio.volume = volume;
+            });
+
+            // Apply theme
+            applyTheme(currentSettings.theme);
+
+            // Apply animations
+            document.body.classList.toggle('no-animations', !currentSettings.animations);
+
+            // Apply mobile controls
+            const mobileControls = document.getElementById('mobileControls');
+            if (mobileControls) {
+                if (currentSettings.mobileControls && ('ontouchstart' in window || navigator.maxTouchPoints > 0)) {
+                    mobileControls.classList.add('visible');
+                } else {
+                    mobileControls.classList.remove('visible');
+                }
+            }
+
+            // Toggle music
+            const bgMusic = document.getElementById('bgMusic');
+            const ambientForest = document.getElementById('ambientForest');
+
+            if (bgMusic) {
+                if (currentSettings.music) {
+                    bgMusic.play().catch(e => console.log('Audio play failed:', e));
+                } else {
+                    bgMusic.pause();
+                }
+            }
+
+            if (ambientForest) {
+                if (currentSettings.music) {
+                    ambientForest.play().catch(e => console.log('Audio play failed:', e));
+                } else {
+                    ambientForest.pause();
+                }
+            }
+        }
+
+        // Apply theme to document
+        function applyTheme(theme) {
+            // Remove existing theme classes
+            document.documentElement.classList.remove('theme-light', 'theme-dark');
+
+            // Determine actual theme (auto checks system preference)
+            let actualTheme = theme;
+            if (theme === 'auto') {
+                actualTheme = window.matchMedia('(prefers-color-scheme: dark)').matches ? 'dark' : 'light';
+            }
+
+            // Apply theme class
+            document.documentElement.classList.add(`theme-${actualTheme}`);
+
+            // Update theme colors
+            if (actualTheme === 'dark') {
+                document.documentElement.style.setProperty('--bg', '#1a1a1a');
+                document.documentElement.style.setProperty('--bg-soft', '#2a2a2a');
+                document.documentElement.style.setProperty('--ink', '#f0f0f0');
+                document.documentElement.style.setProperty('--ink-soft', '#cccccc');
+                document.documentElement.style.setProperty('--card-bg', '#2a2a2a');
+                document.documentElement.style.setProperty('--border-soft', 'rgba(255, 255, 255, 0.1)');
+            } else {
+                // Reset to light theme
+                document.documentElement.style.setProperty('--bg', '#fff9ec');
+                document.documentElement.style.setProperty('--bg-soft', '#fff4dd');
+                document.documentElement.style.setProperty('--ink', '#3b2604');
+                document.documentElement.style.setProperty('--ink-soft', '#5a4330');
+                document.documentElement.style.setProperty('--card-bg', '#ffffff');
+                document.documentElement.style.setProperty('--border-soft', 'rgba(0, 0, 0, 0.06)');
+            }
+        }
+
+        // Collect settings from UI
+        function collectSettingsFromUI() {
+            return {
+                difficulty: difficultySelect.value,
+                music: musicToggle.checked,
+                sfx: sfxToggle.checked,
+                volume: parseInt(volumeSlider.value),
+                particles: particlesToggle.checked,
+                animations: animationsToggle.checked,
+                sensitivity: parseInt(sensitivitySlider.value),
+                vibration: vibrationToggle.checked,
+                mobileControls: mobileControlsToggle.checked,
+                theme: document.querySelector('.theme-option.active').dataset.theme
+            };
+        }
+
+        // Update game with new settings
+        function updateGameSettings() {
+            currentSettings = collectSettingsFromUI();
+            saveSettings();
+            applySettingsToGame();
+
+            // Show confirmation
+            showNotification('Settings applied!');
+        }
+
+        // Reset to defaults
+        function resetToDefaults() {
+            if (confirm('Reset all settings to defaults?')) {
+                currentSettings = { ...defaultSettings };
+                saveSettings();
+                applySettingsToUI();
+                applySettingsToGame();
+                showNotification('Settings reset to defaults');
+            }
+        }
+
+        // Show notification
+        function showNotification(message) {
+            // Create notification element
+            const notification = document.createElement('div');
+            notification.textContent = message;
+            notification.style.cssText = `
+                position: fixed;
+                top: 20px;
+                left: 50%;
+                transform: translateX(-50%);
+                background: linear-gradient(135deg, #f4b944, #f59e0b);
+                color: #3b2604;
+                padding: 12px 24px;
+                border-radius: 999px;
+                font-weight: 600;
+                box-shadow: 0 8px 24px rgba(0, 0, 0, 0.3);
+                z-index: 1001;
+                animation: slideDown 0.3s ease, slideUp 0.3s ease 2s forwards;
+            `;
+
+            document.body.appendChild(notification);
+
+            // Remove after animation
+            setTimeout(() => {
+                notification.remove();
+            }, 2300);
+        }
+
+        // Event Listeners
+        settingsButton.addEventListener('click', () => {
+            settingsOverlay.classList.add('visible');
+            document.body.style.overflow = 'hidden';
+        });
+
+        closeSettings.addEventListener('click', () => {
+            settingsOverlay.classList.remove('visible');
+            document.body.style.overflow = '';
+        });
+
+        settingsOverlay.addEventListener('click', (e) => {
+            if (e.target === settingsOverlay) {
+                settingsOverlay.classList.remove('visible');
+                document.body.style.overflow = '';
+            }
+        });
+
+        applySettingsBtn.addEventListener('click', updateGameSettings);
+        resetSettingsBtn.addEventListener('click', resetToDefaults);
+
+        // Live updates for sliders
+        volumeSlider.addEventListener('input', (e) => {
+            volumeValue.textContent = `${e.target.value}%`;
+        });
+
+        sensitivitySlider.addEventListener('input', (e) => {
+            sensitivityValue.textContent = e.target.value;
+        });
+
+        // Theme selection
+        themeOptions.forEach(option => {
+            option.addEventListener('click', () => {
+                themeOptions.forEach(opt => opt.classList.remove('active'));
+                option.classList.add('active');
+            });
+        });
+
+        // Listen for system theme changes (for auto theme)
+        window.matchMedia('(prefers-color-scheme: dark)').addEventListener('change', (e) => {
+            if (currentSettings.theme === 'auto') {
+                applyTheme('auto');
+            }
+        });
+
+        // Close with Escape key
+        document.addEventListener('keydown', (e) => {
+            if (e.key === 'Escape' && settingsOverlay.classList.contains('visible')) {
+                settingsOverlay.classList.remove('visible');
+                document.body.style.overflow = '';
+            }
+        });
+
+        // Initialize settings
+        window.addEventListener('load', loadSettings);
+
+        // Make functions available globally
+        window.applyGameSettings = applySettingsToGame;
+        window.getGameSettings = () => currentSettings;
+        window.showSettings = () => settingsButton.click();
+
+    })();
+
+</script>
+
+<!-- Audio Elements -->
+<audio id="bgMusic" loop preload="auto" src="media/hundred-acre-lullaby.mp3"></audio>
+<audio id="honeySound" preload="auto">
+    <source src="https://assets.mixkit.co/sfx/preview/mixkit-winning-chimes-2015.mp3">
+</audio>
+<audio id="pageSound" preload="auto">
+    <source src="https://assets.mixkit.co/sfx/preview/mixkit-page-turn-single-1100.mp3">
+</audio>
+<audio id="pageRustle1" preload="auto">
+    <source src="https://assets.mixkit.co/sfx/preview/mixkit-page-turn-single-1100.mp3">
+</audio>
+<audio id="pageRustle2" preload="auto">
+    <source src="https://assets.mixkit.co/sfx/preview/mixkit-page-turn-medium-1103.mp3">
+</audio>
+<audio id="paperThump" preload="auto">
+    <source src="https://assets.mixkit.co/sfx/preview/mixkit-soft-ui-click-2577.mp3">
+</audio>
+<audio id="ambientForest" loop preload="auto">
+    <source src="https://assets.mixkit.co/sfx/preview/mixkit-forest-birds-ambience-121.mp3">
+</audio>
+
 </body>
 </html>
