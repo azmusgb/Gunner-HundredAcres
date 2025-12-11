@@ -1158,77 +1158,36 @@
     }
 
     function playCatchSound(jarType) {
-        switch(jarType) {
-            case 'gold':
-                playSound(SOUNDS.CATCH_GOLD);
-                break;
-            case 'shield':
-                playSound(SOUNDS.CATCH_SHIELD);
-                break;
-            case 'powerup':
-                playSound(SOUNDS.CATCH_POWERUP);
-                playSound(SOUNDS.POWERUP_COLLECT);
-                break;
-            default:
-                playSound(SOUNDS.CATCH_NORMAL);
-        }
+    switch(jarType) {
+        case 'gold':
+            safePlaySound(SOUNDS.CATCH_GOLD);
+            break;
+        case 'shield':
+            safePlaySound(SOUNDS.CATCH_SHIELD);
+            break;
+        case 'powerup':
+            safePlaySound(SOUNDS.CATCH_POWERUP);
+            break;
+        default:
+            safePlaySound(SOUNDS.CATCH_NORMAL);
     }
+}
 
-    function playBeeHitSound() {
-        playSound(SOUNDS.BEE_HIT);
-    }
+function playBeeHitSound() {
+    safePlaySound(SOUNDS.BEE_HIT);
+}
 
-    function playShieldBlockSound() {
-        playSound(SOUNDS.SHIELD_BLOCK);
-    }
+function playButtonClickSound() {
+    safePlaySound(SOUNDS.BUTTON_CLICK);
+}
 
-    function playComboSound() {
-        playSound(SOUNDS.COMBO_START);
-    }
+function playGameStartSound() {
+    safePlaySound(SOUNDS.GAME_START);
+}
 
-    function playGameStartSound() {
-        playSound(SOUNDS.GAME_START);
-    }
-
-    function playGameOverSound() {
-        playSound(SOUNDS.GAME_OVER);
-    }
-
-    function playEvolutionSound() {
-        playSound(SOUNDS.EVOLUTION_UPGRADE);
-    }
-
-    function playButtonClickSound() {
-        playSound(SOUNDS.BUTTON_CLICK);
-    }
-
-    function playPowerupActivateSound() {
-        playSound(SOUNDS.POWERUP_ACTIVATE);
-    }
-
-    function playPowerupExpireSound() {
-        playSound(SOUNDS.POWERUP_EXPIRE);
-    }
-
-    function playAchievementSound() {
-        playSound(SOUNDS.ACHIEVEMENT_UNLOCK);
-    }
-
-    function playPauseSound() {
-        playSound(SOUNDS.GAME_PAUSE);
-    }
-
-    function playResumeSound() {
-        playSound(SOUNDS.GAME_RESUME);
-    }
-
-    function playStreakSound(streak) {
-        if (streak === 5) {
-            playSound(SOUNDS.STREAK_5);
-        } else if (streak === 10) {
-            playSound(SOUNDS.STREAK_10);
-        }
-    }
+function playGameOverSound() {
+    safePlaySound(SOUNDS.GAME_OVER);
+}
 
     const keys = {
         left: false,
@@ -4272,71 +4231,50 @@
     document.head.appendChild(styleSheet);
 }
     // ==================== MAIN INITIALIZATION ====================
-    function init() {
-        console.log("Initializing Honey Hunt with Enhanced Features & Audio...");
-        console.log("Game container:", gameContainer);
-        console.log("Settings toggle:", settingsToggle);
-        console.log("Settings modal:", settingsModal);
-        console.log("Settings close:", settingsClose);
-
-        // If the canvas element was missing from the DOM, the fallback canvas we create
-        // above never gets attached anywhere. That leaves the render loop drawing to a
-        // detached element, so the game appears "not to load" even though no error is
-        // thrown. Attach the fallback canvas to the game container so it is visible.
-        if (!existingCanvas) {
-            canvas.id = "gameCanvas";
-            canvas.width = 640;
-            canvas.height = 360;
-            (gameContainer || document.body).appendChild(canvas);
+ function init() {
+    console.log("Initializing Honey Hunt with Enhanced Features & Audio...");
+    
+    // Initialize settings UI first
+    applySettingsToUi();
+    
+    injectQuickWinsCSS();
+    loadPersistedState();
+    resizeCanvas();
+    updateHud();
+    initControls();
+    initSettings();
+    initTopbar();
+    initOverlays();
+    initHelp();
+    initTutorial();
+    initShareFunctionality();
+    
+    // Safe audio initialization
+    safeInitAudio();
+    
+    createPowerupIndicators();
+    initDailyChallenge();
+    
+    bear.animation.blinkTimer = 1 + Math.random() * 2;
+    dynamicDifficulty.multiplier = 1;
+    dynamicDifficulty.performanceHistory = [];
+    
+    // Start music after user interaction
+    document.addEventListener('click', function startMusicOnInteraction() {
+        if (settingsState.musicOn && !musicPlaying) {
+            safeBackgroundMusic();
         }
-
-        if (!canvas || !ctx) {
-            console.warn("Honey Hunt cannot start without a canvas element.");
-            return;
-        }
-
-        // Initialize settings UI first
-        applySettingsToUi();
-
-        injectQuickWinsCSS();
-        loadPersistedState();
-        resizeCanvas();
-        updateHud();
-        initControls();
-        initSettings();
-        initTopbar();
-        initOverlays();
-        initHelp();
-        initTutorial();
-        initShareFunctionality();
-        initAudio();
-        createPowerupIndicators();
-        initDailyChallenge();
-
-        bear.animation.blinkTimer = 1 + Math.random() * 2;
-        dynamicDifficulty.multiplier = 1;
-        dynamicDifficulty.performanceHistory = [];
-
-        // Add button click sounds to all buttons
-        if (document.readyState === "loading") {
-            document.addEventListener("DOMContentLoaded", addButtonClickSounds);
-        } else {
-            addButtonClickSounds();
-        }
-
-        if (settingsState.musicOn) {
-            startBackgroundMusic();
-        }
-
-        window.addEventListener("resize", resizeCanvas);
-        requestAnimationFrame(gameLoop);
-        console.log("Honey Hunt Enhanced with Audio initialized successfully!");
-    }
-
-    // Initialize the game when DOM is ready
-    if (document.readyState === 'loading') {
-        document.addEventListener('DOMContentLoaded', init);
+        document.removeEventListener('click', startMusicOnInteraction);
+    });
+    
+    // Add button click sounds after audio is ready
+    if (document.readyState === "loading") {
+        document.addEventListener("DOMContentLoaded", addButtonClickSounds);
     } else {
-        init();
+        addButtonClickSounds();
     }
-})();
+    
+    window.addEventListener("resize", resizeCanvas);
+    requestAnimationFrame(gameLoop);
+    console.log("Honey Hunt Enhanced with Audio initialized successfully!");
+}
