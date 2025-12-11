@@ -1,4 +1,3 @@
-
 <!DOCTYPE html>
 <html lang="en">
 <head>
@@ -1513,7 +1512,318 @@
         }
 
         /* =========================================
-           14. RESPONSIVE TWEAKS
+           14. GAME SPECIFIC STYLES (QUICK WINS)
+           ========================================= */
+        .game-container {
+            position: relative;
+            width: 100%;
+            height: 100%;
+        }
+
+        .overlay {
+            position: absolute;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background: rgba(0, 0, 0, 0.8);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            z-index: 100;
+            opacity: 0;
+            visibility: hidden;
+            transition: opacity 0.3s ease;
+        }
+
+        .overlay.visible {
+            opacity: 1;
+            visibility: visible;
+        }
+
+        .overlay-content {
+            background: linear-gradient(135deg, #1e293b, #0f172a);
+            padding: 2rem;
+            border-radius: 20px;
+            text-align: center;
+            max-width: 400px;
+            width: 90%;
+            border: 3px solid #fbbf24;
+            color: white;
+        }
+
+        .modal {
+            display: none;
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background-color: rgba(0, 0, 0, 0.8);
+            z-index: 2000;
+            align-items: center;
+            justify-content: center;
+        }
+
+        .modal.visible {
+            display: flex;
+        }
+
+        .modal-content {
+            background: linear-gradient(135deg, #1e293b, #0f172a);
+            border-radius: 20px;
+            padding: 30px;
+            width: 90%;
+            max-width: 500px;
+            max-height: 80vh;
+            overflow-y: auto;
+            border: 3px solid #fbbf24;
+            color: white;
+        }
+
+        .game-top-controls {
+            position: absolute;
+            top: 10px;
+            right: 10px;
+            display: flex;
+            gap: 10px;
+            z-index: 50;
+        }
+
+        .btn-icon {
+            background: rgba(255, 255, 255, 0.1);
+            border: 2px solid #fbbf24;
+            border-radius: 50%;
+            width: 40px;
+            height: 40px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            color: #fbbf24;
+            cursor: pointer;
+            font-size: 18px;
+            backdrop-filter: blur(10px);
+        }
+
+        .floating-score {
+            position: absolute;
+            font-weight: bold;
+            font-size: 24px;
+            pointer-events: none;
+            z-index: 100;
+            animation: floatUp 1s ease-out forwards;
+        }
+
+        @keyframes floatUp {
+            0% {
+                transform: translateY(0);
+                opacity: 1;
+            }
+            100% {
+                transform: translateY(-50px);
+                opacity: 0;
+            }
+        }
+
+        .floating-score.normal { color: #84cc16; }
+        .floating-score.gold { color: #fbbf24; }
+        .floating-score.shield { color: #60a5fa; }
+        .floating-score.powerup { color: #22c55e; }
+        .floating-score.combo { color: #f97316; }
+
+        .difficulty-indicator {
+            animation: fadeOut 1.5s ease forwards;
+        }
+
+        @keyframes fadeOut {
+            0% { opacity: 1; }
+            70% { opacity: 1; }
+            100% { opacity: 0; }
+        }
+
+        .share-success {
+            animation: pulseSuccess 0.5s ease;
+        }
+
+        @keyframes pulseSuccess {
+            0% { transform: scale(1); }
+            50% { transform: scale(1.1); }
+            100% { transform: scale(1); }
+        }
+
+        /* Settings Modal Styles */
+        #settingsModal {
+            display: none;
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background-color: rgba(0, 0, 0, 0.8);
+            z-index: 2000;
+            align-items: center;
+            justify-content: center;
+        }
+        
+        #settingsModal.visible {
+            display: flex;
+        }
+        
+        #settingsPanel {
+            background: linear-gradient(135deg, #1e293b, #0f172a);
+            border-radius: 20px;
+            padding: 30px;
+            width: 90%;
+            max-width: 500px;
+            max-height: 80vh;
+            overflow-y: auto;
+            border: 3px solid #fbbf24;
+            box-shadow: 0 10px 40px rgba(0, 0, 0, 0.5);
+        }
+        
+        .settings-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 30px;
+        }
+        
+        .settings-header h2 {
+            color: #fbbf24;
+            font-size: 28px;
+            margin: 0;
+        }
+        
+        .settings-close {
+            background: none;
+            border: none;
+            color: #fbbf24;
+            font-size: 24px;
+            cursor: pointer;
+            padding: 5px;
+            border-radius: 5px;
+        }
+        
+        .settings-close:hover {
+            background-color: rgba(251, 191, 36, 0.1);
+        }
+        
+        .settings-group {
+            margin-bottom: 25px;
+            background: rgba(255, 255, 255, 0.05);
+            padding: 20px;
+            border-radius: 15px;
+        }
+        
+        .settings-group h3 {
+            color: #fbbf24;
+            font-size: 20px;
+            margin: 0 0 15px 0;
+        }
+        
+        .settings-row {
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            margin-bottom: 15px;
+            padding: 10px 0;
+            border-bottom: 1px solid rgba(255, 255, 255, 0.1);
+        }
+        
+        .settings-row:last-child {
+            border-bottom: none;
+        }
+        
+        .settings-label {
+            color: white;
+            font-size: 16px;
+            font-weight: bold;
+        }
+        
+        .toggle-btn {
+            background: rgba(255, 255, 255, 0.1);
+            border: 2px solid #fbbf24;
+            border-radius: 50px;
+            width: 60px;
+            height: 30px;
+            position: relative;
+            cursor: pointer;
+            transition: all 0.3s ease;
+        }
+        
+        .toggle-btn[data-on="true"] {
+            background-color: #fbbf24;
+        }
+        
+        .toggle-btn::after {
+            content: '';
+            position: absolute;
+            top: 3px;
+            left: 3px;
+            width: 22px;
+            height: 22px;
+            background-color: white;
+            border-radius: 50%;
+            transition: all 0.3s ease;
+        }
+        
+        .toggle-btn[data-on="true"]::after {
+            left: calc(100% - 25px);
+        }
+        
+        .diff-btn {
+            background: rgba(255, 255, 255, 0.1);
+            border: 2px solid #fbbf24;
+            color: white;
+            padding: 8px 16px;
+            border-radius: 8px;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            font-weight: bold;
+        }
+        
+        .diff-btn:hover {
+            background: rgba(251, 191, 36, 0.2);
+        }
+        
+        .diff-btn.active {
+            background-color: #fbbf24;
+            color: #1e293b;
+        }
+        
+        .settings-btn {
+            background: linear-gradient(135deg, #fbbf24, #f59e0b);
+            color: #1e293b;
+            border: none;
+            padding: 12px 24px;
+            border-radius: 10px;
+            font-weight: bold;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            display: flex;
+            align-items: center;
+            gap: 8px;
+            width: 100%;
+            justify-content: center;
+            margin-top: 10px;
+        }
+        
+        .settings-btn:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 5px 15px rgba(251, 191, 36, 0.4);
+        }
+        
+        .settings-btn.danger {
+            background: linear-gradient(135deg, #ef4444, #dc2626);
+            color: white;
+        }
+        
+        .settings-btn.danger:hover {
+            box-shadow: 0 5px 15px rgba(239, 68, 68, 0.4);
+        }
+
+        /* =========================================
+           15. RESPONSIVE TWEAKS
            ========================================= */
         @media (max-width: 900px) {
             .hero-banner {
@@ -1600,6 +1910,16 @@
 
             .hud-row {
                 flex-wrap: wrap;
+            }
+
+            .overlay-content {
+                padding: 1.5rem;
+                margin: 1rem;
+            }
+            
+            .modal-content {
+                padding: 20px;
+                margin: 1rem;
             }
         }
     </style>
@@ -1851,49 +2171,187 @@
 
                 <!-- Embedded Honey Game -->
                 <div class="game-embed" id="gameEmbed">
-                    <div class="honey-game" id="honeyGame">
-                        <div class="honey-game-header">
-                            <div class="title">
-                                <span aria-hidden="true">🍯</span>
-                                <span>Honey Hunt</span>
+                    <!-- Game Container with all UI elements -->
+                    <div id="gameContainer" class="game-container">
+                        <div class="honey-game" id="honeyGame">
+                            <div class="game-top-controls">
+                                <button id="settingsToggle" class="btn-icon" aria-label="Game settings">
+                                    <span>⚙️</span>
+                                </button>
+                                <button id="helpToggle" class="btn-icon" aria-label="How to play">
+                                    <span>❓</span>
+                                </button>
                             </div>
-                            <div class="hud-row">
-                                <div class="hud-item">
-                                    <span class="hud-label">Score</span><span id="hudScore">0</span>
+                            
+                            <div class="honey-game-header">
+                                <div class="title">
+                                    <span aria-hidden="true">🍯</span>
+                                    <span>Honey Hunt</span>
                                 </div>
-                                <div class="hud-item">
-                                    <span class="hud-label">Time</span><span id="hudTime">60</span>s
-                                </div>
-                                <div class="hud-item">
-                                    <span class="hud-label">Streak</span><span id="hudStreak">0</span>
-                                </div>
-                                <div class="hud-item">
-                                    <span class="hud-label">Lives</span><span id="hudLives">❤️❤️❤️</span>
-                                </div>
-                                <div class="hud-item">
-                                    <span class="hud-label">Best</span><span id="hudBest">0</span>
+                                <div class="hud-row">
+                                    <div class="hud-item">
+                                        <span class="hud-label">Score</span><span id="hudScore">0</span>
+                                    </div>
+                                    <div class="hud-item">
+                                        <span class="hud-label">Time</span><span id="hudTime">60</span>s
+                                    </div>
+                                    <div class="hud-item">
+                                        <span class="hud-label">Streak</span><span id="hudStreak">0</span>
+                                    </div>
+                                    <div class="hud-item">
+                                        <span class="hud-label">Lives</span><span id="hudLives">❤️❤️❤️</span>
+                                    </div>
+                                    <div class="hud-item">
+                                        <span class="hud-label">Best</span><span id="hudBest">0</span>
+                                    </div>
                                 </div>
                             </div>
+                            <div class="honey-game-main">
+                                <canvas id="gameCanvas" width="640" height="360" aria-label="Pooh catching honey pots"></canvas>
+                                
+                                <!-- Game Overlays -->
+                                <div id="startOverlay" class="overlay" aria-hidden="true">
+                                    <div class="overlay-content">
+                                        <h2>Honey Hunt</h2>
+                                        <p>Help Pooh catch honey pots!</p>
+                                        <button id="startButton" class="btn primary">Start Game</button>
+                                        <button id="helpToggleSecondary" class="btn secondary">How to Play</button>
+                                    </div>
+                                </div>
+                                
+                                <div id="pauseOverlay" class="overlay" aria-hidden="true">
+                                    <div class="overlay-content">
+                                        <h2>Game Paused</h2>
+                                        <button id="resumeButton" class="btn primary">Resume</button>
+                                        <button id="restartButton" class="btn">Restart</button>
+                                    </div>
+                                </div>
+                                
+                                <div id="gameOverOverlay" class="overlay" aria-hidden="true">
+                                    <div class="overlay-content">
+                                        <h2>Game Over</h2>
+                                        <div class="score-display">
+                                            <p>Score: <span id="finalScore">0</span></p>
+                                            <p>Best: <span id="finalBest">0</span></p>
+                                        </div>
+                                        <button id="restartButton2" class="btn primary">Play Again</button>
+                                        <button id="shareScoreButton" class="btn secondary">Share Score</button>
+                                    </div>
+                                </div>
+                            </div>
+                            <div class="honey-game-controls" aria-label="Game controls">
+                                <button class="control-btn" id="btnLeft" type="button">
+                                    <span class="control-btn-icon" aria-hidden="true">⬅️</span> Left
+                                </button>
+                                <button class="control-btn" id="btnRight" type="button">
+                                    <span class="control-btn-icon" aria-hidden="true">➡️</span> Right
+                                </button>
+                                <button class="control-btn primary" id="btnStart" type="button">
+                                    <span class="control-btn-icon" aria-hidden="true">▶️</span> Start
+                                </button>
+                                <button class="control-btn" id="btnPause" type="button">
+                                    ⏸ Pause
+                                </button>
+                            </div>
+                            <div class="game-status" id="statusBadge" role="status">Ready to play!</div>
                         </div>
-                        <div class="honey-game-main">
-                            <canvas id="gameCanvas" width="640" height="360" aria-label="Pooh catching honey pots"></canvas>
-                        </div>
-                        <div class="honey-game-controls" aria-label="Game controls">
-                            <button class="control-btn" id="btnLeft" type="button">
-                                <span class="control-btn-icon" aria-hidden="true">⬅️</span> Left
-                            </button>
-                            <button class="control-btn" id="btnRight" type="button">
-                                <span class="control-btn-icon" aria-hidden="true">➡️</span> Right
-                            </button>
-                            <button class="control-btn primary" id="btnStart" type="button">
-                                <span class="control-btn-icon" aria-hidden="true">▶️</span> Start
-                            </button>
-                            <button class="control-btn" id="btnPause" type="button">
-                                ⏸ Pause
-                            </button>
-                        </div>
-                        <div class="game-status" id="statusBadge" role="status">Ready to play!</div>
                     </div>
+
+                    <!-- Settings Modal -->
+                    <div id="settingsModal" class="modal" aria-hidden="true">
+                        <div id="settingsPanel" class="modal-content" tabindex="-1">
+                            <div class="settings-header">
+                                <h2>Game Settings</h2>
+                                <button id="settingsClose" class="settings-close" aria-label="Close settings">×</button>
+                            </div>
+                            
+                            <div class="settings-group">
+                                <h3>Audio</h3>
+                                <div class="settings-row">
+                                    <span class="settings-label">Music</span>
+                                    <button id="musicToggle" class="toggle-btn" data-on="true" aria-pressed="true">
+                                        <span>🔊</span>
+                                    </button>
+                                </div>
+                                <div class="settings-row">
+                                    <span class="settings-label">Sound Effects</span>
+                                    <button id="sfxToggle" class="toggle-btn" data-on="true" aria-pressed="true">
+                                        <span>🔊</span>
+                                    </button>
+                                </div>
+                            </div>
+                            
+                            <div class="settings-group">
+                                <h3>Difficulty</h3>
+                                <div class="difficulty-buttons">
+                                    <button class="diff-btn active" data-level="0">Chill</button>
+                                    <button class="diff-btn" data-level="1">Classic</button>
+                                    <button class="diff-btn" data-level="2">Spicy</button>
+                                </div>
+                            </div>
+                            
+                            <div class="settings-group">
+                                <h3>Progress</h3>
+                                <div class="settings-row">
+                                    <span class="settings-label">Best Score</span>
+                                    <span id="settingsBest">0</span>
+                                </div>
+                                <div class="settings-row">
+                                    <span class="settings-label">Games Played</span>
+                                    <span id="overlayGames">0</span>
+                                </div>
+                                <button id="resetProgress" class="settings-btn danger">
+                                    <span>🔄</span> Reset Progress
+                                </button>
+                            </div>
+                        </div>
+                    </div>
+                    
+                    <!-- Help Panel -->
+                    <div id="helpPanel" class="modal" aria-hidden="true">
+                        <div class="modal-content">
+                            <h2>How to Play</h2>
+                            <ul class="game-instructions">
+                                <li>Use ← → arrow keys or on-screen buttons to move Pooh</li>
+                                <li>Catch honey pots for points</li>
+                                <li>Avoid bees - they cost you a life</li>
+                                <li>Chain catches for combo bonuses</li>
+                                <li>Special jars give power-ups</li>
+                                <li>Survive for 60 seconds!</li>
+                            </ul>
+                            <button class="btn primary" onclick="document.getElementById('helpPanel').classList.remove('visible')">Got it!</button>
+                        </div>
+                    </div>
+                    
+                    <!-- Tutorial Overlay -->
+                    <div id="tutorialOverlay" class="overlay" aria-hidden="true">
+                        <div class="tutorial-content">
+                            <div class="tutorial-step active" data-step="1">
+                                <h3>Welcome to Honey Hunt!</h3>
+                                <p>Help Winnie the Pooh catch as many honey pots as you can.</p>
+                            </div>
+                            <div class="tutorial-step" data-step="2">
+                                <h3>Controls</h3>
+                                <p>Use arrow keys or tap the buttons to move left and right.</p>
+                            </div>
+                            <div class="tutorial-step" data-step="3">
+                                <h3>Power-ups</h3>
+                                <p>Special jars give you special abilities. Watch for them!</p>
+                            </div>
+                            <div class="tutorial-step" data-step="4">
+                                <h3>Avoid Bees!</h3>
+                                <p>Bees will try to stop you. Use your shield or dodge them.</p>
+                            </div>
+                            <div class="tutorial-navigation">
+                                <button id="skipTutorial" class="btn">Skip</button>
+                                <button id="nextTutorial" class="btn primary">Next</button>
+                                <button id="startTutorial" class="btn primary" style="display: none;">Start Game</button>
+                            </div>
+                        </div>
+                    </div>
+                    
+                    <!-- Live region for screen readers -->
+                    <div id="liveRegion" aria-live="polite" class="sr-only"></div>
                 </div>
 
                 <div class="game-description">
