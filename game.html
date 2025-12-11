@@ -356,6 +356,114 @@
             display: block;
         }
 
+        /* ==================== SESSION MICRO-UI ==================== */
+        .session-banner {
+            position: absolute;
+            top: 68px;
+            left: 50%;
+            transform: translateX(-50%);
+            z-index: 28;
+            display: inline-flex;
+            gap: 8px;
+            flex-wrap: wrap;
+            justify-content: center;
+            padding: 6px 10px;
+            border-radius: var(--radius-pill);
+            background: radial-gradient(circle at center, rgba(255, 255, 255, 0.92), rgba(255, 248, 220, 0.92));
+            box-shadow: 0 10px 28px rgba(0, 0, 0, 0.18);
+            border: 1px solid rgba(255, 255, 255, 0.85);
+            backdrop-filter: blur(8px);
+            pointer-events: none;
+        }
+        body.dark .session-banner {
+            background: radial-gradient(circle at center, rgba(15, 23, 42, 0.9), rgba(15, 23, 42, 0.86));
+            border-color: rgba(148, 163, 184, 0.65);
+        }
+        .session-pill {
+            display: inline-flex;
+            align-items: center;
+            gap: 6px;
+            padding: 6px 12px;
+            border-radius: var(--radius-pill);
+            background: rgba(251, 191, 36, 0.16);
+            color: var(--ink);
+            font-size: var(--font-xs);
+            font-weight: 600;
+            box-shadow: inset 0 0 0 1px rgba(251, 146, 60, 0.35);
+            text-transform: uppercase;
+            letter-spacing: 0.08em;
+            pointer-events: auto;
+        }
+        body.dark .session-pill {
+            background: rgba(251, 191, 36, 0.12);
+            color: #f5f5f5;
+        }
+        .session-pill i {
+            color: #f97316;
+        }
+
+        /* ==================== PROGRESS DECK ==================== */
+        .progress-deck {
+            margin-top: 16px;
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(240px, 1fr));
+            gap: 12px;
+        }
+        .progress-card {
+            padding: 14px 16px;
+            border-radius: 16px;
+            background: linear-gradient(135deg, rgba(255, 255, 255, 0.94), rgba(255, 248, 220, 0.96));
+            border: 1px solid rgba(255, 255, 255, 0.85);
+            box-shadow: 0 12px 26px rgba(0, 0, 0, 0.16);
+        }
+        body.dark .progress-card {
+            background: linear-gradient(135deg, rgba(15, 23, 42, 0.95), rgba(15, 23, 42, 0.9));
+            border-color: rgba(148, 163, 184, 0.6);
+        }
+        .progress-head {
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            gap: 8px;
+            margin-bottom: 8px;
+            font-weight: 700;
+            font-size: var(--font-sm);
+        }
+        .progress-sub {
+            font-size: var(--font-xs);
+            color: var(--muted);
+        }
+        body.dark .progress-sub {
+            color: var(--muted-soft);
+        }
+        .progress-bar {
+            position: relative;
+            width: 100%;
+            height: 10px;
+            border-radius: 999px;
+            background: rgba(0, 0, 0, 0.06);
+            overflow: hidden;
+        }
+        body.dark .progress-bar {
+            background: rgba(255, 255, 255, 0.08);
+        }
+        .progress-fill {
+            position: absolute;
+            inset: 0;
+            width: 0;
+            background: linear-gradient(90deg, #fbbf24, #f97316);
+            border-radius: inherit;
+            box-shadow: 0 0 0 1px rgba(255, 255, 255, 0.4);
+            transition: width 0.2s ease-out;
+        }
+        .progress-card.streak .progress-fill {
+            background: linear-gradient(90deg, #38bdf8, #6366f1);
+        }
+        .progress-card.time .progress-fill.low {
+            background: linear-gradient(90deg, #fb7185, #ef4444);
+            box-shadow: 0 0 0 1px rgba(248, 113, 113, 0.6);
+        }
+
         /* ==================== HUD ==================== */
         .hud {
             position: absolute;
@@ -1415,6 +1523,17 @@
                 padding: 8px 12px;
                 font-size: 0.7rem;
             }
+            .session-banner {
+                top: 54px;
+                width: calc(100% - 28px);
+                justify-content: center;
+            }
+            .session-pill {
+                width: fit-content;
+            }
+            .progress-deck {
+                grid-template-columns: 1fr;
+            }
             .powerup-indicators {
                 top: 70px;
             }
@@ -1559,6 +1678,22 @@
                     <div class="game-bg-horizon"></div>
                     <div class="game-bg-ground"></div>
 
+                    <!-- Session banner -->
+                    <div aria-live="polite" class="session-banner" id="sessionBanner">
+                        <div class="session-pill" id="difficultyPill">
+                            <i aria-hidden="true" class="fas fa-fire"></i>
+                            <span id="sessionDifficulty">Classic Mode</span>
+                        </div>
+                        <div class="session-pill" id="moodPill">
+                            <i aria-hidden="true" class="fas fa-heart"></i>
+                            <span id="sessionMood">Cozy start</span>
+                        </div>
+                        <div class="session-pill" id="gamesPill">
+                            <i aria-hidden="true" class="fas fa-flag-checkered"></i>
+                            <span id="sessionGames">0 lifetime runs</span>
+                        </div>
+                    </div>
+
                     <!-- HUD -->
                     <div aria-live="polite" class="hud">
                         <div class="hud-item">
@@ -1662,6 +1797,27 @@
                     </div>
                 </div>
             </section>
+
+            <div class="progress-deck" aria-hidden="true">
+                <div class="progress-card time">
+                    <div class="progress-head">
+                        <span>Sunset timer</span>
+                        <span class="progress-sub" id="timeSubtitle">60s to shine</span>
+                    </div>
+                    <div class="progress-bar">
+                        <div class="progress-fill" id="timeProgress"></div>
+                    </div>
+                </div>
+                <div class="progress-card streak">
+                    <div class="progress-head">
+                        <span>Momentum meter</span>
+                        <span class="progress-sub" id="streakSubtitle">Build that combo</span>
+                    </div>
+                    <div class="progress-bar">
+                        <div class="progress-fill" id="streakProgress"></div>
+                    </div>
+                </div>
+            </div>
 
             <!-- Mobile Controls -->
             <div class="controls-bar" style="display: none;">

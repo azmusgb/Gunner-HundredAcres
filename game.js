@@ -12,6 +12,7 @@
 
     const GAME_DURATION = 60;
     const MAX_LIVES = 3;
+    const DIFFICULTY_LABELS = ["Chill", "Classic", "Spicy"];
 
     const gameContainer = document.getElementById("gameContainer");
     const canvas = document.getElementById("gameCanvas");
@@ -55,6 +56,14 @@
     const fullscreenToggle = document.getElementById("fullscreenToggle");
 
     const liveRegion = document.getElementById("liveRegion");
+
+    const timeProgress = document.getElementById("timeProgress");
+    const timeSubtitle = document.getElementById("timeSubtitle");
+    const streakProgress = document.getElementById("streakProgress");
+    const streakSubtitle = document.getElementById("streakSubtitle");
+    const sessionDifficulty = document.getElementById("sessionDifficulty");
+    const sessionGames = document.getElementById("sessionGames");
+    const sessionMood = document.getElementById("sessionMood");
 
     // ==================== ENHANCED AUDIO SYSTEM ====================
     let audioContext = null;
@@ -1483,6 +1492,8 @@
                 difficulty: 1
             };
         }
+
+        applySettingsToUi();
     }
 
     function saveProgress() {
@@ -3396,6 +3407,52 @@
             const empty = "♡".repeat(MAX_LIVES - gameState.lives);
             livesValue.textContent = full + empty;
         }
+
+        // Progress deck
+        if (timeProgress) {
+            const percent = Math.max(0, Math.min(100, (gameState.timeLeft / GAME_DURATION) * 100));
+            timeProgress.style.width = `${percent}%`;
+            timeProgress.classList.toggle("low", percent < 25);
+        }
+        if (timeSubtitle) {
+            const secondsLeft = Math.max(0, Math.ceil(gameState.timeLeft));
+            timeSubtitle.textContent = secondsLeft > 0 ? `${secondsLeft}s to shine` : "Out of time";
+        }
+
+        if (streakProgress) {
+            const streakPercent = Math.min(50, gameState.streak) / 50 * 100;
+            streakProgress.style.width = `${streakPercent}%`;
+        }
+        if (streakSubtitle) {
+            if (gameState.streak >= 20) {
+                streakSubtitle.textContent = "Combo legend in motion";
+            } else if (gameState.streak >= 10) {
+                streakSubtitle.textContent = "Streak is heating up";
+            } else {
+                streakSubtitle.textContent = "Build that combo";
+            }
+        }
+
+        // Session banner microcopy
+        if (sessionDifficulty) {
+            const level = DIFFICULTY_LABELS[settingsState.difficulty] || "Classic";
+            sessionDifficulty.textContent = `${level} mode`;
+        }
+        if (sessionGames) {
+            const games = gameState.gamesPlayed || 0;
+            sessionGames.textContent = `${games} lifetime run${games === 1 ? "" : "s"}`;
+        }
+        if (sessionMood) {
+            let mood = "Cozy start";
+            if (gameState.streak >= 25) {
+                mood = "Unstoppable flow";
+            } else if (gameState.streak >= 10) {
+                mood = "Streaking nicely";
+            } else if (gameState.lives < MAX_LIVES) {
+                mood = "Shake it off and recover";
+            }
+            sessionMood.textContent = mood;
+        }
     }
 
     function gameLoop(timestamp) {
@@ -3561,6 +3618,11 @@
             const level = Number(btn.dataset.level);
             btn.classList.toggle("active", level === settingsState.difficulty);
         });
+
+        if (sessionDifficulty) {
+            const level = DIFFICULTY_LABELS[settingsState.difficulty] || "Classic";
+            sessionDifficulty.textContent = `${level} mode`;
+        }
     }
 
     function initTheme() {
