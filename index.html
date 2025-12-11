@@ -1,3 +1,15 @@
+
+Nice catch. Let’s pull the game into index.html so Chapter 2 contains the Honey Hunt directly, no game.html, and wire up the other UI bits in this page.
+
+Below is a full replacement index.html with:
+	•	Honey game embedded in Chapter 2 (no iframe).
+	•	Inline game CSS added under the existing styles.
+	•	Game logic included in the bottom <script> (no script.js, no game.html).
+	•	Hero buttons (Begin the Story, Play Honey Game, View Registry) wired via scrollToChapter.
+	•	Chapter navigation, clickable characters, wishes form, countdown, honey-jar hopes, footer buttons, and audio all wired.
+
+You can drop this in as index.html and delete / ignore game.html for now.
+
 <!DOCTYPE html>
 <html lang="en">
 <head>
@@ -13,1422 +25,1595 @@
           property="og:description">
     <meta content="icons/icon.svg" property="og:image">
     <meta content="website" property="og:type">
-    <link href="styles.css" rel="stylesheet">
-<link rel="stylesheet" href="styles.css">
 
-<style>
-    /* =========================================
-       1. ROOT + GLOBAL LAYOUT
-       ========================================= */
-    :root {
-        --bg: #fff9ec;
-        --bg-soft: #fff4dd;
-        --ink: #3b2604;
-        --ink-soft: #5a4330;
-        --accent: #f4b944;
-        --accent-soft: #ffe4a8;
-        --accent-strong: #f59e0b;
-        --border-soft: rgba(0, 0, 0, 0.06);
-        --card-bg: #ffffff;
-        --card-radius: 24px;
-        --shadow-soft: 0 18px 40px rgba(0, 0, 0, 0.16);
-        --shadow-subtle: 0 8px 20px rgba(0, 0, 0, 0.08);
-        --shadow-tiny: 0 2px 6px rgba(0, 0, 0, 0.08);
-        --transition-fast: 0.18s ease-out;
-        --transition-med: 0.28s ease;
-        --page-max-width: 1120px;
-        --page-padding-x: 1.5rem;
-        --page-padding-y: 1.5rem;
-        --font-body: system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
-        --font-title: "Playfair Display", "Georgia", serif;
-        --space-sm: 0.75rem;
-        --space-md: 1.25rem;
-        --touch-min: 44px;
-        --touch-padding: 0.75rem;
-    }
+    <style>
+        /* =========================================
+           1. ROOT + GLOBAL LAYOUT
+           ========================================= */
+        :root {
+            --bg: #fff9ec;
+            --bg-soft: #fff4dd;
+            --ink: #3b2604;
+            --ink-soft: #5a4330;
+            --accent: #f4b944;
+            --accent-soft: #ffe4a8;
+            --accent-strong: #f59e0b;
+            --border-soft: rgba(0, 0, 0, 0.06);
+            --card-bg: #ffffff;
+            --card-radius: 24px;
+            --shadow-soft: 0 18px 40px rgba(0, 0, 0, 0.16);
+            --shadow-subtle: 0 8px 20px rgba(0, 0, 0, 0.08);
+            --shadow-tiny: 0 2px 6px rgba(0, 0, 0, 0.08);
+            --transition-fast: 0.18s ease-out;
+            --transition-med: 0.28s ease;
+            --page-max-width: 1120px;
+            --page-padding-x: 1.5rem;
+            --page-padding-y: 1.5rem;
+            --font-body: system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
+            --font-title: "Playfair Display", "Georgia", serif;
+            --space-sm: 0.75rem;
+            --space-md: 1.25rem;
+            --touch-min: 44px;
+            --touch-padding: 0.75rem;
+        }
 
-    *,
-    *::before,
-    *::after {
-        box-sizing: border-box;
-    }
+        *,
+        *::before,
+        *::after {
+            box-sizing: border-box;
+        }
 
-    html,
-    body {
-        margin: 0;
-        padding: 0;
-    }
+        html,
+        body {
+            margin: 0;
+            padding: 0;
+        }
 
-    body {
-        min-height: 100vh;
-        font-family: var(--font-body);
-        color: var(--ink);
-        background: radial-gradient(circle at top, #fff4d4 0, #ffe5b0 28%, #ffe7c4 48%, #fff9ec 100%);
-        -webkit-font-smoothing: antialiased;
-        padding-left: env(safe-area-inset-left, 1rem);
-        padding-right: env(safe-area-inset-right, 1rem);
-        padding-top: env(safe-area-inset-top, 0);
-        padding-bottom: env(safe-area-inset-bottom, 0);
-    }
+        body {
+            min-height: 100vh;
+            font-family: var(--font-body);
+            color: var(--ink);
+            background: radial-gradient(circle at top, #fff4d4 0, #ffe5b0 28%, #ffe7c4 48%, #fff9ec 100%);
+            -webkit-font-smoothing: antialiased;
+            padding-left: env(safe-area-inset-left, 1rem);
+            padding-right: env(safe-area-inset-right, 1rem);
+            padding-top: env(safe-area-inset-top, 0);
+            padding-bottom: env(safe-area-inset-bottom, 0);
+        }
 
-    /* Global touch targets */
-    .hero-action-btn,
-    .chapter-nav-btn,
-    .footer-link,
-    .submit-btn,
-    .chapter-pill,
-    .registry-card,
-    .clickable-character,
-    .btn {
-        position: relative;
-        min-height: var(--touch-min);
-        min-width: var(--touch-min);
-    }
+        /* Global touch targets */
+        .hero-action-btn,
+        .chapter-nav-btn,
+        .footer-link,
+        .submit-btn,
+        .chapter-pill,
+        .registry-card,
+        .clickable-character,
+        .btn {
+            position: relative;
+            min-height: var(--touch-min);
+            min-width: var(--touch-min);
+        }
 
-    .footer-link,
-    .chapter-nav-btn {
-        padding: var(--touch-padding) calc(var(--touch-padding) * 1.5);
-    }
+        .footer-link,
+        .chapter-nav-btn {
+            padding: var(--touch-padding) calc(var(--touch-padding) * 1.5);
+        }
 
-    .hero-action-btn,
-    .submit-btn {
-        display: inline-flex;
-        align-items: center;
-        justify-content: center;
-    }
+        .hero-action-btn,
+        .submit-btn {
+            display: inline-flex;
+            align-items: center;
+            justify-content: center;
+        }
 
-    .btn-icon,
-    .pill-icon {
-        padding: 0.25rem;
-    }
+        .btn-icon,
+        .pill-icon {
+            padding: 0.25rem;
+        }
 
-    /* A11y helper */
-    .sr-only {
-        position: absolute;
-        width: 1px;
-        height: 1px;
-        padding: 0;
-        margin: -1px;
-        overflow: hidden;
-        clip: rect(0, 0, 0, 0);
-        border: 0;
-    }
+        /* A11y helper */
+        .sr-only {
+            position: absolute;
+            width: 1px;
+            height: 1px;
+            padding: 0;
+            margin: -1px;
+            overflow: hidden;
+            clip: rect(0, 0, 0, 0);
+            border: 0;
+        }
 
-    /* Simple text utilities */
-    .divider {
-        text-align: center;
-        margin: 2rem 0;
-        font-size: 0.95rem;
-        opacity: 0.8;
-    }
+        /* Simple text utilities */
+        .divider {
+            text-align: center;
+            margin: 2rem 0;
+            font-size: 0.95rem;
+            opacity: 0.8;
+        }
 
-    /* =========================================
-       2. DECORATIVE SCENE + CLOUDS
-       ========================================= */
-    .enhanced-scene {
-        position: fixed;
-        inset: 0;
-        pointer-events: none;
-        background:
+        /* =========================================
+           2. DECORATIVE SCENE + CLOUDS
+           ========================================= */
+        .enhanced-scene {
+            position: fixed;
+            inset: 0;
+            pointer-events: none;
+            background:
                 radial-gradient(circle at top left, rgba(255, 255, 255, 0.8), transparent 55%),
                 radial-gradient(circle at top right, rgba(255, 243, 205, 0.8), transparent 50%),
                 radial-gradient(circle at bottom, rgba(255, 220, 185, 0.9), transparent 60%);
-        opacity: 0.6;
-        z-index: -2;
-    }
-
-    .cloud-layer {
-        position: fixed;
-        top: 0;
-        left: 0;
-        width: 100%;
-        pointer-events: none;
-        display: flex;
-        justify-content: space-around;
-        padding-top: 0.5rem;
-        font-size: 1.8rem;
-        opacity: 0.45;
-        z-index: -1;
-    }
-
-    .cloud {
-        animation: floatClouds 24s linear infinite;
-    }
-
-    .cloud:nth-child(2) {
-        animation-delay: -8s;
-    }
-
-    .cloud:nth-child(3) {
-        animation-delay: -16s;
-    }
-
-    @keyframes floatClouds {
-        0% {
-            transform: translate3d(-10px, 0, 0);
+            opacity: 0.6;
+            z-index: -2;
         }
-        50% {
-            transform: translate3d(10px, 4px, 0);
+
+        .cloud-layer {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            pointer-events: none;
+            display: flex;
+            justify-content: space-around;
+            padding-top: 0.5rem;
+            font-size: 1.8rem;
+            opacity: 0.45;
+            z-index: -1;
         }
-        100% {
-            transform: translate3d(-10px, 0, 0);
+
+        .cloud {
+            animation: floatClouds 24s linear infinite;
         }
-    }
 
-    /* =========================================
-       3. HERO / MASTHEAD
-       ========================================= */
-    .masthead-hero {
-        position: relative;
-        padding-bottom: 2rem;
-        color: var(--ink);
-    }
-
-    .hero-banner {
-        position: relative;
-        isolation: isolate;
-        max-width: 1200px;
-        margin: 0 auto 1.5rem;
-        border-radius: 32px;
-        overflow: hidden;
-        box-shadow: var(--shadow-soft);
-        background: linear-gradient(135deg, #ffe5b0, #ffd1a3);
-        padding-top: env(safe-area-inset-top, 0);
-    }
-
-    .hero-image-container {
-        position: relative;
-        width: 100%;
-        height: min(60vh, 520px);
-        overflow: hidden;
-    }
-
-    .hero-banner__img {
-        width: 100%;
-        height: 100%;
-        object-fit: cover;
-        filter: saturate(1.05) contrast(1.03);
-        transform: scale(1.02);
-        transform-origin: center;
-    }
-
-    /* Corner emojis */
-    .hero-corner-decoration {
-        position: absolute;
-        font-size: 1.8rem;
-        filter: drop-shadow(0 2px 4px rgba(0, 0, 0, 0.16));
-    }
-
-    .hero-corner-decoration.top-left {
-        top: 10px;
-        left: 14px;
-    }
-
-    .hero-corner-decoration.top-right {
-        top: 10px;
-        right: 14px;
-    }
-
-    .hero-corner-decoration.bottom-left {
-        bottom: 10px;
-        left: 14px;
-    }
-
-    .hero-corner-decoration.bottom-right {
-        bottom: 10px;
-        right: 14px;
-    }
-
-    /* Title overlay */
-    .hero-title-container {
-        position: absolute;
-        inset: auto 0 0;
-        display: flex;
-        justify-content: center;
-        padding: 1.25rem 1.5rem 1.6rem;
-        pointer-events: none;
-    }
-
-    .title-background {
-        pointer-events: auto;
-        max-width: 720px;
-        width: 100%;
-        padding: 1.25rem 1.5rem 1.5rem;
-        border-radius: 24px 24px 0 0;
-        background: linear-gradient(
-                135deg,
-                rgba(255, 255, 255, 0.99),
-                rgba(255, 248, 225, 0.9)
-        );
-        box-shadow: 0 -10px 30px rgba(0, 0, 0, 0.18);
-        border: 1px solid rgba(255, 255, 255, 0.9);
-        border-bottom: none;
-    }
-
-    .masthead-title {
-        margin: 0 0 0.5rem;
-        font-family: var(--font-title);
-        letter-spacing: 0.04em;
-        text-align: center;
-    }
-
-    .title-line {
-        display: block;
-    }
-
-    .title-line--primary {
-        font-size: clamp(1.3rem, 2vw + 1rem, 1.6rem);
-        text-transform: uppercase;
-        letter-spacing: 0.25em;
-        opacity: 0.9;
-    }
-
-    .title-line--secondary {
-        font-size: clamp(1.9rem, 3vw + 1.2rem, 2.4rem);
-        font-weight: 700;
-    }
-
-    .title-underline {
-        display: flex;
-        justify-content: center;
-        gap: 0.25rem;
-        margin-bottom: 0.35rem;
-    }
-
-    .underline-dot {
-        font-size: 0.95rem;
-        color: var(--accent-strong);
-    }
-
-    .hero-subtitle {
-        margin: 0;
-        text-align: center;
-        font-size: 0.95rem;
-        color: var(--ink-soft);
-    }
-
-    /* Sparkles / bunting / sheen */
-    .hero-sparkles {
-        position: absolute;
-        inset: 0;
-        pointer-events: none;
-        background:
-                radial-gradient(circle at 10% 10%, rgba(255, 255, 255, 0.7), transparent 60%),
-                radial-gradient(circle at 90% 30%, rgba(255, 225, 173, 0.7), transparent 55%);
-        mix-blend-mode: screen;
-        opacity: 0.6;
-        z-index: -1;
-    }
-
-    .hero-bunting {
-        max-width: 1200px;
-        margin: 0.25rem auto 0;
-        display: flex;
-        justify-content: center;
-        gap: 0.5rem;
-        font-size: 1.4rem;
-    }
-
-    .hero-sheen {
-        position: absolute;
-        inset: 0;
-        pointer-events: none;
-        background: linear-gradient(
-                135deg,
-                rgba(255, 255, 255, 0.16),
-                transparent 60%
-        );
-        mix-blend-mode: screen;
-        opacity: 0.8;
-    }
-
-    /* Hero inner panel */
-    .masthead-hero-inner {
-        max-width: var(--page-max-width);
-        margin: 0.5rem auto 0;
-        padding: 0 1.25rem;
-        padding-left: max(var(--page-padding-x), env(safe-area-inset-left, 1rem));
-        padding-right: max(var(--page-padding-x), env(safe-area-inset-right, 1rem));
-    }
-
-    .hero-panel {
-        margin-top: 1.5rem;
-        padding: 1.75rem 1.5rem;
-        border-radius: var(--card-radius);
-        background: rgba(255, 255, 255, 0.96);
-        box-shadow: var(--shadow-subtle);
-        border: 1px solid rgba(255, 255, 255, 0.8);
-    }
-
-    /* =========================================
-       4. HERO BADGE + DETAIL GRID + CTA
-       ========================================= */
-    .hero-badge {
-        display: grid;
-        grid-template-columns: auto minmax(0, 1.5fr);
-        gap: 1rem;
-        padding: 1rem 1.25rem;
-        border-radius: 999px;
-        background: linear-gradient(135deg, #fffaf0, #ffe8bb);
-        align-items: center;
-        border: 1px solid rgba(244, 185, 68, 0.3);
-        margin-bottom: 1.5rem;
-    }
-
-    .badge-icon {
-        display: flex;
-        align-items: center;
-        justify-content: center;
-    }
-
-    .badge-icon-inner {
-        width: 48px;
-        height: 48px;
-        border-radius: 999px;
-        display: flex;
-        align-items: center;
-        justify-content: center;
-        background: radial-gradient(circle at 30% 20%, #fff9e8, #f4b944);
-        box-shadow: var(--shadow-tiny);
-        font-size: 1.6rem;
-    }
-
-    .badge-copy {
-        min-width: 0;
-    }
-
-    .badge-eyebrow {
-        margin: 0;
-        text-transform: uppercase;
-        letter-spacing: 0.16em;
-        font-size: 0.7rem;
-        opacity: 0.7;
-    }
-
-    .badge-label {
-        margin: 0.15rem 0 0;
-        font-size: 0.9rem;
-        font-weight: 600;
-    }
-
-    .badge-title {
-        margin: 0.15rem 0 0;
-        font-size: 1rem;
-        font-weight: 700;
-    }
-
-    .badge-meta {
-        display: flex;
-        gap: 0.5rem;
-        flex-wrap: wrap;
-        justify-content: flex-end;
-        align-items: center;
-        font-size: 0.8rem;
-    }
-
-    .badge-pill {
-        display: inline-flex;
-        align-items: center;
-        gap: 0.4rem;
-        border-radius: 999px;
-        padding: 0.3rem 0.7rem;
-        background: rgba(255, 255, 255, 0.92);
-        border: 1px solid rgba(255, 255, 255, 0.9);
-        box-shadow: 0 2px 6px rgba(244, 185, 68, 0.25);
-    }
-
-    .pill-icon {
-        font-size: 1rem;
-    }
-
-    .pill-text {
-        white-space: nowrap;
-    }
-
-    /* Detail grid */
-    .hero-details-grid {
-        display: grid;
-        grid-template-columns: repeat(3, minmax(0, 1fr));
-        gap: 1rem;
-        margin-bottom: 1.5rem;
-    }
-
-    .hero-detail {
-        display: flex;
-        gap: 0.75rem;
-        padding: 0.85rem 1rem;
-        border-radius: 16px;
-        background: #fffdfa;
-        box-shadow: 0 4px 12px rgba(244, 185, 68, 0.12);
-    }
-
-    .detail-icon {
-        font-size: 1.5rem;
-    }
-
-    .detail-title {
-        margin: 0;
-        font-size: 0.95rem;
-        font-weight: 600;
-    }
-
-    .detail-text {
-        margin: 0.15rem 0 0;
-        font-size: 0.85rem;
-        color: var(--ink-soft);
-    }
-
-    /* Hero CTAs */
-    .hero-actions {
-        display: flex;
-        flex-wrap: wrap;
-        gap: 0.75rem;
-        margin-bottom: 1rem;
-    }
-
-    .hero-action-btn {
-        border-radius: 999px;
-        border: none;
-        padding: 0.6rem 1.1rem;
-        font-size: 0.9rem;
-        font-weight: 600;
-        display: inline-flex;
-        align-items: center;
-        gap: 0.4rem;
-        cursor: pointer;
-        transition: transform var(--transition-fast), box-shadow var(--transition-fast), background var(--transition-fast);
-    }
-
-    .hero-action-btn .btn-icon {
-        font-size: 1.1rem;
-    }
-
-    .hero-action-btn.primary {
-        background: linear-gradient(135deg, #f4b944, #f59e0b);
-        color: #3b2604;
-        box-shadow: 0 8px 18px rgba(244, 185, 68, 0.6);
-    }
-
-    .hero-action-btn.secondary {
-        background: #ffffff;
-        color: var(--ink);
-        box-shadow: var(--shadow-tiny);
-        border: 1px solid rgba(0, 0, 0, 0.06);
-    }
-
-    .hero-action-btn.ghost {
-        background: transparent;
-        color: var(--ink-soft);
-        border: 1px dashed rgba(0, 0, 0, 0.16);
-    }
-
-    .hero-action-btn:hover {
-        transform: translateY(-1px);
-        box-shadow: 0 10px 22px rgba(0, 0, 0, 0.14);
-    }
-
-    /* Orientation hint */
-    .orientation-hint {
-        display: flex;
-        align-items: center;
-        gap: 0.6rem;
-        padding-top: 0.5rem;
-        border-top: 1px dashed rgba(0, 0, 0, 0.08);
-        margin-top: 0.5rem;
-        font-size: 0.83rem;
-        color: var(--ink-soft);
-    }
-
-    .hint-icon {
-        font-size: 1.4rem;
-    }
-
-    /* =========================================
-       5. CHAPTER TRACKER (complements your inline)
-       ========================================= */
-    .tracker-label {
-        font-size: 0.8rem;
-        text-transform: uppercase;
-        letter-spacing: 0.16em;
-        opacity: 0.7;
-    }
-
-    /* Progress bar */
-    .book-progress {
-        position: relative;
-        flex: 1;
-        height: 0.4rem;
-        border-radius: 999px;
-        background: rgba(0, 0, 0, 0.06);
-        overflow: hidden;
-    }
-
-    .book-progress .progress-fill {
-        width: 0%;
-        height: 100%;
-        border-radius: inherit;
-        background: linear-gradient(90deg, #f4b944, #f97316);
-        transition: width 0.25s ease-out;
-    }
-
-    /* Sparkle accent */
-    .sparkle {
-        position: relative;
-    }
-
-    .sparkle::after {
-        content: "";
-        position: absolute;
-        inset: -2px;
-        border-radius: inherit;
-        border: 1px solid rgba(255, 255, 255, 0.7);
-        opacity: 0;
-        pointer-events: none;
-        animation: sparklePulse 2.8s ease-in-out infinite;
-    }
-
-    .chapter-pill.active.sparkle::after {
-        opacity: 1;
-    }
-
-    @keyframes sparklePulse {
-        0%,
-        100% {
-            transform: scale(1);
-            opacity: 0.4;
+        .cloud:nth-child(2) {
+            animation-delay: -8s;
         }
-        50% {
-            transform: scale(1.03);
-            opacity: 1;
+
+        .cloud:nth-child(3) {
+            animation-delay: -16s;
         }
-    }
 
-    /* =========================================
-       6. BOOK LAYOUT + PAGES
-       ========================================= */
-    .book-container {
-        max-width: var(--page-max-width);
-        margin: 1.25rem auto 3rem;
-        padding: 0 var(--page-padding-x);
-        padding-left: max(var(--page-padding-x), env(safe-area-inset-left, 1rem));
-        padding-right: max(var(--page-padding-x), env(safe-area-inset-right, 1rem));
-    }
-
-    .book {
-        margin-top: 1rem;
-        border-radius: var(--card-radius);
-        background: #fffdf8;
-        box-shadow: var(--shadow-soft);
-        border: 1px solid rgba(255, 255, 255, 0.9);
-        overflow: hidden;
-    }
-
-    .pages-wrapper {
-        position: relative;
-        padding: var(--page-padding-y) var(--page-padding-x);
-    }
-
-    /* Page cards */
-    .page {
-        display: none;
-        opacity: 0;
-        transform: translateY(4px);
-        transition: opacity var(--transition-med), transform var(--transition-med);
-    }
-
-    .page.active {
-        display: block;
-        opacity: 1;
-        transform: translateY(0);
-    }
-
-    .chapter-header {
-        text-align: center;
-        margin-bottom: 1.5rem;
-        position: relative;
-    }
-
-    .chapter-number {
-        margin: 0;
-        font-size: 0.85rem;
-        text-transform: uppercase;
-        letter-spacing: 0.22em;
-        opacity: 0.7;
-    }
-
-    .chapter-title {
-        margin: 0.4rem 0 0.25rem;
-        font-family: var(--font-title);
-        font-size: 1.6rem;
-    }
-
-    .chapter-subtitle {
-        margin: 0;
-        font-size: 0.95rem;
-        color: var(--ink-soft);
-    }
-
-    .honey-drip {
-        position: absolute;
-        bottom: -0.4rem;
-        left: 50%;
-        transform: translateX(-50%);
-        width: 110px;
-        height: 12px;
-        border-radius: 999px;
-        background: linear-gradient(90deg, #fbbf24, #f97316);
-        opacity: 0.5;
-    }
-
-    /* Page body */
-    .page-content {
-        margin-top: 1.75rem;
-    }
-
-    .story-text {
-        margin: 0 0 1rem;
-        line-height: 1.7;
-        font-size: 0.98rem;
-    }
-
-    /* =========================================
-       7. FIGURES / CHARACTER CARDS
-       ========================================= */
-    .chapter-illustrations {
-        display: flex;
-        flex-wrap: wrap;
-        gap: 1rem;
-        margin: 1.25rem 0 1.5rem;
-    }
-
-    .storybook-figure {
-        flex: 1 1 180px;
-        min-width: 0;
-        padding: 0.75rem 0.85rem;
-        border-radius: 18px;
-        background: #ffffff;
-        box-shadow: var(--shadow-tiny);
-        display: flex;
-        align-items: center;
-        gap: 0.75rem;
-    }
-
-    .storybook-figure img {
-        border-radius: 16px;
-        background: #fff6dc;
-        box-shadow: 0 4px 12px rgba(0, 0, 0, 0.16);
-    }
-
-    .figure-copy {
-        min-width: 0;
-    }
-
-    .figure-name {
-        font-weight: 600;
-        font-size: 0.9rem;
-    }
-
-    .figure-note {
-        margin: 0.15rem 0 0;
-        font-size: 0.8rem;
-        color: var(--ink-soft);
-    }
-
-    /* Theme tints */
-    .figure-theme-honey {
-        background: linear-gradient(135deg, #fff7dd, #ffe7b8);
-    }
-
-    .figure-theme-forest {
-        background: linear-gradient(135deg, #e5f4dd, #f3ffe3);
-    }
-
-    .figure-theme-sky {
-        background: linear-gradient(135deg, #e5f4ff, #f3f9ff);
-    }
-
-    /* Clickable characters */
-    .clickable-character {
-        cursor: pointer;
-        transition: transform var(--transition-fast), box-shadow var(--transition-fast);
-    }
-
-    .clickable-character:hover {
-        transform: translateY(-2px);
-        box-shadow: 0 10px 22px rgba(0, 0, 0, 0.18);
-    }
-
-    /* Character message bubble */
-    .character-message {
-        margin-top: 0.5rem;
-        font-size: 0.8rem;
-        color: var(--ink);
-    }
-
-    /* Dialogue bubbles in narrative */
-    .dialogue-bubble {
-        position: relative;
-        margin: 1rem 0 1.25rem;
-        padding: 0.7rem 0.9rem;
-        border-radius: 16px;
-        font-size: 0.9rem;
-        line-height: 1.4;
-    }
-
-    .dialogue-piglet {
-        background: #fff0f5;
-    }
-
-    .dialogue-pooh {
-        background: #fff5dd;
-    }
-
-    .dialogue-bubble .speaker {
-        display: block;
-        margin-top: 0.3rem;
-        font-size: 0.8rem;
-        opacity: 0.8;
-    }
-
-    .bubble-arrow {
-        position: absolute;
-        left: 18px;
-        bottom: 100%;
-        width: 12px;
-        height: 12px;
-        background: inherit;
-        transform: translateY(1px) rotate(45deg);
-    }
-
-    /* =========================================
-       8. GAME EMBED + TIPS
-       ========================================= */
-    .game-embed {
-        margin: 1.5rem auto;
-        max-width: 960px;
-        width: 100%;
-        border-radius: 24px;
-        overflow: hidden;
-        background: #000;
-        box-shadow: var(--shadow-soft);
-        border: 2px solid rgba(0, 0, 0, 0.08);
-        position: relative;
-        min-height: 300px;
-    }
-
-    /* Let the iframe fill the card; height tuned for mobile/desktop */
-    .game-embed__frame {
-        display: block;
-        width: 100%;
-        height: min(500px, 70vh, 80svh);
-        min-height: 300px;
-        max-height: 640px;
-        border: none;
-    }
-
-    @media (orientation: landscape) and (max-height: 600px) {
-        .game-embed__frame {
-            height: min(400px, 90svh);
+        @keyframes floatClouds {
+            0% {
+                transform: translate3d(-10px, 0, 0);
+            }
+            50% {
+                transform: translate3d(10px, 4px, 0);
+            }
+            100% {
+                transform: translate3d(-10px, 0, 0);
+            }
         }
-    }
 
-    .game-embed::before {
-        content: 'Loading game…';
-        position: absolute;
-        inset: 0;
-        background: linear-gradient(135deg, #ffe5b0, #ffd1a3);
-        display: flex;
-        align-items: center;
-        justify-content: center;
-        font-size: 1.2rem;
-        color: var(--ink);
-        z-index: 1;
-        opacity: 1;
-        transition: opacity 0.3s ease;
-    }
+        /* =========================================
+           3. HERO / MASTHEAD
+           ========================================= */
+        .masthead-hero {
+            position: relative;
+            padding-bottom: 2rem;
+            color: var(--ink);
+        }
 
-    .game-embed.loaded::before {
-        opacity: 0;
-        pointer-events: none;
-    }
-
-    /* Game description */
-    .game-description {
-        margin-top: 1.5rem;
-    }
-
-    .game-description h3 {
-        margin: 0 0 0.5rem;
-    }
-
-    .game-tips {
-        display: grid;
-        grid-template-columns: repeat(auto-fit, minmax(180px, 1fr));
-        gap: 0.9rem;
-        margin-top: 0.75rem;
-    }
-
-    .tip {
-        display: flex;
-        gap: 0.5rem;
-        padding: 0.7rem 0.8rem;
-        border-radius: 16px;
-        background: #fffdfa;
-        box-shadow: var(--shadow-tiny);
-        font-size: 0.85rem;
-    }
-
-    .tip-icon {
-        font-size: 1.2rem;
-        flex-shrink: 0;
-    }
-
-    /* =========================================
-       9. REGISTRY + NURSERY DETAILS + WISHES
-       ========================================= */
-    .registry-container {
-        margin: 2rem 0 1.75rem;
-    }
-
-    .registry-section {
-        padding: 1.25rem 1.3rem;
-        border-radius: 22px;
-        background: linear-gradient(135deg, #fffaf3, #ffeede);
-        box-shadow: var(--shadow-subtle);
-    }
-
-    .registry-header {
-        display: flex;
-        gap: 0.8rem;
-        align-items: center;
-        margin-bottom: 1rem;
-    }
-
-    .registry-icon {
-        font-size: 1.8rem;
-    }
-
-    .registry-subtitle {
-        margin: 0.2rem 0 0;
-        font-size: 0.9rem;
-        color: var(--ink-soft);
-    }
-
-    .registry-grid {
-        display: grid;
-        grid-template-columns: minmax(0, 1.4fr) minmax(0, 1.2fr);
-        gap: 1rem;
-    }
-
-    .registry-card {
-        display: flex;
-        gap: 0.75rem;
-        padding: 0.9rem 1rem;
-        border-radius: 18px;
-        background: #ffffff;
-        text-decoration: none;
-        color: inherit;
-        box-shadow: var(--shadow-tiny);
-        transition: transform var(--transition-fast), box-shadow var(--transition-fast);
-    }
-
-    .registry-card:hover {
-        transform: translateY(-2px);
-        box-shadow: 0 10px 24px rgba(0, 0, 0, 0.18);
-    }
-
-    .registry-card .card-icon {
-        font-size: 1.5rem;
-    }
-
-    .registry-card .card-content h4 {
-        margin: 0 0 0.2rem;
-        font-size: 0.95rem;
-    }
-
-    .registry-card .card-content p {
-        margin: 0;
-        font-size: 0.85rem;
-        color: var(--ink-soft);
-    }
-
-    .registry-card .card-link {
-        display: inline-block;
-        margin-top: 0.3rem;
-        font-size: 0.8rem;
-        color: #b45309;
-    }
-
-    .gift-idea-card {
-        flex-direction: column;
-    }
-
-    .gift-ideas {
-        margin: 0.25rem 0 0;
-        padding-left: 1.1rem;
-        font-size: 0.85rem;
-    }
-
-    /* Nursery details grid */
-    .nursery-details {
-        margin: 2rem 0 1.75rem;
-    }
-
-    .nursery-details h3 {
-        display: flex;
-        align-items: center;
-        gap: 0.4rem;
-    }
-
-    .details-grid {
-        display: grid;
-        grid-template-columns: repeat(auto-fit, minmax(190px, 1fr));
-        gap: 1rem;
-        margin-top: 0.9rem;
-    }
-
-    .detail-card {
-        padding: 0.85rem 1rem;
-        border-radius: 18px;
-        background: #ffffff;
-        box-shadow: var(--shadow-tiny);
-        display: flex;
-        gap: 0.7rem;
-    }
-
-    .detail-card .detail-icon {
-        font-size: 1.4rem;
-    }
-
-    /* Wishes section */
-    .wishes-section {
-        margin: 1.75rem 0 1.5rem;
-    }
-
-    .wishes-header h3 {
-        margin-bottom: 0.3rem;
-    }
-
-    .wishes-header p {
-        margin: 0;
-        font-size: 0.9rem;
-        color: var(--ink-soft);
-    }
-
-    .wishes-form-container {
-        margin-top: 1rem;
-    }
-
-    .enhanced-form {
-        padding: 1rem 1rem 1.1rem;
-        border-radius: 18px;
-        background: #fffdf8;
-        box-shadow: var(--shadow-tiny);
-    }
-
-    .form-grid {
-        display: grid;
-        grid-template-columns: repeat(2, minmax(0, 1fr));
-        gap: var(--space-md);
-        margin-bottom: 0.75rem;
-    }
-
-    .form-field label {
-        display: block;
-        margin-bottom: 0.15rem;
-        font-size: 0.85rem;
-        font-weight: 600;
-    }
-
-    .form-field input,
-    .form-field select,
-    .form-field textarea {
-        width: 100%;
-        padding: 0.55rem 0.6rem;
-        border-radius: 10px;
-        border: 1px solid rgba(0, 0, 0, 0.14);
-        font-family: inherit;
-        font-size: 0.9rem;
-        background: rgba(255, 255, 255, 0.96);
-    }
-
-    .form-field textarea {
-        resize: vertical;
-    }
-
-    .character-count {
-        margin-top: 0.25rem;
-        font-size: 0.75rem;
-        text-align: right;
-        color: var(--ink-soft);
-    }
-
-    .form-actions {
-        margin-top: 0.6rem;
-        display: flex;
-        flex-wrap: wrap;
-        gap: 0.75rem;
-        align-items: center;
-    }
-
-    .submit-btn {
-        border-radius: 999px;
-        border: none;
-        padding: 0.55rem 1.1rem;
-        background: linear-gradient(135deg, #f4b944, #f59e0b);
-        color: #3b2604;
-        font-weight: 600;
-        cursor: pointer;
-        display: inline-flex;
-        align-items: center;
-        gap: 0.4rem;
-        box-shadow: 0 6px 16px rgba(244, 185, 68, 0.6);
-        transition: transform var(--transition-fast), box-shadow var(--transition-fast);
-    }
-
-    .submit-btn:hover {
-        transform: translateY(-1px);
-        box-shadow: 0 10px 22px rgba(244, 185, 68, 0.7);
-    }
-
-    .form-feedback {
-        font-size: 0.8rem;
-        color: var(--ink-soft);
-    }
-
-    /* Sample wishes */
-    .sample-wishes {
-        margin-top: 1rem;
-    }
-
-    .wish-examples {
-        display: grid;
-        grid-template-columns: repeat(auto-fit, minmax(190px, 1fr));
-        gap: 0.8rem;
-    }
-
-    .wish-example {
-        margin: 0;
-        padding: 0.7rem 0.9rem;
-        border-radius: 14px;
-        background: #ffffff;
-        box-shadow: var(--shadow-tiny);
-        font-size: 0.85rem;
-    }
-
-    .wish-example cite {
-        display: block;
-        margin-top: 0.3rem;
-        font-size: 0.8rem;
-        opacity: 0.8;
-    }
-
-    /* Dynamic wishes display */
-    .wishes-display {
-        margin-top: 1.25rem;
-        display: grid;
-        grid-template-columns: repeat(auto-fit, minmax(210px, 1fr));
-        gap: 0.9rem;
-    }
-
-    .wishes-display .wish-card {
-        padding: 0.8rem 0.9rem;
-        border-radius: 16px;
-        background: #fffdfa;
-        box-shadow: var(--shadow-tiny);
-        font-size: 0.9rem;
-    }
-
-    /* =========================================
-       10. CHAPTER 4 CELEBRATION / COUNTDOWN
-       ========================================= */
-    .welcome-panel {
-        margin: 1.75rem 0 1.5rem;
-        padding: 1rem 1.1rem;
-        border-radius: 20px;
-        background: linear-gradient(135deg, #fff6dd, #ffe4b2);
-        display: flex;
-        align-items: center;
-        gap: 0.8rem;
-    }
-
-    .welcome-icon {
-        font-size: 1.7rem;
-    }
-
-    .welcome-heading {
-        margin: 0;
-    }
-
-    .welcome-subtitle {
-        margin: 0.2rem 0 0;
-        font-size: 0.9rem;
-        color: var(--ink-soft);
-    }
-
-    /* Countdown */
-    .countdown-section {
-        margin: 1.5rem 0 1.75rem;
-    }
-
-    .countdown-display {
-        display: flex;
-        gap: 1rem;
-        margin: 0.7rem 0;
-    }
-
-    .countdown-item {
-        flex: 0 0 90px;
-        padding: 0.7rem 0.8rem;
-        border-radius: 16px;
-        background: #ffffff;
-        box-shadow: var(--shadow-tiny);
-        text-align: center;
-    }
-
-    .countdown-number {
-        display: block;
-        font-size: 1.35rem;
-        font-weight: 700;
-    }
-
-    .countdown-label {
-        font-size: 0.8rem;
-        opacity: 0.8;
-    }
-
-    .countdown-note {
-        margin: 0;
-        font-size: 0.9rem;
-        color: var(--ink-soft);
-    }
-
-    /* Honey jar hopes */
-    .honey-jar-interactive {
-        margin: 1.75rem 0 1.5rem;
-        padding: 1rem 1.1rem;
-        border-radius: 20px;
-        background: #fffdf5;
-        box-shadow: var(--shadow-tiny);
-    }
-
-    .honey-jar-interactive h3 {
-        margin: 0.3rem 0 0.3rem;
-    }
-
-    .honey-jar-interactive p {
-        margin: 0 0 0.6rem;
-    }
-
-    /* Generic button used here */
-    .btn {
-        border-radius: 999px;
-        border: 1px solid rgba(0, 0, 0, 0.14);
-        padding: 0.5rem 1.1rem;
-        font-size: 0.9rem;
-        font-weight: 600;
-        cursor: pointer;
-        background: #ffffff;
-        box-shadow: var(--shadow-tiny);
-        transition: transform var(--transition-fast), box-shadow var(--transition-fast), background var(--transition-fast);
-    }
-
-    .btn.primary {
-        border-color: transparent;
-        background: linear-gradient(135deg, #f4b944, #f59e0b);
-        color: #3b2604;
-        box-shadow: 0 6px 16px rgba(244, 185, 68, 0.6);
-    }
-
-    .btn.primary:hover {
-        transform: translateY(-1px);
-        box-shadow: 0 10px 22px rgba(244, 185, 68, 0.7);
-    }
-
-    /* Final quote */
-    .final-thought {
-        margin-top: 1.5rem;
-        padding-top: 1rem;
-        border-top: 1px dashed rgba(0, 0, 0, 0.12);
-    }
-
-    .final-thought blockquote {
-        margin: 0;
-        font-size: 0.95rem;
-        font-style: italic;
-    }
-
-    .final-thought cite {
-        font-style: normal;
-    }
-
-    .final-thought .signature {
-        margin-top: 0.6rem;
-        font-size: 0.9rem;
-    }
-
-    /* =========================================
-       11. NAVIGATION BUTTONS (Prev / Next)
-       ========================================= */
-    .chapter-nav {
-        display: flex;
-        align-items: center;
-        justify-content: space-between;
-        gap: 0.75rem;
-        padding: 0.85rem 1.25rem 1.1rem;
-        border-top: 1px solid rgba(0, 0, 0, 0.06);
-        background: rgba(255, 255, 255, 0.96);
-    }
-
-    .chapter-nav-btn {
-        border-radius: 999px;
-        border: 1px solid rgba(0, 0, 0, 0.18);
-        padding: 0.45rem 0.9rem;
-        font-size: 0.9rem;
-        cursor: pointer;
-        background: #ffffff;
-        box-shadow: var(--shadow-tiny);
-        transition: transform var(--transition-fast), box-shadow var(--transition-fast), background var(--transition-fast);
-    }
-
-    .chapter-nav-btn.next {
-        border-color: transparent;
-        background: linear-gradient(135deg, #f4b944, #f59e0b);
-        color: #3b2604;
-    }
-
-    .chapter-nav-btn:hover {
-        transform: translateY(-1px);
-        box-shadow: 0 8px 18px rgba(0, 0, 0, 0.16);
-    }
-
-    .chapter-indicator {
-        font-size: 0.9rem;
-        color: var(--ink-soft);
-    }
-
-    /* =========================================
-       12. FOOTER
-       ========================================= */
-    .site-footer {
-        max-width: var(--page-max-width);
-        margin: 0 auto 2rem;
-        padding: 1.25rem var(--page-padding-x) 0;
-        text-align: center;
-        font-size: 0.85rem;
-        color: var(--ink-soft);
-    }
-
-    .footer-links {
-        margin-top: 0.5rem;
-        display: flex;
-        justify-content: center;
-        gap: 0.75rem;
-        flex-wrap: wrap;
-    }
-
-    .footer-link {
-        border-radius: 999px;
-        border: 1px solid rgba(0, 0, 0, 0.16);
-        padding: 0.35rem 0.8rem;
-        font-size: 0.8rem;
-        background: #ffffff;
-        cursor: pointer;
-        box-shadow: var(--shadow-tiny);
-    }
-
-    /* =========================================
-       13. RESPONSIVE TWEAKS
-       ========================================= */
-    @media (max-width: 900px) {
         .hero-banner {
-            border-radius: 0;
-            box-shadow: none;
+            position: relative;
+            isolation: isolate;
+            max-width: 1200px;
+            margin: 0 auto 1.5rem;
+            border-radius: 32px;
+            overflow: hidden;
+            box-shadow: var(--shadow-soft);
+            background: linear-gradient(135deg, #ffe5b0, #ffd1a3);
+            padding-top: env(safe-area-inset-top, 0);
         }
 
         .hero-image-container {
-            height: min(50vh, 420px);
+            position: relative;
+            width: 100%;
+            height: min(60vh, 520px);
+            overflow: hidden;
         }
 
+        .hero-banner__img {
+            width: 100%;
+            height: 100%;
+            object-fit: cover;
+            filter: saturate(1.05) contrast(1.03);
+            transform: scale(1.02);
+            transform-origin: center;
+        }
+
+        /* Corner emojis */
+        .hero-corner-decoration {
+            position: absolute;
+            font-size: 1.8rem;
+            filter: drop-shadow(0 2px 4px rgba(0, 0, 0, 0.16));
+        }
+
+        .hero-corner-decoration.top-left {
+            top: 10px;
+            left: 14px;
+        }
+
+        .hero-corner-decoration.top-right {
+            top: 10px;
+            right: 14px;
+        }
+
+        .hero-corner-decoration.bottom-left {
+            bottom: 10px;
+            left: 14px;
+        }
+
+        .hero-corner-decoration.bottom-right {
+            bottom: 10px;
+            right: 14px;
+        }
+
+        /* Title overlay */
         .hero-title-container {
-            padding-inline: 1rem;
+            position: absolute;
+            inset: auto 0 0;
+            display: flex;
+            justify-content: center;
+            padding: 1.25rem 1.5rem 1.6rem;
+            pointer-events: none;
         }
 
         .title-background {
-            border-radius: 20px 20px 0 0;
+            pointer-events: auto;
+            max-width: 720px;
+            width: 100%;
+            padding: 1.25rem 1.5rem 1.5rem;
+            border-radius: 24px 24px 0 0;
+            background: linear-gradient(
+                135deg,
+                rgba(255, 255, 255, 0.99),
+                rgba(255, 248, 225, 0.9)
+            );
+            box-shadow: 0 -10px 30px rgba(0, 0, 0, 0.18);
+            border: 1px solid rgba(255, 255, 255, 0.9);
+            border-bottom: none;
+        }
+
+        .masthead-title {
+            margin: 0 0 0.5rem;
+            font-family: var(--font-title);
+            letter-spacing: 0.04em;
+            text-align: center;
+        }
+
+        .title-line {
+            display: block;
+        }
+
+        .title-line--primary {
+            font-size: clamp(1.3rem, 2vw + 1rem, 1.6rem);
+            text-transform: uppercase;
+            letter-spacing: 0.25em;
+            opacity: 0.9;
+        }
+
+        .title-line--secondary {
+            font-size: clamp(1.9rem, 3vw + 1.2rem, 2.4rem);
+            font-weight: 700;
+        }
+
+        .title-underline {
+            display: flex;
+            justify-content: center;
+            gap: 0.25rem;
+            margin-bottom: 0.35rem;
+        }
+
+        .underline-dot {
+            font-size: 0.95rem;
+            color: var(--accent-strong);
+        }
+
+        .hero-subtitle {
+            margin: 0;
+            text-align: center;
+            font-size: 0.95rem;
+            color: var(--ink-soft);
+        }
+
+        /* Sparkles / bunting / sheen */
+        .hero-sparkles {
+            position: absolute;
+            inset: 0;
+            pointer-events: none;
+            background:
+                radial-gradient(circle at 10% 10%, rgba(255, 255, 255, 0.7), transparent 60%),
+                radial-gradient(circle at 90% 30%, rgba(255, 225, 173, 0.7), transparent 55%);
+            mix-blend-mode: screen;
+            opacity: 0.6;
+            z-index: -1;
+        }
+
+        .hero-bunting {
+            max-width: 1200px;
+            margin: 0.25rem auto 0;
+            display: flex;
+            justify-content: center;
+            gap: 0.5rem;
+            font-size: 1.4rem;
+        }
+
+        .hero-sheen {
+            position: absolute;
+            inset: 0;
+            pointer-events: none;
+            background: linear-gradient(
+                135deg,
+                rgba(255, 255, 255, 0.16),
+                transparent 60%
+            );
+            mix-blend-mode: screen;
+            opacity: 0.8;
+        }
+
+        /* Hero inner panel */
+        .masthead-hero-inner {
+            max-width: var(--page-max-width);
+            margin: 0.5rem auto 0;
+            padding: 0 1.25rem;
+            padding-left: max(var(--page-padding-x), env(safe-area-inset-left, 1rem));
+            padding-right: max(var(--page-padding-x), env(safe-area-inset-right, 1rem));
         }
 
         .hero-panel {
-            margin-top: 1rem;
-            padding: 1.25rem 1rem 1.4rem;
+            margin-top: 1.5rem;
+            padding: 1.75rem 1.5rem;
+            border-radius: var(--card-radius);
+            background: rgba(255, 255, 255, 0.96);
+            box-shadow: var(--shadow-subtle);
+            border: 1px solid rgba(255, 255, 255, 0.8);
         }
 
+        /* =========================================
+           4. HERO BADGE + DETAIL GRID + CTA
+           ========================================= */
         .hero-badge {
-            grid-template-columns: 1fr;
-            border-radius: 20px;
+            display: grid;
+            grid-template-columns: auto minmax(0, 1.5fr);
+            gap: 1rem;
+            padding: 1rem 1.25rem;
+            border-radius: 999px;
+            background: linear-gradient(135deg, #fffaf0, #ffe8bb);
+            align-items: center;
+            border: 1px solid rgba(244, 185, 68, 0.3);
+            margin-bottom: 1.5rem;
         }
 
+        .badge-icon {
+            display: flex;
+            align-items: center;
+            justify-content: center;
+        }
+
+        .badge-icon-inner {
+            width: 48px;
+            height: 48px;
+            border-radius: 999px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            background: radial-gradient(circle at 30% 20%, #fff9e8, #f4b944);
+            box-shadow: var(--shadow-tiny);
+            font-size: 1.6rem;
+        }
+
+        .badge-copy {
+            min-width: 0;
+        }
+
+        .badge-eyebrow {
+            margin: 0;
+            text-transform: uppercase;
+            letter-spacing: 0.16em;
+            font-size: 0.7rem;
+            opacity: 0.7;
+        }
+
+        .badge-label {
+            margin: 0.15rem 0 0;
+            font-size: 0.9rem;
+            font-weight: 600;
+        }
+
+        .badge-title {
+            margin: 0.15rem 0 0;
+            font-size: 1rem;
+            font-weight: 700;
+        }
+
+        .badge-meta {
+            display: flex;
+            gap: 0.5rem;
+            flex-wrap: wrap;
+            justify-content: flex-end;
+            align-items: center;
+            font-size: 0.8rem;
+        }
+
+        .badge-pill {
+            display: inline-flex;
+            align-items: center;
+            gap: 0.4rem;
+            border-radius: 999px;
+            padding: 0.3rem 0.7rem;
+            background: rgba(255, 255, 255, 0.92);
+            border: 1px solid rgba(255, 255, 255, 0.9);
+            box-shadow: 0 2px 6px rgba(244, 185, 68, 0.25);
+        }
+
+        .pill-icon {
+            font-size: 1rem;
+        }
+
+        .pill-text {
+            white-space: nowrap;
+        }
+
+        /* Detail grid */
         .hero-details-grid {
-            grid-template-columns: minmax(0, 1fr);
+            display: grid;
+            grid-template-columns: repeat(3, minmax(0, 1fr));
+            gap: 1rem;
+            margin-bottom: 1.5rem;
         }
 
-        .registry-grid {
-            grid-template-columns: minmax(0, 1fr);
+        .hero-detail {
+            display: flex;
+            gap: 0.75rem;
+            padding: 0.85rem 1rem;
+            border-radius: 16px;
+            background: #fffdfa;
+            box-shadow: 0 4px 12px rgba(244, 185, 68, 0.12);
         }
-    }
 
-    @media (max-width: 768px) {
+        .detail-icon {
+            font-size: 1.5rem;
+        }
+
+        .detail-title {
+            margin: 0;
+            font-size: 0.95rem;
+            font-weight: 600;
+        }
+
+        .detail-text {
+            margin: 0.15rem 0 0;
+            font-size: 0.85rem;
+            color: var(--ink-soft);
+        }
+
+        /* Hero CTAs */
+        .hero-actions {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 0.75rem;
+            margin-bottom: 1rem;
+        }
+
+        .hero-action-btn {
+            border-radius: 999px;
+            border: none;
+            padding: 0.6rem 1.1rem;
+            font-size: 0.9rem;
+            font-weight: 600;
+            display: inline-flex;
+            align-items: center;
+            gap: 0.4rem;
+            cursor: pointer;
+            transition: transform var(--transition-fast), box-shadow var(--transition-fast), background var(--transition-fast);
+        }
+
+        .hero-action-btn .btn-icon {
+            font-size: 1.1rem;
+        }
+
+        .hero-action-btn.primary {
+            background: linear-gradient(135deg, #f4b944, #f59e0b);
+            color: #3b2604;
+            box-shadow: 0 8px 18px rgba(244, 185, 68, 0.6);
+        }
+
+        .hero-action-btn.secondary {
+            background: #ffffff;
+            color: var(--ink);
+            box-shadow: var(--shadow-tiny);
+            border: 1px solid rgba(0, 0, 0, 0.06);
+        }
+
+        .hero-action-btn.ghost {
+            background: transparent;
+            color: var(--ink-soft);
+            border: 1px dashed rgba(0, 0, 0, 0.16);
+        }
+
+        .hero-action-btn:hover {
+            transform: translateY(-1px);
+            box-shadow: 0 10px 22px rgba(0, 0, 0, 0.14);
+        }
+
+        /* Orientation hint */
+        .orientation-hint {
+            display: flex;
+            align-items: center;
+            gap: 0.6rem;
+            padding-top: 0.5rem;
+            border-top: 1px dashed rgba(0, 0, 0, 0.08);
+            margin-top: 0.5rem;
+            font-size: 0.83rem;
+            color: var(--ink-soft);
+        }
+
+        .hint-icon {
+            font-size: 1.4rem;
+        }
+
+        /* =========================================
+           5. CHAPTER TRACKER
+           ========================================= */
+        .chapter-tracker {
+            margin: 1rem 0 0.75rem;
+        }
+
+        .tracker-row {
+            display: flex;
+            align-items: center;
+            gap: 0.75rem;
+            margin-bottom: 0.75rem;
+        }
+
+        .tracker-label {
+            font-size: 0.8rem;
+            text-transform: uppercase;
+            letter-spacing: 0.16em;
+            opacity: 0.7;
+            white-space: nowrap;
+        }
+
+        /* Progress bar */
+        .book-progress {
+            position: relative;
+            flex: 1;
+            height: 0.4rem;
+            border-radius: 999px;
+            background: rgba(0, 0, 0, 0.06);
+            overflow: hidden;
+        }
+
+        .book-progress .progress-fill {
+            width: 0%;
+            height: 100%;
+            border-radius: inherit;
+            background: linear-gradient(90deg, #f4b944, #f97316);
+            transition: width 0.25s ease-out;
+        }
+
+        .chapter-pill-row {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 0.5rem;
+            margin-top: 0.25rem;
+        }
+
+        .chapter-pill {
+            display: inline-flex;
+            align-items: center;
+            gap: 0.5rem;
+            padding: 0.4rem 0.9rem;
+            border-radius: 999px;
+            border: 1px solid rgba(0, 0, 0, 0.08);
+            background: #ffffff;
+            box-shadow: var(--shadow-tiny);
+            cursor: pointer;
+            font-size: 0.85rem;
+        }
+
+        .chapter-pill .pill-number {
+            display: inline-flex;
+            align-items: center;
+            justify-content: center;
+            width: 1.7rem;
+            height: 1.7rem;
+            border-radius: 999px;
+            background: #fff7dd;
+            font-weight: 700;
+            font-size: 0.85rem;
+        }
+
+        .chapter-pill .pill-text {
+            display: flex;
+            flex-direction: column;
+            align-items: flex-start;
+        }
+
+        .chapter-pill .pill-title {
+            font-weight: 600;
+            font-size: 0.85rem;
+        }
+
+        .chapter-pill .pill-detail {
+            font-size: 0.75rem;
+            opacity: 0.76;
+        }
+
+        .chapter-pill.active {
+            border-color: #f4b944;
+            background: linear-gradient(135deg, #fff8dd, #ffe4af);
+        }
+
+        /* Sparkle accent */
+        .sparkle {
+            position: relative;
+        }
+
+        .sparkle::after {
+            content: "";
+            position: absolute;
+            inset: -2px;
+            border-radius: inherit;
+            border: 1px solid rgba(255, 255, 255, 0.7);
+            opacity: 0;
+            pointer-events: none;
+            animation: sparklePulse 2.8s ease-in-out infinite;
+        }
+
+        .chapter-pill.active.sparkle::after {
+            opacity: 1;
+        }
+
+        @keyframes sparklePulse {
+            0%,
+            100% {
+                transform: scale(1);
+                opacity: 0.4;
+            }
+            50% {
+                transform: scale(1.03);
+                opacity: 1;
+            }
+        }
+
+        /* =========================================
+           6. BOOK LAYOUT + PAGES
+           ========================================= */
         .book-container {
-            padding-inline: 1rem;
+            max-width: var(--page-max-width);
+            margin: 1.25rem auto 3rem;
+            padding: 0 var(--page-padding-x);
+            padding-left: max(var(--page-padding-x), env(safe-area-inset-left, 1rem));
+            padding-right: max(var(--page-padding-x), env(safe-area-inset-right, 1rem));
+        }
+
+        .book {
+            margin-top: 1rem;
+            border-radius: var(--card-radius);
+            background: #fffdf8;
+            box-shadow: var(--shadow-soft);
+            border: 1px solid rgba(255, 255, 255, 0.9);
+            overflow: hidden;
         }
 
         .pages-wrapper {
-            padding-inline: 1rem;
+            position: relative;
+            padding: var(--page-padding-y) var(--page-padding-x);
+        }
+
+        /* Page cards */
+        .page {
+            display: none;
+            opacity: 0;
+            transform: translateY(4px);
+            transition: opacity var(--transition-med), transform var(--transition-med);
+        }
+
+        .page.active {
+            display: block;
+            opacity: 1;
+            transform: translateY(0);
+        }
+
+        .chapter-header {
+            text-align: center;
+            margin-bottom: 1.5rem;
+            position: relative;
+        }
+
+        .chapter-number {
+            margin: 0;
+            font-size: 0.85rem;
+            text-transform: uppercase;
+            letter-spacing: 0.22em;
+            opacity: 0.7;
+        }
+
+        .chapter-title {
+            margin: 0.4rem 0 0.25rem;
+            font-family: var(--font-title);
+            font-size: 1.6rem;
+        }
+
+        .chapter-subtitle {
+            margin: 0;
+            font-size: 0.95rem;
+            color: var(--ink-soft);
+        }
+
+        .honey-drip {
+            position: absolute;
+            bottom: -0.4rem;
+            left: 50%;
+            transform: translateX(-50%);
+            width: 110px;
+            height: 12px;
+            border-radius: 999px;
+            background: linear-gradient(90deg, #fbbf24, #f97316);
+            opacity: 0.5;
+        }
+
+        /* Page body */
+        .page-content {
+            margin-top: 1.75rem;
+        }
+
+        .story-text {
+            margin: 0 0 1rem;
+            line-height: 1.7;
+            font-size: 0.98rem;
+        }
+
+        /* =========================================
+           7. FIGURES / CHARACTER CARDS
+           ========================================= */
+        .chapter-illustrations {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 1rem;
+            margin: 1.25rem 0 1.5rem;
+        }
+
+        .storybook-figure {
+            flex: 1 1 180px;
+            min-width: 0;
+            padding: 0.75rem 0.85rem;
+            border-radius: 18px;
+            background: #ffffff;
+            box-shadow: var(--shadow-tiny);
+            display: flex;
+            align-items: center;
+            gap: 0.75rem;
+        }
+
+        .storybook-figure img {
+            border-radius: 16px;
+            background: #fff6dc;
+            box-shadow: 0 4px 12px rgba(0, 0, 0, 0.16);
+            max-width: 96px;
+            max-height: 96px;
+        }
+
+        .figure-copy {
+            min-width: 0;
+        }
+
+        .figure-name {
+            font-weight: 600;
+            font-size: 0.9rem;
+        }
+
+        .figure-note {
+            margin: 0.15rem 0 0;
+            font-size: 0.8rem;
+            color: var(--ink-soft);
+        }
+
+        /* Theme tints */
+        .figure-theme-honey {
+            background: linear-gradient(135deg, #fff7dd, #ffe7b8);
+        }
+
+        .figure-theme-forest {
+            background: linear-gradient(135deg, #e5f4dd, #f3ffe3);
+        }
+
+        .figure-theme-sky {
+            background: linear-gradient(135deg, #e5f4ff, #f3f9ff);
+        }
+
+        /* Clickable characters */
+        .clickable-character {
+            cursor: pointer;
+            transition: transform var(--transition-fast), box-shadow var(--transition-fast);
+        }
+
+        .clickable-character:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 10px 22px rgba(0, 0, 0, 0.18);
+        }
+
+        /* Character message bubble */
+        .character-message {
+            margin-top: 0.5rem;
+            font-size: 0.8rem;
+            color: var(--ink);
+        }
+
+        /* Dialogue bubbles in narrative */
+        .dialogue-bubble {
+            position: relative;
+            margin: 1rem 0 1.25rem;
+            padding: 0.7rem 0.9rem;
+            border-radius: 16px;
+            font-size: 0.9rem;
+            line-height: 1.4;
+        }
+
+        .dialogue-piglet {
+            background: #fff0f5;
+        }
+
+        .dialogue-pooh {
+            background: #fff5dd;
+        }
+
+        .dialogue-bubble .speaker {
+            display: block;
+            margin-top: 0.3rem;
+            font-size: 0.8rem;
+            opacity: 0.8;
+        }
+
+        .bubble-arrow {
+            position: absolute;
+            left: 18px;
+            bottom: 100%;
+            width: 12px;
+            height: 12px;
+            background: inherit;
+            transform: translateY(1px) rotate(45deg);
+        }
+
+        /* =========================================
+           8. GAME EMBED + HONEY GAME
+           ========================================= */
+        .game-embed {
+            margin: 1.5rem auto;
+            max-width: 960px;
+            width: 100%;
+            border-radius: 24px;
+            overflow: hidden;
+            background: #000;
+            box-shadow: var(--shadow-soft);
+            border: 2px solid rgba(0, 0, 0, 0.08);
+            position: relative;
+            min-height: 320px;
+        }
+
+        .game-embed::before {
+            content: 'Loading game…';
+            position: absolute;
+            inset: 0;
+            background: linear-gradient(135deg, #ffe5b0, #ffd1a3);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 1.2rem;
+            color: var(--ink);
+            z-index: 1;
+            opacity: 1;
+            transition: opacity 0.3s ease;
+        }
+
+        .game-embed.loaded::before {
+            opacity: 0;
+            pointer-events: none;
+        }
+
+        .honey-game {
+            position: relative;
+            display: flex;
+            flex-direction: column;
+            height: 100%;
+            min-height: 320px;
+            background: radial-gradient(circle at top, #fff8e1 0, #ffe0b2 45%, #f6b26b 100%);
+            color: #2c1810;
+        }
+
+        .honey-game-header {
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            padding: 0.6rem 0.9rem;
+            font-size: 0.85rem;
+            background: linear-gradient(135deg, rgba(255, 255, 255, 0.9), rgba(255, 248, 225, 0.9));
+        }
+
+        .honey-game-header .title {
+            display: flex;
+            align-items: center;
+            gap: 0.4rem;
+        }
+
+        .honey-game-header .title span {
+            font-weight: 600;
+        }
+
+        .hud-row {
+            display: flex;
+            align-items: center;
+            gap: 0.75rem;
+        }
+
+        .hud-item {
+            padding: 0.2rem 0.6rem;
+            border-radius: 999px;
+            background: rgba(255, 255, 255, 0.8);
+            box-shadow: var(--shadow-tiny);
+        }
+
+        .hud-label {
+            font-size: 0.75rem;
+            opacity: 0.7;
+            margin-right: 0.2rem;
+        }
+
+        .honey-game-main {
+            position: relative;
+            flex: 1;
+            display: flex;
+            align-items: stretch;
+            justify-content: center;
+            padding: 0.6rem 0.6rem 0.4rem;
+        }
+
+        #gameCanvas {
+            border-radius: 18px;
+            background: linear-gradient(to top, #f4a261 0%, #f4e1a1 40%, #87ceeb 100%);
+            box-shadow: 0 10px 24px rgba(0, 0, 0, 0.3);
+            max-width: 100%;
+            max-height: 100%;
+        }
+
+        .honey-game-controls {
+            padding: 0.4rem 0.6rem 0.7rem;
+            display: flex;
+            flex-wrap: wrap;
+            gap: 0.5rem;
+            justify-content: center;
+            background: linear-gradient(180deg, rgba(255, 255, 255, 0.9), rgba(255, 248, 225, 0.9));
+        }
+
+        .control-btn {
+            border-radius: 999px;
+            border: 1px solid rgba(0, 0, 0, 0.14);
+            padding: 0.4rem 0.9rem;
+            font-size: 0.9rem;
+            font-weight: 600;
+            cursor: pointer;
+            background: #ffffff;
+            box-shadow: var(--shadow-tiny);
+            min-width: 80px;
+        }
+
+        .control-btn.primary {
+            border-color: transparent;
+            background: linear-gradient(135deg, #f4b944, #f59e0b);
+            color: #3b2604;
+            box-shadow: 0 6px 16px rgba(244, 185, 68, 0.6);
+        }
+
+        .control-btn:active {
+            transform: translateY(1px);
+            box-shadow: 0 2px 6px rgba(0, 0, 0, 0.18);
+        }
+
+        .control-btn-icon {
+            margin-right: 0.3rem;
+        }
+
+        /* Game description */
+        .game-description {
+            margin-top: 1.5rem;
+        }
+
+        .game-description h3 {
+            margin: 0 0 0.5rem;
+        }
+
+        .game-tips {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(180px, 1fr));
+            gap: 0.9rem;
+            margin-top: 0.75rem;
+        }
+
+        .tip {
+            display: flex;
+            gap: 0.5rem;
+            padding: 0.7rem 0.8rem;
+            border-radius: 16px;
+            background: #fffdfa;
+            box-shadow: var(--shadow-tiny);
+            font-size: 0.85rem;
+        }
+
+        .tip-icon {
+            font-size: 1.2rem;
+            flex-shrink: 0;
+        }
+
+        /* =========================================
+           9. REGISTRY + NURSERY DETAILS + WISHES
+           ========================================= */
+        .registry-container {
+            margin: 2rem 0 1.75rem;
+        }
+
+        .registry-section {
+            padding: 1.25rem 1.3rem;
+            border-radius: 22px;
+            background: linear-gradient(135deg, #fffaf3, #ffeede);
+            box-shadow: var(--shadow-subtle);
+        }
+
+        .registry-header {
+            display: flex;
+            gap: 0.8rem;
+            align-items: center;
+            margin-bottom: 1rem;
+        }
+
+        .registry-icon {
+            font-size: 1.8rem;
+        }
+
+        .registry-subtitle {
+            margin: 0.2rem 0 0;
+            font-size: 0.9rem;
+            color: var(--ink-soft);
+        }
+
+        .registry-grid {
+            display: grid;
+            grid-template-columns: minmax(0, 1.4fr) minmax(0, 1.2fr);
+            gap: 1rem;
+        }
+
+        .registry-card {
+            display: flex;
+            gap: 0.75rem;
+            padding: 0.9rem 1rem;
+            border-radius: 18px;
+            background: #ffffff;
+            text-decoration: none;
+            color: inherit;
+            box-shadow: var(--shadow-tiny);
+            transition: transform var(--transition-fast), box-shadow var(--transition-fast);
+        }
+
+        .registry-card:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 10px 24px rgba(0, 0, 0, 0.18);
+        }
+
+        .registry-card .card-icon {
+            font-size: 1.5rem;
+        }
+
+        .registry-card .card-content h4 {
+            margin: 0 0 0.2rem;
+            font-size: 0.95rem;
+        }
+
+        .registry-card .card-content p {
+            margin: 0;
+            font-size: 0.85rem;
+            color: var(--ink-soft);
+        }
+
+        .registry-card .card-link {
+            display: inline-block;
+            margin-top: 0.3rem;
+            font-size: 0.8rem;
+            color: #b45309;
+        }
+
+        .gift-idea-card {
+            flex-direction: column;
+        }
+
+        .gift-ideas {
+            margin: 0.25rem 0 0;
+            padding-left: 1.1rem;
+            font-size: 0.85rem;
+        }
+
+        /* Nursery details grid */
+        .nursery-details {
+            margin: 2rem 0 1.75rem;
+        }
+
+        .nursery-details h3 {
+            display: flex;
+            align-items: center;
+            gap: 0.4rem;
+        }
+
+        .details-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(190px, 1fr));
+            gap: 1rem;
+            margin-top: 0.9rem;
+        }
+
+        .detail-card {
+            padding: 0.85rem 1rem;
+            border-radius: 18px;
+            background: #ffffff;
+            box-shadow: var(--shadow-tiny);
+            display: flex;
+            gap: 0.7rem;
+        }
+
+        .detail-card .detail-icon {
+            font-size: 1.4rem;
+        }
+
+        /* Wishes section */
+        .wishes-section {
+            margin: 1.75rem 0 1.5rem;
+        }
+
+        .wishes-header h3 {
+            margin-bottom: 0.3rem;
+        }
+
+        .wishes-header p {
+            margin: 0;
+            font-size: 0.9rem;
+            color: var(--ink-soft);
+        }
+
+        .wishes-form-container {
+            margin-top: 1rem;
+        }
+
+        .enhanced-form {
+            padding: 1rem 1rem 1.1rem;
+            border-radius: 18px;
+            background: #fffdf8;
+            box-shadow: var(--shadow-tiny);
         }
 
         .form-grid {
-            grid-template-columns: 1fr;
-            gap: var(--space-sm);
+            display: grid;
+            grid-template-columns: repeat(2, minmax(0, 1fr));
+            gap: var(--space-md);
+            margin-bottom: 0.75rem;
         }
 
-        input[type="text"],
-        input[type="email"],
-        input[type="tel"],
-        textarea,
-        select {
-            font-size: 16px !important;
+        .form-field label {
+            display: block;
+            margin-bottom: 0.15rem;
+            font-size: 0.85rem;
+            font-weight: 600;
         }
 
         .form-field input,
         .form-field select,
         .form-field textarea {
-            padding: 0.75rem 0.85rem;
-            min-height: var(--touch-min);
+            width: 100%;
+            padding: 0.55rem 0.6rem;
+            border-radius: 10px;
+            border: 1px solid rgba(0, 0, 0, 0.14);
+            font-family: inherit;
+            font-size: 0.9rem;
+            background: rgba(255, 255, 255, 0.96);
         }
 
-        .chapter-illustrations {
-            flex-direction: column;
+        .form-field textarea {
+            resize: vertical;
         }
 
-        .hero-actions {
-            flex-direction: column;
-            align-items: stretch;
+        .character-count {
+            margin-top: 0.25rem;
+            font-size: 0.75rem;
+            text-align: right;
+            color: var(--ink-soft);
         }
 
-        .hero-action-btn {
-            justify-content: center;
+        .form-actions {
+            margin-top: 0.6rem;
+            display: flex;
+            flex-wrap: wrap;
+            gap: 0.75rem;
+            align-items: center;
         }
 
-        .game-embed__frame {
-            height: min(500px, 70vh, 80svh);
+        .submit-btn {
+            border-radius: 999px;
+            border: none;
+            padding: 0.55rem 1.1rem;
+            background: linear-gradient(135deg, #f4b944, #f59e0b);
+            color: #3b2604;
+            font-weight: 600;
+            cursor: pointer;
+            display: inline-flex;
+            align-items: center;
+            gap: 0.4rem;
+            box-shadow: 0 6px 16px rgba(244, 185, 68, 0.6);
+            transition: transform var(--transition-fast), box-shadow var(--transition-fast);
+        }
+
+        .submit-btn:hover {
+            transform: translateY(-1px);
+            box-shadow: 0 10px 22px rgba(244, 185, 68, 0.7);
+        }
+
+        .form-feedback {
+            font-size: 0.8rem;
+            color: var(--ink-soft);
+        }
+
+        /* Sample wishes */
+        .sample-wishes {
+            margin-top: 1rem;
+        }
+
+        .wish-examples {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(190px, 1fr));
+            gap: 0.8rem;
+        }
+
+        .wish-example {
+            margin: 0;
+            padding: 0.7rem 0.9rem;
+            border-radius: 14px;
+            background: #ffffff;
+            box-shadow: var(--shadow-tiny);
+            font-size: 0.85rem;
+        }
+
+        .wish-example cite {
+            display: block;
+            margin-top: 0.3rem;
+            font-size: 0.8rem;
+            opacity: 0.8;
+        }
+
+        /* Dynamic wishes display */
+        .wishes-display {
+            margin-top: 1.25rem;
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(210px, 1fr));
+            gap: 0.9rem;
+        }
+
+        .wishes-display .wish-card {
+            padding: 0.8rem 0.9rem;
+            border-radius: 16px;
+            background: #fffdfa;
+            box-shadow: var(--shadow-tiny);
+            font-size: 0.9rem;
+        }
+
+        .wish-card .wish-meta {
+            font-size: 0.8rem;
+            opacity: 0.7;
+            margin-bottom: 0.25rem;
+        }
+
+        /* =========================================
+           10. CHAPTER 4 CELEBRATION / COUNTDOWN
+           ========================================= */
+        .welcome-panel {
+            margin: 1.75rem 0 1.5rem;
+            padding: 1rem 1.1rem;
+            border-radius: 20px;
+            background: linear-gradient(135deg, #fff6dd, #ffe4b2);
+            display: flex;
+            align-items: center;
+            gap: 0.8rem;
+        }
+
+        .welcome-icon {
+            font-size: 1.7rem;
+        }
+
+        .welcome-heading {
+            margin: 0;
+        }
+
+        .welcome-subtitle {
+            margin: 0.2rem 0 0;
+            font-size: 0.9rem;
+            color: var(--ink-soft);
+        }
+
+        /* Countdown */
+        .countdown-section {
+            margin: 1.5rem 0 1.75rem;
         }
 
         .countdown-display {
-            justify-content: center;
+            display: flex;
+            gap: 1rem;
+            margin: 0.7rem 0;
         }
-    }
 
-</style>
+        .countdown-item {
+            flex: 0 0 90px;
+            padding: 0.7rem 0.8rem;
+            border-radius: 16px;
+            background: #ffffff;
+            box-shadow: var(--shadow-tiny);
+            text-align: center;
+        }
+
+        .countdown-number {
+            display: block;
+            font-size: 1.35rem;
+            font-weight: 700;
+        }
+
+        .countdown-label {
+            font-size: 0.8rem;
+            opacity: 0.8;
+        }
+
+        .countdown-note {
+            margin: 0;
+            font-size: 0.9rem;
+            color: var(--ink-soft);
+        }
+
+        /* Honey jar hopes */
+        .honey-jar-interactive {
+            margin: 1.75rem 0 1.5rem;
+            padding: 1rem 1.1rem;
+            border-radius: 20px;
+            background: #fffdf5;
+            box-shadow: var(--shadow-tiny);
+        }
+
+        .honey-jar-interactive h3 {
+            margin: 0.3rem 0 0.3rem;
+        }
+
+        .honey-jar-interactive p {
+            margin: 0 0 0.6rem;
+        }
+
+        .hopes-list {
+            margin: 0.5rem 0 0;
+            padding-left: 1.1rem;
+            font-size: 0.9rem;
+        }
+
+        /* Generic button used here */
+        .btn {
+            border-radius: 999px;
+            border: 1px solid rgba(0, 0, 0, 0.14);
+            padding: 0.5rem 1.1rem;
+            font-size: 0.9rem;
+            font-weight: 600;
+            cursor: pointer;
+            background: #ffffff;
+            box-shadow: var(--shadow-tiny);
+            transition: transform var(--transition-fast), box-shadow var(--transition-fast), background var(--transition-fast);
+        }
+
+        .btn.primary {
+            border-color: transparent;
+            background: linear-gradient(135deg, #f4b944, #f59e0b);
+            color: #3b2604;
+            box-shadow: 0 6px 16px rgba(244, 185, 68, 0.6);
+        }
+
+        .btn.primary:hover {
+            transform: translateY(-1px);
+            box-shadow: 0 10px 22px rgba(244, 185, 68, 0.7);
+        }
+
+        /* Final quote */
+        .final-thought {
+            margin-top: 1.5rem;
+            padding-top: 1rem;
+            border-top: 1px dashed rgba(0, 0, 0, 0.12);
+        }
+
+        .final-thought blockquote {
+            margin: 0;
+            font-size: 0.95rem;
+            font-style: italic;
+        }
+
+        .final-thought cite {
+            font-style: normal;
+        }
+
+        .final-thought .signature {
+            margin-top: 0.6rem;
+            font-size: 0.9rem;
+        }
+
+        /* =========================================
+           11. NAVIGATION BUTTONS (Prev / Next)
+           ========================================= */
+        .chapter-nav {
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            gap: 0.75rem;
+            padding: 0.85rem 1.25rem 1.1rem;
+            border-top: 1px solid rgba(0, 0, 0, 0.06);
+            background: rgba(255, 255, 255, 0.96);
+        }
+
+        .chapter-nav-btn {
+            border-radius: 999px;
+            border: 1px solid rgba(0, 0, 0, 0.18);
+            padding: 0.45rem 0.9rem;
+            font-size: 0.9rem;
+            cursor: pointer;
+            background: #ffffff;
+            box-shadow: var(--shadow-tiny);
+            transition: transform var(--transition-fast), box-shadow var(--transition-fast), background var(--transition-fast);
+        }
+
+        .chapter-nav-btn.next {
+            border-color: transparent;
+            background: linear-gradient(135deg, #f4b944, #f59e0b);
+            color: #3b2604;
+        }
+
+        .chapter-nav-btn:hover {
+            transform: translateY(-1px);
+            box-shadow: 0 8px 18px rgba(0, 0, 0, 0.16);
+        }
+
+        .chapter-indicator {
+            font-size: 0.9rem;
+            color: var(--ink-soft);
+        }
+
+        /* =========================================
+           12. FOOTER
+           ========================================= */
+        .site-footer {
+            max-width: var(--page-max-width);
+            margin: 0 auto 2rem;
+            padding: 1.25rem var(--page-padding-x) 0;
+            text-align: center;
+            font-size: 0.85rem;
+            color: var(--ink-soft);
+        }
+
+        .footer-links {
+            margin-top: 0.5rem;
+            display: flex;
+            justify-content: center;
+            gap: 0.75rem;
+            flex-wrap: wrap;
+        }
+
+        .footer-link {
+            border-radius: 999px;
+            border: 1px solid rgba(0, 0, 0, 0.16);
+            padding: 0.35rem 0.8rem;
+            font-size: 0.8rem;
+            background: #ffffff;
+            cursor: pointer;
+            box-shadow: var(--shadow-tiny);
+        }
+
+        /* =========================================
+           13. ANIMATIONS TOGGLE
+           ========================================= */
+        body.animations-off .cloud {
+            animation: none !important;
+        }
+
+        body.animations-off .chapter-pill.sparkle::after {
+            display: none;
+        }
+
+        /* =========================================
+           14. RESPONSIVE TWEAKS
+           ========================================= */
+        @media (max-width: 900px) {
+            .hero-banner {
+                border-radius: 0;
+                box-shadow: none;
+            }
+
+            .hero-image-container {
+                height: min(50vh, 420px);
+            }
+
+            .hero-title-container {
+                padding-inline: 1rem;
+            }
+
+            .title-background {
+                border-radius: 20px 20px 0 0;
+            }
+
+            .hero-panel {
+                margin-top: 1rem;
+                padding: 1.25rem 1rem 1.4rem;
+            }
+
+            .hero-badge {
+                grid-template-columns: 1fr;
+                border-radius: 20px;
+            }
+
+            .hero-details-grid {
+                grid-template-columns: minmax(0, 1fr);
+            }
+
+            .registry-grid {
+                grid-template-columns: minmax(0, 1fr);
+            }
+        }
+
+        @media (max-width: 768px) {
+            .book-container {
+                padding-inline: 1rem;
+            }
+
+            .pages-wrapper {
+                padding-inline: 1rem;
+            }
+
+            .form-grid {
+                grid-template-columns: 1fr;
+                gap: var(--space-sm);
+            }
+
+            input[type="text"],
+            input[type="email"],
+            input[type="tel"],
+            textarea,
+            select {
+                font-size: 16px !important;
+            }
+
+            .form-field input,
+            .form-field select,
+            .form-field textarea {
+                padding: 0.75rem 0.85rem;
+                min-height: var(--touch-min);
+            }
+
+            .chapter-illustrations {
+                flex-direction: column;
+            }
+
+            .hero-actions {
+                flex-direction: column;
+                align-items: stretch;
+            }
+
+            .hero-action-btn {
+                justify-content: center;
+            }
+
+            .countdown-display {
+                justify-content: center;
+            }
+
+            .hud-row {
+                flex-wrap: wrap;
+            }
+        }
+    </style>
 
     <link as="image" href="Images/Characters/Gunnar.png" rel="preload">
 </head>
@@ -1440,6 +1625,7 @@
     <div class="cloud">☁️</div>
     <div class="cloud">☁️</div>
 </div>
+
 <!-- Hero Header -->
 <header class="masthead-hero hero-enhancements">
     <!-- Hero Banner with Image and Title Overlay -->
@@ -1469,7 +1655,7 @@
                     <span class="underline-dot">•</span>
                     <span class="underline-dot">•</span>
                 </div>
-                <p class="hero-subtitle">A storybook celebration with Pooh & friends</p>
+                <p class="hero-subtitle">A storybook celebration with Pooh &amp; friends</p>
             </div>
         </div>
     </div>
@@ -1523,21 +1709,21 @@
                     <div aria-hidden="true" class="detail-icon">🎁</div>
                     <div class="detail-content">
                         <h4 class="detail-title">Gift Registry</h4>
-                        <p class="detail-text">Share your wishes & blessings</p>
+                        <p class="detail-text">Share your wishes &amp; blessings</p>
                     </div>
                 </div>
             </div>
             <!-- Quick Actions -->
             <div class="hero-actions">
-                <button class="hero-action-btn primary" onclick="scrollToChapter(1)">
+                <button class="hero-action-btn primary" type="button" onclick="scrollToChapter(1)">
                     <span aria-hidden="true" class="btn-icon">📖</span>
                     <span class="btn-text">Begin the Story</span>
                 </button>
-                <button class="hero-action-btn secondary" onclick="scrollToChapter(2)">
+                <button class="hero-action-btn secondary" type="button" onclick="scrollToChapter(2)">
                     <span aria-hidden="true" class="btn-icon">🍯</span>
                     <span class="btn-text">Play Honey Game</span>
                 </button>
-                <button class="hero-action-btn ghost" onclick="scrollToChapter(3)">
+                <button class="hero-action-btn ghost" type="button" onclick="scrollToChapter(3)">
                     <span aria-hidden="true" class="btn-icon">💝</span>
                     <span class="btn-text">View Registry</span>
                 </button>
@@ -1551,6 +1737,7 @@
         </section>
     </div>
 </header>
+
 <!-- Main Content -->
 <main class="book-container" id="storybook">
     <!-- Chapter Navigation -->
@@ -1563,36 +1750,37 @@
             </div>
         </div>
         <div class="chapter-pill-row">
-            <button aria-current="page" class="chapter-pill sparkle active" data-chapter-target="1">
+            <button aria-current="page" class="chapter-pill sparkle active" data-chapter-target="1" type="button">
                 <span class="pill-number">1</span>
                 <span class="pill-text">
-               <span class="pill-title">Welcome</span>
-               <span class="pill-detail">Invitation arrives</span>
-               </span>
+                    <span class="pill-title">Welcome</span>
+                    <span class="pill-detail">Invitation arrives</span>
+                </span>
             </button>
-            <button class="chapter-pill sparkle" data-chapter-target="2">
+            <button class="chapter-pill sparkle" data-chapter-target="2" type="button">
                 <span class="pill-number">2</span>
                 <span class="pill-text">
-               <span class="pill-title">Honey Hunt</span>
-               <span class="pill-detail">Play the game</span>
-               </span>
+                    <span class="pill-title">Honey Hunt</span>
+                    <span class="pill-detail">Play the game</span>
+                </span>
             </button>
-            <button class="chapter-pill sparkle" data-chapter-target="3">
+            <button class="chapter-pill sparkle" data-chapter-target="3" type="button">
                 <span class="pill-number">3</span>
                 <span class="pill-text">
-               <span class="pill-title">Gifts & Wishes</span>
-               <span class="pill-detail">Registry & guestbook</span>
-               </span>
+                    <span class="pill-title">Gifts &amp; Wishes</span>
+                    <span class="pill-detail">Registry &amp; guestbook</span>
+                </span>
             </button>
-            <button class="chapter-pill sparkle" data-chapter-target="4">
+            <button class="chapter-pill sparkle" data-chapter-target="4" type="button">
                 <span class="pill-number">4</span>
                 <span class="pill-text">
-               <span class="pill-title">Celebration</span>
-               <span class="pill-detail">Welcome Gunnar</span>
-               </span>
+                    <span class="pill-title">Celebration</span>
+                    <span class="pill-detail">Welcome Gunnar</span>
+                </span>
             </button>
         </div>
     </nav>
+
     <!-- Story Pages -->
     <div class="book">
         <div class="pages-wrapper">
@@ -1642,6 +1830,7 @@
                     <div aria-hidden="true" class="divider">🌳 ✿ 🐝 ✿ 🌳</div>
                 </div>
             </article>
+
             <!-- Chapter 2: Game -->
             <article class="page" data-chapter="2" id="honey-game">
                 <header class="chapter-header">
@@ -1670,16 +1859,50 @@
                         <div aria-live="polite" class="character-message"></div>
                     </figure>
                 </div>
-                <!-- Game iframe -->
-                <div class="game-embed">
-                    <iframe
-                            allowfullscreen
-                            class="game-embed__frame"
-                            loading="lazy"
-                            src="game.html"
-                            title="Honey Hunt Game">
-                    </iframe>
+
+                <!-- Embedded Honey Game -->
+                <div class="game-embed" id="gameEmbed">
+                    <div class="honey-game" id="honeyGame">
+                        <div class="honey-game-header">
+                            <div class="title">
+                                <span aria-hidden="true">🍯</span>
+                                <span>Honey Hunt</span>
+                            </div>
+                            <div class="hud-row">
+                                <div class="hud-item">
+                                    <span class="hud-label">Score</span><span id="hudScore">0</span>
+                                </div>
+                                <div class="hud-item">
+                                    <span class="hud-label">Time</span><span id="hudTime">60</span>s
+                                </div>
+                                <div class="hud-item">
+                                    <span class="hud-label">Streak</span><span id="hudStreak">0</span>
+                                </div>
+                                <div class="hud-item">
+                                    <span class="hud-label">Best</span><span id="hudBest">0</span>
+                                </div>
+                            </div>
+                        </div>
+                        <div class="honey-game-main">
+                            <canvas id="gameCanvas" width="640" height="360" aria-label="Pooh catching honey pots"></canvas>
+                        </div>
+                        <div class="honey-game-controls" aria-label="Game controls">
+                            <button class="control-btn" id="btnLeft" type="button">
+                                <span class="control-btn-icon" aria-hidden="true">⬅️</span> Left
+                            </button>
+                            <button class="control-btn" id="btnRight" type="button">
+                                <span class="control-btn-icon" aria-hidden="true">➡️</span> Right
+                            </button>
+                            <button class="control-btn primary" id="btnStart" type="button">
+                                <span class="control-btn-icon" aria-hidden="true">▶️</span> Start
+                            </button>
+                            <button class="control-btn" id="btnPause" type="button">
+                                ⏸ Pause
+                            </button>
+                        </div>
+                    </div>
                 </div>
+
                 <div class="game-description">
                     <h3>How to Play</h3>
                     <p>Help Winnie the Pooh collect honey pots while avoiding bees! Move left and right with arrow keys
@@ -1701,6 +1924,7 @@
                     </div>
                 </div>
             </article>
+
             <!-- Chapter 3: Gifts & Wishes -->
             <article class="page" data-chapter="3">
                 <header class="chapter-header">
@@ -1790,10 +2014,10 @@
                                     <div class="card-content">
                                         <h4>Gift Ideas</h4>
                                         <ul class="gift-ideas">
-                                            <li>Board books & stories</li>
+                                            <li>Board books &amp; stories</li>
                                             <li>Woodland-themed clothing</li>
-                                            <li>Soft blankets & swaddles</li>
-                                            <li>Diapers & essentials</li>
+                                            <li>Soft blankets &amp; swaddles</li>
+                                            <li>Diapers &amp; essentials</li>
                                         </ul>
                                     </div>
                                 </div>
@@ -1808,7 +2032,7 @@
                                 <div class="detail-content">
                                     <h4>Theme</h4>
                                     <p>Hundred Acre Wood Adventures</p>
-                                    <small>Featuring Winnie the Pooh & friends</small>
+                                    <small>Featuring Winnie the Pooh &amp; friends</small>
                                 </div>
                             </div>
                             <div class="detail-card">
@@ -1816,7 +2040,7 @@
                                 <div class="detail-content">
                                     <h4>Colors</h4>
                                     <p>Honey gold, Pooh red, sage green, cream</p>
-                                    <small>Soft & soothing woodland palette</small>
+                                    <small>Soft &amp; soothing woodland palette</small>
                                 </div>
                             </div>
                             <div class="detail-card">
@@ -1847,7 +2071,7 @@
                                     <div class="form-field">
                                         <label for="guestName">Your Name</label>
                                         <input id="guestName" placeholder="How should we call you?" required
-                                               type="text">
+                                               type="text" maxlength="80">
                                     </div>
                                     <div class="form-field">
                                         <label for="guestRelation">Your Relation</label>
@@ -1864,8 +2088,8 @@
                                     <label for="wishMessage">Your Message</label>
                                     <textarea id="wishMessage" placeholder="What wisdom or wishes would you like to share with Baby Gunnar?..."
                                               required
-                                              rows="4"></textarea>
-                                    <div class="character-count">0/500 characters</div>
+                                              rows="4" maxlength="500"></textarea>
+                                    <div class="character-count" id="wishCharCount">0/500 characters</div>
                                 </div>
                                 <div class="form-actions">
                                     <button class="submit-btn" type="submit">
@@ -1894,6 +2118,7 @@
                     </div>
                 </div>
             </article>
+
             <!-- Chapter 4: Celebration -->
             <article class="page" data-chapter="4">
                 <header class="chapter-header">
@@ -1955,7 +2180,8 @@
                         <div aria-hidden="true">🍯</div>
                         <h3>Gunnar's Honey Jar of Hopes</h3>
                         <p>Share your hopes and dreams for Baby Gunnar's future adventures.</p>
-                        <button class="btn primary" id="addHopeBtn">➕ Add Your Hope</button>
+                        <button class="btn primary" id="addHopeBtn" type="button">➕ Add Your Hope</button>
+                        <ul class="hopes-list" id="hopesList"></ul>
                     </div>
                     <aside class="final-thought">
                         <blockquote>
@@ -1970,21 +2196,23 @@
         </div>
         <!-- Navigation -->
         <nav aria-label="Page navigation" class="chapter-nav">
-            <button class="chapter-nav-btn" id="prevBtn">← Previous</button>
+            <button class="chapter-nav-btn" id="prevBtn" type="button">← Previous</button>
             <div class="chapter-indicator" id="pageIndicator">Chapter 1 of 4</div>
-            <button class="chapter-nav-btn next" id="nextBtn">Next →</button>
+            <button class="chapter-nav-btn next" id="nextBtn" type="button">Next →</button>
         </nav>
     </div>
 </main>
+
 <!-- Footer -->
 <footer class="site-footer">
     <p>Made with 💙 and 🍯 for Baby Gunnar's special day</p>
     <div class="footer-links">
-        <button class="footer-link" id="printPageBtn">🖨 Print</button>
-        <button class="footer-link" id="sharePageBtn">📤 Share</button>
-        <button class="footer-link" id="toggleAnimationsBtn">🎭 Animations</button>
+        <button class="footer-link" id="printPageBtn" type="button">🖨 Print</button>
+        <button class="footer-link" id="sharePageBtn" type="button">📤 Share</button>
+        <button class="footer-link" id="toggleAnimationsBtn" type="button">🎭 Animations: On</button>
     </div>
 </footer>
+
 <!-- Audio Elements -->
 <audio id="bgMusic" loop preload="auto" src="media/hundred-acre-lullaby.mp3"></audio>
 <audio id="honeySound" preload="auto">
@@ -2005,76 +2233,701 @@
 <audio id="ambientForest" loop preload="auto">
     <source src="https://assets.mixkit.co/sfx/preview/mixkit-forest-birds-ambience-121.mp3">
 </audio>
+
 <script>
-// Storybook chapter navigation
 document.addEventListener("DOMContentLoaded", () => {
-  const pages = [...document.querySelectorAll(".page")];
-  const nextBtn = document.getElementById("nextBtn");
-  const prevBtn = document.getElementById("prevBtn");
-  const indicator = document.getElementById("pageIndicator");
-  const progress = document.getElementById("progressFill");
-  const total = pages.length;
-  let current = 0;
+    const pages = Array.from(document.querySelectorAll(".page"));
+    const nextBtn = document.getElementById("nextBtn");
+    const prevBtn = document.getElementById("prevBtn");
+    const indicator = document.getElementById("pageIndicator");
+    const progress = document.getElementById("progressFill");
+    const chapterPills = Array.from(document.querySelectorAll("[data-chapter-target]"));
+    const total = pages.length;
+    let current = 0;
 
-  function updateUI() {
-    pages.forEach((page, i) => page.classList.toggle("active", i === current));
-    indicator.textContent = `Chapter ${current + 1} of ${total}`;
-    progress.style.width = `${((current + 1) / total) * 100}%`;
-    document
-      .querySelectorAll("[data-chapter-target]")
-      .forEach((btn) =>
-        btn.classList.toggle(
-          "active",
-          parseInt(btn.dataset.chapterTarget, 10) === current + 1
-        )
-      );
+    const pageSound = document.getElementById("pageSound");
 
-    // Play page-turn sound if available
-    const sound = document.getElementById("pageSound");
-    if (sound) {
-      sound.currentTime = 0;
-      sound.play().catch(() => {});
+    function updateUI(scroll = true) {
+        pages.forEach((page, i) => page.classList.toggle("active", i === current));
+        indicator.textContent = `Chapter ${current + 1} of ${total}`;
+        if (progress) progress.style.width = `${((current + 1) / total) * 100}%`;
+
+        chapterPills.forEach(btn => {
+            const isActive = parseInt(btn.dataset.chapterTarget, 10) === current + 1;
+            btn.classList.toggle("active", isActive);
+            if (isActive) btn.setAttribute("aria-current", "page");
+            else btn.removeAttribute("aria-current");
+        });
+
+        if (pageSound) {
+            try {
+                pageSound.currentTime = 0;
+                pageSound.play().catch(() => {});
+            } catch (e) {}
+        }
+
+        if (scroll && pages[current]) {
+            pages[current].scrollIntoView({ behavior: "smooth", block: "start" });
+        }
     }
 
-    // Smooth scroll
-    pages[current].scrollIntoView({ behavior: "smooth", block: "start" });
-  }
-
-  nextBtn?.addEventListener("click", () => {
-    if (current < total - 1) {
-      current++;
-      updateUI();
-    }
-  });
-
-  prevBtn?.addEventListener("click", () => {
-    if (current > 0) {
-      current--;
-      updateUI();
-    }
-  });
-
-  // Allow clicking chapter pills directly
-  document.querySelectorAll("[data-chapter-target]").forEach((btn) => {
-    btn.addEventListener("click", () => {
-      const target = parseInt(btn.dataset.chapterTarget, 10) - 1;
-      if (!isNaN(target) && target >= 0 && target < total) {
-        current = target;
-        updateUI();
-      }
+    nextBtn?.addEventListener("click", () => {
+        if (current < total - 1) {
+            current++;
+            updateUI();
+        }
     });
-  });
 
-  // Optional keyboard navigation
-  document.addEventListener("keydown", (e) => {
-    if (e.key === "ArrowRight") nextBtn?.click();
-    if (e.key === "ArrowLeft") prevBtn?.click();
-  });
+    prevBtn?.addEventListener("click", () => {
+        if (current > 0) {
+            current--;
+            updateUI();
+        }
+    });
 
-  // Initialize
-  updateUI();
+    chapterPills.forEach(btn => {
+        btn.addEventListener("click", () => {
+            const target = parseInt(btn.dataset.chapterTarget, 10) - 1;
+            if (!Number.isNaN(target) && target >= 0 && target < total) {
+                current = target;
+                updateUI();
+            }
+        });
+    });
+
+    document.addEventListener("keydown", (e) => {
+        if (e.key === "ArrowRight") nextBtn?.click();
+        if (e.key === "ArrowLeft") prevBtn?.click();
+    });
+
+    // Expose scrollToChapter for hero buttons
+    window.scrollToChapter = (chapterNumber) => {
+        const index = chapterNumber - 1;
+        if (index >= 0 && index < total) {
+            current = index;
+            updateUI();
+        }
+    };
+
+    // Character click messages
+    const characterLines = {
+        pooh: [
+            "Pooh smiles and thinks this is the kind of day that simply needs more honey.",
+            "Pooh wonders if there's anything sweeter than welcoming a new little friend."
+        ],
+        piglet: [
+            "Piglet feels a little fluttery, but mostly excited for Baby Gunnar.",
+            "Piglet straightens the banner one more time, just to be sure."
+        ],
+        tigger: [
+            "Tigger announces that baby celebrations are what Tiggers do best!",
+            "Tigger promises to teach Gunnar the very bounciest bounces."
+        ],
+        roo: [
+            "Roo practices tiny jumps, imagining the games they'll play someday.",
+            "Roo says, \"I can't wait to show you all my favorite puddles!\""
+        ],
+        gunnar: [
+            "Everyone is already saving their warmest hugs for you.",
+            "Your story is just beginning, and the whole Wood is cheering."
+        ]
+    };
+
+    const honeySound = document.getElementById("honeySound");
+
+    document.querySelectorAll(".clickable-character").forEach(fig => {
+        const character = fig.dataset.character;
+        const msgEl = fig.querySelector(".character-message");
+        fig.addEventListener("click", () => {
+            const lines = characterLines[character] || ["A quiet, happy thought drifts through the leaves."];
+            const line = lines[Math.floor(Math.random() * lines.length)];
+            if (msgEl) msgEl.textContent = line;
+            if (honeySound) {
+                try {
+                    honeySound.currentTime = 0;
+                    honeySound.play().catch(() => {});
+                } catch (e) {}
+            }
+        });
+        fig.addEventListener("keydown", (e) => {
+            if (e.key === "Enter" || e.key === " ") {
+                e.preventDefault();
+                fig.click();
+            }
+        });
+    });
+
+    // Wishes form
+    const wishesForm = document.getElementById("wishesForm");
+    const wishCharCount = document.getElementById("wishCharCount");
+    const wishMessage = document.getElementById("wishMessage");
+    const wishesDisplay = document.getElementById("wishesDisplay");
+    const wishFeedback = document.getElementById("wishFeedback");
+
+    if (wishMessage && wishCharCount) {
+        const updateCount = () => {
+            const len = wishMessage.value.length;
+            wishCharCount.textContent = `${len}/500 characters`;
+        };
+        wishMessage.addEventListener("input", updateCount);
+        updateCount();
+    }
+
+    if (wishesForm && wishesDisplay) {
+        wishesForm.addEventListener("submit", (e) => {
+            e.preventDefault();
+            const name = document.getElementById("guestName").value.trim();
+            const relation = document.getElementById("guestRelation").value;
+            const message = wishMessage.value.trim();
+            if (!name || !message) {
+                if (wishFeedback) {
+                    wishFeedback.textContent = "Please add your name and a message.";
+                }
+                return;
+            }
+
+            const card = document.createElement("article");
+            card.className = "wish-card";
+
+            const meta = document.createElement("div");
+            meta.className = "wish-meta";
+            meta.textContent = relation
+                ? `${name} • ${relation.replace("-", " ")}`
+                : name;
+
+            const body = document.createElement("p");
+            body.textContent = message;
+
+            card.appendChild(meta);
+            card.appendChild(body);
+            wishesDisplay.prepend(card);
+
+            wishesForm.reset();
+            if (wishCharCount) wishCharCount.textContent = "0/500 characters";
+            if (wishFeedback) wishFeedback.textContent = "Thank you! Your wish has been added.";
+        });
+    }
+
+    // Countdown
+    const targetDate = new Date("2025-08-31T00:00:00");
+    const daysEl = document.getElementById("days");
+    const hoursEl = document.getElementById("hours");
+
+    function updateCountdown() {
+        const now = new Date();
+        const diff = targetDate.getTime() - now.getTime();
+        if (diff <= 0) {
+            if (daysEl) daysEl.textContent = "0";
+            if (hoursEl) hoursEl.textContent = "0";
+            return;
+        }
+        const days = Math.floor(diff / (1000 * 60 * 60 * 24));
+        const hours = Math.floor((diff / (1000 * 60 * 60)) % 24);
+        if (daysEl) daysEl.textContent = String(days);
+        if (hoursEl) hoursEl.textContent = String(hours);
+    }
+    updateCountdown();
+    setInterval(updateCountdown, 60 * 1000);
+
+    // Honey jar hopes
+    const addHopeBtn = document.getElementById("addHopeBtn");
+    const hopesList = document.getElementById("hopesList");
+
+    if (addHopeBtn && hopesList) {
+        addHopeBtn.addEventListener("click", () => {
+            const hope = window.prompt("What hope or dream would you like to share for Baby Gunnar?");
+            if (hope && hope.trim()) {
+                const li = document.createElement("li");
+                li.textContent = hope.trim();
+                hopesList.appendChild(li);
+            }
+        });
+    }
+
+    // Footer actions
+    const printBtn = document.getElementById("printPageBtn");
+    const shareBtn = document.getElementById("sharePageBtn");
+    const toggleAnimationsBtn = document.getElementById("toggleAnimationsBtn");
+
+    printBtn?.addEventListener("click", () => window.print());
+
+    shareBtn?.addEventListener("click", async () => {
+        const shareData = {
+            title: document.title,
+            text: "Join Baby Gunnar's Hundred Acre Wood Adventure!",
+            url: window.location.href
+        };
+        if (navigator.share) {
+            try {
+                await navigator.share(shareData);
+            } catch {
+                // ignored
+            }
+        } else {
+            navigator.clipboard?.writeText(window.location.href).catch(() => {});
+            alert("Link copied to clipboard.");
+        }
+    });
+
+    if (toggleAnimationsBtn) {
+        toggleAnimationsBtn.addEventListener("click", () => {
+            const body = document.body;
+            const isOff = body.classList.toggle("animations-off");
+            toggleAnimationsBtn.textContent = isOff ? "🎭 Animations: Off" : "🎭 Animations: On";
+        });
+    }
+
+    // Audio initialization on first interaction
+    const bgMusic = document.getElementById("bgMusic");
+    const ambientForest = document.getElementById("ambientForest");
+    let audioInitialized = false;
+
+    function initAudio() {
+        if (audioInitialized) return;
+        audioInitialized = true;
+        [bgMusic, ambientForest].forEach(el => {
+            if (el) {
+                try {
+                    el.play().catch(() => {});
+                } catch (e) {}
+            }
+        });
+    }
+
+    document.addEventListener("click", initAudio, { once: true });
+    document.addEventListener("keydown", initAudio, { once: true });
+
+    // Initialize Honey Game
+    initHoneyGame();
+    const gameEmbed = document.getElementById("gameEmbed");
+    if (gameEmbed) gameEmbed.classList.add("loaded");
 });
+
+/* ===============================
+   Honey Hunt Game Logic
+   =============================== */
+function initHoneyGame() {
+    const canvas = document.getElementById("gameCanvas");
+    if (!canvas) return;
+    const ctx = canvas.getContext("2d");
+
+    const hudScore = document.getElementById("hudScore");
+    const hudTime = document.getElementById("hudTime");
+    const hudStreak = document.getElementById("hudStreak");
+    const hudBest = document.getElementById("hudBest");
+
+    const btnLeft = document.getElementById("btnLeft");
+    const btnRight = document.getElementById("btnRight");
+    const btnStart = document.getElementById("btnStart");
+    const btnPause = document.getElementById("btnPause");
+
+    let width = canvas.width;
+    let height = canvas.height;
+
+    function resizeCanvas() {
+        const ratio = 16 / 9;
+        const container = canvas.parentElement;
+        if (!container) return;
+        const w = container.clientWidth;
+        const h = container.clientHeight;
+        let newW = w;
+        let newH = w / ratio;
+        if (newH > h) {
+            newH = h;
+            newW = h * ratio;
+        }
+        canvas.width = newW;
+        canvas.height = newH;
+        width = newW;
+        height = newH;
+    }
+    resizeCanvas();
+    window.addEventListener("resize", resizeCanvas);
+
+    const player = {
+        x: width / 2,
+        y: height - 40,
+        width: 60,
+        height: 24,
+        speed: 280
+    };
+
+    const objects = [];
+    const ObjectType = {
+        HONEY: "honey",
+        GOLD: "gold",
+        SHIELD: "shield",
+        BEE: "bee"
+    };
+
+    let lastSpawn = 0;
+    let spawnInterval = 900;
+    let lastTime = 0;
+    let running = false;
+    let paused = false;
+    let remaining = 60;
+    let score = 0;
+    let streak = 0;
+    let best = Number(localStorage.getItem("honey_hunt_best") || "0");
+    let hasShield = false;
+    let leftHeld = false;
+    let rightHeld = false;
+
+    if (hudBest) hudBest.textContent = String(best);
+
+    function spawnObject() {
+        const typeRoll = Math.random();
+        let type = ObjectType.HONEY;
+        if (typeRoll > 0.88) type = ObjectType.BEE;
+        else if (typeRoll > 0.76) type = ObjectType.SHIELD;
+        else if (typeRoll > 0.6) type = ObjectType.GOLD;
+
+        const size = type === ObjectType.BEE ? 26 : 22;
+        const speed = type === ObjectType.BEE ? random(150, 220) : random(140, 200);
+
+        objects.push({
+            type,
+            x: random(size, width - size),
+            y: -size,
+            size,
+            speed
+        });
+    }
+
+    function random(min, max) {
+        return Math.random() * (max - min) + min;
+    }
+
+    function resetGame() {
+        objects.length = 0;
+        score = 0;
+        streak = 0;
+        remaining = 60;
+        hasShield = false;
+        lastSpawn = 0;
+        if (hudScore) hudScore.textContent = "0";
+        if (hudTime) hudTime.textContent = "60";
+        if (hudStreak) hudStreak.textContent = "0";
+    }
+
+    function update(dt) {
+        if (!running || paused) return;
+
+        remaining -= dt;
+        if (remaining <= 0) {
+            remaining = 0;
+            endGame();
+            return;
+        }
+        if (hudTime) hudTime.textContent = String(Math.max(0, Math.floor(remaining)));
+
+        const move = player.speed * dt;
+        if (leftHeld && !rightHeld) player.x -= move;
+        if (rightHeld && !leftHeld) player.x += move;
+
+        const half = player.width / 2;
+        if (player.x - half < 0) player.x = half;
+        if (player.x + half > width) player.x = width - half;
+
+        lastSpawn += dt * 1000;
+        if (lastSpawn > spawnInterval) {
+            lastSpawn = 0;
+            spawnObject();
+            if (spawnInterval > 450) spawnInterval -= 10;
+        }
+
+        for (let i = objects.length - 1; i >= 0; i--) {
+            const obj = objects[i];
+            obj.y += obj.speed * dt;
+
+            if (obj.y - obj.size > height + 20) {
+                objects.splice(i, 1);
+                continue;
+            }
+
+            const collides =
+                obj.x > player.x - half &&
+                obj.x < player.x + half &&
+                obj.y + obj.size > player.y - player.height / 2 &&
+                obj.y - obj.size < player.y + player.height / 2;
+
+            if (collides) {
+                handleCollision(obj);
+                objects.splice(i, 1);
+            }
+        }
+    }
+
+    function handleCollision(obj) {
+        const type = obj.type;
+        if (type === ObjectType.BEE) {
+            if (hasShield) {
+                hasShield = false;
+                streak = 0;
+                updateHud();
+                flashScreen("#e0f7fa");
+                return;
+            }
+            streak = 0;
+            updateHud();
+            flashScreen("#ffebee");
+            score = Math.max(0, score - 15);
+            if (hudScore) hudScore.textContent = String(score);
+            return;
+        }
+
+        if (type === ObjectType.SHIELD) {
+            hasShield = true;
+            flashScreen("#e3fcec");
+            return;
+        }
+
+        if (type === ObjectType.HONEY || type === ObjectType.GOLD) {
+            const base = type === ObjectType.GOLD ? 10 : 5;
+            streak += 1;
+            const bonus = Math.floor(streak / 3) * 2;
+            score += base + bonus;
+            if (hudScore) hudScore.textContent = String(score);
+            if (hudStreak) hudStreak.textContent = String(streak);
+            flashScreen(type === ObjectType.GOLD ? "#fff9c4" : "#fff3e0");
+        }
+    }
+
+    let flashAlpha = 0;
+    let flashColor = "#ffffff";
+
+    function flashScreen(color) {
+        flashColor = color;
+        flashAlpha = 0.6;
+    }
+
+    function draw() {
+        ctx.clearRect(0, 0, width, height);
+
+        const groundHeight = height * 0.22;
+        const skyHeight = height - groundHeight;
+
+        const gradSky = ctx.createLinearGradient(0, 0, 0, skyHeight);
+        gradSky.addColorStop(0, "#b3e5fc");
+        gradSky.addColorStop(1, "#e1f5fe");
+        ctx.fillStyle = gradSky;
+        ctx.fillRect(0, 0, width, skyHeight);
+
+        const gradGround = ctx.createLinearGradient(0, skyHeight, 0, height);
+        gradGround.addColorStop(0, "#f4a261");
+        gradGround.addColorStop(1, "#f6d365");
+        ctx.fillStyle = gradGround;
+        ctx.fillRect(0, skyHeight, width, height - skyHeight);
+
+        ctx.fillStyle = "#ffecb3";
+        for (let i = 0; i < 4; i++) {
+            const x = (i + 0.5) * (width / 4);
+            const y = skyHeight - 12 - 6 * Math.sin((performance.now() / 1000) + i);
+            ctx.beginPath();
+            ctx.arc(x, y, 12, 0, Math.PI * 2);
+            ctx.fill();
+        }
+
+        ctx.save();
+        ctx.translate(player.x, player.y);
+        ctx.fillStyle = "#fdd835";
+        ctx.beginPath();
+        ctx.roundRect(-player.width / 2, -player.height / 2, player.width, player.height, 12);
+        ctx.fill();
+        ctx.strokeStyle = "#f9a825";
+        ctx.lineWidth = 2;
+        ctx.stroke();
+        ctx.fillStyle = "#5d4037";
+        ctx.font = `${Math.max(12, player.height * 0.7)}px system-ui`;
+        ctx.textAlign = "center";
+        ctx.textBaseline = "middle";
+        ctx.fillText("Pooh", 0, 0);
+        ctx.restore();
+
+        objects.forEach(obj => {
+            ctx.save();
+            ctx.translate(obj.x, obj.y);
+            if (obj.type === ObjectType.BEE) {
+                ctx.fillStyle = "#000000";
+                ctx.beginPath();
+                ctx.ellipse(0, 0, obj.size, obj.size * 0.6, 0, 0, Math.PI * 2);
+                ctx.fill();
+                ctx.fillStyle = "#fdd835";
+                for (let i = -1; i <= 1; i++) {
+                    ctx.fillRect(i * 6 - 6, -obj.size * 0.6, 4, obj.size * 1.2);
+                }
+                ctx.fillStyle = "rgba(255,255,255,0.8)";
+                ctx.beginPath();
+                ctx.ellipse(-obj.size * 0.2, -obj.size * 0.2, 6, 4, 0, 0, Math.PI * 2);
+                ctx.fill();
+            } else if (obj.type === ObjectType.SHIELD) {
+                ctx.fillStyle = "#81d4fa";
+                ctx.beginPath();
+                ctx.arc(0, 0, obj.size, 0, Math.PI * 2);
+                ctx.fill();
+                ctx.strokeStyle = "#0277bd";
+                ctx.lineWidth = 2;
+                ctx.stroke();
+                ctx.fillStyle = "#ffffff";
+                ctx.font = "bold 14px system-ui";
+                ctx.textAlign = "center";
+                ctx.textBaseline = "middle";
+                ctx.fillText("🛡️", 0, 0);
+            } else {
+                const jarColor = obj.type === ObjectType.GOLD ? "#ffca28" : "#ffe082";
+                ctx.fillStyle = jarColor;
+                ctx.beginPath();
+                ctx.roundRect(-obj.size, -obj.size, obj.size * 2, obj.size * 2, 8);
+                ctx.fill();
+                ctx.strokeStyle = "#f57f17";
+                ctx.lineWidth = 2;
+                ctx.stroke();
+
+                ctx.fillStyle = "#6d4c41";
+                ctx.fillRect(-obj.size * 0.6, -obj.size * 1.2, obj.size * 1.2, obj.size * 0.5);
+
+                ctx.fillStyle = "#bf360c";
+                ctx.font = "bold 14px system-ui";
+                ctx.textAlign = "center";
+                ctx.textBaseline = "middle";
+                ctx.fillText("🍯", 0, 0);
+            }
+            ctx.restore();
+        });
+
+        if (hasShield) {
+            ctx.save();
+            ctx.strokeStyle = "rgba(129,212,250,0.9)";
+            ctx.lineWidth = 3;
+            ctx.setLineDash([8, 6]);
+            ctx.beginPath();
+            ctx.ellipse(player.x, player.y - 10, player.width * 0.8, player.height * 1.4, 0, 0, Math.PI * 2);
+            ctx.stroke();
+            ctx.restore();
+        }
+
+        if (flashAlpha > 0.01) {
+            ctx.fillStyle = hexToRgba(flashColor, flashAlpha);
+            ctx.fillRect(0, 0, width, height);
+            flashAlpha *= 0.9;
+        }
+
+        if (!running && remaining <= 0) {
+            ctx.fillStyle = "rgba(0,0,0,0.5)";
+            ctx.fillRect(0, 0, width, height);
+            ctx.fillStyle = "#fffdf8";
+            ctx.font = "bold 28px system-ui";
+            ctx.textAlign = "center";
+            ctx.textBaseline = "middle";
+            ctx.fillText("Time's up!", width / 2, height / 2 - 20);
+            ctx.font = "18px system-ui";
+            ctx.fillText(`Final score: ${score}`, width / 2, height / 2 + 10);
+        }
+    }
+
+    function updateHud() {
+        if (hudScore) hudScore.textContent = String(score);
+        if (hudStreak) hudStreak.textContent = String(streak);
+    }
+
+    function hexToRgba(hex, alpha) {
+        const clean = hex.replace("#", "");
+        const num = parseInt(clean, 16);
+        const r = (num >> 16) & 255;
+        const g = (num >> 8) & 255;
+        const b = num & 255;
+        return `rgba(${r},${g},${b},${alpha})`;
+    }
+
+    function loop(timestamp) {
+        if (!lastTime) lastTime = timestamp;
+        const dt = (timestamp - lastTime) / 1000;
+        lastTime = timestamp;
+        if (!paused) {
+            update(dt);
+        }
+        draw();
+        requestAnimationFrame(loop);
+    }
+    requestAnimationFrame(loop);
+
+    function startGame() {
+        resetGame();
+        running = true;
+        paused = false;
+        lastTime = performance.now();
+    }
+
+    function endGame() {
+        running = false;
+        paused = false;
+        if (score > best) {
+            best = score;
+            localStorage.setItem("honey_hunt_best", String(best));
+            if (hudBest) hudBest.textContent = String(best);
+        }
+    }
+
+    function togglePause() {
+        if (!running) return;
+        paused = !paused;
+    }
+
+    btnStart?.addEventListener("click", startGame);
+    btnPause?.addEventListener("click", togglePause);
+
+    function handlePress(direction, isDown) {
+        if (direction === "left") leftHeld = isDown;
+        if (direction === "right") rightHeld = isDown;
+    }
+
+    if (btnLeft) {
+        btnLeft.addEventListener("mousedown", () => handlePress("left", true));
+        btnLeft.addEventListener("mouseup", () => handlePress("left", false));
+        btnLeft.addEventListener("mouseleave", () => handlePress("left", false));
+        btnLeft.addEventListener("touchstart", (e) => {
+            e.preventDefault();
+            handlePress("left", true);
+        }, { passive: false });
+        btnLeft.addEventListener("touchend", (e) => {
+            e.preventDefault();
+            handlePress("left", false);
+        });
+    }
+
+    if (btnRight) {
+        btnRight.addEventListener("mousedown", () => handlePress("right", true));
+        btnRight.addEventListener("mouseup", () => handlePress("right", false));
+        btnRight.addEventListener("mouseleave", () => handlePress("right", false));
+        btnRight.addEventListener("touchstart", (e) => {
+            e.preventDefault();
+            handlePress("right", true);
+        }, { passive: false });
+        btnRight.addEventListener("touchend", (e) => {
+            e.preventDefault();
+            handlePress("right", false);
+        });
+    }
+
+    document.addEventListener("keydown", (e) => {
+        if (e.key === "ArrowLeft") handlePress("left", true);
+        if (e.key === "ArrowRight") handlePress("right", true);
+        if (e.key === " " && !running) {
+            e.preventDefault();
+            startGame();
+        } else if (e.key === " " && running) {
+            e.preventDefault();
+            togglePause();
+        }
+    });
+
+    document.addEventListener("keyup", (e) => {
+        if (e.key === "ArrowLeft") handlePress("left", false);
+        if (e.key === "ArrowRight") handlePress("right", false);
+    });
+}
 </script>
-<script defer src="script.js"></script>
 </body>
 </html>
+
+
