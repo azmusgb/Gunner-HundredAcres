@@ -18,25 +18,72 @@
     }
 
     function getEl(...ids) {
-        for (const id of ids) {
-            const el = document.getElementById(id);
-            if (el) return el;
-        }
-
-        // Create a more functional placeholder
-        const placeholder = document.createElement("div");
-        placeholder.id = `placeholder-${ids[0] || "missing"}`;
-        placeholder.style.cssText = "display: none !important;";
-
-        // Add basic element methods
-        placeholder.textContent = "";
-        placeholder.classList = { add: () => {}, remove: () => {}, toggle: () => {} };
-        placeholder.setAttribute = () => {};
-        placeholder.addEventListener = () => {};
-        placeholder.removeEventListener = () => {};
-
-        return placeholder;
+    for (const id of ids) {
+        const el = document.getElementById(id);
+        if (el) return el;
     }
+    
+    // Create a functional placeholder that won't crash the game
+    const placeholder = document.createElement('div');
+    placeholder.id = `placeholder-${ids[0] || 'missing'}`;
+    placeholder.style.cssText = 'display: none !important;';
+    
+    // Add basic element methods to prevent crashes
+    placeholder.textContent = '';
+    placeholder.classList = { 
+        add: () => {}, 
+        remove: () => {}, 
+        toggle: () => {},
+        contains: () => false 
+    };
+    placeholder.setAttribute = () => {};
+    placeholder.removeAttribute = () => {};
+    placeholder.addEventListener = () => {};
+    placeholder.removeEventListener = () => {};
+    placeholder.focus = () => {};
+    placeholder.style = { 
+        cssText: '',
+        width: '',
+        height: '',
+        display: '',
+        position: '',
+        top: '',
+        left: '',
+        transform: '',
+        background: '',
+        color: '',
+        padding: '',
+        borderRadius: '',
+        zIndex: '',
+        fontFamily: '',
+        maxWidth: '',
+        textAlign: '',
+        boxShadow: '',
+        marginTop: '',
+        marginBottom: '',
+        lineHeight: '',
+        marginLeft: '',
+        paddingLeft: '',
+        background: '',
+        border: '',
+        cursor: '',
+        fontWeight: '',
+        overflowY: '',
+        maxHeight: '',
+        borderLeft: '',
+        textAlign: '',
+        minWidth: '',
+        filter: '',
+        opacity: '',
+        transition: '',
+        transform: '',
+        boxShadow: '',
+        borderLeft: ''
+    };
+    
+    console.warn(`Element not found: ${ids.join(', ')}. Using placeholder.`);
+    return placeholder;
+}
 
     const GAME_DURATION = 60;
     const MAX_LIVES = 3;
