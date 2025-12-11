@@ -2848,6 +2848,67 @@ body.animations-off .clickable-character:hover {
                         <!-- Game Container -->
                         <div id="gameContainer" class="game-container">
                             <canvas id="gameCanvas" width="640" height="360" aria-label="Pooh catching honey pots"></canvas>
+                            
+                            <!-- Game HUD -->
+                            <div id="gameHUD" class="game-hud">
+                                <div class="game-hud-item">
+                                    <span class="game-hud-label">Score</span>
+                                    <span id="scoreValue" class="game-hud-value">0</span>
+                                </div>
+                                <div class="game-hud-item">
+                                    <span class="game-hud-label">Best</span>
+                                    <span id="bestValue" class="game-hud-value">0</span>
+                                </div>
+                                <div class="game-hud-item">
+                                    <span class="game-hud-label">Time</span>
+                                    <span id="timeValue" class="game-hud-value">60</span>
+                                </div>
+                                <div class="game-hud-item">
+                                    <span class="game-hud-label">Streak</span>
+                                    <span id="streakValue" class="game-hud-value">0</span>
+                                    <span id="streakBadge" class="streak-badge">Combo!</span>
+                                </div>
+                                <div class="game-hud-item">
+                                    <span class="game-hud-label">Lives</span>
+                                    <span id="livesValue" class="game-hud-value">♥♥♥</span>
+                                </div>
+                            </div>
+                            
+                            <!-- Game Overlays -->
+                            <div id="startOverlay" class="game-start-overlay">
+                                <div class="game-start-card">
+                                    <h2 class="game-start-title">Honey Hunt</h2>
+                                    <p class="game-start-subtitle">Help Pooh collect honey jars!</p>
+                                    <button id="startButton" class="btn primary">Start Game</button>
+                                </div>
+                            </div>
+                            
+                            <div id="pauseOverlay" class="game-overlay">
+                                <div class="game-overlay-card">
+                                    <h2>Game Paused</h2>
+                                    <button id="resumeButton" class="btn primary">Resume</button>
+                                </div>
+                            </div>
+                            
+                            <div id="gameOverOverlay" class="game-overlay">
+                                <div class="game-overlay-card">
+                                    <h2>Game Over!</h2>
+                                    <p>Final Score: <span id="finalScore">0</span></p>
+                                    <p>Best: <span id="finalBest">0</span></p>
+                                    <button id="restartButton" class="btn primary">Play Again</button>
+                                    <button id="restartButton2" class="btn secondary">Restart</button>
+                                </div>
+                            </div>
+                            
+                            <!-- Mobile Controls -->
+                            <div class="mobile-controls">
+                                <button id="btnLeft" class="mobile-control-btn">←</button>
+                                <button id="btnRight" class="mobile-control-btn">→</button>
+                                <button id="pauseBtn" class="mobile-control-pause">⏸️</button>
+                            </div>
+                            
+                            <!-- Power-up Indicators -->
+                            <div id="powerupIndicators" class="powerup-indicators"></div>
                         </div>
                     </div>
                     
@@ -3166,13 +3227,120 @@ body.animations-off .clickable-character:hover {
         </div>
     </footer>
 
+    <!-- Hidden Game UI Elements -->
+    <div id="overlayBest" style="display: none;">0</div>
+    <div id="overlayGames" style="display: none;">0</div>
+    <div id="settingsBest" style="display: none;">0</div>
+    
+    <!-- Game UI Buttons -->
+    <button id="helpToggle" style="display: none;">?</button>
+    <button id="helpToggleSecondary" style="display: none;">Help</button>
+    <button id="settingsToggle" style="display: none;">⚙️</button>
+    
+    <!-- Settings Modal -->
+    <div id="settingsModal" class="settings-overlay">
+        <div class="settings-card">
+            <div class="settings-header">
+                <h2>Game Settings</h2>
+                <button id="settingsClose" class="close-settings">×</button>
+            </div>
+            <div class="settings-section">
+                <h3>Audio</h3>
+                <div class="setting-option">
+                    <div class="setting-label">
+                        <span>Music</span>
+                        <small>Background music</small>
+                    </div>
+                    <button id="musicToggle" class="toggle-btn" data-on="true">
+                        <span class="toggle-switch">
+                            <input type="checkbox" checked>
+                            <span class="toggle-slider"></span>
+                        </span>
+                    </button>
+                </div>
+                <div class="setting-option">
+                    <div class="setting-label">
+                        <span>Sound Effects</span>
+                        <small>Game sounds</small>
+                    </div>
+                    <button id="sfxToggle" class="toggle-btn" data-on="true">
+                        <span class="toggle-switch">
+                            <input type="checkbox" checked>
+                            <span class="toggle-slider"></span>
+                        </span>
+                    </button>
+                </div>
+            </div>
+            <div class="settings-section">
+                <h3>Difficulty</h3>
+                <div class="setting-option">
+                    <button class="diff-btn" data-level="0">Chill</button>
+                    <button class="diff-btn active" data-level="1">Classic</button>
+                    <button class="diff-btn" data-level="2">Spicy</button>
+                </div>
+            </div>
+            <div class="settings-section">
+                <h3>Progress</h3>
+                <div class="setting-option">
+                    <span>Best Score: <span id="settingsBestDisplay">0</span></span>
+                    <button id="resetProgress" class="btn secondary">Reset Progress</button>
+                </div>
+            </div>
+        </div>
+    </div>
+    
+    <!-- Help Panel -->
+    <div id="helpPanel" class="help-panel" style="display: none;">
+        <div class="help-content">
+            <button id="helpClose" class="close-settings">×</button>
+            <h2>How to Play</h2>
+            <p>Use arrow keys or on-screen buttons to move Pooh left and right.</p>
+            <p>Catch honey jars for points, avoid bees!</p>
+        </div>
+    </div>
+    
+    <!-- Live Region for Screen Readers -->
+    <div id="liveRegion" aria-live="polite" style="position:absolute;left:-9999px;"></div>
+    
+    <!-- Progress Elements -->
+    <div id="timeProgress" style="display: none;"></div>
+    <div id="timeSubtitle" style="display: none;"></div>
+    <div id="streakProgress" style="display: none;"></div>
+    <div id="streakSubtitle" style="display: none;"></div>
+    <div id="sessionDifficulty" style="display: none;"></div>
+    <div id="sessionGames" style="display: none;"></div>
+    <div id="sessionMood" style="display: none;"></div>
+    
+    <!-- Combo Indicator -->
+    <div id="comboIndicator" style="display: none;">x1 Combo!</div>
+    <div id="powerupIndicator" style="display: none;">🛡️</div>
+    
+    <!-- Daily Challenge Panel -->
+    <div id="dailyChallengePanel" style="display: none;">
+        <div class="daily-challenge-title">Daily Challenge</div>
+        <div id="dailyChallengeText">Catch 30 gold jars</div>
+        <div class="daily-challenge-progress">
+            <div id="dailyChallengeProgress" class="daily-challenge-progress-fill"></div>
+        </div>
+        <div id="dailyChallengeReward" class="daily-challenge-reward">🎁 Reward: Golden Bear Skin</div>
+    </div>
+    
+    <!-- Evolution Display -->
+    <div id="evolutionDisplay" class="evolution-display" style="display: none;">
+        <span class="evolution-level">1</span>
+        <span class="evolution-name">Cub Bear</span>
+        <span class="evolution-icon">🐻</span>
+    </div>
+    
     <!-- Audio Elements -->
     <audio id="bgMusic" preload="auto" loop>
         <source src="media/hundred-acre-lullaby.mp3" type="audio/mpeg">
     </audio>
     
-    <script src = game.js>>/script>
-    <!-- JavaScript -->
+    <!-- JavaScript Files -->
+    <script src="game.js"></script>
+    
+    <!-- Main JavaScript -->
     <script>
         // Main JavaScript functionality
         document.addEventListener("DOMContentLoaded", function() {
