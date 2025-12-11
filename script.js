@@ -419,6 +419,7 @@ syncFullscreenUI();
 
 // ===== GAME LOGIC =====
 let canvas, ctx;
+let hudScoreEl, hudTimeEl, hudStreakEl, hudBestEl, hudLivesEl;
 let rafId = null; // rAF id
 let bgCanvas = null, bgCtx = null; // cached background canvas
 let gameState = 'idle';
@@ -508,6 +509,13 @@ const Game = {
         }
         ctx = canvas.getContext('2d');
 
+        // HUD references that mirror the current markup
+        hudScoreEl = document.getElementById('hudScore');
+        hudTimeEl = document.getElementById('hudTime');
+        hudStreakEl = document.getElementById('hudStreak');
+        hudBestEl = document.getElementById('hudBest');
+        hudLivesEl = document.getElementById('hudLives');
+
         this.overlay = document.getElementById('gameOverlay');
         this.overlayButton = document.getElementById('overlayButton');
         this.overlayTitle = document.getElementById('overlayTitle');
@@ -523,6 +531,26 @@ const Game = {
                     this.start();
                 }
             });
+        }
+
+        const startBtn = document.getElementById('btnStart');
+        const pauseBtn = document.getElementById('btnPause');
+        const leftBtn = document.getElementById('btnLeft');
+        const rightBtn = document.getElementById('btnRight');
+
+        if (startBtn) startBtn.addEventListener('click', () => this.start());
+        if (pauseBtn) pauseBtn.addEventListener('click', () => this.togglePause());
+        if (leftBtn) {
+            leftBtn.addEventListener('mousedown', () => { keys.left = true; });
+            leftBtn.addEventListener('mouseup', () => { keys.left = false; });
+            leftBtn.addEventListener('touchstart', (e) => { e.preventDefault(); keys.left = true; }, { passive: false });
+            leftBtn.addEventListener('touchend', () => { keys.left = false; });
+        }
+        if (rightBtn) {
+            rightBtn.addEventListener('mousedown', () => { keys.right = true; });
+            rightBtn.addEventListener('mouseup', () => { keys.right = false; });
+            rightBtn.addEventListener('touchstart', (e) => { e.preventDefault(); keys.right = true; }, { passive: false });
+            rightBtn.addEventListener('touchend', () => { keys.right = false; });
         }
         // ESC key handling for overlay states
         document.addEventListener('keydown', (e) => {
@@ -653,6 +681,7 @@ const Game = {
 
 
         this.draw();
+        this.updateDisplay();
 
         this.showOverlay('Ready to Play', 'Catch honey, avoid bees, and chase your best streak!', '🍯', 'Start Adventure');
         this.updateStatus('Ready to play!');
@@ -756,7 +785,7 @@ const Game = {
         timerInterval = setInterval(() => {
             if (gameState !== 'playing') return;
             timeLeft--;
-            document.getElementById('time').textContent = timeLeft;
+            if (hudTimeEl) hudTimeEl.textContent = timeLeft;
             if (timeLeft <= 0) {
                 this.end();
             }
@@ -873,7 +902,7 @@ const Game = {
         // Update best scores
         if (score > bestScore) {
             bestScore = score;
-            document.getElementById('gameHighScore').textContent = bestScore;
+            if (hudBestEl) hudBestEl.textContent = bestScore;
             this.showAchievement('New High Score!');
         }
         if (honeyCollected > bestHoney) {
@@ -1505,19 +1534,16 @@ const Game = {
     updateDisplay: function() {
         bestHoney = Math.max(bestHoney, honeyCollected);
         bestCombo = Math.max(bestCombo, combo);
-        document.getElementById('score').textContent = score;
-        document.getElementById('honey').textContent = honeyCollected;
-        document.getElementById('time').textContent = timeLeft;
-        document.getElementById('combo').textContent = combo;
-        document.getElementById('bestHoney').textContent = bestHoney;
-        document.getElementById('bestCombo').textContent = bestCombo;
-        document.getElementById('gameHighScore').textContent = bestScore;
+        if (hudScoreEl) hudScoreEl.textContent = score;
+        if (hudTimeEl) hudTimeEl.textContent = timeLeft;
+        if (hudStreakEl) hudStreakEl.textContent = combo;
+        if (hudBestEl) hudBestEl.textContent = bestScore;
 
         let heartsDisplay = '';
         for (let i = 0; i < lives; i++) {
             heartsDisplay += '❤️';
         }
-        document.getElementById('lives').textContent = heartsDisplay || '💔';
+        if (hudLivesEl) hudLivesEl.textContent = heartsDisplay || '💔';
     },
 
 
@@ -1603,9 +1629,7 @@ const Game = {
                 if (parsed && typeof parsed.honey === 'number') bestHoney = parsed.honey;
                 if (parsed && typeof parsed.combo === 'number') bestCombo = parsed.combo;
             }
-            document.getElementById('gameHighScore').textContent = bestScore;
-            document.getElementById('bestHoney').textContent = bestHoney;
-            document.getElementById('bestCombo').textContent = bestCombo;
+            if (hudBestEl) hudBestEl.textContent = bestScore;
         } catch (e) {
             console.warn('No saved stats', e);
         }
@@ -1798,9 +1822,8 @@ document.addEventListener('DOMContentLoaded', () => {
   }
 
   function wireGame(){
-    $('#startBtn')?.addEventListener('click', ()=> duckAmbient(true));
-    $('#pauseBtn')?.addEventListener('click', ()=> duckAmbient(false));
-    $('#resetBtn')?.addEventListener('click', ()=> duckAmbient(false));
+    $('#btnStart')?.addEventListener('click', ()=> duckAmbient(true));
+    $('#btnPause')?.addEventListener('click', ()=> duckAmbient(false));
   }
 
   function init(){
