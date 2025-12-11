@@ -4526,3 +4526,4 @@
         liveRegion.textContent = "Honey Hunt game loaded. Press Start to begin or Space to start.";
     }
 }
+}
