@@ -1,4 +1,5 @@
 // game.js - Honey Hunt Game (Complete Fixed Version)
+/* jshint esversion: 6 */
 
 (function () {
     "use strict";
@@ -17,28 +18,25 @@
     }
 
     function getEl(...ids) {
-    for (const id of ids) {
-        const el = document.getElementById(id);
-        if (el) return el;
+        for (const id of ids) {
+            const el = document.getElementById(id);
+            if (el) return el;
+        }
+
+        // Create a more functional placeholder
+        const placeholder = document.createElement("div");
+        placeholder.id = `placeholder-${ids[0] || "missing"}`;
+        placeholder.style.cssText = "display: none !important;";
+
+        // Add basic element methods
+        placeholder.textContent = "";
+        placeholder.classList = { add: () => {}, remove: () => {}, toggle: () => {} };
+        placeholder.setAttribute = () => {};
+        placeholder.addEventListener = () => {};
+        placeholder.removeEventListener = () => {};
+
+        return placeholder;
     }
-    
-    // Create a more functional placeholder
-    const placeholder = document.createElement('div');
-    placeholder.id = `placeholder-${ids[0] || 'missing'}`;
-    placeholder.style.cssText = 'display: none !important;';
-    
-    // Add basic element methods
-    placeholder.textContent = '';
-    placeholder.classList = { add: () => {}, remove: () => {}, toggle: () => {} };
-    placeholder.setAttribute = () => {};
-    placeholder.addEventListener = () => {};
-    placeholder.removeEventListener = () => {};
-    
-    return placeholder;
-}
-    // Return a dummy element as last resort
-    return { textContent: "", style: {} };
-}
 
     const GAME_DURATION = 60;
     const MAX_LIVES = 3;
