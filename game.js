@@ -1,4 +1,4 @@
-// game.js - Honey Hunt Game (Fixed Settings)
+// game.js - Honey Hunt Game (Complete Fixed Version)
 
 (function () {
     "use strict";
@@ -17,17 +17,17 @@
     }
 
     function getEl(...ids) {
-    for (const id of ids) {
-        const el = document.getElementById(id);
-        if (el) return el;
-    }
+        for (const id of ids) {
+            const el = document.getElementById(id);
+            if (el) return el;
+        }
 
-    console.warn(
-        "[Honey Hunt] Missing expected element(s):",
-        ids.join(", ")
-    );
-    return null;
-}
+        console.warn(
+            "[Honey Hunt] Missing expected element(s):",
+            ids.join(", ")
+        );
+        return null;
+    }
 
     const GAME_DURATION = 60;
     const MAX_LIVES = 3;
@@ -144,6 +144,65 @@
         CHALLENGE_PROGRESS: 'challenge_progress',
         CHALLENGE_COMPLETE: 'challenge_complete'
     };
+
+    // ==================== SAFE AUDIO FUNCTIONS ====================
+    
+    function safeInitAudio() {
+        try {
+            if (typeof AudioContext !== 'undefined' || typeof webkitAudioContext !== 'undefined') {
+                const AudioContextClass = window.AudioContext || window.webkitAudioContext;
+                audioContext = new AudioContextClass();
+                generateSoundEffects();
+                console.log("Audio system initialized with Web Audio API");
+            } else {
+                console.log("Web Audio API not available, using silent mode");
+            }
+        } catch (error) {
+            console.warn("Audio initialization failed:", error);
+        }
+        isAudioInitialized = true;
+    }
+    
+    function safePlaySound(soundType) {
+        if (!settingsState.sfxOn) return;
+        
+        try {
+            playSound(soundType);
+        } catch (error) {
+            console.warn("Could not play sound:", soundType, error);
+            // Simple fallback beep
+            try {
+                if (audioContext && audioContext.state === 'running') {
+                    const oscillator = audioContext.createOscillator();
+                    const gainNode = audioContext.createGain();
+                    oscillator.connect(gainNode);
+                    gainNode.connect(audioContext.destination);
+                    
+                    oscillator.frequency.value = 800;
+                    oscillator.type = 'sine';
+                    gainNode.gain.setValueAtTime(0.1, audioContext.currentTime);
+                    gainNode.gain.exponentialRampToValueAtTime(0.001, audioContext.currentTime + 0.1);
+                    
+                    oscillator.start();
+                    oscillator.stop(audioContext.currentTime + 0.1);
+                }
+            } catch (e) {
+                // Silent fallback
+            }
+        }
+    }
+    
+    function safeBackgroundMusic() {
+        if (!settingsState.musicOn || musicPlaying) return;
+        
+        try {
+            startBackgroundMusic();
+        } catch (error) {
+            console.warn("Background music failed:", error);
+            // Fallback to simple music
+            playSynthesizedMusic();
+        }
+    }
 
     function initAudio() {
         if (isAudioInitialized) return;
@@ -1158,36 +1217,76 @@
     }
 
     function playCatchSound(jarType) {
-    switch(jarType) {
-        case 'gold':
-            safePlaySound(SOUNDS.CATCH_GOLD);
-            break;
-        case 'shield':
-            safePlaySound(SOUNDS.CATCH_SHIELD);
-            break;
-        case 'powerup':
-            safePlaySound(SOUNDS.CATCH_POWERUP);
-            break;
-        default:
-            safePlaySound(SOUNDS.CATCH_NORMAL);
+        switch(jarType) {
+            case 'gold':
+                safePlaySound(SOUNDS.CATCH_GOLD);
+                break;
+            case 'shield':
+                safePlaySound(SOUNDS.CATCH_SHIELD);
+                break;
+            case 'powerup':
+                safePlaySound(SOUNDS.CATCH_POWERUP);
+                break;
+            default:
+                safePlaySound(SOUNDS.CATCH_NORMAL);
+        }
     }
-}
 
-function playBeeHitSound() {
-    safePlaySound(SOUNDS.BEE_HIT);
-}
+    function playBeeHitSound() {
+        safePlaySound(SOUNDS.BEE_HIT);
+    }
 
-function playButtonClickSound() {
-    safePlaySound(SOUNDS.BUTTON_CLICK);
-}
+    function playButtonClickSound() {
+        safePlaySound(SOUNDS.BUTTON_CLICK);
+    }
 
-function playGameStartSound() {
-    safePlaySound(SOUNDS.GAME_START);
-}
+    function playGameStartSound() {
+        safePlaySound(SOUNDS.GAME_START);
+    }
 
-function playGameOverSound() {
-    safePlaySound(SOUNDS.GAME_OVER);
-}
+    function playGameOverSound() {
+        safePlaySound(SOUNDS.GAME_OVER);
+    }
+
+    function playShieldBlockSound() {
+        safePlaySound(SOUNDS.SHIELD_BLOCK);
+    }
+
+    function playPowerupActivateSound() {
+        safePlaySound(SOUNDS.POWERUP_ACTIVATE);
+    }
+
+    function playPowerupExpireSound() {
+        safePlaySound(SOUNDS.POWERUP_EXPIRE);
+    }
+
+    function playComboSound() {
+        safePlaySound(SOUNDS.COMBO_START);
+    }
+
+    function playStreakSound(streak) {
+        if (streak === 5) {
+            safePlaySound(SOUNDS.STREAK_5);
+        } else if (streak === 10) {
+            safePlaySound(SOUNDS.STREAK_10);
+        }
+    }
+
+    function playEvolutionSound() {
+        safePlaySound(SOUNDS.EVOLUTION_UPGRADE);
+    }
+
+    function playAchievementSound() {
+        safePlaySound(SOUNDS.ACHIEVEMENT_UNLOCK);
+    }
+
+    function playPauseSound() {
+        safePlaySound(SOUNDS.GAME_PAUSE);
+    }
+
+    function playResumeSound() {
+        safePlaySound(SOUNDS.GAME_RESUME);
+    }
 
     const keys = {
         left: false,
@@ -1789,14 +1888,25 @@ function playGameOverSound() {
     }
 
     // ==================== QUICK WINS: BEAR EVOLUTION ====================
-    function updateBearEvolution() {
-        const newEvolution = BEAR_EVOLUTIONS.findIndex(evo => gameState.score >= evo.score);
-        if (newEvolution > gameState.currentEvolution) {
-            gameState.currentEvolution = newEvolution;
-            showEvolutionUpgrade(newEvolution);
-        }
-    }
 
+
+    function showEvolutionUpgrade(level) {
+        const evolution = BEAR_EVOLUTIONS[level];
+        if (!evolution) return;
+
+        const evolutionDisplay = document.getElementById("evolutionDisplay");
+        if (!evolutionDisplay) {
+            const display = document.createElement("div");
+            display.id = "evolutionDisplay";
+            display.className = "evolution-display";
+            gameContainer.appendChild(display);
+        }
+
+        const display = document.getElementById("evolutionDisplay");
+        display.innerHTML = `
+        <span class="evolution-level">${level + 1}</span>
+        <span class="evolution-name">${evolution.name} Bear</span>
+        <span class="evolution-icon">${level === 0 ?
     function showEvolutionUpgrade(level) {
         const evolution = BEAR_EVOLUTIONS[level];
         if (!evolution) return;
