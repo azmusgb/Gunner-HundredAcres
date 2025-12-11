@@ -1849,9 +1849,11 @@ document.addEventListener('DOMContentLoaded', () => {
   const gameFrame = document.querySelector('.game-embed__frame');
   const gameContainer = document.querySelector('.game-embed');
 
-  if (gameFrame && gameContainer) {
-    const markLoaded = () => gameContainer.classList.add('loaded');
+  if (!gameContainer) return;
 
+  const markLoaded = () => gameContainer.classList.add('loaded');
+
+  if (gameFrame) {
     gameFrame.addEventListener('load', () => {
       markLoaded();
       try {
@@ -1862,5 +1864,8 @@ document.addEventListener('DOMContentLoaded', () => {
     });
 
     setTimeout(markLoaded, 3000);
+  } else {
+    // Inline embed: mark as loaded immediately so the overlay disappears
+    markLoaded();
   }
 });
