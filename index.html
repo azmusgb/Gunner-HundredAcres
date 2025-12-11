@@ -749,7 +749,6 @@ body.animations-off .cloud {
 
     <link as="image" href="Images/Characters/Gunnar.png" rel="preload">
 </head>
-
 <body>
     <!-- Decorative Elements -->
     <div class="enhanced-scene" aria-hidden="true" id="enhancedScene"></div>
@@ -1334,7 +1333,7 @@ body.animations-off .cloud {
 
     <!-- JavaScript -->
     <script>
-        // Main JavaScript functionality (truncated for brevity, but all fixes applied)
+        // Main JavaScript functionality
         document.addEventListener("DOMContentLoaded", function() {
             // Navigation system
             const pages = document.querySelectorAll('.page');
@@ -1372,23 +1371,27 @@ body.animations-off .cloud {
             }
             
             // Navigation button handlers
-            nextBtn?.addEventListener('click', () => {
-                if (currentPage < pages.length - 1) {
-                    currentPage++;
-                    updateNavigation();
-                }
-            });
+            if (nextBtn) {
+                nextBtn.addEventListener('click', function() {
+                    if (currentPage < pages.length - 1) {
+                        currentPage++;
+                        updateNavigation();
+                    }
+                });
+            }
             
-            prevBtn?.addEventListener('click', () => {
-                if (currentPage > 0) {
-                    currentPage--;
-                    updateNavigation();
-                }
-            });
+            if (prevBtn) {
+                prevBtn.addEventListener('click', function() {
+                    if (currentPage > 0) {
+                        currentPage--;
+                        updateNavigation();
+                    }
+                });
+            }
             
             // Chapter pill handlers
-            chapterPills.forEach(pill => {
-                pill.addEventListener('click', () => {
+            chapterPills.forEach(function(pill) {
+                pill.addEventListener('click', function() {
                     const target = parseInt(pill.getAttribute('data-chapter-target')) - 1;
                     currentPage = target;
                     updateNavigation();
@@ -1425,11 +1428,11 @@ body.animations-off .cloud {
                 ]
             };
             
-            document.querySelectorAll('.clickable-character').forEach(character => {
+            document.querySelectorAll('.clickable-character').forEach(function(character) {
                 const charType = character.getAttribute('data-character');
                 const messageEl = character.querySelector('.character-message');
                 
-                character.addEventListener('click', () => {
+                character.addEventListener('click', function() {
                     const lines = characterLines[charType] || ["A quiet, happy thought drifts through the leaves."];
                     const randomLine = lines[Math.floor(Math.random() * lines.length)];
                     messageEl.textContent = randomLine;
@@ -1452,56 +1455,60 @@ body.animations-off .cloud {
             }
             
             // Character counter
-            wishMessage?.addEventListener('input', function() {
-                const remaining = 500 - this.value.length;
-                wishCharCount.textContent = `${this.value.length}/500 characters`;
-            });
+            if (wishMessage) {
+                wishMessage.addEventListener('input', function() {
+                    const remaining = 500 - this.value.length;
+                    wishCharCount.textContent = `${this.value.length}/500 characters`;
+                });
+            }
             
             // Form submission
-            wishesForm?.addEventListener('submit', function(e) {
-                e.preventDefault();
-                
-                const name = document.getElementById('guestName').value.trim();
-                const relation = document.getElementById('guestRelation').value;
-                const message = document.getElementById('wishMessage').value.trim();
-                
-                if (!name || !message) {
-                    wishFeedback.textContent = 'Please fill in your name and message.';
-                    wishFeedback.style.color = '#e53e3e';
-                    return;
-                }
-                
-                // Create wish element
-                const wishElement = document.createElement('div');
-                wishElement.className = 'wish-card';
-                wishElement.innerHTML = `
-                    <div class="wish-header">
-                        <strong>${name}</strong>
-                        ${relation ? `<span class="wish-relation">• ${relation}</span>` : ''}
-                    </div>
-                    <div class="wish-message">${message.replace(/\n/g, '<br>')}</div>
-                    <div class="wish-date">${new Date().toLocaleDateString()}</div>
-                `;
-                
-                // Add to display
-                wishesDisplay.prepend(wishElement);
-                
-                // Save to localStorage
-                saveWishes();
-                
-                // Clear form
-                this.reset();
-                wishCharCount.textContent = '0/500 characters';
-                
-                // Show success message
-                wishFeedback.textContent = 'Thank you! Your wish has been added to Gunnar\'s storybook.';
-                wishFeedback.style.color = '#38a169';
-                
-                // Clear feedback after 5 seconds
-                setTimeout(() => {
-                    wishFeedback.textContent = '';
-                }, 5000);
-            });
+            if (wishesForm) {
+                wishesForm.addEventListener('submit', function(e) {
+                    e.preventDefault();
+                    
+                    const name = document.getElementById('guestName').value.trim();
+                    const relation = document.getElementById('guestRelation').value;
+                    const message = document.getElementById('wishMessage').value.trim();
+                    
+                    if (!name || !message) {
+                        wishFeedback.textContent = 'Please fill in your name and message.';
+                        wishFeedback.style.color = '#e53e3e';
+                        return;
+                    }
+                    
+                    // Create wish element
+                    const wishElement = document.createElement('div');
+                    wishElement.className = 'wish-card';
+                    wishElement.innerHTML = `
+                        <div class="wish-header">
+                            <strong>${name}</strong>
+                            ${relation ? '<span class="wish-relation">• ' + relation + '</span>' : ''}
+                        </div>
+                        <div class="wish-message">${message.replace(/\n/g, '<br>')}</div>
+                        <div class="wish-date">${new Date().toLocaleDateString()}</div>
+                    `;
+                    
+                    // Add to display
+                    wishesDisplay.prepend(wishElement);
+                    
+                    // Save to localStorage
+                    saveWishes();
+                    
+                    // Clear form
+                    this.reset();
+                    wishCharCount.textContent = '0/500 characters';
+                    
+                    // Show success message
+                    wishFeedback.textContent = 'Thank you! Your wish has been added to Gunnar\'s storybook.';
+                    wishFeedback.style.color = '#38a169';
+                    
+                    // Clear feedback after 5 seconds
+                    setTimeout(function() {
+                        wishFeedback.textContent = '';
+                    }, 5000);
+                });
+            }
             
             function saveWishes() {
                 localStorage.setItem('gunnarWishes', wishesDisplay.innerHTML);
@@ -1517,8 +1524,11 @@ body.animations-off .cloud {
                     const days = Math.floor(difference / (1000 * 60 * 60 * 24));
                     const hours = Math.floor((difference % (1000 * 60 * 60 * 24)) / (1000 * 60 * 60));
                     
-                    document.getElementById('days').textContent = days;
-                    document.getElementById('hours').textContent = hours;
+                    const daysElement = document.getElementById('days');
+                    const hoursElement = document.getElementById('hours');
+                    
+                    if (daysElement) daysElement.textContent = days;
+                    if (hoursElement) hoursElement.textContent = hours;
                 }
             }
             
@@ -1526,39 +1536,50 @@ body.animations-off .cloud {
             const addHopeBtn = document.getElementById('addHopeBtn');
             const hopesList = document.getElementById('hopesList');
             
-            addHopeBtn?.addEventListener('click', function() {
-                const hope = prompt('What hope or dream would you like to share for Baby Gunnar?');
-                if (hope && hope.trim()) {
-                    const li = document.createElement('li');
-                    li.textContent = hope.trim();
-                    hopesList.appendChild(li);
-                }
-            });
+            if (addHopeBtn && hopesList) {
+                addHopeBtn.addEventListener('click', function() {
+                    const hope = prompt('What hope or dream would you like to share for Baby Gunnar?');
+                    if (hope && hope.trim()) {
+                        const li = document.createElement('li');
+                        li.textContent = hope.trim();
+                        hopesList.appendChild(li);
+                    }
+                });
+            }
             
             // Footer actions
-            document.getElementById('printPageBtn')?.addEventListener('click', function() {
-                window.print();
-            });
+            const printBtn = document.getElementById('printPageBtn');
+            if (printBtn) {
+                printBtn.addEventListener('click', function() {
+                    window.print();
+                });
+            }
             
-            document.getElementById('sharePageBtn')?.addEventListener('click', function() {
-                if (navigator.share) {
-                    navigator.share({
-                        title: document.title,
-                        text: 'Check out Baby Gunnar\'s Hundred Acre Wood Adventure!',
-                        url: window.location.href
-                    });
-                } else {
-                    navigator.clipboard.writeText(window.location.href);
-                    alert('Link copied to clipboard!');
-                }
-            });
+            const shareBtn = document.getElementById('sharePageBtn');
+            if (shareBtn) {
+                shareBtn.addEventListener('click', function() {
+                    if (navigator.share) {
+                        navigator.share({
+                            title: document.title,
+                            text: 'Check out Baby Gunnar\'s Hundred Acre Wood Adventure!',
+                            url: window.location.href
+                        });
+                    } else {
+                        navigator.clipboard.writeText(window.location.href);
+                        alert('Link copied to clipboard!');
+                    }
+                });
+            }
             
-            document.getElementById('toggleAnimationsBtn')?.addEventListener('click', function() {
-                document.body.classList.toggle('animations-off');
-                this.textContent = document.body.classList.contains('animations-off') 
-                    ? 'Animations: Off' 
-                    : 'Animations: On';
-            });
+            const toggleAnimationsBtn = document.getElementById('toggleAnimationsBtn');
+            if (toggleAnimationsBtn) {
+                toggleAnimationsBtn.addEventListener('click', function() {
+                    document.body.classList.toggle('animations-off');
+                    this.textContent = document.body.classList.contains('animations-off') 
+                        ? 'Animations: Off' 
+                        : 'Animations: On';
+                });
+            }
             
             // Initialize
             loadWishes();
