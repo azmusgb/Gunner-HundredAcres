@@ -29,7 +29,8 @@
     const DIFFICULTY_LABELS = ["Chill", "Classic", "Spicy"];
 
     const gameContainer = getEl("gameContainer", "gameEmbed");
-    const canvas = document.getElementById("gameCanvas") || document.createElement("canvas");
+    const existingCanvas = document.getElementById("gameCanvas");
+    const canvas = existingCanvas || document.createElement("canvas");
     const ctx = canvas.getContext ? canvas.getContext("2d") : null;
 
     const scoreValue = getEl("scoreValue", "hudScore");
@@ -4260,6 +4261,17 @@
         console.log("Settings toggle:", settingsToggle);
         console.log("Settings modal:", settingsModal);
         console.log("Settings close:", settingsClose);
+
+        // If the canvas element was missing from the DOM, the fallback canvas we create
+        // above never gets attached anywhere. That leaves the render loop drawing to a
+        // detached element, so the game appears "not to load" even though no error is
+        // thrown. Attach the fallback canvas to the game container so it is visible.
+        if (!existingCanvas) {
+            canvas.id = "gameCanvas";
+            canvas.width = 640;
+            canvas.height = 360;
+            (gameContainer || document.body).appendChild(canvas);
+        }
 
         if (!canvas || !ctx) {
             console.warn("Honey Hunt cannot start without a canvas element.");
