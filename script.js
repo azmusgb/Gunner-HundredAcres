@@ -1821,3 +1821,23 @@ document.addEventListener('DOMContentLoaded', () => {
 
   if (document.readyState === 'loading') document.addEventListener('DOMContentLoaded', init); else init();
 })();
+
+document.addEventListener('DOMContentLoaded', () => {
+  const gameFrame = document.querySelector('.game-embed__frame');
+  const gameContainer = document.querySelector('.game-embed');
+
+  if (gameFrame && gameContainer) {
+    const markLoaded = () => gameContainer.classList.add('loaded');
+
+    gameFrame.addEventListener('load', () => {
+      markLoaded();
+      try {
+        gameFrame.contentWindow?.postMessage('gameReady', '*');
+      } catch (err) {
+        console.debug('Game ready postMessage skipped', err);
+      }
+    });
+
+    setTimeout(markLoaded, 3000);
+  }
+});
