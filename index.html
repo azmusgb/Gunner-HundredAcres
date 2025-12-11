@@ -21,729 +21,875 @@
 
   <style>
 
-    /* =========================================
-       1. ROOT + GLOBAL LAYOUT
-       ========================================= */
-    :root {
-        --bg: #fff9ec;
-        --bg-soft: #fff4dd;
-        --ink: #3b2604;
-        --ink-soft: #5a4330;
-        --accent: #f4b944;
-        --accent-soft: #ffe4a8;
-        --accent-strong: #f59e0b;
-        --border-soft: rgba(0, 0, 0, 0.06);
-        --card-bg: #ffffff;
-        --card-radius: 24px;
-        --shadow-soft: 0 18px 40px rgba(0, 0, 0, 0.16);
-        --shadow-subtle: 0 8px 20px rgba(0, 0, 0, 0.08);
-        --shadow-tiny: 0 2px 6px rgba(0, 0, 0, 0.08);
-        --transition-fast: 0.18s ease-out;
-        --transition-med: 0.28s ease;
-        --page-max-width: 1120px;
-        --page-padding-x: 1.5rem;
-        --page-padding-y: 1.5rem;
-        --font-body: system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
-        --font-title: "Playfair Display", "Georgia", serif;
-        --space-sm: 0.75rem;
-        --space-md: 1.25rem;
-        --touch-min: 44px;
-        --touch-padding: 0.75rem;}
-*,
-    *::before,
-    *::after {
-        box-sizing: border-box;}
-html,
-    body {
-        margin: 0;
-        padding: 0;}
-body {
-        min-height: 100vh;
-        font-family: var(--font-body);
-        color: var(--ink);
-        background: radial-gradient(circle at top, #fff4d4 0, #ffe5b0 28%, #ffe7c4 48%, #fff9ec 100%);
-        -webkit-font-smoothing: antialiased;
-        padding-left: env(safe-area-inset-left, 1rem);
-        padding-right: env(safe-area-inset-right, 1rem);
-        padding-top: env(safe-area-inset-top, 0);
-        padding-bottom: env(safe-area-inset-bottom, 0);}
-/* Global touch targets */
-    .hero-action-btn,
-    .chapter-nav-btn,
-    .footer-link,
-    .submit-btn,
-    .chapter-pill,
-    .registry-card,
-    .clickable-character,
-    .btn {
-        position: relative;
-        min-height: var(--touch-min);
-        min-width: var(--touch-min);}
-.footer-link,
-    .chapter-nav-btn {
-        padding: var(--touch-padding) calc(var(--touch-padding) * 1.5);}
-.hero-action-btn,
-    .submit-btn {
-        display: inline-flex;
-        align-items: center;
-        justify-content: center;}
-.btn-icon,
-    .pill-icon {
-        padding: 0.25rem;}
-/* A11y helper */
-    .sr-only {
-        position: absolute;
-        width: 1px;
-        height: 1px;
-        padding: 0;
-        margin: -1px;
-        overflow: hidden;
-        clip: rect(0, 0, 0, 0);
-        border: 0;}
-/* Simple text utilities */
-    .divider {
-        text-align: center;
-        margin: 2rem 0;
-        font-size: 0.95rem;
-        opacity: 0.8;}
 /* =========================================
-       2. DECORATIVE SCENE + CLOUDS
-       ========================================= */
-    .enhanced-scene {
-        position: fixed;
-        inset: 0;
-        pointer-events: none;
-        background:
-            radial-gradient(circle at top left, rgba(255, 255, 255, 0.8), transparent 55%),
-            radial-gradient(circle at top right, rgba(255, 243, 205, 0.8), transparent 50%),
-            radial-gradient(circle at bottom, rgba(255, 220, 185, 0.9), transparent 60%);
-        opacity: 0.6;
-        z-index: -2;}
-.cloud-layer {
-        position: fixed;
-        top: 0;
-        left: 0;
-        width: 100%;
-        pointer-events: none;
-        display: flex;
-        justify-content: space-around;
-        padding-top: 0.5rem;
-        font-size: 1.8rem;
-        opacity: 0.45;
-        z-index: -1;}
-.cloud {
-        animation: floatClouds 24s linear infinite;}
-.cloud:nth-child(2) {
-        animation-delay: -8s;}
-.cloud:nth-child(3) {
-        animation-delay: -16s;}
-@keyframes floatClouds {
-        0% {
-            transform: translate3d(-10px, 0, 0);}
-50% {
-            transform: translate3d(10px, 4px, 0);}
-100% {
-            transform: translate3d(-10px, 0, 0);}
-/* =========================================
-       3. HERO / MASTHEAD
-       ========================================= */
-    .masthead-hero {
-        position: relative;
-        padding-bottom: 2rem;
-        color: var(--ink);}
-.hero-banner {
-        position: relative;
-        isolation: isolate;
-        max-width: 1200px;
-        margin: 0 auto 1.5rem;
-        border-radius: 32px;
-        overflow: hidden;
-        box-shadow: var(--shadow-soft);
-        background: linear-gradient(135deg, #ffe5b0, #ffd1a3);
-        padding-top: env(safe-area-inset-top, 0);}
-.hero-image-container {
-        position: relative;
-        width: 100%;
-        height: min(60vh, 520px);
-        overflow: hidden;}
-.hero-banner__img {
-        width: 100%;
-        height: 100%;
-        object-fit: cover;
-        filter: saturate(1.05) contrast(1.03);
-        transform: scale(1.02);
-        transform-origin: center;}
-/* Corner emojis */
-    .hero-corner-decoration {
-        position: absolute;
-        font-size: 1.8rem;
-        filter: drop-shadow(0 2px 4px rgba(0, 0, 0, 0.16));}
-.hero-corner-decoration.top-left {
-        top: 10px;
-        left: 14px;}
-.hero-corner-decoration.top-right {
-        top: 10px;
-        right: 14px;}
-.hero-corner-decoration.bottom-left {
-        bottom: 10px;
-        left: 14px;}
-.hero-corner-decoration.bottom-right {
-        bottom: 10px;
-        right: 14px;}
-/* Title overlay */
-    .hero-title-container {
-        position: absolute;
-        inset: auto 0 0;
-        display: flex;
-        justify-content: center;
-        padding: 1.25rem 1.5rem 1.6rem;
-        pointer-events: none;}
-.title-background {
-        pointer-events: auto;
-        max-width: 720px;
-        width: 100%;
-        padding: 1.25rem 1.5rem 1.5rem;
-        border-radius: 24px 24px 0 0;
-        background: linear-gradient(
-            135deg,
-            rgba(255, 255, 255, 0.99),
-            rgba(255, 248, 225, 0.9)
-        );
-        box-shadow: 0 -10px 30px rgba(0, 0, 0, 0.18);
-        border: 1px solid rgba(255, 255, 255, 0.9);
-        border-bottom: none;}
-.masthead-title {
-        margin: 0 0 0.5rem;
-        font-family: var(--font-title);
-        letter-spacing: 0.04em;
-        text-align: center;}
-.title-line {
-        display: block;}
-.title-line--primary {
-        font-size: clamp(1.3rem, 2vw + 1rem, 1.6rem);
-        text-transform: uppercase;
-        letter-spacing: 0.25em;
-        opacity: 0.9;}
-.title-line--secondary {
-        font-size: clamp(1.9rem, 3vw + 1.2rem, 2.4rem);
-        font-weight: 700;}
-.title-underline {
-        display: flex;
-        justify-content: center;
-        gap: 0.25rem;
-        margin-bottom: 0.35rem;}
-.underline-dot {
-        font-size: 0.95rem;
-        color: var(--accent-strong);}
-.hero-subtitle {
-        margin: 0;
-        text-align: center;
-        font-size: 0.95rem;
-        color: var(--ink-soft);}
-/* Sparkles / bunting / sheen */
-    .hero-sparkles {
-        position: absolute;
-        inset: 0;
-        pointer-events: none;
-        background:
-            radial-gradient(circle at 10% 10%, rgba(255, 255, 255, 0.7), transparent 60%),
-            radial-gradient(circle at 90% 30%, rgba(255, 225, 173, 0.7), transparent 55%);
-        mix-blend-mode: screen;
-        opacity: 0.6;
-        z-index: -1;}
-.hero-bunting {
-        max-width: 1200px;
-        margin: 0.25rem auto 0;
-        display: flex;
-        justify-content: center;
-        gap: 0.5rem;
-        font-size: 1.4rem;}
-.hero-sheen {
-        position: absolute;
-        inset: 0;
-        pointer-events: none;
-        background: linear-gradient(
-            135deg,
-            rgba(255, 255, 255, 0.16),
-            transparent 60%
-        );
-        mix-blend-mode: screen;
-        opacity: 0.8;}
-/* Hero inner panel */
-    .masthead-hero-inner {
-        max-width: var(--page-max-width);
-        margin: 0.5rem auto 0;
-        padding: 0 1.25rem;
-        padding-left: max(var(--page-padding-x), env(safe-area-inset-left, 1rem));
-        padding-right: max(var(--page-padding-x), env(safe-area-inset-right, 1rem));}
-.hero-panel {
-        margin-top: 1.5rem;
-        padding: 1.75rem 1.5rem;
-        border-radius: var(--card-radius);
-        background: rgba(255, 255, 255, 0.96);
-        box-shadow: var(--shadow-subtle);
-        border: 1px solid rgba(255, 255, 255, 0.8);}
-/* =========================================
-       4. HERO BADGE + DETAIL GRID + CTA
-       ========================================= */
-    .hero-badge {
-        display: grid;
-        grid-template-columns: auto minmax(0, 1.5fr);
-        gap: 1rem;
-        padding: 1rem 1.25rem;
-        border-radius: 999px;
-        background: linear-gradient(135deg, #fffaf0, #ffe8bb);
-        align-items: center;
-        border: 1px solid rgba(244, 185, 68, 0.3);
-        margin-bottom: 1.5rem;}
-.badge-icon {
-        display: flex;
-        align-items: center;
-        justify-content: center;}
-.badge-icon-inner {
-        width: 48px;
-        height: 48px;
-        border-radius: 999px;
-        display: flex;
-        align-items: center;
-        justify-content: center;
-        background: radial-gradient(circle at 30% 20%, #fff9e8, #f4b944);
-        box-shadow: var(--shadow-tiny);
-        font-size: 1.6rem;}
-.badge-copy {
-        min-width: 0;}
-.badge-eyebrow {
-        margin: 0;
-        text-transform: uppercase;
-        letter-spacing: 0.16em;
-        font-size: 0.7rem;
-        opacity: 0.7;}
-.badge-label {
-        margin: 0.15rem 0 0;
-        font-size: 0.9rem;
-        font-weight: 600;}
-.badge-title {
-        margin: 0.15rem 0 0;
-        font-size: 1rem;
-        font-weight: 700;}
-.badge-meta {
-        display: flex;
-        gap: 0.5rem;
-        flex-wrap: wrap;
-        justify-content: flex-end;
-        align-items: center;
-        font-size: 0.8rem;}
-.badge-pill {
-        display: inline-flex;
-        align-items: center;
-        gap: 0.4rem;
-        border-radius: 999px;
-        padding: 0.3rem 0.7rem;
-        background: rgba(255, 255, 255, 0.92);
-        border: 1px solid rgba(255, 255, 255, 0.9);
-        box-shadow: 0 2px 6px rgba(244, 185, 68, 0.25);}
-.pill-icon {
-        font-size: 1rem;}
-.pill-text {
-        white-space: nowrap;}
-/* Detail grid */
-    .hero-details-grid {
-        display: grid;
-        grid-template-columns: repeat(3, minmax(0, 1fr));
-        gap: 1rem;
-        margin-bottom: 1.5rem;}
-.hero-detail {
-        display: flex;
-        gap: 0.75rem;
-        padding: 0.85rem 1rem;
-        border-radius: 16px;
-        background: #fffdfa;
-        box-shadow: 0 4px 12px rgba(244, 185, 68, 0.12);}
-.detail-icon {
-        font-size: 1.5rem;}
-.detail-title {
-        margin: 0;
-        font-size: 0.95rem;
-        font-weight: 600;}
-.detail-text {
-        margin: 0.15rem 0 0;
-        font-size: 0.85rem;
-        color: var(--ink-soft);}
-/* Hero CTAs */
-    .hero-actions {
-        display: flex;
-        flex-wrap: wrap;
-        gap: 0.75rem;
-        margin-bottom: 1rem;}
-.hero-action-btn {
-        border-radius: 999px;
-        border: none;
-        padding: 0.6rem 1.1rem;
-        font-size: 0.9rem;
-        font-weight: 600;
-        display: inline-flex;
-        align-items: center;
-        gap: 0.4rem;
-        cursor: pointer;
-        transition: transform var(--transition-fast), box-shadow var(--transition-fast), background var(--transition-fast);}
-.hero-action-btn .btn-icon {
-        font-size: 1.1rem;}
-.hero-action-btn.primary {
-        background: linear-gradient(135deg, #f4b944, #f59e0b);
-        color: #3b2604;
-        box-shadow: 0 8px 18px rgba(244, 185, 68, 0.6);}
-.hero-action-btn.secondary {
-        background: #ffffff;
-        color: var(--ink);
-        box-shadow: var(--shadow-tiny);
-        border: 1px solid rgba(0, 0, 0, 0.06);}
-.hero-action-btn.ghost {
-        background: transparent;
-        color: var(--ink-soft);
-        border: 1px dashed rgba(0, 0, 0, 0.16);}
-.hero-action-btn:hover {
-        transform: translateY(-1px);
-        box-shadow: 0 10px 22px rgba(0, 0, 0, 0.14);}
-/* Orientation hint */
-    .orientation-hint {
-        display: flex;
-        align-items: center;
-        gap: 0.6rem;
-        padding-top: 0.5rem;
-        border-top: 1px dashed rgba(0, 0, 0, 0.08);
-        margin-top: 0.5rem;
-        font-size: 0.83rem;
-        color: var(--ink-soft);}
-.hint-icon {
-        font-size: 1.4rem;}
-/* =========================================
-       5. CHAPTER TRACKER
-       ========================================= */
-    .chapter-tracker {
-        margin: 1rem 0 0.75rem;}
-.tracker-row {
-        display: flex;
-        align-items: center;
-        gap: 0.75rem;
-        margin-bottom: 0.75rem;}
-.tracker-label {
-        font-size: 0.8rem;
-        text-transform: uppercase;
-        letter-spacing: 0.16em;
-        opacity: 0.7;
-        white-space: nowrap;}
-/* Progress bar */
-    .book-progress {
-        position: relative;
-        flex: 1;
-        height: 0.4rem;
-        border-radius: 999px;
-        background: rgba(0, 0, 0, 0.06);
-        overflow: hidden;}
-.book-progress .progress-fill {
-        width: 0%;
-        height: 100%;
-        border-radius: inherit;
-        background: linear-gradient(90deg, #f4b944, #f97316);
-        transition: width 0.25s ease-out;}
-.chapter-pill-row {
-        display: flex;
-        flex-wrap: wrap;
-        gap: 0.5rem;
-        margin-top: 0.25rem;}
-.chapter-pill {
-        display: inline-flex;
-        align-items: center;
-        gap: 0.5rem;
-        padding: 0.4rem 0.9rem;
-        border-radius: 999px;
-        border: 1px solid rgba(0, 0, 0, 0.08);
-        background: #ffffff;
-        box-shadow: var(--shadow-tiny);
-        cursor: pointer;
-        font-size: 0.85rem;}
-.chapter-pill .pill-number {
-        display: inline-flex;
-        align-items: center;
-        justify-content: center;
-        width: 1.7rem;
-        height: 1.7rem;
-        border-radius: 999px;
-        background: #fff7dd;
-        font-weight: 700;
-        font-size: 0.85rem;}
-.chapter-pill .pill-text {
-        display: flex;
-        flex-direction: column;
-        align-items: flex-start;}
-.chapter-pill .pill-title {
-        font-weight: 600;
-        font-size: 0.85rem;}
-.chapter-pill .pill-detail {
-        font-size: 0.75rem;
-        opacity: 0.76;}
-.chapter-pill.active {
-        border-color: #f4b944;
-        background: linear-gradient(135deg, #fff8dd, #ffe4af);}
-/* Sparkle accent */
-    .sparkle {
-        position: relative;}
-.sparkle::after {
-        content: "";
-        position: absolute;
-        inset: -2px;
-        border-radius: inherit;
-        border: 1px solid rgba(255, 255, 255, 0.7);
-        opacity: 0;
-        pointer-events: none;
-        animation: sparklePulse 2.8s ease-in-out infinite;}
-.chapter-pill.active.sparkle::after {
-        opacity: 1;}
-@keyframes sparklePulse {
-        0%,
-        100% {
-            transform: scale(1);
-            opacity: 0.4;}
-50% {
-            transform: scale(1.03);
-            opacity: 1;}
-/* =========================================
-       6. BOOK LAYOUT + PAGES
-       ========================================= */
-    .book-container {
-        max-width: var(--page-max-width);
-        margin: 1.25rem auto 3rem;
-        padding: 0 var(--page-padding-x);
-        padding-left: max(var(--page-padding-x), env(safe-area-inset-left, 1rem));
-        padding-right: max(var(--page-padding-x), env(safe-area-inset-right, 1rem));}
-.book {
-        margin-top: 1rem;
-        border-radius: var(--card-radius);
-        background: #fffdf8;
-        box-shadow: var(--shadow-soft);
-        border: 1px solid rgba(255, 255, 255, 0.9);
-        overflow: hidden;}
-.pages-wrapper {
-        position: relative;
-        padding: var(--page-padding-y) var(--page-padding-x);}
-/* Page cards */
-    .page {
-        display: none;
-        opacity: 0;
-        transform: translateY(4px);
-        transition: opacity var(--transition-med), transform var(--transition-med);}
-.page.active {
-        display: block;
-        opacity: 1;
-        transform: translateY(0);}
-.chapter-header {
-        text-align: center;
-        margin-bottom: 1.5rem;
-        position: relative;}
-.chapter-number {
-        margin: 0;
-        font-size: 0.85rem;
-        text-transform: uppercase;
-        letter-spacing: 0.22em;
-        opacity: 0.7;}
-.chapter-title {
-        margin: 0.4rem 0 0.25rem;
-        font-family: var(--font-title);
-        font-size: 1.6rem;}
-.chapter-subtitle {
-        margin: 0;
-        font-size: 0.95rem;
-        color: var(--ink-soft);}
-.honey-drip {
-        position: absolute;
-        bottom: -0.4rem;
-        left: 50%;
-        transform: translateX(-50%);
-        width: 110px;
-        height: 12px;
-        border-radius: 999px;
-        background: linear-gradient(90deg, #fbbf24, #f97316);
-        opacity: 0.5;}
-/* Page body */
-    .page-content {
-        margin-top: 1.75rem;}
-.story-text {
-        margin: 0 0 1rem;
-        line-height: 1.7;
-        font-size: 0.98rem;}
-/* =========================================
-       7. FIGURES / CHARACTER CARDS
-       ========================================= */
-    .chapter-illustrations {
-        display: flex;
-        flex-wrap: wrap;
-        gap: 1rem;
-        margin: 1.25rem 0 1.5rem;}
-.storybook-figure {
-        flex: 1 1 180px;
-        min-width: 0;
-        padding: 0.75rem 0.85rem;
-        border-radius: 18px;
-        background: #ffffff;
-        box-shadow: var(--shadow-tiny);
-        display: flex;
-        align-items: center;
-        gap: 0.75rem;}
-.storybook-figure img {
-        border-radius: 16px;
-        background: #fff6dc;
-        box-shadow: 0 4px 12px rgba(0, 0, 0, 0.16);
-        max-width: 96px;
-        max-height: 96px;}
-.figure-copy {
-        min-width: 0;}
-.figure-name {
-        font-weight: 600;
-        font-size: 0.9rem;}
-.figure-note {
-        margin: 0.15rem 0 0;
-        font-size: 0.8rem;
-        color: var(--ink-soft);}
-/* Theme tints */
-    .figure-theme-honey {
-        background: linear-gradient(135deg, #fff7dd, #ffe7b8);}
-.figure-theme-forest {
-        background: linear-gradient(135deg, #e5f4dd, #f3ffe3);}
-.figure-theme-sky {
-        background: linear-gradient(135deg, #e5f4ff, #f3f9ff);}
-/* Clickable characters */
-    .clickable-character {
-        cursor: pointer;
-        transition: transform var(--transition-fast), box-shadow var(--transition-fast);}
-.clickable-character:hover {
-        transform: translateY(-2px);
-        box-shadow: 0 10px 22px rgba(0, 0, 0, 0.18);}
-/* Character message bubble */
-    .character-message {
-        margin-top: 0.5rem;
-        font-size: 0.8rem;
-        color: var(--ink);}
-/* Dialogue bubbles in narrative */
-    .dialogue-bubble {
-        position: relative;
-        margin: 1rem 0 1.25rem;
-        padding: 0.7rem 0.9rem;
-        border-radius: 16px;
-        font-size: 0.9rem;
-        line-height: 1.4;}
-.dialogue-piglet {
-        background: #fff0f5;}
-.dialogue-pooh {
-        background: #fff5dd;}
-.dialogue-bubble .speaker {
-        display: block;
-        margin-top: 0.3rem;
-        font-size: 0.8rem;
-        opacity: 0.8;}
-.bubble-arrow {
-        position: absolute;
-        left: 18px;
-        bottom: 100%;
-        width: 12px;
-        height: 12px;
-        background: inherit;
-        transform: translateY(1px) rotate(45deg);}
-/* =========================================
-       8. GAME EMBED + HONEY GAME
-       ========================================= */
-    .game-embed {
-        margin: 1.5rem auto;
-        max-width: 960px;
-        width: 100%;
-        border-radius: 24px;
-        overflow: hidden;
-        background: #000;
-        box-shadow: var(--shadow-soft);
-        border: 2px solid rgba(0, 0, 0, 0.08);
-        position: relative;
-        min-height: 320px;}
-.game-embed::before {
-        content: 'Loading game…';
-        position: absolute;
-        inset: 0;
-        background: linear-gradient(135deg, #ffe5b0, #ffd1a3);
-        display: flex;
-        align-items: center;
-        justify-content: center;
-        font-size: 1.2rem;
-        color: var(--ink);
-        z-index: 1;
-        opacity: 1;
-        transition: opacity 0.3s ease;}
-.game-embed.loaded::before {
-        opacity: 0;
-        pointer-events: none;}
-      /* =========================================
-   9. REGISTRY + NURSERY DETAILS + WISHES (MINIMAL FIX)
+   1. GAME EMBED STYLES (Section 8 enhancement)
    ========================================= */
-.registry-container {
-    margin: 2rem 0 1.75rem;
+.game-description {
+    margin: 1.75rem 0;
+    padding: 1.5rem;
+    border-radius: 20px;
+    background: linear-gradient(135deg, #fffaf0, #ffe8bb);
+    border: 1px solid rgba(244, 185, 68, 0.3);
 }
 
-.registry-section {
-    padding: 1.25rem 1.3rem;
+.game-description h3 {
+    margin: 0 0 1rem;
+    font-family: var(--font-title);
+    font-size: 1.4rem;
+    color: var(--ink);
+}
+
+.game-description p {
+    margin: 0 0 1.25rem;
+    line-height: 1.6;
+    font-size: 0.95rem;
+    color: var(--ink-soft);
+}
+
+.game-tips {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+    gap: 1rem;
+    margin-top: 1.25rem;
+}
+
+.tip {
+    display: flex;
+    gap: 0.75rem;
+    padding: 0.9rem;
+    border-radius: 14px;
+    background: rgba(255, 255, 255, 0.9);
+    align-items: flex-start;
+}
+
+.tip-icon {
+    font-size: 1.2rem;
+    flex-shrink: 0;
+}
+
+.tip p {
+    margin: 0;
+    font-size: 0.9rem;
+    line-height: 1.5;
+}
+
+.tip strong {
+    color: var(--ink);
+    font-weight: 700;
+}
+
+/* Game canvas container */
+.game-container {
+    width: 100%;
+    height: 100%;
+    position: relative;
+    min-height: 320px;
+}
+
+#gameCanvas {
+    display: block;
+    width: 100%;
+    height: 100%;
+    background: linear-gradient(135deg, #ffe5b0, #ffd1a3);
+}
+
+/* =========================================
+   2. REGISTRY SECTION STYLES (Section 9 enhancement)
+   ========================================= */
+.registry-header {
+    display: flex;
+    gap: 1rem;
+    align-items: flex-start;
+    margin-bottom: 1.5rem;
+}
+
+.registry-icon {
+    font-size: 2rem;
+    flex-shrink: 0;
+}
+
+.registry-header h3 {
+    margin: 0 0 0.4rem;
+    font-family: var(--font-title);
+    font-size: 1.5rem;
+}
+
+.registry-subtitle {
+    margin: 0;
+    font-size: 0.95rem;
+    color: var(--ink-soft);
+    line-height: 1.5;
+}
+
+.registry-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(280px, 1fr));
+    gap: 1rem;
+    margin-top: 1.5rem;
+}
+
+.registry-card {
+    display: flex;
+    gap: 1rem;
+    padding: 1.25rem;
+    border-radius: 18px;
+    background: white;
+    text-decoration: none;
+    color: inherit;
+    transition: transform var(--transition-fast), box-shadow var(--transition-fast);
+    border: 1px solid rgba(0, 0, 0, 0.06);
+}
+
+.registry-card:hover {
+    transform: translateY(-3px);
+    box-shadow: 0 12px 28px rgba(0, 0, 0, 0.12);
+}
+
+.card-icon {
+    font-size: 1.8rem;
+    flex-shrink: 0;
+}
+
+.card-content {
+    flex: 1;
+    min-width: 0;
+}
+
+.card-content h4 {
+    margin: 0 0 0.5rem;
+    font-size: 1.1rem;
+    font-weight: 700;
+}
+
+.card-content p {
+    margin: 0 0 0.5rem;
+    font-size: 0.9rem;
+    color: var(--ink-soft);
+    line-height: 1.5;
+}
+
+.card-link {
+    display: inline-block;
+    font-size: 0.85rem;
+    color: var(--accent-strong);
+    font-weight: 600;
+    text-decoration: underline;
+    text-underline-offset: 3px;
+}
+
+.gift-idea-card .card-content ul {
+    margin: 0.5rem 0 0;
+    padding-left: 1.2rem;
+    font-size: 0.9rem;
+    color: var(--ink-soft);
+}
+
+.gift-idea-card .card-content li {
+    margin-bottom: 0.3rem;
+}
+
+/* =========================================
+   3. NURSERY DETAILS STYLES
+   ========================================= */
+.nursery-details {
+    margin: 2rem 0;
+    padding: 1.5rem;
+    border-radius: 20px;
+    background: linear-gradient(135deg, #f8f9ff, #f0f7ff);
+}
+
+.nursery-details h3 {
+    margin: 0 0 1.25rem;
+    font-family: var(--font-title);
+    font-size: 1.4rem;
+    display: flex;
+    align-items: center;
+    gap: 0.5rem;
+}
+
+.details-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+    gap: 1rem;
+}
+
+.detail-card {
+    display: flex;
+    gap: 0.9rem;
+    padding: 1rem;
+    border-radius: 16px;
+    background: white;
+    border: 1px solid rgba(0, 0, 0, 0.05);
+}
+
+.detail-icon {
+    font-size: 1.5rem;
+    flex-shrink: 0;
+}
+
+.detail-content {
+    flex: 1;
+    min-width: 0;
+}
+
+.detail-content h4 {
+    margin: 0 0 0.3rem;
+    font-size: 1rem;
+    font-weight: 700;
+}
+
+.detail-content p {
+    margin: 0;
+    font-size: 0.9rem;
+    line-height: 1.4;
+}
+
+.detail-content small {
+    display: block;
+    margin-top: 0.2rem;
+    font-size: 0.8rem;
+    color: var(--ink-soft);
+}
+
+/* =========================================
+   4. WISHES SECTION STYLES
+   ========================================= */
+.wishes-section {
+    margin: 2.5rem 0;
+    padding: 1.75rem;
     border-radius: 22px;
     background: linear-gradient(135deg, #fffaf3, #ffeede);
-    box-shadow: var(--shadow-subtle);
+    border: 1px solid rgba(244, 185, 68, 0.2);
+}
+
+.wishes-header {
+    margin-bottom: 1.75rem;
+    text-align: center;
+}
+
+.wishes-header h3 {
+    margin: 0 0 0.5rem;
+    font-family: var(--font-title);
+    font-size: 1.5rem;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 0.5rem;
+}
+
+.wishes-header p {
+    margin: 0;
+    font-size: 0.95rem;
+    color: var(--ink-soft);
+    max-width: 600px;
+    margin: 0 auto;
+}
+
+.enhanced-form {
+    max-width: 600px;
+    margin: 0 auto;
+}
+
+.form-grid {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 1rem;
+    margin-bottom: 1.25rem;
+}
+
+@media (max-width: 600px) {
+    .form-grid {
+        grid-template-columns: 1fr;
+    }
+}
+
+.form-field {
+    margin-bottom: 1.25rem;
+}
+
+.form-field label {
+    display: block;
+    margin-bottom: 0.5rem;
+    font-weight: 600;
+    font-size: 0.9rem;
+    color: var(--ink);
+}
+
+.form-field input,
+.form-field select,
+.form-field textarea {
+    width: 100%;
+    padding: 0.75rem 1rem;
+    border-radius: 12px;
+    border: 1px solid rgba(0, 0, 0, 0.12);
+    background: white;
+    font-family: var(--font-body);
+    font-size: 0.95rem;
+    transition: border-color var(--transition-fast), box-shadow var(--transition-fast);
+}
+
+.form-field input:focus,
+.form-field select:focus,
+.form-field textarea:focus {
+    outline: none;
+    border-color: var(--accent);
+    box-shadow: 0 0 0 3px rgba(244, 185, 68, 0.2);
+}
+
+.form-field textarea {
+    resize: vertical;
+    min-height: 120px;
+}
+
+.character-count {
+    text-align: right;
+    margin-top: 0.4rem;
+    font-size: 0.8rem;
+    color: var(--ink-soft);
+}
+
+.form-actions {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 1rem;
+    margin-top: 1.75rem;
+}
+
+.submit-btn {
+    background: linear-gradient(135deg, #f4b944, #f59e0b);
+    color: #3b2604;
+    border: none;
+    border-radius: 999px;
+    padding: 0.8rem 2rem;
+    font-size: 1rem;
+    font-weight: 700;
+    cursor: pointer;
+    transition: transform var(--transition-fast), box-shadow var(--transition-fast);
+    display: flex;
+    align-items: center;
+    gap: 0.5rem;
+    min-height: var(--touch-min);
+}
+
+.submit-btn:hover {
+    transform: translateY(-2px);
+    box-shadow: 0 12px 24px rgba(244, 185, 68, 0.4);
+}
+
+.form-feedback {
+    font-size: 0.9rem;
+    min-height: 1.5rem;
+    text-align: center;
+}
+
+.sample-wishes {
+    margin-top: 2.5rem;
+    padding-top: 1.75rem;
+    border-top: 1px dashed rgba(0, 0, 0, 0.1);
+}
+
+.sample-wishes h4 {
+    margin: 0 0 1rem;
+    font-size: 1.1rem;
+    color: var(--ink);
+}
+
+.wish-examples {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
+    gap: 1.25rem;
+}
+
+.wish-example {
+    margin: 0;
+    padding: 1.25rem;
+    border-radius: 16px;
+    background: rgba(255, 255, 255, 0.9);
+    font-style: italic;
+    border-left: 4px solid var(--accent);
+}
+
+.wish-example p {
+    margin: 0 0 0.75rem;
+    font-size: 0.95rem;
+    line-height: 1.5;
+    color: var(--ink);
+}
+
+.wish-example cite {
+    font-style: normal;
+    font-weight: 600;
+    color: var(--ink-soft);
+    font-size: 0.9rem;
+}
+
+/* Wish display area */
+.wishes-display {
+    margin-top: 2rem;
+    padding: 1.5rem;
+    border-radius: 20px;
+    background: rgba(255, 255, 255, 0.7);
+    border: 1px solid rgba(0, 0, 0, 0.06);
+}
+
+.wish-card {
+    margin-bottom: 1.25rem;
+    padding: 1.25rem;
+    border-radius: 16px;
+    background: white;
+    box-shadow: 0 4px 12px rgba(0, 0, 0, 0.05);
+    border: 1px solid rgba(0, 0, 0, 0.04);
+}
+
+.wish-header {
+    display: flex;
+    align-items: center;
+    gap: 0.75rem;
+    margin-bottom: 0.75rem;
+    flex-wrap: wrap;
+}
+
+.wish-header strong {
+    font-size: 1rem;
+    color: var(--ink);
+}
+
+.wish-relation {
+    font-size: 0.85rem;
+    color: var(--ink-soft);
+    font-weight: 500;
+}
+
+.wish-message {
+    margin: 0.5rem 0;
+    font-size: 0.95rem;
+    line-height: 1.6;
+    color: var(--ink);
+}
+
+.wish-date {
+    font-size: 0.8rem;
+    color: var(--ink-soft);
+    text-align: right;
 }
 
 /* =========================================
-   10. CHAPTER 4 CELEBRATION / COUNTDOWN (MINIMAL)
+   5. CHAPTER 4 CELEBRATION STYLES (Section 10 enhancement)
    ========================================= */
+.welcome-panel {
+    text-align: center;
+    margin: 2rem auto;
+    padding: 1.75rem;
+    border-radius: 24px;
+    background: linear-gradient(135deg, #fffaf0, #ffe8bb);
+    max-width: 600px;
+    border: 2px solid rgba(244, 185, 68, 0.3);
+}
+
+.welcome-icon {
+    font-size: 3rem;
+    margin-bottom: 1rem;
+}
+
+.welcome-heading {
+    margin: 0 0 0.5rem;
+    font-family: var(--font-title);
+    font-size: 1.8rem;
+    color: var(--ink);
+}
+
+.welcome-subtitle {
+    margin: 0;
+    font-size: 1rem;
+    color: var(--ink-soft);
+}
+
 .countdown-section {
-    margin: 1.5rem 0 1.75rem;
+    margin: 2.5rem 0;
+    text-align: center;
+}
+
+.countdown-section h3 {
+    margin: 0 0 1.25rem;
+    font-family: var(--font-title);
+    font-size: 1.5rem;
 }
 
 .countdown-display {
     display: flex;
-    gap: 1rem;
-    margin: 0.7rem 0;
+    justify-content: center;
+    gap: 1.5rem;
+    margin: 1.5rem 0;
+    flex-wrap: wrap;
 }
 
 .countdown-item {
-    flex: 0 0 90px;
-    padding: 0.7rem 0.8rem;
-    border-radius: 16px;
-    background: #ffffff;
-    box-shadow: var(--shadow-tiny);
+    flex: 0 0 auto;
+    padding: 1.25rem 1rem;
+    border-radius: 20px;
+    background: white;
+    box-shadow: 0 8px 20px rgba(0, 0, 0, 0.08);
+    min-width: 90px;
+    border: 1px solid rgba(0, 0, 0, 0.05);
+}
+
+.countdown-number {
+    display: block;
+    font-size: 2.2rem;
+    font-weight: 800;
+    color: var(--accent-strong);
+    line-height: 1;
+    margin-bottom: 0.4rem;
+}
+
+.countdown-label {
+    font-size: 0.9rem;
+    text-transform: uppercase;
+    letter-spacing: 0.1em;
+    color: var(--ink-soft);
+}
+
+.countdown-note {
+    margin: 1rem 0 0;
+    font-size: 0.95rem;
+    color: var(--ink-soft);
+}
+
+.honey-jar-interactive {
     text-align: center;
+    margin: 2.5rem auto;
+    padding: 1.75rem;
+    border-radius: 24px;
+    background: linear-gradient(135deg, #fffaf0, #ffe8bb);
+    max-width: 600px;
+    border: 2px dashed rgba(244, 185, 68, 0.4);
+}
+
+.honey-jar-interactive > div:first-child {
+    font-size: 3rem;
+    margin-bottom: 1rem;
+}
+
+.honey-jar-interactive h3 {
+    margin: 0 0 0.75rem;
+    font-family: var(--font-title);
+    font-size: 1.5rem;
+}
+
+.honey-jar-interactive p {
+    margin: 0 0 1.5rem;
+    font-size: 0.95rem;
+    color: var(--ink-soft);
+    line-height: 1.6;
+}
+
+.honey-jar-interactive .btn {
+    margin-bottom: 1.5rem;
+}
+
+.hopes-list {
+    list-style: none;
+    padding: 0;
+    margin: 1.5rem auto 0;
+    max-width: 500px;
+    text-align: left;
+}
+
+.hopes-list li {
+    margin-bottom: 0.75rem;
+    padding: 0.9rem 1rem;
+    background: white;
+    border-radius: 12px;
+    border-left: 4px solid var(--accent);
+    font-size: 0.95rem;
+    line-height: 1.5;
+    color: var(--ink);
+}
+
+.final-thought {
+    text-align: center;
+    margin: 3rem auto 1.5rem;
+    padding: 2rem;
+    border-radius: 24px;
+    background: linear-gradient(135deg, rgba(255, 255, 255, 0.9), rgba(255, 248, 225, 0.8));
+    max-width: 700px;
+    border: 1px solid rgba(255, 255, 255, 0.8);
+}
+
+.final-thought blockquote {
+    margin: 0 0 1.5rem;
+    padding: 0;
+    font-size: 1.2rem;
+    line-height: 1.6;
+    color: var(--ink);
+}
+
+.final-thought blockquote p {
+    margin: 0;
+}
+
+.final-thought cite {
+    font-style: normal;
+    font-weight: 600;
+    color: var(--ink-soft);
+    font-size: 1rem;
+    margin-top: 0.5rem;
+    display: block;
+}
+
+.signature {
+    font-family: var(--font-title);
+    font-size: 1.1rem;
+    color: var(--ink);
+    font-weight: 700;
 }
 
 /* =========================================
-   11. NAVIGATION BUTTONS
+   6. NAVIGATION BUTTONS (Section 11 enhancement)
    ========================================= */
 .chapter-nav {
     display: flex;
     align-items: center;
     justify-content: space-between;
-    gap: 0.75rem;
-    padding: 0.85rem 1.25rem 1.1rem;
+    gap: 1rem;
+    padding: 1.25rem 1.5rem;
     border-top: 1px solid rgba(0, 0, 0, 0.06);
     background: rgba(255, 255, 255, 0.96);
 }
 
-/* =========================================
-   12. FOOTER
-   ========================================= */
-.site-footer {
-    max-width: var(--page-max-width);
-    margin: 0 auto 2rem;
-    padding: 1.25rem var(--page-padding-x) 0;
-    text-align: center;
-    font-size: 0.85rem;
+.chapter-nav-btn {
+    padding: 0.75rem 1.5rem;
+    border-radius: 999px;
+    border: 1px solid rgba(0, 0, 0, 0.12);
+    background: white;
+    font-weight: 600;
+    font-size: 0.95rem;
+    cursor: pointer;
+    transition: all var(--transition-fast);
+    min-height: var(--touch-min);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+}
+
+.chapter-nav-btn.next {
+    background: linear-gradient(135deg, #f4b944, #f59e0b);
+    color: #3b2604;
+    border: none;
+}
+
+.chapter-nav-btn:not(.next):hover {
+    background: #f8f8f8;
+    transform: translateY(-1px);
+    box-shadow: 0 4px 12px rgba(0, 0, 0, 0.08);
+}
+
+.chapter-nav-btn.next:hover {
+    transform: translateY(-1px);
+    box-shadow: 0 8px 20px rgba(244, 185, 68, 0.4);
+}
+
+.chapter-indicator {
+    font-size: 0.9rem;
+    font-weight: 600;
     color: var(--ink-soft);
+    padding: 0.5rem 1rem;
+    background: rgba(255, 255, 255, 0.8);
+    border-radius: 999px;
+    border: 1px solid rgba(0, 0, 0, 0.06);
 }
 
 /* =========================================
-   13. ANIMATIONS TOGGLE
+   7. FOOTER STYLES (Section 12 enhancement)
+   ========================================= */
+.site-footer {
+    max-width: var(--page-max-width);
+    margin: 0 auto 3rem;
+    padding: 1.5rem var(--page-padding-x) 0;
+    text-align: center;
+    font-size: 0.9rem;
+    color: var(--ink-soft);
+    border-top: 1px solid rgba(0, 0, 0, 0.06);
+    padding-top: 2rem;
+}
+
+.site-footer > p:first-child {
+    margin: 0 0 1.25rem;
+    font-size: 1rem;
+}
+
+.footer-links {
+    display: flex;
+    justify-content: center;
+    gap: 1.25rem;
+    flex-wrap: wrap;
+}
+
+.footer-link {
+    padding: 0.6rem 1.25rem;
+    border-radius: 999px;
+    background: rgba(255, 255, 255, 0.8);
+    border: 1px solid rgba(0, 0, 0, 0.08);
+    font-size: 0.9rem;
+    font-weight: 600;
+    cursor: pointer;
+    transition: all var(--transition-fast);
+    text-decoration: none;
+    color: inherit;
+    min-height: var(--touch-min);
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+}
+
+.footer-link:hover {
+    background: white;
+    transform: translateY(-1px);
+    box-shadow: 0 4px 12px rgba(0, 0, 0, 0.08);
+}
+
+/* =========================================
+   8. RESPONSIVE ADJUSTMENTS
+   ========================================= */
+@media (max-width: 768px) {
+    .hero-details-grid {
+        grid-template-columns: 1fr;
+    }
+    
+    .hero-badge {
+        grid-template-columns: 1fr;
+        text-align: center;
+        gap: 1rem;
+    }
+    
+    .badge-meta {
+        justify-content: center;
+    }
+    
+    .countdown-display {
+        gap: 1rem;
+    }
+    
+    .countdown-item {
+        min-width: 80px;
+        padding: 1rem 0.75rem;
+    }
+    
+    .countdown-number {
+        font-size: 1.8rem;
+    }
+    
+    .registry-grid {
+        grid-template-columns: 1fr;
+    }
+    
+    .details-grid {
+        grid-template-columns: 1fr;
+    }
+    
+    .chapter-nav {
+        flex-direction: column;
+        gap: 0.75rem;
+    }
+    
+    .chapter-nav-btn {
+        width: 100%;
+        justify-content: center;
+    }
+    
+    .chapter-indicator {
+        order: -1;
+    }
+}
+
+@media (max-width: 480px) {
+    .hero-actions {
+        flex-direction: column;
+    }
+    
+    .hero-action-btn {
+        width: 100%;
+        justify-content: center;
+    }
+    
+    .chapter-pill-row {
+        flex-direction: column;
+    }
+    
+    .chapter-pill {
+        width: 100%;
+    }
+    
+    .footer-links {
+        flex-direction: column;
+        align-items: center;
+    }
+    
+    .footer-link {
+        width: 200px;
+    }
+}
+
+/* =========================================
+   9. ANIMATIONS TOGGLE (Section 13 enhancement)
    ========================================= */
 body.animations-off .cloud {
     animation: none !important;
+}
+
+body.animations-off .hero-action-btn:hover,
+body.animations-off .chapter-nav-btn:hover,
+body.animations-off .footer-link:hover,
+body.animations-off .submit-btn:hover,
+body.animations-off .chapter-pill:hover,
+body.animations-off .registry-card:hover,
+body.animations-off .clickable-character:hover {
+    transform: none !important;
+}
+
+body.animations-off .sparkle::after {
+    animation: none !important;
+    opacity: 0 !important;
+}
+
+/* =========================================
+   10. PRINT STYLES
+   ========================================= */
+@media print {
+    .hero-action-btn,
+    .chapter-nav-btn,
+    .footer-link,
+    .submit-btn,
+    .chapter-pill,
+    .clickable-character {
+        border: 1px solid #ddd !important;
+        background: white !important;
+        color: black !important;
+        box-shadow: none !important;
+    }
+    
+    .enhanced-scene,
+    .cloud-layer,
+    .hero-sparkles,
+    .hero-sheen,
+    .hero-corner-decoration,
+    .honey-drip {
+        display: none !important;
+    }
+    
+    body {
+        background: white !important;
+    }
+    
+    .hero-banner {
+        box-shadow: none !important;
+        border: 1px solid #ddd !important;
+    }
+    
+    .game-embed {
+        display: none !important;
+    }
 }
     </style>
 
