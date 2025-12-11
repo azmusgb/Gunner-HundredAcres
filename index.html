@@ -2267,6 +2267,92 @@
             from { transform: translate(-50%, 0); opacity: 1; }
             to { transform: translate(-50%, -20px); opacity: 0; }
         }
+        /* Add these styles: */
+.sr-only {
+    position: absolute;
+    width: 1px;
+    height: 1px;
+    padding: 0;
+    margin: -1px;
+    overflow: hidden;
+    clip: rect(0, 0, 0, 0);
+    border: 0;
+}
+
+/* Floating scores animation */
+.floating-score {
+    position: absolute;
+    font-weight: bold;
+    font-size: 24px;
+    pointer-events: none;
+    z-index: 100;
+    animation: floatUp 1s ease-out forwards;
+}
+
+@keyframes floatUp {
+    0% {
+        transform: translateY(0);
+        opacity: 1;
+    }
+    100% {
+        transform: translateY(-50px);
+        opacity: 0;
+    }
+}
+
+.floating-score.normal { color: #84cc16; }
+.floating-score.gold { color: #fbbf24; }
+.floating-score.shield { color: #60a5fa; }
+.floating-score.powerup { color: #22c55e; }
+.floating-score.combo { color: #f97316; }
+
+/* Tutorial styles */
+.tutorial-step {
+    display: none;
+    text-align: center;
+}
+
+.tutorial-step.active {
+    display: block;
+}
+
+.tutorial-navigation {
+    display: flex;
+    justify-content: space-between;
+    margin-top: 20px;
+}
+
+/* Game instructions list */
+.game-instructions {
+    list-style: none;
+    padding: 0;
+    text-align: left;
+}
+
+.game-instructions li {
+    margin-bottom: 10px;
+    padding-left: 20px;
+    position: relative;
+}
+
+.game-instructions li:before {
+    content: "🍯";
+    position: absolute;
+    left: 0;
+}
+
+/* Responsive game controls */
+@media (max-width: 768px) {
+    .honey-game-controls {
+        flex-wrap: wrap;
+        justify-content: center;
+    }
+    
+    .control-btn {
+        min-width: 70px;
+        font-size: 0.8rem;
+    }
+}
     </style>
 
     <link as="image" href="Images/Characters/Gunnar.png" rel="preload">
@@ -2635,8 +2721,10 @@
                             </div>
                             <div class="game-status" id="statusBadge" role="status">Ready to play!</div>
                         </div>
+                        
                     </div>
 
+                    <div id="gameAnnouncements" aria-live="polite" aria-atomic="true" class="sr-only"></div>
                     <!-- Settings Modal -->
                     <div id="settingsModal" class="modal" aria-hidden="true">
                         <div id="settingsPanel" class="modal-content" tabindex="-1">
@@ -2707,33 +2795,32 @@
                         </div>
                     </div>
                     
-                    <!-- Tutorial Overlay -->
-                    <div id="tutorialOverlay" class="overlay" aria-hidden="true">
-                        <div class="tutorial-content">
-                            <div class="tutorial-step active" data-step="1">
-                                <h3>Welcome to Honey Hunt!</h3>
-                                <p>Help Winnie the Pooh catch as many honey pots as you can.</p>
-                            </div>
-                            <div class="tutorial-step" data-step="2">
-                                <h3>Controls</h3>
-                                <p>Use arrow keys or tap the buttons to move left and right.</p>
-                            </div>
-                            <div class="tutorial-step" data-step="3">
-                                <h3>Power-ups</h3>
-                                <p>Special jars give you special abilities. Watch for them!</p>
-                            </div>
-                            <div class="tutorial-step" data-step="4">
-                                <h3>Avoid Bees!</h3>
-                                <p>Bees will try to stop you. Use your shield or dodge them.</p>
-                            </div>
-                            <div class="tutorial-navigation">
-                                <button id="skipTutorial" class="btn">Skip</button>
-                                <button id="nextTutorial" class="btn primary">Next</button>
-                                <button id="startTutorial" class="btn primary" style="display: none;">Start Game</button>
-                            </div>
-                        </div>
-                    </div>
-                    
+<!-- Add this after the helpPanel: -->
+<div id="tutorialOverlay" class="overlay" aria-hidden="true">
+    <div class="tutorial-content">
+        <div class="tutorial-step active" data-step="1">
+            <h3>Welcome to Honey Hunt!</h3>
+            <p>Help Winnie the Pooh catch as many honey pots as you can.</p>
+        </div>
+        <div class="tutorial-step" data-step="2">
+            <h3>Controls</h3>
+            <p>Use arrow keys or tap the buttons to move left and right.</p>
+        </div>
+        <div class="tutorial-step" data-step="3">
+            <h3>Power-ups</h3>
+            <p>Special jars give you special abilities. Watch for them!</p>
+        </div>
+        <div class="tutorial-step" data-step="4">
+            <h3>Avoid Bees!</h3>
+            <p>Bees will try to stop you. Use your shield or dodge them.</p>
+        </div>
+        <div class="tutorial-navigation">
+            <button id="skipTutorial" class="btn">Skip</button>
+            <button id="nextTutorial" class="btn primary">Next</button>
+            <button id="startTutorial" class="btn primary" style="display: none;">Start Game</button>
+        </div>
+    </div>
+</div>
                     <!-- Live region for screen readers -->
                     <div id="liveRegion" aria-live="polite" class="sr-only"></div>
                 </div>
@@ -3043,7 +3130,7 @@
     <p>Made with 💙 and 🍯 for Baby Gunnar's special day</p>
     <div class="footer-links">
         <button class="footer-link" id="printPageBtn" type="button">🖨 Print</button>
-        <button class="footer-link" id="sharePageBtn" type="button">📤 Share</button>
+        <button class="footer-link" id="sharePageBtn" type="button" onclick="sharePage()">📤 Share</button>
         <button class="footer-link" id="toggleAnimationsBtn" type="button">🎭 Animations: On</button>
     </div>
 </footer>
