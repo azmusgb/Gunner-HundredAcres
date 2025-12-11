@@ -144,35 +144,7 @@
     const sessionGames = getEl("sessionGames");
     const sessionMood = getEl("sessionMood");
 
-function gameLoop(timestamp) {
-    if (!lastTimestamp) lastTimestamp = timestamp;
-    const dt = (timestamp - lastTimestamp) / 1000;
-    lastTimestamp = timestamp;
-    
-    if (gameState.running && !gameState.paused) {
-        updateEntities(dt);
-        handleCollisions();
-        updateBearAnimation(dt);
-        updateParticles(dt);
-        updateBearTrail(dt);
-        updatePowerups(dt);
-        updateDynamicDifficulty();
-        checkAchievements();
-        updateDailyChallengeProgress();
-        
-        gameState.timeLeft -= dt;
-        if (gameState.timeLeft <= 0) {
-            endGame();
-        }
-    }
-    
-    updateHud();
-    render();
-    
-    if (gameState.running || particles.length > 0) {
-        requestAnimationFrame(gameLoop);
-    }
-}
+
     // ==================== ENHANCED AUDIO SYSTEM ====================
     let audioContext = null;
     let audioBuffers = {};
@@ -1377,7 +1349,35 @@ function gameLoop(timestamp) {
         left: false,
         right: false
     };
-
+function gameLoop(timestamp) {
+    if (!lastTimestamp) lastTimestamp = timestamp;
+    const dt = (timestamp - lastTimestamp) / 1000;
+    lastTimestamp = timestamp;
+    
+    if (gameState.running && !gameState.paused) {
+        updateEntities(dt);
+        handleCollisions();
+        updateBearAnimation(dt);
+        updateParticles(dt);
+        updateBearTrail(dt);
+        updatePowerups(dt);
+        updateDynamicDifficulty();
+        checkAchievements();
+        updateDailyChallengeProgress();
+        
+        gameState.timeLeft -= dt;
+        if (gameState.timeLeft <= 0) {
+            endGame();
+        }
+    }
+    
+    updateHud();
+    render();
+    
+    if (gameState.running || particles.length > 0) {
+        requestAnimationFrame(gameLoop);
+    }
+}
     // ==================== SETTINGS STATE ====================
     let settingsState = {
         musicOn: true,  // Changed to true by default
