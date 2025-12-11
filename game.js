@@ -17,12 +17,17 @@
     }
 
     function getEl(...ids) {
-        for (const id of ids) {
-            const found = document.getElementById(id);
-            if (found) return found;
-        }
-        return createPlaceholder(ids[0]);
+    for (const id of ids) {
+        const el = document.getElementById(id);
+        if (el) return el;
     }
+
+    console.warn(
+        "[Honey Hunt] Missing expected element(s):",
+        ids.join(", ")
+    );
+    return null;
+}
 
     const GAME_DURATION = 60;
     const MAX_LIVES = 3;
