@@ -17,17 +17,42 @@
     }
 
     function getEl(...ids) {
-        for (const id of ids) {
-            const el = document.getElementById(id);
-            if (el) return el;
-        }
+    for (const id of ids) {
+        const el = document.getElementById(id);
+        if (el) return el;
+    }
 
+    // If in development mode, log warning but create placeholder
+    if (ids.length > 0) {
         console.warn(
-            "[Honey Hunt] Missing expected element(s):",
+            "[Honey Hunt] Creating placeholder for missing element(s):",
             ids.join(", ")
         );
-        return null;
+        
+        // Create a safe placeholder element
+        const placeholder = document.createElement("div");
+        placeholder.id = `placeholder-${ids[0]}`;
+        placeholder.style.cssText = "display: none !important; visibility: hidden !important;";
+        placeholder.setAttribute("aria-hidden", "true");
+        
+        // Try to add to body, but only if body exists
+        if (document.body) {
+            document.body.appendChild(placeholder);
+        } else {
+            // If body doesn't exist yet, wait for DOMContentLoaded
+            document.addEventListener("DOMContentLoaded", () => {
+                if (!document.getElementById(placeholder.id)) {
+                    document.body.appendChild(placeholder);
+                }
+            });
+        }
+        
+        return placeholder;
     }
+
+    // Return a dummy element as last resort
+    return { textContent: "", style: {} };
+}
 
     const GAME_DURATION = 60;
     const MAX_LIVES = 3;
@@ -3460,32 +3485,58 @@
     }
 
     function updateHud() {
-        scoreValue.textContent = String(gameState.score);
-        bestValue.textContent = String(gameState.best);
-        timeValue.textContent = String(Math.max(0, Math.floor(gameState.timeLeft)));
-        streakValue.textContent = String(gameState.streak);
-        if (livesValue) {
+    try {
+        // SAFE ELEMENT ACCESS - Always check if element exists
+        if (scoreValue && 'textContent' in scoreValue) scoreValue.textContent = String(gameState.score);
+        if (bestValue && 'textContent' in bestValue) bestValue.textContent = String(gameState.best);
+        if (timeValue && 'textContent' in timeValue) timeValue.textContent = String(Math.max(0, Math.floor(gameState.timeLeft)));
+        if (streakValue && 'textContent' in streakValue) streakValue.textContent = String(gameState.streak);
+        
+        if (livesValue && 'textContent' in livesValue) {
             const full = "♥".repeat(gameState.lives);
             const empty = "♡".repeat(MAX_LIVES - gameState.lives);
             livesValue.textContent = full + empty;
         }
 
-        // Progress deck
-        if (timeProgress) {
+        // Update combo badge safely
+        if (streakBadge) {
+            streakBadge.textContent = "Combo!";
+            if (gameState.streak >= 5) {
+                streakBadge.classList.add("visible");
+            } else {
+                streakBadge.classList.remove("visible");
+            }
+        }
+
+        // Update powerup indicator
+        if (powerupIndicator) {
+            if (gameState.shieldTime > 0) {
+                powerupIndicator.classList.add("visible");
+            } else {
+                powerupIndicator.classList.remove("visible");
+            }
+        }
+
+        // Progress deck elements
+        if (timeProgress && 'style' in timeProgress) {
             const percent = Math.max(0, Math.min(100, (gameState.timeLeft / GAME_DURATION) * 100));
             timeProgress.style.width = `${percent}%`;
-            timeProgress.classList.toggle("low", percent < 25);
+            if (timeProgress.classList) {
+                timeProgress.classList.toggle("low", percent < 25);
+            }
         }
-        if (timeSubtitle) {
+        
+        if (timeSubtitle && 'textContent' in timeSubtitle) {
             const secondsLeft = Math.max(0, Math.ceil(gameState.timeLeft));
             timeSubtitle.textContent = secondsLeft > 0 ? `${secondsLeft}s to shine` : "Out of time";
         }
 
-        if (streakProgress) {
+        if (streakProgress && 'style' in streakProgress) {
             const streakPercent = Math.min(50, gameState.streak) / 50 * 100;
             streakProgress.style.width = `${streakPercent}%`;
         }
-        if (streakSubtitle) {
+        
+        if (streakSubtitle && 'textContent' in streakSubtitle) {
             if (gameState.streak >= 20) {
                 streakSubtitle.textContent = "Combo legend in motion";
             } else if (gameState.streak >= 10) {
@@ -3496,15 +3547,17 @@
         }
 
         // Session banner microcopy
-        if (sessionDifficulty) {
+        if (sessionDifficulty && 'textContent' in sessionDifficulty) {
             const level = DIFFICULTY_LABELS[settingsState.difficulty] || "Classic";
             sessionDifficulty.textContent = `${level} mode`;
         }
-        if (sessionGames) {
+        
+        if (sessionGames && 'textContent' in sessionGames) {
             const games = gameState.gamesPlayed || 0;
             sessionGames.textContent = `${games} lifetime run${games === 1 ? "" : "s"}`;
         }
-        if (sessionMood) {
+        
+        if (sessionMood && 'textContent' in sessionMood) {
             let mood = "Cozy start";
             if (gameState.streak >= 25) {
                 mood = "Unstoppable flow";
@@ -3515,62 +3568,11 @@
             }
             sessionMood.textContent = mood;
         }
-    }
-function updateBearEvolution() {
-    let newEvolution = 0;
-    
-    // Find the highest evolution level the player qualifies for
-    for (let i = BEAR_EVOLUTIONS.length - 1; i >= 0; i--) {
-        if (gameState.score >= BEAR_EVOLUTIONS[i].score) {
-            newEvolution = i;
-            break;
-        }
-    }
-    
-    // If player reached a new evolution level
-    if (newEvolution > gameState.currentEvolution) {
-        gameState.currentEvolution = newEvolution;
-        showEvolutionUpgrade(newEvolution);
+    } catch (error) {
+        console.warn("Error in updateHud:", error);
+        // Don't crash the game on UI update errors
     }
 }
-    function gameLoop(timestamp) {
-        if (!lastTimestamp) lastTimestamp = timestamp;
-        const dt = (timestamp - lastTimestamp) / 1000;
-        lastTimestamp = timestamp;
-
-        if (gameState.running && !gameState.paused) {
-            gameState.timeLeft -= dt;
-            if (gameState.timeLeft <= 0) {
-                gameState.timeLeft = 0;
-                endGame();
-            } else {
-                updateBearAnimation(dt);
-                updateEntities(dt);
-                updateParticles(dt);
-                updateBearTrail(dt);
-                handleCollisions();
-
-                // Check for achievements
-                checkAchievements();
-
-                // Update bear evolution
-                updateBearEvolution();
-
-                // Update daily challenge progress
-                updateDailyChallengeProgress();
-
-                // Update dynamic difficulty every 10 seconds
-                if (Math.floor(gameState.timeLeft) % 10 === 0) {
-                    updateDynamicDifficulty();
-                }
-            }
-            updateHud();
-        }
-
-        render();
-        requestAnimationFrame(gameLoop);
-    }
-
     // ==================== OVERLAY MANAGEMENT ====================
     function showOverlay(overlay) {
         [startOverlay, pauseOverlay, gameOverOverlay].forEach(function (el) {
@@ -4338,65 +4340,189 @@ function updateBearEvolution() {
     }
 
     function init() {
-        console.log("Initializing Honey Hunt with Enhanced Features & Audio...");
+    console.log("Initializing Honey Hunt with Enhanced Features & Audio...");
+    
+    // CRITICAL SAFETY CHECK: Ensure essential elements exist
+    const requiredElements = [
+        { name: 'gameContainer', element: gameContainer },
+        { name: 'canvas', element: canvas },
+        { name: 'ctx', element: ctx },
+        { name: 'scoreValue', element: scoreValue },
+        { name: 'bestValue', element: bestValue },
+        { name: 'timeValue', element: timeValue }
+    ];
+    
+    const missingElements = requiredElements.filter(item => !item.element);
+    
+    if (missingElements.length > 0) {
+        console.error("Essential game elements not found. Missing:", missingElements.map(item => item.name).join(', '));
         
-        // Initialize settings UI first
-        applySettingsToUi();
+        // Show user-friendly error
+        const errorDiv = document.createElement('div');
+        errorDiv.id = 'gameInitError';
+        errorDiv.style.cssText = `
+            position: fixed;
+            top: 50%;
+            left: 50%;
+            transform: translate(-50%, -50%);
+            background: #dc2626;
+            color: white;
+            padding: 30px;
+            border-radius: 15px;
+            z-index: 99999;
+            font-family: system-ui, -apple-system, sans-serif;
+            max-width: 400px;
+            text-align: center;
+            box-shadow: 0 10px 30px rgba(0,0,0,0.3);
+        `;
         
-        injectQuickWinsCSS();
-        loadPersistedState();
-        resizeCanvas();
-        updateHud();
-        initControls();
-        initSettings();
-        initTopbar();
-        initOverlays();
-        initHelp();
-        initTutorial();
-        initShareFunctionality();
+        errorDiv.innerHTML = `
+            <h3 style="margin-top: 0; margin-bottom: 15px;">⚠️ Game Initialization Error</h3>
+            <p style="margin-bottom: 20px; line-height: 1.5;">
+                Some game elements could not be loaded. This might be due to:
+            </p>
+            <ul style="text-align: left; margin-bottom: 20px; padding-left: 20px;">
+                <li>Page not fully loaded</li>
+                <li>Missing HTML elements</li>
+                <li>Browser compatibility issue</li>
+            </ul>
+            <button onclick="location.reload()" style="
+                background: white;
+                color: #dc2626;
+                border: none;
+                padding: 10px 20px;
+                border-radius: 8px;
+                font-weight: bold;
+                cursor: pointer;
+                margin: 5px;
+            ">Refresh Page</button>
+            <button onclick="document.getElementById('gameInitError').remove()" style="
+                background: transparent;
+                color: white;
+                border: 1px solid white;
+                padding: 10px 20px;
+                border-radius: 8px;
+                font-weight: bold;
+                cursor: pointer;
+                margin: 5px;
+            ">Dismiss</button>
+        `;
         
-        // Safe audio initialization
-        safeInitAudio();
-        
-        createPowerupIndicators();
-        initDailyChallenge();
-        
-        bear.animation.blinkTimer = 1 + Math.random() * 2;
-        dynamicDifficulty.multiplier = 1;
-        dynamicDifficulty.performanceHistory = [];
-        
-        // Start music after user interaction
-        document.addEventListener('click', function startMusicOnInteraction() {
-            if (settingsState.musicOn && !musicPlaying) {
-                safeBackgroundMusic();
-            }
-            document.removeEventListener('click', startMusicOnInteraction);
-        });
-        
-        // Add button click sounds after audio is ready
-        if (document.readyState === "loading") {
-            document.addEventListener("DOMContentLoaded", addButtonClickSounds);
-        } else {
-            addButtonClickSounds();
-        }
-        
-        window.addEventListener("resize", resizeCanvas);
-        requestAnimationFrame(gameLoop);
-        console.log("Honey Hunt Enhanced with Audio initialized successfully!");
+        document.body.appendChild(errorDiv);
+        return; // Stop initialization
     }
-
-    // ==================== INITIALIZE THE GAME ====================
-
-    // Expose a safe initializer for the inline script in index.html
-    if (typeof window !== 'undefined') {
-        window.initHoneyHuntGame = initOnce;
-
-        if (document.readyState === 'loading') {
-            document.addEventListener('DOMContentLoaded', initOnce);
-        } else {
-            // DOM is already ready or we're in a different environment
-            setTimeout(initOnce, 0);
-        }
+    
+    // Initialize settings UI first
+    applySettingsToUi();
+    
+    // Setup canvas
+    if (!existingCanvas) {
+        canvas.id = "gameCanvas";
+        canvas.style.cssText = `
+            display: block;
+            width: 100%;
+            height: 100%;
+            background: linear-gradient(to bottom, #0f766e 0%, #0e7490 50%, #0369a1 100%);
+        `;
+        gameContainer.appendChild(canvas);
     }
-
-})(); 
+    
+    // Setup game container if needed
+    if (gameContainer) {
+        gameContainer.style.cssText = `
+            position: relative;
+            width: 100%;
+            height: 100%;
+            overflow: hidden;
+        `;
+    }
+    
+    // Initialize subsystems
+    injectQuickWinsCSS();
+    loadPersistedState();
+    resizeCanvas();
+    
+    // Initialize bear position
+    bear.x = world.width / 2;
+    bear.y = world.height * 0.85;
+    
+    // Initialize UI
+    updateHud();
+    
+    // Initialize controls
+    initControls();
+    initSettings();
+    initTopbar();
+    initOverlays();
+    initHelp();
+    initTutorial();
+    initShareFunctionality();
+    
+    // Safe audio initialization
+    safeInitAudio();
+    
+    // Setup powerups and challenges
+    createPowerupIndicators();
+    initDailyChallenge();
+    
+    // Initialize animation timers
+    bear.animation.blinkTimer = 1 + Math.random() * 2;
+    dynamicDifficulty.multiplier = 1;
+    dynamicDifficulty.performanceHistory = [];
+    
+    // Setup event listeners
+    window.addEventListener("resize", resizeCanvas);
+    
+    // Handle visibility change for pause
+    document.addEventListener("visibilitychange", function() {
+        if (document.hidden && gameState.running && !gameState.paused) {
+            pauseGame();
+        }
+    });
+    
+    // Start music after user interaction (required by browsers)
+    function startMusicOnInteraction() {
+        if (settingsState.musicOn && !musicPlaying) {
+            safeBackgroundMusic();
+        }
+        document.removeEventListener('click', startMusicOnInteraction);
+        document.removeEventListener('keydown', startMusicOnInteraction);
+    }
+    
+    document.addEventListener('click', startMusicOnInteraction);
+    document.addEventListener('keydown', startMusicOnInteraction);
+    
+    // Add button click sounds after audio is ready
+    if (document.readyState === "loading") {
+        document.addEventListener("DOMContentLoaded", addButtonClickSounds);
+    } else {
+        setTimeout(addButtonClickSounds, 100);
+    }
+    
+    // Initialize game state displays
+    if (overlayBest) overlayBest.textContent = String(gameState.best);
+    if (overlayGames) overlayGames.textContent = String(gameState.gamesPlayed);
+    if (settingsBest) settingsBest.textContent = String(gameState.best);
+    
+    // Start game loop
+    lastTimestamp = 0;
+    requestAnimationFrame(gameLoop);
+    
+    // Show start screen
+    showOverlay(startOverlay);
+    
+    // Log successful initialization
+    console.log("Honey Hunt Enhanced with Audio initialized successfully!");
+    console.log("Game stats:", {
+        bestScore: gameState.best,
+        gamesPlayed: gameState.gamesPlayed,
+        difficulty: settingsState.difficulty,
+        music: settingsState.musicOn,
+        sfx: settingsState.sfxOn
+    });
+    
+    // Announce readiness
+    if (liveRegion) {
+        liveRegion.textContent = "Honey Hunt game loaded. Press Start to begin or Space to start.";
+    }
+}
