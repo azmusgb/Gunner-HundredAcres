@@ -4326,51 +4326,65 @@ function updateBearEvolution() {
     styleSheet.textContent = powerupCSS;
     document.head.appendChild(styleSheet);
 }
+
     // ==================== MAIN INITIALIZATION ====================
- function init() {
-    console.log("Initializing Honey Hunt with Enhanced Features & Audio...");
-    
-    // Initialize settings UI first
-    applySettingsToUi();
-    
-    injectQuickWinsCSS();
-    loadPersistedState();
-    resizeCanvas();
-    updateHud();
-    initControls();
-    initSettings();
-    initTopbar();
-    initOverlays();
-    initHelp();
-    initTutorial();
-    initShareFunctionality();
-    
-    // Safe audio initialization
-    safeInitAudio();
-    
-    createPowerupIndicators();
-    initDailyChallenge();
-    
-    bear.animation.blinkTimer = 1 + Math.random() * 2;
-    dynamicDifficulty.multiplier = 1;
-    dynamicDifficulty.performanceHistory = [];
-    
-    // Start music after user interaction
-    document.addEventListener('click', function startMusicOnInteraction() {
-        if (settingsState.musicOn && !musicPlaying) {
-            safeBackgroundMusic();
+    function init() {
+        console.log("Initializing Honey Hunt with Enhanced Features & Audio...");
+        
+        // Initialize settings UI first
+        applySettingsToUi();
+        
+        injectQuickWinsCSS();
+        loadPersistedState();
+        resizeCanvas();
+        updateHud();
+        initControls();
+        initSettings();
+        initTopbar();
+        initOverlays();
+        initHelp();
+        initTutorial();
+        initShareFunctionality();
+        
+        // Safe audio initialization
+        safeInitAudio();
+        
+        createPowerupIndicators();
+        initDailyChallenge();
+        
+        bear.animation.blinkTimer = 1 + Math.random() * 2;
+        dynamicDifficulty.multiplier = 1;
+        dynamicDifficulty.performanceHistory = [];
+        
+        // Start music after user interaction
+        document.addEventListener('click', function startMusicOnInteraction() {
+            if (settingsState.musicOn && !musicPlaying) {
+                safeBackgroundMusic();
+            }
+            document.removeEventListener('click', startMusicOnInteraction);
+        });
+        
+        // Add button click sounds after audio is ready
+        if (document.readyState === "loading") {
+            document.addEventListener("DOMContentLoaded", addButtonClickSounds);
+        } else {
+            addButtonClickSounds();
         }
-        document.removeEventListener('click', startMusicOnInteraction);
-    });
-    
-    // Add button click sounds after audio is ready
-    if (document.readyState === "loading") {
-        document.addEventListener("DOMContentLoaded", addButtonClickSounds);
-    } else {
-        addButtonClickSounds();
+        
+        window.addEventListener("resize", resizeCanvas);
+        requestAnimationFrame(gameLoop);
+        console.log("Honey Hunt Enhanced with Audio initialized successfully!");
     }
+
+    // ==================== INITIALIZE THE GAME ====================
     
-    window.addEventListener("resize", resizeCanvas);
-    requestAnimationFrame(gameLoop);
-    console.log("Honey Hunt Enhanced with Audio initialized successfully!");
-}
+    // Check if we're running in a browser environment
+    if (typeof window !== 'undefined' && document.readyState === 'loading') {
+        // Wait for DOM to be ready
+        document.addEventListener('DOMContentLoaded', init);
+    } else {
+        // DOM is already ready or we're in a different environment
+        setTimeout(init, 0);
+    }
+
+})(); 
