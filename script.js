@@ -114,21 +114,15 @@ function scrollToChapter(chapterNumber) {
     const chapterElement = document.querySelector(`[data-chapter="${chapterNumber}"]`);
     const chapterTracker = document.querySelector('.chapter-tracker');
 
-    if (chapterElement && chapterTracker) {
-        // Update active chapter
-        document.querySelectorAll('.chapter-pill').forEach(pill => {
-            pill.classList.remove('active');
-        });
-        document.querySelector(`[data-chapter-target="${chapterNumber}"]`).classList.add('active');
+    if (!chapterElement || !chapterTracker) return;
 
-        // Scroll to chapter
-        const yOffset = -80; // Adjust for header
-        const y = chapterTracker.getBoundingClientRect().top + window.pageYOffset + yOffset;
-        window.scrollTo({ top: y, behavior: 'smooth' });
+    // Use existing navigation logic so the correct chapter content shows
+    showChapter(chapterNumber);
 
-        // Update page content if needed
-        updatePageDisplay(chapterNumber);
-    }
+    // Scroll to the tracker area so the user sees the new chapter
+    const yOffset = -80; // Adjust for header
+    const y = chapterTracker.getBoundingClientRect().top + window.pageYOffset + yOffset;
+    window.scrollTo({ top: y, behavior: 'smooth' });
 }
 function toggleMobileFullscreen() {
     if (!gameCard || !fullscreenBtn) return;
