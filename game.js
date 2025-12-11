@@ -10,60 +10,74 @@
         THEME: "honeyHunt_theme_v2"
     };
 
+    function createPlaceholder(id) {
+        const el = document.createElement("div");
+        if (id) el.id = `placeholder-${id}`;
+        return el;
+    }
+
+    function getEl(...ids) {
+        for (const id of ids) {
+            const found = document.getElementById(id);
+            if (found) return found;
+        }
+        return createPlaceholder(ids[0]);
+    }
+
     const GAME_DURATION = 60;
     const MAX_LIVES = 3;
     const DIFFICULTY_LABELS = ["Chill", "Classic", "Spicy"];
 
-    const gameContainer = document.getElementById("gameContainer");
-    const canvas = document.getElementById("gameCanvas");
-    const ctx = canvas.getContext("2d");
+    const gameContainer = getEl("gameContainer", "gameEmbed");
+    const canvas = document.getElementById("gameCanvas") || document.createElement("canvas");
+    const ctx = canvas.getContext ? canvas.getContext("2d") : null;
 
-    const scoreValue = document.getElementById("scoreValue");
-    const bestValue = document.getElementById("bestValue");
-    const timeValue = document.getElementById("timeValue");
-    const streakValue = document.getElementById("streakValue");
-    const livesValue = document.getElementById("livesValue");
-    const streakBadge = document.getElementById("streakBadge");
-    const comboIndicator = document.getElementById("comboIndicator");
-    const powerupIndicator = document.getElementById("powerupIndicator");
+    const scoreValue = getEl("scoreValue", "hudScore");
+    const bestValue = getEl("bestValue", "hudBest");
+    const timeValue = getEl("timeValue", "hudTime");
+    const streakValue = getEl("streakValue", "hudStreak");
+    const livesValue = getEl("livesValue", "hudLives");
+    const streakBadge = getEl("streakBadge", "statusBadge");
+    const comboIndicator = getEl("comboIndicator");
+    const powerupIndicator = getEl("powerupIndicator");
 
-    const startOverlay = document.getElementById("startOverlay");
-    const pauseOverlay = document.getElementById("pauseOverlay");
-    const gameOverOverlay = document.getElementById("gameOverOverlay");
-    const startButton = document.getElementById("startButton");
-    const resumeButton = document.getElementById("resumeButton");
-    const restartButton = document.getElementById("restartButton");
-    const overlayBest = document.getElementById("overlayBest");
-    const overlayGames = document.getElementById("overlayGames");
-    const finalScore = document.getElementById("finalScore");
-    const finalBest = document.getElementById("finalBest");
+    const startOverlay = getEl("startOverlay");
+    const pauseOverlay = getEl("pauseOverlay");
+    const gameOverOverlay = getEl("gameOverOverlay");
+    const startButton = getEl("startButton", "btnStart");
+    const resumeButton = getEl("resumeButton", "btnPause");
+    const restartButton = getEl("restartButton", "btnStart");
+    const overlayBest = getEl("overlayBest", "hudBest");
+    const overlayGames = getEl("overlayGames");
+    const finalScore = getEl("finalScore");
+    const finalBest = getEl("finalBest", "hudBest");
 
-    const helpToggle = document.getElementById("helpToggle");
-    const helpToggleSecondary = document.getElementById("helpToggleSecondary");
-    const helpPanel = document.getElementById("helpPanel");
+    const helpToggle = getEl("helpToggle");
+    const helpToggleSecondary = getEl("helpToggleSecondary");
+    const helpPanel = getEl("helpPanel");
 
-    const settingsToggle = document.getElementById("settingsToggle");
-    const settingsModal = document.getElementById("settingsModal");
-    const settingsPanel = document.getElementById("settingsPanel");
-    const settingsClose = document.getElementById("settingsClose");
-    const musicToggle = document.getElementById("musicToggle");
-    const sfxToggle = document.getElementById("sfxToggle");
+    const settingsToggle = getEl("settingsToggle");
+    const settingsModal = getEl("settingsModal");
+    const settingsPanel = getEl("settingsPanel");
+    const settingsClose = getEl("settingsClose");
+    const musicToggle = getEl("musicToggle");
+    const sfxToggle = getEl("sfxToggle");
     const diffButtons = Array.from(document.querySelectorAll(".diff-btn"));
-    const resetProgress = document.getElementById("resetProgress");
-    const settingsBest = document.getElementById("settingsBest");
+    const resetProgress = getEl("resetProgress");
+    const settingsBest = getEl("settingsBest", "hudBest");
 
-    const themeToggle = document.getElementById("themeToggle");
-    const fullscreenToggle = document.getElementById("fullscreenToggle");
+    const themeToggle = getEl("themeToggle");
+    const fullscreenToggle = getEl("fullscreenToggle");
 
-    const liveRegion = document.getElementById("liveRegion");
+    const liveRegion = getEl("liveRegion");
 
-    const timeProgress = document.getElementById("timeProgress");
-    const timeSubtitle = document.getElementById("timeSubtitle");
-    const streakProgress = document.getElementById("streakProgress");
-    const streakSubtitle = document.getElementById("streakSubtitle");
-    const sessionDifficulty = document.getElementById("sessionDifficulty");
-    const sessionGames = document.getElementById("sessionGames");
-    const sessionMood = document.getElementById("sessionMood");
+    const timeProgress = getEl("timeProgress");
+    const timeSubtitle = getEl("timeSubtitle");
+    const streakProgress = getEl("streakProgress");
+    const streakSubtitle = getEl("streakSubtitle");
+    const sessionDifficulty = getEl("sessionDifficulty");
+    const sessionGames = getEl("sessionGames");
+    const sessionMood = getEl("sessionMood");
 
     // ==================== ENHANCED AUDIO SYSTEM ====================
     let audioContext = null;
@@ -4415,6 +4429,11 @@
         console.log("Settings toggle:", settingsToggle);
         console.log("Settings modal:", settingsModal);
         console.log("Settings close:", settingsClose);
+
+        if (!canvas || !ctx) {
+            console.warn("Honey Hunt cannot start without a canvas element.");
+            return;
+        }
 
         // Initialize settings UI first
         applySettingsToUi();
