@@ -47,6 +47,7 @@
     const startButton = getEl("startButton", "btnStart");
     const resumeButton = getEl("resumeButton", "btnPause");
     const restartButton = getEl("restartButton", "btnStart");
+    const restartButton2 = getEl("restartButton2");
     const overlayBest = getEl("overlayBest", "hudBest");
     const overlayGames = getEl("overlayGames");
     const finalScore = getEl("finalScore");
@@ -3002,13 +3003,13 @@
         }
     }
 
-    function fallbackShare(text) {
+    function fallbackShare(shareText) {
         if (navigator.clipboard && navigator.clipboard.writeText) {
-            navigator.clipboard.writeText(text)
+            navigator.clipboard.writeText(shareText)
                 .then(() => showNotification('Score copied to clipboard! 📋', '#fbbf24'))
-                .catch(err => prompt('Copy this text to share:', text));
+                .catch(err => prompt('Copy this text to share:', shareText));
         } else {
-            prompt('Copy this text to share:', text);
+            prompt('Copy this text to share:', shareText);
         }
     }
 
@@ -3980,6 +3981,7 @@
         if (startButton) startButton.addEventListener("click", startGame);
         if (resumeButton) resumeButton.addEventListener("click", resumeGame);
         if (restartButton) restartButton.addEventListener("click", startGame);
+        if (restartButton2) restartButton2.addEventListener("click", startGame);
 
         if (overlayBest) overlayBest.textContent = String(gameState.best);
         if (overlayGames) overlayGames.textContent = String(gameState.gamesPlayed);
@@ -4243,177 +4245,6 @@
             .achievement-desc {
                 font-size: 12px;
                 color: rgba(255, 255, 255, 0.8);
-            }
-            
-            /* Settings Modal Styles */
-            #settingsModal {
-                display: none;
-                position: fixed;
-                top: 0;
-                left: 0;
-                width: 100%;
-                height: 100%;
-                background-color: rgba(0, 0, 0, 0.8);
-                z-index: 2000;
-                align-items: center;
-                justify-content: center;
-            }
-            
-            #settingsModal.visible {
-                display: flex;
-            }
-            
-            #settingsPanel {
-                background: linear-gradient(135deg, #1e293b, #0f172a);
-                border-radius: 20px;
-                padding: 30px;
-                width: 90%;
-                max-width: 500px;
-                max-height: 80vh;
-                overflow-y: auto;
-                border: 3px solid #fbbf24;
-                box-shadow: 0 10px 40px rgba(0, 0, 0, 0.5);
-            }
-            
-            .settings-header {
-                display: flex;
-                justify-content: space-between;
-                align-items: center;
-                margin-bottom: 30px;
-            }
-            
-            .settings-header h2 {
-                color: #fbbf24;
-                font-size: 28px;
-                margin: 0;
-            }
-            
-            .settings-close {
-                background: none;
-                border: none;
-                color: #fbbf24;
-                font-size: 24px;
-                cursor: pointer;
-                padding: 5px;
-                border-radius: 5px;
-            }
-            
-            .settings-close:hover {
-                background-color: rgba(251, 191, 36, 0.1);
-            }
-            
-            .settings-group {
-                margin-bottom: 25px;
-                background: rgba(255, 255, 255, 0.05);
-                padding: 20px;
-                border-radius: 15px;
-            }
-            
-            .settings-group h3 {
-                color: #fbbf24;
-                font-size: 20px;
-                margin: 0 0 15px 0;
-            }
-            
-            .settings-row {
-                display: flex;
-                align-items: center;
-                justify-content: space-between;
-                margin-bottom: 15px;
-                padding: 10px 0;
-                border-bottom: 1px solid rgba(255, 255, 255, 0.1);
-            }
-            
-            .settings-row:last-child {
-                border-bottom: none;
-            }
-            
-            .settings-label {
-                color: white;
-                font-size: 16px;
-                font-weight: bold;
-            }
-            
-            .toggle-btn {
-                background: rgba(255, 255, 255, 0.1);
-                border: 2px solid #fbbf24;
-                border-radius: 50px;
-                width: 60px;
-                height: 30px;
-                position: relative;
-                cursor: pointer;
-                transition: all 0.3s ease;
-            }
-            
-            .toggle-btn[data-on="true"] {
-                background-color: #fbbf24;
-            }
-            
-            .toggle-btn::after {
-                content: '';
-                position: absolute;
-                top: 3px;
-                left: 3px;
-                width: 22px;
-                height: 22px;
-                background-color: white;
-                border-radius: 50%;
-                transition: all 0.3s ease;
-            }
-            
-            .toggle-btn[data-on="true"]::after {
-                left: calc(100% - 25px);
-            }
-            
-            .diff-btn {
-                background: rgba(255, 255, 255, 0.1);
-                border: 2px solid #fbbf24;
-                color: white;
-                padding: 8px 16px;
-                border-radius: 8px;
-                cursor: pointer;
-                transition: all 0.3s ease;
-                font-weight: bold;
-            }
-            
-            .diff-btn:hover {
-                background: rgba(251, 191, 36, 0.2);
-            }
-            
-            .diff-btn.active {
-                background-color: #fbbf24;
-                color: #1e293b;
-            }
-            
-            .settings-btn {
-                background: linear-gradient(135deg, #fbbf24, #f59e0b);
-                color: #1e293b;
-                border: none;
-                padding: 12px 24px;
-                border-radius: 10px;
-                font-weight: bold;
-                cursor: pointer;
-                transition: all 0.3s ease;
-                display: flex;
-                align-items: center;
-                gap: 8px;
-                width: 100%;
-                justify-content: center;
-                margin-top: 10px;
-            }
-            
-            .settings-btn:hover {
-                transform: translateY(-2px);
-                box-shadow: 0 5px 15px rgba(251, 191, 36, 0.4);
-            }
-            
-            .settings-btn.danger {
-                background: linear-gradient(135deg, #ef4444, #dc2626);
-                color: white;
-            }
-            
-            .settings-btn.danger:hover {
-                box-shadow: 0 5px 15px rgba(239, 68, 68, 0.4);
             }
         `;
 
