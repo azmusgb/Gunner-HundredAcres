@@ -4000,265 +4000,268 @@
 
     // ==================== QUICK WINS: CSS INJECTION ====================
     function injectQuickWinsCSS() {
-        const powerupCSS = `
-            .powerup-indicators {
-                position: absolute;
-                top: 80px;
-                right: 20px;
-                display: flex;
-                flex-direction: column;
-                gap: 10px;
-                z-index: 100;
-            }
+    // Avoid injecting the same CSS block multiple times
+    if (document.getElementById("honey-powerup-css")) return;
 
-            .powerup-indicator {
-                width: 50px;
-                height: 50px;
-                border-radius: 12px;
-                display: flex;
-                align-items: center;
-                justify-content: center;
-                font-size: 20px;
-                position: relative;
-                opacity: 0.3;
-                transition: all 0.3s ease;
-                transform: scale(0.9);
-            }
+    const powerupCSS = `
+        .powerup-indicators {
+            position: absolute;
+            top: 80px;
+            right: 20px;
+            display: flex;
+            flex-direction: column;
+            gap: 10px;
+            z-index: 100;
+        }
 
-            .powerup-indicator.active {
-                opacity: 1;
-                transform: scale(1);
-                box-shadow: 0 0 20px currentColor;
-            }
+        .powerup-indicator {
+            width: 50px;
+            height: 50px;
+            border-radius: 12px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 20px;
+            position: relative;
+            opacity: 0.3;
+            transition: all 0.3s ease;
+            transform: scale(0.9);
+        }
 
-            .powerup-indicator[data-type="DOUBLE_POINTS"] {
-                background: linear-gradient(135deg, #fbbf24, #f59e0b);
-                color: #78350f;
-            }
+        .powerup-indicator.active {
+            opacity: 1;
+            transform: scale(1);
+            box-shadow: 0 0 20px currentColor;
+        }
 
-            .powerup-indicator[data-type="SLOW_TIME"] {
-                background: linear-gradient(135deg, #60a5fa, #3b82f6);
-                color: white;
-            }
+        .powerup-indicator[data-type="DOUBLE_POINTS"] {
+            background: linear-gradient(135deg, #fbbf24, #f59e0b);
+            color: #78350f;
+        }
 
-            .powerup-indicator[data-type="MAGNET"] {
-                background: linear-gradient(135deg, #ef4444, #dc2626);
-                color: white;
-            }
+        .powerup-indicator[data-type="SLOW_TIME"] {
+            background: linear-gradient(135deg, #60a5fa, #3b82f6);
+            color: white;
+        }
 
-            .powerup-indicator[data-type="BEE_REPELLENT"] {
-                background: linear-gradient(135deg, #22c55e, #16a34a);
-                color: white;
-            }
+        .powerup-indicator[data-type="MAGNET"] {
+            background: linear-gradient(135deg, #ef4444, #dc2626);
+            color: white;
+        }
 
-            .powerup-timer {
-                position: absolute;
-                bottom: -8px;
-                left: 5px;
-                right: 5px;
-                height: 3px;
-                background: rgba(255, 255, 255, 0.3);
-                border-radius: 2px;
-                overflow: hidden;
-            }
+        .powerup-indicator[data-type="BEE_REPELLENT"] {
+            background: linear-gradient(135deg, #22c55e, #16a34a);
+            color: white;
+        }
 
-            .powerup-timer::after {
-                content: '';
-                position: absolute;
-                top: 0;
-                left: 0;
-                height: 100%;
-                background: white;
-                width: 100%;
-                transition: width linear;
-            }
+        .powerup-timer {
+            position: absolute;
+            bottom: -8px;
+            left: 5px;
+            right: 5px;
+            height: 3px;
+            background: rgba(255, 255, 255, 0.3);
+            border-radius: 2px;
+            overflow: hidden;
+        }
 
-            .achievement-popup {
-                position: fixed;
-                top: 50%;
-                left: 50%;
-                transform: translate(-50%, -50%);
-                background: linear-gradient(135deg, #fbbf24, #f59e0b);
-                color: #78350f;
-                padding: 20px;
-                border-radius: 20px;
-                box-shadow: 0 10px 40px rgba(0, 0, 0, 0.3);
-                z-index: 1000;
-                display: none;
-                align-items: center;
-                gap: 15px;
-                min-width: 300px;
-                animation: achievementPopup 3s ease forwards;
-                border: 3px solid #78350f;
-            }
+        .powerup-timer::after {
+            content: '';
+            position: absolute;
+            top: 0;
+            left: 0;
+            height: 100%;
+            background: white;
+            width: 100%;
+            transition: width linear;
+        }
 
-            @keyframes achievementPopup {
-                0% { opacity: 0; transform: translate(-50%, -40%); }
-                10% { opacity: 1; transform: translate(-50%, -50%); }
-                90% { opacity: 1; transform: translate(-50%, -50%); }
-                100% { opacity: 0; transform: translate(-50%, -60%); }
-            }
+        .achievement-popup {
+            position: fixed;
+            top: 50%;
+            left: 50%;
+            transform: translate(-50%, -50%);
+            background: linear-gradient(135deg, #fbbf24, #f59e0b);
+            color: #78350f;
+            padding: 20px;
+            border-radius: 20px;
+            box-shadow: 0 10px 40px rgba(0, 0, 0, 0.3);
+            z-index: 1000;
+            display: none;
+            align-items: center;
+            gap: 15px;
+            min-width: 300px;
+            animation: achievementPopup 3s ease forwards;
+            border: 3px solid #78350f;
+        }
 
-            .achievement-icon {
-                font-size: 40px;
-                filter: drop-shadow(2px 2px 2px rgba(0,0,0,0.2));
-            }
+        @keyframes achievementPopup {
+            0% { opacity: 0; transform: translate(-50%, -40%); }
+            10% { opacity: 1; transform: translate(-50%, -50%); }
+            90% { opacity: 1; transform: translate(-50%, -50%); }
+            100% { opacity: 0; transform: translate(-50%, -60%); }
+        }
 
-            .achievement-text {
-                flex: 1;
-            }
+        .achievement-icon {
+            font-size: 40px;
+            filter: drop-shadow(2px 2px 2px rgba(0,0,0,0.2));
+        }
 
-            .achievement-title {
-                font-weight: bold;
-                font-size: 18px;
-                margin-bottom: 5px;
-            }
+        .achievement-text {
+            flex: 1;
+        }
 
-            .achievement-name {
-                font-size: 16px;
-                font-weight: bold;
-                margin-bottom: 5px;
-            }
+        .achievement-title {
+            font-weight: bold;
+            font-size: 18px;
+            margin-bottom: 5px;
+        }
 
-            .achievement-desc {
-                font-size: 14px;
-                opacity: 0.9;
-            }
+        .achievement-name {
+            font-size: 16px;
+            font-weight: bold;
+            margin-bottom: 5px;
+        }
 
-            .daily-challenge-panel {
-                position: absolute;
-                top: 80px;
-                left: 20px;
-                background: rgba(30, 41, 59, 0.9);
-                border-radius: 15px;
-                padding: 15px;
-                color: white;
-                width: 250px;
-                backdrop-filter: blur(10px);
-                border: 2px solid #fbbf24;
-                z-index: 50;
-            }
+        .achievement-desc {
+            font-size: 14px;
+            opacity: 0.9;
+        }
 
-            .daily-challenge-title {
-                font-weight: bold;
-                color: #fbbf24;
-                margin-bottom: 10px;
-                font-size: 16px;
-                display: flex;
-                align-items: center;
-                gap: 8px;
-            }
+        .daily-challenge-panel {
+            position: absolute;
+            top: 80px;
+            left: 20px;
+            background: rgba(30, 41, 59, 0.9);
+            border-radius: 15px;
+            padding: 15px;
+            color: white;
+            width: 250px;
+            backdrop-filter: blur(10px);
+            border: 2px solid #fbbf24;
+            z-index: 50;
+        }
 
-            .daily-challenge-title::before {
-                content: '🏆';
-                font-size: 14px;
-            }
+        .daily-challenge-title {
+            font-weight: bold;
+            color: #fbbf24;
+            margin-bottom: 10px;
+            font-size: 16px;
+            display: flex;
+            align-items: center;
+            gap: 8px;
+        }
 
-            .daily-challenge-progress {
-                height: 8px;
-                background: rgba(255, 255, 255, 0.1);
-                border-radius: 4px;
-                margin: 10px 0;
-                overflow: hidden;
-            }
+        .daily-challenge-title::before {
+            content: '🏆';
+            font-size: 14px;
+        }
 
-            .daily-challenge-progress-fill {
-                height: 100%;
-                background: linear-gradient(90deg, #fbbf24, #f59e0b);
-                border-radius: 4px;
-                transition: width 0.3s ease;
-            }
+        .daily-challenge-progress {
+            height: 8px;
+            background: rgba(255, 255, 255, 0.1);
+            border-radius: 4px;
+            margin: 10px 0;
+            overflow: hidden;
+        }
 
-            .daily-challenge-reward {
-                font-size: 12px;
-                color: #fbbf24;
-                margin-top: 8px;
-                display: flex;
-                align-items: center;
-                gap: 5px;
-            }
+        .daily-challenge-progress-fill {
+            height: 100%;
+            background: linear-gradient(90deg, #fbbf24, #f59e0b);
+            border-radius: 4px;
+            transition: width 0.3s ease;
+        }
 
-            .evolution-display {
-                position: absolute;
-                top: 20px;
-                left: 50%;
-                transform: translateX(-50%);
-                background: rgba(30, 41, 59, 0.9);
-                border-radius: 15px;
-                padding: 8px 20px;
-                color: white;
-                backdrop-filter: blur(10px);
-                border: 2px solid #fbbf24;
-                z-index: 50;
-                font-weight: bold;
-                display: none;
-                align-items: center;
-                gap: 10px;
-            }
+        .daily-challenge-reward {
+            font-size: 12px;
+            color: #fbbf24;
+            margin-top: 8px;
+            display: flex;
+            align-items: center;
+            gap: 5px;
+        }
 
-            .evolution-level {
-                color: #fbbf24;
-                font-size: 18px;
-            }
+        .evolution-display {
+            position: absolute;
+            top: 20px;
+            left: 50%;
+            transform: translateX(-50%);
+            background: rgba(30, 41, 59, 0.9);
+            border-radius: 15px;
+            padding: 8px 20px;
+            color: white;
+            backdrop-filter: blur(10px);
+            border: 2px solid #fbbf24;
+            z-index: 50;
+            font-weight: bold;
+            display: none;
+            align-items: center;
+            gap: 10px;
+        }
 
-            .evolution-name {
-                font-size: 14px;
-            }
+        .evolution-level {
+            color: #fbbf24;
+            font-size: 18px;
+        }
 
-            @keyframes slideDown {
-                from { transform: translate(-50%, -20px); opacity: 0; }
-                to { transform: translate(-50%, 0); opacity: 1; }
-            }
+        .evolution-name {
+            font-size: 14px;
+        }
 
-            @keyframes slideUp {
-                from { transform: translate(-50%, 0); opacity: 1; }
-                to { transform: translate(-50%, -20px); opacity: 0; }
-            }
+        @keyframes slideDown {
+            from { transform: translate(-50%, -20px); opacity: 0; }
+            to { transform: translate(-50%, 0); opacity: 1; }
+        }
 
-            .achievements-container {
-                max-height: 400px;
-                overflow-y: auto;
-                margin-top: 20px;
-                padding: 15px;
-                background: rgba(30, 41, 59, 0.9);
-                border-radius: 15px;
-                border: 2px solid #fbbf24;
-            }
+        @keyframes slideUp {
+            from { transform: translate(-50%, 0); opacity: 1; }
+            to { transform: translate(-50%, -20px); opacity: 0; }
+        }
 
-            .achievement {
-                display: flex;
-                align-items: center;
-                gap: 15px;
-                padding: 12px;
-                margin-bottom: 10px;
-                background: rgba(255, 255, 255, 0.1);
-                border-radius: 10px;
-                border-left: 4px solid #fbbf24;
-            }
+        .achievements-container {
+            max-height: 400px;
+            overflow-y: auto;
+            margin-top: 20px;
+            padding: 15px;
+            background: rgba(30, 41, 59, 0.9);
+            border-radius: 15px;
+            border: 2px solid #fbbf24;
+        }
 
-            .achievement-icon {
-                font-size: 24px;
-                min-width: 40px;
-                text-align: center;
-            }
+        .achievement {
+            display: flex;
+            align-items: center;
+            gap: 15px;
+            padding: 12px;
+            margin-bottom: 10px;
+            background: rgba(255, 255, 255, 0.1);
+            border-radius: 10px;
+            border-left: 4px solid #fbbf24;
+        }
 
-            .achievement-name {
-                font-weight: bold;
-                color: #fbbf24;
-                font-size: 16px;
-            }
+        .achievement-icon {
+            font-size: 24px;
+            min-width: 40px;
+            text-align: center;
+        }
 
-            .achievement-desc {
-                font-size: 12px;
-                color: rgba(255, 255, 255, 0.8);
-            }
-        `;
+        .achievement-name {
+            font-weight: bold;
+            color: #fbbf24;
+            font-size: 16px;
+        }
 
-        const styleSheet = document.createElement("style");
-        styleSheet.textContent = powerupCSS;
-        document.head.appendChild(styleSheet);
-    }
+        .achievement-desc {
+            font-size: 12px;
+            color: rgba(255, 255, 255, 0.8);
+        }
+    `;
 
+    const styleSheet = document.createElement("style");
+    styleSheet.id = "honey-powerup-css";
+    styleSheet.textContent = powerupCSS;
+    document.head.appendChild(styleSheet);
+}
     // ==================== MAIN INITIALIZATION ====================
     function init() {
         console.log("Initializing Honey Hunt with Enhanced Features & Audio...");
