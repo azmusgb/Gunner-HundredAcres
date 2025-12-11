@@ -4342,7 +4342,7 @@ function gameLoop(timestamp) {
     document.head.appendChild(styleSheet);
 }
 
-    // ==================== MAIN INITIALIZATION ====================
+       // ==================== MAIN INITIALIZATION ====================
     let hasInitialized = false;
 
     function initOnce() {
@@ -4353,190 +4353,198 @@ function gameLoop(timestamp) {
     }
 
     function init() {
-    console.log("Initializing Honey Hunt with Enhanced Features & Audio...");
-    
-    // CRITICAL SAFETY CHECK: Ensure essential elements exist
-    const requiredElements = [
-        { name: 'gameContainer', element: gameContainer },
-        { name: 'canvas', element: canvas },
-        { name: 'ctx', element: ctx },
-        { name: 'scoreValue', element: scoreValue },
-        { name: 'bestValue', element: bestValue },
-        { name: 'timeValue', element: timeValue }
-    ];
-    
-    const missingElements = requiredElements.filter(item => !item.element);
-    
-    if (missingElements.length > 0) {
-        console.error("Essential game elements not found. Missing:", missingElements.map(item => item.name).join(', '));
+        console.log("Initializing Honey Hunt with Enhanced Features & Audio...");
         
-        // Show user-friendly error
-        const errorDiv = document.createElement('div');
-        errorDiv.id = 'gameInitError';
-        errorDiv.style.cssText = `
-            position: fixed;
-            top: 50%;
-            left: 50%;
-            transform: translate(-50%, -50%);
-            background: #dc2626;
-            color: white;
-            padding: 30px;
-            border-radius: 15px;
-            z-index: 99999;
-            font-family: system-ui, -apple-system, sans-serif;
-            max-width: 400px;
-            text-align: center;
-            box-shadow: 0 10px 30px rgba(0,0,0,0.3);
-        `;
+        // CRITICAL SAFETY CHECK: Ensure essential elements exist
+        const requiredElements = [
+            { name: 'gameContainer', element: gameContainer },
+            { name: 'canvas', element: canvas },
+            { name: 'ctx', element: ctx },
+            { name: 'scoreValue', element: scoreValue },
+            { name: 'bestValue', element: bestValue },
+            { name: 'timeValue', element: timeValue }
+        ];
         
-        errorDiv.innerHTML = `
-            <h3 style="margin-top: 0; margin-bottom: 15px;">⚠️ Game Initialization Error</h3>
-            <p style="margin-bottom: 20px; line-height: 1.5;">
-                Some game elements could not be loaded. This might be due to:
-            </p>
-            <ul style="text-align: left; margin-bottom: 20px; padding-left: 20px;">
-                <li>Page not fully loaded</li>
-                <li>Missing HTML elements</li>
-                <li>Browser compatibility issue</li>
-            </ul>
-            <button onclick="location.reload()" style="
-                background: white;
-                color: #dc2626;
-                border: none;
-                padding: 10px 20px;
-                border-radius: 8px;
-                font-weight: bold;
-                cursor: pointer;
-                margin: 5px;
-            ">Refresh Page</button>
-            <button onclick="document.getElementById('gameInitError').remove()" style="
-                background: transparent;
+        const missingElements = requiredElements.filter(item => !item.element);
+        
+        if (missingElements.length > 0) {
+            console.error("Essential game elements not found. Missing:", missingElements.map(item => item.name).join(', '));
+            
+            // Show user-friendly error
+            const errorDiv = document.createElement('div');
+            errorDiv.id = 'gameInitError';
+            errorDiv.style.cssText = `
+                position: fixed;
+                top: 50%;
+                left: 50%;
+                transform: translate(-50%, -50%);
+                background: #dc2626;
                 color: white;
-                border: 1px solid white;
-                padding: 10px 20px;
-                border-radius: 8px;
-                font-weight: bold;
-                cursor: pointer;
-                margin: 5px;
-            ">Dismiss</button>
-        `;
+                padding: 30px;
+                border-radius: 15px;
+                z-index: 99999;
+                font-family: system-ui, -apple-system, sans-serif;
+                max-width: 400px;
+                text-align: center;
+                box-shadow: 0 10px 30px rgba(0,0,0,0.3);
+            `;
+            
+            errorDiv.innerHTML = `
+                <h3 style="margin-top: 0; margin-bottom: 15px;">⚠️ Game Initialization Error</h3>
+                <p style="margin-bottom: 20px; line-height: 1.5;">
+                    Some game elements could not be loaded. This might be due to:
+                </p>
+                <ul style="text-align: left; margin-bottom: 20px; padding-left: 20px;">
+                    <li>Page not fully loaded</li>
+                    <li>Missing HTML elements</li>
+                    <li>Browser compatibility issue</li>
+                </ul>
+                <button onclick="location.reload()" style="
+                    background: white;
+                    color: #dc2626;
+                    border: none;
+                    padding: 10px 20px;
+                    border-radius: 8px;
+                    font-weight: bold;
+                    cursor: pointer;
+                    margin: 5px;
+                ">Refresh Page</button>
+                <button onclick="document.getElementById('gameInitError').remove()" style="
+                    background: transparent;
+                    color: white;
+                    border: 1px solid white;
+                    padding: 10px 20px;
+                    border-radius: 8px;
+                    font-weight: bold;
+                    cursor: pointer;
+                    margin: 5px;
+                ">Dismiss</button>
+            `;
+            
+            document.body.appendChild(errorDiv);
+            return; // Stop initialization
+        }
         
-        document.body.appendChild(errorDiv);
-        return; // Stop initialization
-    }
-    
-    // Initialize settings UI first
-    applySettingsToUi();
-    
-    // Setup canvas
-    if (!existingCanvas) {
-        canvas.id = "gameCanvas";
-        canvas.style.cssText = `
-            display: block;
-            width: 100%;
-            height: 100%;
-            background: linear-gradient(to bottom, #0f766e 0%, #0e7490 50%, #0369a1 100%);
-        `;
-        gameContainer.appendChild(canvas);
-    }
-    
-    // Setup game container if needed
-    if (gameContainer) {
-        gameContainer.style.cssText = `
-            position: relative;
-            width: 100%;
-            height: 100%;
-            overflow: hidden;
-        `;
-    }
-    
-    // Initialize subsystems
-    injectQuickWinsCSS();
-    loadPersistedState();
-    resizeCanvas();
-    
-    // Initialize bear position
-    bear.x = world.width / 2;
-    bear.y = world.height * 0.85;
-    
-    // Initialize UI
-    updateHud();
-    
-    // Initialize controls
-    initControls();
-    initSettings();
-    initTopbar();
-    initOverlays();
-    initHelp();
-    initTutorial();
-    initShareFunctionality();
-    
-    // Safe audio initialization
-    safeInitAudio();
-    
-    // Setup powerups and challenges
-    createPowerupIndicators();
-    initDailyChallenge();
-    
-    // Initialize animation timers
-    bear.animation.blinkTimer = 1 + Math.random() * 2;
-    dynamicDifficulty.multiplier = 1;
-    dynamicDifficulty.performanceHistory = [];
-    
-    // Setup event listeners
-    window.addEventListener("resize", resizeCanvas);
-    
-    // Handle visibility change for pause
-    document.addEventListener("visibilitychange", function() {
-        if (document.hidden && gameState.running && !gameState.paused) {
-            pauseGame();
+        // Initialize settings UI first
+        applySettingsToUi();
+        
+        // Setup canvas
+        if (!existingCanvas) {
+            canvas.id = "gameCanvas";
+            canvas.style.cssText = `
+                display: block;
+                width: 100%;
+                height: 100%;
+                background: linear-gradient(to bottom, #0f766e 0%, #0e7490 50%, #0369a1 100%);
+            `;
+            gameContainer.appendChild(canvas);
         }
-    });
-    
-    // Start music after user interaction (required by browsers)
-    function startMusicOnInteraction() {
-        if (settingsState.musicOn && !musicPlaying) {
-            safeBackgroundMusic();
+        
+        // Setup game container if needed
+        if (gameContainer) {
+            gameContainer.style.cssText = `
+                position: relative;
+                width: 100%;
+                height: 100%;
+                overflow: hidden;
+            `;
         }
-        document.removeEventListener('click', startMusicOnInteraction);
-        document.removeEventListener('keydown', startMusicOnInteraction);
+        
+        // Initialize subsystems
+        injectQuickWinsCSS();
+        loadPersistedState();
+        resizeCanvas();
+        
+        // Initialize bear position
+        bear.x = world.width / 2;
+        bear.y = world.height * 0.85;
+        
+        // Initialize UI
+        updateHud();
+        
+        // Initialize controls
+        initControls();
+        initSettings();
+        initTopbar();
+        initOverlays();
+        initHelp();
+        initTutorial();
+        initShareFunctionality();
+        
+        // Safe audio initialization
+        safeInitAudio();
+        
+        // Setup powerups and challenges
+        createPowerupIndicators();
+        initDailyChallenge();
+        
+        // Initialize animation timers
+        bear.animation.blinkTimer = 1 + Math.random() * 2;
+        dynamicDifficulty.multiplier = 1;
+        dynamicDifficulty.performanceHistory = [];
+        
+        // Setup event listeners
+        window.addEventListener("resize", resizeCanvas);
+        
+        // Handle visibility change for pause
+        document.addEventListener("visibilitychange", function() {
+            if (document.hidden && gameState.running && !gameState.paused) {
+                pauseGame();
+            }
+        });
+        
+        // Start music after user interaction (required by browsers)
+        function startMusicOnInteraction() {
+            if (settingsState.musicOn && !musicPlaying) {
+                safeBackgroundMusic();
+            }
+            document.removeEventListener('click', startMusicOnInteraction);
+            document.removeEventListener('keydown', startMusicOnInteraction);
+        }
+        
+        document.addEventListener('click', startMusicOnInteraction);
+        document.addEventListener('keydown', startMusicOnInteraction);
+        
+        // Add button click sounds after audio is ready
+        if (document.readyState === "loading") {
+            document.addEventListener("DOMContentLoaded", addButtonClickSounds);
+        } else {
+            setTimeout(addButtonClickSounds, 100);
+        }
+        
+        // Initialize game state displays
+        if (overlayBest) overlayBest.textContent = String(gameState.best);
+        if (overlayGames) overlayGames.textContent = String(gameState.gamesPlayed);
+        if (settingsBest) settingsBest.textContent = String(gameState.best);
+        
+        // Start game loop
+        lastTimestamp = 0;
+        requestAnimationFrame(gameLoop);
+        
+        // Show start screen
+        showOverlay(startOverlay);
+        
+        // Log successful initialization
+        console.log("Honey Hunt Enhanced with Audio initialized successfully!");
+        console.log("Game stats:", {
+            bestScore: gameState.best,
+            gamesPlayed: gameState.gamesPlayed,
+            difficulty: settingsState.difficulty,
+            music: settingsState.musicOn,
+            sfx: settingsState.sfxOn
+        });
+        
+        // Announce readiness
+        if (liveRegion) {
+            liveRegion.textContent = "Honey Hunt game loaded. Press Start to begin or Space to start.";
+        }
     }
-    
-    document.addEventListener('click', startMusicOnInteraction);
-    document.addEventListener('keydown', startMusicOnInteraction);
-    
-    // Add button click sounds after audio is ready
+
+    // Start initialization when ready
     if (document.readyState === "loading") {
-        document.addEventListener("DOMContentLoaded", addButtonClickSounds);
+        document.addEventListener("DOMContentLoaded", initOnce);
     } else {
-        setTimeout(addButtonClickSounds, 100);
+        setTimeout(initOnce, 100);
     }
-    
-    // Initialize game state displays
-    if (overlayBest) overlayBest.textContent = String(gameState.best);
-    if (overlayGames) overlayGames.textContent = String(gameState.gamesPlayed);
-    if (settingsBest) settingsBest.textContent = String(gameState.best);
-    
-    // Start game loop
-    lastTimestamp = 0;
-    requestAnimationFrame(gameLoop);
-    
-    // Show start screen
-    showOverlay(startOverlay);
-    
-    // Log successful initialization
-    console.log("Honey Hunt Enhanced with Audio initialized successfully!");
-    console.log("Game stats:", {
-        bestScore: gameState.best,
-        gamesPlayed: gameState.gamesPlayed,
-        difficulty: settingsState.difficulty,
-        music: settingsState.musicOn,
-        sfx: settingsState.sfxOn
-    });
-    
-    // Announce readiness
-    if (liveRegion) {
-        liveRegion.textContent = "Honey Hunt game loaded. Press Start to begin or Space to start.";
-    }
-}
-}
+
+})(); 
