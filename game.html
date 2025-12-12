@@ -6,7 +6,7 @@
     <meta content="width=device-width, initial-scale=1.0" name="viewport"/>
     <meta content="#f4a944" name="theme-color"/>
     <style>
-        /* FIXED GAME CSS WITH PROPER ASPECT RATIO */
+        /* SIMPLIFIED FIXED GAME CSS */
         * {
             margin: 0;
             padding: 0;
@@ -14,7 +14,7 @@
         }
 
         body {
-            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            font-family: 'Segoe UI', Tahoma, sans-serif;
             background: #f5e9d8;
             overflow: hidden;
             width: 100vw;
@@ -22,36 +22,28 @@
             display: flex;
             justify-content: center;
             align-items: center;
+            padding: 0;
         }
 
         #gameContainer {
             width: 800px;
             height: 600px;
-            max-width: 90vw;
-            max-height: 90vh;
-            aspect-ratio: 4/3;
+            max-width: 95vw;
+            max-height: 95vh;
+            aspect-ratio: 800/600;
             position: relative;
             background: linear-gradient(to bottom, #87CEEB 0%, #87CEEB 60%, #8B4513 60%, #A0522D 100%);
             border-radius: 20px;
             overflow: hidden;
-            box-shadow: 0 20px 60px rgba(0, 0, 0, 0.3);
+            box-shadow: 0 10px 30px rgba(0, 0, 0, 0.2);
             border: 4px solid #f4a944;
         }
 
         #gameCanvas {
-            width: 100% !important;
-            height: 100% !important;
+            width: 100%;
+            height: 100%;
             display: block;
-        }
-
-        .game-ui {
-            position: absolute;
-            top: 0;
-            left: 0;
-            right: 0;
-            bottom: 0;
-            pointer-events: none;
-            z-index: 10;
+            background: transparent;
         }
 
         .hud {
@@ -62,54 +54,32 @@
             display: flex;
             justify-content: space-between;
             background: rgba(255, 255, 255, 0.95);
-            padding: 15px 25px;
-            border-radius: 15px;
-            border: 3px solid #f4a944;
-            box-shadow: 0 8px 24px rgba(0, 0, 0, 0.2);
+            padding: 12px 20px;
+            border-radius: 12px;
+            border: 2px solid #f4a944;
+            box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1);
             pointer-events: none;
+            z-index: 10;
         }
 
         .hud-item {
             display: flex;
             flex-direction: column;
             align-items: center;
-            gap: 5px;
+            gap: 4px;
         }
 
         .hud-label {
-            font-size: 14px;
+            font-size: 12px;
             font-weight: 600;
             color: #8B4513;
             text-transform: uppercase;
-            letter-spacing: 1px;
         }
 
         .hud-value {
-            font-size: 28px;
+            font-size: 20px;
             font-weight: bold;
             color: #d18a2c;
-            font-family: 'Georgia', serif;
-        }
-
-        .streak {
-            background: linear-gradient(135deg, #f4a944, #d18a2c);
-            padding: 5px 15px;
-            border-radius: 25px;
-            margin: -5px -10px -5px 0;
-        }
-
-        .streak .hud-value {
-            color: white;
-        }
-
-        .streak-badge {
-            font-size: 11px;
-            background: white;
-            color: #f4a944;
-            padding: 3px 8px;
-            border-radius: 12px;
-            margin-top: 3px;
-            font-weight: bold;
         }
 
         .overlay {
@@ -123,999 +93,340 @@
             align-items: center;
             justify-content: center;
             z-index: 20;
-            opacity: 0;
-            pointer-events: none;
-            transition: opacity 0.3s ease;
-        }
-
-        .overlay.active {
-            opacity: 1;
-            pointer-events: all;
         }
 
         .overlay-card {
             background: white;
-            padding: 40px;
-            border-radius: 25px;
+            padding: 30px;
+            border-radius: 20px;
             text-align: center;
             max-width: 500px;
             width: 90%;
             border: 4px solid #f4a944;
-            box-shadow: 0 16px 48px rgba(0, 0, 0, 0.3);
-            transform: translateY(20px);
-            animation: slideUp 0.5s ease forwards;
-        }
-
-        @keyframes slideUp {
-            to { transform: translateY(0); }
         }
 
         .overlay-title {
-            font-size: 2.5rem;
+            font-size: 2rem;
             color: #8B4513;
-            margin-bottom: 15px;
-            font-family: 'Georgia', serif;
+            margin-bottom: 10px;
         }
 
         .overlay-sub {
             color: #5a3a1c;
-            margin-bottom: 30px;
-            line-height: 1.6;
-            font-size: 1.1rem;
-        }
-
-        .overlay-stats {
-            display: flex;
-            justify-content: center;
-            gap: 40px;
-            margin: 30px 0;
-        }
-
-        .overlay-stat-label {
-            font-size: 14px;
-            color: #8B4513;
-            opacity: 0.8;
-            text-transform: uppercase;
-            letter-spacing: 1.5px;
-        }
-
-        .overlay-stat-value {
-            font-size: 2.8rem;
-            font-weight: bold;
-            color: #f4a944;
-            font-family: 'Georgia', serif;
+            margin-bottom: 20px;
+            line-height: 1.5;
         }
 
         .btn {
-            padding: 16px 32px;
+            padding: 12px 24px;
             border: none;
-            border-radius: 15px;
-            font-size: 18px;
+            border-radius: 10px;
+            font-size: 16px;
             font-weight: bold;
             cursor: pointer;
-            display: inline-flex;
-            align-items: center;
-            justify-content: center;
-            gap: 10px;
-            transition: all 0.3s ease;
-            text-decoration: none;
-            font-family: 'Segoe UI', sans-serif;
-            pointer-events: all;
-        }
-
-        .btn.primary {
             background: linear-gradient(135deg, #f4a944, #d18a2c);
             color: white;
-            box-shadow: 0 8px 24px rgba(244, 169, 68, 0.4);
+            margin: 5px;
         }
 
-        .btn.primary:hover {
-            transform: translateY(-4px);
-            box-shadow: 0 12px 32px rgba(244, 169, 68, 0.6);
+        .btn:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 4px 12px rgba(244, 169, 68, 0.4);
         }
 
-        .btn.secondary {
-            background: white;
-            color: #8B4513;
-            border: 3px solid #f4a944;
-        }
-
-        .btn.secondary:hover {
-            background: #f4a944;
-            color: white;
-        }
-
-        .combo-indicator {
-            position: absolute;
-            top: 50%;
-            left: 50%;
-            transform: translate(-50%, -50%);
-            font-size: 64px;
-            font-weight: bold;
-            color: #f4a944;
-            text-shadow: 0 4px 12px rgba(0, 0, 0, 0.4);
-            z-index: 15;
-            opacity: 0;
-            pointer-events: none;
-            animation: popIn 0.5s ease forwards;
-        }
-
-        @keyframes popIn {
-            0% { transform: translate(-50%, -50%) scale(0.5); opacity: 0; }
-            70% { transform: translate(-50%, -50%) scale(1.1); opacity: 1; }
-            100% { transform: translate(-50%, -50%) scale(1); opacity: 1; }
-        }
-
-        .powerup-indicator {
-            position: absolute;
-            top: 20px;
-            right: 20px;
-            background: linear-gradient(135deg, #87a96b, #6a8a52);
-            color: white;
-            padding: 10px 20px;
-            border-radius: 25px;
-            display: flex;
-            align-items: center;
-            gap: 10px;
-            font-weight: bold;
-            z-index: 15;
-            box-shadow: 0 6px 20px rgba(0, 0, 0, 0.3);
-            font-size: 1.1rem;
-        }
-
-        .game-tips {
-            position: absolute;
-            bottom: 20px;
-            left: 20px;
-            right: 20px;
-            background: rgba(255, 255, 255, 0.9);
-            padding: 15px;
-            border-radius: 15px;
-            border: 2px solid #f4a944;
-            text-align: center;
-            font-size: 0.95rem;
-            color: #5a3a1c;
-            pointer-events: none;
-        }
-
-        /* Mobile controls */
-        .mobile-controls {
-            position: absolute;
-            bottom: 100px;
-            left: 0;
-            right: 0;
-            display: flex;
-            justify-content: space-between;
-            padding: 0 40px;
+        /* Hide start overlay initially - will show via JS */
+        #startOverlay {
             display: none;
         }
 
-        @media (max-width: 768px) {
-            .mobile-controls {
-                display: flex;
-            }
-            
-            .hud {
-                padding: 10px 15px;
-                flex-wrap: wrap;
-                gap: 10px;
-            }
-            
-            .hud-item {
-                flex: 1;
-                min-width: 100px;
-            }
-            
-            .hud-value {
-                font-size: 22px;
-            }
+        /* Make sure game is visible */
+        .game-active #startOverlay {
+            display: none;
         }
 
-        .control-btn {
-            width: 70px;
-            height: 70px;
-            border-radius: 50%;
-            background: rgba(255, 255, 255, 0.95);
-            border: 3px solid #f4a944;
+        .game-inactive #startOverlay {
             display: flex;
-            align-items: center;
-            justify-content: center;
-            font-size: 28px;
-            color: #8B4513;
-            cursor: pointer;
-            box-shadow: 0 8px 20px rgba(0, 0, 0, 0.3);
-            pointer-events: all;
-            transition: all 0.2s ease;
         }
-
-        .control-btn:active {
-            transform: scale(0.95);
-            background: #f4a944;
-            color: white;
-        }
-
-        /* Clouds */
-        .cloud {
-            position: absolute;
-            font-size: 60px;
-            opacity: 0.3;
-            z-index: 1;
-            animation: float 30s linear infinite;
-        }
-
-        .cloud:nth-child(1) { top: 10%; left: 5%; animation-delay: 0s; }
-        .cloud:nth-child(2) { top: 20%; right: 10%; animation-delay: -10s; }
-        .cloud:nth-child(3) { top: 40%; left: 15%; animation-delay: -20s; }
-
-        @keyframes float {
-            0% { transform: translateX(-100px); }
-            100% { transform: translateX(900px); }
-        }
-
-        /* Grass details */
-        .grass {
-            position: absolute;
-            bottom: 40%;
-            left: 0;
-            right: 0;
-            height: 40px;
-            background: #2E8B57;
-            z-index: 2;
-        }
-
-        .grass:before {
-            content: '';
-            position: absolute;
-            top: -20px;
-            left: 0;
-            right: 0;
-            height: 40px;
-            background: repeating-linear-gradient(
-                90deg,
-                transparent,
-                transparent 15px,
-                #3CB371 15px,
-                #3CB371 30px
-            );
-            clip-path: polygon(0% 100%, 100% 100%, 100% 0%, 0% 0%);
-        }
-
-        /* Trees */
-        .tree {
-            position: absolute;
-            bottom: 40%;
-            width: 40px;
-            height: 120px;
-            background: #8B4513;
-            z-index: 3;
-        }
-
-        .tree:before {
-            content: '';
-            position: absolute;
-            top: -60px;
-            left: -40px;
-            width: 120px;
-            height: 120px;
-            background: #228B22;
-            border-radius: 50%;
-        }
-
-        .tree-1 { left: 10%; }
-        .tree-2 { right: 15%; }
-        .tree-3 { left: 30%; }
     </style>
 </head>
 <body>
     <div id="gameContainer">
-        <!-- Decorative elements -->
-        <div class="cloud">☁️</div>
-        <div class="cloud">☁️</div>
-        <div class="cloud">☁️</div>
+        <!-- Canvas must come first -->
+        <canvas id="gameCanvas" width="800" height="600"></canvas>
         
-        <div class="grass"></div>
-        <div class="tree tree-1"></div>
-        <div class="tree tree-2"></div>
-        <div class="tree tree-3"></div>
-
-        <!-- Game UI -->
-        <div class="game-ui">
-            <div class="hud">
-                <div class="hud-item">
-                    <span class="hud-label">Score</span>
-                    <span class="hud-value" id="scoreValue">0</span>
-                </div>
-                <div class="hud-item">
-                    <span class="hud-label">Best</span>
-                    <span class="hud-value" id="bestValue">0</span>
-                </div>
-                <div class="hud-item">
-                    <span class="hud-label">Time</span>
-                    <span class="hud-value" id="timeValue">60</span>
-                </div>
-                <div class="hud-item">
-                    <span class="hud-label">Lives</span>
-                    <span class="hud-value" id="livesValue">❤️❤️❤️</span>
-                </div>
-                <div class="hud-item streak">
-                    <span class="hud-label">Streak</span>
-                    <span class="hud-value" id="streakValue">0</span>
-                    <span class="streak-badge" id="streakBadge"></span>
-                </div>
+        <!-- HUD -->
+        <div class="hud">
+            <div class="hud-item">
+                <span class="hud-label">Score</span>
+                <span class="hud-value" id="scoreValue">0</span>
             </div>
-
-            <div class="game-tips">
-                Use ← → arrow keys or tap sides to move | Catch honey 🍯 | Avoid bees 🐝
+            <div class="hud-item">
+                <span class="hud-label">Time</span>
+                <span class="hud-value" id="timeValue">60</span>
             </div>
-
-            <div class="mobile-controls">
-                <button class="control-btn" id="btnLeft">←</button>
-                <button class="control-btn" id="btnPause">⏸</button>
-                <button class="control-btn" id="btnRight">→</button>
+            <div class="hud-item">
+                <span class="hud-label">Lives</span>
+                <span class="hud-value" id="livesValue">3</span>
             </div>
         </div>
 
-        <!-- Canvas -->
-        <canvas id="gameCanvas" width="800" height="600"></canvas>
-
         <!-- Start Overlay -->
-        <div class="overlay active" id="startOverlay">
+        <div class="overlay" id="startOverlay">
             <div class="overlay-card">
                 <h2 class="overlay-title">🍯 Honey Hunt 🐝</h2>
-                <p class="overlay-sub">Help Pooh catch honey jars in the Hundred Acre Wood!<br>Use arrow keys or tap buttons to move.</p>
-                <div class="overlay-stats">
-                    <div>
-                        <div class="overlay-stat-label">Best Score</div>
-                        <div class="overlay-stat-value" id="overlayBest">0</div>
-                    </div>
-                    <div>
-                        <div class="overlay-stat-label">Games Played</div>
-                        <div class="overlay-stat-value" id="overlayGames">0</div>
-                    </div>
-                </div>
-                <button class="btn primary" id="startButton" style="margin-top: 20px;">
-                    <span style="font-size: 24px;">🎮</span> Start Game
-                </button>
+                <p class="overlay-sub">Help Pooh catch honey jars!<br>Use arrow keys ← → to move</p>
+                <button class="btn" id="startButton">Start Game</button>
             </div>
         </div>
 
         <!-- Game Over Overlay -->
-        <div class="overlay" id="gameOverOverlay">
+        <div class="overlay" id="gameOverOverlay" style="display: none;">
             <div class="overlay-card">
                 <h2 class="overlay-title">Game Over!</h2>
-                <p class="overlay-sub">The bees got the best of you this time!</p>
-                <div class="overlay-stats">
-                    <div>
-                        <div class="overlay-stat-label">Your Score</div>
-                        <div class="overlay-stat-value" id="finalScore">0</div>
-                    </div>
-                    <div>
-                        <div class="overlay-stat-label">Best Score</div>
-                        <div class="overlay-stat-value" id="finalBest">0</div>
-                    </div>
-                </div>
-                <button class="btn primary" id="restartButton" style="margin-top: 20px;">
-                    <span style="font-size: 24px;">🔄</span> Play Again
-                </button>
-                <button class="btn secondary" id="shareButton" style="margin-top: 10px;">
-                    <span style="font-size: 20px;">📤</span> Share Score
-                </button>
-            </div>
-        </div>
-
-        <!-- Pause Overlay -->
-        <div class="overlay" id="pauseOverlay">
-            <div class="overlay-card">
-                <h2 class="overlay-title">Game Paused</h2>
-                <p class="overlay-sub">Take a break, the honey will wait!</p>
-                <button class="btn primary" id="resumeButton" style="margin-top: 20px;">
-                    <span style="font-size: 24px;">▶️</span> Resume Game
-                </button>
+                <p class="overlay-sub">Score: <span id="finalScore">0</span></p>
+                <button class="btn" id="restartButton">Play Again</button>
             </div>
         </div>
     </div>
 
     <script>
-        // GAME SCRIPT WITH PROPER DIMENSIONS
-        class HoneyHuntGame {
-            constructor() {
-                this.canvas = document.getElementById('gameCanvas');
-                this.ctx = this.canvas.getContext('2d');
-                
-                // Fixed game dimensions
-                this.canvas.width = 800;
-                this.canvas.height = 600;
-                
-                // Game state
-                this.gameRunning = false;
-                this.isPaused = false;
-                this.score = 0;
-                this.highScore = localStorage.getItem('honeyHuntHighScore') || 0;
-                this.gamesPlayed = localStorage.getItem('honeyHuntGames') || 0;
-                this.lives = 3;
-                this.timeLeft = 60;
-                this.streak = 0;
-                this.gameTime = 0;
-                
-                // Game objects
-                this.bear = { 
-                    x: 400, 
-                    y: 500, 
-                    width: 60, 
-                    height: 80, 
-                    speed: 8 
-                };
-                this.honeyJars = [];
-                this.bees = [];
-                this.powerUps = [];
-                
-                // Game settings
-                this.settings = {
-                    sound: true,
-                    music: true,
-                    difficulty: 'medium'
-                };
-                
-                // Controls
-                this.keys = {};
-                this.touchControls = { left: false, right: false };
-                
-                // Initialize
-                this.init();
-            }
+        // SIMPLE WORKING GAME
+        document.addEventListener('DOMContentLoaded', function() {
+            console.log('Game loading...');
             
-            init() {
-                // Set up controls
-                this.setupControls();
-                
-                // Load high score
-                this.updateUI();
-                
-                // Start game loop
-                this.gameLoop();
-                
-                console.log('Game initialized at 800x600 resolution');
-            }
+            const canvas = document.getElementById('gameCanvas');
+            const ctx = canvas.getContext('2d');
             
-            setupControls() {
-                // Keyboard controls
-                document.addEventListener('keydown', (e) => {
-                    const key = e.key.toLowerCase();
-                    if (key === 'arrowleft' || key === 'a') this.keys.left = true;
-                    if (key === 'arrowright' || key === 'd') this.keys.right = true;
-                    if (key === 'escape') this.togglePause();
-                    if (key === ' ') this.keys.space = true;
-                });
-                
-                document.addEventListener('keyup', (e) => {
-                    const key = e.key.toLowerCase();
-                    if (key === 'arrowleft' || key === 'a') this.keys.left = false;
-                    if (key === 'arrowright' || key === 'd') this.keys.right = false;
-                    if (key === ' ') this.keys.space = false;
-                });
-                
-                // Mobile controls
-                const leftBtn = document.getElementById('btnLeft');
-                const rightBtn = document.getElementById('btnRight');
-                const pauseBtn = document.getElementById('btnPause');
-                
-                if (leftBtn) {
-                    leftBtn.addEventListener('touchstart', (e) => { e.preventDefault(); this.touchControls.left = true; });
-                    leftBtn.addEventListener('touchend', (e) => { e.preventDefault(); this.touchControls.left = false; });
-                    leftBtn.addEventListener('mousedown', () => this.touchControls.left = true);
-                    leftBtn.addEventListener('mouseup', () => this.touchControls.left = false);
-                }
-                
-                if (rightBtn) {
-                    rightBtn.addEventListener('touchstart', (e) => { e.preventDefault(); this.touchControls.right = true; });
-                    rightBtn.addEventListener('touchend', (e) => { e.preventDefault(); this.touchControls.right = false; });
-                    rightBtn.addEventListener('mousedown', () => this.touchControls.right = true);
-                    rightBtn.addEventListener('mouseup', () => this.touchControls.right = false);
-                }
-                
-                if (pauseBtn) {
-                    pauseBtn.addEventListener('click', () => this.togglePause());
-                }
-                
-                // Touch screen controls (direct canvas touch)
-                this.canvas.addEventListener('touchstart', (e) => {
-                    e.preventDefault();
-                    const touch = e.touches[0];
-                    const rect = this.canvas.getBoundingClientRect();
-                    const x = touch.clientX - rect.left;
-                    
-                    if (x < this.canvas.width / 2) {
-                        this.touchControls.left = true;
-                        this.touchControls.right = false;
-                    } else {
-                        this.touchControls.left = false;
-                        this.touchControls.right = true;
-                    }
-                });
-                
-                this.canvas.addEventListener('touchend', (e) => {
-                    e.preventDefault();
-                    this.touchControls.left = false;
-                    this.touchControls.right = false;
-                });
-                
-                // UI buttons
-                document.getElementById('startButton').addEventListener('click', () => this.startGame());
-                document.getElementById('restartButton').addEventListener('click', () => {
-                    document.getElementById('gameOverOverlay').classList.remove('active');
-                    this.startGame();
-                });
-                document.getElementById('resumeButton').addEventListener('click', () => this.togglePause());
-                document.getElementById('shareButton').addEventListener('click', () => this.shareScore());
-            }
+            // Ensure canvas has proper size
+            canvas.width = 800;
+            canvas.height = 600;
             
-            startGame() {
-                this.gameRunning = true;
-                this.isPaused = false;
-                this.score = 0;
-                this.lives = 3;
-                this.timeLeft = 60;
-                this.streak = 0;
-                this.gameTime = 0;
-                this.honeyJars = [];
-                this.bees = [];
-                this.powerUps = [];
-                
-                // Update games played
-                this.gamesPlayed++;
-                localStorage.setItem('honeyHuntGames', this.gamesPlayed);
+            // Game state
+            let score = 0;
+            let timeLeft = 60;
+            let lives = 3;
+            let gameRunning = false;
+            let gameTime = 0;
+            
+            // Bear
+            const bear = {
+                x: 400,
+                y: 500,
+                width: 60,
+                height: 80,
+                speed: 8
+            };
+            
+            // Honey jars
+            const honeyJars = [];
+            
+            // Bees
+            const bees = [];
+            
+            // Keys
+            const keys = {};
+            
+            // Show start screen
+            document.getElementById('startOverlay').style.display = 'flex';
+            
+            // Event Listeners
+            document.addEventListener('keydown', function(e) {
+                keys[e.key] = true;
+            });
+            
+            document.addEventListener('keyup', function(e) {
+                keys[e.key] = false;
+            });
+            
+            document.getElementById('startButton').addEventListener('click', startGame);
+            document.getElementById('restartButton').addEventListener('click', startGame);
+            
+            function startGame() {
+                console.log('Starting game...');
+                gameRunning = true;
+                score = 0;
+                timeLeft = 60;
+                lives = 3;
+                gameTime = 0;
+                honeyJars.length = 0;
+                bees.length = 0;
                 
                 // Hide overlays
-                document.getElementById('startOverlay').classList.remove('active');
-                document.getElementById('pauseOverlay').classList.remove('active');
-                document.getElementById('gameOverOverlay').classList.remove('active');
+                document.getElementById('startOverlay').style.display = 'none';
+                document.getElementById('gameOverOverlay').style.display = 'none';
                 
-                this.updateUI();
+                // Start game loop
+                gameLoop();
             }
             
-            togglePause() {
-                if (!this.gameRunning) return;
-                
-                this.isPaused = !this.isPaused;
-                document.getElementById('pauseOverlay').classList.toggle('active', this.isPaused);
+            function gameOver() {
+                gameRunning = false;
+                document.getElementById('finalScore').textContent = score;
+                document.getElementById('gameOverOverlay').style.display = 'flex';
             }
             
-            gameOver() {
-                this.gameRunning = false;
-                
-                // Update high score
-                if (this.score > this.highScore) {
-                    this.highScore = this.score;
-                    localStorage.setItem('honeyHuntHighScore', this.highScore);
-                }
-                
-                // Show game over overlay
-                document.getElementById('finalScore').textContent = this.score;
-                document.getElementById('finalBest').textContent = this.highScore;
-                document.getElementById('gameOverOverlay').classList.add('active');
-                
-                this.updateUI();
-            }
-            
-            updateUI() {
-                document.getElementById('scoreValue').textContent = this.score;
-                document.getElementById('bestValue').textContent = this.highScore;
-                document.getElementById('timeValue').textContent = this.timeLeft;
-                document.getElementById('livesValue').textContent = '❤️'.repeat(this.lives);
-                document.getElementById('streakValue').textContent = this.streak;
-                document.getElementById('overlayBest').textContent = this.highScore;
-                document.getElementById('overlayGames').textContent = this.gamesPlayed;
-                
-                // Update streak badge
-                const streakBadge = document.getElementById('streakBadge');
-                if (this.streak >= 10) {
-                    streakBadge.textContent = 'HOT!';
-                    streakBadge.style.display = 'inline-block';
-                } else if (this.streak >= 5) {
-                    streakBadge.textContent = 'COMBO!';
-                    streakBadge.style.display = 'inline-block';
-                } else {
-                    streakBadge.style.display = 'none';
-                }
-            }
-            
-            update() {
-                if (!this.gameRunning || this.isPaused) return;
+            function update() {
+                if (!gameRunning) return;
                 
                 // Update time
-                this.gameTime += 1/60;
-                this.timeLeft = Math.max(0, 60 - Math.floor(this.gameTime));
+                gameTime += 1/60;
+                timeLeft = Math.max(0, 60 - Math.floor(gameTime));
                 
                 // Move bear
-                if (this.keys.left || this.touchControls.left) {
-                    this.bear.x -= this.bear.speed;
+                if (keys['ArrowLeft'] || keys['a']) {
+                    bear.x -= bear.speed;
                 }
-                if (this.keys.right || this.touchControls.right) {
-                    this.bear.x += this.bear.speed;
+                if (keys['ArrowRight'] || keys['d']) {
+                    bear.x += bear.speed;
                 }
                 
                 // Keep bear in bounds
-                this.bear.x = Math.max(
-                    this.bear.width/2, 
-                    Math.min(this.canvas.width - this.bear.width/2, this.bear.x)
-                );
+                bear.x = Math.max(bear.width/2, Math.min(canvas.width - bear.width/2, bear.x));
                 
                 // Spawn honey jars
-                if (Math.random() < 0.04) {
-                    this.honeyJars.push({
-                        x: Math.random() * (this.canvas.width - 50) + 25,
-                        y: -50,
+                if (Math.random() < 0.03) {
+                    honeyJars.push({
+                        x: Math.random() * (canvas.width - 40) + 20,
+                        y: -40,
                         width: 40,
                         height: 50,
-                        speed: 3 + Math.random() * 2,
-                        type: Math.random() < 0.15 ? 'golden' : 'normal'
+                        speed: 3 + Math.random() * 2
                     });
                 }
                 
                 // Spawn bees
-                if (Math.random() < 0.015) {
-                    this.bees.push({
-                        x: Math.random() * (this.canvas.width - 40) + 20,
-                        y: -40,
-                        width: 35,
-                        height: 35,
-                        speed: 4 + Math.random() * 2,
-                        direction: Math.random() * 0.3 - 0.15
+                if (Math.random() < 0.01) {
+                    bees.push({
+                        x: Math.random() * (canvas.width - 30) + 15,
+                        y: -30,
+                        width: 30,
+                        height: 30,
+                        speed: 4 + Math.random() * 2
                     });
                 }
                 
                 // Update objects
-                this.updateObjects();
-                
-                // Check collisions
-                this.checkCollisions();
-                
-                // Check game over conditions
-                if (this.timeLeft <= 0 || this.lives <= 0) {
-                    this.gameOver();
-                }
-                
-                this.updateUI();
-            }
-            
-            updateObjects() {
-                // Update honey jars
-                for (let i = this.honeyJars.length - 1; i >= 0; i--) {
-                    const jar = this.honeyJars[i];
+                for (let i = honeyJars.length - 1; i >= 0; i--) {
+                    const jar = honeyJars[i];
                     jar.y += jar.speed;
                     
-                    if (jar.y > this.canvas.height) {
-                        this.honeyJars.splice(i, 1);
-                        this.streak = 0;
+                    // Check collision with bear
+                    if (jar.x < bear.x + bear.width/2 &&
+                        jar.x + jar.width > bear.x - bear.width/2 &&
+                        jar.y < bear.y + bear.height/2 &&
+                        jar.y + jar.height > bear.y - bear.height/2) {
+                        score += 10;
+                        honeyJars.splice(i, 1);
+                    } else if (jar.y > canvas.height) {
+                        honeyJars.splice(i, 1);
                     }
                 }
                 
-                // Update bees
-                for (let i = this.bees.length - 1; i >= 0; i--) {
-                    const bee = this.bees[i];
+                for (let i = bees.length - 1; i >= 0; i--) {
+                    const bee = bees[i];
                     bee.y += bee.speed;
-                    bee.x += bee.direction;
                     
-                    // Keep bees in bounds
-                    if (bee.x < 20 || bee.x > this.canvas.width - 20) {
-                        bee.direction *= -1;
-                    }
-                    
-                    if (bee.y > this.canvas.height) {
-                        this.bees.splice(i, 1);
-                    }
-                }
-            }
-            
-            checkCollisions() {
-                // Check honey jar collisions
-                for (let i = this.honeyJars.length - 1; i >= 0; i--) {
-                    const jar = this.honeyJars[i];
-                    
-                    if (this.checkCollision(this.bear, jar)) {
-                        // Collect honey
-                        const points = jar.type === 'golden' ? 50 : 10;
-                        this.score += points;
-                        this.streak++;
+                    // Check collision with bear
+                    if (bee.x < bear.x + bear.width/2 &&
+                        bee.x + bee.width > bear.x - bear.width/2 &&
+                        bee.y < bear.y + bear.height/2 &&
+                        bee.y + bee.height > bear.y - bear.height/2) {
+                        lives--;
+                        bees.splice(i, 1);
                         
-                        // Bonus for streaks
-                        if (this.streak % 5 === 0) {
-                            this.score += this.streak * 5;
-                            this.showCombo(this.streak);
+                        if (lives <= 0) {
+                            gameOver();
                         }
-                        
-                        // Play sound
-                        this.playSound('honey');
-                        
-                        this.honeyJars.splice(i, 1);
+                    } else if (bee.y > canvas.height) {
+                        bees.splice(i, 1);
                     }
                 }
                 
-                // Check bee collisions
-                for (let i = this.bees.length - 1; i >= 0; i--) {
-                    const bee = this.bees[i];
-                    
-                    if (this.checkCollision(this.bear, bee)) {
-                        this.lives--;
-                        this.streak = 0;
-                        this.bees.splice(i, 1);
-                        
-                        // Play sound
-                        this.playSound('bee');
-                        
-                        if (this.lives <= 0) {
-                            this.gameOver();
-                        }
-                    }
-                }
-            }
-            
-            checkCollision(obj1, obj2) {
-                const dx = obj1.x - obj2.x;
-                const dy = obj1.y - obj2.y;
-                const distance = Math.sqrt(dx * dx + dy * dy);
-                const minDistance = (obj1.width + obj2.width) / 2;
-                
-                return distance < minDistance;
-            }
-            
-            showCombo(streak) {
-                const comboText = document.createElement('div');
-                comboText.className = 'combo-indicator';
-                comboText.textContent = `${streak}x COMBO!`;
-                comboText.style.position = 'absolute';
-                comboText.style.top = '50%';
-                comboText.style.left = '50%';
-                comboText.style.transform = 'translate(-50%, -50%)';
-                
-                document.getElementById('gameContainer').appendChild(comboText);
-                
-                setTimeout(() => {
-                    comboText.remove();
-                }, 1500);
-            }
-            
-            playSound(type) {
-                if (!this.settings.sound) return;
-                
-                const audio = new Audio();
-                if (type === 'honey') {
-                    audio.src = 'https://assets.mixkit.co/sfx/preview/mixkit-winning-chimes-2015.mp3';
-                } else if (type === 'bee') {
-                    audio.src = 'https://assets.mixkit.co/sfx/preview/mixkit-retro-game-emergency-alarm-1000.mp3';
+                // Check game over
+                if (timeLeft <= 0) {
+                    gameOver();
                 }
                 
-                audio.volume = 0.3;
-                audio.play().catch(e => console.log("Sound play failed:", e));
+                // Update UI
+                document.getElementById('scoreValue').textContent = score;
+                document.getElementById('timeValue').textContent = timeLeft;
+                document.getElementById('livesValue').textContent = lives;
             }
             
-            shareScore() {
-                const text = `I scored ${this.score} points in Baby Gunnar's Honey Hunt game! 🍯🐝`;
-                if (navigator.share) {
-                    navigator.share({
-                        title: 'Honey Hunt Score',
-                        text: text,
-                        url: window.location.href
-                    });
-                } else {
-                    navigator.clipboard.writeText(text);
-                    alert('Score copied to clipboard!');
-                }
-            }
-            
-            draw() {
-                const ctx = this.ctx;
-                const width = this.canvas.width;
-                const height = this.canvas.height;
-                
+            function draw() {
                 // Clear canvas
-                ctx.clearRect(0, 0, width, height);
+                ctx.clearRect(0, 0, canvas.width, canvas.height);
                 
                 // Draw sky
-                const skyGradient = ctx.createLinearGradient(0, 0, 0, height * 0.6);
-                skyGradient.addColorStop(0, '#87CEEB');
-                skyGradient.addColorStop(0.7, '#E0F7FF');
-                skyGradient.addColorStop(1, '#B0E0E6');
-                ctx.fillStyle = skyGradient;
-                ctx.fillRect(0, 0, width, height * 0.6);
+                ctx.fillStyle = '#87CEEB';
+                ctx.fillRect(0, 0, canvas.width, canvas.height * 0.6);
                 
                 // Draw ground
-                const groundGradient = ctx.createLinearGradient(0, height * 0.6, 0, height);
-                groundGradient.addColorStop(0, '#8B4513');
-                groundGradient.addColorStop(1, '#A0522D');
-                ctx.fillStyle = groundGradient;
-                ctx.fillRect(0, height * 0.6, width, height * 0.4);
+                ctx.fillStyle = '#8B4513';
+                ctx.fillRect(0, canvas.height * 0.6, canvas.width, canvas.height * 0.4);
                 
-                // Draw grass
-                ctx.fillStyle = '#2E8B57';
-                for (let i = 0; i < width; i += 25) {
-                    const grassHeight = 15 + Math.random() * 25;
-                    ctx.fillRect(i, height * 0.6, 10, grassHeight);
-                }
+                // Draw bear (simple rectangle for now)
+                ctx.fillStyle = '#F4A944';
+                ctx.beginPath();
+                ctx.ellipse(bear.x, bear.y, bear.width/2, bear.height/2, 0, 0, Math.PI * 2);
+                ctx.fill();
                 
-                // Draw trees
-                this.drawTree(ctx, width * 0.1, height * 0.6);
-                this.drawTree(ctx, width * 0.3, height * 0.6);
-                this.drawTree(ctx, width * 0.7, height * 0.6);
-                this.drawTree(ctx, width * 0.9, height * 0.6);
-                
-                // Draw bear (Pooh)
-                this.drawBear(ctx, this.bear.x, this.bear.y);
+                // Draw face
+                ctx.fillStyle = '#8B4513';
+                ctx.beginPath();
+                ctx.arc(bear.x - 15, bear.y - 10, 5, 0, Math.PI * 2); // Left eye
+                ctx.arc(bear.x + 15, bear.y - 10, 5, 0, Math.PI * 2); // Right eye
+                ctx.ellipse(bear.x, bear.y + 5, 10, 8, 0, 0, Math.PI * 2); // Nose
+                ctx.fill();
                 
                 // Draw honey jars
-                this.honeyJars.forEach(jar => {
-                    this.drawHoneyJar(ctx, jar.x, jar.y, jar.type);
+                honeyJars.forEach(jar => {
+                    ctx.fillStyle = '#FFA500';
+                    ctx.fillRect(jar.x - jar.width/2, jar.y - jar.height/2, jar.width, jar.height);
+                    ctx.fillStyle = '#8B4513';
+                    ctx.fillRect(jar.x - jar.width/2, jar.y - jar.height/2, jar.width, 8);
                 });
                 
                 // Draw bees
-                this.bees.forEach(bee => {
-                    this.drawBee(ctx, bee.x, bee.y);
+                bees.forEach(bee => {
+                    ctx.fillStyle = '#FFD700';
+                    ctx.beginPath();
+                    ctx.ellipse(bee.x, bee.y, bee.width/2, bee.height/2, 0, 0, Math.PI * 2);
+                    ctx.fill();
+                    
+                    // Stripes
+                    ctx.fillStyle = '#000000';
+                    ctx.fillRect(bee.x - bee.width/2, bee.y - 3, bee.width, 6);
+                    
+                    // Wings
+                    ctx.fillStyle = 'rgba(255, 255, 255, 0.8)';
+                    ctx.beginPath();
+                    ctx.ellipse(bee.x - 10, bee.y - 12, 8, 10, Math.PI/4, 0, Math.PI * 2);
+                    ctx.ellipse(bee.x + 10, bee.y - 12, 8, 10, -Math.PI/4, 0, Math.PI * 2);
+                    ctx.fill();
                 });
+                
+                // Draw score on canvas too
+                ctx.fillStyle = 'white';
+                ctx.font = '20px Arial';
+                ctx.fillText(`Score: ${score}`, 20, 30);
+                ctx.fillText(`Time: ${timeLeft}`, 20, 60);
+                ctx.fillText(`Lives: ${lives}`, 20, 90);
             }
             
-            drawBear(ctx, x, y) {
-                ctx.save();
-                ctx.translate(x, y);
+            function gameLoop() {
+                if (!gameRunning) return;
                 
-                // Bear body
-                ctx.fillStyle = '#F4A944';
-                ctx.beginPath();
-                ctx.ellipse(0, 0, 30, 40, 0, 0, Math.PI * 2);
-                ctx.fill();
+                update();
+                draw();
                 
-                // Bear outline
-                ctx.strokeStyle = '#D18A2C';
-                ctx.lineWidth = 3;
-                ctx.stroke();
-                
-                // Bear face
-                ctx.fillStyle = '#8B4513';
-                ctx.beginPath();
-                ctx.arc(-12, -12, 5, 0, Math.PI * 2); // Left eye
-                ctx.arc(12, -12, 5, 0, Math.PI * 2);  // Right eye
-                ctx.fill();
-                
-                // Bear nose
-                ctx.fillStyle = '#D18A2C';
-                ctx.beginPath();
-                ctx.ellipse(0, 5, 10, 8, 0, 0, Math.PI * 2);
-                ctx.fill();
-                
-                // Smile
-                ctx.strokeStyle = '#8B4513';
-                ctx.lineWidth = 2;
-                ctx.beginPath();
-                ctx.arc(0, 15, 8, 0, Math.PI);
-                ctx.stroke();
-                
-                // Ears
-                ctx.fillStyle = '#F4A944';
-                ctx.beginPath();
-                ctx.arc(-20, -30, 10, 0, Math.PI * 2);
-                ctx.arc(20, -30, 10, 0, Math.PI * 2);
-                ctx.fill();
-                
-                ctx.restore();
+                requestAnimationFrame(gameLoop);
             }
             
-            drawHoneyJar(ctx, x, y, type) {
-                ctx.save();
-                ctx.translate(x, y);
-                
-                // Jar body
-                const color = type === 'golden' ? '#FFD700' : '#FFA500';
-                ctx.fillStyle = color;
-                ctx.fillRect(-20, -25, 40, 50);
-                
-                // Jar outline
-                ctx.strokeStyle = '#8B4513';
-                ctx.lineWidth = 3;
-                ctx.strokeRect(-20, -25, 40, 50);
-                
-                // Jar lid
-                ctx.fillStyle = '#8B4513';
-                ctx.fillRect(-20, -25, 40, 10);
-                
-                // Honey inside
-                ctx.fillStyle = '#FFC107';
-                ctx.fillRect(-15, -15, 30, 40);
-                
-                // Honey drips
-                ctx.fillStyle = '#FF9800';
-                ctx.beginPath();
-                ctx.moveTo(-8, 25);
-                ctx.lineTo(8, 25);
-                ctx.lineTo(0, 35);
-                ctx.closePath();
-                ctx.fill();
-                
-                // Jar label
-                ctx.fillStyle = '#8B4513';
-                ctx.font = 'bold 12px Arial';
-                ctx.textAlign = 'center';
-                ctx.fillText('HONEY', 0, 10);
-                
-                ctx.restore();
-            }
+            // Initial test draw
+            draw();
             
-            drawBee(ctx, x, y) {
-                ctx.save();
-                ctx.translate(x, y);
-                
-                // Bee body
-                ctx.fillStyle = '#FFD700';
-                ctx.beginPath();
-                ctx.ellipse(0, 0, 17, 12, 0, 0, Math.PI * 2);
-                ctx.fill();
-                
-                // Bee stripes
-                ctx.fillStyle = '#000000';
-                ctx.fillRect(-15, -4, 30, 8);
-                
-                // Bee wings
-                ctx.fillStyle = 'rgba(255, 255, 255, 0.8)';
-                ctx.beginPath();
-                ctx.ellipse(-10, -15, 8, 12, Math.PI/4, 0, Math.PI * 2);
-                ctx.ellipse(10, -15, 8, 12, -Math.PI/4, 0, Math.PI * 2);
-                ctx.fill();
-                
-                // Bee face
-                ctx.fillStyle = '#000000';
-                ctx.beginPath();
-                ctx.arc(0, -5, 3, 0, Math.PI * 2); // Left eye
-                ctx.arc(0, -5, 3, 0, Math.PI * 2); // Right eye
-                ctx.fill();
-                
-                ctx.restore();
-            }
-            
-            drawTree(ctx, x, y) {
-                ctx.save();
-                ctx.translate(x, y);
-                
-                // Tree trunk
-                ctx.fillStyle = '#8B4513';
-                ctx.fillRect(-10, 0, 20, 80);
-                
-                // Tree leaves
-                ctx.fillStyle = '#228B22';
-                ctx.beginPath();
-                ctx.arc(0, -40, 50, 0, Math.PI * 2);
-                ctx.fill();
-                
-                ctx.restore();
-            }
-            
-            gameLoop() {
-                this.update();
-                this.draw();
-                requestAnimationFrame(() => this.gameLoop());
-            }
-        }
-
-        // Initialize game when page loads
-        window.addEventListener('DOMContentLoaded', () => {
-            const game = new HoneyHuntGame();
-            
-            // Detect mobile and show controls
-            if ('ontouchstart' in window || navigator.maxTouchPoints > 0) {
-                document.querySelector('.mobile-controls').style.display = 'flex';
-                document.querySelector('.game-tips').textContent = 'Tap sides to move | Catch honey 🍯 | Avoid bees 🐝';
-            }
-            
-            // Handle window resize
-            window.addEventListener('resize', () => {
-                // Keep aspect ratio
-                const container = document.getElementById('gameContainer');
-                const aspectRatio = 800/600;
-                const width = Math.min(container.parentElement.clientWidth, 800);
-                const height = width / aspectRatio;
-                
-                container.style.width = width + 'px';
-                container.style.height = height + 'px';
-            });
-            
-            console.log('Honey Hunt Game loaded successfully at 800x600 resolution!');
+            console.log('Game initialized successfully');
         });
     </script>
 </body>
