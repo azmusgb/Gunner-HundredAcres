@@ -191,7 +191,7 @@
             eeyore: 'Images/Characters/eeyore.png',
             owl: 'Images/Characters/owl.png',
             roo: 'Images/Characters/roo.png',
-            honey: 'Images/Characters/honey.png'
+            honey: 'Images/honey.png'
         };
 
         Object.keys(paths).forEach((key) => {
