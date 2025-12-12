@@ -931,12 +931,12 @@
 
             @keyframes cardEnter3D {
                 0% {
-                    transform: translateY(50px) rotateX(-45deg) scale(0.8) translateZ(0);
+                    transform: translate3d(var(--parallax-x, 0px), var(--parallax-y, 0px), 0) translateY(50px) rotateX(-45deg) scale(0.8) translateZ(0);
                     opacity: 0;
                     filter: blur(10px);
                 }
                 100% {
-                    transform: translateY(0) rotateX(0deg) scale(1) translateZ(0);
+                    transform: translate3d(var(--parallax-x, 0px), var(--parallax-y, 0px), 0) translateY(0) rotateX(0deg) scale(1) translateZ(0);
                     opacity: 1;
                     filter: blur(0);
                 }
@@ -944,11 +944,11 @@
 
             @keyframes card-hover {
                 0% {
-                    transform: translateY(0) scale(1) translateZ(0);
+                    transform: translate3d(var(--parallax-x, 0px), var(--parallax-y, 0px), 0) translateY(0) scale(1) translateZ(0);
                     box-shadow: 0 5px 15px rgba(0,0,0,0.1);
                 }
                 100% {
-                    transform: translateY(-8px) scale(1.02) translateZ(0);
+                    transform: translate3d(var(--parallax-x, 0px), var(--parallax-y, 0px), 0) translateY(-8px) scale(1.02) translateZ(0);
                     box-shadow: 0 15px 30px var(--hover-shadow);
                 }
             }
@@ -1014,10 +1014,12 @@
                 contain: layout style paint;
             }
 
-            .character-card {
-                will-change: transform, box-shadow;
-                transform: translateZ(0);
-                backface-visibility: hidden;
+            .character-card { 
+                --parallax-x: 0px;
+                --parallax-y: 0px;
+                will-change: transform, box-shadow; 
+                transform: translate3d(var(--parallax-x), var(--parallax-y), 0) translateZ(0); 
+                backface-visibility: hidden; 
             }
 
             /* Reduced motion support */
@@ -1902,13 +1904,10 @@
                 if (!card.matches(':hover')) {
                     const yPos = -(scrolled * rate * (0.03 + index * 0.01)); // Much smaller movement
                     const xPos = Math.sin(scrolled * 0.005 + index) * 2; // Reduced from 5px
-                    
-                    // Use transform3d for hardware acceleration
-                    card.style.transform = `translate3d(${xPos}px, ${yPos}px, 0)`;
-                    
-                    // Store current transform for CSS animations to use
-                    card.dataset.parallaxX = xPos;
-                    card.dataset.parallaxY = yPos;
+
+                    // Use CSS variables so hover animations can layer with parallax
+                    card.style.setProperty('--parallax-x', `${xPos}px`);
+                    card.style.setProperty('--parallax-y', `${yPos}px`);
                 }
             });
             
