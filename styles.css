@@ -53,7 +53,75 @@ body.reduce-motion * {
     transition: none !important;
     scroll-behavior: auto !important;
 }
+/* ===== FIX FOR CHARACTER CARD HOVER ===== */
+.characters-grid-enhanced {
+    overflow: visible !important;
+    position: relative;
+    min-height: 600px;
+    padding: 2rem 0 !important;
+    z-index: 1;
+}
 
+.character-card-enhanced {
+    position: relative;
+    margin: 1rem 0;
+    isolation: isolate;
+    transform-style: preserve-3d;
+    transform-origin: center center;
+    transition: 
+        transform 0.3s cubic-bezier(0.68, -0.55, 0.27, 1.55),
+        box-shadow 0.3s ease,
+        z-index 0.3s ease !important;
+    z-index: 1;
+}
+
+/* Hover effect that combines with parallax */
+.character-card-enhanced:hover {
+    transform: 
+        translate3d(
+            var(--parallax-x, 0px),
+            calc(var(--parallax-y, 0px) - 12px), /* Combines parallax with hover lift */
+            20px /* Add Z-depth on hover */
+        ) 
+        scale(1.03) 
+        rotateX(5deg) 
+        rotateY(2deg) !important;
+    
+    box-shadow: 
+        0 20px 40px var(--hover-shadow, rgba(0,0,0,0.25)),
+        0 0 60px rgba(var(--glow-color, 255, 180, 71), 0.15) !important;
+    
+    z-index: 100 !important;
+    isolation: auto;
+}
+
+/* Ensure parent containers don't clip */
+.characters-section, 
+#characters, 
+[class*="character"] {
+    overflow: visible !important;
+}
+
+/* Fix for reduced motion */
+@media (prefers-reduced-motion: reduce) {
+    .character-card-enhanced,
+    .character-card-enhanced:hover {
+        transition: none !important;
+        transform: none !important;
+    }
+}
+
+/* Touch device optimization */
+@media (hover: none) and (pointer: coarse) {
+    .character-card-enhanced:hover {
+        transform: none !important;
+    }
+    
+    .character-card-enhanced:active {
+        transform: scale(0.98) !important;
+        transition: transform 0.1s ease !important;
+    }
+}
 /* Respect system reduced-motion preference */
 @media (prefers-reduced-motion: reduce) {
     html {
