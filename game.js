@@ -1,4416 +1,1253 @@
-// game.js - Honey Hunt Game (Fixed Settings)
+// game.js - Consolidated Game Module for Hundred Acre Celebration
+// Contains both games: Honey Hive Defense & Honey Pot Catch
 
-(function () {
-    "use strict";
+'use strict';
 
-    const STORAGE_KEYS = {
-        BEST: "honeyHunt_bestScore_v2",
-        GAMES: "honeyHunt_gamesPlayed_v2",
-        SETTINGS: "honeyHunt_settings_v2",
-        THEME: "honeyHunt_theme_v2"
-    };
+// ============================================================================
+// GAME CONSTANTS & SHARED UTILITIES
+// ============================================================================
 
-    const GAME_DURATION = 60;
-    const MAX_LIVES = 3;
-
-    const gameContainer = document.getElementById("gameContainer");
-    const canvas = document.getElementById("gameCanvas");
-    const ctx = canvas.getContext("2d");
-
-    const scoreValue = document.getElementById("scoreValue");
-    const bestValue = document.getElementById("bestValue");
-    const timeValue = document.getElementById("timeValue");
-    const streakValue = document.getElementById("streakValue");
-    const livesValue = document.getElementById("livesValue");
-    const streakBadge = document.getElementById("streakBadge");
-    const comboIndicator = document.getElementById("comboIndicator");
-    const powerupIndicator = document.getElementById("powerupIndicator");
-
-    const startOverlay = document.getElementById("gameStartOverlay");
-    const pauseOverlay = document.getElementById("pauseOverlay");
-    const gameOverOverlay = document.getElementById("gameOverOverlay");
-    const startButton = document.getElementById("gameStartButton");
-    const startButtonOverlay = document.getElementById("gameStartButtonOverlay");
-    const resumeButton = document.getElementById("resumeButton");
-    const restartButton = document.getElementById("gameRestartButton");
-    const overlayBest = document.getElementById("overlayBest");
-    const overlayGames = document.getElementById("overlayGames");
-    const finalScore = document.getElementById("finalScore");
-    const finalBest = document.getElementById("finalBest");
-
-    const helpToggle = document.getElementById("helpToggle");
-    const helpToggleSecondary = document.getElementById("helpToggleSecondary");
-    const helpPanel = document.getElementById("helpPanel");
-
-    const settingsToggle = document.getElementById("settingsToggle");
-    const settingsModal = document.getElementById("settingsModal");
-    const settingsPanel = document.getElementById("settingsPanel");
-    const settingsClose = document.getElementById("settingsClose");
-    const musicToggle = document.getElementById("musicToggle");
-    const sfxToggle = document.getElementById("sfxToggle");
-    const diffButtons = Array.from(document.querySelectorAll(".diff-btn"));
-    const resetProgress = document.getElementById("resetProgress");
-    const settingsBest = document.getElementById("settingsBest");
-
-    const themeToggle = document.getElementById("themeToggle");
-    const fullscreenToggle = document.getElementById("fullscreenToggle");
-
-    const liveRegion = document.getElementById("liveRegion");
-    const pauseButton = document.getElementById("togglePauseButton");
-    const leftButton = document.getElementById("controlLeft");
-    const rightButton = document.getElementById("controlRight");
-
-    // ==================== ENHANCED AUDIO SYSTEM ====================
-    let audioContext = null;
-    let audioBuffers = {};
-    let isAudioInitialized = false;
-    let musicSource = null;
-    let musicPlaying = false;
-    let backgroundMusic = null;
-    let musicGainNode = null;
-    let musicAudioElement = null;
-
-    const SOUNDS = {
-        // Jar catching sounds
-        CATCH_NORMAL: 'catch_normal',
-        CATCH_GOLD: 'catch_gold',
-        CATCH_SHIELD: 'catch_shield',
-        CATCH_POWERUP: 'catch_powerup',
-
-        // Bee sounds
-        BEE_HIT: 'bee_hit',
-        BEE_MISS: 'bee_miss',
-        BEE_SWOOP: 'bee_swoop',
-
-        // Power-up sounds
-        SHIELD_ACTIVATE: 'shield_activate',
-        SHIELD_BLOCK: 'shield_block',
-        POWERUP_ACTIVATE: 'powerup_activate',
-        POWERUP_EXPIRE: 'powerup_expire',
-        POWERUP_COLLECT: 'powerup_collect',
-
-        // Combo & streak sounds
-        COMBO_START: 'combo_start',
-        COMBO_CHAIN: 'combo_chain',
-        COMBO_BREAK: 'combo_break',
-        STREAK_5: 'streak_5',
-        STREAK_10: 'streak_10',
-
-        // Game state sounds
-        GAME_START: 'game_start',
-        GAME_OVER: 'game_over',
-        GAME_PAUSE: 'game_pause',
-        GAME_RESUME: 'game_resume',
-
-        // UI sounds
-        BUTTON_CLICK: 'button_click',
-        BUTTON_HOVER: 'button_hover',
-        MENU_OPEN: 'menu_open',
-        MENU_CLOSE: 'menu_close',
-
-        // Evolution & achievement sounds
-        EVOLUTION_UPGRADE: 'evolution_upgrade',
-        ACHIEVEMENT_UNLOCK: 'achievement_unlock',
-
-        // Daily challenge sounds
-        CHALLENGE_PROGRESS: 'challenge_progress',
-        CHALLENGE_COMPLETE: 'challenge_complete'
-    };
-
-    function initAudio() {
-        if (isAudioInitialized) return;
-
-        try {
-            // Try to create audio context
-            const AudioContextClass = window.AudioContext || window.webkitAudioContext;
-            if (!AudioContextClass) {
-                throw new Error("Web Audio API not supported");
-            }
-
-            audioContext = new AudioContextClass();
-
-            // Create audio gain nodes
-            musicGainNode = audioContext.createGain();
-            musicGainNode.connect(audioContext.destination);
-            musicGainNode.gain.value = settingsState.musicOn ? 0.6 : 0;
-
-            // Load background music (uses synthesized music)
-            loadBackgroundMusic();
-
-            // Generate sound effects
-            generateSoundEffects();
-
-            // Add click handler to unlock audio
-            const unlockAudio = () => {
-                if (audioContext && audioContext.state === 'suspended') {
-                    audioContext.resume();
-                }
-                document.removeEventListener('click', unlockAudio);
-                document.removeEventListener('touchstart', unlockAudio);
-            };
-
-            document.addEventListener('click', unlockAudio);
-            document.addEventListener('touchstart', unlockAudio);
-
-            isAudioInitialized = true;
-            console.log("Audio system initialized successfully");
-        } catch (error) {
-            console.warn("Audio initialization failed, using fallback:", error);
-            // Fallback: create dummy audio system
-            audioBuffers = {};
-            isAudioInitialized = true;
-        }
+const GameConstants = {
+    MOBILE_MAX_ENEMIES: 20,
+    DESKTOP_MAX_ENEMIES: 30,
+    MOBILE_FPS: 30,
+    DESKTOP_FPS: 60,
+    SPRITE_PATHS: {
+        pooh: 'Images/Characters/honey-bear.png',
+        piglet: 'Images/Characters/piglet.png',
+        tigger: 'Images/Characters/tigger.png',
+        eeyore: 'Images/Characters/eeyore.png',
+        owl: 'Images/Characters/owl.png',
+        roo: 'Images/Characters/roo.png',
+        honey: 'Images/Characters/honey.png'
     }
+};
 
-    function loadBackgroundMusic() {
-        // Use synthesized music as primary
-        console.log("Using synthesized background music");
-        createSynthesizedBackgroundMusic();
-
-        // Create fallback audio element
-        musicAudioElement = new Audio();
-        musicAudioElement.loop = true;
-        musicAudioElement.volume = settingsState.musicOn ? 0.6 : 0;
-    }
-
-    function createSynthesizedBackgroundMusic() {
-        // Fallback synthesized music
-        const createNote = (frequency, duration, startTime, type = 'sine', volume = 0.15) => {
-            if (!audioContext) return;
-
-            const oscillator = audioContext.createOscillator();
-            const gainNode = audioContext.createGain();
-
-            oscillator.connect(gainNode);
-            gainNode.connect(musicGainNode);
-
-            oscillator.frequency.value = frequency;
-            oscillator.type = type;
-
-            const fadeTime = 0.05;
-            gainNode.gain.setValueAtTime(0, startTime);
-            gainNode.gain.linearRampToValueAtTime(volume, startTime + fadeTime);
-            gainNode.gain.setValueAtTime(volume, startTime + duration - fadeTime);
-            gainNode.gain.linearRampToValueAtTime(0, startTime + duration);
-
-            oscillator.start(startTime);
-            oscillator.stop(startTime + duration);
-        };
-
-        const melody = [
-            { note: 'C4', duration: 0.5 },
-            { note: 'E4', duration: 0.5 },
-            { note: 'G4', duration: 0.5 },
-            { note: 'C5', duration: 0.75 },
-            { note: 'G4', duration: 0.25 },
-            { note: 'E4', duration: 0.5 },
-            { note: 'C4', duration: 0.5 },
-            { note: 'G3', duration: 1 }
-        ];
-
-        const noteToFrequency = {
-            'C3': 130.81, 'D3': 146.83, 'E3': 164.81, 'F3': 174.61, 'G3': 196.00, 'A3': 220.00, 'B3': 246.94,
-            'C4': 261.63, 'D4': 293.66, 'E4': 329.63, 'F4': 349.23, 'G4': 392.00, 'A4': 440.00, 'B4': 493.88,
-            'C5': 523.25, 'D5': 587.33, 'E5': 659.25, 'F5': 698.46, 'G5': 783.99, 'A5': 880.00, 'B5': 987.77
-        };
-
-        let musicSynthesisInterval = null;
-
-        const playMelody = () => {
-            if (!audioContext || !musicPlaying || !settingsState.musicOn) return;
-
-            let currentTime = audioContext.currentTime;
-
-            melody.forEach(({ note, duration }) => {
-                createNote(noteToFrequency[note], duration, currentTime, 'triangle', 0.12);
-
-                if (note === 'C4' || note === 'C5') {
-                    createNote(noteToFrequency[note] * 1.5, duration, currentTime, 'sine', 0.06);
-                }
-
-                currentTime += duration;
-            });
-
-            // Schedule next melody
-            return (currentTime - audioContext.currentTime) * 1000;
-        };
-
-        backgroundMusic = {
-            play: () => {
-                if (musicPlaying || !settingsState.musicOn) return;
-                musicPlaying = true;
-
-                if (!audioContext) return;
-
-                const interval = playMelody();
-                if (musicSynthesisInterval) {
-                    clearInterval(musicSynthesisInterval);
-                }
-                musicSynthesisInterval = setInterval(() => {
-                    if (musicPlaying && settingsState.musicOn) {
-                        playMelody();
-                    } else {
-                        clearInterval(musicSynthesisInterval);
-                        musicSynthesisInterval = null;
-                    }
-                }, interval);
-            },
-            stop: () => {
-                musicPlaying = false;
-                if (musicSynthesisInterval) {
-                    clearInterval(musicSynthesisInterval);
-                    musicSynthesisInterval = null;
-                }
-            },
-            setVolume: (volume) => {
-                const safeVolume = Math.max(0, Math.min(1, volume));
-                if (musicGainNode) {
-                    musicGainNode.gain.value = safeVolume;
-                }
-                if (musicAudioElement) {
-                    musicAudioElement.volume = safeVolume;
-                }
+// Performance optimization helpers
+const GameUtils = {
+    throttle(func, limit) {
+        let inThrottle;
+        return function(...args) {
+            if (!inThrottle) {
+                func.apply(this, args);
+                inThrottle = true;
+                setTimeout(() => inThrottle = false, limit);
             }
         };
-    }
+    },
 
-    function playSynthesizedMusic() {
-        // Fallback if both Web Audio API and HTML5 Audio fail
-        console.log("Playing synthesized fallback music");
-
-        if (!audioContext) return;
-
-        const tempo = 120;
-        const quarterNote = 60 / tempo;
-        const melody = [
-            { note: 'C4', duration: quarterNote },
-            { note: 'E4', duration: quarterNote },
-            { note: 'G4', duration: quarterNote },
-            { note: 'C5', duration: quarterNote },
-            { note: 'E5', duration: quarterNote },
-            { note: 'G4', duration: quarterNote },
-            { note: 'C5', duration: quarterNote },
-            { note: 'B4', duration: quarterNote * 2 }
-        ];
-
-        const noteToFrequency = {
-            'C4': 261.63, 'E4': 329.63, 'G4': 392.00,
-            'C5': 523.25, 'E5': 659.25, 'B4': 493.88
+    debounce(func, wait) {
+        let timeout;
+        return function(...args) {
+            clearTimeout(timeout);
+            timeout = setTimeout(() => func.apply(this, args), wait);
         };
+    },
 
-        let currentTime = audioContext.currentTime;
+    isMobile() {
+        return /Android|webOS|iPhone|iPad|iPod|BlackBerry|IEMobile|Opera Mini/i.test(navigator.userAgent);
+    },
 
-        melody.forEach(({ note, duration }, index) => {
-            const oscillator = audioContext.createOscillator();
-            const gainNode = audioContext.createGain();
+    createObjectPool(getFn, resetFn) {
+        const pool = [];
+        let active = 0;
 
-            oscillator.connect(gainNode);
-            gainNode.connect(audioContext.destination);
-
-            oscillator.frequency.value = noteToFrequency[note];
-            oscillator.type = 'triangle';
-
-            gainNode.gain.setValueAtTime(0, currentTime);
-            gainNode.gain.linearRampToValueAtTime(0.03, currentTime + 0.05);
-            gainNode.gain.exponentialRampToValueAtTime(0.001, currentTime + duration - 0.05);
-
-            oscillator.start(currentTime);
-            oscillator.stop(currentTime + duration);
-            currentTime += duration;
-        });
-
-        if (musicSource) {
-            clearTimeout(musicSource);
-        }
-        musicSource = setTimeout(() => {
-            if (musicPlaying && settingsState.musicOn) playSynthesizedMusic();
-        }, currentTime - audioContext.currentTime + 500);
-    }
-
-    function generateSoundEffects() {
-        if (!audioContext) return;
-
-        // Normal jar catch - happy pluck sound
-        audioBuffers[SOUNDS.CATCH_NORMAL] = createPluckSound(523.25, 0.2, 0.15, 'sine');
-
-        // Gold jar catch - richer, more rewarding sound
-        audioBuffers[SOUNDS.CATCH_GOLD] = createRichPluckSound(659.25, 0.3, 0.2);
-
-        // Shield jar catch - shimmering, magical sound
-        audioBuffers[SOUNDS.CATCH_SHIELD] = createShimmerSound(392.00, 0.4, 0.18);
-
-        // Power-up jar catch - exciting, ascending sound
-        audioBuffers[SOUNDS.CATCH_POWERUP] = createAscendingSound(261.63, 1046.50, 0.5, 0.2);
-
-        // Power-up collect - distinct from activation
-        audioBuffers[SOUNDS.POWERUP_COLLECT] = createSparkleSound(0.3, 0.15);
-
-        // Bee hit - sharp, painful sound
-        audioBuffers[SOUNDS.BEE_HIT] = createBeeHitSound();
-
-        // Bee miss (near miss) - warning whoosh
-        audioBuffers[SOUNDS.BEE_MISS] = createWhooshSound(0.2, 0.1);
-
-        // Bee swoop - movement sound
-        audioBuffers[SOUNDS.BEE_SWOOP] = createSwoopSound(0.3, 0.08);
-
-        // Shield activate - protective bubble sound
-        audioBuffers[SOUNDS.SHIELD_ACTIVATE] = createBubbleSound(0.4, 0.15);
-
-        // Shield block - satisfying deflection sound
-        audioBuffers[SOUNDS.SHIELD_BLOCK] = createDeflectSound(0.3, 0.12);
-
-        // Power-up activate - exciting activation
-        audioBuffers[SOUNDS.POWERUP_ACTIVATE] = createPowerupActivateSound();
-
-        // Power-up expire - fading out sound
-        audioBuffers[SOUNDS.POWERUP_EXPIRE] = createFadeOutSound(0.4, 0.1);
-
-        // Combo start - exciting beginning
-        audioBuffers[SOUNDS.COMBO_START] = createComboStartSound();
-
-        // Combo chain - continuation sound
-        audioBuffers[SOUNDS.COMBO_CHAIN] = createChainSound(0.2, 0.08);
-
-        // Combo break - disappointing sound
-        audioBuffers[SOUNDS.COMBO_BREAK] = createBreakSound(0.3, 0.12);
-
-        // Streak milestones
-        audioBuffers[SOUNDS.STREAK_5] = createMilestoneSound(5, 0.3, 0.15);
-        audioBuffers[SOUNDS.STREAK_10] = createMilestoneSound(10, 0.4, 0.18);
-
-        // Game state sounds
-        audioBuffers[SOUNDS.GAME_START] = createGameStartSound();
-        audioBuffers[SOUNDS.GAME_OVER] = createGameOverSound();
-        audioBuffers[SOUNDS.GAME_PAUSE] = createPauseSound();
-        audioBuffers[SOUNDS.GAME_RESUME] = createResumeSound();
-
-        // UI sounds
-        audioBuffers[SOUNDS.BUTTON_CLICK] = createClickSound();
-        audioBuffers[SOUNDS.BUTTON_HOVER] = createHoverSound();
-        audioBuffers[SOUNDS.MENU_OPEN] = createMenuOpenSound();
-        audioBuffers[SOUNDS.MENU_CLOSE] = createMenuCloseSound();
-
-        // Evolution & achievement sounds
-        audioBuffers[SOUNDS.EVOLUTION_UPGRADE] = createEvolutionSound();
-        audioBuffers[SOUNDS.ACHIEVEMENT_UNLOCK] = createAchievementSound();
-
-        // Daily challenge sounds
-        audioBuffers[SOUNDS.CHALLENGE_PROGRESS] = createProgressSound();
-        audioBuffers[SOUNDS.CHALLENGE_COMPLETE] = createCompleteSound();
-    }
-
-    // ==================== SOUND GENERATORS ====================
-
-    function createPluckSound(freq, duration, volume, type = 'sine') {
-        if (!audioContext) return { oscillator: null, gainNode: null, duration };
-
-        const oscillator = audioContext.createOscillator();
-        const gainNode = audioContext.createGain();
-
-        oscillator.connect(gainNode);
-        gainNode.connect(audioContext.destination);
-
-        oscillator.frequency.value = freq;
-        oscillator.type = type;
-
-        gainNode.gain.setValueAtTime(0, audioContext.currentTime);
-        gainNode.gain.linearRampToValueAtTime(volume, audioContext.currentTime + 0.01);
-        gainNode.gain.exponentialRampToValueAtTime(0.001, audioContext.currentTime + duration);
-
-        return { oscillator, gainNode, duration };
-    }
-
-    function createRichPluckSound(freq, duration, volume) {
-        if (!audioContext) return { oscillators: [], duration };
-
-        const oscillators = [];
-
-        for (let i = 0; i < 3; i++) {
-            const oscillator = audioContext.createOscillator();
-            const gainNode = audioContext.createGain();
-
-            oscillator.connect(gainNode);
-            gainNode.connect(audioContext.destination);
-
-            oscillator.frequency.value = freq * (1 + (i - 1) * 0.01);
-            oscillator.type = i === 0 ? 'sine' : i === 1 ? 'triangle' : 'sawtooth';
-
-            gainNode.gain.setValueAtTime(0, audioContext.currentTime);
-            gainNode.gain.linearRampToValueAtTime(volume * (1 - i * 0.3), audioContext.currentTime + 0.02);
-            gainNode.gain.exponentialRampToValueAtTime(0.001, audioContext.currentTime + duration * (1 + i * 0.1));
-
-            oscillators.push({ oscillator, gainNode });
-        }
-
-        return { oscillators, duration };
-    }
-
-    function createShimmerSound(freq, duration, volume) {
-        if (!audioContext) return { oscillators: [], duration };
-
-        const oscillators = [];
-
-        for (let i = 0; i < 4; i++) {
-            const oscillator = audioContext.createOscillator();
-            const gainNode = audioContext.createGain();
-
-            oscillator.connect(gainNode);
-            gainNode.connect(audioContext.destination);
-
-            oscillator.frequency.value = freq * Math.pow(2, i/12);
-            oscillator.type = 'sine';
-
-            const startTime = audioContext.currentTime + i * 0.05;
-            gainNode.gain.setValueAtTime(0, startTime);
-            gainNode.gain.linearRampToValueAtTime(volume * 0.7, startTime + 0.1);
-            gainNode.gain.exponentialRampToValueAtTime(0.001, startTime + duration);
-
-            oscillators.push({ oscillator, gainNode });
-        }
-
-        return { oscillators, duration };
-    }
-
-    function createAscendingSound(startFreq, endFreq, duration, volume) {
-        if (!audioContext) return { oscillator: null, gainNode: null, duration };
-
-        const oscillator = audioContext.createOscillator();
-        const gainNode = audioContext.createGain();
-
-        oscillator.connect(gainNode);
-        gainNode.connect(audioContext.destination);
-
-        oscillator.frequency.setValueAtTime(startFreq, audioContext.currentTime);
-        oscillator.frequency.linearRampToValueAtTime(endFreq, audioContext.currentTime + duration);
-        oscillator.type = 'sawtooth';
-
-        gainNode.gain.setValueAtTime(0, audioContext.currentTime);
-        gainNode.gain.linearRampToValueAtTime(volume, audioContext.currentTime + 0.1);
-        gainNode.gain.exponentialRampToValueAtTime(0.001, audioContext.currentTime + duration);
-
-        return { oscillator, gainNode, duration };
-    }
-
-    function createSparkleSound(duration, volume) {
-        if (!audioContext) return { oscillators: [], duration };
-
-        const oscillators = [];
-
-        for (let i = 0; i < 6; i++) {
-            const oscillator = audioContext.createOscillator();
-            const gainNode = audioContext.createGain();
-
-            oscillator.connect(gainNode);
-            gainNode.connect(audioContext.destination);
-
-            oscillator.frequency.value = 1000 + Math.random() * 2000;
-            oscillator.type = 'sine';
-
-            const startTime = audioContext.currentTime + Math.random() * 0.1;
-            gainNode.gain.setValueAtTime(0, startTime);
-            gainNode.gain.linearRampToValueAtTime(volume * 0.5, startTime + 0.02);
-            gainNode.gain.exponentialRampToValueAtTime(0.001, startTime + duration * 0.5);
-
-            oscillators.push({ oscillator, gainNode });
-        }
-
-        return { oscillators, duration };
-    }
-
-    function createBeeHitSound() {
-        if (!audioContext) return { oscillator: null, gainNode: null, duration: 0.3 };
-
-        const oscillator = audioContext.createOscillator();
-        const gainNode = audioContext.createGain();
-
-        oscillator.connect(gainNode);
-        gainNode.connect(audioContext.destination);
-
-        oscillator.frequency.setValueAtTime(300, audioContext.currentTime);
-        oscillator.frequency.exponentialRampToValueAtTime(100, audioContext.currentTime + 0.3);
-        oscillator.type = 'sawtooth';
-
-        gainNode.gain.setValueAtTime(0.25, audioContext.currentTime);
-        gainNode.gain.exponentialRampToValueAtTime(0.001, audioContext.currentTime + 0.3);
-
-        return { oscillator, gainNode, duration: 0.3 };
-    }
-
-    function createWhooshSound(duration, volume) {
-        if (!audioContext) return { oscillator: null, gainNode: null, duration };
-
-        const oscillator = audioContext.createOscillator();
-        const gainNode = audioContext.createGain();
-
-        oscillator.connect(gainNode);
-        gainNode.connect(audioContext.destination);
-
-        oscillator.frequency.setValueAtTime(400, audioContext.currentTime);
-        oscillator.frequency.exponentialRampToValueAtTime(100, audioContext.currentTime + duration);
-        oscillator.type = 'sine';
-
-        gainNode.gain.setValueAtTime(0, audioContext.currentTime);
-        gainNode.gain.linearRampToValueAtTime(volume, audioContext.currentTime + 0.05);
-        gainNode.gain.exponentialRampToValueAtTime(0.001, audioContext.currentTime + duration);
-
-        return { oscillator, gainNode, duration };
-    }
-
-    function createSwoopSound(duration, volume) {
-        if (!audioContext) return { oscillator: null, gainNode: null, duration };
-
-        const oscillator = audioContext.createOscillator();
-        const gainNode = audioContext.createGain();
-
-        oscillator.connect(gainNode);
-        gainNode.connect(audioContext.destination);
-
-        oscillator.frequency.setValueAtTime(200, audioContext.currentTime);
-        oscillator.frequency.linearRampToValueAtTime(600, audioContext.currentTime + duration/2);
-        oscillator.frequency.linearRampToValueAtTime(200, audioContext.currentTime + duration);
-        oscillator.type = 'sine';
-
-        gainNode.gain.setValueAtTime(0, audioContext.currentTime);
-        gainNode.gain.linearRampToValueAtTime(volume, audioContext.currentTime + 0.05);
-        gainNode.gain.exponentialRampToValueAtTime(0.001, audioContext.currentTime + duration);
-
-        return { oscillator, gainNode, duration };
-    }
-
-    function createBubbleSound(duration, volume) {
-        if (!audioContext) return { oscillators: [], duration };
-
-        const oscillators = [];
-
-        for (let i = 0; i < 3; i++) {
-            const oscillator = audioContext.createOscillator();
-            const gainNode = audioContext.createGain();
-
-            oscillator.connect(gainNode);
-            gainNode.connect(audioContext.destination);
-
-            oscillator.frequency.value = 300 + i * 100;
-            oscillator.type = 'sine';
-
-            const startTime = audioContext.currentTime + i * 0.1;
-            gainNode.gain.setValueAtTime(0, startTime);
-            gainNode.gain.linearRampToValueAtTime(volume * 0.8, startTime + 0.1);
-            gainNode.gain.exponentialRampToValueAtTime(0.001, startTime + duration * 0.8);
-
-            oscillators.push({ oscillator, gainNode });
-        }
-
-        return { oscillators, duration };
-    }
-
-    function createDeflectSound(duration, volume) {
-        if (!audioContext) return { oscillator: null, gainNode: null, duration };
-
-        const oscillator = audioContext.createOscillator();
-        const gainNode = audioContext.createGain();
-
-        oscillator.connect(gainNode);
-        gainNode.connect(audioContext.destination);
-
-        oscillator.frequency.setValueAtTime(800, audioContext.currentTime);
-        oscillator.frequency.exponentialRampToValueAtTime(400, audioContext.currentTime + duration);
-        oscillator.type = 'square';
-
-        gainNode.gain.setValueAtTime(0, audioContext.currentTime);
-        gainNode.gain.linearRampToValueAtTime(volume, audioContext.currentTime + 0.02);
-        gainNode.gain.exponentialRampToValueAtTime(0.001, audioContext.currentTime + duration);
-
-        return { oscillator, gainNode, duration };
-    }
-
-    function createPowerupActivateSound() {
-        if (!audioContext) return { oscillators: [], duration: 0.5 };
-
-        const oscillators = [];
-
-        for (let i = 0; i < 4; i++) {
-            const oscillator = audioContext.createOscillator();
-            const gainNode = audioContext.createGain();
-
-            oscillator.connect(gainNode);
-            gainNode.connect(audioContext.destination);
-
-            oscillator.frequency.value = 200 * (i + 1);
-            oscillator.type = i % 2 === 0 ? 'sawtooth' : i === 1 ? 'triangle' : 'sawtooth';
-
-            const startTime = audioContext.currentTime + i * 0.05;
-            gainNode.gain.setValueAtTime(0, startTime);
-            gainNode.gain.linearRampToValueAtTime(0.15, startTime + 0.1);
-            gainNode.gain.exponentialRampToValueAtTime(0.001, startTime + 0.4);
-
-            oscillators.push({ oscillator, gainNode });
-        }
-
-        return { oscillators, duration: 0.5 };
-    }
-
-    function createFadeOutSound(duration, volume) {
-        if (!audioContext) return { oscillator: null, gainNode: null, duration };
-
-        const oscillator = audioContext.createOscillator();
-        const gainNode = audioContext.createGain();
-
-        oscillator.connect(gainNode);
-        gainNode.connect(audioContext.destination);
-
-        oscillator.frequency.value = 400;
-        oscillator.type = 'sine';
-
-        gainNode.gain.setValueAtTime(volume, audioContext.currentTime);
-        gainNode.gain.exponentialRampToValueAtTime(0.001, audioContext.currentTime + duration);
-
-        return { oscillator, gainNode, duration };
-    }
-
-    function createComboStartSound() {
-        if (!audioContext) return { oscillators: [], duration: 0.4 };
-
-        const oscillators = [];
-        const frequencies = [523.25, 659.25, 783.99, 1046.50];
-
-        frequencies.forEach((freq, i) => {
-            const oscillator = audioContext.createOscillator();
-            const gainNode = audioContext.createGain();
-
-            oscillator.connect(gainNode);
-            gainNode.connect(audioContext.destination);
-
-            oscillator.frequency.value = freq;
-            oscillator.type = 'square';
-
-            const startTime = audioContext.currentTime + i * 0.05;
-            gainNode.gain.setValueAtTime(0, startTime);
-            gainNode.gain.linearRampToValueAtTime(0.2, startTime + 0.1);
-            gainNode.gain.exponentialRampToValueAtTime(0.001, startTime + 0.3);
-
-            oscillators.push({ oscillator, gainNode });
-        });
-
-        return { oscillators, duration: 0.4 };
-    }
-
-    function createChainSound(duration, volume) {
-        if (!audioContext) return { oscillators: [], duration };
-
-        const oscillators = [];
-
-        for (let i = 0; i < 3; i++) {
-            const oscillator = audioContext.createOscillator();
-            const gainNode = audioContext.createGain();
-
-            oscillator.connect(gainNode);
-            gainNode.connect(audioContext.destination);
-
-            oscillator.frequency.value = 600 + i * 100;
-            oscillator.type = 'sine';
-
-            const startTime = audioContext.currentTime + i * 0.05;
-            gainNode.gain.setValueAtTime(0, startTime);
-            gainNode.gain.linearRampToValueAtTime(volume, startTime + 0.05);
-            gainNode.gain.exponentialRampToValueAtTime(0.001, startTime + duration * 0.7);
-
-            oscillators.push({ oscillator, gainNode });
-        }
-
-        return { oscillators, duration };
-    }
-
-    function createBreakSound(duration, volume) {
-        if (!audioContext) return { oscillator: null, gainNode: null, duration };
-
-        const oscillator = audioContext.createOscillator();
-        const gainNode = audioContext.createGain();
-
-        oscillator.connect(gainNode);
-        gainNode.connect(audioContext.destination);
-
-        oscillator.frequency.setValueAtTime(400, audioContext.currentTime);
-        oscillator.frequency.exponentialRampToValueAtTime(200, audioContext.currentTime + duration);
-        oscillator.type = 'sawtooth';
-
-        gainNode.gain.setValueAtTime(volume, audioContext.currentTime);
-        gainNode.gain.exponentialRampToValueAtTime(0.001, audioContext.currentTime + duration);
-
-        return { oscillator, gainNode, duration };
-    }
-
-    function createMilestoneSound(streak, duration, volume) {
-        if (!audioContext) return { oscillators: [], duration };
-
-        const oscillators = [];
-        const noteCount = Math.min(streak / 5, 5);
-
-        for (let i = 0; i < noteCount; i++) {
-            const oscillator = audioContext.createOscillator();
-            const gainNode = audioContext.createGain();
-
-            oscillator.connect(gainNode);
-            gainNode.connect(audioContext.destination);
-
-            oscillator.frequency.value = 300 + i * 100;
-            oscillator.type = 'triangle';
-
-            const startTime = audioContext.currentTime + i * 0.1;
-            gainNode.gain.setValueAtTime(0, startTime);
-            gainNode.gain.linearRampToValueAtTime(volume, startTime + 0.05);
-            gainNode.gain.exponentialRampToValueAtTime(0.001, startTime + duration);
-
-            oscillators.push({ oscillator, gainNode });
-        }
-
-        return { oscillators, duration };
-    }
-
-    function createGameStartSound() {
-        if (!audioContext) return { oscillators: [], duration: 0.6 };
-
-        const oscillators = [];
-        const frequencies = [261.63, 329.63, 392.00, 523.25];
-
-        frequencies.forEach((freq, i) => {
-            const oscillator = audioContext.createOscillator();
-            const gainNode = audioContext.createGain();
-
-            oscillator.connect(gainNode);
-            gainNode.connect(audioContext.destination);
-
-            oscillator.frequency.value = freq;
-            oscillator.type = 'sine';
-
-            const startTime = audioContext.currentTime + i * 0.1;
-            gainNode.gain.setValueAtTime(0, startTime);
-            gainNode.gain.linearRampToValueAtTime(0.15, startTime + 0.1);
-            gainNode.gain.exponentialRampToValueAtTime(0.001, startTime + 0.5);
-
-            oscillators.push({ oscillator, gainNode });
-        });
-
-        return { oscillators, duration: 0.6 };
-    }
-
-    function createGameOverSound() {
-        if (!audioContext) return { oscillator: null, gainNode: null, duration: 0.8 };
-
-        const oscillator = audioContext.createOscillator();
-        const gainNode = audioContext.createGain();
-
-        oscillator.connect(gainNode);
-        gainNode.connect(audioContext.destination);
-
-        oscillator.frequency.setValueAtTime(523.25, audioContext.currentTime);
-        oscillator.frequency.exponentialRampToValueAtTime(130.81, audioContext.currentTime + 0.8);
-        oscillator.type = 'sine';
-
-        gainNode.gain.setValueAtTime(0.2, audioContext.currentTime);
-        gainNode.gain.exponentialRampToValueAtTime(0.001, audioContext.currentTime + 0.8);
-
-        return { oscillator, gainNode, duration: 0.8 };
-    }
-
-    function createPauseSound() {
-        if (!audioContext) return { oscillator: null, gainNode: null, duration: 0.1 };
-
-        const oscillator = audioContext.createOscillator();
-        const gainNode = audioContext.createGain();
-
-        oscillator.connect(gainNode);
-        gainNode.connect(audioContext.destination);
-
-        oscillator.frequency.value = 200;
-        oscillator.type = 'sine';
-
-        gainNode.gain.setValueAtTime(0.1, audioContext.currentTime);
-        gainNode.gain.exponentialRampToValueAtTime(0.001, audioContext.currentTime + 0.1);
-
-        return { oscillator, gainNode, duration: 0.1 };
-    }
-
-    function createResumeSound() {
-        if (!audioContext) return { oscillators: [], duration: 0.25 };
-
-        const oscillators = [];
-
-        for (let i = 0; i < 2; i++) {
-            const oscillator = audioContext.createOscillator();
-            const gainNode = audioContext.createGain();
-
-            oscillator.connect(gainNode);
-            gainNode.connect(audioContext.destination);
-
-            oscillator.frequency.value = 300 + i * 100;
-            oscillator.type = 'sine';
-
-            const startTime = audioContext.currentTime + i * 0.05;
-            gainNode.gain.setValueAtTime(0, startTime);
-            gainNode.gain.linearRampToValueAtTime(0.1, startTime + 0.05);
-            gainNode.gain.exponentialRampToValueAtTime(0.001, startTime + 0.2);
-
-            oscillators.push({ oscillator, gainNode });
-        }
-
-        return { oscillators, duration: 0.25 };
-    }
-
-    function createClickSound() {
-        if (!audioContext) return { oscillator: null, gainNode: null, duration: 0.05 };
-
-        const oscillator = audioContext.createOscillator();
-        const gainNode = audioContext.createGain();
-
-        oscillator.connect(gainNode);
-        gainNode.connect(audioContext.destination);
-
-        oscillator.frequency.value = 800;
-        oscillator.type = 'sine';
-
-        gainNode.gain.setValueAtTime(0.1, audioContext.currentTime);
-        gainNode.gain.exponentialRampToValueAtTime(0.001, audioContext.currentTime + 0.05);
-
-        return { oscillator, gainNode, duration: 0.05 };
-    }
-
-    function createHoverSound() {
-        if (!audioContext) return { oscillator: null, gainNode: null, duration: 0.1 };
-
-        const oscillator = audioContext.createOscillator();
-        const gainNode = audioContext.createGain();
-
-        oscillator.connect(gainNode);
-        gainNode.connect(audioContext.destination);
-
-        oscillator.frequency.value = 600;
-        oscillator.type = 'sine';
-
-        gainNode.gain.setValueAtTime(0.05, audioContext.currentTime);
-        gainNode.gain.exponentialRampToValueAtTime(0.001, audioContext.currentTime + 0.1);
-
-        return { oscillator, gainNode, duration: 0.1 };
-    }
-
-    function createMenuOpenSound() {
-        if (!audioContext) return { oscillator: null, gainNode: null, duration: 0.2 };
-
-        const oscillator = audioContext.createOscillator();
-        const gainNode = audioContext.createGain();
-
-        oscillator.connect(gainNode);
-        gainNode.connect(audioContext.destination);
-
-        oscillator.frequency.setValueAtTime(300, audioContext.currentTime);
-        oscillator.frequency.linearRampToValueAtTime(600, audioContext.currentTime + 0.2);
-        oscillator.type = 'sine';
-
-        gainNode.gain.setValueAtTime(0.1, audioContext.currentTime);
-        gainNode.gain.exponentialRampToValueAtTime(0.001, audioContext.currentTime + 0.2);
-
-        return { oscillator, gainNode, duration: 0.2 };
-    }
-
-    function createMenuCloseSound() {
-        if (!audioContext) return { oscillator: null, gainNode: null, duration: 0.2 };
-
-        const oscillator = audioContext.createOscillator();
-        const gainNode = audioContext.createGain();
-
-        oscillator.connect(gainNode);
-        gainNode.connect(audioContext.destination);
-
-        oscillator.frequency.setValueAtTime(600, audioContext.currentTime);
-        oscillator.frequency.linearRampToValueAtTime(300, audioContext.currentTime + 0.2);
-        oscillator.type = 'sine';
-
-        gainNode.gain.setValueAtTime(0.1, audioContext.currentTime);
-        gainNode.gain.exponentialRampToValueAtTime(0.001, audioContext.currentTime + 0.2);
-
-        return { oscillator, gainNode, duration: 0.2 };
-    }
-
-    function createEvolutionSound() {
-        if (!audioContext) return { oscillators: [], duration: 0.4 };
-
-        const oscillators = [];
-        const frequencies = [523.25, 659.25, 783.99, 1046.50, 1318.51];
-
-        frequencies.forEach((freq, i) => {
-            const oscillator = audioContext.createOscillator();
-            const gainNode = audioContext.createGain();
-
-            oscillator.connect(gainNode);
-            gainNode.connect(audioContext.destination);
-
-            oscillator.frequency.value = freq;
-            oscillator.type = 'triangle';
-
-            const startTime = audioContext.currentTime + i * 0.08;
-            gainNode.gain.setValueAtTime(0, startTime);
-            gainNode.gain.linearRampToValueAtTime(0.12, startTime + 0.1);
-            gainNode.gain.exponentialRampToValueAtTime(0.001, startTime + 0.3);
-
-            oscillators.push({ oscillator, gainNode });
-        });
-
-        return { oscillators, duration: 0.4 };
-    }
-
-    function createAchievementSound() {
-        if (!audioContext) return { oscillators: [], duration: 0.35 };
-
-        const oscillators = [];
-
-        for (let i = 0; i < 5; i++) {
-            const oscillator = audioContext.createOscillator();
-            const gainNode = audioContext.createGain();
-
-            oscillator.connect(gainNode);
-            gainNode.connect(audioContext.destination);
-
-            oscillator.frequency.value = 800 + i * 200;
-            oscillator.type = 'sine';
-
-            const startTime = audioContext.currentTime + i * 0.05;
-            gainNode.gain.setValueAtTime(0, startTime);
-            gainNode.gain.linearRampToValueAtTime(0.15, startTime + 0.1);
-            gainNode.gain.exponentialRampToValueAtTime(0.001, startTime + 0.3);
-
-            oscillators.push({ oscillator, gainNode });
-        }
-
-        return { oscillators, duration: 0.35 };
-    }
-
-    function createProgressSound() {
-        if (!audioContext) return { oscillator: null, gainNode: null, duration: 0.15 };
-
-        const oscillator = audioContext.createOscillator();
-        const gainNode = audioContext.createGain();
-
-        oscillator.connect(gainNode);
-        gainNode.connect(audioContext.destination);
-
-        oscillator.frequency.value = 400;
-        oscillator.type = 'sine';
-
-        gainNode.gain.setValueAtTime(0.08, audioContext.currentTime);
-        gainNode.gain.exponentialRampToValueAtTime(0.001, audioContext.currentTime + 0.15);
-
-        return { oscillator, gainNode, duration: 0.15 };
-    }
-
-    function createCompleteSound() {
-        if (!audioContext) return { oscillators: [], duration: 0.5 };
-
-        const oscillators = [];
-        const frequencies = [261.63, 329.63, 392.00];
-
-        frequencies.forEach((freq, i) => {
-            const oscillator = audioContext.createOscillator();
-            const gainNode = audioContext.createGain();
-
-            oscillator.connect(gainNode);
-            gainNode.connect(audioContext.destination);
-
-            oscillator.frequency.value = freq;
-            oscillator.type = 'sine';
-
-            const startTime = audioContext.currentTime + i * 0.1;
-            gainNode.gain.setValueAtTime(0, startTime);
-            gainNode.gain.linearRampToValueAtTime(0.12, startTime + 0.1);
-            gainNode.gain.exponentialRampToValueAtTime(0.001, startTime + 0.4);
-
-            oscillators.push({ oscillator, gainNode });
-        });
-
-        return { oscillators, duration: 0.5 };
-    }
-
-    function playSound(soundType) {
-        if (!settingsState.sfxOn || !isAudioInitialized || !audioContext || audioContext.state === 'suspended') return;
-
-        const sound = audioBuffers[soundType];
-        if (!sound) {
-            return;
-        }
-
-        try {
-            if (sound.oscillators) {
-                sound.oscillators.forEach(({ oscillator, gainNode }) => {
-                    const newOscillator = audioContext.createOscillator();
-                    const newGainNode = audioContext.createGain();
-
-                    newOscillator.connect(newGainNode);
-                    newGainNode.connect(audioContext.destination);
-
-                    newOscillator.frequency.value = oscillator.frequency.value;
-                    newOscillator.type = oscillator.type;
-
-                    const currentTime = audioContext.currentTime;
-                    newGainNode.gain.cancelScheduledValues(currentTime);
-                    newGainNode.gain.setValueAtTime(0, currentTime);
-                    newGainNode.gain.linearRampToValueAtTime(gainNode.gain.value || 0.1, currentTime + 0.01);
-                    newGainNode.gain.exponentialRampToValueAtTime(0.001, currentTime + sound.duration);
-
-                    newOscillator.start(currentTime);
-                    newOscillator.stop(currentTime + sound.duration);
-                });
-            } else {
-                const newOscillator = audioContext.createOscillator();
-                const newGainNode = audioContext.createGain();
-
-                newOscillator.connect(newGainNode);
-                newGainNode.connect(audioContext.destination);
-
-                newOscillator.frequency.value = sound.oscillator.frequency.value;
-                newOscillator.type = sound.oscillator.type;
-
-                const currentTime = audioContext.currentTime;
-                newGainNode.gain.cancelScheduledValues(currentTime);
-                newGainNode.gain.setValueAtTime(0, currentTime);
-                newGainNode.gain.linearRampToValueAtTime(sound.gainNode.gain.value || 0.1, currentTime + 0.01);
-                newGainNode.gain.exponentialRampToValueAtTime(0.001, currentTime + sound.duration);
-
-                newOscillator.start(currentTime);
-                newOscillator.stop(currentTime + sound.duration);
-            }
-        } catch (error) {
-            console.warn("Failed to play sound:", error);
-        }
-    }
-
-    function startBackgroundMusic() {
-        if (!settingsState.musicOn || musicPlaying) return;
-
-        if (musicGainNode) {
-            musicGainNode.gain.value = 0.6;
-        }
-
-        if (backgroundMusic && backgroundMusic.play) {
-            backgroundMusic.play();
-        } else {
-            // Fallback to synthesized music
-            musicPlaying = true;
-            playSynthesizedMusic();
-        }
-    }
-
-    function stopBackgroundMusic() {
-        musicPlaying = false;
-
-        if (musicGainNode) {
-            musicGainNode.gain.value = 0;
-        }
-
-        if (backgroundMusic && backgroundMusic.stop) {
-            backgroundMusic.stop();
-        }
-
-        if (musicSource) {
-            clearTimeout(musicSource);
-            musicSource = null;
-        }
-    }
-
-    function setMusicVolume(volume) {
-        const safeVolume = Math.max(0, Math.min(1, volume));
-
-        if (backgroundMusic && backgroundMusic.setVolume) {
-            backgroundMusic.setVolume(safeVolume);
-        } else if (musicGainNode) {
-            musicGainNode.gain.value = safeVolume;
-        }
-
-        if (musicAudioElement) {
-            musicAudioElement.volume = safeVolume;
-        }
-    }
-
-    function playCatchSound(jarType) {
-        switch(jarType) {
-            case 'gold':
-                playSound(SOUNDS.CATCH_GOLD);
-                break;
-            case 'shield':
-                playSound(SOUNDS.CATCH_SHIELD);
-                break;
-            case 'powerup':
-                playSound(SOUNDS.CATCH_POWERUP);
-                playSound(SOUNDS.POWERUP_COLLECT);
-                break;
-            default:
-                playSound(SOUNDS.CATCH_NORMAL);
-        }
-    }
-
-    function playBeeHitSound() {
-        playSound(SOUNDS.BEE_HIT);
-    }
-
-    function playShieldBlockSound() {
-        playSound(SOUNDS.SHIELD_BLOCK);
-    }
-
-    function playComboSound() {
-        playSound(SOUNDS.COMBO_START);
-    }
-
-    function playGameStartSound() {
-        playSound(SOUNDS.GAME_START);
-    }
-
-    function playGameOverSound() {
-        playSound(SOUNDS.GAME_OVER);
-    }
-
-    function playEvolutionSound() {
-        playSound(SOUNDS.EVOLUTION_UPGRADE);
-    }
-
-    function playButtonClickSound() {
-        playSound(SOUNDS.BUTTON_CLICK);
-    }
-
-    function playPowerupActivateSound() {
-        playSound(SOUNDS.POWERUP_ACTIVATE);
-    }
-
-    function playPowerupExpireSound() {
-        playSound(SOUNDS.POWERUP_EXPIRE);
-    }
-
-    function playAchievementSound() {
-        playSound(SOUNDS.ACHIEVEMENT_UNLOCK);
-    }
-
-    function playPauseSound() {
-        playSound(SOUNDS.GAME_PAUSE);
-    }
-
-    function playResumeSound() {
-        playSound(SOUNDS.GAME_RESUME);
-    }
-
-    function playStreakSound(streak) {
-        if (streak === 5) {
-            playSound(SOUNDS.STREAK_5);
-        } else if (streak === 10) {
-            playSound(SOUNDS.STREAK_10);
-        }
-    }
-
-    const keys = {
-        left: false,
-        right: false
-    };
-
-    // ==================== SETTINGS STATE ====================
-    let settingsState = {
-        musicOn: true,  // Changed to true by default
-        sfxOn: true,    // Changed to true by default
-        difficulty: 1
-    };
-
-    let gameState = {
-        running: false,
-        paused: false,
-        timeLeft: GAME_DURATION,
-        score: 0,
-        best: 0,
-        gamesPlayed: 0,
-        streak: 0,
-        lives: MAX_LIVES,
-        shieldTime: 0,
-        activeEffects: {},
-        stats: {
-            jarsCaught: 0,
-            beesAvoided: 0,
-            consecutiveCatches: 0,
-            highestCombo: 0,
-            fastest5Catches: Infinity,
-            lastCatchTime: 0,
-            powerupsCollected: 0,
-            goldJarsCaught: 0
-        },
-        achievements: [],
-        currentEvolution: 0,
-        dailyProgress: {}
-    };
-
-    // ==================== DYNAMIC DIFFICULTY ====================
-    let dynamicDifficulty = {
-        multiplier: 1,
-        performanceHistory: [],
-        lastAdjustment: 0
-    };
-
-    // ==================== TUTORIAL SYSTEM ====================
-    let tutorialState = {
-        currentStep: 1,
-        totalSteps: 4,
-        completed: false
-    };
-
-    const world = {
-        width: 0,
-        height: 0
-    };
-
-    const bear = {
-        x: 0,
-        y: 0,
-        width: 40,
-        height: 60,
-        speed: 260,
-        vx: 0,
-        dir: 0,
-        // Enhanced animation properties
-        animation: {
-            walkCycle: 0,
-            bobPhase: 0,
-            scaleX: 1,
-            squashStretch: 1,
-            isMoving: false,
-            blinkTimer: 0,
-            mood: "happy",
-            lastMoodChange: 0,
-            celebrationTimer: 0
-        }
-    };
-
-    const jars = [];
-    const bees = [];
-    const scorePopups = [];
-    const particles = [];
-    const bearTrail = [];
-
-    let screenShake = {
-        intensity: 0,
-        duration: 0,
-        timer: 0
-    };
-
-    let lastTimestamp = 0;
-    let jarSpawnTimer = 0;
-    let beeSpawnTimer = 0;
-
-    // ==================== QUICK WINS CONSTANTS ====================
-    const POWERUPS = {
-        DOUBLE_POINTS: {
-            name: "Double Points",
-            duration: 10,
-            icon: "✖️2",
-            color: "#fbbf24",
-            effect: "doublePoints"
-        },
-        SLOW_TIME: {
-            name: "Slow Time",
-            duration: 8,
-            icon: "⏱️",
-            color: "#60a5fa",
-            effect: "slowTime"
-        },
-        MAGNET: {
-            name: "Magnet",
-            duration: 12,
-            icon: "🧲",
-            color: "#ef4444",
-            effect: "magnet",
-            radius: 120
-        },
-        BEE_REPELLENT: {
-            name: "Bee Repellent",
-            duration: 15,
-            icon: "🐝🚫",
-            color: "#22c55e",
-            effect: "beeRepellent"
-        }
-    };
-
-    const BEAR_EVOLUTIONS = [
-        { score: 0, size: 1, color: "#fbbf24", hat: null, name: "Cub" },
-        { score: 500, size: 1.1, color: "#f59e0b", hat: "cap", name: "Adventurer" },
-        { score: 1000, size: 1.2, color: "#d97706", hat: "crown", name: "Champion" },
-        { score: 2000, size: 1.3, color: "#92400e", hat: "majestic_crown", name: "Monarch" }
-    ];
-
-    const ACHIEVEMENTS = [
-        {
-            id: "first_100",
-            name: "Honey Starter",
-            desc: "Score 100 points",
-            icon: "🍯",
-            condition: (score, stats) => score >= 100
-        },
-        {
-            id: "perfect_50",
-            name: "Untouched",
-            desc: "Catch 50 jars without bee hits",
-            icon: "👑",
-            condition: (score, stats) => stats.consecutiveCatches >= 50
-        },
-        {
-            id: "combo_master",
-            name: "Combo King",
-            desc: "Reach 15x combo",
-            icon: "🔥",
-            condition: (score, stats) => stats.highestCombo >= 15
-        },
-        {
-            id: "speed_demon",
-            name: "Speed Demon",
-            desc: "Catch 5 jars in 3 seconds",
-            icon: "⚡",
-            condition: (score, stats) => stats.fastest5Catches <= 3
-        },
-        {
-            id: "power_collector",
-            name: "Power Collector",
-            desc: "Collect 10 power-ups",
-            icon: "✨",
-            condition: (score, stats) => stats.powerupsCollected >= 10
-        }
-    ];
-
-    const DAILY_CHALLENGES = {
-        monday: {
-            objective: "Catch 30 gold jars",
-            target: 30,
-            type: "goldJars",
-            reward: "Golden Bear Skin",
-            active: true
-        },
-        tuesday: {
-            objective: "Reach 20x combo",
-            target: 20,
-            type: "combo",
-            reward: "Combo Master Title",
-            active: true
-        },
-        wednesday: {
-            objective: "Score 1000 points",
-            target: 1000,
-            type: "score",
-            reward: "Crown Accessory",
-            active: true
-        },
-        thursday: {
-            objective: "Survive 45 seconds without hits",
-            target: 45,
-            type: "survival",
-            reward: "Shield Power-up Pack",
-            active: true
-        },
-        friday: {
-            objective: "Collect 5 power-ups",
-            target: 5,
-            type: "powerups",
-            reward: "Mega Magnet",
-            active: true
-        }
-    };
-
-    // ==================== UTILITY FUNCTIONS ====================
-    function clamp(value, min, max) {
-        return Math.max(min, Math.min(max, value));
-    }
-
-    function rand(min, max) {
-        return Math.random() * (max - min) + min;
-    }
-
-    function togglePause() {
-        if (!gameState.running) return;
-
-        if (gameState.paused) {
-            resumeGame();
-            playResumeSound();
-        } else {
-            pauseGame();
-            playPauseSound();
-        }
-    }
-
-    // ==================== PERSISTENCE ====================
-    function loadPersistedState() {
-        try {
-            const best = Number(localStorage.getItem(STORAGE_KEYS.BEST) || "0");
-            const games = Number(localStorage.getItem(STORAGE_KEYS.GAMES) || "0");
-            gameState.best = isFinite(best) ? best : 0;
-            gameState.gamesPlayed = isFinite(games) ? games : 0;
-
-            const savedSettings = localStorage.getItem(STORAGE_KEYS.SETTINGS);
-            if (savedSettings) {
-                const parsed = JSON.parse(savedSettings);
-                settingsState = {
-                    musicOn: parsed.musicOn !== undefined ? parsed.musicOn : true,
-                    sfxOn: parsed.sfxOn !== undefined ? parsed.sfxOn : true,
-                    difficulty: parsed.difficulty !== undefined ? parsed.difficulty : 1
-                };
-            } else {
-                // Default settings if none saved
-                settingsState = {
-                    musicOn: true,
-                    sfxOn: true,
-                    difficulty: 1
-                };
-            }
-
-            const savedTheme = localStorage.getItem(STORAGE_KEYS.THEME);
-            if (savedTheme === "dark") {
-                document.body.classList.add("dark");
-                themeToggle.setAttribute("aria-pressed", "true");
-                themeToggle.innerHTML = '<i class="fas fa-sun" aria-hidden="true"></i><span>Theme</span>';
-            }
-
-            // Load achievements
-            const savedAchievements = localStorage.getItem("honeyHunt_achievements");
-            if (savedAchievements) {
-                gameState.achievements = JSON.parse(savedAchievements);
-            }
-
-            // Load daily challenge progress
-            const today = new Date().toLocaleDateString('en-US', { weekday: 'long' }).toLowerCase();
-            const savedDailyProgress = localStorage.getItem(`dailyChallenge_${today}`);
-            if (savedDailyProgress) {
-                gameState.dailyProgress = JSON.parse(savedDailyProgress);
-            }
-        } catch (e) {
-            console.warn("Failed to load saved state", e);
-            // Set default settings on error
-            settingsState = {
-                musicOn: true,
-                sfxOn: true,
-                difficulty: 1
-            };
-        }
-    }
-
-    function saveProgress() {
-        try {
-            localStorage.setItem(STORAGE_KEYS.BEST, String(gameState.best));
-            localStorage.setItem(STORAGE_KEYS.GAMES, String(gameState.gamesPlayed));
-            localStorage.setItem(STORAGE_KEYS.SETTINGS, JSON.stringify(settingsState));
-            localStorage.setItem("honeyHunt_achievements", JSON.stringify(gameState.achievements || []));
-            console.log("Settings saved:", settingsState);
-        } catch (e) {
-            console.warn("Failed to save progress", e);
-        }
-    }
-
-    // ==================== SCREEN SHAKE ====================
-    function shakeScreen(intensity = 5, duration = 0.3) {
-        screenShake.intensity = intensity;
-        screenShake.duration = duration;
-        screenShake.timer = duration;
-    }
-
-    // ==================== PARTICLE SYSTEM ====================
-    function createJarParticles(x, y, type) {
-        const colors = {
-            normal: ["#facc15", "#eab308", "#fbbf24"],
-            gold: ["#f97316", "#ea580c", "#fb923c"],
-            shield: ["#38bdf8", "#0ea5e9", "#7dd3fc"],
-            powerup: ["#fbbf24", "#60a5fa", "#ef4444", "#22c55e"]
-        };
-
-        const particleCount = type === "gold" ? 20 : type === "shield" || type === "powerup" ? 15 : 12;
-        const colorSet = colors[type] || colors.normal;
-
-        for (let i = 0; i < particleCount; i++) {
-            const angle = Math.random() * Math.PI * 2;
-            const speed = 80 + Math.random() * 120;
-            const size = 3 + Math.random() * 4;
-
-            particles.push({
-                x,
-                y,
-                vx: Math.cos(angle) * speed,
-                vy: Math.sin(angle) * speed - 40,
-                color: colorSet[Math.floor(Math.random() * colorSet.length)],
-                life: 1,
-                decay: 0.012 + Math.random() * 0.008,
-                radius: size,
-                gravity: 120,
-                rotation: Math.random() * Math.PI * 2,
-                rotationSpeed: (Math.random() - 0.5) * 10
-            });
-        }
-
-        // Add sparkle particles for special jars
-        if (type === "gold" || type === "powerup") {
-            for (let i = 0; i < 6; i++) {
-                particles.push({
-                    x,
-                    y,
-                    vx: (Math.random() - 0.5) * 60,
-                    vy: -80 - Math.random() * 60,
-                    color: "#ffffff",
-                    life: 1,
-                    decay: 0.02,
-                    radius: 1.5,
-                    gravity: 60
-                });
-            }
-        }
-    }
-
-    function createBeeHitParticles(x, y, count = 16) {
-        for (let i = 0; i < count; i++) {
-            const angle = Math.random() * Math.PI * 2;
-            const speed = 60 + Math.random() * 90;
-
-            particles.push({
-                x,
-                y,
-                vx: Math.cos(angle) * speed,
-                vy: Math.sin(angle) * speed,
-                color: "#ef4444",
-                life: 1,
-                decay: 0.02,
-                radius: 2 + Math.random() * 3,
-                gravity: 100,
-                rotation: Math.random() * Math.PI * 2
-            });
-        }
-    }
-
-    function updateParticles(dt) {
-        for (let i = particles.length - 1; i >= 0; i--) {
-            const p = particles[i];
-            p.x += p.vx * dt;
-            p.y += p.vy * dt;
-            p.vy += (p.gravity || 200) * dt;
-            p.life -= p.decay;
-
-            if (p.rotation !== undefined) {
-                p.rotation += (p.rotationSpeed || 0) * dt;
-            }
-
-            if (p.life <= 0) {
-                particles.splice(i, 1);
-            }
-        }
-    }
-
-    function drawParticles() {
-        for (const p of particles) {
-            ctx.save();
-            ctx.globalAlpha = p.life;
-            ctx.fillStyle = p.color;
-
-            if (p.rotation !== undefined) {
-                ctx.translate(p.x, p.y);
-                ctx.rotate(p.rotation);
-                ctx.beginPath();
-                ctx.arc(0, 0, p.radius, 0, Math.PI * 2);
-                ctx.fill();
-            } else {
-                ctx.beginPath();
-                ctx.arc(p.x, p.y, p.radius, 0, Math.PI * 2);
-                ctx.fill();
-            }
-
-            ctx.restore();
-        }
-    }
-
-    // ==================== BEAR ANIMATION ====================
-    function updateBearAnimation(dt) {
-        const anim = bear.animation;
-
-        // Walking animation
-        if (bear.vx !== 0) {
-            anim.isMoving = true;
-            anim.walkCycle += Math.abs(bear.vx) * 0.01 * dt;
-            anim.bobPhase += dt * 8;
-
-            // Squash/stretch on direction change
-            if (Math.sign(bear.vx) !== Math.sign(bear.dir) && bear.dir !== 0) {
-                anim.squashStretch = 0.8;
-            } else {
-                anim.squashStretch = 1 + Math.sin(anim.walkCycle * 2) * 0.05;
-            }
-        } else {
-            anim.isMoving = false;
-            anim.squashStretch = 1 + Math.sin(performance.now() / 1000) * 0.02;
-            anim.bobPhase += dt * 2;
-        }
-
-        // Blinking animation
-        anim.blinkTimer -= dt;
-        if (anim.blinkTimer <= 0) {
-            anim.blinkTimer = 3 + Math.random() * 4;
-        }
-
-        // Mood based on game state
-        const newMood = gameState.lives === 1 ? "worried" :
-            gameState.streak >= 10 ? "excited" : "happy";
-
-        if (newMood !== anim.mood) {
-            anim.mood = newMood;
-            anim.lastMoodChange = performance.now();
-        }
-
-        // Celebration timer for combos
-        if (anim.celebrationTimer > 0) {
-            anim.celebrationTimer -= dt;
-        }
-
-        // Direction flipping
-        anim.scaleX = bear.dir < 0 ? -1 : 1;
-    }
-
-    function triggerBearCelebration() {
-        bear.animation.celebrationTimer = 0.5;
-        bear.animation.mood = "excited";
-
-        // Jump animation
-        bear.animation.squashStretch = 0.7;
-        setTimeout(() => {
-            bear.animation.squashStretch = 1.3;
-        }, 100);
-        setTimeout(() => {
-            bear.animation.squashStretch = 1;
-        }, 200);
-    }
-
-    // ==================== QUICK WINS: POWER-UP SYSTEM ====================
-    function createPowerupIndicators() {
-        // Remove existing indicators if any
-        const existing = document.getElementById("powerupIndicators");
-        if (existing) {
-            existing.remove();
-        }
-
-        const container = document.createElement("div");
-        container.id = "powerupIndicators";
-        container.className = "powerup-indicators";
-        container.innerHTML = `
-        <div class="powerup-indicator" data-type="DOUBLE_POINTS">
-            <span class="powerup-icon">✖️2</span>
-            <div class="powerup-timer"></div>
-        </div>
-        <div class="powerup-indicator" data-type="SLOW_TIME">
-            <span class="powerup-icon">⏱️</span>
-            <div class="powerup-timer"></div>
-        </div>
-        <div class="powerup-indicator" data-type="MAGNET">
-            <span class="powerup-icon">🧲</span>
-            <div class="powerup-timer"></div>
-        </div>
-        <div class="powerup-indicator" data-type="BEE_REPELLENT">
-            <span class="powerup-icon">🐝🚫</span>
-            <div class="powerup-timer"></div>
-        </div>
-    `;
-        gameContainer.appendChild(container);
-    }
-
-    function activatePowerup(type) {
-        const powerup = POWERUPS[type];
-        if (!powerup) return;
-
-        gameState.activeEffects[type] = {
-            timeLeft: powerup.duration,
-            ...powerup
-        };
-
-        gameState.stats.powerupsCollected++;
-
-        // Update UI indicator
-        const indicator = document.querySelector(`.powerup-indicator[data-type="${type}"]`);
-        if (indicator) {
-            indicator.classList.add('active');
-            const timer = indicator.querySelector('.powerup-timer');
-            if (timer) {
-                timer.style.width = '100%';
-            }
-        }
-
-        // Show notification
-        showNotification(`Power-up: ${powerup.name} activated!`, powerup.color);
-        playPowerupActivateSound();
-    }
-
-    function updatePowerups(dt) {
-        for (const type in gameState.activeEffects) {
-            const effect = gameState.activeEffects[type];
-            effect.timeLeft -= dt;
-
-            // Update UI timer
-            const indicator = document.querySelector(`.powerup-indicator[data-type="${type}"]`);
-            if (indicator) {
-                const timer = indicator.querySelector('.powerup-timer');
-                if (timer) {
-                    const percent = (effect.timeLeft / POWERUPS[type].duration) * 100;
-                    timer.style.width = `${percent}%`;
-                }
-            }
-
-            if (effect.timeLeft <= 0) {
-                deactivatePowerup(type);
-            }
-        }
-    }
-
-    function deactivatePowerup(type) {
-        delete gameState.activeEffects[type];
-
-        const indicator = document.querySelector(`.powerup-indicator[data-type="${type}"]`);
-        if (indicator) {
-            indicator.classList.remove('active');
-        }
-
-        showNotification(`Power-up: ${POWERUPS[type].name} expired!`, '#64748b');
-        playPowerupExpireSound();
-    }
-
-    function drawMagnetEffect() {
-        if (!gameState.activeEffects.MAGNET) return;
-
-        const magnet = gameState.activeEffects.MAGNET;
-        const radius = magnet.radius || 120;
-
-        ctx.save();
-        ctx.translate(bear.x, bear.y - 10);
-
-        // Draw magnet field
-        const gradient = ctx.createRadialGradient(0, 0, 0, 0, 0, radius);
-        gradient.addColorStop(0, 'rgba(239, 68, 68, 0.3)');
-        gradient.addColorStop(1, 'rgba(239, 68, 68, 0)');
-
-        ctx.fillStyle = gradient;
-        ctx.beginPath();
-        ctx.arc(0, 0, radius, 0, Math.PI * 2);
-        ctx.fill();
-
-        // Draw pulsing rings
-        const pulse = (Math.sin(performance.now() / 300) * 0.2 + 0.8);
-        ctx.strokeStyle = `rgba(239, 68, 68, ${0.5 * pulse})`;
-        ctx.lineWidth = 2;
-        ctx.beginPath();
-        ctx.arc(0, 0, radius * pulse, 0, Math.PI * 2);
-        ctx.stroke();
-
-        ctx.restore();
-    }
-
-    // ==================== QUICK WINS: BEAR EVOLUTION ====================
-    function updateBearEvolution() {
-        const newEvolution = BEAR_EVOLUTIONS.findIndex(evo => gameState.score >= evo.score);
-        if (newEvolution > gameState.currentEvolution) {
-            gameState.currentEvolution = newEvolution;
-            showEvolutionUpgrade(newEvolution);
-        }
-    }
-
-    function showEvolutionUpgrade(level) {
-        const evolution = BEAR_EVOLUTIONS[level];
-        if (!evolution) return;
-
-        const evolutionDisplay = document.getElementById("evolutionDisplay");
-        if (!evolutionDisplay) {
-            const display = document.createElement("div");
-            display.id = "evolutionDisplay";
-            display.className = "evolution-display";
-            gameContainer.appendChild(display);
-        }
-
-        const display = document.getElementById("evolutionDisplay");
-        display.innerHTML = `
-        <span class="evolution-level">${level + 1}</span>
-        <span class="evolution-name">${evolution.name} Bear</span>
-        <span class="evolution-icon">${level === 0 ? '🐻' : level === 1 ? '🐻‍❄️' : level === 2 ? '👑' : '🏆'}</span>
-    `;
-
-        // Show with animation
-        display.style.display = 'flex';
-        display.style.animation = 'evolutionPopIn 0.5s cubic-bezier(0.34, 1.56, 0.64, 1)';
-
-        // Hide after 3 seconds
-        setTimeout(() => {
-            display.style.animation = 'none';
-            setTimeout(() => {
-                display.style.display = 'none';
-            }, 300);
-        }, 3000);
-
-        showNotification(`Evolved to ${evolution.name}!`, "#fbbf24");
-        triggerHaptic("evolution");
-        playEvolutionSound();
-    }
-
-    // Helper function to darken colors
-    function darkenColor(color, percent) {
-        const num = parseInt(color.replace("#", ""), 16);
-        const amt = Math.round(2.55 * percent);
-        const R = (num >> 16) - amt;
-        const G = (num >> 8 & 0x00FF) - amt;
-        const B = (num & 0x0000FF) - amt;
-        return "#" + (0x1000000 + (R < 255 ? R < 1 ? 0 : R : 255) * 0x10000 +
-            (G < 255 ? G < 1 ? 0 : G : 255) * 0x100 +
-            (B < 255 ? B < 1 ? 0 : B : 255)).toString(16).slice(1);
-    }
-
-    // ==================== QUICK WINS: ACHIEVEMENT SYSTEM ====================
-    function checkAchievements() {
-        for (const achievement of ACHIEVEMENTS) {
-            if (!gameState.achievements.includes(achievement.id)) {
-                if (achievement.condition(gameState.score, gameState.stats)) {
-                    unlockAchievement(achievement);
-                }
-            }
-        }
-    }
-
-    function unlockAchievement(achievement) {
-        gameState.achievements.push(achievement.id);
-        showAchievementPopup(achievement);
-        playAchievementSound();
-        saveProgress();
-    }
-
-    function showAchievementPopup(achievement) {
-        // Create popup element
-        const popup = document.createElement("div");
-        popup.className = "achievement-popup";
-        popup.innerHTML = `
-            <div class="achievement-icon">${achievement.icon}</div>
-            <div class="achievement-text">
-                <div class="achievement-title">Achievement Unlocked!</div>
-                <div class="achievement-name">${achievement.name}</div>
-                <div class="achievement-desc">${achievement.desc}</div>
-            </div>
-        `;
-
-        document.body.appendChild(popup);
-
-        // Remove after animation
-        setTimeout(() => {
-            if (popup.parentNode) {
-                popup.parentNode.removeChild(popup);
-            }
-        }, 3000);
-
-        liveRegion.textContent = `Achievement unlocked: ${achievement.name}! ${achievement.desc}`;
-    }
-
-    // ==================== QUICK WINS: DAILY CHALLENGE SYSTEM ====================
-    function initDailyChallenge() {
-        const today = new Date().toLocaleDateString('en-US', { weekday: 'long' }).toLowerCase();
-        const challenge = DAILY_CHALLENGES[today];
-
-        const dailyChallengePanel = document.getElementById("dailyChallengePanel");
-        const dailyChallengeText = document.getElementById("dailyChallengeText");
-        const dailyChallengeProgress = document.getElementById("dailyChallengeProgress");
-        const dailyChallengeReward = document.getElementById("dailyChallengeReward");
-
-        if (!challenge || !dailyChallengePanel || !dailyChallengeText || !dailyChallengeProgress || !dailyChallengeReward) return;
-
-        // Update UI
-        dailyChallengeText.textContent = challenge.objective;
-        dailyChallengeReward.innerHTML = `<span>🎁</span> Reward: ${challenge.reward}`;
-
-        updateDailyChallengeProgress();
-
-        // Show panel
-        dailyChallengePanel.style.display = 'block';
-    }
-
-    function updateDailyChallengeProgress() {
-        const today = new Date().toLocaleDateString('en-US', { weekday: 'long' }).toLowerCase();
-        const challenge = DAILY_CHALLENGES[today];
-
-        const dailyChallengeProgress = document.getElementById("dailyChallengeProgress");
-        if (!challenge || !dailyChallengeProgress) return;
-
-        let progress = 0;
-        switch(challenge.type) {
-            case 'goldJars':
-                progress = gameState.stats.goldJarsCaught;
-                break;
-            case 'combo':
-                progress = gameState.stats.highestCombo;
-                break;
-            case 'score':
-                progress = gameState.score;
-                break;
-            case 'survival':
-                progress = GAME_DURATION - gameState.timeLeft;
-                break;
-            case 'powerups':
-                progress = gameState.stats.powerupsCollected;
-                break;
-        }
-
-        const percent = Math.min((progress / challenge.target) * 100, 100);
-        dailyChallengeProgress.style.width = `${percent}%`;
-
-        // Check if challenge completed
-        if (progress >= challenge.target && (!gameState.dailyProgress || !gameState.dailyProgress.completed)) {
-            completeDailyChallenge(challenge);
-        }
-    }
-
-    function completeDailyChallenge(challenge) {
-        gameState.dailyProgress.completed = true;
-        gameState.dailyProgress.rewardClaimed = false;
-
-        showNotification(`Daily Challenge Complete! Reward: ${challenge.reward}`, "#fbbf24");
-        liveRegion.textContent = `Daily challenge completed! You earned: ${challenge.reward}`;
-        playSound(SOUNDS.CHALLENGE_COMPLETE);
-
-        // Save progress
-        const today = new Date().toLocaleDateString('en-US', { weekday: 'long' }).toLowerCase();
-        localStorage.setItem(`dailyChallenge_${today}`, JSON.stringify(gameState.dailyProgress));
-    }
-
-    // ==================== QUICK WINS: NOTIFICATION SYSTEM ====================
-    function showNotification(text, color) {
-        // Create notification element
-        const notification = document.createElement("div");
-        notification.className = "notification";
-        notification.textContent = text;
-        notification.style.cssText = `
-            position: fixed;
-            top: 20%;
-            left: 50%;
-            transform: translateX(-50%);
-            background: ${color};
-            color: white;
-            padding: 10px 20px;
-            border-radius: 10px;
-            font-weight: bold;
-            z-index: 1000;
-            box-shadow: 0 5px 20px rgba(0,0,0,0.3);
-            animation: slideDown 0.3s ease;
-        `;
-
-        document.body.appendChild(notification);
-
-        // Remove after 2 seconds
-        setTimeout(() => {
-            notification.style.animation = 'slideUp 0.3s ease';
-            setTimeout(() => {
-                if (notification.parentNode) {
-                    notification.parentNode.removeChild(notification);
-                }
-            }, 300);
-        }, 2000);
-    }
-
-    // ==================== DRAWING FUNCTIONS ====================
-    function drawBear() {
-        const x = bear.x;
-        const y = bear.y;
-        const anim = bear.animation;
-        const evolution = BEAR_EVOLUTIONS[gameState.currentEvolution];
-
-        ctx.save();
-        ctx.translate(x, y);
-
-        // Apply evolution scaling
-        if (evolution && evolution.size) {
-            ctx.scale(evolution.size, evolution.size);
-        }
-
-        // Apply direction and squash/stretch
-        ctx.scale(anim.scaleX * anim.squashStretch, 1 / anim.squashStretch);
-
-        const bob = Math.sin(anim.bobPhase) * (anim.isMoving ? 4 : 2);
-        const tilt = bear.vx * 0.01 * anim.scaleX;
-
-        ctx.rotate(tilt);
-        ctx.translate(0, bob);
-
-        // Draw speed trail if moving fast
-        if (anim.isMoving && Math.abs(bear.vx) > 150) {
-            drawSpeedTrail(anim);
-        }
-
-        // Shadow with movement blur
-        ctx.fillStyle = anim.isMoving ?
-            `rgba(0, 0, 0, 0.25)` :
-            `rgba(0, 0, 0, 0.2)`;
-
-        ctx.beginPath();
-        ctx.ellipse(0, 40,
-            anim.isMoving ? 32 : 28,
-            anim.isMoving ? 12 : 10,
-            0, 0, Math.PI * 2);
-        ctx.fill();
-
-        // ============= ENHANCED WINNIE THE POOH BODY =============
-
-        // Body with Pooh's classic red shirt
-        ctx.fillStyle = "#e02828"; // Pooh's classic red color
-        ctx.beginPath();
-
-        // Walking animation - slight leaning
-        const leanOffset = anim.isMoving ? Math.sin(anim.walkCycle * 2) * 3 : 0;
-
-        // Pooh's body - rounder and more huggable
-        ctx.ellipse(leanOffset, 0, 32, 42, 0, 0, Math.PI * 2);
-        ctx.fill();
-
-        // Draw evolution hat if any
-        if (evolution && evolution.hat) {
-            drawEvolutionHat(evolution.hat);
-        }
-
-        // ============= ENHANCED HEAD =============
-        drawBearHead(anim);
-
-        // ============= ENHANCED ARMS =============
-        drawBearArms(anim);
-
-        // ============= ENHANCED HONEY JAR =============
-        drawJarWithBear(anim);
-
-        // ============= ADDITIONAL POOH DETAILS =============
-        drawPoohDetails(anim);
-
-        // Shield effect
-        if (gameState.shieldTime > 0) {
-            drawShieldEffect();
-        }
-
-        ctx.restore();
-    }
-
-    function drawBearHead(anim) {
-        // Head with classic Pooh shape
-        ctx.fillStyle = "#fbbf24"; // Lighter yellow for Pooh
-        ctx.beginPath();
-
-        // Classic Pooh head shape - rounder
-        ctx.ellipse(0, -30, 24, 22, 0, 0, Math.PI * 2);
-        ctx.fill();
-
-        // Ears with more character
-        drawEars(anim);
-
-        // Face with classic Pooh expression
-        drawPoohFace(anim);
-
-        // Neck and shirt collar
-        ctx.fillStyle = "#e02828";
-        ctx.beginPath();
-        ctx.arc(0, -10, 18, 0.2, Math.PI - 0.2);
-        ctx.fill();
-
-        // Shirt collar detail
-        ctx.fillStyle = "#b91c1c";
-        ctx.beginPath();
-        ctx.ellipse(0, -8, 20, 5, 0, 0, Math.PI);
-        ctx.fill();
-    }
-
-    function drawEars(anim) {
-        // Left ear with more animation
-        ctx.save();
-        ctx.translate(-18, -40);
-        ctx.rotate(Math.sin(anim.walkCycle) * 0.15);
-
-        // Outer ear
-        ctx.fillStyle = "#fbbf24";
-        ctx.beginPath();
-        ctx.arc(0, 0, 10, 0, Math.PI * 2);
-        ctx.fill();
-
-        // Inner ear - lighter color
-        ctx.fillStyle = "#fde047";
-        ctx.beginPath();
-        ctx.arc(0, 0, 6, 0, Math.PI * 2);
-        ctx.fill();
-
-        // Ear highlight
-        ctx.fillStyle = "rgba(255, 255, 255, 0.3)";
-        ctx.beginPath();
-        ctx.arc(-2, -2, 3, 0, Math.PI * 2);
-        ctx.fill();
-        ctx.restore();
-
-        // Right ear
-        ctx.save();
-        ctx.translate(18, -40);
-        ctx.rotate(-Math.sin(anim.walkCycle) * 0.15);
-
-        // Outer ear
-        ctx.fillStyle = "#fbbf24";
-        ctx.beginPath();
-        ctx.arc(0, 0, 10, 0, Math.PI * 2);
-        ctx.fill();
-
-        // Inner ear
-        ctx.fillStyle = "#fde047";
-        ctx.beginPath();
-        ctx.arc(0, 0, 6, 0, Math.PI * 2);
-        ctx.fill();
-
-        // Ear highlight
-        ctx.fillStyle = "rgba(255, 255, 255, 0.3)";
-        ctx.beginPath();
-        ctx.arc(-2, -2, 3, 0, Math.PI * 2);
-        ctx.fill();
-        ctx.restore();
-    }
-
-    function drawPoohFace(anim) {
-        // Eyes with blinking
-        const blink = anim.blinkTimer < 0.1 ? 0.1 : 1;
-        const isExcited = anim.mood === "excited";
-        const isWorried = anim.mood === "worried";
-
-        ctx.fillStyle = "#1f2937"; // Dark brown for Pooh's eyes
-
-        // Left eye
-        ctx.save();
-        ctx.translate(-8, -28);
-        ctx.scale(1, blink);
-
-        // Eye shape - more rounded
-        ctx.beginPath();
-        ctx.ellipse(0, 0, 4, 5, 0, 0, Math.PI * 2);
-        ctx.fill();
-
-        // Eye sparkle (except when blinking)
-        if (blink > 0.5) {
-            ctx.fillStyle = "white";
-            ctx.beginPath();
-            ctx.arc(-1, -1, 1.5, 0, Math.PI * 2);
-            ctx.fill();
-        }
-        ctx.restore();
-
-        // Right eye
-        ctx.save();
-        ctx.translate(8, -28);
-        ctx.scale(1, blink);
-        ctx.fillStyle = "#1f2937";
-
-        ctx.beginPath();
-        ctx.ellipse(0, 0, 4, 5, 0, 0, Math.PI * 2);
-        ctx.fill();
-
-        // Eye sparkle
-        if (blink > 0.5) {
-            ctx.fillStyle = "white";
-            ctx.beginPath();
-            ctx.arc(-1, -1, 1.5, 0, Math.PI * 2);
-            ctx.fill();
-        }
-        ctx.restore();
-
-        // Snout/nose
-        ctx.fillStyle = "#1f2937";
-        ctx.beginPath();
-        ctx.arc(0, -20, 5, 0, Math.PI * 2);
-        ctx.fill();
-
-        // Nose highlight
-        ctx.fillStyle = "rgba(255, 255, 255, 0.4)";
-        ctx.beginPath();
-        ctx.arc(-1, -21, 1.5, 0, Math.PI * 2);
-        ctx.fill();
-
-        // Mouth based on mood
-        ctx.strokeStyle = "#1f2937";
-        ctx.lineWidth = 2;
-        ctx.lineCap = "round";
-
-        if (isExcited) {
-            // Big happy smile for excitement
-            ctx.beginPath();
-            ctx.arc(0, -15, 8, 0.1, Math.PI - 0.1);
-            ctx.stroke();
-
-            // Tongue sticking out
-            ctx.fillStyle = "#fb7185";
-            ctx.beginPath();
-            ctx.ellipse(0, -8, 4, 3, 0, 0, Math.PI);
-            ctx.fill();
-        } else if (isWorried) {
-            // Concerned expression
-            ctx.beginPath();
-            ctx.moveTo(-5, -15);
-            ctx.quadraticCurveTo(0, -12, 5, -15);
-            ctx.stroke();
-
-            // Worry lines
-            ctx.beginPath();
-            ctx.moveTo(-2, -18);
-            ctx.lineTo(-2, -16);
-            ctx.moveTo(2, -18);
-            ctx.lineTo(2, -16);
-            ctx.stroke();
-        } else {
-            // Default gentle smile
-            ctx.beginPath();
-            ctx.arc(0, -15, 6, 0.2, Math.PI - 0.2);
-            ctx.stroke();
-        }
-
-        // Cheeks blush when excited
-        if (isExcited) {
-            ctx.fillStyle = "rgba(255, 100, 100, 0.4)";
-            ctx.beginPath();
-            ctx.arc(-10, -20, 3, 0, Math.PI * 2);
-            ctx.arc(10, -20, 3, 0, Math.PI * 2);
-            ctx.fill();
-        }
-    }
-
-    function drawBearArms(anim) {
-        // Walking arm animation
-        const armSwing = anim.isMoving ? Math.sin(anim.walkCycle * 4) * 20 : 0;
-
-        // Left arm
-        ctx.save();
-        ctx.translate(-26, -8);
-        ctx.rotate(armSwing * 0.04);
-
-        // Arm sleeve (red part)
-        ctx.fillStyle = "#e02828";
-        ctx.beginPath();
-        ctx.roundRect(-6, 0, 12, 28, 6);
-        ctx.fill();
-
-        // Arm end (yellow fur)
-        ctx.fillStyle = "#fbbf24";
-        ctx.beginPath();
-        ctx.roundRect(-5, 28, 10, 10, 5);
-        ctx.fill();
-
-        // Paw
-        ctx.fillStyle = "#d97706";
-        ctx.beginPath();
-        ctx.arc(0, 38, 8, 0, Math.PI * 2);
-        ctx.fill();
-
-        // Paw pads
-        ctx.fillStyle = "#92400e";
-        for (let i = 0; i < 4; i++) {
-            const angle = (i / 4) * Math.PI * 2;
-            const px = Math.cos(angle) * 4;
-            const py = 38 + Math.sin(angle) * 4;
-            ctx.beginPath();
-            ctx.arc(px, py, 2, 0, Math.PI * 2);
-            ctx.fill();
-        }
-        ctx.restore();
-
-        // Right arm
-        ctx.save();
-        ctx.translate(26, -8);
-        ctx.rotate(-armSwing * 0.04);
-
-        // Arm sleeve
-        ctx.fillStyle = "#e02828";
-        ctx.beginPath();
-        ctx.roundRect(-6, 0, 12, 28, 6);
-        ctx.fill();
-
-        // Arm end
-        ctx.fillStyle = "#fbbf24";
-        ctx.beginPath();
-        ctx.roundRect(-5, 28, 10, 10, 5);
-        ctx.fill();
-
-        // Paw
-        ctx.fillStyle = "#d97706";
-        ctx.beginPath();
-        ctx.arc(0, 38, 8, 0, Math.PI * 2);
-        ctx.fill();
-
-        // Paw pads
-        ctx.fillStyle = "#92400e";
-        for (let i = 0; i < 4; i++) {
-            const angle = (i / 4) * Math.PI * 2;
-            const px = Math.cos(angle) * 4;
-            const py = 38 + Math.sin(angle) * 4;
-            ctx.beginPath();
-            ctx.arc(px, py, 2, 0, Math.PI * 2);
-            ctx.fill();
-        }
-        ctx.restore();
-    }
-
-    function drawJarWithBear(anim) {
-        // Jar body with honey level that changes with streak
-        const honeyLevel = Math.min(0.7 + (gameState.streak * 0.02), 0.95);
-
-        // Jar outline - more detailed
-        ctx.fillStyle = "#7c2d12"; // Darker brown for jar
-        ctx.beginPath();
-        ctx.roundRect(-22, 10, 44, 50, 15);
-        ctx.fill();
-
-        // Jar glass effect with gradient
-        const jarGradient = ctx.createLinearGradient(-20, 60, -20, 10);
-        jarGradient.addColorStop(0, "rgba(254, 215, 170, 0.7)"); // Light amber
-        jarGradient.addColorStop(0.3, "rgba(253, 186, 116, 0.9)"); // Medium amber
-        jarGradient.addColorStop(1, "rgba(251, 146, 60, 0.95)"); // Dark amber
-
-        ctx.fillStyle = jarGradient;
-        ctx.beginPath();
-        ctx.roundRect(-18, 60 - (50 * honeyLevel), 36, 50 * honeyLevel, 12);
-        ctx.fill();
-
-        // Honey bubbles
-        const bubbleTime = performance.now() / 300;
-        for (let i = 0; i < 5; i++) {
-            const bubbleY = 60 - (50 * honeyLevel) + Math.sin(bubbleTime + i) * 3;
-            const bubbleX = (Math.cos(bubbleTime * 1.5 + i) * 8);
-            const bubbleSize = 2 + Math.sin(bubbleTime * 2 + i) * 1.5;
-
-            ctx.fillStyle = "rgba(255, 237, 213, 0.7)";
-            ctx.beginPath();
-            ctx.arc(bubbleX, bubbleY, bubbleSize, 0, Math.PI * 2);
-            ctx.fill();
-        }
-
-        // Jar label with Winnie the Pooh style
-        ctx.fillStyle = "#fbbf24";
-        ctx.beginPath();
-        ctx.roundRect(-15, 25, 30, 20, 8);
-        ctx.fill();
-
-        // Label text
-        ctx.fillStyle = "#78350f";
-        ctx.font = "bold 14px 'Comic Sans MS', cursive";
-        ctx.textAlign = "center";
-        ctx.textBaseline = "middle";
-        ctx.fillText("Pooh's", 0, 30);
-        ctx.fillText("Honey", 0, 40);
-
-        // Jar lid with more detail
-        ctx.fillStyle = "#92400e";
-        ctx.beginPath();
-        ctx.roundRect(-20, 5, 40, 12, 6);
-        ctx.fill();
-
-        // Lid highlight
-        ctx.fillStyle = "rgba(255, 255, 255, 0.2)";
-        ctx.beginPath();
-        ctx.roundRect(-18, 6, 36, 4, 3);
-        ctx.fill();
-
-        // Jar gloss reflection
-        ctx.fillStyle = "rgba(255, 255, 255, 0.15)";
-        ctx.beginPath();
-        ctx.ellipse(5, 40, 8, 12, 0, 0, Math.PI * 2);
-        ctx.fill();
-    }
-
-    function drawPoohDetails(anim) {
-        // Shirt buttons
-        ctx.fillStyle = "#fbbf24"; // Yellow buttons
-        for (let i = 0; i < 2; i++) {
-            ctx.beginPath();
-            ctx.arc(0, 5 + (i * 15), 3, 0, Math.PI * 2);
-            ctx.fill();
-
-            // Button highlight
-            ctx.fillStyle = "rgba(255, 255, 255, 0.4)";
-            ctx.beginPath();
-            ctx.arc(-1, 4 + (i * 15), 1, 0, Math.PI * 2);
-            ctx.fill();
-            ctx.fillStyle = "#fbbf24";
-        }
-
-        // Belly fur
-        ctx.fillStyle = "#fde047"; // Lighter yellow for belly
-        ctx.beginPath();
-        ctx.ellipse(0, 10, 20, 15, 0, 0, Math.PI * 2);
-        ctx.fill();
-
-        // Legs (simplified)
-        ctx.fillStyle = "#fbbf24";
-        ctx.beginPath();
-        ctx.ellipse(-12, 35, 8, 6, 0, 0, Math.PI * 2);
-        ctx.ellipse(12, 35, 8, 6, 0, 0, Math.PI * 2);
-        ctx.fill();
-
-        // Feet
-        ctx.fillStyle = "#d97706";
-        ctx.beginPath();
-        ctx.ellipse(-12, 42, 6, 4, 0, 0, Math.PI * 2);
-        ctx.ellipse(12, 42, 6, 4, 0, 0, Math.PI * 2);
-        ctx.fill();
-    }
-
-    function drawShieldEffect() {
-        const pulse = 1 + Math.sin(performance.now() / 200) * 0.1;
-        const alpha = 0.4 + Math.sin(performance.now() / 300) * 0.3;
-
-        // Outer shield - honey-themed
-        const shieldGradient = ctx.createRadialGradient(0, -5, 0, 0, -5, 50 * pulse);
-        shieldGradient.addColorStop(0, "rgba(251, 191, 36, 0.6)");
-        shieldGradient.addColorStop(1, "rgba(251, 191, 36, 0.1)");
-
-        ctx.fillStyle = shieldGradient;
-        ctx.beginPath();
-        ctx.arc(0, -5, 50 * pulse, 0, Math.PI * 2);
-        ctx.fill();
-
-        // Honeycomb pattern in shield
-        ctx.strokeStyle = `rgba(120, 53, 15, ${alpha})`;
-        ctx.lineWidth = 2;
-
-        const hexSize = 15;
-        for (let i = 0; i < 6; i++) {
-            const angle = (i / 6) * Math.PI * 2 + performance.now() / 1000;
-            const sx = Math.cos(angle) * 30;
-            const sy = -5 + Math.sin(angle) * 30;
-
-            // Draw hexagon
-            ctx.beginPath();
-            for (let j = 0; j < 6; j++) {
-                const hexAngle = (j / 6) * Math.PI * 2 + angle;
-                const hexX = sx + Math.cos(hexAngle) * hexSize;
-                const hexY = sy + Math.sin(hexAngle) * hexSize;
-
-                if (j === 0) {
-                    ctx.moveTo(hexX, hexY);
-                } else {
-                    ctx.lineTo(hexX, hexY);
-                }
-            }
-            ctx.closePath();
-            ctx.stroke();
-        }
-
-        // Rotating honey drips
-        const dripTime = performance.now() / 800;
-        for (let i = 0; i < 4; i++) {
-            const angle = (i / 4) * Math.PI * 2 + dripTime;
-            const sx = Math.cos(angle) * 40;
-            const sy = -5 + Math.sin(angle) * 40;
-
-            // Honey drip shape
-            ctx.fillStyle = `rgba(251, 191, 36, ${alpha + 0.3})`;
-            ctx.beginPath();
-            ctx.ellipse(sx, sy, 3, 6, angle, 0, Math.PI * 2);
-            ctx.fill();
-
-            // Drip trail
-            const trailLength = 8;
-            const trailGradient = ctx.createLinearGradient(
-                sx, sy - trailLength,
-                sx, sy
-            );
-            trailGradient.addColorStop(0, "rgba(251, 191, 36, 0)");
-            trailGradient.addColorStop(1, `rgba(251, 191, 36, ${alpha})`);
-
-            ctx.fillStyle = trailGradient;
-            ctx.beginPath();
-            ctx.ellipse(sx, sy - trailLength/2, 2, trailLength, angle, 0, Math.PI * 2);
-            ctx.fill();
-        }
-    }
-
-    function drawSpeedTrail(anim) {
-        const trailCount = 5;
-        for (let i = 0; i < trailCount; i++) {
-            const alpha = 0.2 * (1 - i / trailCount);
-            const offset = -i * 8 * anim.scaleX;
-
-            ctx.save();
-            ctx.translate(offset, 0);
-            ctx.globalAlpha = alpha;
-
-            // Simplified bear silhouette
-            ctx.fillStyle = "#f59e0b";
-            ctx.beginPath();
-            ctx.arc(0, -28, 18, 0, Math.PI * 2);
-            ctx.fill();
-
-            ctx.beginPath();
-            ctx.ellipse(0, -10, 22, 32, 0, 0, Math.PI * 2);
-            ctx.fill();
-
-            ctx.restore();
-        }
-    }
-
-    function drawEvolutionHat(hatType) {
-        if (!hatType) return;
-
-        ctx.save();
-        ctx.translate(0, -40);
-
-        switch(hatType) {
-            case 'cap':
-                // Baseball cap
-                ctx.fillStyle = "#1e40af";
-                ctx.beginPath();
-                ctx.ellipse(0, -10, 20, 8, 0, 0, Math.PI * 2);
-                ctx.fill();
-                ctx.fillStyle = "#3b82f6";
-                ctx.beginPath();
-                ctx.roundRect(-15, -15, 30, 10, 5);
-                ctx.fill();
-                break;
-            case 'crown':
-                // Simple crown
-                ctx.fillStyle = "#fbbf24";
-                const points = 5;
-                const radius = 18;
-                for (let i = 0; i < points; i++) {
-                    const angle = (i * Math.PI * 2) / points - Math.PI/2;
-                    const x = Math.cos(angle) * radius;
-                    const y = Math.sin(angle) * radius;
-                    if (i === 0) {
-                        ctx.beginPath();
-                        ctx.moveTo(x, y);
-                    } else {
-                        ctx.lineTo(x, y);
-                    }
-                }
-                ctx.closePath();
-                ctx.fill();
-                break;
-            case 'majestic_crown':
-                // Fancy crown
-                ctx.fillStyle = "gold";
-                ctx.beginPath();
-                // Crown base
-                ctx.roundRect(-20, -10, 40, 8, 3);
-                // Crown spikes
-                for (let i = 0; i < 5; i++) {
-                    const x = -15 + i * 7.5;
-                    ctx.moveTo(x, -10);
-                    ctx.lineTo(x + 3.75, -20);
-                    ctx.lineTo(x + 7.5, -10);
-                }
-                ctx.fill();
-                // Jewels
-                ctx.fillStyle = "#ef4444";
-                ctx.beginPath();
-                ctx.arc(0, -5, 3, 0, Math.PI * 2);
-                ctx.fill();
-                break;
-        }
-
-        ctx.restore();
-    }
-
-    // ==================== GAME INITIALIZATION ====================
-    function resizeCanvas() {
-        const rect = gameContainer.getBoundingClientRect();
-        const dpr = window.devicePixelRatio || 1;
-        const width = rect.width;
-        const height = rect.height;
-
-        canvas.width = width * dpr;
-        canvas.height = height * dpr;
-        ctx.setTransform(dpr, 0, 0, dpr, 0, 0);
-
-        world.width = width;
-        world.height = height;
-
-        bear.y = world.height * 0.85;
-        bear.x = clamp(bear.x || world.width / 2, 30, world.width - 30);
-    }
-
-    function resetGameState() {
-        gameState.running = false;
-        gameState.paused = false;
-        gameState.timeLeft = GAME_DURATION;
-        gameState.score = 0;
-        gameState.streak = 0;
-        gameState.lives = MAX_LIVES;
-        gameState.shieldTime = 0;
-        gameState.activeEffects = {};
-        gameState.stats = {
-            jarsCaught: 0,
-            beesAvoided: 0,
-            consecutiveCatches: 0,
-            highestCombo: 0,
-            fastest5Catches: Infinity,
-            lastCatchTime: 0,
-            powerupsCollected: 0,
-            goldJarsCaught: 0
-        };
-        gameState.currentEvolution = 0;
-        gameState.dailyProgress = {};
-        jars.length = 0;
-        bees.length = 0;
-        scorePopups.length = 0;
-        particles.length = 0;
-        bearTrail.length = 0;
-        jarSpawnTimer = 0;
-        beeSpawnTimer = 0;
-        screenShake.timer = 0;
-
-        bear.x = world.width / 2;
-        bear.y = world.height * 0.85;
-
-        // Reset bear animation
-        bear.animation.walkCycle = 0;
-        bear.animation.bobPhase = 0;
-        bear.animation.scaleX = 1;
-        bear.animation.squashStretch = 1;
-        bear.animation.isMoving = false;
-        bear.animation.mood = "happy";
-        bear.animation.celebrationTimer = 0;
-
-        // Reset power-up indicators
-        document.querySelectorAll('.powerup-indicator').forEach(indicator => {
-            indicator.classList.remove('active');
-            const timer = indicator.querySelector('.powerup-timer');
-            if (timer) {
-                timer.style.width = '0%';
-            }
-        });
-
-        dynamicDifficulty.multiplier = 1;
-        dynamicDifficulty.performanceHistory = [];
-    }
-
-    // ==================== GAME LOGIC ====================
-    function difficultyConfig() {
-        const baseConfig = { jarRate: 0.7, beeRate: 1.7, fallSpeed: 190 };
-        if (settingsState.difficulty === 0) {
-            baseConfig.jarRate = 0.9;
-            baseConfig.beeRate = 2.2;
-            baseConfig.fallSpeed = 150;
-        }
-        else if (settingsState.difficulty === 2) {
-            baseConfig.jarRate = 0.55;
-            baseConfig.beeRate = 1.3;
-            baseConfig.fallSpeed = 220;
-        }
         return {
-            jarRate: baseConfig.jarRate / dynamicDifficulty.multiplier,
-            beeRate: baseConfig.beeRate * dynamicDifficulty.multiplier,
-            fallSpeed: baseConfig.fallSpeed * dynamicDifficulty.multiplier
+            get(...args) {
+                let obj;
+                if (active < pool.length) {
+                    obj = pool[active];
+                    resetFn(obj);
+                    getFn(obj, ...args);
+                } else {
+                    obj = {};
+                    getFn(obj, ...args);
+                    pool.push(obj);
+                }
+                obj.active = true;
+                active++;
+                return obj;
+            },
+
+            update(delta, updateFn) {
+                for (let i = 0; i < active; i++) {
+                    const obj = pool[i];
+                    if (obj.active) {
+                        const shouldKeep = updateFn(obj, delta, i);
+                        if (!shouldKeep) {
+                            obj.active = false;
+                            // Move to inactive section
+                            [pool[i], pool[active - 1]] = [pool[active - 1], pool[i]];
+                            active--;
+                            i--;
+                        }
+                    }
+                }
+            },
+
+            reset() {
+                active = 0;
+                pool.forEach(obj => obj.active = false);
+            },
+
+            getActiveCount() { return active; }
         };
     }
+};
 
-    function spawnJar() {
-        const {fallSpeed} = difficultyConfig();
-        const x = rand(30, world.width - 30);
-        const kindRand = Math.random();
-        let type = "normal";
-        let value = 10;
+// ============================================================================
+// SPRITE MANAGER (Shared between games)
+// ============================================================================
 
-        if (kindRand > 0.95) {
-            // Power-up jar (5% chance)
-            type = "powerup";
-            const powerupTypes = Object.keys(POWERUPS);
-            value = powerupTypes[Math.floor(Math.random() * powerupTypes.length)];
-        } else if (kindRand > 0.85) {
-            type = "gold";
-            value = 30;
-        } else if (kindRand > 0.7) {
-            type = "shield";
-            value = 15;
-        }
-
-        jars.push({
-            x,
-            y: -20,
-            radius: type === "powerup" ? 16 : 12,
-            vy: fallSpeed + rand(-20, 20),
-            type,
-            value
-        });
+class SpriteManager {
+    constructor() {
+        this.sprites = new Map();
+        this.loaded = false;
+        this.loadCallbacks = [];
     }
 
-    function spawnBee() {
-        const {fallSpeed} = difficultyConfig();
-        const x = Math.random() < 0.5 ? -30 : world.width + 30;
-        const vy = fallSpeed * 0.7;
-        const dir = x < 0 ? 1 : -1;
-        bees.push({
-            x,
-            y: rand(world.height * 0.2, world.height * 0.7),
-            vx: dir * rand(80, 140),
-            vy,
-            radius: 14
-        });
-    }
-
-    function updateEntities(dt) {
-        // Apply slow time effect
-        const timeScale = gameState.activeEffects.SLOW_TIME ? 0.5 : 1;
-        const scaledDt = dt * timeScale;
-
-        const {jarRate, beeRate} = difficultyConfig();
-
-        jarSpawnTimer += scaledDt;
-        beeSpawnTimer += scaledDt;
-
-        const jarInterval = jarRate;
-        const beeInterval = beeRate;
-
-        while (jarSpawnTimer > jarInterval) {
-            jarSpawnTimer -= jarInterval;
-            spawnJar();
-        }
-
-        while (beeSpawnTimer > beeInterval) {
-            beeSpawnTimer -= beeInterval;
-            spawnBee();
-        }
-
-        const targetDir = (keys.left ? -1 : 0) + (keys.right ? 1 : 0);
-        bear.dir = targetDir;
-        bear.vx = bear.dir * bear.speed * timeScale;
-        bear.x = clamp(bear.x + bear.vx * dt, 26, world.width - 26);
-
-        for (let i = jars.length - 1; i >= 0; i--) {
-            const jar = jars[i];
-            jar.y += jar.vy * scaledDt;
-            if (jar.y - jar.radius > world.height + 40) {
-                jars.splice(i, 1);
-                gameState.streak = 0;
-                gameState.stats.consecutiveCatches = 0;
-            }
-        }
-
-        for (let i = bees.length - 1; i >= 0; i--) {
-            const bee = bees[i];
-            bee.x += bee.vx * scaledDt;
-            bee.y += bee.vy * scaledDt * 0.04;
-
-            if (bee.x < -60 || bee.x > world.width + 60 || bee.y > world.height + 40) {
-                bees.splice(i, 1);
-            }
-        }
-
-        if (gameState.shieldTime > 0) {
-            gameState.shieldTime -= dt;
-            if (gameState.shieldTime <= 0) {
-                gameState.shieldTime = 0;
-                powerupIndicator.classList.remove("visible");
-            }
-        }
-
-        // Update power-ups
-        updatePowerups(dt);
-    }
-
-    // ==================== NEW UI/UX FUNCTIONS ====================
-
-    // Floating Score System
-    function createFloatingScore(amount, x, y, type = "normal") {
-        const scoreElement = document.createElement("div");
-        scoreElement.className = `floating-score ${type}`;
-        scoreElement.textContent = amount > 0 ? `+${amount}` : amount;
-        scoreElement.style.left = `${x}px`;
-        scoreElement.style.top = `${y}px`;
-        scoreElement.style.color = getScoreColor(type, amount);
-        gameContainer.appendChild(scoreElement);
-        setTimeout(() => { if (scoreElement.parentNode) scoreElement.parentNode.removeChild(scoreElement); }, 1000);
-    }
-
-    function getScoreColor(type, amount) {
-        switch(type) {
-            case "combo": return "#f97316";
-            case "gold": return "#fbbf24";
-            case "shield": return "#60a5fa";
-            case "powerup": return "#22c55e";
-            case "negative": return "#ef4444";
-            default: return amount >= 30 ? "#f59e0b" : "#84cc16";
-        }
-    }
-
-    function addScorePopup(amount, x, y, color, type = "normal") {
-        scorePopups.push({
-            amount: amount > 0 ? "+" + amount : String(amount),
-            x,
-            y,
-            color,
-            start: performance.now(),
-            duration: 650
-        });
-        createFloatingScore(amount, x, y - 30, type);
-    }
-
-    // Haptic Feedback
-    function triggerHaptic(feedbackType) {
-        if ('vibrate' in navigator) {
-            const patterns = {
-                catch: 30,
-                catchGold: [30, 20, 30],
-                catchPowerup: 100,
-                beeHit: [80, 40, 80],
-                shieldBlock: 50,
-                combo: [20, 20, 20, 20, 20],
-                gameOver: [200],
-                evolution: [50, 30, 50]
-            };
-            navigator.vibrate(patterns[feedbackType] || 30);
-        }
-    }
-
-    // Tutorial System
-    function initTutorial() {
-        const tutorialOverlay = document.getElementById("tutorialOverlay");
-        const skipTutorial = document.getElementById("skipTutorial");
-        const nextTutorial = document.getElementById("nextTutorial");
-        const startTutorial = document.getElementById("startTutorial");
-        const hasSeenTutorial = localStorage.getItem("honeyHunt_tutorialSeen");
-        if (!hasSeenTutorial && gameState.gamesPlayed === 0) showTutorial();
-        if (skipTutorial) {
-            skipTutorial.addEventListener("click", () => {
-                hideTutorial();
-                localStorage.setItem("honeyHunt_tutorialSeen", "true");
+    load() {
+        const promises = Object.entries(GameConstants.SPRITE_PATHS).map(([key, path]) => {
+            return new Promise((resolve) => {
+                const img = new Image();
+                img.src = path;
+                img.onload = () => {
+                    this.sprites.set(key, img);
+                    resolve(true);
+                };
+                img.onerror = () => {
+                    console.warn(`Failed to load sprite: ${key}`);
+                    // Create fallback canvas sprite
+                    const fallback = this.createFallbackSprite(key);
+                    this.sprites.set(key, fallback);
+                    resolve(true);
+                };
             });
-        }
-        if (nextTutorial) {
-            nextTutorial.addEventListener("click", nextTutorialStep);
-        }
-        if (startTutorial) {
-            startTutorial.addEventListener("click", () => {
-                hideTutorial();
-                localStorage.setItem("honeyHunt_tutorialSeen", "true");
-                startGame();
-            });
-        }
-    }
+        });
 
-    function showTutorial() {
-        const tutorialOverlay = document.getElementById("tutorialOverlay");
-        if (tutorialOverlay) {
-            tutorialOverlay.classList.add("visible");
-            tutorialOverlay.setAttribute("aria-hidden", "false");
-            updateTutorialStep();
-        }
-    }
-
-    function hideTutorial() {
-        const tutorialOverlay = document.getElementById("tutorialOverlay");
-        if (tutorialOverlay) {
-            tutorialOverlay.classList.remove("visible");
-            tutorialOverlay.setAttribute("aria-hidden", "true");
-        }
-    }
-
-    function nextTutorialStep() {
-        if (tutorialState.currentStep < tutorialState.totalSteps) {
-            tutorialState.currentStep++;
-            updateTutorialStep();
-        }
-    }
-
-    function updateTutorialStep() {
-        document.querySelectorAll(".tutorial-step").forEach(step => step.classList.remove("active"));
-        const currentStep = document.querySelector(`.tutorial-step[data-step="${tutorialState.currentStep}"]`);
-        if (currentStep) {
-            currentStep.classList.add("active");
-        }
-        document.querySelectorAll(".tutorial-dot").forEach((dot, index) => dot.classList.toggle("active", index + 1 === tutorialState.currentStep));
-        const nextButton = document.getElementById("nextTutorial");
-        const startButton = document.getElementById("startTutorial");
-        if (nextButton && startButton) {
-            if (tutorialState.currentStep === tutorialState.totalSteps) {
-                nextButton.style.display = "none";
-                startButton.style.display = "inline-flex";
-            } else {
-                nextButton.style.display = "inline-flex";
-                startButton.style.display = "none";
-            }
-        }
-    }
-
-    // Dynamic Difficulty
-    function updateDynamicDifficulty() {
-        if (gameState.timeLeft % 10 > 1) return;
-        const currentPerformance = gameState.score / (GAME_DURATION - gameState.timeLeft);
-        dynamicDifficulty.performanceHistory.push(currentPerformance);
-        if (dynamicDifficulty.performanceHistory.length > 3) dynamicDifficulty.performanceHistory.shift();
-        const avgPerformance = dynamicDifficulty.performanceHistory.reduce((a, b) => a + b, 0) / dynamicDifficulty.performanceHistory.length;
-        if (avgPerformance > 12) {
-            dynamicDifficulty.multiplier = Math.min(1.5, 1 + (avgPerformance - 12) * 0.04);
-            showNotification("Difficulty increased!", "#ef4444");
-        } else if (avgPerformance < 6) {
-            dynamicDifficulty.multiplier = Math.max(0.7, 1 - (6 - avgPerformance) * 0.05);
-            showNotification("Difficulty decreased", "#22c55e");
-        } else {
-            dynamicDifficulty.multiplier = 1;
-        }
-        showDifficultyIndicator();
-    }
-
-    function showDifficultyIndicator() {
-        if (Math.abs(dynamicDifficulty.multiplier - 1) > 0.05) {
-            const indicator = document.createElement("div");
-            indicator.className = "difficulty-indicator";
-            indicator.textContent = dynamicDifficulty.multiplier > 1 ? "⚡ Harder" : "🕊️ Easier";
-            indicator.style.cssText = `position: absolute; top: 50%; left: 50%; transform: translate(-50%, -50%); background: ${dynamicDifficulty.multiplier > 1 ? "#ef4444" : "#22c55e"}; color: white; padding: 8px 16px; border-radius: 20px; font-weight: bold; z-index: 100; animation: fadeOut 1.5s ease forwards;`;
-            gameContainer.appendChild(indicator);
-            setTimeout(() => indicator.remove(), 1500);
-        }
-    }
-
-    // Share Functionality
-    function initShareFunctionality() {
-        const shareButton = document.getElementById("shareScoreButton");
-        if (!shareButton) return;
-        shareButton.addEventListener("click", shareScore);
-        shareButton.addEventListener("click", function() {
-            this.classList.add("share-success");
-            setTimeout(() => this.classList.remove("share-success"), 500);
+        Promise.all(promises).then(() => {
+            this.loaded = true;
+            this.loadCallbacks.forEach(cb => cb());
+            this.loadCallbacks = [];
         });
     }
 
-    function shareScore() {
-        const score = gameState.score;
-        const best = gameState.best;
-        const isNewBest = score === best && score > 0;
-        const shareText = `I scored ${score} points${isNewBest ? ' (NEW BEST!)' : ''} in Honey Hunt! 🍯🐻\n\nCan you beat my score?\n\nPlay at: ${window.location.href}`;
-        const shareData = {
-            title: 'Honey Hunt Score',
-            text: shareText,
-            url: window.location.href
+    createFallbackSprite(key) {
+        const canvas = document.createElement('canvas');
+        canvas.width = 40;
+        canvas.height = 40;
+        const ctx = canvas.getContext('2d');
+        
+        // Simple colored circles as fallback
+        const colors = {
+            pooh: '#FFB347',
+            piglet: '#FFB6C1',
+            tigger: '#FF8C42',
+            eeyore: '#C0C0C0',
+            owl: '#8B4513',
+            roo: '#87CEEB',
+            honey: '#FFD54F'
         };
-        if (navigator.share && navigator.canShare(shareData)) {
-            navigator.share(shareData)
-                .then(() => showNotification('Score shared successfully!', '#22c55e'))
-                .catch(err => fallbackShare(shareText));
+        
+        ctx.fillStyle = colors[key] || '#FFB347';
+        ctx.beginPath();
+        ctx.arc(20, 20, 18, 0, Math.PI * 2);
+        ctx.fill();
+        
+        if (key === 'honey') {
+            ctx.strokeStyle = '#8B4513';
+            ctx.lineWidth = 2;
+            ctx.stroke();
+        }
+        
+        const img = new Image();
+        img.src = canvas.toDataURL();
+        return img;
+    }
+
+    get(key) {
+        return this.sprites.get(key);
+    }
+
+    onLoad(callback) {
+        if (this.loaded) {
+            callback();
         } else {
-            fallbackShare(shareText);
+            this.loadCallbacks.push(callback);
         }
     }
+}
 
-    function fallbackShare(text) {
-        if (navigator.clipboard && navigator.clipboard.writeText) {
-            navigator.clipboard.writeText(text)
-                .then(() => showNotification('Score copied to clipboard! 📋', '#fbbf24'))
-                .catch(err => prompt('Copy this text to share:', text));
-        } else {
-            prompt('Copy this text to share:', text);
-        }
+// ============================================================================
+// GAME 1: HONEY HIVE DEFENSE (Tower Defense)
+// ============================================================================
+
+class HoneyHiveDefense {
+    constructor(canvasId, options = {}) {
+        this.canvas = document.getElementById(canvasId);
+        if (!this.canvas) throw new Error(`Canvas ${canvasId} not found`);
+        
+        this.ctx = this.canvas.getContext('2d');
+        this.spriteManager = options.spriteManager || new SpriteManager();
+        
+        // Game state
+        this.state = {
+            honey: 100,
+            lives: 10,
+            wave: 1,
+            score: 0,
+            running: false,
+            gameOver: false,
+            selectedTower: 'pooh'
+        };
+
+        // Game objects
+        this.towers = [];
+        this.enemies = [];
+        this.projectiles = GameUtils.createObjectPool(
+            (obj, x, y, target, damage, color) => {
+                obj.x = x;
+                obj.y = y;
+                obj.target = target;
+                obj.damage = damage;
+                obj.color = color;
+                obj.speed = 5;
+            },
+            (obj) => { obj.active = false; }
+        );
+
+        // Tower configurations
+        this.towerConfigs = {
+            pooh: { cost: 20, damage: 10, range: 100, fireRate: 900, color: '#FFB347', sprite: 'pooh' },
+            tigger: { cost: 30, damage: 14, range: 90, fireRate: 650, color: '#FF8C42', sprite: 'tigger' },
+            piglet: { cost: 25, damage: 9, range: 95, fireRate: 550, color: '#FFB6C1', sprite: 'piglet' },
+            eeyore: { cost: 35, damage: 24, range: 115, fireRate: 1900, color: '#C0C0C0', sprite: 'eeyore' }
+        };
+
+        // Enemy configurations
+        this.enemyConfigs = {
+            heffalump: { health: 55, speed: 0.75, color: '#8A2BE2', points: 10 },
+            woozle: { health: 32, speed: 1.4, color: '#FF4500', points: 15 },
+            bee: { health: 18, speed: 2.1, color: '#FFD700', points: 5 }
+        };
+
+        // Game path (enemy route)
+        this.path = [
+            { x: 0, y: 220 },
+            { x: 160, y: 220 },
+            { x: 160, y: 120 },
+            { x: 320, y: 120 },
+            { x: 320, y: 320 },
+            { x: 520, y: 320 }
+        ];
+
+        // Performance
+        this.lastFrameTime = 0;
+        this.rafId = null;
+        this.lastSpawnTime = 0;
+        this.spawnInterval = 900;
+        this.waveActive = false;
+
+        // UI Elements
+        this.ui = {
+            honey: document.getElementById('honey-count'),
+            lives: document.getElementById('lives-count'),
+            wave: document.getElementById('wave-count'),
+            startBtn: document.getElementById('start-defense'),
+            upgradeBtn: document.getElementById('upgrade-tower'),
+            alert: document.getElementById('defense-alert')
+        };
+
+        this.bindEvents();
+        this.initCanvas();
     }
 
-    // Trail Effects
-    function updateBearTrail(dt) {
-        if (Math.abs(bear.vx) > 80 && gameState.running && !gameState.paused) {
-            bearTrail.push({
-                x: bear.x,
-                y: bear.y,
-                life: 1,
-                decay: 0.03 + Math.random() * 0.02,
-                size: 6 + Math.random() * 4,
-                color: `rgba(${gameState.currentEvolution * 40 + 200}, ${150 + gameState.currentEvolution * 20}, ${50}, 0.6)`,
-                vx: (Math.random() - 0.5) * 20,
-                vy: -20 - Math.random() * 20
+    initCanvas() {
+        // Optimize canvas for performance
+        this.canvas.style.imageRendering = 'pixelated';
+        this.ctx.imageSmoothingEnabled = false;
+        
+        // Pre-render static background
+        this.renderBackground();
+    }
+
+    bindEvents() {
+        // Canvas click for tower placement
+        this.canvas.addEventListener('click', (e) => this.handleCanvasClick(e));
+        
+        // UI buttons
+        if (this.ui.startBtn) {
+            this.ui.startBtn.addEventListener('click', () => this.startWave());
+        }
+        
+        if (this.ui.upgradeBtn) {
+            this.ui.upgradeBtn.addEventListener('click', () => this.upgradeTowers());
+        }
+
+        // Tower selection
+        document.querySelectorAll('.tower-option').forEach(option => {
+            option.addEventListener('click', (e) => {
+                this.state.selectedTower = e.currentTarget.dataset.tower;
+                document.querySelectorAll('.tower-option').forEach(o => 
+                    o.classList.remove('selected'));
+                e.currentTarget.classList.add('selected');
             });
-        }
-        for (let i = bearTrail.length - 1; i >= 0; i--) {
-            const trail = bearTrail[i];
-            trail.x += trail.vx * dt;
-            trail.y += trail.vy * dt;
-            trail.life -= trail.decay;
-            trail.size *= 0.97;
-            if (trail.life <= 0) bearTrail.splice(i, 1);
-        }
-    }
-
-    function drawBearTrail() {
-        for (const trail of bearTrail) {
-            ctx.save();
-            ctx.globalAlpha = trail.life * 0.7;
-            ctx.fillStyle = trail.color;
-            ctx.beginPath();
-            ctx.arc(trail.x, trail.y, trail.size, 0, Math.PI * 2);
-            ctx.fill();
-            ctx.globalAlpha = trail.life * 0.3;
-            ctx.beginPath();
-            ctx.arc(trail.x, trail.y, trail.size * 1.5, 0, Math.PI * 2);
-            ctx.fill();
-            ctx.restore();
-        }
-    }
-
-    // Button Click Sounds
-    function addButtonClickSounds() {
-        document.querySelectorAll('button').forEach(button => {
-            if (button.hasAttribute('data-has-sound')) return;
-            button.addEventListener('click', (e) => {
-                if (button.disabled || button.getAttribute('aria-disabled') === 'true') return;
-                playButtonClickSound();
-            });
-            button.setAttribute('data-has-sound', 'true');
         });
     }
 
-    // ==================== UPDATED GAME FUNCTIONS ====================
+    start() {
+        if (this.state.running) return;
+        
+        this.state.running = true;
+        this.lastFrameTime = performance.now();
+        this.gameLoop();
+        
+        this.updateUI();
+        this.showMessage('Prepare your defenses!', 2000);
+    }
 
-    function handleCollisions() {
-        for (let i = jars.length - 1; i >= 0; i--) {
-            const jar = jars[i];
-            const dx = jar.x - bear.x;
-            const dy = jar.y - (bear.y - 10);
-            const dist = Math.sqrt(dx * dx + dy * dy);
-            const collisionRadius = jar.type === "powerup" ? 30 : 26;
+    stop() {
+        this.state.running = false;
+        if (this.rafId) {
+            cancelAnimationFrame(this.rafId);
+            this.rafId = null;
+        }
+    }
 
-            if (dist < jar.radius + collisionRadius) {
-                jars.splice(i, 1);
+    reset() {
+        this.stop();
+        this.state = {
+            honey: 100,
+            lives: 10,
+            wave: 1,
+            score: 0,
+            running: false,
+            gameOver: false,
+            selectedTower: 'pooh'
+        };
+        this.towers = [];
+        this.enemies = [];
+        this.projectiles.reset();
+        this.waveActive = false;
+        this.updateUI();
+        this.showMessage('Game reset. Ready to play!', 1500);
+    }
 
-                if (jar.type === "powerup") {
-                    activatePowerup(jar.value);
-                    createJarParticles(jar.x, jar.y, "powerup");
-                    liveRegion.textContent = `Collected ${POWERUPS[jar.value].name} power-up!`;
-                    triggerHaptic("catchPowerup");
-                    addScorePopup("POWER UP!", bear.x, bear.y - 50, POWERUPS[jar.value].color, "powerup");
-                    playSound(SOUNDS.POWERUP_COLLECT);
+    gameLoop(currentTime) {
+        if (!this.state.running) return;
+
+        const delta = Math.min(currentTime - this.lastFrameTime, 100);
+        this.lastFrameTime = currentTime;
+
+        this.update(delta);
+        this.render();
+
+        this.rafId = requestAnimationFrame((t) => this.gameLoop(t));
+    }
+
+    update(delta) {
+        if (this.state.gameOver) return;
+
+        const deltaTime = delta / 16;
+
+        // Update enemies
+        for (let i = this.enemies.length - 1; i >= 0; i--) {
+            const enemy = this.enemies[i];
+            const target = this.path[enemy.pathIndex];
+            const dx = target.x - enemy.x;
+            const dy = target.y - enemy.y;
+            const dist = Math.hypot(dx, dy);
+
+            if (dist < 1) {
+                enemy.pathIndex++;
+                if (enemy.pathIndex >= this.path.length) {
+                    // Enemy reached the end
+                    this.state.lives--;
+                    this.enemies.splice(i, 1);
+                    this.showMessage('Honey jar spilled! -1 life', 1200);
+                    if (this.state.lives <= 0) {
+                        this.gameOver();
+                    }
                     continue;
                 }
-
-                let mult = 1 + Math.min(gameState.streak * 0.05, 1.5);
-                if (gameState.activeEffects.DOUBLE_POINTS) mult *= 2;
-                let gain = Math.round(jar.value * mult);
-                gameState.score += gain;
-                gameState.streak += 1;
-                gameState.stats.jarsCaught++;
-                gameState.stats.consecutiveCatches++;
-                if (gameState.streak > gameState.stats.highestCombo) gameState.stats.highestCombo = gameState.streak;
-                if (jar.type === "gold") gameState.stats.goldJarsCaught++;
-                const now = performance.now() / 1000;
-                if (gameState.stats.lastCatchTime > 0) {
-                    const timeDiff = now - gameState.stats.lastCatchTime;
-                    if (gameState.stats.consecutiveCatches >= 5) {
-                        const catchTime = timeDiff * 5;
-                        if (catchTime < gameState.stats.fastest5Catches) gameState.stats.fastest5Catches = catchTime;
-                    }
-                }
-                gameState.stats.lastCatchTime = now;
-                const type = jar.type === "gold" ? "gold" : jar.type === "shield" ? "shield" : gameState.streak >= 10 ? "combo" : "normal";
-                const popColor = jar.type === "gold" ? "#f97316" : jar.type === "shield" ? "#38bdf8" : gameState.streak >= 10 ? "#f97316" : "#0f766e";
-                addScorePopup(gain, bear.x, bear.y - 50, popColor, type);
-                createJarParticles(jar.x, jar.y, jar.type);
-                triggerHaptic(jar.type === "gold" ? "catchGold" : "catch");
-                playCatchSound(jar.type);
-
-                // Play streak milestone sounds
-                if (gameState.streak === 5 || gameState.streak === 10) {
-                    playStreakSound(gameState.streak);
-                }
-
-                showComboIfNeeded();
-
-                if (jar.type === "shield") {
-                    gameState.shieldTime = 5;
-                    powerupIndicator.classList.add("visible");
-                    liveRegion.textContent = "Shield active for five seconds.";
-                    triggerHaptic("shieldBlock");
-                    playSound(SOUNDS.SHIELD_ACTIVATE);
-                }
+            } else {
+                const step = enemy.speed * deltaTime;
+                enemy.x += (dx / dist) * step;
+                enemy.y += (dy / dist) * step;
             }
         }
 
-        if (gameState.activeEffects.MAGNET) {
-            const magnetRadius = gameState.activeEffects.MAGNET.radius || 120;
-            for (let i = jars.length - 1; i >= 0; i--) {
-                const jar = jars[i];
-                const dx = jar.x - bear.x;
-                const dy = jar.y - (bear.y - 10);
-                const dist = Math.sqrt(dx * dx + dy * dy);
-                if (dist < magnetRadius) {
-                    const speed = 300;
-                    const angle = Math.atan2(bear.y - 10 - jar.y, bear.x - jar.x);
-                    jar.x += Math.cos(angle) * speed * (1/60);
-                    jar.y += Math.sin(angle) * speed * (1/60);
-                }
+        // Update towers
+        this.towers.forEach(tower => {
+            if (tower.cooldown > 0) {
+                tower.cooldown -= delta;
+                return;
             }
-        }
 
-        if (gameState.activeEffects.BEE_REPELLENT) {
-            for (let i = bees.length - 1; i >= 0; i--) {
-                const bee = bees[i];
-                const dx = bee.x - bear.x;
-                const dy = bee.y - (bear.y - 10);
-                const dist = Math.sqrt(dx * dx + dy * dy);
-                if (dist < 150) {
-                    const angle = Math.atan2(bee.y - (bear.y - 10), bee.x - bear.x);
-                    bee.x += Math.cos(angle) * 200 * (1/60);
-                    bee.y += Math.sin(angle) * 200 * (1/60);
+            // Find target
+            let target = null;
+            let minDist = tower.range * tower.range;
+
+            this.enemies.forEach(enemy => {
+                const dx = enemy.x - tower.x;
+                const dy = enemy.y - tower.y;
+                const distSq = dx * dx + dy * dy;
+                
+                if (distSq < minDist) {
+                    minDist = distSq;
+                    target = enemy;
                 }
-            }
-        }
-
-        for (let i = bees.length - 1; i >= 0; i--) {
-            const bee = bees[i];
-            const dx = bee.x - bear.x;
-            const dy = bee.y - (bear.y - 10);
-            const dist = Math.sqrt(dx * dx + dy * dy);
-            if (dist < bee.radius + 24) {
-                bees.splice(i, 1);
-                if (gameState.shieldTime > 0) {
-                    gameState.shieldTime = 0;
-                    powerupIndicator.classList.remove("visible");
-                    addScorePopup(0, bear.x, bear.y - 50, "#e5e7eb");
-                    createJarParticles(bee.x, bee.y, "shield");
-                    liveRegion.textContent = "Bee blocked by shield.";
-                    triggerHaptic("shieldBlock");
-                    playShieldBlockSound();
-                } else {
-                    gameState.lives -= 1;
-                    gameState.streak = 0;
-                    gameState.stats.consecutiveCatches = 0;
-                    createBeeHitParticles(bear.x, bear.y - 10);
-                    shakeScreen(8, 0.4);
-                    liveRegion.textContent = "Bee hit! Lives left: " + gameState.lives;
-                    triggerHaptic("beeHit");
-                    playBeeHitSound();
-                    if (gameState.lives <= 0) {
-                        endGame();
-                        return;
-                    }
-                }
-            }
-        }
-    }
-
-    function triggerComboEffect() {
-        for (let i = 0; i < 30; i++) {
-            particles.push({
-                x: bear.x,
-                y: bear.y - 30,
-                vx: (Math.random() - 0.5) * 300,
-                vy: -100 - Math.random() * 200,
-                color: i < 10 ? "#f97316" : i < 20 ? "#facc15" : "#38bdf8",
-                life: 1.5,
-                decay: 0.01,
-                radius: 3 + Math.random() * 4,
-                gravity: 80
             });
-        }
-        triggerBearCelebration();
-        triggerHaptic("combo");
-        playComboSound();
-    }
 
-    function showComboIfNeeded() {
-        streakValue.textContent = String(gameState.streak);
-        if (gameState.streak >= 5) {
-            if (streakBadge) {
-                streakBadge.textContent = "Combo!";
-                streakBadge.classList.add("visible");
+            if (target) {
+                this.projectiles.get(tower.x, tower.y, target, tower.damage, tower.color);
+                tower.cooldown = tower.fireRate;
             }
-        } else {
-            if (streakBadge) streakBadge.classList.remove("visible");
-        }
+        });
 
-        if (gameState.streak > 0 && gameState.streak % 10 === 0) {
-            if (comboIndicator) {
-                comboIndicator.textContent = "x" + (1 + Math.floor(gameState.streak / 10)) + " Combo!";
-                comboIndicator.classList.add("visible");
-                triggerComboEffect();
-                setTimeout(() => comboIndicator.classList.remove("visible"), 700);
-            }
-        }
-    }
+        // Update projectiles
+        this.projectiles.update(delta, (proj, delta) => {
+            if (!proj.target || !proj.target.health) return false;
 
-    function drawJars() {
-        for (const jar of jars) {
-            ctx.save();
-            ctx.translate(jar.x, jar.y);
+            const dx = proj.target.x - proj.x;
+            const dy = proj.target.y - proj.y;
+            const dist = Math.hypot(dx, dy);
+            const step = proj.speed * (delta / 16);
 
-            const rot = jar.y * 0.01;
-            ctx.rotate(rot);
-
-            let bodyColor = "#facc15";
-            let glowColor = "rgba(250, 204, 21, 0.6)";
-            if (jar.type === "gold") {
-                bodyColor = "#f97316";
-                glowColor = "rgba(249, 115, 22, 0.7)";
-            } else if (jar.type === "shield") {
-                bodyColor = "#38bdf8";
-                glowColor = "rgba(56, 189, 248, 0.7)";
-            } else if (jar.type === "powerup") {
-                const powerup = POWERUPS[jar.value];
-                bodyColor = powerup ? powerup.color : "#facc15";
-                glowColor = `rgba(${parseInt(bodyColor.slice(1,3), 16)}, ${parseInt(bodyColor.slice(3,5), 16)}, ${parseInt(bodyColor.slice(5,7), 16)}, 0.7)`;
-            }
-
-            ctx.shadowColor = glowColor;
-            ctx.shadowBlur = jar.type === "gold" || jar.type === "shield" || jar.type === "powerup" ? 12 : 6;
-
-            ctx.fillStyle = bodyColor;
-            ctx.beginPath();
-            ctx.roundRect(-10, -14, 20, 26, 6);
-            ctx.fill();
-
-            ctx.shadowBlur = 0;
-
-            // Power-up icon
-            if (jar.type === "powerup") {
-                const powerup = POWERUPS[jar.value];
-                if (powerup) {
-                    ctx.fillStyle = "white";
-                    ctx.font = "bold 10px system-ui";
-                    ctx.textAlign = "center";
-                    ctx.textBaseline = "middle";
-                    ctx.fillText(powerup.icon, 0, 0);
+            if (dist < step) {
+                // Hit target
+                proj.target.health -= proj.damage;
+                if (proj.target.health <= 0) {
+                    this.state.honey += proj.target.points;
+                    this.state.score += proj.target.points;
+                    this.enemies = this.enemies.filter(e => e !== proj.target);
                 }
+                return false;
             } else {
-                ctx.fillStyle = "rgba(255, 255, 255, 0.9)";
-                ctx.fillRect(-10, -18, 20, 6);
+                proj.x += (dx / dist) * step;
+                proj.y += (dy / dist) * step;
+                return true;
+            }
+        });
 
-                ctx.fillStyle = "rgba(255, 255, 255, 0.5)";
-                ctx.beginPath();
-                ctx.ellipse(-3, -8, 4, 6, 0, 0, Math.PI * 2);
-                ctx.fill();
+        // Spawn enemies during wave
+        if (this.waveActive) {
+            const now = performance.now();
+            const maxEnemies = GameUtils.isMobile() ? 
+                GameConstants.MOBILE_MAX_ENEMIES : 
+                GameConstants.DESKTOP_MAX_ENEMIES;
 
-                ctx.fillStyle = "rgba(0, 0, 0, 0.25)";
-                ctx.fillRect(-6, -10, 12, 2);
+            if (this.enemies.length < maxEnemies && now - this.lastSpawnTime > this.spawnInterval) {
+                this.lastSpawnTime = now;
+                this.spawnEnemy();
             }
 
-            ctx.restore();
-        }
-    }
-
-    function drawBees() {
-        for (const bee of bees) {
-            ctx.save();
-            ctx.translate(bee.x, bee.y);
-
-            const wingFlap = Math.sin(performance.now() / 80) * 0.3;
-
-            ctx.fillStyle = "#facc15";
-            ctx.beginPath();
-            ctx.ellipse(0, 0, 14, 10, 0, 0, Math.PI * 2);
-            ctx.fill();
-
-            ctx.strokeStyle = "#111827";
-            ctx.lineWidth = 2;
-            ctx.beginPath();
-            ctx.moveTo(-8, -3);
-            ctx.lineTo(8, -3);
-            ctx.moveTo(-8, 0);
-            ctx.lineTo(8, 0);
-            ctx.moveTo(-8, 3);
-            ctx.lineTo(8, 3);
-            ctx.stroke();
-
-            ctx.fillStyle = "rgba(248, 250, 252, 0.85)";
-            ctx.save();
-            ctx.translate(-6, -10);
-            ctx.rotate(-0.8 + wingFlap);
-            ctx.beginPath();
-            ctx.ellipse(0, 0, 10, 6, 0, 0, Math.PI * 2);
-            ctx.fill();
-            ctx.restore();
-
-            ctx.save();
-            ctx.translate(6, -10);
-            ctx.rotate(0.8 - wingFlap);
-            ctx.beginPath();
-            ctx.ellipse(0, 0, 10, 6, 0, 0, Math.PI * 2);
-            ctx.fill();
-            ctx.restore();
-
-            ctx.shadowColor = "rgba(255, 255, 255, 0.8)";
-            ctx.shadowBlur = 4;
-            ctx.strokeStyle = "rgba(255, 255, 255, 0.6)";
-            ctx.lineWidth = 1;
-            ctx.beginPath();
-            ctx.ellipse(-6, -10, 9, 5, -0.8 + wingFlap, 0, Math.PI * 2);
-            ctx.ellipse(6, -10, 9, 5, 0.8 - wingFlap, 0, Math.PI * 2);
-            ctx.stroke();
-            ctx.shadowBlur = 0;
-
-            ctx.fillStyle = "#111827";
-            ctx.beginPath();
-            ctx.arc(8, -1, 2, 0, Math.PI * 2);
-            ctx.fill();
-
-            ctx.restore();
-        }
-    }
-
-    function drawScorePopups() {
-        const now = performance.now();
-        for (let i = scorePopups.length - 1; i >= 0; i--) {
-            const p = scorePopups[i];
-            const t = (now - p.start) / p.duration;
-            if (t >= 1) {
-                scorePopups.splice(i, 1);
-                continue;
+            // Check if wave is complete
+            if (this.enemies.length === 0 && now - this.lastSpawnTime > 3000) {
+                this.waveComplete();
             }
-            const easeOut = 1 - Math.pow(1 - t, 3);
-            const y = p.y - easeOut * 40;
-            const alpha = 1 - Math.pow(t, 2);
-            const scale = 1 + Math.sin(t * Math.PI) * 0.2;
-
-            ctx.save();
-            ctx.globalAlpha = alpha;
-            ctx.translate(p.x, y);
-            ctx.scale(scale, scale);
-            ctx.fillStyle = p.color;
-            ctx.strokeStyle = "rgba(255, 255, 255, 0.9)";
-            ctx.lineWidth = 3;
-            ctx.font = "bold 18px system-ui";
-            ctx.textAlign = "center";
-            ctx.textBaseline = "middle";
-            ctx.strokeText(p.amount, 0, 0);
-            ctx.fillText(p.amount, 0, 0);
-            ctx.restore();
-        }
-    }
-
-    function render() {
-        ctx.clearRect(0, 0, world.width, world.height);
-
-        // Apply screen shake
-        if (screenShake.timer > 0) {
-            screenShake.timer -= 1/60;
         }
 
-        const shakeX = screenShake.timer > 0 ?
-            (Math.random() - 0.5) * screenShake.intensity * (screenShake.timer / screenShake.duration) : 0;
-        const shakeY = screenShake.timer > 0 ?
-            (Math.random() - 0.5) * screenShake.intensity * (screenShake.timer / screenShake.duration) : 0;
-
-        ctx.save();
-        ctx.translate(shakeX, shakeY);
-
-        // Draw game elements
-        drawParticles();
-        drawBearTrail();
-        drawJars();
-        drawBees();
-        drawBear();
-
-        // Draw magnet effect
-        drawMagnetEffect();
-
-        drawScorePopups();
-
-        ctx.restore();
+        this.updateUI();
     }
 
-    function updateHud() {
-        scoreValue.textContent = String(gameState.score);
-        bestValue.textContent = String(gameState.best);
-        timeValue.textContent = String(Math.max(0, Math.floor(gameState.timeLeft)));
-        streakValue.textContent = String(gameState.streak);
-        if (livesValue) {
-            const full = "♥".repeat(gameState.lives);
-            const empty = "♡".repeat(MAX_LIVES - gameState.lives);
-            livesValue.textContent = full + empty;
-        }
-    }
+    spawnEnemy() {
+        const enemyTypes = Object.keys(this.enemyConfigs);
+        const type = enemyTypes[Math.floor(Math.random() * enemyTypes.length)];
+        const config = this.enemyConfigs[type];
 
-    function gameLoop(timestamp) {
-        if (!lastTimestamp) lastTimestamp = timestamp;
-        const dt = (timestamp - lastTimestamp) / 1000;
-        lastTimestamp = timestamp;
-
-        if (gameState.running && !gameState.paused) {
-            gameState.timeLeft -= dt;
-            if (gameState.timeLeft <= 0) {
-                gameState.timeLeft = 0;
-                endGame();
-            } else {
-                updateBearAnimation(dt);
-                updateEntities(dt);
-                updateParticles(dt);
-                updateBearTrail(dt);
-                handleCollisions();
-
-                // Check for achievements
-                checkAchievements();
-
-                // Update bear evolution
-                updateBearEvolution();
-
-                // Update daily challenge progress
-                updateDailyChallengeProgress();
-
-                // Update dynamic difficulty every 10 seconds
-                if (Math.floor(gameState.timeLeft) % 10 === 0) {
-                    updateDynamicDifficulty();
-                }
-            }
-            updateHud();
-        }
-
-        render();
-        requestAnimationFrame(gameLoop);
-    }
-
-    // ==================== OVERLAY MANAGEMENT ====================
-    function showOverlay(overlay) {
-        [startOverlay, pauseOverlay, gameOverOverlay].forEach(function (el) {
-            if (!el) return;
-            const isTarget = el === overlay;
-            if (isTarget) {
-                el.style.display = "flex";
-            }
-            el.classList.toggle("visible", isTarget);
-            el.setAttribute("aria-hidden", String(!isTarget));
-            if (!isTarget) {
-                el.style.display = "none";
-            }
+        this.enemies.push({
+            x: this.path[0].x,
+            y: this.path[0].y,
+            pathIndex: 1,
+            health: config.health,
+            maxHealth: config.health,
+            speed: config.speed,
+            color: config.color,
+            points: config.points,
+            type: type
         });
     }
 
-    function hideOverlay(overlay) {
-        if (!overlay) return;
-        overlay.classList.remove("visible");
-        overlay.setAttribute("aria-hidden", "true");
-        overlay.style.display = "none";
+    waveComplete() {
+        this.waveActive = false;
+        this.state.wave++;
+        this.state.honey += 50;
+        
+        this.showMessage(`Wave ${this.state.wave - 1} complete! +50 honey`, 2000);
+        
+        // Increase difficulty
+        this.spawnInterval = Math.max(300, this.spawnInterval - 50);
+        
+        Object.values(this.enemyConfigs).forEach(config => {
+            config.health = Math.floor(config.health * 1.2);
+        });
     }
 
-    function startGame() {
-        resetGameState();
-        gameState.running = true;
-        hideOverlay(startOverlay);
-        hideOverlay(gameOverOverlay);
-        hideOverlay(pauseOverlay);
-        updateHud();
-        liveRegion.textContent = "Game started. Catch the honey and avoid the bees.";
-        playGameStartSound();
-        if (settingsState.musicOn) startBackgroundMusic();
+    startWave() {
+        if (this.waveActive || this.state.gameOver) return;
+        
+        this.waveActive = true;
+        this.lastSpawnTime = performance.now();
+        this.showMessage(`Wave ${this.state.wave} incoming!`, 1500);
     }
 
-    function pauseGame() {
-        if (!gameState.running) return;
-        gameState.paused = true;
-        showOverlay(pauseOverlay);
-        liveRegion.textContent = "Game paused.";
-    }
-
-    function resumeGame() {
-        if (!gameState.running) return;
-        gameState.paused = false;
-        hideOverlay(pauseOverlay);
-        liveRegion.textContent = "Game resumed.";
-    }
-
-    function endGame() {
-        if (!gameState.running) return;
-        gameState.running = false;
-        gameState.paused = false;
-        gameState.gamesPlayed += 1;
-
-        if (gameState.score > gameState.best) {
-            gameState.best = gameState.score;
-            liveRegion.textContent = "New high score " + gameState.best + "!";
-        } else {
-            liveRegion.textContent = "Final score " + gameState.score + ".";
-        }
-
-        saveProgress();
-        if (finalScore) finalScore.textContent = String(gameState.score);
-        if (finalBest) finalBest.textContent = String(gameState.best);
-        if (overlayBest) overlayBest.textContent = String(gameState.best);
-        if (overlayGames) overlayGames.textContent = String(gameState.gamesPlayed);
-
-        showOverlay(gameOverOverlay);
-        triggerHaptic("gameOver");
-        playGameOverSound();
-        stopBackgroundMusic();
-    }
-
-    // ==================== UI CONTROLS ====================
-    function toggleHelp() {
-        if (!helpPanel) return;
-        const isOpen = helpPanel.classList.toggle("visible");
-        helpPanel.setAttribute("aria-hidden", String(!isOpen));
-        if (helpToggle) helpToggle.setAttribute("aria-expanded", String(isOpen));
-        if (helpToggleSecondary) helpToggleSecondary.setAttribute("aria-expanded", String(isOpen));
-        playSound(isOpen ? SOUNDS.MENU_OPEN : SOUNDS.MENU_CLOSE);
-    }
-
-    function openSettings() {
-        console.log("Opening settings modal...");
-        if (!settingsModal) {
-            console.error("Settings modal element not found!");
+    upgradeTowers() {
+        if (this.state.honey < 50 || this.towers.length === 0) {
+            this.showMessage('Not enough honey or no towers to upgrade!', 1500);
             return;
         }
-        settingsModal.classList.add("visible");
-        settingsModal.style.display = "flex";
-        if (settingsToggle) settingsToggle.setAttribute("aria-expanded", "true");
-        if (settingsBest) settingsBest.textContent = String(gameState.best);
-        if (settingsPanel) settingsPanel.focus();
-        playSound(SOUNDS.MENU_OPEN);
-        console.log("Settings modal opened");
-    }
 
-    function closeSettings() {
-        console.log("Closing settings modal...");
-        if (!settingsModal) return;
-        settingsModal.classList.remove("visible");
-        settingsModal.style.display = "none";
-        if (settingsToggle) settingsToggle.setAttribute("aria-expanded", "false");
-        playSound(SOUNDS.MENU_CLOSE);
-        console.log("Settings modal closed");
-    }
-
-    function applySettingsToUi() {
-        console.log("Applying settings to UI:", settingsState);
-
-        if (musicToggle) {
-            musicToggle.dataset.on = settingsState.musicOn ? "true" : "false";
-            musicToggle.setAttribute("aria-pressed", String(settingsState.musicOn));
-            musicToggle.innerHTML = settingsState.musicOn ?
-                '<i class="fas fa-volume-up" aria-hidden="true"></i><span>Music</span>' :
-                '<i class="fas fa-volume-mute" aria-hidden="true"></i><span>Music</span>';
-        }
-
-        if (sfxToggle) {
-            sfxToggle.dataset.on = settingsState.sfxOn ? "true" : "false";
-            sfxToggle.setAttribute("aria-pressed", String(settingsState.sfxOn));
-            sfxToggle.innerHTML = settingsState.sfxOn ?
-                '<i class="fas fa-volume-up" aria-hidden="true"></i><span>SFX</span>' :
-                '<i class="fas fa-volume-mute" aria-hidden="true"></i><span>SFX</span>';
-        }
-
-        diffButtons.forEach(btn => {
-            const level = Number(btn.dataset.level);
-            btn.classList.toggle("active", level === settingsState.difficulty);
+        this.state.honey -= 50;
+        this.towers.forEach(tower => {
+            tower.level++;
+            tower.damage += 5;
+            tower.range += 10;
         });
+
+        this.showMessage('Towers upgraded!', 1200);
     }
 
-    function initTheme() {
-        if (document.body.classList.contains("dark")) {
-            if (themeToggle) {
-                themeToggle.setAttribute("aria-pressed", "true");
-                themeToggle.innerHTML = '<i class="fas fa-sun" aria-hidden="true"></i><span>Theme</span>';
-            }
+    handleCanvasClick(e) {
+        if (this.state.gameOver) return;
+
+        const rect = this.canvas.getBoundingClientRect();
+        const x = e.clientX - rect.left;
+        const y = e.clientY - rect.top;
+
+        // Check if too close to path
+        const nearPath = this.path.some((point, i) => {
+            if (i === 0) return false;
+            const prev = this.path[i - 1];
+            const dist = this.pointToLineDistance(x, y, prev.x, prev.y, point.x, point.y);
+            return dist < 40;
+        });
+
+        if (nearPath) {
+            this.showMessage('Too close to the path!', 1200);
+            return;
+        }
+
+        const towerType = this.towerConfigs[this.state.selectedTower];
+        if (this.state.honey < towerType.cost) {
+            this.showMessage('Not enough honey!', 1200);
+            return;
+        }
+
+        this.state.honey -= towerType.cost;
+        this.towers.push({
+            x, y,
+            type: this.state.selectedTower,
+            damage: towerType.damage,
+            range: towerType.range,
+            fireRate: towerType.fireRate,
+            color: towerType.color,
+            level: 1,
+            cooldown: 0
+        });
+
+        this.updateUI();
+    }
+
+    pointToLineDistance(px, py, x1, y1, x2, y2) {
+        const A = px - x1;
+        const B = py - y1;
+        const C = x2 - x1;
+        const D = y2 - y1;
+
+        const dot = A * C + B * D;
+        const lenSq = C * C + D * D;
+        let param = -1;
+        
+        if (lenSq !== 0) param = dot / lenSq;
+
+        let xx, yy;
+
+        if (param < 0) {
+            xx = x1;
+            yy = y1;
+        } else if (param > 1) {
+            xx = x2;
+            yy = y2;
         } else {
-            if (themeToggle) {
-                themeToggle.setAttribute("aria-pressed", "false");
-                themeToggle.innerHTML = '<i class="fas fa-moon" aria-hidden="true"></i><span>Theme</span>';
+            xx = x1 + param * C;
+            yy = y1 + param * D;
+        }
+
+        const dx = px - xx;
+        const dy = py - yy;
+        return Math.hypot(dx, dy);
+    }
+
+    gameOver() {
+        this.state.gameOver = true;
+        this.waveActive = false;
+        this.showMessage(`Game Over! Final Score: ${this.state.score}`, 3000);
+        
+        setTimeout(() => {
+            if (confirm(`Game Over! Score: ${this.state.score}\nPlay again?`)) {
+                this.reset();
+                this.start();
             }
-        }
+        }, 1000);
     }
 
-    function isFullscreen() {
-        return (
-            document.fullscreenElement ||
-            document.webkitFullscreenElement ||
-            document.mozFullScreenElement ||
-            document.msFullscreenElement
-        );
-    }
-
-    function enterFullscreen(el) {
-        if (el.requestFullscreen) {
-            el.requestFullscreen();
-        } else if (el.webkitRequestFullscreen) {
-            el.webkitRequestFullscreen();
-        } else if (el.mozRequestFullScreen) {
-            el.mozRequestFullScreen();
-        } else if (el.msRequestFullscreen) {
-            el.msRequestFullscreen();
-        }
-    }
-
-    function exitFullscreen() {
-        if (document.exitFullscreen) {
-            document.exitFullscreen();
-        } else if (document.webkitExitFullscreen) {
-            document.webkitExitFullscreen();
-        } else if (document.mozCancelFullScreen) {
-            document.mozCancelFullScreen();
-        } else if (document.msExitFullscreen) {
-            document.msExitFullscreen();
-        }
-    }
-
-    function updateFullscreenButton() {
-        const isFs = isFullscreen();
-        const icon = isFs ? "fa-down-left-and-up-right-to-center" : "fa-up-right-and-down-left-from-center";
-        const text = isFs ? "Exit Fullscreen" : "Fullscreen";
-
-        if (fullscreenToggle) {
-            fullscreenToggle.innerHTML = `<i class="fas ${icon}" aria-hidden="true"></i><span>${text}</span>`;
-        }
-    }
-
-    function initFullscreen() {
-        if (!fullscreenToggle) return;
-
-        fullscreenToggle.addEventListener("click", () => {
-            if (isFullscreen()) {
-                exitFullscreen();
+    render() {
+        // Clear canvas
+        this.ctx.clearRect(0, 0, this.canvas.width, this.canvas.height);
+        
+        // Draw background (could be cached)
+        this.renderBackground();
+        
+        // Draw towers
+        this.towers.forEach(tower => {
+            const sprite = this.spriteManager.get(tower.type);
+            if (sprite) {
+                this.ctx.drawImage(sprite, tower.x - 20, tower.y - 20, 40, 40);
             } else {
-                enterFullscreen(gameContainer);
+                // Fallback circle
+                this.ctx.fillStyle = tower.color;
+                this.ctx.beginPath();
+                this.ctx.arc(tower.x, tower.y, 18, 0, Math.PI * 2);
+                this.ctx.fill();
             }
-            playButtonClickSound();
+            
+            // Level indicator
+            this.ctx.fillStyle = '#000';
+            this.ctx.font = '12px Arial';
+            this.ctx.fillText(`Lv.${tower.level}`, tower.x - 10, tower.y - 25);
         });
-
-        document.addEventListener("fullscreenchange", () => {
-            updateFullscreenButton();
-            resizeCanvas();
+        
+        // Draw enemies
+        this.enemies.forEach(enemy => {
+            this.ctx.fillStyle = enemy.color;
+            this.ctx.beginPath();
+            this.ctx.arc(enemy.x, enemy.y, 12, 0, Math.PI * 2);
+            this.ctx.fill();
+            
+            // Health bar
+            const healthWidth = 30 * (enemy.health / enemy.maxHealth);
+            this.ctx.fillStyle = '#FF0000';
+            this.ctx.fillRect(enemy.x - 15, enemy.y - 20, 30, 4);
+            this.ctx.fillStyle = '#00FF00';
+            this.ctx.fillRect(enemy.x - 15, enemy.y - 20, healthWidth, 4);
         });
-
-        document.addEventListener("webkitfullscreenchange", () => {
-            updateFullscreenButton();
-            resizeCanvas();
+        
+        // Draw projectiles
+        this.projectiles.update(0, (proj) => {
+            this.ctx.fillStyle = proj.color;
+            this.ctx.beginPath();
+            this.ctx.arc(proj.x, proj.y, 4, 0, Math.PI * 2);
+            this.ctx.fill();
+            return true;
         });
-
-        document.addEventListener("mozfullscreenchange", () => {
-            updateFullscreenButton();
-            resizeCanvas();
-        });
-
-        document.addEventListener("msfullscreenchange", () => {
-            updateFullscreenButton();
-            resizeCanvas();
-        });
-
-        updateFullscreenButton();
-
-        document.addEventListener("keydown", (e) => {
-            if (e.key === "F11") {
-                e.preventDefault();
-                if (isFullscreen()) {
-                    exitFullscreen();
-                } else {
-                    enterFullscreen(gameContainer);
-                }
-            }
-        });
+        
+        // Draw path (debug)
+        this.ctx.strokeStyle = 'rgba(139, 69, 19, 0.3)';
+        this.ctx.lineWidth = 30;
+        this.ctx.lineCap = 'round';
+        this.ctx.beginPath();
+        this.ctx.moveTo(this.path[0].x, this.path[0].y);
+        this.path.forEach(point => this.ctx.lineTo(point.x, point.y));
+        this.ctx.stroke();
     }
 
-    function handleKeyDown(e) {
-        if (e.key === "ArrowLeft") {
-            keys.left = true;
-        } else if (e.key === "ArrowRight") {
-            keys.right = true;
-        } else if (e.key === " " || e.code === "Space") {
-            e.preventDefault();
-            if (!gameState.running) {
-                startGame();
-            } else {
-                togglePause();
-            }
-        } else if (e.key === "p" || e.key === "P") {
-            e.preventDefault();
-            togglePause();
-        } else if (e.key === "Escape") {
-            if (settingsModal && settingsModal.classList.contains("visible")) {
-                closeSettings();
-                e.preventDefault();
-            }
-            if (helpPanel && helpPanel.classList.contains("visible")) {
-                toggleHelp();
-                e.preventDefault();
-            }
-            if (isFullscreen()) {
-                exitFullscreen();
-                e.preventDefault();
-            }
+    renderBackground() {
+        // Simple background
+        this.ctx.fillStyle = '#87CEEB';
+        this.ctx.fillRect(0, 0, this.canvas.width, this.canvas.height);
+        
+        this.ctx.fillStyle = '#90EE90';
+        this.ctx.fillRect(0, this.canvas.height - 60, this.canvas.width, 60);
+    }
+
+    updateUI() {
+        if (this.ui.honey) this.ui.honey.textContent = this.state.honey;
+        if (this.ui.lives) this.ui.lives.textContent = this.state.lives;
+        if (this.ui.wave) this.ui.wave.textContent = this.state.wave;
+    }
+
+    showMessage(text, duration = 2000) {
+        if (this.ui.alert) {
+            this.ui.alert.textContent = text;
+            this.ui.alert.style.opacity = '1';
+            setTimeout(() => {
+                this.ui.alert.style.opacity = '0';
+            }, duration);
         }
     }
+}
 
-    function handleKeyUp(e) {
-        if (e.key === "ArrowLeft") {
-            keys.left = false;
-        } else if (e.key === "ArrowRight") {
-            keys.right = false;
-        }
-    }
+// ============================================================================
+// GAME 2: HONEY POT CATCH
+// ============================================================================
 
-    function bindPadButton(btn, direction) {
-        if (!btn) return;
-
-        const set = (pressed) => {
-            btn.setAttribute("aria-pressed", String(pressed));
-            if (direction === "left") {
-                keys.left = pressed;
-            } else if (direction === "right") {
-                keys.right = pressed;
-            }
+class HoneyPotCatch {
+    constructor(canvasId, options = {}) {
+        this.canvas = document.getElementById(canvasId);
+        if (!this.canvas) throw new Error(`Canvas ${canvasId} not found`);
+        
+        this.ctx = this.canvas.getContext('2d');
+        this.spriteManager = options.spriteManager || new SpriteManager();
+        
+        // Game state
+        this.state = {
+            score: 0,
+            timeLeft: 60,
+            lives: 3,
+            running: false,
+            gameOver: false,
+            paused: false
         };
 
-        btn.addEventListener("mousedown", (e) => {
-            e.preventDefault();
-            set(true);
-        });
+        // Game objects
+        this.player = {
+            x: this.canvas.width / 2,
+            y: this.canvas.height - 60,
+            width: 60,
+            height: 60,
+            speed: 8
+        };
 
-        btn.addEventListener("mouseup", (e) => {
-            e.preventDefault();
-            set(false);
-        });
+        this.honeyPots = GameUtils.createObjectPool(
+            (obj) => {
+                obj.x = Math.random() * (this.canvas.width - 30) + 15;
+                obj.y = -30;
+                obj.speed = 2 + Math.random() * 3;
+                obj.type = 'honey';
+            },
+            (obj) => { obj.active = false; }
+        );
 
-        btn.addEventListener("mouseleave", () => set(false));
+        this.bees = GameUtils.createObjectPool(
+            (obj) => {
+                obj.x = Math.random() * (this.canvas.width - 30) + 15;
+                obj.y = -30;
+                obj.speed = 3 + Math.random() * 2;
+                obj.type = 'bee';
+            },
+            (obj) => { obj.active = false; }
+        );
 
-        btn.addEventListener("touchstart", (e) => {
-            e.preventDefault();
-            set(true);
-        });
+        // Performance
+        this.lastFrameTime = 0;
+        this.rafId = null;
+        this.timerInterval = null;
+        this.spawnTimer = 0;
+        
+        // Controls
+        this.keys = {};
+        
+        // UI Elements
+        this.ui = {
+            score: document.getElementById('score-count'),
+            time: document.getElementById('time-count'),
+            lives: document.getElementById('catch-lives'),
+            startBtn: document.getElementById('start-catch'),
+            pauseBtn: document.getElementById('pause-catch'),
+            overlay: document.getElementById('catch-overlay')
+        };
 
-        btn.addEventListener("touchend", (e) => {
-            e.preventDefault();
-            set(false);
-        });
-
-        btn.addEventListener("touchcancel", () => set(false));
+        this.bindEvents();
+        this.initCanvas();
     }
 
-    function initControls() {
-        window.addEventListener("keydown", handleKeyDown);
-        window.addEventListener("keyup", handleKeyUp);
+    initCanvas() {
+        this.canvas.style.imageRendering = 'pixelated';
+        this.ctx.imageSmoothingEnabled = false;
+        this.renderBackground();
+    }
 
-        if (pauseButton) {
-            pauseButton.onclick = (e) => {
+    bindEvents() {
+        // Keyboard controls
+        window.addEventListener('keydown', (e) => {
+            this.keys[e.key] = true;
+            if (e.key === 'ArrowLeft' || e.key === 'ArrowRight') {
                 e.preventDefault();
-                togglePause();
-            };
-        }
-
-        bindPadButton(leftButton, "left");
-        bindPadButton(rightButton, "right");
-    }
-
-    function initSettings() {
-        console.log("Initializing settings...");
-
-        if (!settingsToggle) {
-            console.error("Settings toggle button not found!");
-            return;
-        }
-
-        if (!settingsModal) {
-            console.error("Settings modal not found!");
-            return;
-        }
-
-        if (!settingsClose) {
-            console.error("Settings close button not found!");
-            return;
-        }
-
-        console.log("All settings elements found, setting up event listeners...");
-
-        // Setup settings toggle
-        settingsToggle.addEventListener("click", function(e) {
-            console.log("Settings toggle clicked!");
-            e.preventDefault();
-            e.stopPropagation();
-            openSettings();
-        });
-
-        // Setup settings close
-        settingsClose.addEventListener("click", function(e) {
-            console.log("Settings close clicked!");
-            e.preventDefault();
-            e.stopPropagation();
-            closeSettings();
-        });
-
-        // Close modal when clicking outside
-        settingsModal.addEventListener("click", function(e) {
-            if (e.target === settingsModal) {
-                console.log("Clicked outside modal, closing...");
-                closeSettings();
             }
         });
 
-        // Setup music toggle
-        if (musicToggle) {
-            musicToggle.addEventListener("click", function(e) {
-                e.preventDefault();
-                e.stopPropagation();
-                console.log("Music toggle clicked, current state:", settingsState.musicOn);
-                settingsState.musicOn = !settingsState.musicOn;
-                applySettingsToUi();
-                saveProgress();
+        window.addEventListener('keyup', (e) => {
+            this.keys[e.key] = false;
+        });
 
-                if (settingsState.musicOn) {
-                    startBackgroundMusic();
-                    setMusicVolume(0.6);
-                    liveRegion.textContent = "Music enabled";
-                    console.log("Music enabled");
-                } else {
-                    stopBackgroundMusic();
-                    setMusicVolume(0);
-                    liveRegion.textContent = "Music disabled";
-                    console.log("Music disabled");
+        // Touch controls for mobile
+        this.canvas.addEventListener('touchstart', (e) => {
+            e.preventDefault();
+            const touch = e.touches[0];
+            this.handleTouch(touch.clientX);
+        });
+
+        this.canvas.addEventListener('touchmove', (e) => {
+            e.preventDefault();
+            const touch = e.touches[0];
+            this.handleTouch(touch.clientX);
+        });
+
+        // UI buttons
+        if (this.ui.startBtn) {
+            this.ui.startBtn.addEventListener('click', () => this.start());
+        }
+
+        if (this.ui.pauseBtn) {
+            this.ui.pauseBtn.addEventListener('click', () => this.togglePause());
+        }
+    }
+
+    handleTouch(touchX) {
+        const rect = this.canvas.getBoundingClientRect();
+        this.player.x = touchX - rect.left;
+        this.player.x = Math.max(this.player.width / 2, 
+            Math.min(this.canvas.width - this.player.width / 2, this.player.x));
+    }
+
+    start() {
+        if (this.state.running) return;
+
+        this.reset();
+        this.state.running = true;
+        
+        // Countdown
+        this.showOverlay('3');
+        setTimeout(() => {
+            this.showOverlay('2');
+            setTimeout(() => {
+                this.showOverlay('1');
+                setTimeout(() => {
+                    this.showOverlay('GO!');
+                    this.startGameLoop();
+                    this.startTimer();
+                    setTimeout(() => this.hideOverlay(), 500);
+                }, 500);
+            }, 500);
+        }, 500);
+    }
+
+    startGameLoop() {
+        this.lastFrameTime = performance.now();
+        this.gameLoop();
+    }
+
+    startTimer() {
+        if (this.timerInterval) clearInterval(this.timerInterval);
+        
+        this.timerInterval = setInterval(() => {
+            if (!this.state.paused && this.state.running) {
+                this.state.timeLeft--;
+                this.updateUI();
+                
+                if (this.state.timeLeft <= 0) {
+                    this.gameOver(true);
                 }
-                playButtonClickSound();
-            });
-        }
-
-        // Setup SFX toggle
-        if (sfxToggle) {
-            sfxToggle.addEventListener("click", function(e) {
-                e.preventDefault();
-                e.stopPropagation();
-                console.log("SFX toggle clicked, current state:", settingsState.sfxOn);
-                settingsState.sfxOn = !settingsState.sfxOn;
-                applySettingsToUi();
-                saveProgress();
-                liveRegion.textContent = "Sound effects " + (settingsState.sfxOn ? "enabled" : "disabled");
-                console.log("SFX:", settingsState.sfxOn ? "enabled" : "disabled");
-                playButtonClickSound();
-            });
-        }
-
-        // Setup difficulty buttons
-        diffButtons.forEach(btn => {
-            btn.addEventListener("click", function(e) {
-                e.preventDefault();
-                e.stopPropagation();
-                const level = Number(btn.dataset.level);
-                console.log("Difficulty button clicked, level:", level);
-                settingsState.difficulty = level;
-                applySettingsToUi();
-                saveProgress();
-                liveRegion.textContent = "Difficulty set to " + btn.textContent + ".";
-                console.log("Difficulty set to:", level);
-                playButtonClickSound();
-            });
-        });
-
-        // Setup reset progress
-        if (resetProgress) {
-            resetProgress.addEventListener("click", function(e) {
-                e.preventDefault();
-                e.stopPropagation();
-                console.log("Reset progress clicked");
-                if (confirm("Are you sure you want to reset all progress? This will delete your high score and games played.")) {
-                    gameState.best = 0;
-                    gameState.gamesPlayed = 0;
-                    gameState.achievements = [];
-                    saveProgress();
-                    if (settingsBest) settingsBest.textContent = "0";
-                    if (bestValue) bestValue.textContent = "0";
-                    if (overlayBest) overlayBest.textContent = "0";
-                    if (overlayGames) overlayGames.textContent = "0";
-                    liveRegion.textContent = "Progress reset.";
-                    console.log("Progress reset");
-                    playButtonClickSound();
-                }
-            });
-        }
-
-        console.log("Settings initialization complete");
+            }
+        }, 1000);
     }
 
-    function initTopbar() {
-        if (!themeToggle) return;
-
-        themeToggle.addEventListener("click", function(e) {
-            e.preventDefault();
-            e.stopPropagation();
-            const isDark = document.body.classList.toggle("dark");
-            localStorage.setItem(STORAGE_KEYS.THEME, isDark ? "dark" : "light");
-            initTheme();
-            playButtonClickSound();
-        });
-        initTheme();
-        initFullscreen();
-    }
-
-    function initOverlays() {
-        if (startButton) startButton.addEventListener("click", startGame);
-        if (startButtonOverlay) startButtonOverlay.addEventListener("click", startGame);
-        if (resumeButton) resumeButton.addEventListener("click", resumeGame);
-        if (restartButton) restartButton.addEventListener("click", startGame);
-
-        if (startOverlay) {
-            startOverlay.style.display = "flex";
-            startOverlay.classList.add("visible");
-            startOverlay.setAttribute("aria-hidden", "false");
-        }
-
-        if (overlayBest) overlayBest.textContent = String(gameState.best);
-        if (overlayGames) overlayGames.textContent = String(gameState.gamesPlayed);
-    }
-
-    function initHelp() {
-        if (helpToggle) helpToggle.addEventListener("click", toggleHelp);
-        if (helpToggleSecondary) helpToggleSecondary.addEventListener("click", toggleHelp);
-    }
-
-    // ==================== QUICK WINS: CSS INJECTION ====================
-    function injectQuickWinsCSS() {
-        const powerupCSS = `
-            .powerup-indicators {
-                position: absolute;
-                top: 80px;
-                right: 20px;
-                display: flex;
-                flex-direction: column;
-                gap: 10px;
-                z-index: 100;
+    togglePause() {
+        if (!this.state.running) return;
+        
+        this.state.paused = !this.state.paused;
+        if (this.state.paused) {
+            if (this.rafId) {
+                cancelAnimationFrame(this.rafId);
+                this.rafId = null;
             }
-
-            .powerup-indicator {
-                width: 50px;
-                height: 50px;
-                border-radius: 12px;
-                display: flex;
-                align-items: center;
-                justify-content: center;
-                font-size: 20px;
-                position: relative;
-                opacity: 0.3;
-                transition: all 0.3s ease;
-                transform: scale(0.9);
-            }
-
-            .powerup-indicator.active {
-                opacity: 1;
-                transform: scale(1);
-                box-shadow: 0 0 20px currentColor;
-            }
-
-            .powerup-indicator[data-type="DOUBLE_POINTS"] {
-                background: linear-gradient(135deg, #fbbf24, #f59e0b);
-                color: #78350f;
-            }
-
-            .powerup-indicator[data-type="SLOW_TIME"] {
-                background: linear-gradient(135deg, #60a5fa, #3b82f6);
-                color: white;
-            }
-
-            .powerup-indicator[data-type="MAGNET"] {
-                background: linear-gradient(135deg, #ef4444, #dc2626);
-                color: white;
-            }
-
-            .powerup-indicator[data-type="BEE_REPELLENT"] {
-                background: linear-gradient(135deg, #22c55e, #16a34a);
-                color: white;
-            }
-
-            .powerup-timer {
-                position: absolute;
-                bottom: -8px;
-                left: 5px;
-                right: 5px;
-                height: 3px;
-                background: rgba(255, 255, 255, 0.3);
-                border-radius: 2px;
-                overflow: hidden;
-            }
-
-            .powerup-timer::after {
-                content: '';
-                position: absolute;
-                top: 0;
-                left: 0;
-                height: 100%;
-                background: white;
-                width: 100%;
-                transition: width linear;
-            }
-
-            .achievement-popup {
-                position: fixed;
-                top: 50%;
-                left: 50%;
-                transform: translate(-50%, -50%);
-                background: linear-gradient(135deg, #fbbf24, #f59e0b);
-                color: #78350f;
-                padding: 20px;
-                border-radius: 20px;
-                box-shadow: 0 10px 40px rgba(0, 0, 0, 0.3);
-                z-index: 1000;
-                display: none;
-                align-items: center;
-                gap: 15px;
-                min-width: 300px;
-                animation: achievementPopup 3s ease forwards;
-                border: 3px solid #78350f;
-            }
-
-            @keyframes achievementPopup {
-                0% { opacity: 0; transform: translate(-50%, -40%); }
-                10% { opacity: 1; transform: translate(-50%, -50%); }
-                90% { opacity: 1; transform: translate(-50%, -50%); }
-                100% { opacity: 0; transform: translate(-50%, -60%); }
-            }
-
-            .achievement-icon {
-                font-size: 40px;
-                filter: drop-shadow(2px 2px 2px rgba(0,0,0,0.2));
-            }
-
-            .achievement-text {
-                flex: 1;
-            }
-
-            .achievement-title {
-                font-weight: bold;
-                font-size: 18px;
-                margin-bottom: 5px;
-            }
-
-            .achievement-name {
-                font-size: 16px;
-                font-weight: bold;
-                margin-bottom: 5px;
-            }
-
-            .achievement-desc {
-                font-size: 14px;
-                opacity: 0.9;
-            }
-
-            .daily-challenge-panel {
-                position: absolute;
-                top: 80px;
-                left: 20px;
-                background: rgba(30, 41, 59, 0.9);
-                border-radius: 15px;
-                padding: 15px;
-                color: white;
-                width: 250px;
-                backdrop-filter: blur(10px);
-                border: 2px solid #fbbf24;
-                z-index: 50;
-            }
-
-            .daily-challenge-title {
-                font-weight: bold;
-                color: #fbbf24;
-                margin-bottom: 10px;
-                font-size: 16px;
-                display: flex;
-                align-items: center;
-                gap: 8px;
-            }
-
-            .daily-challenge-title::before {
-                content: '🏆';
-                font-size: 14px;
-            }
-
-            .daily-challenge-progress {
-                height: 8px;
-                background: rgba(255, 255, 255, 0.1);
-                border-radius: 4px;
-                margin: 10px 0;
-                overflow: hidden;
-            }
-
-            .daily-challenge-progress-fill {
-                height: 100%;
-                background: linear-gradient(90deg, #fbbf24, #f59e0b);
-                border-radius: 4px;
-                transition: width 0.3s ease;
-            }
-
-            .daily-challenge-reward {
-                font-size: 12px;
-                color: #fbbf24;
-                margin-top: 8px;
-                display: flex;
-                align-items: center;
-                gap: 5px;
-            }
-
-            .evolution-display {
-                position: absolute;
-                top: 20px;
-                left: 50%;
-                transform: translateX(-50%);
-                background: rgba(30, 41, 59, 0.9);
-                border-radius: 15px;
-                padding: 8px 20px;
-                color: white;
-                backdrop-filter: blur(10px);
-                border: 2px solid #fbbf24;
-                z-index: 50;
-                font-weight: bold;
-                display: none;
-                align-items: center;
-                gap: 10px;
-            }
-
-            .evolution-level {
-                color: #fbbf24;
-                font-size: 18px;
-            }
-
-            .evolution-name {
-                font-size: 14px;
-            }
-
-            @keyframes slideDown {
-                from { transform: translate(-50%, -20px); opacity: 0; }
-                to { transform: translate(-50%, 0); opacity: 1; }
-            }
-
-            @keyframes slideUp {
-                from { transform: translate(-50%, 0); opacity: 1; }
-                to { transform: translate(-50%, -20px); opacity: 0; }
-            }
-
-            .achievements-container {
-                max-height: 400px;
-                overflow-y: auto;
-                margin-top: 20px;
-                padding: 15px;
-                background: rgba(30, 41, 59, 0.9);
-                border-radius: 15px;
-                border: 2px solid #fbbf24;
-            }
-
-            .achievement {
-                display: flex;
-                align-items: center;
-                gap: 15px;
-                padding: 12px;
-                margin-bottom: 10px;
-                background: rgba(255, 255, 255, 0.1);
-                border-radius: 10px;
-                border-left: 4px solid #fbbf24;
-            }
-
-            .achievement-icon {
-                font-size: 24px;
-                min-width: 40px;
-                text-align: center;
-            }
-
-            .achievement-name {
-                font-weight: bold;
-                color: #fbbf24;
-                font-size: 16px;
-            }
-
-            .achievement-desc {
-                font-size: 12px;
-                color: rgba(255, 255, 255, 0.8);
-            }
-            
-            /* Settings Modal Styles */
-            #settingsModal {
-                display: none;
-                position: fixed;
-                top: 0;
-                left: 0;
-                width: 100%;
-                height: 100%;
-                background-color: rgba(0, 0, 0, 0.8);
-                z-index: 2000;
-                align-items: center;
-                justify-content: center;
-            }
-            
-            #settingsModal.visible {
-                display: flex;
-            }
-            
-            #settingsPanel {
-                background: linear-gradient(135deg, #1e293b, #0f172a);
-                border-radius: 20px;
-                padding: 30px;
-                width: 90%;
-                max-width: 500px;
-                max-height: 80vh;
-                overflow-y: auto;
-                border: 3px solid #fbbf24;
-                box-shadow: 0 10px 40px rgba(0, 0, 0, 0.5);
-            }
-            
-            .settings-header {
-                display: flex;
-                justify-content: space-between;
-                align-items: center;
-                margin-bottom: 30px;
-            }
-            
-            .settings-header h2 {
-                color: #fbbf24;
-                font-size: 28px;
-                margin: 0;
-            }
-            
-            .settings-close {
-                background: none;
-                border: none;
-                color: #fbbf24;
-                font-size: 24px;
-                cursor: pointer;
-                padding: 5px;
-                border-radius: 5px;
-            }
-            
-            .settings-close:hover {
-                background-color: rgba(251, 191, 36, 0.1);
-            }
-            
-            .settings-group {
-                margin-bottom: 25px;
-                background: rgba(255, 255, 255, 0.05);
-                padding: 20px;
-                border-radius: 15px;
-            }
-            
-            .settings-group h3 {
-                color: #fbbf24;
-                font-size: 20px;
-                margin: 0 0 15px 0;
-            }
-            
-            .settings-row {
-                display: flex;
-                align-items: center;
-                justify-content: space-between;
-                margin-bottom: 15px;
-                padding: 10px 0;
-                border-bottom: 1px solid rgba(255, 255, 255, 0.1);
-            }
-            
-            .settings-row:last-child {
-                border-bottom: none;
-            }
-            
-            .settings-label {
-                color: white;
-                font-size: 16px;
-                font-weight: bold;
-            }
-            
-            .toggle-btn {
-                background: rgba(255, 255, 255, 0.1);
-                border: 2px solid #fbbf24;
-                border-radius: 50px;
-                width: 60px;
-                height: 30px;
-                position: relative;
-                cursor: pointer;
-                transition: all 0.3s ease;
-            }
-            
-            .toggle-btn[data-on="true"] {
-                background-color: #fbbf24;
-            }
-            
-            .toggle-btn::after {
-                content: '';
-                position: absolute;
-                top: 3px;
-                left: 3px;
-                width: 22px;
-                height: 22px;
-                background-color: white;
-                border-radius: 50%;
-                transition: all 0.3s ease;
-            }
-            
-            .toggle-btn[data-on="true"]::after {
-                left: calc(100% - 25px);
-            }
-            
-            .diff-btn {
-                background: rgba(255, 255, 255, 0.1);
-                border: 2px solid #fbbf24;
-                color: white;
-                padding: 8px 16px;
-                border-radius: 8px;
-                cursor: pointer;
-                transition: all 0.3s ease;
-                font-weight: bold;
-            }
-            
-            .diff-btn:hover {
-                background: rgba(251, 191, 36, 0.2);
-            }
-            
-            .diff-btn.active {
-                background-color: #fbbf24;
-                color: #1e293b;
-            }
-            
-            .settings-btn {
-                background: linear-gradient(135deg, #fbbf24, #f59e0b);
-                color: #1e293b;
-                border: none;
-                padding: 12px 24px;
-                border-radius: 10px;
-                font-weight: bold;
-                cursor: pointer;
-                transition: all 0.3s ease;
-                display: flex;
-                align-items: center;
-                gap: 8px;
-                width: 100%;
-                justify-content: center;
-                margin-top: 10px;
-            }
-            
-            .settings-btn:hover {
-                transform: translateY(-2px);
-                box-shadow: 0 5px 15px rgba(251, 191, 36, 0.4);
-            }
-            
-            .settings-btn.danger {
-                background: linear-gradient(135deg, #ef4444, #dc2626);
-                color: white;
-            }
-            
-            .settings-btn.danger:hover {
-                box-shadow: 0 5px 15px rgba(239, 68, 68, 0.4);
-            }
-        `;
-
-        const styleSheet = document.createElement("style");
-        styleSheet.textContent = powerupCSS;
-        document.head.appendChild(styleSheet);
-    }
-
-    // ==================== MAIN INITIALIZATION ====================
-    function init() {
-        console.log("Initializing Honey Hunt with Enhanced Features & Audio...");
-        console.log("Game container:", gameContainer);
-        console.log("Settings toggle:", settingsToggle);
-        console.log("Settings modal:", settingsModal);
-        console.log("Settings close:", settingsClose);
-
-        // Initialize settings UI first
-        applySettingsToUi();
-
-        injectQuickWinsCSS();
-        loadPersistedState();
-        resizeCanvas();
-        updateHud();
-        initControls();
-        initSettings();
-        initTopbar();
-        initOverlays();
-        initHelp();
-        initTutorial();
-        initShareFunctionality();
-        initAudio();
-        createPowerupIndicators();
-        initDailyChallenge();
-
-        bear.animation.blinkTimer = 1 + Math.random() * 2;
-        dynamicDifficulty.multiplier = 1;
-        dynamicDifficulty.performanceHistory = [];
-
-        // Add button click sounds to all buttons
-        if (document.readyState === "loading") {
-            document.addEventListener("DOMContentLoaded", addButtonClickSounds);
+            this.showOverlay('PAUSED', 'Click resume to continue');
         } else {
-            addButtonClickSounds();
+            this.startGameLoop();
+            this.hideOverlay();
         }
-
-        if (settingsState.musicOn) {
-            startBackgroundMusic();
-        }
-
-        window.addEventListener("resize", resizeCanvas);
-        requestAnimationFrame(gameLoop);
-        console.log("Honey Hunt Enhanced with Audio initialized successfully!");
     }
 
-    // Initialize the game when DOM is ready
-    if (document.readyState === 'loading') {
-        document.addEventListener('DOMContentLoaded', init);
-    } else {
-        init();
+    reset() {
+        this.state = {
+            score: 0,
+            timeLeft: 60,
+            lives: 3,
+            running: false,
+            gameOver: false,
+            paused: false
+        };
+
+        this.player.x = this.canvas.width / 2;
+        this.honeyPots.reset();
+        this.bees.reset();
+        
+        if (this.timerInterval) {
+            clearInterval(this.timerInterval);
+            this.timerInterval = null;
+        }
+        
+        if (this.rafId) {
+            cancelAnimationFrame(this.rafId);
+            this.rafId = null;
+        }
+        
+        this.updateUI();
     }
-})();
+
+    gameLoop(currentTime) {
+        if (!this.state.running || this.state.paused || this.state.gameOver) return;
+
+        const delta = Math.min(currentTime - this.lastFrameTime, 100);
+        this.lastFrameTime = currentTime;
+
+        this.update(delta);
+        this.render();
+
+        this.rafId = requestAnimationFrame((t) => this.gameLoop(t));
+    }
+
+    update(delta) {
+        const deltaTime = delta / 16;
+
+        // Update player position
+        if (this.keys['ArrowLeft'] || this.keys['a']) {
+            this.player.x = Math.max(this.player.width / 2, 
+                this.player.x - this.player.speed);
+        }
+        if (this.keys['ArrowRight'] || this.keys['d']) {
+            this.player.x = Math.min(this.canvas.width - this.player.width / 2, 
+                this.player.x + this.player.speed);
+        }
+
+        // Spawn objects
+        this.spawnTimer += delta;
+        if (this.spawnTimer > 800) {
+            this.spawnTimer = 0;
+            
+            if (Math.random() > 0.3) {
+                this.honeyPots.get();
+            }
+            
+            if (Math.random() > 0.7) {
+                this.bees.get();
+            }
+        }
+
+        // Update honey pots
+        this.honeyPots.update(delta, (pot, delta) => {
+            pot.y += pot.speed * (delta / 16);
+            
+            // Check collision with player
+            if (this.checkCollision(pot, this.player)) {
+                this.state.score += 10;
+                this.updateUI();
+                return false;
+            }
+            
+            // Remove if off screen
+            return pot.y < this.canvas.height + 30;
+        });
+
+        // Update bees
+        this.bees.update(delta, (bee, delta) => {
+            bee.y += bee.speed * (delta / 16);
+            
+            // Check collision with player
+            if (this.checkCollision(bee, this.player)) {
+                this.state.lives--;
+                this.updateUI();
+                
+                if (this.state.lives <= 0) {
+                    this.gameOver(false);
+                }
+                return false;
+            }
+            
+            // Remove if off screen
+            return bee.y < this.canvas.height + 30;
+        });
+    }
+
+    checkCollision(obj1, obj2) {
+        const dx = obj1.x - obj2.x;
+        const dy = obj1.y - obj2.y;
+        const distance = Math.hypot(dx, dy);
+        return distance < 25;
+    }
+
+    gameOver(timeUp) {
+        this.state.running = false;
+        this.state.gameOver = true;
+        
+        if (this.rafId) {
+            cancelAnimationFrame(this.rafId);
+            this.rafId = null;
+        }
+        
+        if (this.timerInterval) {
+            clearInterval(this.timerInterval);
+            this.timerInterval = null;
+        }
+        
+        const message = timeUp ? 
+            `Time's up! Score: ${this.state.score}` :
+            `Game Over! Score: ${this.state.score}`;
+        
+        this.showOverlay(message, 'Click start to play again');
+        
+        setTimeout(() => {
+            if (confirm(`${message}\nPlay again?`)) {
+                this.reset();
+                this.start();
+            }
+        }, 500);
+    }
+
+    render() {
+        // Clear canvas
+        this.ctx.clearRect(0, 0, this.canvas.width, this.canvas.height);
+        
+        // Draw background
+        this.renderBackground();
+        
+        // Draw player (Pooh)
+        const poohSprite = this.spriteManager.get('pooh');
+        if (poohSprite) {
+            this.ctx.drawImage(
+                poohSprite,
+                this.player.x - this.player.width / 2,
+                this.player.y - this.player.height / 2,
+                this.player.width,
+                this.player.height
+            );
+        } else {
+            // Fallback
+            this.ctx.fillStyle = '#FFB347';
+            this.ctx.beginPath();
+            this.ctx.arc(this.player.x, this.player.y, 25, 0, Math.PI * 2);
+            this.ctx.fill();
+        }
+        
+        // Draw honey pots
+        this.honeyPots.update(0, (pot) => {
+            const honeySprite = this.spriteManager.get('honey');
+            if (honeySprite) {
+                this.ctx.drawImage(honeySprite, pot.x - 15, pot.y - 15, 30, 30);
+            } else {
+                this.ctx.fillStyle = '#FFD54F';
+                this.ctx.beginPath();
+                this.ctx.arc(pot.x, pot.y, 12, 0, Math.PI * 2);
+                this.ctx.fill();
+            }
+            return true;
+        });
+        
+        // Draw bees
+        this.bees.update(0, (bee) => {
+            this.ctx.fillStyle = '#FFD700';
+            this.ctx.beginPath();
+            this.ctx.arc(bee.x, bee.y, 10, 0, Math.PI * 2);
+            this.ctx.fill();
+            
+            // Bee stripes
+            this.ctx.fillStyle = '#000';
+            this.ctx.fillRect(bee.x - 8, bee.y - 2, 4, 4);
+            this.ctx.fillRect(bee.x + 4, bee.y - 2, 4, 4);
+            
+            // Wings
+            this.ctx.fillStyle = 'rgba(255, 255, 255, 0.7)';
+            this.ctx.beginPath();
+            this.ctx.arc(bee.x - 5, bee.y - 8, 6, 0, Math.PI * 2);
+            this.ctx.arc(bee.x + 5, bee.y - 8, 6, 0, Math.PI * 2);
+            this.ctx.fill();
+            
+            return true;
+        });
+        
+        // Draw HUD
+        this.ctx.fillStyle = 'rgba(0, 0, 0, 0.7)';
+        this.ctx.fillRect(10, 10, 200, 80);
+        
+        this.ctx.fillStyle = '#FFF';
+        this.ctx.font = '16px Arial';
+        this.ctx.fillText(`Score: ${this.state.score}`, 20, 35);
+        this.ctx.fillText(`Time: ${this.state.timeLeft}s`, 20, 60);
+        this.ctx.fillText(`Lives: ${this.state.lives}`, 20, 85);
+    }
+
+    renderBackground() {
+        // Sky
+        this.ctx.fillStyle = '#87CEEB';
+        this.ctx.fillRect(0, 0, this.canvas.width, this.canvas.height);
+        
+        // Clouds
+        this.ctx.fillStyle = 'rgba(255, 255, 255, 0.9)';
+        this.ctx.beginPath();
+        this.ctx.arc(100, 80, 25, 0, Math.PI * 2);
+        this.ctx.arc(130, 70, 30, 0, Math.PI * 2);
+        this.ctx.arc(160, 80, 25, 0, Math.PI * 2);
+        this.ctx.fill();
+        
+        // Ground
+        this.ctx.fillStyle = '#8BC34A';
+        this.ctx.fillRect(0, this.canvas.height - 60, this.canvas.width, 60);
+        
+        // Grass detail
+        this.ctx.fillStyle = '#7CB342';
+        for (let i = 0; i < this.canvas.width; i += 10) {
+            const height = 10 + Math.random() * 20;
+            this.ctx.fillRect(i, this.canvas.height - 60, 3, -height);
+        }
+    }
+
+    updateUI() {
+        if (this.ui.score) this.ui.score.textContent = this.state.score;
+        if (this.ui.time) this.ui.time.textContent = this.state.timeLeft;
+        if (this.ui.lives) this.ui.lives.textContent = this.state.lives;
+    }
+
+    showOverlay(text, subtext = '') {
+        if (this.ui.overlay) {
+            const overlay = this.ui.overlay;
+            overlay.querySelector('.catch-countdown').textContent = text;
+            overlay.querySelector('.catch-hint').textContent = subtext;
+            overlay.classList.add('active');
+        }
+    }
+
+    hideOverlay() {
+        if (this.ui.overlay) {
+            this.ui.overlay.classList.remove('active');
+        }
+    }
+}
+
+// ============================================================================
+// GAME MANAGER (Orchestrates both games)
+// ============================================================================
+
+class GameManager {
+    constructor() {
+        this.games = new Map();
+        this.spriteManager = new SpriteManager();
+        this.activeGame = null;
+    }
+
+    init() {
+        // Load sprites first
+        this.spriteManager.load();
+        
+        // Wait for sprites to load before initializing games
+        this.spriteManager.onLoad(() => {
+            this.initializeGames();
+        });
+    }
+
+    initializeGames() {
+        try {
+            // Initialize defense game
+            const defenseGame = new HoneyHiveDefense('defense-game', {
+                spriteManager: this.spriteManager
+            });
+            this.games.set('defense', defenseGame);
+
+            // Initialize catch game
+            const catchGame = new HoneyPotCatch('honey-game', {
+                spriteManager: this.spriteManager
+            });
+            this.games.set('catch', catchGame);
+
+            // Set up game switching
+            this.setupNavigation();
+            
+            console.log('Games initialized successfully');
+        } catch (error) {
+            console.error('Failed to initialize games:', error);
+        }
+    }
+
+    setupNavigation() {
+        // Listen for chapter changes to pause/stop games
+        document.addEventListener('chapterChange', (e) => {
+            const newChapter = e.detail.chapter;
+            
+            // Stop games when not on game chapters
+            if (newChapter !== 2 && newChapter !== 3) {
+                this.stopAllGames();
+            }
+        });
+
+        // Pause games on visibility change
+        document.addEventListener('visibilitychange', () => {
+            if (document.hidden) {
+                this.pauseAllGames();
+            }
+        });
+    }
+
+    getGame(name) {
+        return this.games.get(name);
+    }
+
+    startGame(name) {
+        const game = this.games.get(name);
+        if (game) {
+            this.activeGame = game;
+            game.start();
+        }
+    }
+
+    stopGame(name) {
+        const game = this.games.get(name);
+        if (game) {
+            game.stop();
+            if (this.activeGame === game) {
+                this.activeGame = null;
+            }
+        }
+    }
+
+    pauseAllGames() {
+        this.games.forEach(game => {
+            if (game.state && game.state.running && !game.state.paused) {
+                game.togglePause?.();
+            }
+        });
+    }
+
+    stopAllGames() {
+        this.games.forEach(game => game.stop?.());
+        this.activeGame = null;
+    }
+
+    resetAllGames() {
+        this.games.forEach(game => game.reset?.());
+    }
+}
+
+// ============================================================================
+// GLOBAL EXPORTS
+// ============================================================================
+
+// Export for browser
+window.Games = {
+    HoneyHiveDefense,
+    HoneyPotCatch,
+    GameManager,
+    SpriteManager,
+    GameUtils
+};
+
+// Auto-initialize if in browser context
+if (typeof window !== 'undefined') {
+    document.addEventListener('DOMContentLoaded', () => {
+        // Only initialize if we're on a page with games
+        if (document.getElementById('defense-game') || document.getElementById('honey-game')) {
+            window.gameManager = new GameManager();
+            window.gameManager.init();
+        }
+    });
+}
+
+// Export for module systems
+if (typeof module !== 'undefined' && module.exports) {
+    module.exports = {
+        HoneyHiveDefense,
+        HoneyPotCatch,
+        GameManager,
+        SpriteManager,
+        GameUtils
+    };
+}
