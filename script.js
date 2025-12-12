@@ -203,8 +203,33 @@
                 updateCharacterCardImages();
             };
             img.onerror = () => {
-                console.warn(`Failed to load sprite: ${key}`);
-                // Use fallback icon
+                console.warn(`Failed to load sprite: ${key}. Using fallback.`);
+                // Create a colored circle fallback
+                const canvas = document.createElement('canvas');
+                canvas.width = 40;
+                canvas.height = 40;
+                const ctx = canvas.getContext('2d');
+                
+                // Different colors for different characters
+                let color = '#FFB347';
+                switch(key) {
+                    case 'pooh': color = '#FFB347'; break;
+                    case 'piglet': color = '#FFB6C1'; break;
+                    case 'tigger': color = '#FF8C42'; break;
+                    case 'eeyore': color = '#C0C0C0'; break;
+                    case 'owl': color = '#8B4513'; break;
+                    case 'roo': color = '#87CEEB'; break;
+                    case 'honey': color = '#FFD54F'; break;
+                }
+                
+                ctx.fillStyle = color;
+                ctx.beginPath();
+                ctx.arc(20, 20, 18, 0, Math.PI * 2);
+                ctx.fill();
+                
+                // Convert canvas to data URL
+                img.src = canvas.toDataURL();
+                Sprites[key] = img;
             };
             Sprites[key] = img;
         });
@@ -398,6 +423,10 @@
                 img.src = sprite.src;
                 img.alt = characterData[characterKey].name;
                 img.className = 'character-portrait';
+                img.style.width = '120px';
+                img.style.height = '120px';
+                img.style.objectFit = 'contain';
+                img.style.borderRadius = '50%';
                 imagePlaceholder.appendChild(img);
                 
                 // Add loaded class for animation
@@ -535,13 +564,18 @@
             const data = characterData[key];
             if (!data) return;
 
-            // Create audio context for simple tones (or use pre-recorded samples if available)
+            // Create audio context for simple tones
             try {
                 const AudioContext = window.AudioContext || window.webkitAudioContext;
                 if (AudioContext) {
                     const audioContext = new AudioContext();
                     const oscillator = audioContext.createOscillator();
                     const gainNode = audioContext.createGain();
+                    
+                    // Check if audio context is suspended and resume it
+                    if (audioContext.state === 'suspended') {
+                        audioContext.resume();
+                    }
                     
                     oscillator.connect(gainNode);
                     gainNode.connect(audioContext.destination);
@@ -578,8 +612,43 @@
                 }
             } catch (err) {
                 console.log('Audio context not available:', err);
-                // Fallback: Show voice sample in alert
-                alert(`${data.name} says:\n\n"${data.voiceSample}"`);
+                // Fallback: Show voice sample in a subtle notification
+                const notification = document.createElement('div');
+                notification.style.cssText = `
+                    position: fixed;
+                    top: 20px;
+                    right: 20px;
+                    background: ${characterData[key].bgColor};
+                    color: ${characterData[key].color};
+                    padding: 1rem;
+                    border-radius: 10px;
+                    border-left: 4px solid ${characterData[key].color};
+                    box-shadow: 0 4px 12px rgba(0,0,0,0.15);
+                    z-index: 10000;
+                    max-width: 300px;
+                    font-family: Arial, sans-serif;
+                    animation: fadeInOut 3s ease-in-out;
+                `;
+                
+                const style = document.createElement('style');
+                style.textContent = `
+                    @keyframes fadeInOut {
+                        0%, 100% { opacity: 0; transform: translateY(-10px); }
+                        10%, 90% { opacity: 1; transform: translateY(0); }
+                    }
+                `;
+                document.head.appendChild(style);
+                
+                notification.innerHTML = `
+                    <div style="font-weight: bold; margin-bottom: 0.5rem;">${data.name} says:</div>
+                    <div>"${data.voiceSample}"</div>
+                `;
+                
+                document.body.appendChild(notification);
+                setTimeout(() => {
+                    notification.remove();
+                    style.remove();
+                }, 3000);
             }
         };
     }
@@ -663,7 +732,7 @@
     }
 
     // ========================================================================
-    // BASE UI: STORYBOOK, NAV, RSVP, MUSIC, ACCESSIBILITY
+    // BASE UI: STORYBOOK, NAV, RSVP, MUSIC, ACCESSIBILITY - FIXED AUDIO
     // ========================================================================
 
     function initBaseUI() {
@@ -836,37 +905,117 @@
             motionToggle.addEventListener('click', toggleReduceMotion);
         }
 
-        // ----------------- Background music -----------------
+        // ----------------- Background music - FIXED AUTOPLAY -----------------
         function initMusicPreference() {
             if (!musicToggle || !bgMusic) return;
             const stored = localStorage.getItem('bg-music');
             const icon = musicToggle.querySelector('i');
 
             if (stored === 'on') {
+                // Set the icon to show music is on, but don't autoplay
                 bgMusic.volume = 0.35;
-                bgMusic.play().catch(() => {});
+                bgMusic.muted = true; // Start muted to comply with autoplay policies
                 if (icon) {
                     icon.classList.remove('fa-volume-xmark');
                     icon.classList.add('fa-music');
                 }
+                
+                // Try to play when user interacts with the page
+                const playOnInteraction = () => {
+                    bgMusic.muted = false;
+                    const playPromise = bgMusic.play();
+                    if (playPromise !== undefined) {
+                        playPromise.catch(error => {
+                            console.log("Audio play failed, will wait for user interaction:", error);
+                            // If play fails, set up a one-time interaction listener
+                            document.addEventListener('click', function playOnClick() {
+                                bgMusic.play().catch(e => console.log("Still can't play:", e));
+                                document.removeEventListener('click', playOnClick);
+                            }, { once: true });
+                        });
+                    }
+                };
+                
+                // Try to play on page load with muted audio
+                setTimeout(playOnInteraction, 1000);
             } else if (stored === 'off' && icon) {
                 icon.classList.remove('fa-music');
                 icon.classList.add('fa-volume-xmark');
+            } else {
+                // Default state: music is off
+                if (icon) {
+                    icon.classList.remove('fa-music');
+                    icon.classList.add('fa-volume-xmark');
+                }
+                localStorage.setItem('bg-music', 'off');
             }
         }
 
         function toggleMusic() {
             if (!musicToggle || !bgMusic) return;
             const icon = musicToggle.querySelector('i');
+            
             if (bgMusic.paused) {
+                // User is trying to start music - this is allowed
                 bgMusic.volume = 0.35;
-                bgMusic.play().catch(() => {});
-                if (icon) {
-                    icon.classList.remove('fa-volume-xmark');
-                    icon.classList.add('fa-music');
+                bgMusic.muted = false;
+                
+                const playPromise = bgMusic.play();
+                if (playPromise !== undefined) {
+                    playPromise.then(() => {
+                        // Successfully started playing
+                        if (icon) {
+                            icon.classList.remove('fa-volume-xmark');
+                            icon.classList.add('fa-music');
+                        }
+                        localStorage.setItem('bg-music', 'on');
+                    }).catch(error => {
+                        // Auto-play was prevented
+                        console.log("Playback failed:", error);
+                        // Show user they need to interact
+                        if (icon) {
+                            icon.classList.remove('fa-volume-xmark');
+                            icon.classList.add('fa-music');
+                            icon.style.color = '#ff6b6b';
+                            setTimeout(() => {
+                                icon.style.color = '';
+                            }, 2000);
+                        }
+                        
+                        // Show a subtle hint
+                        const hint = document.createElement('div');
+                        hint.textContent = 'Click anywhere to enable music';
+                        hint.style.cssText = `
+                            position: fixed;
+                            top: 70px;
+                            right: 20px;
+                            background: #333;
+                            color: white;
+                            padding: 8px 12px;
+                            border-radius: 4px;
+                            font-size: 12px;
+                            z-index: 10000;
+                            animation: fadeInOut 3s ease-in-out;
+                        `;
+                        document.body.appendChild(hint);
+                        setTimeout(() => hint.remove(), 3000);
+                        
+                        // Set up interaction to enable audio
+                        const enableOnInteraction = () => {
+                            bgMusic.play().then(() => {
+                                localStorage.setItem('bg-music', 'on');
+                                if (icon) {
+                                    icon.style.color = '';
+                                }
+                            }).catch(e => console.log("Still can't play:", e));
+                            document.removeEventListener('click', enableOnInteraction);
+                        };
+                        
+                        document.addEventListener('click', enableOnInteraction, { once: true });
+                    });
                 }
-                localStorage.setItem('bg-music', 'on');
             } else {
+                // Music is playing, pause it
                 bgMusic.pause();
                 if (icon) {
                     icon.classList.remove('fa-music');
@@ -881,6 +1030,18 @@
         if (musicToggle) {
             musicToggle.addEventListener('click', toggleMusic);
         }
+
+        // Also allow music to start on any user interaction with the page
+        document.addEventListener('click', function initAudioOnInteraction() {
+            if (bgMusic && bgMusic.paused) {
+                const stored = localStorage.getItem('bg-music');
+                if (stored === 'on') {
+                    bgMusic.play().catch(e => console.log("Background music play failed:", e));
+                }
+            }
+            // Remove this listener after first interaction
+            document.removeEventListener('click', initAudioOnInteraction);
+        }, { once: true });
 
         // ----------------- RSVP + confetti -----------------
         function createConfetti() {
@@ -1005,10 +1166,6 @@
             rsvpStatus.innerHTML = '';
         };
 
-        // ----------------- Character modal (global) -----------------
-        // Note: This is now handled by initCharacterModal()
-        // but keeping for backward compatibility
-        
         // ----------------- Woodland sound (global) -----------------
         window.playWoodlandSound = function (ev) {
             const e = ev || window.event;
@@ -1017,6 +1174,12 @@
                 const AudioCtx = window.AudioContext || window.webkitAudioContext;
                 if (AudioCtx) {
                     const audioContext = new AudioCtx();
+                    
+                    // Resume audio context if suspended
+                    if (audioContext.state === 'suspended') {
+                        audioContext.resume();
+                    }
+                    
                     const osc = audioContext.createOscillator();
                     const gain = audioContext.createGain();
 
@@ -1306,9 +1469,10 @@
             const potX = end.x;
             const potY = end.y;
             
-            if (Sprites.honey && Sprites.honey.complete && Sprites.honey.naturalWidth) {
+            if (Sprites.honey && Sprites.honey.complete) {
                 bgCtx.drawImage(Sprites.honey, potX - 20, potY - 25, 40, 40);
             } else {
+                // Fallback honey pot drawing
                 bgCtx.fillStyle = '#FFD54F';
                 bgCtx.beginPath();
                 bgCtx.arc(potX, potY, 20, 0, Math.PI * 2);
@@ -1316,6 +1480,12 @@
                 bgCtx.strokeStyle = '#8B4513';
                 bgCtx.lineWidth = 3;
                 bgCtx.stroke();
+                
+                // Add honey drip
+                bgCtx.fillStyle = '#FFB300';
+                bgCtx.beginPath();
+                bgCtx.ellipse(potX, potY + 15, 8, 12, 0, 0, Math.PI * 2);
+                bgCtx.fill();
             }
             
             backgroundDirty = false;
@@ -1336,13 +1506,24 @@
                 const spriteKey = towerTypes[t.type].key;
                 const sprite = Sprites[spriteKey];
 
-                if (sprite && sprite.complete && sprite.naturalWidth) {
+                if (sprite && sprite.complete) {
                     ctx.drawImage(sprite, t.x - 20, t.y - 20, 40, 40);
                 } else {
+                    // Fallback tower drawing
                     ctx.fillStyle = towerTypes[t.type].color;
                     ctx.beginPath();
                     ctx.arc(t.x, t.y, 18, 0, Math.PI * 2);
                     ctx.fill();
+                    
+                    // Add a simple face for character towers
+                    ctx.fillStyle = '#000';
+                    ctx.beginPath();
+                    ctx.arc(t.x - 5, t.y - 3, 2, 0, Math.PI * 2); // Left eye
+                    ctx.arc(t.x + 5, t.y - 3, 2, 0, Math.PI * 2); // Right eye
+                    ctx.fill();
+                    ctx.beginPath();
+                    ctx.arc(t.x, t.y + 5, 4, 0, Math.PI, false); // Smile
+                    ctx.stroke();
                 }
 
                 ctx.restore();
@@ -1863,18 +2044,29 @@
                     const cacheCtx = cacheCanvas.getContext('2d');
                     
                     const sprite = Sprites.pooh;
-                    if (sprite && sprite.complete && sprite.naturalWidth) {
+                    if (sprite && sprite.complete) {
                         cacheCtx.save();
                         cacheCtx.shadowColor = 'rgba(0,0,0,0.35)';
                         cacheCtx.shadowBlur = 10;
                         cacheCtx.drawImage(sprite, 0, 0, 60, 60);
                         cacheCtx.restore();
                     } else {
-                        // Fallback drawing
+                        // Fallback drawing - Pooh bear
                         cacheCtx.fillStyle = '#FFB347';
                         cacheCtx.beginPath();
                         cacheCtx.arc(30, 30, 28, 0, Math.PI * 2);
                         cacheCtx.fill();
+                        
+                        // Face
+                        cacheCtx.fillStyle = '#000';
+                        cacheCtx.beginPath();
+                        cacheCtx.arc(22, 25, 3, 0, Math.PI * 2); // Left eye
+                        cacheCtx.arc(38, 25, 3, 0, Math.PI * 2); // Right eye
+                        cacheCtx.fill();
+                        
+                        cacheCtx.beginPath();
+                        cacheCtx.arc(30, 35, 6, 0.2, Math.PI - 0.2, false); // Smile
+                        cacheCtx.stroke();
                     }
                     this.poohCache = cacheCanvas;
                 }
@@ -1889,16 +2081,23 @@
                     const cacheCtx = cacheCanvas.getContext('2d');
                     
                     const sprite = Sprites.honey;
-                    if (sprite && sprite.complete && sprite.naturalWidth) {
+                    if (sprite && sprite.complete) {
                         cacheCtx.drawImage(sprite, 0, 0, 28, 28);
                     } else {
+                        // Fallback honey pot drawing
                         cacheCtx.fillStyle = '#FFD54F';
                         cacheCtx.beginPath();
                         cacheCtx.arc(14, 14, 14, 0, Math.PI * 2);
                         cacheCtx.fill();
+                        
                         cacheCtx.strokeStyle = '#8B4513';
                         cacheCtx.lineWidth = 2;
                         cacheCtx.stroke();
+                        
+                        // Lid
+                        cacheCtx.fillStyle = '#8B4513';
+                        cacheCtx.fillRect(6, 5, 16, 4);
+                        cacheCtx.fillRect(10, 3, 8, 2);
                     }
                     this.honeyCache = cacheCanvas;
                 }
