@@ -1,2117 +1,664 @@
 <!DOCTYPE html>
 <html lang="en">
+
 <head>
     <meta charset="UTF-8">
-    <meta content="width=device-width, initial-scale=1.0, viewport-fit=cover" name="viewport">
-    <title>Baby Gunnar's Hundred Acre Wood Adventure</title>
-    <meta content="#f4a944" name="theme-color">
-    <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.1/css/all.min.css" rel="stylesheet">
-    
-    <!-- Embed the CSS directly -->
-    <style>
-        /* ============================================
-   BABY GUNNAR'S HUNDRED ACRE WOOD ADVENTURE
-   Fixed & Streamlined CSS
-   ============================================ */
-
-/* CSS Reset & Base Styles */
-* {
-    margin: 0;
-    padding: 0;
-    box-sizing: border-box;
-}
-
-:root {
-    /* Light Theme Colors (Default) */
-    --color-honey: #f4a944;
-    --color-honey-light: #f9d8a6;
-    --color-honey-dark: #d18a2c;
-    --color-wood: #8b4513;
-    --color-wood-light: #a0522d;
-    --color-wood-dark: #654321;
-    --color-paper: #fef9f3;
-    --color-paper-dark: #f5e9d8;
-    --color-parchment: #f8f1e3;
-    --color-text: #3d2c1e;
-    --color-text-light: #7a5c3c;
-    --color-poppy: #e74c3c;
-    --color-poppy-light: #fd9b87;
-    --color-sage: #87a96b;
-    --color-sage-light: #b8d8a6;
-    --color-sky: #a6d0e4;
-    --color-sky-light: #d4eaf7;
-    --color-shadow: rgba(61, 44, 30, 0.15);
-    --color-shadow-light: rgba(61, 44, 30, 0.08);
-    --color-overlay: rgba(0, 0, 0, 0.5);
-    --border-radius-sm: 8px;
-    --border-radius-md: 12px;
-    --border-radius-lg: 16px;
-    --border-radius-xl: 24px;
-    --spacing-xs: 0.5rem;
-    --spacing-sm: 1rem;
-    --spacing-md: 1.5rem;
-    --spacing-lg: 2rem;
-    --spacing-xl: 3rem;
-    --spacing-xxl: 4rem;
-    --font-heading: 'Georgia', serif;
-    --font-body: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
-    --font-special: 'Comic Sans MS', 'Chalkboard SE', cursive;
-    --transition-base: 0.3s ease;
-    --transition-slow: 0.5s ease;
-    --shadow-soft: 0 4px 12px var(--color-shadow);
-    --shadow-medium: 0 8px 24px var(--color-shadow);
-    --shadow-large: 0 12px 36px var(--color-shadow);
-    --shadow-inner: inset 0 2px 8px rgba(0, 0, 0, 0.1);
-}
-
-/* Base Styles */
-body {
-    font-family: var(--font-body);
-    background-color: var(--color-paper);
-    color: var(--color-text);
-    line-height: 1.6;
-    overflow-x: hidden;
-    min-height: 100vh;
-}
-
-/* Fix the background gradient - simpler version */
-body::before {
-    content: '';
-    position: fixed;
-    top: 0;
-    left: 0;
-    width: 100%;
-    height: 100%;
-    background: 
-        radial-gradient(circle at 20% 30%, var(--color-sky-light) 0%, transparent 30%),
-        radial-gradient(circle at 80% 20%, var(--color-honey-light) 0%, transparent 30%),
-        radial-gradient(circle at 40% 80%, var(--color-sage-light) 0%, transparent 40%);
-    opacity: 0.15;
-    z-index: -1;
-    pointer-events: none;
-}
-
-/* Cloud Layer - Simplified */
-.cloud-layer {
-    position: fixed;
-    top: 0;
-    left: 0;
-    width: 100%;
-    height: 100%;
-    pointer-events: none;
-    z-index: -1;
-    overflow: hidden;
-}
-
-.cloud {
-    position: absolute;
-    font-size: 3rem;
-    opacity: 0.2;
-}
-
-.cloud:nth-child(1) {
-    top: 10%;
-    left: -100px;
-    animation: floatCloud 30s linear infinite;
-}
-
-.cloud:nth-child(2) {
-    top: 30%;
-    right: -100px;
-    animation: floatCloud 35s linear infinite 5s;
-}
-
-.cloud:nth-child(3) {
-    top: 60%;
-    left: -100px;
-    animation: floatCloud 40s linear infinite 10s;
-}
-
-@keyframes floatCloud {
-    0% {
-        transform: translateX(-100px) translateY(0);
-    }
-    100% {
-        transform: translateX(calc(100vw + 100px)) translateY(0);
-    }
-}
-
-/* Settings Panel - Fixed positioning */
-.settings-panel {
-    position: fixed;
-    top: var(--spacing-sm);
-    right: var(--spacing-sm);
-    z-index: 1000;
-}
-
-.settings-button {
-    background: var(--color-honey);
-    color: white;
-    border: none;
-    border-radius: 50%;
-    width: 48px;
-    height: 48px;
-    font-size: 1.5rem;
-    cursor: pointer;
-    display: flex;
-    align-items: center;
-    justify-content: center;
-    box-shadow: var(--shadow-medium);
-    transition: all var(--transition-base);
-}
-
-.settings-button:hover {
-    background: var(--color-honey-dark);
-    transform: scale(1.1) rotate(30deg);
-}
-
-/* Settings Overlay */
-.settings-overlay {
-    position: fixed;
-    top: 0;
-    left: 0;
-    width: 100%;
-    height: 100%;
-    background: rgba(0, 0, 0, 0.7);
-    z-index: 2000;
-    display: none;
-    align-items: center;
-    justify-content: center;
-    padding: var(--spacing-md);
-}
-
-.settings-card {
-    background: var(--color-paper);
-    border-radius: var(--border-radius-xl);
-    width: 100%;
-    max-width: 500px;
-    max-height: 90vh;
-    overflow-y: auto;
-    box-shadow: var(--shadow-large);
-    border: 2px solid var(--color-honey);
-}
-
-.settings-header {
-    display: flex;
-    justify-content: space-between;
-    align-items: center;
-    padding: var(--spacing-md);
-    border-bottom: 2px solid var(--color-honey-light);
-    background: linear-gradient(to right, var(--color-honey-light) 0%, transparent 100%);
-}
-
-/* Honey Hunt Game Refresh */
-.game-shell {
-    width: 100vw;
-    max-width: none;
-    height: 100vh;
-    margin: 0;
-    border-radius: 0;
-    border: none;
-    box-shadow: none;
-    position: fixed;
-    top: 0; left: 0;
-    z-index: 10;
-}
-
-@keyframes gentleGlow {
-    from { box-shadow: 0 30px 80px rgba(0,0,0,0.4), inset 0 10px 30px rgba(255,255,255,0.3), 0 0 120px rgba(244,169,68,0.4); }
-    to   { box-shadow: 0 30px 80px rgba(0,0,0,0.5), inset 0 10px 30px rgba(255,255,255,0.5), 0 0 160px rgba(244,169,68,0.6); }
-}
-
-.game-shell::before {
-    content: "";
-    position: absolute;
-    inset: 0;
-    background: url('data:image/svg+xml;utf8,<svg xmlns="http://www.w3.org/2000/svg" width="100" height="100" viewBox="0 0 100 100"><defs><radialGradient id="leaf"><stop offset="0%" stop-color="%2387a96b"/><stop offset="100%" stop-color="%236b8e23"/></radialGradient></defs><path fill="url(%23leaf)" opacity="0.15" d="M50 10 Q65 30 50 50 Q35 70 50 90 Q65 70 50 50 Q65 30 50 10"/></svg>') repeat;
-    background-size: 80px;
-    animation: drift 60s linear infinite;
-    pointer-events: none;
-    z-index: 0;
-}
-
-@keyframes drift {
-    from { background-position: 0 0; }
-    to   { background-position: 200px 200px; }
-}
-
-.game-canvas {
-    image-rendering: pixelated; /* or crisp-edges for modern look */
-    transform: scale(1.02);
-}
-.game-canvas {
-    width: 100%;
-    height: 100%;
-    display: block;
-    position: relative;
-    z-index: 1;
-    background: transparent;
-}
-
-.game-hud {
-    position: absolute;
-    top: 20px;
-    left: 20px;
-    right: 20px;
-    display: grid;
-    grid-template-columns: repeat(auto-fit, minmax(120px, 1fr));
-    gap: var(--spacing-sm);
-    background: rgba(255, 255, 255, 0.94);
-    padding: 14px 18px;
-    border-radius: 16px;
-    border: 2px solid var(--color-honey);
-    box-shadow: var(--shadow-medium);
-    z-index: 2;
-}
-
-.game-stat {
-    display: flex;
-    flex-direction: column;
-    gap: 4px;
-    text-align: center;
-}
-
-.stat-label {
-    font-size: 0.8rem;
-    font-weight: 700;
-    text-transform: uppercase;
-    letter-spacing: 0.03em;
-    color: var(--color-wood);
-}
-
-.stat-value {
-    font-size: 1.4rem;
-    font-weight: 800;
-    color: var(--color-honey-dark);
-    font-family: var(--font-heading);
-}
-
-.game-meter {
-    display: grid;
-    gap: 6px;
-}
-
-.meter-track {
-    width: 100%;
-    height: 10px;
-    border-radius: 999px;
-    background: var(--color-paper-dark);
-    box-shadow: var(--shadow-inner);
-    overflow: hidden;
-}
-
-.meter-fill {
-    height: 100%;
-    width: 100%;
-    background: linear-gradient(90deg, var(--color-sage) 0%, var(--color-honey) 50%, var(--color-poppy) 100%);
-    transition: width 0.2s ease;
-}
-
-.meter-value {
-    font-weight: 700;
-    color: var(--color-text-light);
-}
-
-.game-status {
-    position: absolute;
-    left: 20px;
-    right: 20px;
-    bottom: 130px;
-    z-index: 2;
-    background: rgba(255, 255, 255, 0.9);
-    border: 2px solid var(--color-honey-light);
-    border-radius: 12px;
-    padding: 10px 14px;
-    color: var(--color-wood);
-    font-weight: 700;
-    display: inline-flex;
-    align-items: center;
-    gap: 8px;
-    box-shadow: var(--shadow-soft);
-}
-
-.control-deck {
-    position: absolute;
-    left: 20px;
-    right: 20px;
-    bottom: 20px;
-    display: flex;
-    flex-wrap: wrap;
-    justify-content: space-between;
-    gap: var(--spacing-sm);
-    z-index: 2;
-    align-items: center;
-}
-
-.control-pad {
-    display: flex;
-    gap: var(--spacing-xs);
-    background: rgba(255, 255, 255, 0.9);
-    border-radius: 12px;
-    padding: 8px;
-    border: 2px solid var(--color-honey-light);
-    box-shadow: var(--shadow-soft);
-}
-
-.control-actions {
-    display: flex;
-    flex-wrap: wrap;
-    gap: var(--spacing-xs);
-    align-items: center;
-    background: rgba(255, 255, 255, 0.9);
-    padding: 8px 10px;
-    border-radius: 12px;
-    border: 2px solid var(--color-honey-light);
-    box-shadow: var(--shadow-soft);
-}
-
-.control-button {
-    border: none;
-    background: linear-gradient(135deg, var(--color-honey), var(--color-honey-dark));
-    color: white;
-    font-weight: 800;
-    padding: 10px 14px;
-    border-radius: 12px;
-    cursor: pointer;
-    min-width: 48px;
-    box-shadow: var(--shadow-medium);
-    transition: transform var(--transition-base), box-shadow var(--transition-base), opacity var(--transition-base);
-}
-
-.control-button--ghost {
-    background: white;
-    color: var(--color-wood);
-    border: 2px solid var(--color-honey-light);
-    box-shadow: none;
-}
-
-.control-button--primary {
-    background: linear-gradient(135deg, var(--color-poppy), var(--color-honey));
-}
-
-.control-button:hover {
-    transform: translateY(-2px);
-    box-shadow: 0 10px 25px rgba(0, 0, 0, 0.15);
-}
-
-.control-hint {
-    font-size: 0.9rem;
-    color: var(--color-text-light);
-    font-weight: 600;
-}
-
-.game-overlay {
-    position: absolute;
-    inset: 0;
-    background: rgba(0, 0, 0, 0.8);
-    display: flex;
-    align-items: center;
-    justify-content: center;
-    z-index: 5;
-    padding: var(--spacing-lg) var(--spacing-md);
-    overflow-y: auto;
-}
-
-.game-overlay__card {
-    background: white;
-    padding: var(--spacing-lg);
-    border-radius: 20px;
-    text-align: center;
-    border: 4px solid var(--color-honey);
-    max-width: 520px;
-    width: 100%;
-    box-shadow: var(--shadow-large);
-    max-height: 90vh;
-    overflow-y: auto;
-    margin: auto;
-    display: flex;
-    flex-direction: column;
-    gap: var(--spacing-sm);
-}
-
-.game-overlay__title {
-    font-size: 2rem;
-    color: var(--color-wood);
-    margin-bottom: var(--spacing-xs);
-}
-
-.game-overlay__sub {
-    color: var(--color-text);
-    margin-bottom: var(--spacing-sm);
-    line-height: 1.5;
-}
-
-.game-overlay__list {
-    text-align: left;
-    margin: var(--spacing-sm) auto;
-    padding-left: var(--spacing-md);
-    color: var(--color-text);
-}
-
-.game-overlay__cta {
-    margin-top: auto;
-    position: sticky;
-    bottom: 0;
-    padding-top: var(--spacing-sm);
-    background: linear-gradient(to top, rgba(255, 255, 255, 0.95), rgba(255, 255, 255, 0.4));
-}
-
-@media (max-width: 640px) {
-    .game-overlay {
-        padding: var(--spacing-md);
-    }
-
-    .game-overlay__card {
-        padding: var(--spacing-md);
-        gap: var(--spacing-xs);
-    }
-
-    .game-overlay__cta .control-button {
-        width: 100%;
-    }
-}
-
-.settings-header h2 {
-    font-family: var(--font-heading);
-    color: var(--color-wood);
-    font-size: 1.5rem;
-}
-
-.close-settings {
-    background: none;
-    border: none;
-    font-size: 1.8rem;
-    color: var(--color-wood);
-    cursor: pointer;
-    width: 36px;
-    height: 36px;
-    border-radius: 50%;
-    display: flex;
-    align-items: center;
-    justify-content: center;
-    transition: all var(--transition-base);
-}
-
-.close-settings:hover {
-    background: var(--color-honey-light);
-}
-
-/* Hero Header - Fixed layout */
-.masthead-hero {
-    position: relative;
-    padding: var(--spacing-md);
-    max-width: 1200px;
-    margin: 0 auto;
-}
-
-.hero-banner {
-    position: relative;
-    border-radius: var(--border-radius-xl);
-    overflow: hidden;
-    box-shadow: var(--shadow-large);
-    margin-bottom: var(--spacing-lg);
-}
-
-.hero-image-container {
-    position: relative;
-    height: 300px;
-    overflow: hidden;
-}
-
-.hero-banner__img {
-    width: 100%;
-    height: 100%;
-    object-fit: cover;
-}
-
-.hero-title-container {
-    position: absolute;
-    bottom: 0;
-    left: 0;
-    right: 0;
-    padding: var(--spacing-md);
-    background: linear-gradient(to top, rgba(0,0,0,0.7), transparent);
-}
-
-.title-background {
-    background: var(--color-paper);
-    padding: var(--spacing-md);
-    border-radius: var(--border-radius-lg);
-    box-shadow: var(--shadow-medium);
-    max-width: 600px;
-    margin: 0 auto;
-    text-align: center;
-    border: 2px solid var(--color-honey);
-}
-
-.masthead-title {
-    margin-bottom: var(--spacing-xs);
-}
-
-.title-line {
-    display: block;
-    font-family: var(--font-heading);
-    font-weight: bold;
-}
-
-.title-line--primary {
-    font-size: 1.8rem;
-    color: var(--color-wood);
-    margin-bottom: 0.25rem;
-}
-
-.title-line--secondary {
-    font-size: 1.5rem;
-    color: var(--color-honey);
-    margin-bottom: 0.5rem;
-}
-
-.hero-subtitle {
-    font-size: 1.1rem;
-    color: var(--color-text-light);
-    font-family: var(--font-special);
-}
-
-/* Hero Panel - Fixed grid layout */
-.hero-panel {
-    background: var(--color-parchment);
-    border-radius: var(--border-radius-xl);
-    padding: var(--spacing-lg);
-    box-shadow: var(--shadow-medium);
-    border: 2px solid var(--color-wood-light);
-    margin-bottom: var(--spacing-xl);
-}
-
-.hero-badge {
-    background: white;
-    border-radius: var(--border-radius-lg);
-    padding: var(--spacing-md);
-    display: flex;
-    flex-direction: column;
-    align-items: center;
-    text-align: center;
-    gap: var(--spacing-sm);
-    margin-bottom: var(--spacing-lg);
-    box-shadow: var(--shadow-soft);
-    border: 2px solid var(--color-honey-light);
-}
-
-.badge-icon {
-    width: 60px;
-    height: 60px;
-    border-radius: 50%;
-    background: linear-gradient(135deg, var(--color-honey), var(--color-poppy));
-    display: flex;
-    align-items: center;
-    justify-content: center;
-}
-
-.badge-icon-inner {
-    font-size: 2rem;
-}
-
-.badge-copy {
-    width: 100%;
-}
-
-.badge-eyebrow {
-    color: var(--color-text-light);
-    font-size: 0.9rem;
-    text-transform: uppercase;
-    letter-spacing: 1px;
-    margin-bottom: 0.25rem;
-}
-
-.badge-label {
-    color: var(--color-honey);
-    font-weight: bold;
-    font-size: 1.2rem;
-    margin-bottom: 0.25rem;
-    font-family: var(--font-heading);
-}
-
-.badge-title {
-    color: var(--color-wood);
-    font-size: 1rem;
-    font-weight: 600;
-}
-
-.badge-meta {
-    display: flex;
-    gap: var(--spacing-sm);
-    justify-content: center;
-    flex-wrap: wrap;
-    width: 100%;
-}
-
-.badge-pill {
-    background: var(--color-honey-light);
-    padding: 0.5rem 1rem;
-    border-radius: 50px;
-    display: inline-flex;
-    align-items: center;
-    gap: 0.5rem;
-    font-size: 0.9rem;
-    color: var(--color-wood);
-    text-decoration: none;
-}
-
-/* Hero Details Grid - Fixed */
-.hero-details-grid {
-    display: grid;
-    grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
-    gap: var(--spacing-md);
-    margin-bottom: var(--spacing-lg);
-}
-
-.hero-detail {
-    background: white;
-    border-radius: var(--border-radius-md);
-    padding: var(--spacing-md);
-    display: flex;
-    align-items: center;
-    gap: var(--spacing-sm);
-    border: 2px solid transparent;
-    transition: all var(--transition-base);
-}
-
-.hero-detail:hover {
-    border-color: var(--color-honey);
-    transform: translateY(-4px);
-    box-shadow: var(--shadow-soft);
-}
-
-.detail-icon {
-    font-size: 2rem;
-    flex-shrink: 0;
-}
-
-.detail-content {
-    flex: 1;
-}
-
-.detail-title {
-    color: var(--color-wood);
-    font-family: var(--font-heading);
-    font-size: 1.1rem;
-    margin-bottom: 0.25rem;
-}
-
-.detail-text {
-    color: var(--color-text-light);
-    font-size: 0.9rem;
-}
-
-/* Hero Actions - Fixed button layout */
-.hero-actions {
-    display: flex;
-    flex-direction: column;
-    gap: var(--spacing-sm);
-    margin-bottom: var(--spacing-lg);
-}
-
-.hero-action-btn {
-    padding: 1rem;
-    border-radius: var(--border-radius-md);
-    border: none;
-    font-family: var(--font-body);
-    font-weight: 600;
-    font-size: 1rem;
-    cursor: pointer;
-    transition: all var(--transition-base);
-    display: flex;
-    align-items: center;
-    justify-content: center;
-    gap: 0.75rem;
-    width: 100%;
-}
-
-.hero-action-btn.primary {
-    background: linear-gradient(135deg, var(--color-honey), var(--color-honey-dark));
-    color: white;
-}
-
-.hero-action-btn.secondary {
-    background: white;
-    color: var(--color-wood);
-    border: 2px solid var(--color-honey);
-}
-
-.hero-action-btn.ghost {
-    background: transparent;
-    color: var(--color-wood);
-    border: 2px solid var(--color-wood-light);
-}
-
-/* Main Content Area */
-.book-container {
-    max-width: 1200px;
-    margin: 0 auto;
-    padding: 0 var(--spacing-md) var(--spacing-xl);
-}
-
-.chapter-tracker {
-    background: var(--color-parchment);
-    border-radius: var(--border-radius-xl);
-    padding: var(--spacing-md);
-    margin-bottom: var(--spacing-lg);
-    box-shadow: var(--shadow-medium);
-    border: 2px solid var(--color-wood-light);
-}
-
-.tracker-row {
-    display: flex;
-    flex-direction: column;
-    gap: var(--spacing-xs);
-    margin-bottom: var(--spacing-md);
-}
-
-.tracker-label {
-    font-family: var(--font-heading);
-    color: var(--color-wood);
-    font-weight: bold;
-    font-size: 1rem;
-}
-
-.book-progress {
-    width: 100%;
-    height: 12px;
-    background: var(--color-paper);
-    border-radius: 6px;
-    overflow: hidden;
-    position: relative;
-    box-shadow: var(--shadow-inner);
-}
-
-.progress-fill {
-    position: absolute;
-    top: 0;
-    left: 0;
-    height: 100%;
-    background: linear-gradient(90deg, var(--color-honey), var(--color-poppy));
-    border-radius: 6px;
-    width: 0%;
-    transition: width 1s ease;
-}
-
-.chapter-pill-row {
-    display: grid;
-    grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
-    gap: var(--spacing-sm);
-}
-
-.chapter-pill {
-    background: white;
-    border: 2px solid var(--color-honey-light);
-    border-radius: var(--border-radius-lg);
-    padding: var(--spacing-sm);
-    display: flex;
-    align-items: center;
-    gap: var(--spacing-sm);
-    cursor: pointer;
-    transition: all var(--transition-base);
-    text-align: left;
-}
-
-.chapter-pill:hover {
-    border-color: var(--color-honey);
-    transform: translateY(-2px);
-    box-shadow: var(--shadow-soft);
-}
-
-.chapter-pill.active {
-    background: var(--color-honey-light);
-    border-color: var(--color-honey);
-}
-
-.pill-number {
-    width: 32px;
-    height: 32px;
-    border-radius: 50%;
-    background: var(--color-honey);
-    color: white;
-    display: flex;
-    align-items: center;
-    justify-content: center;
-    font-weight: bold;
-    font-size: 1rem;
-    flex-shrink: 0;
-}
-
-.pill-text {
-    flex: 1;
-    display: flex;
-    flex-direction: column;
-}
-
-.pill-title {
-    font-weight: bold;
-    color: var(--color-wood);
-    font-family: var(--font-heading);
-    font-size: 0.9rem;
-    margin-bottom: 0.125rem;
-}
-
-.pill-detail {
-    color: var(--color-text-light);
-    font-size: 0.8rem;
-}
-
-/* Book Content - Fixed layout */
-.book {
-    background: var(--color-paper);
-    border-radius: var(--border-radius-xl);
-    padding: var(--spacing-lg);
-    box-shadow: var(--shadow-large);
-    border: 2px solid var(--color-wood);
-    min-height: 400px;
-}
-
-.pages-wrapper {
-    position: relative;
-}
-
-.page {
-    display: none;
-}
-
-.page.active {
-    display: block;
-    animation: fadeIn 0.5s ease;
-}
-
-@keyframes fadeIn {
-    from {
-        opacity: 0;
-        transform: translateY(20px);
-    }
-    to {
-        opacity: 1;
-        transform: translateY(0);
-    }
-}
-
-.chapter-header {
-    text-align: center;
-    margin-bottom: var(--spacing-lg);
-    padding-bottom: var(--spacing-md);
-    border-bottom: 2px solid var(--color-honey-light);
-    position: relative;
-}
-
-.chapter-number {
-    font-family: var(--font-special);
-    color: var(--color-honey);
-    font-size: 1rem;
-    margin-bottom: 0.5rem;
-    letter-spacing: 1px;
-}
-
-.chapter-title {
-    font-family: var(--font-heading);
-    color: var(--color-wood);
-    font-size: 1.8rem;
-    margin-bottom: 0.5rem;
-    line-height: 1.2;
-}
-
-.chapter-subtitle {
-    font-size: 1.1rem;
-    color: var(--color-text-light);
-    font-style: italic;
-    margin-bottom: var(--spacing-md);
-}
-
-.page-content {
-    max-width: 800px;
-    margin: 0 auto;
-}
-
-.story-text {
-    font-size: 1.1rem;
-    line-height: 1.7;
-    margin-bottom: var(--spacing-md);
-    color: var(--color-text);
-}
-
-.chapter-illustrations {
-    display: grid;
-    grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
-    gap: var(--spacing-md);
-    margin: var(--spacing-lg) 0;
-}
-
-.storybook-figure {
-    background: white;
-    border-radius: var(--border-radius-lg);
-    padding: var(--spacing-md);
-    border: 2px solid var(--color-wood-light);
-    transition: all var(--transition-base);
-}
-
-.storybook-figure img {
-    width: 100%;
-    height: 150px;
-    object-fit: cover;
-    border-radius: var(--border-radius-md);
-    margin-bottom: var(--spacing-sm);
-}
-
-.figure-copy {
-    text-align: center;
-}
-
-.figure-name {
-    font-weight: bold;
-    color: var(--color-wood);
-    font-family: var(--font-heading);
-    margin-bottom: 0.5rem;
-    font-size: 1rem;
-}
-
-.figure-note {
-    color: var(--color-text-light);
-    font-size: 0.9rem;
-    line-height: 1.5;
-}
-
-/* Game Embed Frame */
-.game-embed__frame {
-    background: white;
-    border-radius: var(--border-radius-lg);
-    overflow: hidden;
-    box-shadow: var(--shadow-large);
-    margin: var(--spacing-lg) 0;
-    border: 2px solid var(--color-honey);
-}
-
-.game-frame {
-    width: 100%;
-    height: 600px;
-    border: none;
-}
-
-/* Dialogue Bubbles */
-.dialogue-bubble {
-    background: white;
-    border-radius: var(--border-radius-lg);
-    padding: var(--spacing-md);
-    margin: var(--spacing-md) 0;
-    border: 2px solid var(--color-honey-light);
-    box-shadow: var(--shadow-soft);
-    position: relative;
-}
-
-.dialogue-bubble p {
-    margin-bottom: 0.5rem;
-    font-style: italic;
-}
-
-.speaker {
-    text-align: right;
-    color: var(--color-honey);
-    font-weight: bold;
-    font-style: italic;
-    font-size: 0.9rem;
-}
-
-/* Registry Container */
-.registry-container {
-    background: linear-gradient(135deg, var(--color-honey-light), var(--color-sky-light));
-    border-radius: var(--border-radius-xl);
-    padding: var(--spacing-lg);
-    margin: var(--spacing-lg) 0;
-    border: 2px solid var(--color-honey);
-}
-
-.registry-header {
-    display: flex;
-    flex-direction: column;
-    align-items: center;
-    text-align: center;
-    gap: var(--spacing-sm);
-    margin-bottom: var(--spacing-lg);
-}
-
-.registry-icon {
-    font-size: 2.5rem;
-}
-
-.registry-header h3 {
-    color: var(--color-wood);
-    font-family: var(--font-heading);
-    font-size: 1.5rem;
-    margin-bottom: 0.5rem;
-}
-
-.registry-subtitle {
-    color: var(--color-text);
-    font-size: 1rem;
-}
-
-.registry-grid {
-    display: grid;
-    grid-template-columns: 1fr;
-    gap: var(--spacing-md);
-}
-
-.registry-card {
-    background: white;
-    border-radius: var(--border-radius-lg);
-    padding: var(--spacing-md);
-    text-decoration: none;
-    color: inherit;
-    display: flex;
-    flex-direction: column;
-    align-items: center;
-    text-align: center;
-    gap: var(--spacing-sm);
-    transition: all var(--transition-base);
-    border: 2px solid transparent;
-}
-
-.registry-card:hover {
-    border-color: var(--color-honey);
-    transform: translateY(-4px);
-    box-shadow: var(--shadow-medium);
-}
-
-.card-icon {
-    font-size: 1.8rem;
-}
-
-.card-content h4 {
-    color: var(--color-wood);
-    font-family: var(--font-heading);
-    margin-bottom: 0.5rem;
-    font-size: 1.2rem;
-}
-
-.card-content p {
-    color: var(--color-text-light);
-    margin-bottom: 1rem;
-    line-height: 1.5;
-    font-size: 0.9rem;
-}
-
-.card-link {
-    color: var(--color-honey);
-    font-weight: bold;
-    font-size: 0.9rem;
-}
-
-/* Wishes Section */
-.wishes-section {
-    background: var(--color-parchment);
-    border-radius: var(--border-radius-xl);
-    padding: var(--spacing-lg);
-    margin: var(--spacing-lg) 0;
-    border: 2px solid var(--color-wood-light);
-}
-
-.wishes-header {
-    text-align: center;
-    margin-bottom: var(--spacing-lg);
-}
-
-.wishes-header h3 {
-    color: var(--color-wood);
-    font-family: var(--font-heading);
-    font-size: 1.5rem;
-    margin-bottom: 0.5rem;
-}
-
-.wishes-header p {
-    color: var(--color-text-light);
-    font-size: 1rem;
-}
-
-.enhanced-form {
-    background: white;
-    border-radius: var(--border-radius-lg);
-    padding: var(--spacing-md);
-    box-shadow: var(--shadow-soft);
-}
-
-.form-grid {
-    display: grid;
-    grid-template-columns: 1fr;
-    gap: var(--spacing-sm);
-    margin-bottom: var(--spacing-md);
-}
-
-.form-field {
-    margin-bottom: var(--spacing-sm);
-}
-
-.form-field label {
-    display: block;
-    color: var(--color-wood);
-    font-weight: 600;
-    margin-bottom: 0.5rem;
-    font-family: var(--font-heading);
-    font-size: 0.9rem;
-}
-
-.form-field input,
-.form-field select,
-.form-field textarea {
-    width: 100%;
-    padding: 0.75rem;
-    border-radius: var(--border-radius-md);
-    border: 2px solid var(--color-honey-light);
-    background: var(--color-paper);
-    color: var(--color-text);
-    font-family: var(--font-body);
-    font-size: 1rem;
-    transition: all var(--transition-base);
-}
-
-.form-field input:focus,
-.form-field select:focus,
-.form-field textarea:focus {
-    outline: none;
-    border-color: var(--color-honey);
-    box-shadow: 0 0 0 3px rgba(244, 169, 68, 0.2);
-}
-
-.form-actions {
-    margin-top: var(--spacing-md);
-}
-
-.submit-btn {
-    background: linear-gradient(135deg, var(--color-honey), var(--color-honey-dark));
-    color: white;
-    border: none;
-    border-radius: var(--border-radius-md);
-    padding: 1rem 1.5rem;
-    font-family: var(--font-body);
-    font-weight: 600;
-    font-size: 1rem;
-    cursor: pointer;
-    transition: all var(--transition-base);
-    display: flex;
-    align-items: center;
-    justify-content: center;
-    gap: 0.5rem;
-    width: 100%;
-}
-
-.submit-btn:hover {
-    transform: translateY(-2px);
-    box-shadow: 0 6px 20px rgba(244, 169, 68, 0.3);
-}
-
-/* Footer */
-.site-footer {
-    text-align: center;
-    padding: var(--spacing-lg) var(--spacing-md);
-    color: var(--color-text-light);
-    border-top: 2px solid var(--color-honey-light);
-    margin-top: var(--spacing-xl);
-    background: var(--color-paper-dark);
-}
-
-.site-footer p {
-    margin-bottom: var(--spacing-md);
-    font-size: 1rem;
-}
-
-.footer-links {
-    display: flex;
-    justify-content: center;
-    gap: var(--spacing-md);
-    flex-wrap: wrap;
-}
-
-.footer-link {
-    background: none;
-    border: none;
-    color: var(--color-honey);
-    font-family: var(--font-body);
-    font-weight: 600;
-    font-size: 0.9rem;
-    cursor: pointer;
-    display: flex;
-    align-items: center;
-    gap: 0.5rem;
-    padding: 0.5rem 1rem;
-    border-radius: var(--border-radius-md);
-    transition: all var(--transition-base);
-}
-
-.footer-link:hover {
-    background: var(--color-honey-light);
-}
-
-/* Chapter Navigation */
-.chapter-nav {
-    display: flex;
-    justify-content: space-between;
-    align-items: center;
-    margin-top: var(--spacing-lg);
-    padding-top: var(--spacing-md);
-    border-top: 2px solid var(--color-honey-light);
-}
-
-.chapter-nav-btn {
-    background: var(--color-honey-light);
-    color: var(--color-wood);
-    border: 2px solid var(--color-honey);
-    border-radius: var(--border-radius-md);
-    padding: 0.75rem 1.5rem;
-    font-family: var(--font-body);
-    font-weight: 600;
-    cursor: pointer;
-    transition: all var(--transition-base);
-    display: flex;
-    align-items: center;
-    gap: 0.5rem;
-}
-
-.chapter-nav-btn:hover {
-    background: var(--color-honey);
-    color: white;
-}
-
-.chapter-indicator {
-    color: var(--color-text-light);
-    font-weight: 600;
-    font-size: 1rem;
-}
-
-/* Responsive Design */
-@media (min-width: 768px) {
-    .hero-image-container {
-        height: 400px;
-    }
-    
-    .title-line--primary {
-        font-size: 2.5rem;
-    }
-    
-    .title-line--secondary {
-        font-size: 2rem;
-    }
-    
-    .hero-badge {
-        flex-direction: row;
-        text-align: left;
-        align-items: center;
-    }
-    
-    .hero-actions {
-        flex-direction: row;
-    }
-    
-    .hero-action-btn {
-        width: auto;
-    }
-    
-    .chapter-pill-row {
-        grid-template-columns: repeat(4, 1fr);
-    }
-    
-    .registry-grid {
-        grid-template-columns: repeat(2, 1fr);
-    }
-    
-    .form-grid {
-        grid-template-columns: repeat(2, 1fr);
-    }
-}
-
-@media (min-width: 1024px) {
-    .title-line--primary {
-        font-size: 3rem;
-    }
-    
-    .title-line--secondary {
-        font-size: 2.2rem;
-    }
-    
-    .chapter-pill-row {
-        grid-template-columns: repeat(4, 1fr);
-    }
-}
-
-/* Accessibility */
-.sr-only {
-    position: absolute;
-    width: 1px;
-    height: 1px;
-    padding: 0;
-    margin: -1px;
-    overflow: hidden;
-    clip: rect(0, 0, 0, 0);
-    white-space: nowrap;
-    border: 0;
-}
-
-/* Utility Classes */
-.text-center {
-    text-align: center;
-}
-
-.mb-1 {
-    margin-bottom: 0.5rem;
-}
-
-.mb-2 {
-    margin-bottom: 1rem;
-}
-
-.mb-3 {
-    margin-bottom: 1.5rem;
-}
-
-.mt-1 {
-    margin-top: 0.5rem;
-}
-
-.mt-2 {
-    margin-top: 1rem;
-}
-
-.mt-3 {
-    margin-top: 1.5rem;
-}
-    </style>
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>The Hundred Acre Celebration: Welcoming Baby Gunner</title>
+
+    <!-- SEO & Social -->
+    <meta name="description" content="A storybook-style Winnie the Pooh baby shower experience for Baby Gunner, with invitations, characters, and gentle Hundred Acre Wood games.">
+    <meta property="og:title" content="The Hundred Acre Celebration: Welcoming Baby Gunner">
+    <meta property="og:description" content="Join us in the Hundred Acre Wood to celebrate Baby Gunner with stories, honey-sweet moments, and cozy games.">
+    <meta property="og:type" content="website">
+    <meta name="theme-color" content="#FFC42B">
+
+    <!-- Fonts & Icons -->
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link
+        href="https://fonts.googleapis.com/css2?family=Playfair+Display:wght@400;600;700&family=Lato:wght@300;400;700&family=Patrick+Hand&display=swap"
+        rel="stylesheet">
+    <link rel="stylesheet"
+        href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.1/css/all.min.css">
+
+    <!-- Main Styles -->
+    <link rel="stylesheet" href="styles.css">
 </head>
 
 <body>
-<div aria-hidden="true" class="cloud-layer">
-    <div class="cloud">☁️</div>
-    <div class="cloud">☁️</div>
-    <div class="cloud">☁️</div>
-</div>
 
-<!-- Settings Panel -->
-<div class="settings-panel">
-    <button class="settings-button" id="settingsButton" aria-label="Open settings">
-        ⚙️
-    </button>
-</div>
+    <a href="#mainContent" class="skip-link">Skip to main content</a>
+    <div class="reading-progress" id="readingProgress" aria-hidden="true"></div>
 
-<div class="settings-overlay" id="settingsOverlay">
-    <div class="settings-card">
-        <div class="settings-header">
-            <h2>Game Settings</h2>
-            <button class="close-settings" id="closeSettings" aria-label="Close settings">×</button>
+    <!-- Loading -->
+    <div class="loading-screen hidden" id="loadingScreen" role="status" aria-live="polite">
+        <div class="honey-spinner" aria-hidden="true">
+            <div class="loading-jar">
+                <div class="loading-honey-fill"></div>
+            </div>
         </div>
-
-        <!-- Game Difficulty -->
-        <section class="settings-section">
-            <h3><span class="icon">🎮</span> Game Difficulty</h3>
-            <div class="setting-option">
-                <div class="setting-label">
-                    <span>Difficulty Level</span>
-                    <small>Adjusts jar speed, bee frequency, and time limit</small>
-                </div>
-                <select class="setting-select" id="difficultySelect">
-                    <option value="easy">Easy</option>
-                    <option value="medium" selected>Medium</option>
-                    <option value="hard">Hard</option>
-                    <option value="expert">Expert</option>
-                </select>
-            </div>
-        </section>
-
-        <!-- Sound & Music -->
-        <section class="settings-section">
-            <h3><span class="icon">🔊</span> Sound & Music</h3>
-            <div class="setting-option">
-                <div class="setting-label">
-                    <span>Background Music</span>
-                    <small>Play soothing Hundred Acre Wood music</small>
-                </div>
-                <label class="toggle-switch">
-                    <input type="checkbox" id="musicToggle" checked>
-                    <span class="toggle-slider"></span>
-                </label>
-            </div>
-            <div class="setting-option">
-                <div class="setting-label">
-                    <span>Sound Effects</span>
-                    <small>Honey catches, bee buzzes, and game sounds</small>
-                </div>
-                <label class="toggle-switch">
-                    <input type="checkbox" id="sfxToggle" checked>
-                    <span class="toggle-slider"></span>
-                </label>
-            </div>
-            <div class="setting-option">
-                <div class="setting-label">
-                    <span>Volume Level</span>
-                    <small>Adjust overall volume</small>
-                </div>
-                <div style="display: flex; align-items: center; gap: 1rem;">
-                    <input type="range" class="setting-range" id="volumeSlider" min="0" max="100" value="80">
-                    <span class="setting-range-value" id="volumeValue">80%</span>
-                </div>
-            </div>
-        </section>
-
-        <!-- Visual Theme -->
-        <section class="settings-section">
-            <h3><span class="icon">🎨</span> Visual Theme</h3>
-            <div class="theme-options">
-                <div class="theme-option active" data-theme="light">
-                    <span class="icon">☀️</span>
-                    <span class="name">Light</span>
-                </div>
-                <div class="theme-option" data-theme="dark">
-                    <span class="icon">🌙</span>
-                    <span class="name">Dark</span>
-                </div>
-                <div class="theme-option" data-theme="auto">
-                    <span class="icon">⚙️</span>
-                    <span class="name">Auto</span>
-                </div>
-            </div>
-        </section>
-
-        <!-- Game Visuals -->
-        <section class="settings-section">
-            <h3><span class="icon">✨</span> Visual Effects</h3>
-            <div class="setting-option">
-                <div class="setting-label">
-                    <span>Particle Effects</span>
-                    <small>Show honey sparkles and catch effects</small>
-                </div>
-                <label class="toggle-switch">
-                    <input type="checkbox" id="particlesToggle" checked>
-                    <span class="toggle-slider"></span>
-                </label>
-            </div>
-            <div class="setting-option">
-                <div class="setting-label">
-                    <span>Animations</span>
-                    <small>Page transitions and character animations</small>
-                </div>
-                <label class="toggle-switch">
-                    <input type="checkbox" id="animationsToggle" checked>
-                    <span class="toggle-slider"></span>
-                </label>
-            </div>
-        </section>
-
-        <!-- Actions -->
-        <div class="settings-actions">
-            <button class="settings-btn secondary" id="resetSettingsBtn">
-                <span>🔁</span> Reset to Defaults
-            </button>
-            <button class="settings-btn primary" id="applySettingsBtn">
-                <span>💾</span> Apply Settings
-            </button>
+        <div class="loading-text">Stirring the Honey...</div>
+        <div class="loading-subtext">
+            The Hundred Acre Wood is getting ready for Baby Gunner's celebration.
+        </div>
+        <div class="loading-dots" aria-hidden="true">
+            <div class="loading-dot"></div>
+            <div class="loading-dot"></div>
+            <div class="loading-dot"></div>
+        </div>
+        <div class="loading-hint">
+            If this takes more than a few seconds, try a little refresh—just like tapping a honey jar.
         </div>
     </div>
-</div>
 
-<!-- Hero Header -->
-<header class="masthead-hero hero-enhancements">
-    <!-- Hero Banner with Image and Title Overlay -->
-    <div class="hero-banner">
-        <div class="hero-image-container">
-            <img src="https://images.unsplash.com/photo-1519340241574-2cec6aef0c01?w=1600&h=900&fit=crop"
-                 alt="Baby Gunnar with Hundred Acre Wood friends"
-                 class="hero-banner__img"
-                 loading="eager">
-            <!-- Decorative corner elements -->
-            <div aria-hidden="true" class="hero-corner-decoration top-left">🌿</div>
-            <div aria-hidden="true" class="hero-corner-decoration top-right">🍯</div>
-            <div aria-hidden="true" class="hero-corner-decoration bottom-left">💛</div>
-            <div aria-hidden="true" class="hero-corner-decoration bottom-right">🐝</div>
-        </div>
-        <!-- Title Container with Background -->
-        <div class="hero-title-container">
-            <div class="title-background">
-                <h1 class="masthead-title">
-                    <span class="title-line title-line--primary">Baby Gunnar's</span>
-                    <span class="title-line title-line--secondary">Hundred Acre Wood Shower</span>
-                </h1>
-                <div aria-hidden="true" class="title-underline">
-                    <span class="underline-dot">•</span>
-                    <span class="underline-dot">•</span>
-                    <span class="underline-dot">•</span>
-                </div>
-                <p class="hero-subtitle">A storybook celebration with Pooh & friends</p>
-            </div>
-        </div>
+    <!-- Background layers -->
+    <div class="honeycomb-bg" aria-hidden="true"></div>
+    <div class="golden-light" aria-hidden="true"></div>
+
+    <div class="enchanted-forest" aria-hidden="true">
+        <div class="tree" style="left: -40px;"></div>
+        <div class="tree" style="right: -40px; height: 260px; width: 200px;"></div>
+        <div class="floating-leaf" style="left: 10%; animation-delay: -4s;"></div>
+        <div class="floating-leaf" style="left: 40%; animation-delay: -8s;"></div>
+        <div class="floating-leaf" style="left: 70%; animation-delay: -2s;"></div>
+        <div class="floating-leaf" style="left: 85%; animation-delay: -10s;"></div>
     </div>
-    <!-- Decorative Elements -->
-    <div aria-hidden="true" class="hero-sparkles" id="heroSparkles"></div>
-    <div aria-hidden="true" class="hero-bunting">
-        <span>✨</span><span>🎈</span><span>🍯</span><span>💝</span><span>🧸</span><span>📖</span><span>✨</span>
-    </div>
-    <div aria-hidden="true" class="hero-sheen"></div>
-    <!-- Hero Info Panel -->
-    <div class="masthead-hero-inner">
-        <section class="hero-panel">
-            <!-- Event Badge -->
-            <div class="hero-badge">
-                <div aria-hidden="true" class="badge-icon">
-                    <div class="badge-icon-inner">🎉</div>
-                </div>
-                <div class="badge-copy">
-                    <p class="badge-eyebrow">A Very Special</p>
-                    <p class="badge-label">Hundred Acre Gathering</p>
-                    <p class="badge-title">Virtual Baby Shower Celebration</p>
-                </div>
-                <div class="badge-meta">
-                    <time class="badge-pill date" datetime="2025-06-15">
-                        <span aria-hidden="true" class="pill-icon">📅</span>
-                        <span class="pill-text">June 15, 2025</span>
-                    </time>
-                    <div class="badge-pill location">
-                        <span aria-hidden="true" class="pill-icon">📍</span>
-                        <span class="pill-text">Online Celebration</span>
-                    </div>
-                </div>
+
+    <!-- Nav -->
+    <nav class="main-nav" id="mainNav" aria-label="Primary">
+        <div class="nav-container">
+            <div class="nav-brand">
+                <a href="#mainContent" class="nav-title">Hundred Acre Wood</a>
+                <div class="nav-subtitle">Baby Gunner's Celebration</div>
             </div>
-            <!-- Hero Details Grid -->
-            <div class="hero-details-grid">
-                <div class="hero-detail">
-                    <div aria-hidden="true" class="detail-icon">📚</div>
-                    <div class="detail-content">
-                        <h4 class="detail-title">Interactive Storybook</h4>
-                        <p class="detail-text">Read through four charming chapters</p>
-                    </div>
-                </div>
-                <div class="hero-detail">
-                    <div aria-hidden="true" class="detail-icon">🎮</div>
-                    <div class="detail-content">
-                        <h4 class="detail-title">Honey Game</h4>
-                        <p class="detail-text">Help Pooh catch honey pots</p>
-                    </div>
-                </div>
-                <div class="hero-detail">
-                    <div aria-hidden="true" class="detail-icon">🎁</div>
-                    <div class="detail-content">
-                        <h4 class="detail-title">Gift Registry</h4>
-                        <p class="detail-text">Share your wishes & blessings</p>
-                    </div>
-                </div>
-            </div>
-            <!-- Quick Actions -->
-            <div class="hero-actions">
-                <button class="hero-action-btn primary" onclick="scrollToChapter(1)">
-                    <span aria-hidden="true" class="btn-icon">📖</span>
-                    <span class="btn-text">Begin the Story</span>
-                </button>
-                <button class="hero-action-btn secondary" onclick="scrollToChapter(2)">
-                    <span aria-hidden="true" class="btn-icon">🍯</span>
-                    <span class="btn-text">Play Honey Game</span>
-                </button>
-                <button class="hero-action-btn ghost" onclick="scrollToChapter(3)">
-                    <span aria-hidden="true" class="btn-icon">💝</span>
-                    <span class="btn-text">View Registry</span>
-                </button>
-            </div>
-            <!-- Orientation Hint -->
-            <div class="orientation-hint">
-                <div aria-hidden="true" class="hint-icon">📱</div>
-                <p class="hint-text">For the best experience: Rotate for wider game view, or stay in portrait for lovely
-                    story reading.</p>
-            </div>
-        </section>
-    </div>
-</header>
-<!-- Main Content -->
-<main class="book-container" id="storybook">
-    <!-- Chapter Navigation -->
-    <nav aria-label="Story chapters" class="chapter-tracker">
-        <h2 class="sr-only">Chapter navigation</h2>
-        <div class="tracker-row">
-            <div class="tracker-label">Story path</div>
-            <div aria-valuemax="100" aria-valuemin="0" aria-valuenow="0" class="book-progress" role="progressbar">
-                <div class="progress-fill" id="progressFill"></div>
-            </div>
-        </div>
-        <div class="chapter-pill-row">
-            <button aria-current="page" class="chapter-pill sparkle active" data-chapter-target="1">
-                <span class="pill-number">1</span>
-                <span class="pill-text">
-               <span class="pill-title">Welcome</span>
-               <span class="pill-detail">Invitation arrives</span>
-               </span>
+
+            <button class="nav-toggle" id="navToggle" aria-label="Toggle navigation menu" aria-expanded="false"
+                aria-controls="navMenu">
+                <i class="fas fa-bars" aria-hidden="true"></i>
             </button>
-            <button class="chapter-pill sparkle" data-chapter-target="2">
-                <span class="pill-number">2</span>
-                <span class="pill-text">
-               <span class="pill-title">Honey Hunt</span>
-               <span class="pill-detail">Play the game</span>
-               </span>
-            </button>
-            <button class="chapter-pill sparkle" data-chapter-target="3">
-                <span class="pill-number">3</span>
-                <span class="pill-text">
-               <span class="pill-title">Gifts & Wishes</span>
-               <span class="pill-detail">Registry & guestbook</span>
-               </span>
-            </button>
-            <button class="chapter-pill sparkle" data-chapter-target="4">
-                <span class="pill-number">4</span>
-                <span class="pill-text">
-               <span class="pill-title">Celebration</span>
-               <span class="pill-detail">Welcome Gunnar</span>
-               </span>
-            </button>
+
+            <div class="nav-menu" id="navMenu">
+                <a href="#section1" class="nav-item active" data-section="section1">
+                    <i class="fas fa-book" aria-hidden="true"></i>
+                    <span>Story Beginning</span>
+                </a>
+                <a href="#section2" class="nav-item" data-section="section2">
+                    <i class="fas fa-envelope" aria-hidden="true"></i>
+                    <span>Invitation &amp; RSVP</span>
+                </a>
+                <a href="#section6" class="nav-item" data-section="section6">
+                    <i class="fas fa-map-marker-alt" aria-hidden="true"></i>
+                    <span>Location &amp; Details</span>
+                </a>
+                <a href="#section3" class="nav-item" data-section="section3">
+                    <i class="fas fa-users" aria-hidden="true"></i>
+                    <span>Meet the Characters</span>
+                </a>
+                <a href="#section5" class="nav-item" data-section="section5">
+                    <i class="fas fa-gift" aria-hidden="true"></i>
+                    <span>Gunner's Treasure Trove</span>
+                </a>
+                <a href="#games" class="nav-item" data-section="games">
+                    <i class="fas fa-gamepad" aria-hidden="true"></i>
+                    <span>Bonus Pooh Games</span>
+                </a>
+            </div>
         </div>
     </nav>
-    <!-- Story Pages -->
-    <div class="book">
-        <div class="pages-wrapper">
-            <!-- Chapter 1 -->
-            <article class="page active" data-chapter="1">
-                <header class="chapter-header">
-                    <p class="chapter-number">Chapter One</p>
-                    <h2 class="chapter-title">A Special Day in the Hundred Acre Wood</h2>
-                    <p class="chapter-subtitle">An Invitation to Celebrate</p>
-                    <span aria-hidden="true" class="honey-drip"></span>
-                </header>
-                <div class="page-content">
-                    <p class="story-text">One fine spring day, in a corner of the Hundred Acre Wood where the sun shines
-                        warmly through the trees and the flowers bloom in cheerful colors, something wonderful was
-                        happening. All the forest friends were gathering, for there was to be a celebration unlike any
-                        other.</p>
-                    <p class="story-text">"What sort of celebration?" you might ask. Well, it was the very best sort—the
-                        kind that welcomes a new little friend to the world. A baby boy named Gunnar James was soon to
-                        arrive, and everyone in the Hundred Acre Wood wanted to share in the joy.</p>
-                    <div class="chapter-illustrations">
-                        <figure class="storybook-figure">
-                            <img src="https://images.unsplash.com/photo-1582142306909-195724d3daf9?w=200&h=200&fit=crop"
-                                 alt="Winnie the Pooh" loading="eager">
-                            <figcaption>
-                                <div class="figure-name">Pooh brings the first pot</div>
-                                <p class="figure-note">"A baby celebration needs extra honey," he whispered.</p>
-                            </figcaption>
-                            <div class="character-message"></div>
-                        </figure>
-                        <figure class="storybook-figure">
-                            <img src="https://images.unsplash.com/photo-1425082661705-1834bfd09dca?w=200&h=200&fit=crop"
-                                 alt="Piglet" loading="eager">
-                            <figcaption>
-                                <div class="figure-name">Piglet pins up the banner</div>
-                                <p class="figure-note">Making sure every friend felt warmly invited.</p>
-                            </figcaption>
-                            <div class="character-message"></div>
-                        </figure>
-                    </div>
-                    <p class="story-text">Winnie the Pooh, being a Bear of Very Little Brain but a Very Big Heart, knew
-                        that the most important thing for any celebration was honey. And not just a little honey, but
-                        lots and lots of it. After all, welcoming Baby Gunnar was a Very Important Matter.</p>
-                    <p class="story-text">"But first," thought Pooh, looking up at his honey pots on the high shelf,
-                        "we'll need to gather more honey. Won't you help?"</p>
-                    <div aria-hidden="true" class="divider">🌳 ✿ 🐝 ✿ 🌳</div>
-                </div>
-            </article>
-            <!-- Chapter 2: Game -->
-        <!-- Chapter 2: Game -->
-<article class="page page--game" data-chapter="2" id="honey-game">
-    <header class="chapter-header">
-        <p class="chapter-number">Chapter Two</p>
-        <h2 class="chapter-title">Pooh's Honey Gathering Adventure</h2>
-        <p class="chapter-subtitle">A Game of Skill and Sweetness</p>
-        <span aria-hidden="true" class="honey-drip"></span>
-    </header>
-    
-    <div class="chapter-illustrations">
-        <figure class="storybook-figure figure-theme-forest clickable-character" data-character="tigger">
-            <img alt="Tigger bouncing" height="96" loading="lazy" src="Images/Characters/tigger.png" width="96">
-            <figcaption class="figure-copy">
-                <div class="figure-name">Tigger stakes out the course</div>
-                <p class="figure-note">He marked the path with springy footprints so every honey pot feels like an adventure to catch.</p>
-            </figcaption>
-            <div aria-live="polite" class="character-message"></div>
-        </figure>
-        <figure class="storybook-figure figure-theme-honey clickable-character" data-character="roo">
-            <img alt="Roo cheering" height="96" loading="lazy" src="Images/Characters/roo.png" width="96">
-            <figcaption class="figure-copy">
-                <div class="figure-name">Roo cheers from the sidelines</div>
-                <p class="figure-note">"Mind the bees!" he giggled, handing out cozy scarves.</p>
-            </figcaption>
-            <div aria-live="polite" class="character-message"></div>
-        </figure>
+
+    <!-- Storybook cover -->
+    <div class="storybook-cover" id="storybookCover" aria-labelledby="coverTitle">
+        <div class="cover-decoration" aria-hidden="true"></div>
+        <h1 class="cover-title" id="coverTitle">The Hundred Acre Celebration</h1>
+        <p class="cover-subtitle">Welcoming Baby Gunner to Our Story</p>
+        <button class="open-book-btn" id="openBookBtn">
+            <i class="fas fa-book-open" aria-hidden="true"></i>
+            <span>Open the Story</span>
+        </button>
     </div>
 
-    <div class="page-content">
-        <!-- GAME DIRECTLY EMBEDDED HERE -->
-        <div class="game-shell" id="gameContainer">
-            <canvas class="game-canvas" id="gameCanvas" width="800" height="600"></canvas>
-
-            <div class="game-hud">
-                <div class="game-stat">
-                    <span class="stat-label">Score</span>
-                    <span class="stat-value" id="scoreValue">0</span>
-                </div>
-                <div class="game-meter">
-                    <span class="stat-label">Time</span>
-                    <div aria-label="Time remaining" class="meter-track" role="progressbar">
-                        <div class="meter-fill" id="timeBar"></div>
-                    </div>
-                    <span class="meter-value" id="timeValue">60s</span>
-                </div>
-                <div class="game-stat">
-                    <span class="stat-label">Lives</span>
-                    <span class="stat-value" id="livesValue">3</span>
-                </div>
-                <div class="game-stat">
-                    <span class="stat-label">Best</span>
-                    <span class="stat-value" id="bestValue">0</span>
-                </div>
-            </div>
-
-            <div aria-live="polite" class="game-status" id="gameStatus">Ready to play? Tap Start or press Space.</div>
-
-            <div class="control-deck" aria-label="Game controls">
-                <div class="control-pad">
-                    <button class="control-button control-button--ghost" id="controlLeft" aria-label="Move left">⟵</button>
-                    <button class="control-button control-button--ghost" id="controlRight" aria-label="Move right">⟶</button>
-                </div>
-                <div class="control-actions">
-                    <button class="control-button control-button--primary" id="gameStartButton">Start</button>
-                    <button class="control-button" id="togglePauseButton">Pause</button>
-                    <span class="control-hint">Space = Start/Pause · P = Pause/Resume</span>
-                </div>
-            </div>
-
-            <div class="game-overlay" id="gameStartOverlay">
-                <div class="game-overlay__card">
-                    <h2 class="game-overlay__title">🍯 Honey Hunt 🐝</h2>
-                    <p class="game-overlay__sub">Catch the honey jars, dodge the bees, and keep Pooh smiling.</p>
-                    <ul class="game-overlay__list">
-                        <li>Arrow keys or on-screen arrows to move.</li>
-                        <li>Spacebar to start and pause, P to pause/resume.</li>
-                        <li>Stay alive for 60 seconds; gold pots are worth extra!</li>
-                    </ul>
-                    <div class="game-overlay__cta">
-                        <button class="control-button control-button--primary" id="gameStartButtonOverlay">Start the Hunt</button>
-                    </div>
-                </div>
-            </div>
-
-            <div class="game-overlay" id="gameOverOverlay" style="display: none;">
-                <div class="game-overlay__card">
-                    <h2 class="game-overlay__title">Game Over!</h2>
-                    <p class="game-overlay__sub">Score: <span id="finalScore">0</span></p>
-                    <div class="game-overlay__cta">
-                        <button class="control-button control-button--primary" id="gameRestartButton">Play Again</button>
-                    </div>
-                </div>
-            </div>
-        </div>
-
-        <p class="story-text">Help Pooh gather sweet honey by playing the Honey Hunt game above. Catch jars, dodge bees, and send your best score to the Hundred Acre Wood crew!</p>
+    <!-- Music & accessibility controls -->
+    <div class="music-controls" aria-label="Page controls">
+        <button class="music-btn" id="musicToggle" aria-label="Toggle background music">
+            <i class="fas fa-music" aria-hidden="true"></i>
+        </button>
+        <button class="accessibility-btn" id="motionToggle" aria-label="Toggle reduced motion">
+            <i class="fas fa-universal-access" aria-hidden="true"></i>
+        </button>
     </div>
-</article>
-            <!-- Chapter 3: Gifts & Wishes -->
-            <article class="page" data-chapter="3">
-                <header class="chapter-header">
-                    <p class="chapter-number">Chapter Three</p>
-                    <h2 class="chapter-title">Gifts from the Heart</h2>
-                    <p class="chapter-subtitle">Preparing for Baby Gunnar's Arrival</p>
-                    <span aria-hidden="true" class="honey-drip"></span>
-                </header>
-                <div class="page-content">
-                    <section class="story-section">
-                        <p class="story-text">Back in the Hundred Acre Wood, Pooh sat thoughtfully by his honey pots.
-                            "Honey is wonderful," he mused, "but I wonder what else a growing bear—oh, I mean baby—might
-                            need?"</p>
-                        <p class="story-text">Just then, Piglet came scurrying up, holding something soft. "I was
-                            thinking, Pooh," he said in his small voice, "perhaps something cozy for chilly
-                            evenings?"</p>
-                        <div class="dialogue-bubble dialogue-piglet">
-                            <div class="bubble-arrow"></div>
-                            <p>"Something soft and warm, for when the wind howls!"</p>
-                            <span class="speaker">— Piglet</span>
+
+    <!-- Background music element -->
+    <audio id="bgMusic" loop preload="auto">
+        <source src="media/hundred-acre-lullaby.mp3" type="audio/mpeg">
+    </audio>
+
+    <!-- FABs -->
+    <div class="fab-container" aria-label="Quick navigation">
+        <button class="fab" id="scrollTopFab" aria-label="Back to top of page">
+            <i class="fas fa-arrow-up" aria-hidden="true"></i>
+        </button>
+        <button class="fab" id="scrollRsvpFab" aria-label="Jump to RSVP form">
+            <i class="fas fa-heart" aria-hidden="true"></i>
+        </button>
+    </div>
+
+    <!-- Main content - Celebration Storybook -->
+    <main id="mainContent" tabindex="-1">
+        <div class="storybook-shell">
+            <div class="storybook" id="storybook">
+                <div class="storybook-inner">
+                    <header class="storybook-header">
+                        <h2 class="storybook-heading">Once upon a very special day...</h2>
+                        <p class="storybook-subheading">A new little friend joins the Hundred Acre Wood</p>
+                    </header>
+
+                    <!-- Section 1: Story beginning -->
+                    <section class="content-section scroll-animate" id="section1" aria-labelledby="storyStartTitle">
+                        <div class="content-section-inner">
+                            <div class="section-number">1</div>
+                            <div class="section-header">
+                                <h2 class="story-title" id="storyStartTitle">
+                                    Once Upon a Time in the Hundred Acre Wood...
+                                </h2>
+                            </div>
+
+                            <button class="woodland-sign" type="button" onclick="playWoodlandSound(event)">
+                                Welcome to the Hundred Acre Wood
+                            </button>
+
+                            <div class="story-section">
+                                <p class="story-text">
+                                    In a corner of the world where stories grow on trees and adventures wait around every bend,
+                                    a very special celebration is being prepared. The friends of the Hundred Acre Wood are gathering
+                                    together, for they've heard the most wonderful news – a new friend is coming to join their adventures:
+                                    Baby Gunner.
+                                </p>
+                            </div>
+
+                            <!-- Pooh spotlight uses honey-bear.png -->
+                            <button class="character-spotlight" type="button" data-character="pooh"
+                                onclick="showCharacterModal('pooh')">
+                                <div class="character-illustration" aria-hidden="true">
+                                    <img src="Images/Characters/honey-bear.png" alt="" />
+                                </div>
+                                <div class="character-spotlight-content">
+                                    <div class="character-quote">
+                                        "Oh, bother! I do believe this calls for a Very Special Something. Perhaps with a little honey?"
+                                    </div>
+                                    <div class="character-name">- Winnie the Pooh</div>
+                                </div>
+                            </button>
+
+                            <div class="story-section">
+                                <p class="story-text">
+                                    And so it was decided that all the creatures of the wood would come together for a Grand Celebration
+                                    to welcome this new little friend. They would share stories, play games, and of course, enjoy
+                                    plenty of honey and treats. For when a new friend arrives in the Hundred Acre Wood, it is always
+                                    a cause for the happiest of gatherings.
+                                </p>
+                            </div>
                         </div>
                     </section>
-                    <div class="chapter-illustrations">
-                        <figure class="storybook-figure figure-theme-forest clickable-character"
-                                data-character="piglet">
-                            <img alt="Piglet with blanket" height="96" loading="lazy" src="Images/Characters/piglet.png"
-                                 width="96">
-                            <figcaption class="figure-copy">
-                                <div class="figure-name">Piglet's Cozy Corner</div>
-                                <p class="figure-note">Found the snuggliest blanket in all the Wood.</p>
-                            </figcaption>
-                            <div aria-live="polite" class="character-message"></div>
-                        </figure>
-                        <figure class="storybook-figure figure-theme-honey clickable-character" data-character="pooh">
-                            <img alt="Pooh thinking" height="96" loading="lazy" src="Images/Characters/honey-bear.png"
-                                 width="96">
-                            <figcaption class="figure-copy">
-                                <div class="figure-name">Pooh's Pondering</div>
-                                <p class="figure-note">Thinking of practical things (between honey snacks).</p>
-                            </figcaption>
-                            <div aria-live="polite" class="character-message"></div>
-                        </figure>
-                        <figure class="storybook-figure figure-theme-sky clickable-character" data-character="tigger">
-                            <img alt="Tigger bouncing" height="96" loading="lazy" src="Images/Characters/tigger.png"
-                                 width="96">
-                            <figcaption class="figure-copy">
-                                <div class="figure-name">Tigger's Toys</div>
-                                <p class="figure-note">Bounced in with the bounciest ideas!</p>
-                            </figcaption>
-                            <div aria-live="polite" class="character-message"></div>
-                        </figure>
-                    </div>
-                    <section class="story-section">
-                        <p class="story-text">Soon, all the friends had gathered with their ideas. Tigger bounced about
-                            toys that bounce, Eeyore suggested "something useful that won't blow away," and Rabbit began
-                            making a very organized list.</p>
-                        <div class="dialogue-bubble dialogue-pooh">
-                            <div class="bubble-arrow"></div>
-                            <p>"The most important thing," said Pooh wisely, "is that Baby Gunnar knows he is surrounded
-                                by love. But if you'd like to bring something special, his parents have shared a few
-                                ideas that would be helpful."</p>
-                            <span class="speaker">— Pooh Bear</span>
-                        </div>
-                    </section>
-                    <div class="registry-container">
-                        <aside class="registry-section">
-                            <div class="registry-header">
-                                <div aria-hidden="true" class="registry-icon">🎁</div>
-                                <div>
-                                    <h3>Baby Gunnar's Registry</h3>
-                                    <p class="registry-subtitle">Your presence is the greatest present, but if you'd
-                                        like to contribute to his woodland adventures:</p>
+
+                    <!-- Section 2: Invitation & RSVP -->
+                    <section class="content-section scroll-animate" id="section2" aria-labelledby="invitationTitle">
+                        <div class="content-section-inner">
+                            <div class="section-number">2</div>
+                            <div class="section-header">
+                                <h2 class="story-title" id="invitationTitle">You Are Cordially Invited</h2>
+                            </div>
+
+                            <button class="woodland-sign" type="button" onclick="playWoodlandSound(event)">
+                                Party This Way →
+                            </button>
+
+                            <div class="story-section">
+                                <p class="story-text">
+                                    The friends of the Hundred Acre Wood request the pleasure of your company at a Very Special
+                                    Celebration in honor of Baby Gunner. Come share in the joy, laughter, and honey-sweet moments
+                                    as we prepare to welcome this new little adventurer to our story.
+                                </p>
+                            </div>
+
+                            <div class="invitation-details" aria-label="Event details">
+                                <div class="detail-card">
+                                    <div class="detail-title">Date &amp; Time</div>
+                                    <div class="detail-content">
+                                        Saturday, February 15, 2025<br>
+                                        1:00 PM – 4:00 PM<br>
+                                        <small>(Arrive a few minutes early to visit the honey jars and guestbook.)</small>
+                                    </div>
+                                </div>
+                                <div class="detail-card">
+                                    <div class="detail-title">Location</div>
+                                    <div class="detail-content">
+                                        The Hundred Acre Gathering Hall<br>
+                                        123 Storybook Lane<br>
+                                        Hometown, USA<br>
+                                        <em>Follow the balloons and honey pots from the parking lot.</em>
+                                    </div>
                                 </div>
                             </div>
-                            <div class="registry-grid">
-                                <a class="registry-card" href="https://my.babylist.com/lea-hardesty" rel="noopener"
-                                   target="_blank">
-                                    <div class="card-icon">🎯</div>
-                                    <div class="card-content">
-                                        <h4>babylist Registry</h4>
-                                        <p>For everyday essentials and nursery items</p>
-                                        <span class="card-link">Browse registry →</span>
+
+                            <div class="rsvp-form" id="rsvp">
+                                <h3
+                                    style="font-family: var(--font-heading); font-size: 1.4rem; margin-bottom: 8px; color: var(--storybook-brown);">
+                                    RSVP to Join the Celebration
+                                </h3>
+                                <form class="storybook-form" id="rsvpForm" novalidate>
+                                    <div class="form-grid">
+                                        <div class="form-field">
+                                            <label class="field-label" for="guestName">
+                                                <i class="fas fa-user" aria-hidden="true"></i>
+                                                <span>Your Name</span>
+                                            </label>
+                                            <input id="guestName" name="guestName" type="text" required
+                                                autocomplete="name"
+                                                placeholder="Who's coming from your Hundred Acre Wood?">
+                                        </div>
+                                        <div class="form-field">
+                                            <label class="field-label" for="guestCount">
+                                                <i class="fas fa-users" aria-hidden="true"></i>
+                                                <span>Number of Guests</span>
+                                            </label>
+                                            <select id="guestCount" name="guestCount" required>
+                                                <option value="">Select</option>
+                                                <option value="1">Just me</option>
+                                                <option value="2">2</option>
+                                                <option value="3">3</option>
+                                                <option value="4">4</option>
+                                                <option value="5">5</option>
+                                            </select>
+                                        </div>
                                     </div>
-                                </a>
-                                <div class="registry-card gift-idea-card">
-                                    <div class="card-icon">💝</div>
-                                    <div class="card-content">
-                                        <h4>Gift Ideas</h4>
-                                        <ul class="gift-ideas">
-                                            <li>Board books & stories</li>
-                                            <li>Woodland-themed clothing</li>
-                                            <li>Soft blankets & swaddles</li>
-                                            <li>Diapers & essentials</li>
+                                    <div class="form-field">
+                                        <label class="field-label" for="guestNote">
+                                            <i class="fas fa-comment-dots" aria-hidden="true"></i>
+                                            <span>Notes for the Hosts</span>
+                                        </label>
+                                        <textarea id="guestNote" name="guestNote" rows="3"
+                                            placeholder="Share favorite snacks, allergies, or a short note for Baby Gunner."></textarea>
+                                    </div>
+                                    <button type="submit" class="magical-btn">
+                                        <i class="fas fa-paper-plane" aria-hidden="true"></i>
+                                        <span>Send RSVP</span>
+                                    </button>
+                                    <div class="form-status" id="rsvpStatus" aria-live="polite"></div>
+                                </form>
+                            </div>
+                        </div>
+                    </section>
+
+                    <!-- Section 3: Location / logistics -->
+                    <section class="content-section scroll-animate" id="section6"
+                        aria-labelledby="locationTitle">
+                        <div class="content-section-inner">
+                            <div class="section-number">3</div>
+
+                            <div class="section-header">
+                                <h2 class="story-title" id="locationTitle">Finding Our Woodland Gathering</h2>
+                            </div>
+
+                            <button class="woodland-sign" type="button" onclick="playWoodlandSound(event)">
+                                Directions &amp; Details
+                            </button>
+
+                            <div class="story-section">
+                                <p class="story-text">
+                                    Even the most wonderful adventures require a bit of practical planning. Here you'll find
+                                    all the details needed to join our celebration without any bother. From parking spots to
+                                    dress code (storybook-comfy), we've tucked the important notes just below.
+                                </p>
+                            </div>
+
+                            <div class="invitation-details" aria-label="Logistics">
+                                <div class="detail-card">
+                                    <div class="detail-title">Parking &amp; Arrival</div>
+                                    <div class="detail-content">
+                                        Follow the balloons and wooden signs from the main entrance. Parking attendants (disguised
+                                        as friendly grown-ups) will help you find a spot.
+                                    </div>
+                                </div>
+                                <div class="detail-card">
+                                    <div class="detail-title">Dress Code</div>
+                                    <div class="detail-content">
+                                        Soft, cozy, and picture-ready. Pastels, florals, or a nod to your favorite Hundred Acre
+                                        friend are all welcome.
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    </section>
+
+                    <!-- Section 4: Characters -->
+                    <section class="content-section scroll-animate" id="section3"
+                        aria-labelledby="charactersTitle">
+                        <div class="content-section-inner">
+                            <div class="section-number">4</div>
+
+                            <div class="section-header">
+                                <h2 class="story-title" id="charactersTitle">Meet Our Hosts</h2>
+                            </div>
+
+                            <button class="woodland-sign" type="button" onclick="playWoodlandSound(event)">
+                                Character Meet &amp; Greet
+                            </button>
+
+                            <div class="story-section">
+                                <p class="story-text">
+                                    All your favorite friends from the Hundred Acre Wood will be there to welcome you and share
+                                    in the celebration. Each has prepared a little something special for Baby Gunner (and for you).
+                                    Tap or click on a character to learn more about how they're helping with the party.
+                                </p>
+                            </div>
+
+                            <!-- Character PNGs here -->
+                            <button class="character-spotlight" type="button" onclick="showCharacterModal('pooh')">
+                                <div class="character-illustration" aria-hidden="true">
+                                    <img src="Images/Characters/honey-bear.png" alt="" />
+                                </div>
+                                <div class="character-spotlight-content">
+                                    <div class="character-quote">
+                                        "Sometimes the smallest things take up the most room in your heart."
+                                    </div>
+                                    <div class="character-name">Winnie the Pooh</div>
+                                </div>
+                            </button>
+
+                            <button class="character-spotlight" type="button" onclick="showCharacterModal('piglet')">
+                                <div class="character-illustration" aria-hidden="true">
+                                    <img src="Images/Characters/piglet.png" alt="" />
+                                </div>
+                                <div class="character-spotlight-content">
+                                    <div class="character-quote">
+                                        "Even the littlest friend can bring the greatest joy."
+                                    </div>
+                                    <div class="character-name">Piglet</div>
+                                </div>
+                            </button>
+
+                            <button class="character-spotlight" type="button" onclick="showCharacterModal('tigger')">
+                                <div class="character-illustration" aria-hidden="true">
+                                    <img src="Images/Characters/tigger.png" alt="" />
+                                </div>
+                                <div class="character-spotlight-content">
+                                    <div class="character-quote">
+                                        "New babies are what Tiggers like best!"
+                                    </div>
+                                    <div class="character-name">Tigger</div>
+                                </div>
+                            </button>
+
+                            <button class="character-spotlight" type="button" onclick="showCharacterModal('eeyore')">
+                                <div class="character-illustration" aria-hidden="true">
+                                    <img src="Images/Characters/eeyore.png" alt="" />
+                                </div>
+                                <div class="character-spotlight-content">
+                                    <div class="character-quote">
+                                        "Not that I'm complaining, but it will be rather nice to have someone new around."
+                                    </div>
+                                    <div class="character-name">Eeyore</div>
+                                </div>
+                            </button>
+                        </div>
+                    </section>
+
+                    <!-- Section 5: Gifts -->
+                    <section class="content-section scroll-animate" id="section5"
+                        aria-labelledby="treasureTitle">
+                        <div class="content-section-inner">
+                            <div class="section-number">5</div>
+
+                            <div class="section-header">
+                                <h2 class="story-title" id="treasureTitle">Gunner's Treasure Trove</h2>
+                            </div>
+
+                            <button class="woodland-sign" type="button" onclick="playWoodlandSound(event)">
+                                Baby's First Treasures
+                            </button>
+
+                            <div class="story-section">
+                                <p class="story-text">
+                                    Your presence at our celebration is the greatest gift we could imagine. For those who have
+                                    asked about gifts, we've created a small treasure trove of items that would help welcome
+                                    our little one to the world. But handwritten notes, favorite children's books,
+                                    or simple well-wishes are equally treasured.
+                                </p>
+                            </div>
+
+                            <div class="invitation-details" aria-label="Gift suggestions">
+                                <div class="detail-card">
+                                    <div class="detail-title">Book Nook</div>
+                                    <div class="detail-content">
+                                        Bring your favorite childhood book (new or gently loved) with a note inside for Baby Gunner.
+                                        The Hundred Acre Wood will become his first library.
+                                    </div>
+                                </div>
+                                <div class="detail-card">
+                                    <div class="detail-title">Registry</div>
+                                    <div class="detail-content">
+                                        For anyone who asked, registry details can be shared by the hosts. Think cozy blankets,
+                                        soft friends, and just enough honey-colored things to make a nursery glow.
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    </section>
+
+                    <!-- Section 6: Games (bonus) -->
+                    <section class="content-section scroll-animate" id="games" aria-labelledby="gamesHeading">
+                        <div class="content-section-inner">
+                            <div class="section-number">6</div>
+                            <div class="section-header">
+                                <h2 class="story-title" id="gamesHeading">Bonus Playtime in the Hundred Acre Wood</h2>
+                            </div>
+
+                            <div class="story-section">
+                                <p class="story-text">
+                                    Once the plans are set, the maps are marked, and the gifts are tucked away,
+                                    there’s still room for a bit of gentle fun. These little games are just a bonus—
+                                    something extra for older kids and playful grown-ups who want to wander through the
+                                    Hundred Acre Wood a tiny bit longer.
+                                </p>
+                            </div>
+
+                            <header class="games-header">
+                                <div class="character pooh-header" aria-hidden="true">🐻</div>
+                                <div class="character tigger-header" aria-hidden="true">🐯</div>
+                                <h1>Winnie the Pooh Adventures</h1>
+                                <p class="subtitle">Cozy, kid-friendly games inspired by the Hundred Acre Wood.</p>
+                            </header>
+
+                            <div class="games-container" aria-label="Pooh-themed mini games">
+                                <!-- Tower Defense Game -->
+                                <article class="game-card game-card--primary" aria-labelledby="defenseTitle"
+                                    id="defense-card">
+                                    <div class="game-ribbon">Cozy Strategy</div>
+                                    <div class="game-character piglet" aria-hidden="true">🐷</div>
+                                    <div class="game-character eeyore" aria-hidden="true">🐴</div>
+
+                                    <h2 class="game-title" id="defenseTitle">Honey Hive Defense</h2>
+                                    <p class="game-tagline">Help Pooh’s friends guard the honey path from silly mischief-makers.</p>
+
+                                    <p class="game-description">
+                                        Choose your favorite Hundred Acre friend and place them along the path.
+                                        Work together to keep the honey safe from Heffalumps and Woozles—nothing scary, just
+                                        playful, bouncy trouble to outsmart.
+                                    </p>
+
+                                    <div class="stats stats--pill" aria-label="Honey hive game stats">
+                                        <div class="stat-item">
+                                            <span class="stat-label">Honey</span>
+                                            <span class="stat-value"><span id="honey-count">100</span>🍯</span>
+                                        </div>
+                                        <div class="stat-item">
+                                            <span class="stat-label">Lives</span>
+                                            <span class="stat-value"><span id="lives-count">10</span>❤️</span>
+                                        </div>
+                                        <div class="stat-item">
+                                            <span class="stat-label">Wave</span>
+                                            <span class="stat-value"><span id="wave-count">1</span>🌊</span>
+                                        </div>
+                                    </div>
+
+                                    <div class="game-status-badge" id="defense-alert" role="status"
+                                        aria-live="polite">The honey path is peaceful. Prepare your friends.</div>
+
+                                    <div class="tower-selector" aria-label="Choose a defender">
+                                        <button class="tower-option selected" type="button" data-tower="pooh"
+                                            aria-pressed="true" aria-label="Pooh tower, cost 20 honey">
+                                            <div class="tower-icon" aria-hidden="true">🐻</div>
+                                            <div class="tower-cost">20🍯</div>
+                                        </button>
+                                        <button class="tower-option" type="button" data-tower="tigger"
+                                            aria-pressed="false" aria-label="Tigger tower, cost 30 honey">
+                                            <div class="tower-icon" aria-hidden="true">🐯</div>
+                                            <div class="tower-cost">30🍯</div>
+                                        </button>
+                                        <button class="tower-option" type="button" data-tower="rabbit"
+                                            aria-pressed="false" aria-label="Rabbit tower, cost 40 honey">
+                                            <div class="tower-icon" aria-hidden="true">🐰</div>
+                                            <div class="tower-cost">40🍯</div>
+                                        </button>
+                                        <button class="tower-option" type="button" data-tower="piglet"
+                                            aria-pressed="false" aria-label="Piglet tower, cost 25 honey">
+                                            <div class="tower-icon" aria-hidden="true">🐷</div>
+                                            <div class="tower-cost">25🍯</div>
+                                        </button>
+                                        <button class="tower-option" type="button" data-tower="eeyore"
+                                            aria-pressed="false" aria-label="Eeyore tower, cost 35 honey">
+                                            <div class="tower-icon" aria-hidden="true">🐴</div>
+                                            <div class="tower-cost">35🍯</div>
+                                        </button>
+                                    </div>
+
+                                    <div class="game-area game-area--framed" aria-label="Honey hive defense game area">
+                                        <canvas id="defense-game" width="520" height="400" role="img"
+                                            aria-label="Pooh and friends defending the honey path"></canvas>
+                                        <div class="game-overlay-hint">
+                                            Tap or click on the path to place your friends.
+                                        </div>
+                                        <div class="game-overlay-status" id="defense-wave-status">Wave 1 ready</div>
+                                    </div>
+
+                                    <div class="controls controls--stack">
+                                        <button id="start-defense" type="button">
+                                            <i class="fas fa-play" aria-hidden="true"></i>
+                                            Start Wave
+                                        </button>
+                                        <button id="upgrade-tower" type="button">
+                                            <i class="fas fa-arrow-up" aria-hidden="true"></i>
+                                            Upgrade Tower (50🍯)
+                                        </button>
+                                    </div>
+
+                                    <div class="instructions">
+                                        <p><strong>How to play:</strong></p>
+                                        <ul>
+                                            <li>Select a friend (tower) above.</li>
+                                            <li>Tap or click on the path in the game area to place them.</li>
+                                            <li>As waves begin, your friends will gently shoo away the troublemakers.</li>
+                                            <li>Use honey wisely to upgrade your favorite helpers.</li>
                                         </ul>
                                     </div>
-                                </div>
-                            </div>
-                        </aside>
-                    </div>
-                    <section class="nursery-details">
-                        <h3><span aria-hidden="true">🧸</span> Nursery Details</h3>
-                        <div class="details-grid">
-                            <div class="detail-card">
-                                <div class="detail-icon">🎨</div>
-                                <div class="detail-content">
-                                    <h4>Theme</h4>
-                                    <p>Hundred Acre Wood Adventures</p>
-                                    <small>Featuring Winnie the Pooh & friends</small>
-                                </div>
-                            </div>
-                            <div class="detail-card">
-                                <div class="detail-icon">🌈</div>
-                                <div class="detail-content">
-                                    <h4>Colors</h4>
-                                    <p>Honey gold, Pooh red, sage green, cream</p>
-                                    <small>Soft & soothing woodland palette</small>
-                                </div>
-                            </div>
-                            <div class="detail-card">
-                                <div class="detail-icon">📚</div>
-                                <div class="detail-content">
-                                    <h4>Favorite Items</h4>
-                                    <p>Swaddles, sleepers, board books, cozy blankets</p>
-                                </div>
-                            </div>
-                            <div class="detail-card">
-                                <div class="detail-icon">📍</div>
-                                <div class="detail-content">
-                                    <h4>Location</h4>
-                                    <p>Arizona</p>
-                                    <small>Where adventures begin</small>
-                                </div>
-                            </div>
-                        </div>
-                    </section>
-                    <section class="wishes-section">
-                        <div class="wishes-header">
-                            <h3>Share Your Wishes <span aria-hidden="true">✨</span></h3>
-                            <p>Leave wisdom, well-wishes, or favorite childhood memories for Gunnar's storybook</p>
-                        </div>
-                        <div class="wishes-form-container">
-                            <form class="enhanced-form" id="wishesForm">
-                                <div class="form-grid">
-                                    <div class="form-field">
-                                        <label for="guestName">Your Name</label>
-                                        <input id="guestName" placeholder="How should we call you?" required
-                                               type="text">
+                                </article>
+
+                                <!-- Honey Catch Game -->
+                                <article class="game-card game-card--secondary" aria-labelledby="catchTitle"
+                                    id="catch-card">
+                                    <div class="game-ribbon game-ribbon--blue">Quick &amp; Silly</div>
+                                    <div class="game-character rabbit" aria-hidden="true">🐰</div>
+
+                                    <h2 class="game-title" id="catchTitle">Honey Pot Catch</h2>
+                                    <p class="game-tagline">A simple, kid-friendly reflex game—no stress, just honey.</p>
+
+                                    <p class="game-description">
+                                        Pooh has stacked a few too many jars, and they’re starting to wobble.
+                                        Help him catch the falling honey pots while keeping an eye out for buzzing bees.
+                                    </p>
+
+                                    <div class="stats stats--pill" aria-label="Honey pot game stats">
+                                        <div class="stat-item">
+                                            <span class="stat-label">Score</span>
+                                            <span class="stat-value"><span id="score-count">0</span>🏆</span>
+                                        </div>
+                                        <div class="stat-item">
+                                            <span class="stat-label">Time</span>
+                                            <span class="stat-value"><span id="time-count">60</span>s⏱️</span>
+                                        </div>
+                                        <div class="stat-item">
+                                            <span class="stat-label">Lives</span>
+                                            <span class="stat-value"><span id="catch-lives">3</span>❤️</span>
+                                        </div>
                                     </div>
-                                    <div class="form-field">
-                                        <label for="guestRelation">Your Relation</label>
-                                        <select id="guestRelation">
-                                            <option value="">Choose one...</option>
-                                            <option value="family">Family</option>
-                                            <option value="friend">Friend</option>
-                                            <option value="colleague">Colleague</option>
-                                            <option value="woodland-friend">Woodland Friend</option>
-                                        </select>
+
+                                    <div class="game-area game-area--framed" aria-label="Honey pot catch game area">
+                                        <canvas id="honey-game" width="520" height="400" role="img"
+                                            aria-label="Pooh catching falling honey pots"></canvas>
+                                        <div class="game-overlay-hint">
+                                            Tap left or right (or use arrow keys) to move Pooh.
+                                        </div>
+                                        <div class="game-overlay-status" id="catch-overlay">
+                                            <div class="status-line" id="catch-countdown">Ready when you are.</div>
+                                            <div class="status-sub" id="catch-hint">Press start to begin a calm 60 second run.</div>
+                                        </div>
                                     </div>
-                                </div>
-                                <div class="form-field">
-                                    <label for="wishMessage">Your Message</label>
-                                    <textarea id="wishMessage" placeholder="What wisdom or wishes would you like to share with Baby Gunnar?..."
-                                              required
-                                              rows="4"></textarea>
-                                    <div class="character-count">0/500 characters</div>
-                                </div>
-                                <div class="form-actions">
-                                    <button class="submit-btn" type="submit">
-                                        <span aria-hidden="true">📝</span> Add to Gunnar's Storybook
-                                    </button>
-                                    <div aria-live="polite" class="form-feedback" id="wishFeedback" role="status"></div>
-                                </div>
-                            </form>
-                        </div>
-                        <div class="sample-wishes">
-                            <h4>Wishes from the Wood:</h4>
-                            <div class="wish-examples">
-                                <blockquote class="wish-example">
-                                    <p>"May your days be filled with wonder and your nights with sweet dreams."</p>
-                                    <cite>— Owl</cite>
-                                </blockquote>
-                                <blockquote class="wish-example">
-                                    <p>"Remember: even the smallest creatures can have the biggest hearts."</p>
-                                    <cite>— Piglet</cite>
-                                </blockquote>
+
+                                    <div class="controls controls--stack">
+                                        <button id="start-catch" type="button">
+                                            <i class="fas fa-play" aria-hidden="true"></i>
+                                            Start Game
+                                        </button>
+                                        <button id="pause-catch" type="button">
+                                            <i class="fas fa-pause" aria-hidden="true"></i>
+                                            Pause
+                                        </button>
+                                    </div>
+
+                                    <div class="instructions">
+                                        <p><strong>How to play:</strong></p>
+                                        <ul>
+                                            <li>On a keyboard: use the ◀ and ▶ arrow keys to move Pooh.</li>
+                                            <li>On a phone or tablet: tap the left or right side of the game area to move.</li>
+                                            <li>Catch honey pots for points; avoid bees to keep your hearts.</li>
+                                            <li>Try to finish the full 60 seconds with the highest score you can.</li>
+                                        </ul>
+                                    </div>
+                                </article>
                             </div>
                         </div>
                     </section>
-                    <div class="wishes-display" id="wishesDisplay">
-                        <!-- Dynamic wishes will appear here -->
-                    </div>
+
+                    <footer class="footer">
+                        <p>"Sometimes the smallest things take up the most room in your heart."</p>
+                        <p>We can't wait to celebrate Baby Gunner with you in our own little Hundred Acre Wood.</p>
+                    </footer>
                 </div>
-            </article>
-            <!-- Chapter 4: Celebration -->
-            <article class="page" data-chapter="4">
-                <header class="chapter-header">
-                    <p class="chapter-number">Chapter Four</p>
-                    <h2 class="chapter-title">The Gathering</h2>
-                    <p class="chapter-subtitle">Celebrating What's to Come</p>
-                    <span aria-hidden="true" class="honey-drip"></span>
-                </header>
-                <div class="page-content">
-                    <p class="story-text">As the sun began to set over the Hundred Acre Wood, casting long golden
-                        shadows through the trees, Pooh and his friends gathered to celebrate the coming arrival of Baby
-                        Gunnar.</p>
-                    <div class="chapter-illustrations">
-                        <figure class="storybook-figure figure-theme-honey clickable-character" data-character="pooh">
-                            <img alt="Pooh with honey pot" height="96" loading="lazy" src="Images/Characters/honey-bear.png"
-                                 width="96">
-                            <figcaption class="figure-copy">
-                                <div class="figure-name">Pooh's special pot</div>
-                                <p class="figure-note">He saved one golden pot for Gunnar's first visit.</p>
-                            </figcaption>
-                            <div aria-live="polite" class="character-message"></div>
-                        </figure>
-                        <figure class="storybook-figure figure-theme-sky clickable-character" data-character="gunnar">
-                            <img alt="Baby Gunnar" height="96" loading="lazy" src="Images/Characters/Gunnar.png"
-                                 width="96">
-                            <figcaption class="figure-copy">
-                                <div class="figure-name">Coming Soon</div>
-                                <p class="figure-note">The Hundred Acre Wood awaits its newest friend.</p>
-                            </figcaption>
-                            <div aria-live="polite" class="character-message"></div>
-                        </figure>
-                    </div>
-                    <p class="story-text">With honey gathered, gifts prepared, and wishes shared, everyone in the
-                        Hundred Acre Wood looked forward to the day they would meet Baby Gunnar. For as Pooh always
-                        said, "How lucky I am to have something to look forward to."</p>
-                    <div class="welcome-panel">
-                        <div aria-hidden="true" class="welcome-icon">🌟</div>
-                        <h3 class="welcome-heading">We Can't Wait to Meet You!</h3>
-                        <p class="welcome-subtitle">Baby Gunnar, your adventure in the Hundred Acre Wood is about to
-                            begin</p>
-                    </div>
-                    <section class="countdown-section">
-                        <h3>Until We Meet 🐻</h3>
-                        <div class="countdown-display">
-                            <div class="countdown-item">
-                                <span class="countdown-number" id="days">--</span>
-                                <span class="countdown-label">Days</span>
-                            </div>
-                            <div class="countdown-item">
-                                <span class="countdown-number" id="hours">--</span>
-                                <span class="countdown-label">Hours</span>
-                            </div>
-                        </div>
-                        <p class="countdown-note">Expected arrival:
-                            <time datetime="2025-08">Late August 2025</time>
-                        </p>
-                    </section>
-                    <div class="honey-jar-interactive">
-                        <div aria-hidden="true">🍯</div>
-                        <h3>Gunnar's Honey Jar of Hopes</h3>
-                        <p>Share your hopes and dreams for Baby Gunnar's future adventures.</p>
-                        <button class="btn primary" id="addHopeBtn">➕ Add Your Hope</button>
-                    </div>
-                    <aside class="final-thought">
-                        <blockquote>
-                            <p>"Sometimes the smallest things take up the most room in your heart."<br>
-                                <cite>— Winnie the Pooh</cite>
-                            </p>
-                        </blockquote>
-                        <p class="signature">With love from all your friends in the Hundred Acre Wood</p>
-                    </aside>
-                </div>
-            </article>
+            </div>
         </div>
-        <!-- Navigation -->
-        <nav aria-label="Page navigation" class="chapter-nav">
-            <button class="chapter-nav-btn" id="prevBtn">← Previous</button>
-            <div class="chapter-indicator" id="pageIndicator">Chapter 1 of 4</div>
-            <button class="chapter-nav-btn next" id="nextBtn">Next →</button>
-        </nav>
-    </div>
-</main>
-<!-- Footer -->
-<footer class="site-footer">
-    <p>Made with 💙 and 🍯 for Baby Gunnar's special day</p>
-    <div class="footer-links">
-        <button class="footer-link" id="printPageBtn">🖨 Print</button>
-        <button class="footer-link" id="sharePageBtn">📤 Share</button>
-        <button class="footer-link" id="toggleAnimationsBtn">🎭 Animations</button>
-    </div>
-</footer>
+    </main>
 
-<!-- Audio Elements -->
-<audio id="bgMusic" loop preload="auto" src="media/hundred-acre-lullaby.mp3"></audio>
-<audio id="honeySound" preload="auto">
-    <source src="https://assets.mixkit.co/sfx/preview/mixkit-winning-chimes-2015.mp3">
-</audio>
-<audio id="pageSound" preload="auto">
-    <source src="https://assets.mixkit.co/sfx/preview/mixkit-page-turn-single-1100.mp3">
-</audio>
-<audio id="pageRustle1" preload="auto">
-    <source src="https://assets.mixkit.co/sfx/preview/mixkit-page-turn-single-1100.mp3">
-</audio>
-<audio id="pageRustle2" preload="auto">
-    <source src="https://assets.mixkit.co/sfx/preview/mixkit-page-turn-medium-1103.mp3">
-</audio>
-<audio id="paperThump" preload="auto">
-    <source src="https://assets.mixkit.co/sfx/preview/mixkit-soft-ui-click-2577.mp3">
-</audio>
-<audio id="ambientForest" loop preload="auto">
-    <source src="https://assets.mixkit.co/sfx/preview/mixkit-forest-birds-ambience-121.mp3">
-</audio>
+    <!-- Character modal -->
+    <div class="character-modal" id="characterModal" role="dialog" aria-modal="true"
+        aria-labelledby="characterModalTitle">
+        <div class="modal-content">
+            <button class="close-modal" id="closeCharacterModal" aria-label="Close character details">
+                <i class="fas fa-times" aria-hidden="true"></i>
+            </button>
+            <div class="modal-character">
+                <div class="modal-character-icon" id="modalCharacterIcon" aria-hidden="true"></div>
+                <div>
+                    <div class="modal-character-name" id="characterModalTitle"></div>
+                </div>
+            </div>
+            <div class="modal-character-quote" id="modalCharacterQuote"></div>
+            <p class="modal-character-bio" id="modalCharacterBio"></p>
+        </div>
+    </div>
 
+    <!-- Main script -->
+    <script src="script.js"></script>
 </body>
-<script src="simple_game.js" defer></script>
-<script src="script.js" defer></script>
+
 </html>
