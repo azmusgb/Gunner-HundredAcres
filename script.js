@@ -411,23 +411,48 @@
             this.isEnabled = true;
             this.sounds = new Map();
             this.masterVolume = 0.3;
-            this.init();
         }
 
         init() {
+            // Only proceed if we haven't initialized already
+            if (this.audioContext) {
+                return;
+            }
+
             try {
                 this.audioContext = new (window.AudioContext || window.webkitAudioContext)();
                 this.gainNode = this.audioContext.createGain();
                 this.gainNode.connect(this.audioContext.destination);
                 this.gainNode.gain.value = this.masterVolume;
-                
+
                 // Create audio buffer cache
                 this.createSoundBuffers();
-                
-                console.log('Audio system initialized successfully');
+
+                console.log('Audio system initialized successfully by user gesture');
+
+                // If a music track was supposed to play on load, start it now.
+                this.tryResumeBackgroundMusic();
             } catch (e) {
                 console.warn('Web Audio API not supported, using fallback sounds');
                 this.isEnabled = false;
+            }
+        }
+
+        tryResumeBackgroundMusic() {
+            const bgMusic = document.getElementById('bgMusic');
+            if (bgMusic && localStorage.getItem('bg-music') === 'on') {
+                // Ensure music is muted first to comply with some browser policies
+                bgMusic.muted = true;
+                const playPromise = bgMusic.play();
+                if (playPromise !== undefined) {
+                    playPromise.then(() => {
+                        console.log('Background music auto-resumed after user gesture');
+                        // Optionally unmute here if you want sound immediately
+                        // bgMusic.muted = false;
+                    }).catch(e => {
+                        console.log("Could not auto-play background music:", e);
+                    });
+                }
             }
         }
 
@@ -698,7 +723,7 @@
             
             if (loadedCount === totalCount) {
                 console.log('All sprites loaded successfully!');
-                updateCharacterCardImages();
+                updateEnhancedCharacterCardImages();
             }
         }
 
@@ -1037,10 +1062,10 @@
 
     function initEnhancedCharactersSection() {
         console.log('Initializing enhanced characters section...');
-        
+
         const charactersContainer = DOM.$('#charactersGrid');
         if (!charactersContainer) {
-            console.error('Characters container not found');
+            console.warn('Characters container (#charactersGrid) not found. Skipping character section initialization.');
             return;
         }
 
@@ -2135,9 +2160,6 @@
         const rsvpForm = DOM.$('#rsvpForm');
         const rsvpStatus = DOM.$('#rsvpStatus');
 
-        // Initialize audio manager
-        window.audioManager = new EnhancedAudioManager();
-
         // ----------------- Enhanced Loading Screen -----------------
         function initEnhancedLoading() {
             if (!loadingScreen) return;
@@ -2929,6 +2951,24 @@
                 }, 300);
             }
         };
+
+        // === CRITICAL: Initialize Audio on First User Gesture ===
+        const initAudioOnInteraction = () => {
+            if (window.audioManager) {
+                window.audioManager.init();
+            }
+            // Remove this listener after the first interaction
+            document.removeEventListener('click', initAudioOnInteraction);
+            document.removeEventListener('keydown', initAudioOnInteraction);
+            document.removeEventListener('touchstart', initAudioOnInteraction);
+        };
+
+        // Listen for multiple types of user gestures
+        document.addEventListener('click', initAudioOnInteraction, { once: true });
+        document.addEventListener('keydown', initAudioOnInteraction, { once: true });
+        document.addEventListener('touchstart', initAudioOnInteraction, { once: true });
+
+        console.log('Enhanced base UI initialized - waiting for user gesture to start audio');
 
         console.log('Enhanced base UI initialized');
     }
