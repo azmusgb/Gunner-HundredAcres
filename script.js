@@ -198,41 +198,150 @@
             const img = new Image();
             img.src = paths[key];
             img.onload = () => {
-                console.log(`Loaded sprite: ${key}`);
+                console.log(`Successfully loaded sprite: ${key}`);
                 // Update character cards with actual images once loaded
                 updateCharacterCardImages();
+                
+                // Force redraw of games if they're using this sprite
+                if (key === 'pooh' || key === 'honey') {
+                    console.log(`Redrawing games that use ${key} sprite`);
+                    // The games will redraw on next frame automatically
+                }
             };
             img.onerror = () => {
                 console.warn(`Failed to load sprite: ${key}. Using fallback.`);
                 // Create a colored circle fallback
-                const canvas = document.createElement('canvas');
-                canvas.width = 40;
-                canvas.height = 40;
-                const ctx = canvas.getContext('2d');
+                createFallbackSprite(img, key);
                 
-                // Different colors for different characters
-                let color = '#FFB347';
-                switch(key) {
-                    case 'pooh': color = '#FFB347'; break;
-                    case 'piglet': color = '#FFB6C1'; break;
-                    case 'tigger': color = '#FF8C42'; break;
-                    case 'eeyore': color = '#C0C0C0'; break;
-                    case 'owl': color = '#8B4513'; break;
-                    case 'roo': color = '#87CEEB'; break;
-                    case 'honey': color = '#FFD54F'; break;
-                }
-                
-                ctx.fillStyle = color;
-                ctx.beginPath();
-                ctx.arc(20, 20, 18, 0, Math.PI * 2);
-                ctx.fill();
-                
-                // Convert canvas to data URL
-                img.src = canvas.toDataURL();
+                // Store in Sprites object
                 Sprites[key] = img;
+                
+                // If this is Pooh sprite, create a more detailed fallback
+                if (key === 'pooh') {
+                    createDetailedPoohFallback(img);
+                }
             };
             Sprites[key] = img;
         });
+    }
+
+    function createFallbackSprite(img, key) {
+        const canvas = document.createElement('canvas');
+        canvas.width = 60;
+        canvas.height = 60;
+        const ctx = canvas.getContext('2d');
+        
+        // Different colors for different characters
+        let color = '#FFB347';
+        let bgColor = '#FFF3E0';
+        switch(key) {
+            case 'pooh': 
+                color = '#FFB347';
+                bgColor = '#FFF3E0';
+                break;
+            case 'piglet': 
+                color = '#FFB6C1';
+                bgColor = '#FFF0F5';
+                break;
+            case 'tigger': 
+                color = '#FF8C42';
+                bgColor = '#FFECB3';
+                break;
+            case 'eeyore': 
+                color = '#C0C0C0';
+                bgColor = '#F5F5F5';
+                break;
+            case 'owl': 
+                color = '#8B4513';
+                bgColor = '#F5F5DC';
+                break;
+            case 'roo': 
+                color = '#87CEEB';
+                bgColor = '#E0F7FA';
+                break;
+            case 'honey': 
+                color = '#FFD54F';
+                bgColor = '#FFF8E1';
+                break;
+        }
+        
+        // Background
+        ctx.fillStyle = bgColor;
+        ctx.fillRect(0, 0, 60, 60);
+        
+        // Character circle
+        ctx.fillStyle = color;
+        ctx.beginPath();
+        ctx.arc(30, 30, 25, 0, Math.PI * 2);
+        ctx.fill();
+        
+        // Character initial
+        ctx.fillStyle = '#FFFFFF';
+        ctx.font = 'bold 20px Arial';
+        ctx.textAlign = 'center';
+        ctx.textBaseline = 'middle';
+        const initial = key.charAt(0).toUpperCase();
+        ctx.fillText(initial, 30, 30);
+        
+        // Convert canvas to data URL
+        img.src = canvas.toDataURL();
+    }
+
+    function createDetailedPoohFallback(img) {
+        const canvas = document.createElement('canvas');
+        canvas.width = 60;
+        canvas.height = 60;
+        const ctx = canvas.getContext('2d');
+        
+        // Honey-colored bear
+        ctx.fillStyle = '#FFB347';
+        ctx.beginPath();
+        ctx.arc(30, 30, 25, 0, Math.PI * 2);
+        ctx.fill();
+        
+        // Belly
+        ctx.fillStyle = '#FFD8A6';
+        ctx.beginPath();
+        ctx.ellipse(30, 40, 15, 10, 0, 0, Math.PI * 2);
+        ctx.fill();
+        
+        // Face details
+        ctx.fillStyle = '#000000';
+        // Eyes
+        ctx.beginPath();
+        ctx.arc(22, 25, 3, 0, Math.PI * 2);
+        ctx.arc(38, 25, 3, 0, Math.PI * 2);
+        ctx.fill();
+        
+        // Nose
+        ctx.fillStyle = '#8B4513';
+        ctx.beginPath();
+        ctx.arc(30, 32, 4, 0, Math.PI * 2);
+        ctx.fill();
+        
+        // Smile
+        ctx.strokeStyle = '#000000';
+        ctx.lineWidth = 2;
+        ctx.beginPath();
+        ctx.arc(30, 38, 8, 0.2, Math.PI - 0.2, false);
+        ctx.stroke();
+        
+        // Ears
+        ctx.fillStyle = '#FFB347';
+        ctx.beginPath();
+        ctx.arc(18, 15, 8, 0, Math.PI * 2);
+        ctx.arc(42, 15, 8, 0, Math.PI * 2);
+        ctx.fill();
+        
+        // Inner ears
+        ctx.fillStyle = '#FFD8A6';
+        ctx.beginPath();
+        ctx.arc(18, 15, 4, 0, Math.PI * 2);
+        ctx.arc(42, 15, 4, 0, Math.PI * 2);
+        ctx.fill();
+        
+        // Convert canvas to data URL
+        img.src = canvas.toDataURL();
     }
 
     // Inject keyframe helpers (confetti + honeyPop) so we don't depend on CSS
@@ -416,7 +525,7 @@
             const sprite = Sprites[characterKey];
             const imagePlaceholder = card.querySelector('.character-image-placeholder');
             
-            if (sprite && sprite.complete && sprite.naturalWidth && imagePlaceholder) {
+            if (sprite && sprite.complete && sprite.naturalWidth > 0 && imagePlaceholder) {
                 // Replace placeholder with actual image
                 imagePlaceholder.innerHTML = '';
                 const img = document.createElement('img');
@@ -1506,7 +1615,7 @@
                 const spriteKey = towerTypes[t.type].key;
                 const sprite = Sprites[spriteKey];
 
-                if (sprite && sprite.complete) {
+                if (sprite && sprite.complete && sprite.naturalWidth > 0) {
                     ctx.drawImage(sprite, t.x - 20, t.y - 20, 40, 40);
                 } else {
                     // Fallback tower drawing
@@ -1913,12 +2022,18 @@
     }
 
     // ========================================================================
-    // GAME 2: HONEY POT CATCH - OPTIMIZED
+    // GAME 2: HONEY POT CATCH - FIXED WITH VISIBLE POOH
     // ========================================================================
 
     function initHoneyCatchGame() {
+        console.log("Initializing Honey Catch Game...");
         const canvas = document.getElementById('honey-game');
-        if (!canvas) return;
+        if (!canvas) {
+            console.error("Honey catch game canvas not found!");
+            return;
+        }
+        console.log("Canvas found, dimensions:", canvas.width, "x", canvas.height);
+        
         const ctx = canvas.getContext('2d');
         
         // ========== PERFORMANCE ENHANCEMENTS ==========
@@ -2030,7 +2145,8 @@
             }
         };
         
-        // ========== PERFORMANCE: Sprite caching ==========
+        // ========== FIXED SPRITE CACHING ==========
+        // Create sprite cache with immediate fallback drawing
         const spriteCache = {
             poohCache: null,
             honeyCache: null,
@@ -2038,37 +2154,88 @@
             
             renderPooh: function() {
                 if (!this.poohCache) {
+                    console.log("Creating Pooh sprite cache...");
                     const cacheCanvas = document.createElement('canvas');
                     cacheCanvas.width = 60;
                     cacheCanvas.height = 60;
                     const cacheCtx = cacheCanvas.getContext('2d');
                     
                     const sprite = Sprites.pooh;
-                    if (sprite && sprite.complete) {
+                    console.log("Pooh sprite object:", sprite);
+                    console.log("Pooh sprite complete:", sprite ? sprite.complete : "No sprite");
+                    console.log("Pooh sprite src:", sprite ? sprite.src : "No src");
+                    
+                    if (sprite && sprite.complete && sprite.naturalWidth > 0) {
+                        console.log("Drawing Pooh from loaded image");
                         cacheCtx.save();
                         cacheCtx.shadowColor = 'rgba(0,0,0,0.35)';
                         cacheCtx.shadowBlur = 10;
                         cacheCtx.drawImage(sprite, 0, 0, 60, 60);
                         cacheCtx.restore();
                     } else {
-                        // Fallback drawing - Pooh bear
+                        console.log("Drawing Pooh fallback");
+                        // Fallback drawing - Detailed Pooh bear
+                        // Body
                         cacheCtx.fillStyle = '#FFB347';
                         cacheCtx.beginPath();
-                        cacheCtx.arc(30, 30, 28, 0, Math.PI * 2);
+                        cacheCtx.arc(30, 30, 25, 0, Math.PI * 2);
                         cacheCtx.fill();
                         
-                        // Face
-                        cacheCtx.fillStyle = '#000';
+                        // Shadow
+                        cacheCtx.shadowColor = 'rgba(0,0,0,0.35)';
+                        cacheCtx.shadowBlur = 10;
+                        
+                        // Belly
+                        cacheCtx.fillStyle = '#FFD8A6';
                         cacheCtx.beginPath();
-                        cacheCtx.arc(22, 25, 3, 0, Math.PI * 2); // Left eye
-                        cacheCtx.arc(38, 25, 3, 0, Math.PI * 2); // Right eye
+                        cacheCtx.ellipse(30, 40, 15, 10, 0, 0, Math.PI * 2);
                         cacheCtx.fill();
                         
+                        // Face details
+                        cacheCtx.fillStyle = '#000000';
+                        // Eyes
                         cacheCtx.beginPath();
-                        cacheCtx.arc(30, 35, 6, 0.2, Math.PI - 0.2, false); // Smile
+                        cacheCtx.arc(22, 25, 3, 0, Math.PI * 2);
+                        cacheCtx.arc(38, 25, 3, 0, Math.PI * 2);
+                        cacheCtx.fill();
+                        
+                        // Nose
+                        cacheCtx.fillStyle = '#8B4513';
+                        cacheCtx.beginPath();
+                        cacheCtx.arc(30, 32, 4, 0, Math.PI * 2);
+                        cacheCtx.fill();
+                        
+                        // Smile
+                        cacheCtx.strokeStyle = '#000000';
+                        cacheCtx.lineWidth = 2;
+                        cacheCtx.beginPath();
+                        cacheCtx.arc(30, 38, 8, 0.2, Math.PI - 0.2, false);
                         cacheCtx.stroke();
+                        
+                        // Ears
+                        cacheCtx.fillStyle = '#FFB347';
+                        cacheCtx.beginPath();
+                        cacheCtx.arc(18, 15, 8, 0, Math.PI * 2);
+                        cacheCtx.arc(42, 15, 8, 0, Math.PI * 2);
+                        cacheCtx.fill();
+                        
+                        // Inner ears
+                        cacheCtx.fillStyle = '#FFD8A6';
+                        cacheCtx.beginPath();
+                        cacheCtx.arc(18, 15, 4, 0, Math.PI * 2);
+                        cacheCtx.arc(42, 15, 4, 0, Math.PI * 2);
+                        cacheCtx.fill();
+                        
+                        // Red shirt
+                        cacheCtx.fillStyle = '#D62E2E';
+                        cacheCtx.fillRect(15, 45, 30, 15);
+                        
+                        // Reset shadow
+                        cacheCtx.shadowColor = 'transparent';
+                        cacheCtx.shadowBlur = 0;
                     }
                     this.poohCache = cacheCanvas;
+                    console.log("Pooh cache created successfully");
                 }
                 return this.poohCache;
             },
@@ -2081,7 +2248,7 @@
                     const cacheCtx = cacheCanvas.getContext('2d');
                     
                     const sprite = Sprites.honey;
-                    if (sprite && sprite.complete) {
+                    if (sprite && sprite.complete && sprite.naturalWidth > 0) {
                         cacheCtx.drawImage(sprite, 0, 0, 28, 28);
                     } else {
                         // Fallback honey pot drawing
@@ -2098,6 +2265,12 @@
                         cacheCtx.fillStyle = '#8B4513';
                         cacheCtx.fillRect(6, 5, 16, 4);
                         cacheCtx.fillRect(10, 3, 8, 2);
+                        
+                        // Honey drip
+                        cacheCtx.fillStyle = '#FFB300';
+                        cacheCtx.beginPath();
+                        cacheCtx.ellipse(14, 20, 5, 8, 0, 0, Math.PI * 2);
+                        cacheCtx.fill();
                     }
                     this.honeyCache = cacheCanvas;
                 }
@@ -2205,7 +2378,18 @@
         function drawPooh() {
             const baseY = canvas.height - 80;
             const poohSprite = spriteCache.renderPooh();
+            
+            // Draw a debug rectangle to see where Pooh should be
+            ctx.fillStyle = 'rgba(255, 0, 0, 0.3)';
+            ctx.fillRect(poohX - 40, baseY - 90, 80, 90);
+            
+            // Draw Pooh
             ctx.drawImage(poohSprite, poohX - 30, baseY - 60);
+            
+            // Draw debug text
+            ctx.fillStyle = '#000';
+            ctx.font = '12px Arial';
+            ctx.fillText(`Pooh: ${Math.round(poohX)},${Math.round(baseY)}`, poohX - 30, baseY - 70);
         }
 
         function drawHoneyPots() {
@@ -2486,6 +2670,25 @@
                 poohX = Math.min(canvas.width - 40, poohX + step);
             }
         });
+        
+        // Mouse/touch controls
+        canvas.addEventListener('mousemove', (ev) => {
+            if (!gameRunning) return;
+            const rect = canvas.getBoundingClientRect();
+            poohX = ev.clientX - rect.left;
+            poohX = Math.max(40, Math.min(canvas.width - 40, poohX));
+        });
+        
+        canvas.addEventListener('touchmove', (ev) => {
+            if (!gameRunning) return;
+            ev.preventDefault();
+            const rect = canvas.getBoundingClientRect();
+            const touch = ev.touches[0];
+            poohX = touch.clientX - rect.left;
+            poohX = Math.max(40, Math.min(canvas.width - 40, poohX));
+        }, { passive: false });
+        
+        console.log("Honey Catch Game initialized successfully!");
     }
 
     // ========================================================================
@@ -2778,6 +2981,7 @@
     // ========================================================================
 
     document.addEventListener('DOMContentLoaded', () => {
+        console.log("DOM loaded, initializing all components...");
         loadSprites();
         injectExtraKeyframes();
         initBaseUI();
@@ -2788,6 +2992,7 @@
         initHoneyCatchGame();
         
         addCharactersCSS();
+        console.log("All components initialized!");
     });
 
 })();
