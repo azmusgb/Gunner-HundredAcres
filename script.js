@@ -154,12 +154,13 @@
     function optimizeForDevice() {
         const isMobile = isMobileDevice();
         const isHighPerf = isHighPerformanceDevice();
-        
+
         window.DEVICE_TYPE = isMobile ? 'mobile' : 'desktop';
         window.PERFORMANCE_LEVEL = isHighPerf ? 'high' : 'medium';
-        
+        window.IS_MOBILE = isMobile;
+
         if (isMobile) {
-            window.MAX_PARTICLES = 30;
+            window.MAX_PARTICLES = 50;
             window.GAME_FPS_TARGET = 30;
             window.GRAPHICS_QUALITY = 'low';
             window.PARTICLE_QUALITY = 'low';
@@ -170,11 +171,11 @@
             window.PARTICLE_QUALITY = 'high';
         } else {
             window.MAX_PARTICLES = 100;
-            window.GAME_FPS_TARGET = 45;
+            window.GAME_FPS_TARGET = 60;
             window.GRAPHICS_QUALITY = 'medium';
             window.PARTICLE_QUALITY = 'medium';
         }
-        
+
         console.log(`Device: ${window.DEVICE_TYPE}, Performance: ${window.PERFORMANCE_LEVEL}, FPS: ${window.GAME_FPS_TARGET}`);
     }
 
@@ -926,15 +927,26 @@
             }
 
             @keyframes cardEnter3D {
-                0% { 
-                    transform: translateY(50px) rotateX(-45deg) scale(0.8); 
+                0% {
+                    transform: translateY(50px) rotateX(-45deg) scale(0.8) translateZ(0);
                     opacity: 0;
                     filter: blur(10px);
                 }
-                100% { 
-                    transform: translateY(0) rotateX(0deg) scale(1); 
+                100% {
+                    transform: translateY(0) rotateX(0deg) scale(1) translateZ(0);
                     opacity: 1;
                     filter: blur(0);
+                }
+            }
+
+            @keyframes card-hover {
+                0% {
+                    transform: translateY(0) scale(1) translateZ(0);
+                    box-shadow: 0 5px 15px rgba(0,0,0,0.1);
+                }
+                100% {
+                    transform: translateY(-8px) scale(1.02) translateZ(0);
+                    box-shadow: 0 15px 30px var(--hover-shadow);
                 }
             }
 
@@ -972,7 +984,7 @@
 
             .character-card-enhanced {
                 animation: cardEnter3D 0.8s cubic-bezier(0.68, -0.55, 0.27, 1.55) forwards;
-                animation-delay: calc(var(--card-index, 0) * 0.15s);
+                animation-delay: var(--card-delay, calc(var(--card-index, 0) * 0.15s));
                 opacity: 0;
                 transform-style: preserve-3d;
                 perspective: 1000px;
@@ -980,9 +992,7 @@
 
             /* Enhanced hover effects */
             .character-card:hover {
-                animation: pulseGlow 2s infinite ease-in-out,
-                          enhancedFloat 3s infinite ease-in-out;
-                transform: translateY(-5px) rotateX(5deg);
+                animation: card-hover 0.3s ease-out forwards;
             }
 
             /* Performance optimizations */
@@ -999,6 +1009,12 @@
                 transform: translateZ(0);
                 will-change: transform;
                 contain: layout style paint;
+            }
+
+            .character-card {
+                will-change: transform, box-shadow;
+                transform: translateZ(0);
+                backface-visibility: hidden;
             }
 
             /* Reduced motion support */
@@ -1024,9 +1040,9 @@
                     transform: none !important;
                     animation: none !important;
                 }
-                
+
                 .character-card:active {
-                    transform: scale(0.98) !important;
+                    transform: scale(0.98) translateZ(0) !important;
                     transition: transform 0.1s ease !important;
                 }
             }
@@ -1089,46 +1105,12 @@
             card.style.setProperty('--glow-color', rgb);
             card.style.setProperty('--character-color', character.color);
             card.style.setProperty('--character-bg', character.bgColor);
+            card.style.setProperty('--hover-shadow', hexToRgb(character.color, 0.2));
+            const animationDelay = (window.IS_MOBILE ? 0.15 : 0.1) * index;
+            card.style.setProperty('--card-delay', `${animationDelay}s`);
+            card.style.animationDelay = `${animationDelay}s`;
             card.style.borderColor = character.color;
             card.style.background = `linear-gradient(145deg, ${character.bgColor}, ${lightenColor(character.bgColor, 10)})`;
-
-            // Enhanced hover effects
-            // Enhanced hover effects
-            let hoverTimeout;
-            card.addEventListener('mouseenter', () => {
-                clearTimeout(hoverTimeout);
-                
-                // Cancel any parallax transforms
-                card.style.transform = '';
-                
-                // Let CSS handle the hover animation exclusively
-                card.classList.add('card-hovering');
-                
-                // Play subtle sound
-                if (window.audioManager) {
-                    window.audioManager.playTone([330, 392], 0.1);
-                }
-            });
-            
-            card.addEventListener('mouseleave', () => {
-                card.classList.remove('card-hovering');
-                
-                // Return to parallax position after hover ends
-                hoverTimeout = setTimeout(() => {
-                    // Get stored parallax values
-                    const xPos = parseFloat(card.dataset.parallaxX) || 0;
-                    const yPos = parseFloat(card.dataset.parallaxY) || 0;
-                    
-                    // Smooth transition back to parallax position
-                    card.style.transition = 'transform 0.5s cubic-bezier(0.68, -0.55, 0.27, 1.55)';
-                    card.style.transform = `translate3d(${xPos}px, ${yPos}px, 0)`;
-                    
-                    // Remove transition after animation completes
-                    setTimeout(() => {
-                        card.style.transition = '';
-                    }, 500);
-                }, 100);
-            });
                 
             // Click/tap handling
             card.addEventListener('click', (e) => {
@@ -1343,11 +1325,15 @@
     }
 
     // Helper functions
-    function hexToRgb(hex) {
+    function hexToRgb(hex, opacity = 1) {
         const result = /^#?([a-f\d]{2})([a-f\d]{2})([a-f\d]{2})$/i.exec(hex);
-        return result ? 
-            `${parseInt(result[1], 16)}, ${parseInt(result[2], 16)}, ${parseInt(result[3], 16)}` 
-            : '255, 180, 71';
+        if (result) {
+            const r = parseInt(result[1], 16);
+            const g = parseInt(result[2], 16);
+            const b = parseInt(result[3], 16);
+            return opacity === 1 ? `${r}, ${g}, ${b}` : `rgba(${r}, ${g}, ${b}, ${opacity})`;
+        }
+        return opacity === 1 ? '255, 180, 71' : `rgba(255, 180, 71, ${opacity})`;
     }
 
     function lightenColor(color, percent) {
@@ -1948,16 +1934,18 @@ const observer = new IntersectionObserver((entries) => {
         if (entry.isIntersecting) {
             // Staggered card entrance only, no floating yet
             DOM.$$('.character-card').forEach((card, index) => {
+                const delayMs = (window.IS_MOBILE ? 150 : 100) * index;
+
                 setTimeout(() => {
                     card.classList.add('animate-in');
                     card.style.animation = `cardEnter3D 0.8s cubic-bezier(0.68, -0.55, 0.27, 1.55) forwards`;
-                    card.style.animationDelay = `${index * 150}ms`;
-                    
+                    card.style.animationDelay = `${delayMs}ms`;
+
                     // Start parallax after entrance animation completes
                     setTimeout(() => {
                         card.style.animation = '';
-                    }, 800 + (index * 150));
-                }, index * 150);
+                    }, 800 + delayMs);
+                }, delayMs);
             });
             
             observer.unobserve(entry.target);
@@ -2009,15 +1997,19 @@ const observer = new IntersectionObserver((entries) => {
                 { color: '#FF6B6B', size: 5, speed: 0.8 }  // Red
             ];
 
-            for (let i = 0; i < 25; i++) {
+            const sparkles = [];
+            const fragment = document.createDocumentFragment();
+            const sparkleCount = 15;
+
+            for (let i = 0; i < sparkleCount; i++) {
                 const type = sparkleTypes[i % sparkleTypes.length];
                 const sparkle = document.createElement('div');
                 sparkle.className = 'character-sparkle-enhanced';
-                
+
                 const duration = type.speed + Math.random() * 1;
-                const delay = Math.random() * 2;
+                const delay = Math.random() * 1.5;
                 const startX = Math.random() * 100;
-                
+
                 sparkle.style.cssText = `
                     position: absolute;
                     width: ${type.size}px;
@@ -2033,8 +2025,10 @@ const observer = new IntersectionObserver((entries) => {
                     top: -20px;
                     filter: blur(${Math.random() * 2}px);
                     box-shadow: 0 0 ${type.size * 2}px ${type.color};
+                    will-change: transform, opacity;
+                    transform: translateZ(0);
                 `;
-                
+
                 // Add trail
                 const trail = document.createElement('div');
                 trail.className = 'sparkle-trail';
@@ -2049,16 +2043,24 @@ const observer = new IntersectionObserver((entries) => {
                     opacity: 0.5;
                 `;
                 sparkle.appendChild(trail);
-                
-                container.appendChild(sparkle);
-                
-                // Remove after animation
-                setTimeout(() => {
-                    if (sparkle.parentNode) {
-                        sparkle.remove();
-                    }
-                }, (duration + delay) * 1000);
+
+                fragment.appendChild(sparkle);
+                sparkles.push(sparkle);
             }
+
+            container.appendChild(fragment);
+
+            // Remove after animation batch completes
+            setTimeout(() => {
+                sparkles.forEach(sparkle => {
+                    sparkle.style.opacity = '0';
+                    setTimeout(() => {
+                        if (sparkle.parentNode) {
+                            sparkle.remove();
+                        }
+                    }, 500);
+                });
+            }, 2500);
         }
 
         function startSectionParticles() {
@@ -6686,7 +6688,7 @@ const observer = new IntersectionObserver((entries) => {
                 background: linear-gradient(145deg, #ffffff, #f0f0f0);
                 border-radius: 20px;
                 overflow: hidden;
-                box-shadow: 
+                box-shadow:
                     0 10px 30px rgba(0,0,0,0.1),
                     inset 0 1px 0 rgba(255,255,255,0.5);
                 border: 3px solid;
@@ -6694,6 +6696,9 @@ const observer = new IntersectionObserver((entries) => {
                 transform-style: preserve-3d;
                 position: relative;
                 backdrop-filter: blur(10px);
+                will-change: transform, box-shadow;
+                transform: translateZ(0);
+                backface-visibility: hidden;
             }
             
             .character-card-header-enhanced {
