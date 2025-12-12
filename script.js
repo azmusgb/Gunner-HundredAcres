@@ -2517,20 +2517,21 @@
 
         // ========== OPTIMIZED GAME LOOP ==========
         let catchAnimationFrameId = null;
-        
+
         function catchGameLoop(timestamp) {
-            if (!gameRunning && catchAnimationFrameId) {
-                cancelAnimationFrame(catchAnimationFrameId);
-                return;
-            }
-            
             const delta = timestamp - lastFrameTime;
             lastFrameTime = timestamp;
-            
+
             const cappedDelta = Math.min(delta, 100);
-            update(cappedDelta);
+
+            // Always render so Pooh and the background stay visible even when
+            // the game is idle or paused. Only advance the game state while
+            // actively running.
+            if (gameRunning) {
+                update(cappedDelta);
+            }
             render();
-            
+
             catchAnimationFrameId = requestAnimationFrame(catchGameLoop);
         }
         
