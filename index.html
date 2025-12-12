@@ -1173,6 +1173,360 @@
     
     <!-- Optional: Load Font Awesome for icons -->
     <script src="https://kit.fontawesome.com/your-fontawesome-kit.js" crossorigin="anonymous"></script>
+
+    <!-- Game Scripts (replace the old script tags) -->
+<script>
+    // ============================================
+    // HONEY HIVE DEFENSE GAME
+    // ============================================
+    let defenseGameActive = false;
+    let currentWave = 1;
+    let honey = 100;
+    let lives = 10;
+    let selectedTower = 'pooh';
+    let towers = [];
+    
+    const defenseCanvas = document.getElementById('defense-game');
+    const defenseCtx = defenseCanvas.getContext('2d');
+    
+    // Initialize canvas size
+    function initDefenseCanvas() {
+        const container = defenseCanvas.parentElement;
+        defenseCanvas.width = container.clientWidth;
+        defenseCanvas.height = container.clientHeight;
+    }
+    
+    // Tower selection
+    function selectTower(towerType) {
+        selectedTower = towerType;
+        document.querySelectorAll('.tower-option').forEach(btn => {
+            btn.classList.remove('selected');
+        });
+        event.target.closest('.tower-option').classList.add('selected');
+    }
+    
+    // Start defense game
+    function startDefenseGame() {
+        if (defenseGameActive) return;
+        
+        defenseGameActive = true;
+        document.getElementById('defense-overlay').style.display = 'none';
+        currentWave++;
+        document.getElementById('wave-count').textContent = currentWave;
+        
+        // Simulate game for demonstration
+        setTimeout(() => {
+            honey += 25;
+            lives -= 1;
+            document.getElementById('honey-count').textContent = honey;
+            document.getElementById('lives-count').textContent = lives;
+            
+            // Draw something on canvas
+            defenseCtx.clearRect(0, 0, defenseCanvas.width, defenseCanvas.height);
+            
+            // Draw background
+            defenseCtx.fillStyle = '#FFF9E6';
+            defenseCtx.fillRect(0, 0, defenseCanvas.width, defenseCanvas.height);
+            
+            // Draw path
+            defenseCtx.strokeStyle = '#8B4513';
+            defenseCtx.lineWidth = 4;
+            defenseCtx.beginPath();
+            defenseCtx.moveTo(20, defenseCanvas.height/2);
+            defenseCtx.lineTo(defenseCanvas.width - 20, defenseCanvas.height/2);
+            defenseCtx.stroke();
+            
+            // Draw towers
+            if (towers.length === 0) {
+                towers.push({x: 100, y: defenseCanvas.height/2 - 30, type: 'pooh'});
+                towers.push({x: defenseCanvas.width/2, y: defenseCanvas.height/2 - 30, type: 'tigger'});
+            }
+            
+            towers.forEach(tower => {
+                defenseCtx.fillStyle = getTowerColor(tower.type);
+                defenseCtx.fillRect(tower.x, tower.y, 40, 40);
+                defenseCtx.fillStyle = '#8B4513';
+                defenseCtx.font = '12px Arial';
+                defenseCtx.fillText(tower.type.charAt(0).toUpperCase(), tower.x + 15, tower.y + 25);
+            });
+            
+            // Draw enemies
+            defenseCtx.fillStyle = '#FF0000';
+            defenseCtx.beginPath();
+            defenseCtx.arc(defenseCanvas.width - 50, defenseCanvas.height/2, 15, 0, Math.PI * 2);
+            defenseCtx.fill();
+            defenseCtx.fillStyle = 'white';
+            defenseCtx.font = '10px Arial';
+            defenseCtx.fillText('H', defenseCanvas.width - 54, defenseCanvas.height/2 + 4);
+            
+            defenseGameActive = false;
+        }, 1000);
+    }
+    
+    function getTowerColor(type) {
+        const colors = {
+            pooh: '#FFC42B',
+            tigger: '#FF8C00',
+            piglet: '#FFB6C1',
+            eeyore: '#A9A9A9'
+        };
+        return colors[type] || '#8B4513';
+    }
+    
+    function upgradeAllTowers() {
+        if (honey >= 50) {
+            honey -= 50;
+            document.getElementById('honey-count').textContent = honey;
+            alert('All towers upgraded! They are now twice as strong.');
+        } else {
+            alert('Not enough honey! Collect more by defeating enemies.');
+        }
+    }
+    
+    // ============================================
+    // HONEY POT CATCH GAME
+    // ============================================
+    let catchGameActive = false;
+    let score = 0;
+    let timeLeft = 60;
+    let catchLives = 3;
+    let poohX = 0;
+    let gameInterval;
+    
+    const catchCanvas = document.getElementById('honey-game');
+    const catchCtx = catchCanvas.getContext('2d');
+    const mobileControls = document.getElementById('mobile-controls');
+    
+    // Initialize canvas size
+    function initCatchCanvas() {
+        const container = catchCanvas.parentElement;
+        catchCanvas.width = container.clientWidth;
+        catchCanvas.height = container.clientHeight;
+        poohX = catchCanvas.width / 2;
+        drawCatchGame();
+    }
+    
+    // Start catch game
+    function startCatchGame() {
+        if (catchGameActive) return;
+        
+        catchGameActive = true;
+        score = 0;
+        timeLeft = 60;
+        catchLives = 3;
+        poohX = catchCanvas.width / 2;
+        
+        document.getElementById('catch-overlay').style.display = 'none';
+        document.getElementById('score-count').textContent = score;
+        document.getElementById('time-count').textContent = timeLeft;
+        document.getElementById('catch-lives').textContent = catchLives;
+        
+        // Show mobile controls on small screens
+        if (window.innerWidth < 768) {
+            mobileControls.style.display = 'flex';
+        }
+        
+        // Start game loop
+        gameInterval = setInterval(gameLoop, 100);
+        
+        // Add keyboard controls
+        document.addEventListener('keydown', handleKeyPress);
+    }
+    
+    function gameLoop() {
+        if (!catchGameActive) return;
+        
+        timeLeft -= 0.1;
+        document.getElementById('time-count').textContent = Math.ceil(timeLeft);
+        
+        // Randomly add items
+        if (Math.random() < 0.2) {
+            // Simulate catching honey pot or hitting bee
+            if (Math.random() < 0.7) {
+                score += 10;
+                document.getElementById('score-count').textContent = score;
+            } else {
+                catchLives -= 1;
+                document.getElementById('catch-lives').textContent = catchLives;
+            }
+        }
+        
+        drawCatchGame();
+        
+        // Check game end conditions
+        if (timeLeft <= 0 || catchLives <= 0) {
+            endCatchGame();
+        }
+    }
+    
+    function drawCatchGame() {
+        catchCtx.clearRect(0, 0, catchCanvas.width, catchCanvas.height);
+        
+        // Draw sky
+        catchCtx.fillStyle = '#87CEEB';
+        catchCtx.fillRect(0, 0, catchCanvas.width, catchCanvas.height * 0.8);
+        
+        // Draw ground
+        catchCtx.fillStyle = '#8B4513';
+        catchCtx.fillRect(0, catchCanvas.height * 0.8, catchCanvas.width, catchCanvas.height * 0.2);
+        
+        // Draw Pooh
+        catchCtx.fillStyle = '#FFC42B';
+        catchCtx.beginPath();
+        catchCtx.arc(poohX, catchCanvas.height * 0.8, 20, 0, Math.PI * 2);
+        catchCtx.fill();
+        
+        // Draw Pooh's face
+        catchCtx.fillStyle = '#8B4513';
+        catchCtx.beginPath();
+        catchCtx.arc(poohX - 8, catchCanvas.height * 0.8 - 5, 3, 0, Math.PI * 2); // Left eye
+        catchCtx.arc(poohX + 8, catchCanvas.height * 0.8 - 5, 3, 0, Math.PI * 2); // Right eye
+        catchCtx.fill();
+        
+        catchCtx.beginPath();
+        catchCtx.arc(poohX, catchCanvas.height * 0.8 + 5, 5, 0, Math.PI); // Smile
+        catchCtx.stroke();
+        
+        // Draw falling items
+        for (let i = 0; i < 5; i++) {
+            const x = catchCanvas.width * Math.random();
+            const y = catchCanvas.height * Math.random() * 0.7;
+            
+            if (i % 3 === 0) {
+                // Draw bee
+                catchCtx.fillStyle = '#FFD700';
+                catchCtx.beginPath();
+                catchCtx.arc(x, y, 8, 0, Math.PI * 2);
+                catchCtx.fill();
+                
+                catchCtx.fillStyle = '#000000';
+                catchCtx.font = '10px Arial';
+                catchCtx.fillText('🐝', x - 6, y + 4);
+            } else {
+                // Draw honey pot
+                catchCtx.fillStyle = '#FFA500';
+                catchCtx.fillRect(x - 10, y - 10, 20, 15);
+                catchCtx.fillStyle = '#8B4513';
+                catchCtx.fillRect(x - 6, y - 15, 12, 5);
+            }
+        }
+    }
+    
+    function handleKeyPress(e) {
+        if (!catchGameActive) return;
+        
+        const moveAmount = 20;
+        
+        switch(e.key) {
+            case 'ArrowLeft':
+                poohX = Math.max(30, poohX - moveAmount);
+                break;
+            case 'ArrowRight':
+                poohX = Math.min(catchCanvas.width - 30, poohX + moveAmount);
+                break;
+        }
+    }
+    
+    function movePoohLeft() {
+        if (catchGameActive) {
+            poohX = Math.max(30, poohX - 20);
+        }
+    }
+    
+    function movePoohRight() {
+        if (catchGameActive) {
+            poohX = Math.min(catchCanvas.width - 30, poohX + 20);
+        }
+    }
+    
+    function pauseCatchGame() {
+        if (catchGameActive) {
+            catchGameActive = false;
+            clearInterval(gameInterval);
+            event.target.innerHTML = '<i class="fas fa-play"></i> Resume';
+            event.target.onclick = resumeCatchGame;
+        }
+    }
+    
+    function resumeCatchGame() {
+        catchGameActive = true;
+        gameInterval = setInterval(gameLoop, 100);
+        event.target.innerHTML = '<i class="fas fa-pause"></i> Pause';
+        event.target.onclick = pauseCatchGame;
+    }
+    
+    function endCatchGame() {
+        catchGameActive = false;
+        clearInterval(gameInterval);
+        document.removeEventListener('keydown', handleKeyPress);
+        
+        const overlay = document.getElementById('catch-overlay');
+        overlay.style.display = 'flex';
+        overlay.querySelector('.countdown-display').textContent = 
+            `Game Over! Final Score: ${score}`;
+        
+        // Reset button
+        const pauseBtn = document.querySelector('button[onclick="pauseCatchGame()"]');
+        if (pauseBtn) {
+            pauseBtn.innerHTML = '<i class="fas fa-pause"></i> Pause';
+            pauseBtn.onclick = pauseCatchGame;
+        }
+        
+        mobileControls.style.display = 'none';
+    }
+    
+    // ============================================
+    // INITIALIZATION
+    // ============================================
+    window.addEventListener('load', () => {
+        initDefenseCanvas();
+        initCatchCanvas();
+        
+        // Add click to place towers for defense game
+        defenseCanvas.addEventListener('click', (e) => {
+            if (!defenseGameActive) return;
+            
+            const rect = defenseCanvas.getBoundingClientRect();
+            const x = e.clientX - rect.left;
+            const y = e.clientY - rect.top;
+            
+            if (honey >= 30) {
+                honey -= 30;
+                document.getElementById('honey-count').textContent = honey;
+                towers.push({x: x - 20, y: y - 20, type: selectedTower});
+                drawDefenseGame();
+            }
+        });
+        
+        // Show mobile controls based on screen size
+        if (window.innerWidth < 768) {
+            mobileControls.style.display = 'flex';
+        }
+    });
+    
+    window.addEventListener('resize', () => {
+        initDefenseCanvas();
+        initCatchCanvas();
+    });
+    
+    // Simple draw function for defense game
+    function drawDefenseGame() {
+        defenseCtx.clearRect(0, 0, defenseCanvas.width, defenseCanvas.height);
+        
+        // Draw background
+        defenseCtx.fillStyle = '#FFF9E6';
+        defenseCtx.fillRect(0, 0, defenseCanvas.width, defenseCanvas.height);
+        
+        // Draw towers if any
+        towers.forEach(tower => {
+            defenseCtx.fillStyle = getTowerColor(tower.type);
+            defenseCtx.fillRect(tower.x, tower.y, 40, 40);
+            defenseCtx.fillStyle = '#8B4513';
+            defenseCtx.font = '12px Arial';
+            defenseCtx.fillText(tower.type.charAt(0).toUpperCase(), tower.x + 15, tower.y + 25);
+        });
+    }
+</script>
 </body>
 </html>
 
