@@ -599,103 +599,36 @@
 
     // Enhanced character data with more details
     const characterData = {
-        pooh: {
-            name: 'Winnie the Pooh',
-            fullName: 'Winnie-the-Pooh',
-            quote: '"A little Consideration, a little Thought for Others, makes all the difference."',
-            icon: 'fas fa-bear',
-            color: '#FFB347',
-            bgColor: '#FFF3E0',
-            role: 'Honey Keeper & Chief Hug Officer',
-            bio: 'Our thoughtful, honey-loving friend has volunteered to be in charge of all honey jars, gentle hugs, and quiet snuggles. He is quite certain Baby Gunner will need all three in generous amounts.',
-            funFact: 'Pooh\'s favorite snack is, of course, honey! He can identify different flower varieties by their honey flavor.',
-            voiceSample: 'Oh bother! I mean... oh, wonderful! A new friend to share honey with!',
-            responsibilities: ['Honey distribution', 'Comfort snuggles', 'Bedtime stories'],
-            image: 'Images/Characters/honey-bear.png',
-            personality: ['Thoughtful', 'Hungry', 'Loving', 'Optimistic'],
-            stats: { strength: 3, wisdom: 4, speed: 2, charm: 5 }
-        },
-        piglet: {
-            name: 'Piglet',
-            fullName: 'Piglet',
-            quote: '"It is hard to be brave, when you\'re only a Very Small Animal — but I\'ll do it for Baby Gunner."',
-            icon: 'fas fa-heart',
-            color: '#FFB6C1',
-            bgColor: '#FFF0F5',
-            role: 'Cozy Coordinator',
-            bio: 'Our very small but very brave friend has carefully arranged all the soft blankets, tiny clothes, and cozy corners. He\'s making sure everything feels safe, warm, and just right for someone very small.',
-            funFact: 'Despite his size, Piglet has the biggest heart in the Hundred Acre Wood. He notices when anyone needs an extra blanket or a kind word.',
-            voiceSample: 'Oh d-d-dear! I mean... oh goodness! Everything must be just perfect for Baby Gunner!',
-            responsibilities: ['Blanket organization', 'Safety checks', 'Comfort monitoring'],
-            image: 'Images/Characters/piglet.png',
-            personality: ['Brave', 'Caring', 'Nervous', 'Detail-oriented'],
-            stats: { strength: 2, wisdom: 3, speed: 3, charm: 4 }
-        },
-        tigger: {
-            name: 'Tigger',
-            fullName: 'Tigger',
-            quote: '"The wonderful thing about babies is that babies are wonderful things!"',
-            icon: 'fas fa-paw',
-            color: '#FF8C42',
-            bgColor: '#FFECB3',
-            role: 'Head of Games & Giggles',
-            bio: 'Our bouncy, trouncy friend is in charge of all games, giggles, and any moment that calls for a bounce. He\'s especially excited about showing everyone how to make Baby Gunner smile.',
-            funFact: 'Tigger has invented three new baby-friendly bounces that are gentle enough for the tiniest of tiggers.',
-            voiceSample: 'Hoo-hoo-hoo! That\'s what Tiggers do best—make babies giggle!',
-            responsibilities: ['Entertainment', 'Giggle induction', 'Gentle bouncing'],
-            image: 'Images/Characters/tigger.png',
-            personality: ['Energetic', 'Playful', 'Loud', 'Optimistic'],
-            stats: { strength: 5, wisdom: 2, speed: 5, charm: 4 }
-        },
-        eeyore: {
-            name: 'Eeyore',
-            fullName: 'Eeyore',
-            quote: '"Not much of a tail, but it\'s my tail. And this is our baby, and that\'s rather special."',
-            icon: 'fas fa-cloud',
-            color: '#C0C0C0',
-            bgColor: '#F5F5F5',
-            role: 'Quiet Moments Director',
-            bio: 'Our thoughtful friend has quietly found the best spot for photos, the coziest places for naps, and the perfect moments for quiet reflection. He is making sure there\'s always a comfortable place to simply be together.',
-            funFact: 'Eeyore built a special "quiet corner" with just the right amount of shade and a view of the butterflies.',
-            voiceSample: 'Thanks for noticing me... and the baby. The baby is worth noticing.',
-            responsibilities: ['Photo spots', 'Quiet corners', 'Reflection time'],
-            image: 'Images/Characters/eeyore.png',
-            personality: ['Thoughtful', 'Melancholic', 'Wise', 'Patient'],
-            stats: { strength: 3, wisdom: 5, speed: 1, charm: 3 }
-        },
-        owl: {
-            name: 'Owl',
-            fullName: 'Owl',
-            quote: '"Wisdom begins with wonder, and what is more wonderful than a new beginning?"',
-            icon: 'fas fa-feather-alt',
-            color: '#8B4513',
-            bgColor: '#F5F5DC',
-            role: 'Official Historian & Storyteller',
-            bio: 'Our wisest friend is recording all the special moments in his finest scrolls. He\'s also prepared stories about friendship, courage, and the importance of being yourself.',
-            funFact: 'Owl has written a special welcome poem for Baby Gunner, complete with illustrations.',
-            voiceSample: 'Ahem! According to my extensive research, babies require approximately 14-17 hours of sleep per day!',
-            responsibilities: ['Memory keeping', 'Storytelling', 'Official announcements'],
-            image: 'Images/Characters/owl.png',
-            personality: ['Wise', 'Scholarly', 'Long-winded', 'Knowledgeable'],
-            stats: { strength: 2, wisdom: 5, speed: 2, charm: 3 }
-        },
-        roo: {
-            name: 'Roo',
-            fullName: 'Roo',
-            quote: '"I can\'t wait to show Baby Gunner how to hop! Well, maybe in a little while."',
-            icon: 'fas fa-child',
-            color: '#87CEEB',
-            bgColor: '#E0F7FA',
-            role: 'Junior Welcomer',
-            bio: 'Our youngest friend is very excited to meet someone closer to his size! He\'s practicing being gentle and has collected some of his favorite soft toys to share.',
-            funFact: 'Roo has been practicing his "inside voice" for weeks in preparation.',
-            voiceSample: 'Look, Mama! A baby! Can we play gentle games?',
-            responsibilities: ['Toy sharing', 'Gentle play demonstrations', 'Welcome committee'],
-            image: 'Images/Characters/roo.png',
-            personality: ['Energetic', 'Curious', 'Playful', 'Innocent'],
-            stats: { strength: 2, wisdom: 2, speed: 4, charm: 5 }
-        }
-    };
+  pooh: {
+    name: "Winnie the Pooh",
+    quote: "Sometimes the smallest things take up the most room in your heart.",
+    bio: "Pooh is our honey-loving host who believes every celebration needs a little something sweet. He's in charge of making sure there's plenty of honey treats for everyone and will be sharing his favorite stories about friendship and adventure.",
+    icon: "Images/Characters/honey-bear.png",
+    color: "#FFC42B"
+  },
+  piglet: {
+    name: "Piglet",
+    quote: "Even the littlest friend can bring the greatest joy.",
+    bio: "Our small but mighty friend Piglet is handling the decorations and making sure everything is just right. He may be small, but his heart is big, and he's ensuring every detail is perfect for Baby Gunner's welcome.",
+    icon: "Images/Characters/piglet.png",
+    color: "#FFB6C1"
+  },
+  tigger: {
+    name: "Tigger",
+    quote: "New babies are what Tiggers like best!",
+    bio: "Tigger is our bounce-tastic party energizer! He's organizing games and making sure everyone has a wonderful, bouncy time. His enthusiasm is contagious, and he promises to keep the celebration full of fun and laughter.",
+    icon: "Images/Characters/tigger.png",
+    color: "#FF8C00"
+  },
+  eeyore: {
+    name: "Eeyore",
+    quote: "Not that I'm complaining, but it will be rather nice to have someone new around.",
+    bio: "Eeyore may seem gloomy, but he's secretly thrilled about the new arrival. He's carefully watching over the gift table and making sure all the presents are kept safe. His thoughtful nature means he'll remember every little detail.",
+    icon: "Images/Characters/eeyore.png",
+    color: "#A9A9A9"
+  }
+};
+
 
     // Enhanced sprite loading with progress tracking
     function loadSprites() {
@@ -3403,6 +3336,224 @@ const observer = new IntersectionObserver((entries) => {
                 }
             });
         }
+        // Function to show character modal
+function showCharacterModal(characterId) {
+  const character = characterData[characterId];
+  
+  if (!character) {
+    console.error(`Character ${characterId} not found`);
+    return;
+  }
+  
+  // Set modal content
+  modalTitle.textContent = character.name;
+  modalQuote.textContent = `"${character.quote}"`;
+  modalBio.textContent = character.bio;
+  
+  // Set character icon
+  modalIcon.style.backgroundImage = `url('${character.icon}')`;
+  
+  // Add color accent
+  characterModal.style.setProperty('--character-color', character.color);
+  
+  // Show modal
+  characterModal.classList.add('active');
+  document.body.style.overflow = 'hidden'; // Prevent scrolling
+  
+  // Play a gentle sound if available
+  playWoodlandSound(new Event('click'));
+  
+  // Add escape key listener
+  document.addEventListener('keydown', handleEscapeKey);
+}
+// ============================================
+// CHARACTER MODAL FUNCTIONALITY
+// ============================================
+
+// Character data for modals
+const characterData = {
+  pooh: {
+    name: "Winnie the Pooh",
+    quote: "Sometimes the smallest things take up the most room in your heart.",
+    bio: "Pooh is our honey-loving host who believes every celebration needs a little something sweet. He's in charge of making sure there's plenty of honey treats for everyone and will be sharing his favorite stories about friendship and adventure.",
+    icon: "Images/Characters/honey-bear.png",
+    color: "#FFC42B"
+  },
+  piglet: {
+    name: "Piglet",
+    quote: "Even the littlest friend can bring the greatest joy.",
+    bio: "Our small but mighty friend Piglet is handling the decorations and making sure everything is just right. He may be small, but his heart is big, and he's ensuring every detail is perfect for Baby Gunner's welcome.",
+    icon: "Images/Characters/piglet.png",
+    color: "#FFB6C1"
+  },
+  tigger: {
+    name: "Tigger",
+    quote: "New babies are what Tiggers like best!",
+    bio: "Tigger is our bounce-tastic party energizer! He's organizing games and making sure everyone has a wonderful, bouncy time. His enthusiasm is contagious, and he promises to keep the celebration full of fun and laughter.",
+    icon: "Images/Characters/tigger.png",
+    color: "#FF8C00"
+  },
+  eeyore: {
+    name: "Eeyore",
+    quote: "Not that I'm complaining, but it will be rather nice to have someone new around.",
+    bio: "Eeyore may seem gloomy, but he's secretly thrilled about the new arrival. He's carefully watching over the gift table and making sure all the presents are kept safe. His thoughtful nature means he'll remember every little detail.",
+    icon: "Images/Characters/eeyore.png",
+    color: "#A9A9A9"
+  }
+};
+
+// Modal elements
+const characterModal = document.getElementById('characterModal');
+const closeModalBtn = document.getElementById('closeCharacterModal');
+const modalTitle = document.getElementById('characterModalTitle');
+const modalQuote = document.getElementById('modalCharacterQuote');
+const modalBio = document.getElementById('modalCharacterBio');
+const modalIcon = document.getElementById('modalCharacterIcon');
+
+// Function to show character modal
+function showCharacterModal(characterId) {
+  const character = characterData[characterId];
+  
+  if (!character) {
+    console.error(`Character ${characterId} not found`);
+    return;
+  }
+  
+  // Set modal content
+  modalTitle.textContent = character.name;
+  modalQuote.textContent = `"${character.quote}"`;
+  modalBio.textContent = character.bio;
+  
+  // Set character icon
+  modalIcon.style.backgroundImage = `url('${character.icon}')`;
+  
+  // Add color accent
+  characterModal.style.setProperty('--character-color', character.color);
+  
+  // Show modal
+  characterModal.classList.add('active');
+  document.body.style.overflow = 'hidden'; // Prevent scrolling
+  
+  // Play a gentle sound if available
+  playWoodlandSound(new Event('click'));
+  
+  // Add escape key listener
+  document.addEventListener('keydown', handleEscapeKey);
+}
+
+// Function to close modal
+function closeCharacterModal() {
+  characterModal.classList.remove('active');
+  document.body.style.overflow = ''; // Re-enable scrolling
+  document.removeEventListener('keydown', handleEscapeKey);
+}
+
+// Handle escape key
+function handleEscapeKey(event) {
+  if (event.key === 'Escape') {
+    closeCharacterModal();
+  }
+}
+
+// Close modal when clicking outside content
+characterModal.addEventListener('click', (event) => {
+  if (event.target === characterModal) {
+    closeCharacterModal();
+  }
+});
+
+// Close modal button event
+closeModalBtn.addEventListener('click', closeCharacterModal);
+
+// ============================================
+// ENHANCED HOVER EFFECTS FOR CHARACTER SPOTLIGHTS
+// ============================================
+
+// Add mouseenter/mouseleave effects for all character spotlights
+document.querySelectorAll('.character-spotlight').forEach(spotlight => {
+  // Extract character from onclick attribute
+  const onclickAttr = spotlight.getAttribute('onclick');
+  const characterMatch = onclickAttr?.match(/showCharacterModal\('(\w+)'\)/);
+  const characterId = characterMatch ? characterMatch[1] : null;
+  
+  if (characterId) {
+    // Add data attribute for CSS targeting
+    spotlight.setAttribute('data-character', characterId);
+    
+    // Remove the inline onclick and add event listener
+    spotlight.removeAttribute('onclick');
+    spotlight.addEventListener('click', () => showCharacterModal(characterId));
+    
+    // Enhanced hover effects
+    spotlight.addEventListener('mouseenter', function() {
+      const character = characterData[characterId];
+      if (character) {
+        // Add a subtle color tint
+        this.style.backgroundColor = `${character.color}15`; // 15 = 10% opacity in hex
+        
+        // Add a pulsing animation
+        this.style.animation = 'pulseGlow 1s infinite alternate';
+      }
+    });
+    
+    spotlight.addEventListener('mouseleave', function() {
+      this.style.backgroundColor = '';
+      this.style.animation = '';
+    });
+  }
+});
+
+// Add CSS for pulse animation
+const style = document.createElement('style');
+style.textContent = `
+  @keyframes pulseGlow {
+    from { box-shadow: 0 0 10px rgba(255, 196, 43, 0.3); }
+    to { box-shadow: 0 0 20px rgba(255, 196, 43, 0.6); }
+  }
+`;
+document.head.appendChild(style);
+
+// ============================================
+// WOODLAND SOUND FUNCTION (Placeholder)
+// ============================================
+
+function playWoodlandSound(event) {
+  // This is a placeholder - implement actual sound playback
+  console.log('Playing woodland sound');
+  
+  // You would implement actual audio playback here:
+  /*
+  const sound = new Audio('media/woodland-sound.mp3');
+  sound.volume = 0.3;
+  sound.play().catch(e => console.log('Audio play failed:', e));
+  */
+  
+  // For now, just prevent default if it's a button
+  if (event && event.preventDefault) {
+    event.preventDefault();
+  }
+  
+  // Add a visual feedback for the button
+  if (event && event.target) {
+    const button = event.target.closest('button');
+    if (button) {
+      button.style.transform = 'scale(0.95)';
+      setTimeout(() => {
+        button.style.transform = '';
+      }, 200);
+    }
+  }
+}
+
+// ============================================
+// INITIALIZE CHARACTER MODAL SYSTEM
+// ============================================
+
+// Make functions globally available
+window.showCharacterModal = showCharacterModal;
+window.playWoodlandSound = playWoodlandSound;
+
+console.log('Character modal system initialized');
         
         function showEnhancedWaveStatus(msg, duration = 1400) {
             if (!waveStatus) return;
