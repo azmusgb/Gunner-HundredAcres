@@ -1884,33 +1884,26 @@
         let lastScrollY = window.scrollY;
         let ticking = false;
 
-        function updateParallax() {
-            const scrolled = window.scrollY;
-            const rate = 0.1;
+       function updateParallax() {
+    const scrolled = window.scrollY;
+    const rate = 0.1;
+    
+    DOM.$$('.character-card-enhanced').forEach((card, index) => {
+        // Don't update parallax if hovering
+        if (!card.matches(':hover')) {
+            const yPos = -(scrolled * rate * (0.03 + index * 0.01));
+            const xPos = Math.sin(scrolled * 0.005 + index) * 2;
+
+            // Store parallax values in CSS custom properties
+            card.style.setProperty('--parallax-x', `${xPos}px`);
+            card.style.setProperty('--parallax-y', `${yPos}px`);
             
-            DOM.$$('.character-card').forEach((card, index) => {
-                // Check if card is being hovered
-                const isHovered = card.matches(':hover');
-                
-                // Only apply parallax if NOT hovering
-                if (!isHovered) {
-                    const yPos = -(scrolled * rate * (0.03 + index * 0.01));
-                    const xPos = Math.sin(scrolled * 0.005 + index) * 2;
-        
-                    card.style.setProperty('--parallax-x', `${xPos}px`);
-                    card.style.setProperty('--parallax-y', `${yPos}px`);
-                    
-                    // Apply the parallax transform
-                    card.style.transform = `translate3d(${xPos}px, ${yPos}px, 0) translateZ(0)`;
-                } else {
-                    // When hovering, reset parallax values but keep hover transform
-                    card.style.setProperty('--parallax-x', '0px');
-                    card.style.setProperty('--parallax-y', '0px');
-                }
-            });
-            
-            ticking = false;
+            // Don't apply transform directly - let CSS handle it
         }
+    });
+    
+    ticking = false;
+}
         // Throttle scroll events with requestAnimationFrame
             let scrollTimeout;
             window.addEventListener('scroll', () => {
