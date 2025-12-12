@@ -26,12 +26,13 @@
     const comboIndicator = document.getElementById("comboIndicator");
     const powerupIndicator = document.getElementById("powerupIndicator");
 
-    const startOverlay = document.getElementById("startOverlay");
+    const startOverlay = document.getElementById("gameStartOverlay");
     const pauseOverlay = document.getElementById("pauseOverlay");
     const gameOverOverlay = document.getElementById("gameOverOverlay");
-    const startButton = document.getElementById("startButton");
+    const startButton = document.getElementById("gameStartButton");
+    const startButtonOverlay = document.getElementById("gameStartButtonOverlay");
     const resumeButton = document.getElementById("resumeButton");
-    const restartButton = document.getElementById("restartButton");
+    const restartButton = document.getElementById("gameRestartButton");
     const overlayBest = document.getElementById("overlayBest");
     const overlayGames = document.getElementById("overlayGames");
     const finalScore = document.getElementById("finalScore");
@@ -55,6 +56,9 @@
     const fullscreenToggle = document.getElementById("fullscreenToggle");
 
     const liveRegion = document.getElementById("liveRegion");
+    const pauseButton = document.getElementById("togglePauseButton");
+    const leftButton = document.getElementById("controlLeft");
+    const rightButton = document.getElementById("controlRight");
 
     // ==================== ENHANCED AUDIO SYSTEM ====================
     let audioContext = null;
@@ -3441,8 +3445,14 @@
         [startOverlay, pauseOverlay, gameOverOverlay].forEach(function (el) {
             if (!el) return;
             const isTarget = el === overlay;
+            if (isTarget) {
+                el.style.display = "flex";
+            }
             el.classList.toggle("visible", isTarget);
             el.setAttribute("aria-hidden", String(!isTarget));
+            if (!isTarget) {
+                el.style.display = "none";
+            }
         });
     }
 
@@ -3450,6 +3460,7 @@
         if (!overlay) return;
         overlay.classList.remove("visible");
         overlay.setAttribute("aria-hidden", "true");
+        overlay.style.display = "none";
     }
 
     function startGame() {
@@ -3746,18 +3757,15 @@
         window.addEventListener("keydown", handleKeyDown);
         window.addEventListener("keyup", handleKeyUp);
 
-        const hudPause = document.getElementById("pauseBtn");
-        if (hudPause) {
-            hudPause.onclick = (e) => {
+        if (pauseButton) {
+            pauseButton.onclick = (e) => {
                 e.preventDefault();
                 togglePause();
             };
         }
 
-        const leftBtn = document.getElementById("btnLeft");
-        const rightBtn = document.getElementById("btnRight");
-        bindPadButton(leftBtn, "left");
-        bindPadButton(rightBtn, "right");
+        bindPadButton(leftButton, "left");
+        bindPadButton(rightButton, "right");
     }
 
     function initSettings() {
@@ -3902,8 +3910,15 @@
 
     function initOverlays() {
         if (startButton) startButton.addEventListener("click", startGame);
+        if (startButtonOverlay) startButtonOverlay.addEventListener("click", startGame);
         if (resumeButton) resumeButton.addEventListener("click", resumeGame);
         if (restartButton) restartButton.addEventListener("click", startGame);
+
+        if (startOverlay) {
+            startOverlay.style.display = "flex";
+            startOverlay.classList.add("visible");
+            startOverlay.setAttribute("aria-hidden", "false");
+        }
 
         if (overlayBest) overlayBest.textContent = String(gameState.best);
         if (overlayGames) overlayGames.textContent = String(gameState.gamesPlayed);
