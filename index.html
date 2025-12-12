@@ -1436,52 +1436,166 @@ body::before {
                 </div>
             </article>
             <!-- Chapter 2: Game -->
-            <article class="page page--game" data-chapter="2" id="honey-game">
-                <header class="chapter-header">
-                    <p class="chapter-number">Chapter Two</p>
-                    <h2 class="chapter-title">Pooh's Honey Gathering Adventure</h2>
-                    <p class="chapter-subtitle">A Game of Skill and Sweetness</p>
-                    <span aria-hidden="true" class="honey-drip"></span>
-                </header>
-                <div class="chapter-illustrations">
-                    <figure class="storybook-figure figure-theme-forest clickable-character" data-character="tigger">
-                        <img alt="Tigger bouncing" height="96" loading="lazy" src="Images/Characters/tigger.png"
-                             width="96">
-                        <figcaption class="figure-copy">
-                            <div class="figure-name">Tigger stakes out the course</div>
-                            <p class="figure-note">He marked the path with springy footprints so every honey pot feels
-                                like an adventure to catch.</p>
-                        </figcaption>
-                        <div aria-live="polite" class="character-message"></div>
-                    </figure>
-                    <figure class="storybook-figure figure-theme-honey clickable-character" data-character="roo">
-                        <img alt="Roo cheering" height="96" loading="lazy" src="Images/Characters/roo.png" width="96">
-                        <figcaption class="figure-copy">
-                            <div class="figure-name">Roo cheers from the sidelines</div>
-                            <p class="figure-note">"Mind the bees!" he giggled, handing out cozy scarves.</p>
-                        </figcaption>
-                        <div aria-live="polite" class="character-message"></div>
-                    </figure>
+        <!-- Chapter 2: Game -->
+<article class="page page--game" data-chapter="2" id="honey-game">
+    <header class="chapter-header">
+        <p class="chapter-number">Chapter Two</p>
+        <h2 class="chapter-title">Pooh's Honey Gathering Adventure</h2>
+        <p class="chapter-subtitle">A Game of Skill and Sweetness</p>
+        <span aria-hidden="true" class="honey-drip"></span>
+    </header>
+    
+    <div class="chapter-illustrations">
+        <figure class="storybook-figure figure-theme-forest clickable-character" data-character="tigger">
+            <img alt="Tigger bouncing" height="96" loading="lazy" src="Images/Characters/tigger.png" width="96">
+            <figcaption class="figure-copy">
+                <div class="figure-name">Tigger stakes out the course</div>
+                <p class="figure-note">He marked the path with springy footprints so every honey pot feels like an adventure to catch.</p>
+            </figcaption>
+            <div aria-live="polite" class="character-message"></div>
+        </figure>
+        <figure class="storybook-figure figure-theme-honey clickable-character" data-character="roo">
+            <img alt="Roo cheering" height="96" loading="lazy" src="Images/Characters/roo.png" width="96">
+            <figcaption class="figure-copy">
+                <div class="figure-name">Roo cheers from the sidelines</div>
+                <p class="figure-note">"Mind the bees!" he giggled, handing out cozy scarves.</p>
+            </figcaption>
+            <div aria-live="polite" class="character-message"></div>
+        </figure>
+    </div>
+
+    <div class="page-content">
+        <!-- GAME DIRECTLY EMBEDDED HERE -->
+        <div id="gameContainer" style="
+            width: 100%;
+            max-width: 800px;
+            height: 600px;
+            margin: 2rem auto;
+            position: relative;
+            background: linear-gradient(to bottom, #87CEEB 0%, #87CEEB 60%, #8B4513 60%, #A0522D 100%);
+            border-radius: 20px;
+            overflow: hidden;
+            box-shadow: 0 20px 60px rgba(0, 0, 0, 0.3);
+            border: 4px solid #f4a944;
+        ">
+            <canvas id="gameCanvas" width="800" height="600" style="
+                width: 100%;
+                height: 100%;
+                display: block;
+            "></canvas>
+            
+            <!-- HUD -->
+            <div style="
+                position: absolute;
+                top: 20px;
+                left: 20px;
+                right: 20px;
+                display: flex;
+                justify-content: space-between;
+                background: rgba(255, 255, 255, 0.95);
+                padding: 12px 20px;
+                border-radius: 12px;
+                border: 2px solid #f4a944;
+                box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1);
+                pointer-events: none;
+                z-index: 10;
+            ">
+                <div class="hud-item">
+                    <span style="font-size: 12px; font-weight: 600; color: #8B4513; text-transform: uppercase;">Score</span>
+                    <span style="font-size: 20px; font-weight: bold; color: #d18a2c;" id="scoreValue">0</span>
                 </div>
-
-                <div class="page-content">
-                <!-- Replace the current game-embed__frame div with: -->
-<!-- In your main HTML file, update Chapter 2's game section: -->
-
-<div class="game-embed__frame" style="width: 100%; height: 700px;">
-    <iframe 
-        src="game.html"
-        title="Honey Hunt Game"
-        style="width: 100%; height: 100%; border: none;"
-        allowfullscreen
-    ></iframe>
-</div>
-
-
-                    <p class="story-text">Help Pooh gather sweet honey by playing the Honey Hunt game below. Launch the
-                        adventure to catch jars, dodge bees, and send your best score to the Hundred Acre Wood crew!</p>
+                <div class="hud-item">
+                    <span style="font-size: 12px; font-weight: 600; color: #8B4513; text-transform: uppercase;">Time</span>
+                    <span style="font-size: 20px; font-weight: bold; color: #d18a2c;" id="timeValue">60</span>
                 </div>
-            </article>
+                <div class="hud-item">
+                    <span style="font-size: 12px; font-weight: 600; color: #8B4513; text-transform: uppercase;">Lives</span>
+                    <span style="font-size: 20px; font-weight: bold; color: #d18a2c;" id="livesValue">3</span>
+                </div>
+            </div>
+
+            <!-- Start Overlay -->
+            <div id="gameStartOverlay" style="
+                position: absolute;
+                top: 0;
+                left: 0;
+                right: 0;
+                bottom: 0;
+                background: rgba(0, 0, 0, 0.85);
+                display: flex;
+                align-items: center;
+                justify-content: center;
+                z-index: 20;
+            ">
+                <div style="
+                    background: white;
+                    padding: 30px;
+                    border-radius: 20px;
+                    text-align: center;
+                    max-width: 500px;
+                    width: 90%;
+                    border: 4px solid #f4a944;
+                ">
+                    <h2 style="font-size: 2rem; color: #8B4513; margin-bottom: 10px;">🍯 Honey Hunt 🐝</h2>
+                    <p style="color: #5a3a1c; margin-bottom: 20px; line-height: 1.5;">
+                        Help Pooh catch honey jars!<br>Use arrow keys ← → to move
+                    </p>
+                    <button id="gameStartButton" style="
+                        padding: 12px 24px;
+                        border: none;
+                        border-radius: 10px;
+                        font-size: 16px;
+                        font-weight: bold;
+                        cursor: pointer;
+                        background: linear-gradient(135deg, #f4a944, #d18a2c);
+                        color: white;
+                    ">Start Game</button>
+                </div>
+            </div>
+
+            <!-- Game Over Overlay -->
+            <div id="gameOverOverlay" style="
+                position: absolute;
+                top: 0;
+                left: 0;
+                right: 0;
+                bottom: 0;
+                background: rgba(0, 0, 0, 0.85);
+                display: none;
+                align-items: center;
+                justify-content: center;
+                z-index: 20;
+            ">
+                <div style="
+                    background: white;
+                    padding: 30px;
+                    border-radius: 20px;
+                    text-align: center;
+                    max-width: 500px;
+                    width: 90%;
+                    border: 4px solid #f4a944;
+                ">
+                    <h2 style="font-size: 2rem; color: #8B4513; margin-bottom: 10px;">Game Over!</h2>
+                    <p style="color: #5a3a1c; margin-bottom: 20px; line-height: 1.5;">
+                        Score: <span id="finalScore">0</span>
+                    </p>
+                    <button id="gameRestartButton" style="
+                        padding: 12px 24px;
+                        border: none;
+                        border-radius: 10px;
+                        font-size: 16px;
+                        font-weight: bold;
+                        cursor: pointer;
+                        background: linear-gradient(135deg, #f4a944, #d18a2c);
+                        color: white;
+                    ">Play Again</button>
+                </div>
+            </div>
+        </div>
+        
+        <p class="story-text">Help Pooh gather sweet honey by playing the Honey Hunt game above. Catch jars, dodge bees, and send your best score to the Hundred Acre Wood crew!</p>
+    </div>
+</article>
             <!-- Chapter 3: Gifts & Wishes -->
             <article class="page" data-chapter="3">
                 <header class="chapter-header">
