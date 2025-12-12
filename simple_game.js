@@ -3,7 +3,9 @@
 // Game Variables
 let canvas, ctx;
 let gameRunning = false;
+let isPaused = false;
 let score = 0;
+let bestScore = 0;
 let timeLeft = 60;
 let lives = 3;
 let poohX = 350;
@@ -29,11 +31,20 @@ const gameCanvas = document.getElementById('gameCanvas');
 const scoreValue = document.getElementById('scoreValue');
 const timeValue = document.getElementById('timeValue');
 const livesValue = document.getElementById('livesValue');
+const bestValue = document.getElementById('bestValue');
+const timeBar = document.getElementById('timeBar');
+const statusBanner = document.getElementById('gameStatus');
 const gameStartOverlay = document.getElementById('gameStartOverlay');
 const gameOverOverlay = document.getElementById('gameOverOverlay');
 const gameStartButton = document.getElementById('gameStartButton');
+const gameStartButtonOverlay = document.getElementById('gameStartButtonOverlay');
 const gameRestartButton = document.getElementById('gameRestartButton');
 const finalScore = document.getElementById('finalScore');
+const pauseToggleButton = document.getElementById('togglePauseButton');
+const controlLeft = document.getElementById('controlLeft');
+const controlRight = document.getElementById('controlRight');
+
+const BEST_SCORE_KEY = 'honeyHunt_bestScore_simple';
 
 // Initialize Game
 function initGame() {
@@ -45,14 +56,21 @@ function initGame() {
     canvas = gameCanvas;
     ctx = canvas.getContext('2d');
     
+    // Load best score
+    const storedBest = localStorage.getItem(BEST_SCORE_KEY);
+    bestScore = storedBest ? parseInt(storedBest, 10) || 0 : 0;
+    updateStatus('Ready to play? Tap Start or press Space.');
+
     // Set up canvas size
     resizeCanvas();
     
     // Set up event listeners
     setupEventListeners();
-    
+
     // Initial render
     render();
+    updateUI();
+    updatePauseButton();
     
     console.log('Game initialized');
 }
@@ -69,55 +87,101 @@ function resizeCanvas() {
     }
 }
 
+function updateStatus(message) {
+    if (statusBanner) {
+        statusBanner.textContent = message;
+    }
+}
+
+function updatePauseButton() {
+    if (!pauseToggleButton) return;
+
+    pauseToggleButton.textContent = isPaused ? 'Resume' : 'Pause';
+    pauseToggleButton.setAttribute('aria-pressed', isPaused);
+    pauseToggleButton.disabled = !gameRunning;
+}
+
+function setupHoldControl(button, key) {
+    if (!button) return;
+
+    const setPressed = (pressed) => {
+        keys[key] = pressed;
+        button.setAttribute('aria-pressed', String(pressed));
+    };
+
+    ['mousedown', 'touchstart'].forEach((evt) => {
+        button.addEventListener(evt, (e) => {
+            e.preventDefault();
+            setPressed(true);
+        });
+    });
+
+    ['mouseup', 'mouseleave', 'touchend', 'touchcancel'].forEach((evt) => {
+        button.addEventListener(evt, (e) => {
+            e.preventDefault();
+            setPressed(false);
+        });
+    });
+}
+
 // Set up event listeners
 function setupEventListeners() {
-    // Keyboard controls
-    document.addEventListener('keydown', (e) => {
-        if (e.key === 'ArrowLeft' || e.key === 'ArrowRight') {
-            keys[e.key] = true;
+    document.addEventListener('keydown', handleKeyDown);
+    document.addEventListener('keyup', handleKeyUp);
+
+    [gameStartButton, gameStartButtonOverlay].forEach((btn) => {
+        if (btn) {
+            btn.addEventListener('click', startGame);
         }
     });
-    
-    document.addEventListener('keyup', (e) => {
-        if (e.key === 'ArrowLeft' || e.key === 'ArrowRight') {
-            keys[e.key] = false;
-        }
-    });
-    
-    // Game buttons
-    if (gameStartButton) {
-        gameStartButton.addEventListener('click', startGame);
-    }
-    
+
     if (gameRestartButton) {
         gameRestartButton.addEventListener('click', restartGame);
     }
-    
-    // Window resize
+
+    if (pauseToggleButton) {
+        pauseToggleButton.addEventListener('click', togglePause);
+    }
+
+    setupHoldControl(controlLeft, 'ArrowLeft');
+    setupHoldControl(controlRight, 'ArrowRight');
+
     window.addEventListener('resize', resizeCanvas);
+    window.addEventListener('blur', () => {
+        if (gameRunning && !isPaused) {
+            pauseGame();
+        }
+    });
 }
 
 // Start Game
 function startGame() {
     console.log('Starting game...');
-    
+
     // Reset game state
     gameRunning = true;
+    isPaused = false;
     score = 0;
     timeLeft = 60;
     lives = 3;
     honeyJars = [];
     bees = [];
     fallingLeaves = [];
-    
+
     // Reset Pooh position
     poohX = canvas.width / 2 - poohWidth / 2;
-    
+
     // Hide start overlay
     if (gameStartOverlay) {
         gameStartOverlay.style.display = 'none';
     }
-    
+    if (gameOverOverlay) {
+        gameOverOverlay.style.display = 'none';
+    }
+
+    updateStatus('Catch as much honey as you can!');
+    updatePauseButton();
+
     // Update UI
     updateUI();
     
@@ -130,10 +194,10 @@ function startGame() {
     }
     
     countdownInterval = setInterval(() => {
-        if (gameRunning) {
+        if (gameRunning && !isPaused) {
             timeLeft--;
             updateUI();
-            
+
             if (timeLeft <= 0) {
                 endGame('Time\'s up!');
             }
@@ -148,12 +212,69 @@ function startGame() {
 // Game Loop
 function gameLoop() {
     if (!gameRunning) return;
-    
+
+    if (isPaused) {
+        render();
+        return;
+    }
+
     // Update
     update();
-    
+
     // Render
     render();
+}
+
+function handleKeyDown(e) {
+    if (e.key === 'ArrowLeft' || e.key === 'ArrowRight') {
+        keys[e.key] = true;
+        return;
+    }
+
+    if (e.code === 'Space') {
+        e.preventDefault();
+        if (!gameRunning) {
+            startGame();
+        } else {
+            togglePause();
+        }
+    } else if (e.key === 'p' || e.key === 'P') {
+        e.preventDefault();
+        togglePause();
+    }
+}
+
+function handleKeyUp(e) {
+    if (e.key === 'ArrowLeft' || e.key === 'ArrowRight') {
+        keys[e.key] = false;
+    }
+}
+
+function pauseGame() {
+    if (!gameRunning || isPaused) return;
+    isPaused = true;
+    updatePauseButton();
+    updateStatus('Paused — press Resume, Space, or P to continue');
+}
+
+function resumeGame() {
+    if (!gameRunning) return;
+    isPaused = false;
+    updatePauseButton();
+    updateStatus('Back in the honey hunt!');
+}
+
+function togglePause() {
+    if (!gameRunning) {
+        startGame();
+        return;
+    }
+
+    if (isPaused) {
+        resumeGame();
+    } else {
+        pauseGame();
+    }
 }
 
 // Update Game State
@@ -247,7 +368,8 @@ function update() {
             
             lives--;
             updateUI();
-            
+            updateStatus(`Ouch! ${lives} ${lives === 1 ? 'life' : 'lives'} left.`);
+
             // Create hit effect
             createHitEffect(bee.x + bee.width / 2, bee.y + bee.height / 2);
             
@@ -511,26 +633,47 @@ function createHitEffect(x, y) {
 // Update UI
 function updateUI() {
     if (scoreValue) scoreValue.textContent = score;
-    if (timeValue) timeValue.textContent = Math.max(0, timeLeft);
+    if (timeValue) timeValue.textContent = `${Math.max(0, timeLeft)}s`;
     if (livesValue) livesValue.textContent = lives;
+    if (bestValue) bestValue.textContent = bestScore;
+    if (timeBar) {
+        const percent = Math.max(0, timeLeft) / 60 * 100;
+        timeBar.style.width = `${percent}%`;
+        const track = timeBar.parentElement;
+        if (track) {
+            track.setAttribute('aria-valuenow', Math.max(0, timeLeft));
+            track.setAttribute('aria-valuemin', '0');
+            track.setAttribute('aria-valuemax', '60');
+        }
+    }
 }
 
 // End Game
 function endGame(reason) {
     gameRunning = false;
-    
+    isPaused = false;
+
     if (gameInterval) {
         clearInterval(gameInterval);
     }
     if (countdownInterval) {
         clearInterval(countdownInterval);
     }
-    
+
+    if (score > bestScore) {
+        bestScore = score;
+        localStorage.setItem(BEST_SCORE_KEY, bestScore.toString());
+    }
+
     // Update final score
     if (finalScore) {
         finalScore.textContent = score;
     }
-    
+
+    updateUI();
+    updatePauseButton();
+    updateStatus(reason);
+
     // Show game over overlay
     if (gameOverOverlay) {
         gameOverOverlay.style.display = 'flex';
