@@ -6870,11 +6870,11 @@ const observer = new IntersectionObserver((entries) => {
                 transition: all 0.3s ease;
             }
             
-            .character-card:hover .character-stats-overlay {
-                transform: translateY(0);
-                opacity: 1;
+            .character-card:hover {
+                transform: translate3d(0, 0, 0) scale(1.05) translateZ(0);
+                transition: transform 0.3s ease-out;
             }
-            
+        
             .stats-container {
                 display: grid;
                 grid-template-columns: repeat(2, 1fr);
@@ -8145,7 +8145,38 @@ const observer = new IntersectionObserver((entries) => {
                     transition: none !important;
                 }
             }
+                /* Replace the existing .character-card:hover rule */
+                .character-card-enhanced:hover,
+                .character-card:hover {
+                    transform: translate3d(var(--parallax-x), var(--parallax-y), 0) translateZ(0) 
+                               scale(1.05) 
+                               rotateY(5deg) 
+                               rotateX(5deg) !important;
+                    box-shadow: 
+                        0 20px 40px rgba(0,0,0,0.2),
+                        0 0 0 1px rgba(255,255,255,0.1),
+                        0 0 30px rgba(var(--glow-color), 0.4) !important;
+                    z-index: 100;
+                    transition: transform 0.3s cubic-bezier(0.68, -0.55, 0.27, 1.55),
+                                box-shadow 0.3s ease,
+                                z-index 0.3s ease;
+                }
+                
+                /* Add a specific rule to override parallax on hover */
+                .character-card-enhanced:hover .character-glow-effect,
+                .character-card:hover .character-glow-effect {
+                    opacity: 0.3;
+                }
             
+            /* Ensure hover states work on mobile */
+            @media (hover: none) and (pointer: coarse) {
+                .character-card-enhanced:active,
+                .character-card:active {
+                    transform: translate3d(var(--parallax-x), var(--parallax-y), 0) 
+                               scale(0.98) !important;
+                    transition: transform 0.1s ease !important;
+                }
+            }
             /* Touch Device Optimizations */
             @media (hover: none) and (pointer: coarse) {
                 .character-card-enhanced:hover {
