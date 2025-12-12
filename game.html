@@ -4,106 +4,630 @@
     <meta charset="UTF-8"/>
     <title>Honey Hunt — Ultimate Edition</title>
     <meta content="width=device-width, initial-scale=1.0, viewport-fit=cover" name="viewport"/>
-    <meta content="Collect honey, dodge bees, stack streaks, and unlock power-ups in this cozy Hundred Acre Wood–inspired honey hunt."
-          name="description"/>
-    <meta content="light dark" name="color-scheme"/>
     <meta content="#ffb23a" name="theme-color"/>
-    <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.1/css/all.min.css" rel="stylesheet"/>
-    <link rel="preconnect" href="https://cdnjs.cloudflare.com">
-    <link rel="preload" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.1/css/all.min.css" as="style" onload="this.onload=null;this.rel='stylesheet'">
-    <noscript><link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.1/css/all.min.css"></noscript>
-        <link rel="stylesheet" href="styles.css">
+    <style>
+        /* EMBED-OPTIMIZED GAME CSS */
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        :root {
+            --color-honey: #f4a944;
+            --color-honey-light: #f9d8a6;
+            --color-honey-dark: #d18a2c;
+            --color-wood: #8b4513;
+            --color-wood-light: #a0522d;
+            --color-text: #3d2c1e;
+            --color-poppy: #e74c3c;
+            --color-sage: #87a96b;
+            --color-sky: #a6d0e4;
+            --color-bg: #fef9f3;
+            --color-card: #ffffff;
+            --shadow: 0 8px 32px rgba(0, 0, 0, 0.1);
+        }
+
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+            background: var(--color-bg);
+            color: var(--color-text);
+            min-height: 100vh;
+            overflow: hidden;
+            margin: 0;
+            padding: 0;
+        }
+
+        .app {
+            display: flex;
+            flex-direction: column;
+            height: 100vh;
+            width: 100vw;
+            max-width: 100%;
+            overflow: hidden;
+        }
+
+        .topbar {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            padding: 12px 16px;
+            background: var(--color-card);
+            border-bottom: 2px solid var(--color-honey-light);
+            box-shadow: var(--shadow);
+            flex-shrink: 0;
+        }
+
+        .title {
+            display: flex;
+            align-items: center;
+            gap: 12px;
+        }
+
+        .title-icon {
+            font-size: 28px;
+        }
+
+        .title-text {
+            display: flex;
+            flex-direction: column;
+        }
+
+        .title-main {
+            font-size: 1.5rem;
+            font-weight: bold;
+            color: var(--color-wood);
+        }
+
+        .title-sub {
+            font-size: 0.85rem;
+            color: var(--color-text);
+            opacity: 0.7;
+        }
+
+        .topbar-buttons {
+            display: flex;
+            gap: 8px;
+        }
+
+        .btn {
+            padding: 8px 16px;
+            border: none;
+            border-radius: 8px;
+            font-size: 14px;
+            font-weight: 600;
+            cursor: pointer;
+            display: inline-flex;
+            align-items: center;
+            gap: 6px;
+            transition: all 0.2s ease;
+            text-decoration: none;
+        }
+
+        .btn.small {
+            padding: 6px 12px;
+            font-size: 13px;
+        }
+
+        .btn.primary {
+            background: var(--color-honey);
+            color: white;
+        }
+
+        .btn.secondary {
+            background: var(--color-honey-light);
+            color: var(--color-wood);
+        }
+
+        .btn:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 4px 12px rgba(0, 0, 0, 0.15);
+        }
+
+        .game-layout {
+            flex: 1;
+            display: flex;
+            overflow: hidden;
+            position: relative;
+        }
+
+        .viewport-shell {
+            flex: 1;
+            display: flex;
+            flex-direction: column;
+            overflow: hidden;
+        }
+
+        .game-card {
+            flex: 1;
+            margin: 16px;
+            border-radius: 16px;
+            background: var(--color-card);
+            box-shadow: var(--shadow);
+            border: 2px solid var(--color-honey-light);
+            overflow: hidden;
+            position: relative;
+        }
+
+        .game-container {
+            position: relative;
+            width: 100%;
+            height: 100%;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            background: linear-gradient(135deg, var(--color-sky), var(--color-honey-light));
+        }
+
+        .game-bg-horizon {
+            position: absolute;
+            top: 0;
+            left: 0;
+            right: 0;
+            height: 60%;
+            background: linear-gradient(to bottom, #87CEEB, #E0F7FF);
+        }
+
+        .game-bg-ground {
+            position: absolute;
+            bottom: 0;
+            left: 0;
+            right: 0;
+            height: 40%;
+            background: linear-gradient(to top, #8B4513, #A0522D);
+        }
+
+        #gameCanvas {
+            width: 100% !important;
+            height: 100% !important;
+            max-width: 800px;
+            max-height: 600px;
+            background: transparent;
+            display: block;
+            z-index: 10;
+            border-radius: 12px;
+            box-shadow: 0 4px 24px rgba(0, 0, 0, 0.15);
+        }
+
+        .hud {
+            position: absolute;
+            top: 20px;
+            left: 20px;
+            right: 20px;
+            display: flex;
+            justify-content: space-between;
+            background: rgba(255, 255, 255, 0.9);
+            padding: 12px 20px;
+            border-radius: 12px;
+            border: 2px solid var(--color-honey);
+            box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1);
+            z-index: 20;
+        }
+
+        .hud-item {
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            gap: 4px;
+        }
+
+        .hud-label {
+            font-size: 12px;
+            font-weight: 600;
+            color: var(--color-wood);
+            text-transform: uppercase;
+            letter-spacing: 0.5px;
+        }
+
+        .hud-value {
+            font-size: 20px;
+            font-weight: bold;
+            color: var(--color-honey-dark);
+        }
+
+        .streak {
+            background: var(--color-honey);
+            padding: 4px 12px;
+            border-radius: 20px;
+            margin: -4px -8px -4px 0;
+        }
+
+        .streak .hud-value {
+            color: white;
+        }
+
+        .streak-badge {
+            font-size: 10px;
+            background: white;
+            color: var(--color-honey);
+            padding: 2px 6px;
+            border-radius: 10px;
+            margin-top: 2px;
+        }
+
+        .overlay {
+            position: absolute;
+            top: 0;
+            left: 0;
+            right: 0;
+            bottom: 0;
+            background: rgba(0, 0, 0, 0.7);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            z-index: 30;
+            opacity: 0;
+            pointer-events: none;
+            transition: opacity 0.3s ease;
+        }
+
+        .overlay.visible {
+            opacity: 1;
+            pointer-events: all;
+        }
+
+        .overlay-card {
+            background: white;
+            padding: 32px;
+            border-radius: 20px;
+            text-align: center;
+            max-width: 400px;
+            width: 90%;
+            border: 3px solid var(--color-honey);
+            box-shadow: 0 12px 40px rgba(0, 0, 0, 0.2);
+        }
+
+        .overlay-title {
+            font-size: 2rem;
+            color: var(--color-wood);
+            margin-bottom: 12px;
+        }
+
+        .overlay-sub {
+            color: var(--color-text);
+            margin-bottom: 24px;
+            line-height: 1.5;
+        }
+
+        .overlay-stats {
+            display: flex;
+            justify-content: center;
+            gap: 32px;
+            margin: 24px 0;
+        }
+
+        .overlay-stat-label {
+            font-size: 12px;
+            color: var(--color-text);
+            opacity: 0.7;
+            text-transform: uppercase;
+            letter-spacing: 1px;
+        }
+
+        .overlay-stat-value {
+            font-size: 2rem;
+            font-weight: bold;
+            color: var(--color-honey);
+        }
+
+        .combo-indicator {
+            position: absolute;
+            top: 50%;
+            left: 50%;
+            transform: translate(-50%, -50%);
+            font-size: 48px;
+            font-weight: bold;
+            color: var(--color-honey);
+            text-shadow: 0 4px 8px rgba(0, 0, 0, 0.3);
+            z-index: 15;
+            opacity: 0;
+            pointer-events: none;
+            transition: all 0.3s ease;
+        }
+
+        .powerup-indicator {
+            position: absolute;
+            top: 20px;
+            right: 20px;
+            background: var(--color-sage);
+            color: white;
+            padding: 8px 16px;
+            border-radius: 20px;
+            display: flex;
+            align-items: center;
+            gap: 8px;
+            font-weight: bold;
+            z-index: 20;
+            box-shadow: 0 4px 12px rgba(0, 0, 0, 0.2);
+        }
+
+        /* Mobile controls */
+        .controls-bar {
+            position: absolute;
+            bottom: 20px;
+            left: 0;
+            right: 0;
+            display: flex;
+            justify-content: center;
+            gap: 40px;
+            padding: 16px;
+            z-index: 25;
+            display: none;
+        }
+
+        @media (max-width: 768px) {
+            .controls-bar {
+                display: flex;
+            }
+        }
+
+        .control-button {
+            width: 60px;
+            height: 60px;
+            border-radius: 50%;
+            background: rgba(255, 255, 255, 0.9);
+            border: 3px solid var(--color-honey);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 24px;
+            color: var(--color-wood);
+            cursor: pointer;
+            box-shadow: 0 4px 12px rgba(0, 0, 0, 0.2);
+        }
+
+        /* Settings modal */
+        .settings-backdrop {
+            position: fixed;
+            top: 0;
+            left: 0;
+            right: 0;
+            bottom: 0;
+            background: rgba(0, 0, 0, 0.8);
+            display: none;
+            align-items: center;
+            justify-content: center;
+            z-index: 1000;
+        }
+
+        .settings-panel {
+            background: white;
+            border-radius: 20px;
+            padding: 24px;
+            max-width: 400px;
+            width: 90%;
+            max-height: 80vh;
+            overflow-y: auto;
+            box-shadow: 0 20px 60px rgba(0, 0, 0, 0.3);
+        }
+
+        .settings-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 24px;
+            padding-bottom: 12px;
+            border-bottom: 2px solid var(--color-honey-light);
+        }
+
+        .settings-title {
+            font-size: 1.5rem;
+            font-weight: bold;
+            color: var(--color-wood);
+        }
+
+        .settings-row {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            padding: 16px 0;
+            border-bottom: 1px solid rgba(0, 0, 0, 0.1);
+        }
+
+        .settings-label {
+            display: flex;
+            flex-direction: column;
+        }
+
+        .settings-label span:first-child {
+            font-weight: 600;
+            color: var(--color-wood);
+        }
+
+        .settings-label span:last-child {
+            font-size: 12px;
+            color: var(--color-text);
+            opacity: 0.7;
+        }
+
+        .toggle {
+            width: 60px;
+            height: 30px;
+            background: #ddd;
+            border-radius: 15px;
+            position: relative;
+            cursor: pointer;
+            border: none;
+            padding: 0;
+        }
+
+        .toggle[data-on="true"] {
+            background: var(--color-honey);
+        }
+
+        .toggle-knob {
+            position: absolute;
+            top: 3px;
+            left: 3px;
+            width: 24px;
+            height: 24px;
+            background: white;
+            border-radius: 50%;
+            transition: transform 0.2s ease;
+        }
+
+        .toggle[data-on="true"] .toggle-knob {
+            transform: translateX(30px);
+        }
+
+        .difficulty-pill {
+            display: flex;
+            gap: 8px;
+        }
+
+        .diff-btn {
+            padding: 8px 16px;
+            border: 2px solid var(--color-honey-light);
+            background: transparent;
+            border-radius: 20px;
+            color: var(--color-text);
+            cursor: pointer;
+            transition: all 0.2s ease;
+        }
+
+        .diff-btn.active {
+            background: var(--color-honey);
+            color: white;
+            border-color: var(--color-honey);
+        }
+
+        .settings-footer {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-top: 24px;
+            padding-top: 16px;
+            border-top: 2px solid var(--color-honey-light);
+        }
+
+        /* Help panel */
+        .help-panel {
+            position: absolute;
+            bottom: 0;
+            left: 0;
+            right: 0;
+            background: white;
+            padding: 20px;
+            border-top: 3px solid var(--color-honey);
+            transform: translateY(100%);
+            transition: transform 0.3s ease;
+            box-shadow: 0 -4px 20px rgba(0, 0, 0, 0.1);
+        }
+
+        .help-panel[aria-expanded="true"] {
+            transform: translateY(0);
+        }
+
+        .help-columns {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
+            gap: 24px;
+        }
+
+        .help-heading {
+            font-size: 1.2rem;
+            font-weight: bold;
+            color: var(--color-wood);
+            margin-bottom: 12px;
+        }
+
+        .help-list {
+            list-style: none;
+        }
+
+        .help-list li {
+            padding: 6px 0;
+            position: relative;
+            padding-left: 20px;
+        }
+
+        .help-list li:before {
+            content: "🍯";
+            position: absolute;
+            left: 0;
+        }
+
+        /* Accessibility */
+        .sr-only {
+            position: absolute;
+            width: 1px;
+            height: 1px;
+            padding: 0;
+            margin: -1px;
+            overflow: hidden;
+            clip: rect(0, 0, 0, 0);
+            white-space: nowrap;
+            border: 0;
+        }
+
+        /* Responsive */
+        @media (max-width: 768px) {
+            .hud {
+                flex-wrap: wrap;
+                gap: 8px;
+            }
+
+            .hud-item {
+                flex: 1;
+                min-width: 80px;
+            }
+
+            .title-main {
+                font-size: 1.2rem;
+            }
+
+            .title-sub {
+                font-size: 0.75rem;
+            }
+        }
+
+        @media (max-width: 480px) {
+            .topbar {
+                flex-direction: column;
+                gap: 12px;
+                padding: 12px;
+            }
+
+            .title {
+                width: 100%;
+                justify-content: center;
+                text-align: center;
+            }
+
+            .topbar-buttons {
+                width: 100%;
+                justify-content: center;
+                flex-wrap: wrap;
+            }
+        }
+    </style>
 </head>
 <body>
-<a href="#gameCanvas" class="skip-link sr-only">Skip to game</a>
 <div class="app">
     <header class="topbar">
         <div class="title">
             <span aria-hidden="true" class="title-icon">🍯</span>
             <div class="title-text">
                 <span class="title-main">Honey Hunt</span>
-                <span class="title-sub">Catch the honey, dodge the bees, stack the streaks.</span>
+                <span class="title-sub">Catch the honey, dodge the bees!</span>
             </div>
         </div>
         <div class="topbar-buttons">
-            <button aria-pressed="false" class="btn small secondary" id="themeToggle" type="button">
-                <i aria-hidden="true" class="fas fa-moon"></i>
-                <span>Theme</span>
+            <button class="btn small secondary" id="settingsToggle">
+                <span>⚙️ Settings</span>
             </button>
-            <button class="btn small secondary" id="fullscreenToggle" type="button">
-                <i aria-hidden="true" class="fas fa-up-right-and-down-left-from-center"></i>
-                <span>Fullscreen</span>
-            </button>
-            <button aria-controls="helpPanel" aria-expanded="false" class="btn small secondary" id="helpToggle"
-                    type="button">
-                <i aria-hidden="true" class="fas fa-question-circle"></i>
-                <span>Help</span>
-            </button>
-            <button aria-controls="settingsPanel" aria-expanded="false" class="btn small primary" id="settingsToggle"
-                    type="button">
-                <i aria-hidden="true" class="fas fa-sliders-h"></i>
-                <span>Settings</span>
+            <button class="btn small secondary" id="fullscreenToggle">
+                <span>⛶ Fullscreen</span>
             </button>
         </div>
     </header>
+
     <main class="game-layout">
         <div class="viewport-shell">
-            <section aria-label="Honey Hunt game" class="game-card">
-                <div class="game-container" id="gameContainer">
-                    <!-- Tutorial Overlay -->
-                    <div aria-hidden="true" class="tutorial-overlay" id="tutorialOverlay">
-                        <div class="tutorial-card">
-                            <div class="tutorial-step active" data-step="1">
-                                <h3 class="tutorial-title">Welcome to Honey Hunt!</h3>
-                                <p class="tutorial-text">Move your bear left and right to catch honey jars. Avoid the bees to keep your streak alive!</p>
-                            </div>
-                            <div class="tutorial-step" data-step="2">
-                                <h3 class="tutorial-title">Power-ups</h3>
-                                <p class="tutorial-text">Collect special jars for power-ups: Double Points, Slow Time, Magnet, and Bee Repellent!</p>
-                            </div>
-                            <div class="tutorial-step" data-step="3">
-                                <h3 class="tutorial-title">Daily Challenges</h3>
-                                <p class="tutorial-text">Complete daily challenges for special rewards. Check the panel in the top left!</p>
-                            </div>
-                            <div class="tutorial-step" data-step="4">
-                                <h3 class="tutorial-title">Bear Evolution</h3>
-                                <p class="tutorial-text">Your bear evolves as you score points. Reach new levels for special hats and abilities!</p>
-                            </div>
-                            <div class="tutorial-dots">
-                                <div class="tutorial-dot active" data-step="1"></div>
-                                <div class="tutorial-dot" data-step="2"></div>
-                                <div class="tutorial-dot" data-step="3"></div>
-                                <div class="tutorial-dot" data-step="4"></div>
-                            </div>
-                            <div class="tutorial-buttons">
-                                <button class="btn secondary" id="skipTutorial" type="button">Skip Tutorial</button>
-                                <button class="btn primary" id="nextTutorial" type="button">Next</button>
-                                <button class="btn primary" id="startTutorial" type="button" style="display: none;">Start Game</button>
-                            </div>
-                        </div>
-                    </div>
-
-                    <!-- Daily Challenge Panel -->
-                    <div id="dailyChallengePanel" class="daily-challenge-panel">
-                        <div class="daily-challenge-title">Daily Challenge</div>
-                        <div id="dailyChallengeText" class="daily-challenge-text"></div>
-                        <div class="daily-challenge-progress">
-                            <div id="dailyChallengeProgress" class="daily-challenge-progress-fill"></div>
-                        </div>
-                        <div id="dailyChallengeReward" class="daily-challenge-reward"></div>
-                    </div>
-
-                    <!-- Evolution Display -->
-                    <div id="evolutionDisplay" class="evolution-display"></div>
-
-                    <!-- Power-up Indicators will be injected here by JavaScript -->
-
-                    <!-- Game Background -->
-                    <div class="game-bg-horizon"></div>
-                    <div class="game-bg-ground"></div>
-
-                    <!-- HUD -->
-                    <div aria-live="polite" class="hud">
+            <section class="game-card">
+                <div class="game-container">
+                    <div class="hud">
                         <div class="hud-item">
                             <span class="hud-label">Score</span>
                             <span class="hud-value" id="scoreValue">0</span>
@@ -123,30 +647,18 @@
                         <div class="hud-item streak">
                             <span class="hud-label">Streak</span>
                             <span class="hud-value" id="streakValue">0</span>
-                            <span class="streak-badge" id="streakBadge">Combo!</span>
                         </div>
                     </div>
 
-                    <!-- Combo Indicator -->
-                    <div class="combo-indicator" id="comboIndicator">x2 Combo!</div>
+                    <div class="game-bg-horizon"></div>
+                    <div class="game-bg-ground"></div>
 
-                    <!-- Power-up Indicator -->
-                    <div aria-hidden="true" class="powerup-indicator" id="powerupIndicator">
-                        <i aria-hidden="true" class="fas fa-bolt"></i>
-                        <span>Shield active</span>
-                    </div>
+                    <canvas id="gameCanvas" width="800" height="600"></canvas>
 
-                    <!-- Game Canvas -->
-                    <canvas aria-label="Honey Hunt playfield" id="gameCanvas" role="img"></canvas>
-
-                    <!-- Overlays -->
-                    <div aria-hidden="false" class="overlay visible" id="startOverlay">
+                    <div class="overlay visible" id="startOverlay">
                         <div class="overlay-card">
-                            <h2 class="overlay-title">Ready to hunt?</h2>
-                            <p class="overlay-sub">
-                                Move your bear left and right to catch honey jars and dodge bees.
-                                Chain catches for big combos.
-                            </p>
+                            <h2 class="overlay-title">🍯 Honey Hunt 🐝</h2>
+                            <p class="overlay-sub">Help Pooh catch honey jars!<br>Avoid the bees and get the highest score.</p>
                             <div class="overlay-stats">
                                 <div>
                                     <div class="overlay-stat-label">Best</div>
@@ -157,32 +669,16 @@
                                     <div class="overlay-stat-value" id="overlayGames">0</div>
                                 </div>
                             </div>
-                            <button class="btn primary" id="startButton" type="button">
-                                <i aria-hidden="true" class="fas fa-play"></i>
-                                <span>Start</span>
-                            </button>
-                            <button class="btn secondary" id="shareScoreButton" type="button" style="margin-top: 8px;">
-                                <i aria-hidden="true" class="fas fa-share-alt"></i>
-                                <span>Share Score</span>
+                            <button class="btn primary" id="startButton" style="margin-top: 20px; padding: 12px 24px;">
+                                <span>🎮 Start Game</span>
                             </button>
                         </div>
                     </div>
 
-                    <div aria-hidden="true" class="overlay" id="pauseOverlay">
+                    <div class="overlay" id="gameOverOverlay">
                         <div class="overlay-card">
-                            <h2 class="overlay-title">Paused</h2>
-                            <p class="overlay-sub">Stretch your paws. The bees will wait (for now).</p>
-                            <button class="btn primary" id="resumeButton" type="button">
-                                <i aria-hidden="true" class="fas fa-play"></i>
-                                <span>Resume</span>
-                            </button>
-                        </div>
-                    </div>
-
-                    <div aria-hidden="true" class="overlay" id="gameOverOverlay">
-                        <div class="overlay-card">
-                            <h2 class="overlay-title">Game over</h2>
-                            <p class="overlay-sub">The bees won this round, but the honey's still out there.</p>
+                            <h2 class="overlay-title">Game Over!</h2>
+                            <p class="overlay-sub">The bees won this round!</p>
                             <div class="overlay-stats">
                                 <div>
                                     <div class="overlay-stat-label">Score</div>
@@ -193,134 +689,569 @@
                                     <div class="overlay-stat-value" id="finalBest">0</div>
                                 </div>
                             </div>
-                            <button class="btn primary" id="restartButton" type="button">
-                                <i aria-hidden="true" class="fas fa-rotate-right"></i>
-                                <span>Play again</span>
-                            </button>
-                            <button class="btn secondary" id="shareScoreButton2" type="button" style="margin-top: 8px;">
-                                <i aria-hidden="true" class="fas fa-share-alt"></i>
-                                <span>Share Score</span>
+                            <button class="btn primary" id="restartButton" style="margin-top: 20px;">
+                                <span>🔄 Play Again</span>
                             </button>
                         </div>
                     </div>
                 </div>
             </section>
 
-            <!-- Mobile Controls -->
-            <div class="controls-bar" style="display: none;">
-                <button aria-label="Move left" class="control-button" id="btnLeft" type="button">
-                    <i aria-hidden="true" class="fas fa-arrow-left"></i>
-                </button>
-                <button aria-label="Pause game" class="control-button pause" id="pauseBtn" type="button">
-                    <i aria-hidden="true" class="fas fa-pause"></i>
-                </button>
-                <button aria-label="Move right" class="control-button" id="btnRight" type="button">
-                    <i aria-hidden="true" class="fas fa-arrow-right"></i>
-                </button>
+            <div class="controls-bar">
+                <button class="control-button" id="btnLeft">←</button>
+                <button class="control-button pause" id="pauseBtn">⏸</button>
+                <button class="control-button" id="btnRight">→</button>
             </div>
-
-            <button aria-controls="helpPanel" aria-expanded="false" class="help-toggle" id="helpToggleSecondary"
-                    type="button">
-                <i aria-hidden="true" class="fas fa-lightbulb"></i>
-                <span>Quick tips</span>
-            </button>
-            <section aria-hidden="true" aria-label="How to play Honey Hunt" class="help-panel" id="helpPanel">
-                <div class="help-columns">
-                    <div>
-                        <div class="help-heading">How to play</div>
-                        <ul class="help-list">
-                            <li>Move your bear with the arrow keys or on-screen pads.</li>
-                            <li>Catching honey jars adds score. Golden jars give bonus points.</li>
-                            <li>Hitting a bee costs a life and breaks your streak.</li>
-                            <li>Blue jars grant a temporary shield that blocks one bee.</li>
-                            <li>Finish the 60 second hunt with the highest score you can.</li>
-                        </ul>
-                    </div>
-                    <div>
-                        <div class="help-heading">Scoring &amp; streaks</div>
-                        <ul class="help-list">
-                            <li>Each jar adds points; combos increase the value of each catch.</li>
-                            <li>Keep catching jars without missing to grow your streak meter.</li>
-                            <li>Streaks unlock big combo bursts. Watch the Combo indicator.</li>
-                            <li>Your best score is saved on this device between games.</li>
-                        </ul>
-                    </div>
-                </div>
-            </section>
         </div>
     </main>
 </div>
 
-<!-- Settings Modal -->
-<div aria-labelledby="settingsTitle" aria-modal="true" class="settings-backdrop" id="settingsModal" role="dialog">
-    <div class="settings-panel" id="settingsPanel" tabindex="-1">
+<div class="settings-backdrop" id="settingsModal">
+    <div class="settings-panel">
         <div class="settings-header">
-            <div class="settings-title" id="settingsTitle">Game settings</div>
-            <button class="btn small secondary" id="settingsClose" type="button">
-                <i aria-hidden="true" class="fas fa-times"></i>
-                <span>Close</span>
-            </button>
+            <div class="settings-title">Game Settings</div>
+            <button class="btn small secondary" id="settingsClose">✕</button>
         </div>
         <div class="settings-row">
             <div class="settings-label">
                 <span>Music</span>
-                <span>Background tune while you play.</span>
+                <span>Background music</span>
             </div>
-            <button aria-pressed="true" class="toggle" data-on="true" id="musicToggle" type="button">
+            <button class="toggle" data-on="true" id="musicToggle">
                 <span class="toggle-knob"></span>
-                <span class="sr-only">Toggle music</span>
             </button>
         </div>
         <div class="settings-row">
             <div class="settings-label">
-                <span>Sound effects</span>
-                <span>Jar catches, bees, and combo pops.</span>
+                <span>Sound Effects</span>
+                <span>Game sounds</span>
             </div>
-            <button aria-pressed="true" class="toggle" data-on="true" id="sfxToggle" type="button">
+            <button class="toggle" data-on="true" id="sfxToggle">
                 <span class="toggle-knob"></span>
-                <span class="sr-only">Toggle sound effects</span>
             </button>
         </div>
         <div class="settings-row">
             <div class="settings-label">
                 <span>Difficulty</span>
-                <span>Changes jar speed and bee frequency.</span>
+                <span>Game challenge level</span>
             </div>
-            <div aria-label="Difficulty" class="difficulty-pill" role="radiogroup">
-                <button class="diff-btn" data-level="0" type="button">Chill</button>
-                <button class="diff-btn active" data-level="1" type="button">Classic</button>
-                <button class="diff-btn" data-level="2" type="button">Spicy</button>
+            <div class="difficulty-pill">
+                <button class="diff-btn" data-level="0">Easy</button>
+                <button class="diff-btn active" data-level="1">Medium</button>
+                <button class="diff-btn" data-level="2">Hard</button>
             </div>
         </div>
         <div class="settings-footer">
-            <span>High score: <strong id="settingsBest">0</strong></span>
-            <button class="btn small secondary" id="resetProgress" type="button">
-                <i aria-hidden="true" class="fas fa-broom"></i>
-                <span>Reset progress</span>
-            </button>
+            <span>High Score: <strong id="settingsBest">0</strong></span>
+            <button class="btn small secondary" id="resetProgress">Reset</button>
         </div>
     </div>
 </div>
 
-<!-- Live Region for Accessibility -->
-<div aria-atomic="true" aria-live="polite" class="sr-only" id="liveRegion"></div>
-
-<!-- Game JavaScript -->
 <script>
-    // Quick check to ensure game.js loads properly
-    window.addEventListener('DOMContentLoaded', function() {
-        console.log('Honey Hunt HTML loaded successfully');
-
-        // Add a simple check to see if game.js loaded
-        setTimeout(function() {
-            if (typeof init !== 'undefined') {
-                console.log('Game script found and ready');
-            } else {
-                console.warn('Game script not loaded yet - ensure game.js is in same directory');
+    // GAME LOGIC - SIMPLIFIED VERSION
+    class HoneyHuntGame {
+        constructor() {
+            this.canvas = document.getElementById('gameCanvas');
+            this.ctx = this.canvas.getContext('2d');
+            
+            // Game state
+            this.gameRunning = false;
+            this.score = 0;
+            this.highScore = localStorage.getItem('honeyHuntHighScore') || 0;
+            this.lives = 3;
+            this.timeLeft = 60;
+            this.streak = 0;
+            this.gameTime = 0;
+            
+            // Game objects
+            this.bear = { x: 400, y: 500, width: 60, height: 80, speed: 8 };
+            this.honeyJars = [];
+            this.bees = [];
+            this.powerUps = [];
+            
+            // Controls
+            this.keys = {};
+            this.touchControls = { left: false, right: false };
+            
+            // Initialize
+            this.init();
+        }
+        
+        init() {
+            // Set canvas size
+            this.resizeCanvas();
+            window.addEventListener('resize', () => this.resizeCanvas());
+            
+            // Set up controls
+            this.setupControls();
+            
+            // Initialize UI
+            this.updateUI();
+            
+            // Load sounds
+            this.sounds = {
+                honey: new Audio('https://assets.mixkit.co/sfx/preview/mixkit-winning-chimes-2015.mp3'),
+                bee: new Audio('https://assets.mixkit.co/sfx/preview/mixkit-retro-game-emergency-alarm-1000.mp3'),
+                powerup: new Audio('https://assets.mixkit.co/sfx/preview/mixkit-magic-sparkles-300.mp3')
+            };
+            
+            // Start game loop
+            this.gameLoop();
+        }
+        
+        resizeCanvas() {
+            const container = this.canvas.parentElement;
+            const containerWidth = container.clientWidth;
+            const containerHeight = container.clientHeight;
+            
+            // Maintain 4:3 aspect ratio
+            const aspectRatio = 4/3;
+            let width = containerWidth;
+            let height = containerWidth / aspectRatio;
+            
+            if (height > containerHeight) {
+                height = containerHeight;
+                width = containerHeight * aspectRatio;
             }
-        }, 100);
+            
+            this.canvas.style.width = width + 'px';
+            this.canvas.style.height = height + 'px';
+        }
+        
+        setupControls() {
+            // Keyboard controls
+            document.addEventListener('keydown', (e) => {
+                this.keys[e.key.toLowerCase()] = true;
+            });
+            
+            document.addEventListener('keyup', (e) => {
+                this.keys[e.key.toLowerCase()] = false;
+            });
+            
+            // Touch controls
+            document.getElementById('btnLeft')?.addEventListener('touchstart', (e) => {
+                e.preventDefault();
+                this.touchControls.left = true;
+            });
+            
+            document.getElementById('btnLeft')?.addEventListener('touchend', (e) => {
+                e.preventDefault();
+                this.touchControls.left = false;
+            });
+            
+            document.getElementById('btnRight')?.addEventListener('touchstart', (e) => {
+                e.preventDefault();
+                this.touchControls.right = true;
+            });
+            
+            document.getElementById('btnRight')?.addEventListener('touchend', (e) => {
+                e.preventDefault();
+                this.touchControls.right = false;
+            });
+            
+            // Button controls for mobile
+            document.getElementById('btnLeft')?.addEventListener('mousedown', () => this.touchControls.left = true);
+            document.getElementById('btnLeft')?.addEventListener('mouseup', () => this.touchControls.left = false);
+            document.getElementById('btnRight')?.addEventListener('mousedown', () => this.touchControls.right = true);
+            document.getElementById('btnRight')?.addEventListener('mouseup', () => this.touchControls.right = false);
+        }
+        
+        startGame() {
+            this.gameRunning = true;
+            this.score = 0;
+            this.lives = 3;
+            this.timeLeft = 60;
+            this.streak = 0;
+            this.gameTime = 0;
+            this.honeyJars = [];
+            this.bees = [];
+            this.powerUps = [];
+            
+            // Hide start overlay
+            document.getElementById('startOverlay').classList.remove('visible');
+            
+            this.updateUI();
+        }
+        
+        gameOver() {
+            this.gameRunning = false;
+            
+            // Update high score
+            if (this.score > this.highScore) {
+                this.highScore = this.score;
+                localStorage.setItem('honeyHuntHighScore', this.highScore);
+            }
+            
+            // Show game over overlay
+            document.getElementById('finalScore').textContent = this.score;
+            document.getElementById('finalBest').textContent = this.highScore;
+            document.getElementById('gameOverOverlay').classList.add('visible');
+            
+            this.updateUI();
+        }
+        
+        updateUI() {
+            document.getElementById('scoreValue').textContent = this.score;
+            document.getElementById('bestValue').textContent = this.highScore;
+            document.getElementById('timeValue').textContent = this.timeLeft;
+            document.getElementById('livesValue').textContent = '♥'.repeat(this.lives);
+            document.getElementById('streakValue').textContent = this.streak;
+            document.getElementById('overlayBest').textContent = this.highScore;
+            document.getElementById('settingsBest').textContent = this.highScore;
+        }
+        
+        update() {
+            if (!this.gameRunning) return;
+            
+            this.gameTime += 1/60;
+            this.timeLeft = Math.max(0, 60 - Math.floor(this.gameTime));
+            
+            // Move bear
+            if (this.keys['arrowleft'] || this.keys['a'] || this.touchControls.left) {
+                this.bear.x -= this.bear.speed;
+            }
+            if (this.keys['arrowright'] || this.keys['d'] || this.touchControls.right) {
+                this.bear.x += this.bear.speed;
+            }
+            
+            // Keep bear in bounds
+            this.bear.x = Math.max(this.bear.width/2, Math.min(this.canvas.width - this.bear.width/2, this.bear.x));
+            
+            // Spawn objects
+            if (Math.random() < 0.05) {
+                this.honeyJars.push({
+                    x: Math.random() * (this.canvas.width - 40) + 20,
+                    y: -40,
+                    width: 40,
+                    height: 50,
+                    speed: 3 + Math.random() * 2,
+                    type: Math.random() < 0.1 ? 'golden' : 'normal'
+                });
+            }
+            
+            if (Math.random() < 0.02) {
+                this.bees.push({
+                    x: Math.random() * (this.canvas.width - 30) + 15,
+                    y: -30,
+                    width: 30,
+                    height: 30,
+                    speed: 4 + Math.random() * 3,
+                    direction: Math.random() * 0.4 - 0.2
+                });
+            }
+            
+            // Update objects
+            this.updateObjects();
+            
+            // Check collisions
+            this.checkCollisions();
+            
+            // Check game over conditions
+            if (this.timeLeft <= 0 || this.lives <= 0) {
+                this.gameOver();
+            }
+            
+            this.updateUI();
+        }
+        
+        updateObjects() {
+            // Update honey jars
+            for (let i = this.honeyJars.length - 1; i >= 0; i--) {
+                const jar = this.honeyJars[i];
+                jar.y += jar.speed;
+                
+                if (jar.y > this.canvas.height) {
+                    this.honeyJars.splice(i, 1);
+                    this.streak = 0;
+                }
+            }
+            
+            // Update bees
+            for (let i = this.bees.length - 1; i >= 0; i--) {
+                const bee = this.bees[i];
+                bee.y += bee.speed;
+                bee.x += bee.direction;
+                
+                if (bee.y > this.canvas.height) {
+                    this.bees.splice(i, 1);
+                }
+            }
+        }
+        
+        checkCollisions() {
+            // Check honey jar collisions
+            for (let i = this.honeyJars.length - 1; i >= 0; i--) {
+                const jar = this.honeyJars[i];
+                
+                if (this.checkCollision(this.bear, jar)) {
+                    // Collect honey
+                    const points = jar.type === 'golden' ? 50 : 10;
+                    this.score += points;
+                    this.streak++;
+                    
+                    if (this.streak % 5 === 0) {
+                        this.score += this.streak * 5;
+                        this.showCombo(this.streak);
+                    }
+                    
+                    // Play sound
+                    if (this.sounds.honey) {
+                        this.sounds.honey.currentTime = 0;
+                        this.sounds.honey.play().catch(e => console.log("Sound play failed:", e));
+                    }
+                    
+                    this.honeyJars.splice(i, 1);
+                }
+            }
+            
+            // Check bee collisions
+            for (let i = this.bees.length - 1; i >= 0; i--) {
+                const bee = this.bees[i];
+                
+                if (this.checkCollision(this.bear, bee)) {
+                    this.lives--;
+                    this.streak = 0;
+                    this.bees.splice(i, 1);
+                    
+                    // Play sound
+                    if (this.sounds.bee) {
+                        this.sounds.bee.currentTime = 0;
+                        this.sounds.bee.play().catch(e => console.log("Sound play failed:", e));
+                    }
+                    
+                    if (this.lives <= 0) {
+                        this.gameOver();
+                    }
+                }
+            }
+        }
+        
+        checkCollision(obj1, obj2) {
+            return obj1.x - obj1.width/2 < obj2.x + obj2.width/2 &&
+                   obj1.x + obj1.width/2 > obj2.x - obj2.width/2 &&
+                   obj1.y - obj1.height/2 < obj2.y + obj2.height/2 &&
+                   obj1.y + obj1.height/2 > obj2.y - obj2.height/2;
+        }
+        
+        showCombo(streak) {
+            const comboText = document.createElement('div');
+            comboText.className = 'combo-indicator';
+            comboText.textContent = `${streak}x COMBO!`;
+            comboText.style.opacity = '1';
+            
+            document.querySelector('.game-container').appendChild(comboText);
+            
+            setTimeout(() => {
+                comboText.style.opacity = '0';
+                setTimeout(() => comboText.remove(), 300);
+            }, 1000);
+        }
+        
+        draw() {
+            const ctx = this.ctx;
+            const width = this.canvas.width;
+            const height = this.canvas.height;
+            
+            // Clear canvas
+            ctx.clearRect(0, 0, width, height);
+            
+            // Draw sky
+            const skyGradient = ctx.createLinearGradient(0, 0, 0, height * 0.6);
+            skyGradient.addColorStop(0, '#87CEEB');
+            skyGradient.addColorStop(1, '#E0F7FF');
+            ctx.fillStyle = skyGradient;
+            ctx.fillRect(0, 0, width, height * 0.6);
+            
+            // Draw ground
+            const groundGradient = ctx.createLinearGradient(0, height * 0.6, 0, height);
+            groundGradient.addColorStop(0, '#8B4513');
+            groundGradient.addColorStop(1, '#A0522D');
+            ctx.fillStyle = groundGradient;
+            ctx.fillRect(0, height * 0.6, width, height * 0.4);
+            
+            // Draw grass
+            ctx.fillStyle = '#2E8B57';
+            for (let i = 0; i < width; i += 20) {
+                const grassHeight = 10 + Math.random() * 20;
+                ctx.fillRect(i, height * 0.6, 10, grassHeight);
+            }
+            
+            // Draw bear (Pooh)
+            ctx.save();
+            ctx.translate(this.bear.x, this.bear.y);
+            
+            // Bear body
+            ctx.fillStyle = '#F4A944';
+            ctx.beginPath();
+            ctx.ellipse(0, 0, this.bear.width/2, this.bear.height/2, 0, 0, Math.PI * 2);
+            ctx.fill();
+            
+            // Bear face
+            ctx.fillStyle = '#8B4513';
+            ctx.beginPath();
+            ctx.arc(-10, -10, 5, 0, Math.PI * 2); // Left eye
+            ctx.arc(10, -10, 5, 0, Math.PI * 2);  // Right eye
+            ctx.fill();
+            
+            // Bear nose
+            ctx.fillStyle = '#D18A2C';
+            ctx.beginPath();
+            ctx.ellipse(0, 5, 8, 6, 0, 0, Math.PI * 2);
+            ctx.fill();
+            
+            ctx.restore();
+            
+            // Draw honey jars
+            this.honeyJars.forEach(jar => {
+                ctx.save();
+                ctx.translate(jar.x, jar.y);
+                
+                // Jar body
+                ctx.fillStyle = jar.type === 'golden' ? '#FFD700' : '#FFA500';
+                ctx.fillRect(-jar.width/2, -jar.height/2, jar.width, jar.height);
+                
+                // Jar lid
+                ctx.fillStyle = '#8B4513';
+                ctx.fillRect(-jar.width/2, -jar.height/2, jar.width, 10);
+                
+                // Honey inside
+                ctx.fillStyle = '#FFC107';
+                ctx.fillRect(-jar.width/2 + 5, -jar.height/2 + 15, jar.width - 10, jar.height - 25);
+                
+                // Honey drips
+                ctx.fillStyle = '#FF9800';
+                ctx.beginPath();
+                ctx.moveTo(-5, jar.height/2);
+                ctx.lineTo(5, jar.height/2);
+                ctx.lineTo(0, jar.height/2 + 10);
+                ctx.closePath();
+                ctx.fill();
+                
+                ctx.restore();
+            });
+            
+            // Draw bees
+            this.bees.forEach(bee => {
+                ctx.save();
+                ctx.translate(bee.x, bee.y);
+                
+                // Bee body
+                ctx.fillStyle = '#FFD700';
+                ctx.beginPath();
+                ctx.ellipse(0, 0, bee.width/2, bee.height/2, 0, 0, Math.PI * 2);
+                ctx.fill();
+                
+                // Bee stripes
+                ctx.fillStyle = '#000000';
+                ctx.fillRect(-bee.width/2, -3, bee.width, 6);
+                
+                // Bee wings
+                ctx.fillStyle = 'rgba(255, 255, 255, 0.8)';
+                ctx.beginPath();
+                ctx.ellipse(-8, -8, 6, 10, Math.PI/4, 0, Math.PI * 2);
+                ctx.ellipse(8, -8, 6, 10, -Math.PI/4, 0, Math.PI * 2);
+                ctx.fill();
+                
+                ctx.restore();
+            });
+            
+            // Draw score overlay
+            ctx.fillStyle = 'rgba(255, 255, 255, 0.2)';
+            ctx.fillRect(10, 10, 150, 80);
+            ctx.fillStyle = '#8B4513';
+            ctx.font = '16px Arial';
+            ctx.fillText(`Score: ${this.score}`, 20, 35);
+            ctx.fillText(`Time: ${this.timeLeft}s`, 20, 60);
+            ctx.fillText(`Lives: ${'♥'.repeat(this.lives)}`, 20, 85);
+        }
+        
+        gameLoop() {
+            this.update();
+            this.draw();
+            requestAnimationFrame(() => this.gameLoop());
+        }
+    }
+
+    // Initialize game when page loads
+    window.addEventListener('DOMContentLoaded', () => {
+        const game = new HoneyHuntGame();
+        
+        // Button event listeners
+        document.getElementById('startButton').addEventListener('click', () => {
+            game.startGame();
+        });
+        
+        document.getElementById('restartButton').addEventListener('click', () => {
+            document.getElementById('gameOverOverlay').classList.remove('visible');
+            game.startGame();
+        });
+        
+        // Settings
+        document.getElementById('settingsToggle').addEventListener('click', () => {
+            document.getElementById('settingsModal').style.display = 'flex';
+        });
+        
+        document.getElementById('settingsClose').addEventListener('click', () => {
+            document.getElementById('settingsModal').style.display = 'none';
+        });
+        
+        // Fullscreen
+        document.getElementById('fullscreenToggle').addEventListener('click', () => {
+            if (!document.fullscreenElement) {
+                document.documentElement.requestFullscreen().catch(err => {
+                    console.log(`Error attempting to enable fullscreen: ${err.message}`);
+                });
+            } else {
+                if (document.exitFullscreen) {
+                    document.exitFullscreen();
+                }
+            }
+        });
+        
+        // Reset progress
+        document.getElementById('resetProgress').addEventListener('click', () => {
+            localStorage.removeItem('honeyHuntHighScore');
+            game.highScore = 0;
+            game.updateUI();
+        });
+        
+        // Close settings when clicking backdrop
+        document.getElementById('settingsModal').addEventListener('click', (e) => {
+            if (e.target.id === 'settingsModal') {
+                e.target.style.display = 'none';
+            }
+        });
+        
+        // Difficulty buttons
+        document.querySelectorAll('.diff-btn').forEach(btn => {
+            btn.addEventListener('click', () => {
+                document.querySelectorAll('.diff-btn').forEach(b => b.classList.remove('active'));
+                btn.classList.add('active');
+                
+                // Update game difficulty
+                const level = parseInt(btn.dataset.level);
+                if (level === 0) game.bear.speed = 10;
+                else if (level === 1) game.bear.speed = 8;
+                else game.bear.speed = 6;
+            });
+        });
+        
+        // Toggle buttons
+        document.querySelectorAll('.toggle').forEach(toggle => {
+            toggle.addEventListener('click', () => {
+                const isOn = toggle.dataset.on === 'true';
+                toggle.dataset.on = (!isOn).toString();
+            });
+        });
+        
+        // Mobile detection
+        if ('ontouchstart' in window || navigator.maxTouchPoints) {
+            document.querySelector('.controls-bar').style.display = 'flex';
+        }
+        
+        console.log('Honey Hunt Game loaded successfully!');
     });
 </script>
-<script src="game.js"></script>
 </body>
 </html>
