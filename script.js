@@ -1093,14 +1093,16 @@
             card.style.background = `linear-gradient(145deg, ${character.bgColor}, ${lightenColor(character.bgColor, 10)})`;
 
             // Enhanced hover effects
+            // Enhanced hover effects
             let hoverTimeout;
             card.addEventListener('mouseenter', () => {
                 clearTimeout(hoverTimeout);
-                card.style.transform = 'translateY(-10px) scale(1.03) rotateX(5deg)';
-                card.style.boxShadow = `
-                    0 20px 40px rgba(${rgb}, 0.2),
-                    0 0 30px rgba(${rgb}, 0.1)
-                `;
+                
+                // Cancel any parallax transforms
+                card.style.transform = '';
+                
+                // Let CSS handle the hover animation exclusively
+                card.classList.add('card-hovering');
                 
                 // Play subtle sound
                 if (window.audioManager) {
@@ -1109,12 +1111,25 @@
             });
             
             card.addEventListener('mouseleave', () => {
+                card.classList.remove('card-hovering');
+                
+                // Return to parallax position after hover ends
                 hoverTimeout = setTimeout(() => {
-                    card.style.transform = 'translateY(0) scale(1) rotateX(0deg)';
-                    card.style.boxShadow = '0 5px 15px rgba(0,0,0,0.1)';
+                    // Get stored parallax values
+                    const xPos = parseFloat(card.dataset.parallaxX) || 0;
+                    const yPos = parseFloat(card.dataset.parallaxY) || 0;
+                    
+                    // Smooth transition back to parallax position
+                    card.style.transition = 'transform 0.5s cubic-bezier(0.68, -0.55, 0.27, 1.55)';
+                    card.style.transform = `translate3d(${xPos}px, ${yPos}px, 0)`;
+                    
+                    // Remove transition after animation completes
+                    setTimeout(() => {
+                        card.style.transition = '';
+                    }, 500);
                 }, 100);
             });
-
+                
             // Click/tap handling
             card.addEventListener('click', (e) => {
                 e.preventDefault();
@@ -1891,69 +1906,67 @@
 
         function updateParallax() {
             const scrolled = window.scrollY;
-            const rate = 0.3;
+            const rate = 0.1; // Reduced from 0.3 for smoother effect
             
             DOM.$$('.character-card').forEach((card, index) => {
-                const yPos = -(scrolled * rate * (0.05 + index * 0.02));
-                const xPos = Math.sin(scrolled * 0.01 + index) * 5;
-                card.style.transform = `translate(${xPos}px, ${yPos}px) rotate(${Math.sin(scrolled * 0.005 + index) * 0.5}deg)`;
+                // Only apply parallax if NOT hovering (CSS handles hover state)
+                if (!card.matches(':hover')) {
+                    const yPos = -(scrolled * rate * (0.03 + index * 0.01)); // Much smaller movement
+                    const xPos = Math.sin(scrolled * 0.005 + index) * 2; // Reduced from 5px
+                    
+                    // Use transform3d for hardware acceleration
+                    card.style.transform = `translate3d(${xPos}px, ${yPos}px, 0)`;
+                    
+                    // Store current transform for CSS animations to use
+                    card.dataset.parallaxX = xPos;
+                    card.dataset.parallaxY = yPos;
+                }
             });
             
             ticking = false;
         }
 
-        window.addEventListener('scroll', () => {
-            lastScrollY = window.scrollY;
-            
-            if (!ticking) {
-                window.requestAnimationFrame(updateParallax);
-                ticking = true;
-            }
-        });
+        // Throttle scroll events with requestAnimationFrame
+            let scrollTimeout;
+            window.addEventListener('scroll', () => {
+                if (scrollTimeout) {
+                    cancelAnimationFrame(scrollTimeout);
+                }
+                
+                scrollTimeout = requestAnimationFrame(() => {
+                    if (!ticking) {
+                        window.requestAnimationFrame(updateParallax);
+                        ticking = true;
+                    }
+                });
+            });
 
         // Intersection Observer for staggered animations
-        const observer = new IntersectionObserver((entries) => {
-            entries.forEach(entry => {
-                if (entry.isIntersecting) {
-                    // Staggered card animations
-                    DOM.$$('.character-card').forEach((card, index) => {
-                        setTimeout(() => {
-                            card.classList.add('animate-in');
-                            
-                            // Add floating animation with unique timing
-                            const duration = 3 + index * 0.3;
-                            const delay = index * 0.2;
-                            card.style.animation = `
-                                enhancedFloat ${duration}s ease-in-out infinite ${delay}s
-                            `;
-                            
-                            // Create sparkle effect
-                            if (index % 2 === 0) {
-                                createCardSparkle(card);
-                            }
-                        }, index * 150);
-                    });
+        // Intersection Observer for staggered animations
+const observer = new IntersectionObserver((entries) => {
+    entries.forEach(entry => {
+        if (entry.isIntersecting) {
+            // Staggered card entrance only, no floating yet
+            DOM.$$('.character-card').forEach((card, index) => {
+                setTimeout(() => {
+                    card.classList.add('animate-in');
+                    card.style.animation = `cardEnter3D 0.8s cubic-bezier(0.68, -0.55, 0.27, 1.55) forwards`;
+                    card.style.animationDelay = `${index * 150}ms`;
                     
-                    // Create background sparkles
-                    createEnhancedCharacterSparkles();
-                    
-                    // Start particle system
-                    startSectionParticles();
-                    
-                    observer.unobserve(entry.target);
-                    
-                    // Play welcome sound
-                    if (window.audioManager) {
-                        setTimeout(() => {
-                            window.audioManager.playTone([392, 523, 659], 0.2);
-                        }, 500);
-                    }
-                }
+                    // Start parallax after entrance animation completes
+                    setTimeout(() => {
+                        card.style.animation = '';
+                    }, 800 + (index * 150));
+                }, index * 150);
             });
-        }, { 
-            threshold: 0.1,
-            rootMargin: '50px'
-        });
+            
+            observer.unobserve(entry.target);
+        }
+    });
+}, { 
+    threshold: 0.1,
+    rootMargin: '50px'
+});
 
         observer.observe(charactersSection);
 
