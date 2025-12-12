@@ -2176,33 +2176,59 @@ const observer = new IntersectionObserver((entries) => {
         }
 
         // ----------------- Enhanced Navigation -----------------
+        function setNavState(isOpen) {
+            if (!navMenu || !navToggle) return;
+
+            navMenu.classList.toggle('open', isOpen);
+            navToggle.classList.toggle('active', isOpen);
+            navToggle.setAttribute('aria-expanded', isOpen ? 'true' : 'false');
+
+            // Animate hamburger icon
+            const bars = navToggle.querySelectorAll('.bar');
+            if (bars.length) {
+                bars.forEach((bar, i) => {
+                    bar.style.transform = isOpen
+                        ? `rotate(${i === 0 ? '45' : i === 2 ? '-45' : '0'}deg) translate(${i === 1 ? '-20px' : '0'}, ${i === 0 ? '6px' : i === 2 ? '-6px' : '0'})`
+                        : 'none';
+                });
+            }
+        }
+
         if (navToggle && navMenu) {
             navToggle.addEventListener('click', () => {
-                navMenu.classList.toggle('open');
-                navToggle.classList.toggle('active');
-                
+                const shouldOpen = !navMenu.classList.contains('open');
+                setNavState(shouldOpen);
+
                 // Play sound
                 if (window.audioManager) {
                     window.audioManager.playSound('click');
                 }
-                
-                // Animate hamburger icon
-                const bars = navToggle.querySelectorAll('.bar');
-                if (bars) {
-                    bars.forEach((bar, i) => {
-                        bar.style.transform = navMenu.classList.contains('open') 
-                            ? `rotate(${i === 0 ? '45' : i === 2 ? '-45' : '0'}deg) translate(${i === 1 ? '-20px' : '0'}, ${i === 0 ? '6px' : i === 2 ? '-6px' : '0'})`
-                            : 'none';
-                    });
+            });
+
+            document.addEventListener('click', (event) => {
+                if (!navMenu.classList.contains('open')) return;
+
+                const clickedInsideMenu = navMenu.contains(event.target);
+                const clickedToggle = navToggle.contains(event.target);
+
+                if (!clickedInsideMenu && !clickedToggle) {
+                    setNavState(false);
+                }
+            });
+
+            document.addEventListener('keydown', (event) => {
+                if (event.key === 'Escape' && navMenu.classList.contains('open')) {
+                    setNavState(false);
                 }
             });
         }
 
         navItems.forEach((item) => {
             item.addEventListener('click', () => {
-                if (navMenu) navMenu.classList.remove('open');
-                if (navToggle) navToggle.classList.remove('active');
-                
+                if (navMenu && navMenu.classList.contains('open')) {
+                    setNavState(false);
+                }
+
                 // Play click sound
                 if (window.audioManager) {
                     window.audioManager.playSound('click');
