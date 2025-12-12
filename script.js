@@ -213,6 +213,9 @@
         }
     };
 
+    // Quick DOM helpers for one-off queries
+    const $ = DOM.$.bind(DOM);
+
     // Enhanced shake effect with configurable parameters
     function shakeElement(el, intensity = 5, duration = 300) {
         if (!el || !el.style) return;
@@ -1975,15 +1978,69 @@ const observer = new IntersectionObserver((entries) => {
                 top: ${Math.random() * 100}%;
                 left: ${Math.random() * 100}%;
             `;
-            
+
             card.appendChild(sparkle);
-            
+
             // Remove after animation
             setTimeout(() => {
                 if (sparkle.parentNode) {
                     sparkle.remove();
                 }
             }, 1500);
+        }
+
+        function createCharacterSparkles() {
+            const container = $('#charactersGrid');
+            if (!container) return;
+
+            // Use device-tuned particle cap if available, but keep a hard upper bound.
+            const defaultSparkles = 20;
+            const maxFromDevice = (typeof window.MAX_PARTICLES === 'number' && window.MAX_PARTICLES > 0)
+                ? window.MAX_PARTICLES
+                : defaultSparkles;
+            const sparkleCount = Math.min(maxFromDevice, 40);
+
+            // Ensure sparkle keyframes are only registered once
+            if (!document.querySelector('#sparkle-keyframes')) {
+                const style = document.createElement('style');
+                style.id = 'sparkle-keyframes';
+                style.textContent = `
+                @keyframes sparkle-fall {
+                    0%   { transform: translateY(0) rotate(0deg);    opacity: 0; }
+                    10%  { opacity: 1; }
+                    90%  { opacity: 0.7; }
+                    100% { transform: translateY(100px) rotate(180deg); opacity: 0; }
+                }
+            `;
+                document.head.appendChild(style);
+            }
+
+            // Create sparkles around the grid
+            for (let i = 0; i < sparkleCount; i++) {
+                const sparkle = document.createElement('div');
+                sparkle.className = 'character-sparkle';
+                sparkle.style.cssText = `
+                position: absolute;
+                width: 6px;
+                height: 6px;
+                background: #FFD700;
+                border-radius: 50%;
+                pointer-events: none;
+                z-index: 1;
+                opacity: 0;
+                animation: sparkle-fall ${1 + Math.random() * 2}s ease-in forwards;
+                animation-delay: ${Math.random() * 1.5}s;
+                left: ${Math.random() * 100}%;
+                top: -20px;
+            `;
+
+                container.appendChild(sparkle);
+
+                // Remove sparkle after animation
+                setTimeout(() => {
+                    sparkle.remove();
+                }, 3000);
+            }
         }
 
         function createEnhancedCharacterSparkles() {
@@ -2928,10 +2985,73 @@ const observer = new IntersectionObserver((entries) => {
             }
         };
 
+        // ----------------- Woodland sound (global) -----------------
+        let woodlandAudioCtx = null;
+
+        function getWoodlandAudioContext() {
+            const AudioCtx = window.AudioContext || window.webkitAudioContext;
+            if (!AudioCtx) return null;
+
+            if (!woodlandAudioCtx) {
+                woodlandAudioCtx = new AudioCtx();
+            }
+
+            return woodlandAudioCtx;
+        }
+
+        window.playWoodlandSound = function (ev) {
+            const e = ev || window.event;
+
+            try {
+                const audioContext = getWoodlandAudioContext();
+                if (audioContext) {
+                    // If the context was auto-suspended (tab inactive, etc.), try to resume.
+                    if (audioContext.state === 'suspended') {
+                        audioContext.resume().catch(() => {
+                            // Ignore; worst case we just don't get sound this tap.
+                        });
+                    }
+
+                    const osc = audioContext.createOscillator();
+                    const gain = audioContext.createGain();
+
+                    osc.connect(gain);
+                    gain.connect(audioContext.destination);
+
+                    const t0 = audioContext.currentTime;
+                    osc.type = 'sine';
+
+                    // Simple “woodland chime” sequence
+                    osc.frequency.setValueAtTime(523.25, t0);          // C5
+                    osc.frequency.setValueAtTime(659.25, t0 + 0.12);   // E5
+                    osc.frequency.setValueAtTime(783.99, t0 + 0.24);   // G5
+
+                    gain.gain.setValueAtTime(0.12, t0);
+                    gain.gain.exponentialRampToValueAtTime(0.001, t0 + 0.8);
+
+                    osc.start();
+                    osc.stop(t0 + 0.85);
+                }
+            } catch (err) {
+                console.log('Web Audio not available:', err);
+            }
+
+            const sign = e && e.target && e.target.closest
+                ? e.target.closest('.woodland-sign')
+                : null;
+
+            if (sign) {
+                sign.style.transform = 'scale(1.06) rotate(-1deg)';
+                setTimeout(() => {
+                    sign.style.transform = '';
+                }, 260);
+            }
+        };
+
         // ----------------- Enhanced Woodland Sound -----------------
         window.playEnhancedWoodlandSound = function (ev) {
             const element = ev && ev.target ? ev.target.closest('.woodland-sign') : null;
-            
+
             // Play sound
             if (window.audioManager) {
                 window.audioManager.playGameSound('collect');
@@ -2941,7 +3061,7 @@ const observer = new IntersectionObserver((entries) => {
             if (element) {
                 element.style.transform = 'scale(1.1) rotate(-2deg)';
                 element.style.filter = 'brightness(1.2)';
-                
+
                 // Create ripple effect
                 const ripple = document.createElement('div');
                 ripple.className = 'woodland-ripple';
@@ -2958,7 +3078,7 @@ const observer = new IntersectionObserver((entries) => {
                     pointer-events: none;
                 `;
                 element.appendChild(ripple);
-                
+
                 setTimeout(() => ripple.remove(), 600);
                 setTimeout(() => {
                     element.style.transform = '';
