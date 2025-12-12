@@ -24,6 +24,271 @@
 
     <!-- Main Styles -->
     <link rel="stylesheet" href="styles.css">
+    <style>
+        /* ============================================
+   CHARACTER HOVER ANIMATIONS & MODAL STYLES
+   ============================================ */
+
+/* Character spotlight hover effects */
+.character-spotlight {
+  position: relative;
+  transition: all 0.3s ease;
+  overflow: hidden;
+  cursor: pointer;
+  border: 2px solid transparent;
+}
+
+.character-spotlight:hover {
+  transform: translateY(-5px);
+  box-shadow: 0 10px 25px rgba(0, 0, 0, 0.15);
+  border-color: #FFC42B;
+}
+
+/* Honey glow effect on hover */
+.character-spotlight:hover .character-illustration::after {
+  content: '';
+  position: absolute;
+  top: 0;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  background: radial-gradient(circle, rgba(255, 196, 43, 0.2) 0%, transparent 70%);
+  z-index: 1;
+  animation: honeyGlow 1.5s infinite alternate;
+}
+
+@keyframes honeyGlow {
+  from { opacity: 0.3; }
+  to { opacity: 0.6; }
+}
+
+/* Character illustration animations */
+.character-illustration {
+  position: relative;
+  transition: transform 0.5s ease;
+}
+
+.character-spotlight:hover .character-illustration {
+  transform: scale(1.05) rotate(-2deg);
+}
+
+/* Character quote animation */
+.character-quote {
+  position: relative;
+  transition: all 0.3s ease;
+}
+
+.character-spotlight:hover .character-quote {
+  color: #8B4513;
+  transform: translateX(5px);
+}
+
+/* Bounce animation for character icon */
+@keyframes gentleBounce {
+  0%, 100% { transform: translateY(0); }
+  50% { transform: translateY(-10px); }
+}
+
+.character-spotlight:hover .character-illustration img {
+  animation: gentleBounce 0.8s ease;
+}
+
+/* Woodland sign hover effect */
+.woodland-sign {
+  transition: all 0.3s ease;
+  cursor: pointer;
+}
+
+.woodland-sign:hover {
+  transform: scale(1.05) rotate(-1deg);
+  box-shadow: 0 8px 20px rgba(139, 69, 19, 0.25);
+  background-color: #A0522D;
+  color: #FFEBB7;
+}
+
+/* ============================================
+   CHARACTER MODAL STYLES
+   ============================================ */
+
+.character-modal {
+  display: none;
+  position: fixed;
+  top: 0;
+  left: 0;
+  width: 100%;
+  height: 100%;
+  background-color: rgba(0, 0, 0, 0.8);
+  z-index: 1000;
+  opacity: 0;
+  transition: opacity 0.3s ease;
+  backdrop-filter: blur(5px);
+}
+
+.character-modal.active {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  opacity: 1;
+}
+
+.modal-content {
+  background: linear-gradient(135deg, #FFF9E6 0%, #FFEFCC 100%);
+  border-radius: 20px;
+  padding: 2.5rem;
+  max-width: 500px;
+  width: 90%;
+  max-height: 80vh;
+  overflow-y: auto;
+  position: relative;
+  border: 3px solid #FFC42B;
+  box-shadow: 0 20px 50px rgba(0, 0, 0, 0.3);
+  animation: modalAppear 0.4s cubic-bezier(0.175, 0.885, 0.32, 1.275);
+  font-family: 'Lato', sans-serif;
+}
+
+@keyframes modalAppear {
+  from {
+    opacity: 0;
+    transform: scale(0.8) translateY(20px);
+  }
+  to {
+    opacity: 1;
+    transform: scale(1) translateY(0);
+  }
+}
+
+.close-modal {
+  position: absolute;
+  top: 15px;
+  right: 15px;
+  background: #8B4513;
+  color: white;
+  border: none;
+  width: 40px;
+  height: 40px;
+  border-radius: 50%;
+  cursor: pointer;
+  font-size: 1.2rem;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  transition: all 0.3s ease;
+  z-index: 10;
+}
+
+.close-modal:hover {
+  background: #A0522D;
+  transform: rotate(90deg) scale(1.1);
+}
+
+.modal-character {
+  display: flex;
+  align-items: center;
+  gap: 1.5rem;
+  margin-bottom: 1.5rem;
+  padding-bottom: 1.5rem;
+  border-bottom: 2px dashed #FFC42B;
+}
+
+.modal-character-icon {
+  width: 80px;
+  height: 80px;
+  background-size: contain;
+  background-repeat: no-repeat;
+  background-position: center;
+  filter: drop-shadow(0 4px 8px rgba(0, 0, 0, 0.2));
+}
+
+.modal-character-name {
+  font-family: 'Playfair Display', serif;
+  font-size: 2rem;
+  font-weight: 700;
+  color: #8B4513;
+  margin-bottom: 0.5rem;
+}
+
+.modal-character-quote {
+  font-style: italic;
+  font-size: 1.2rem;
+  color: #A0522D;
+  margin-bottom: 1.5rem;
+  padding-left: 1rem;
+  border-left: 3px solid #FFC42B;
+  font-family: 'Patrick Hand', cursive;
+}
+
+.modal-character-bio {
+  font-size: 1.1rem;
+  line-height: 1.6;
+  color: #5C4033;
+  background: rgba(255, 255, 255, 0.7);
+  padding: 1.5rem;
+  border-radius: 10px;
+  border: 1px solid #E8D4B9;
+}
+
+/* Character-specific colors */
+.character-spotlight[onclick*="pooh"]:hover {
+  background: linear-gradient(135deg, rgba(255, 196, 43, 0.1) 0%, transparent 100%);
+}
+
+.character-spotlight[onclick*="piglet"]:hover {
+  background: linear-gradient(135deg, rgba(255, 182, 193, 0.1) 0%, transparent 100%);
+}
+
+.character-spotlight[onclick*="tigger"]:hover {
+  background: linear-gradient(135deg, rgba(255, 165, 0, 0.1) 0%, transparent 100%);
+}
+
+.character-spotlight[onclick*="eeyore"]:hover {
+  background: linear-gradient(135deg, rgba(169, 169, 169, 0.1) 0%, transparent 100%);
+}
+
+/* Responsive modal adjustments */
+@media (max-width: 768px) {
+  .modal-content {
+    padding: 1.5rem;
+    width: 95%;
+  }
+  
+  .modal-character {
+    flex-direction: column;
+    text-align: center;
+    gap: 1rem;
+  }
+  
+  .modal-character-icon {
+    width: 100px;
+    height: 100px;
+  }
+  
+  .modal-character-name {
+    font-size: 1.8rem;
+  }
+  
+  .modal-character-quote {
+    font-size: 1.1rem;
+  }
+  
+  .modal-character-bio {
+    font-size: 1rem;
+  }
+}
+
+/* Honey drip animation for modal close */
+@keyframes honeyDrip {
+  0% { transform: translateY(-20px) rotate(0deg); }
+  100% { transform: translateY(20px) rotate(180deg); }
+}
+
+.close-modal:hover::after {
+  content: '🍯';
+  position: absolute;
+  font-size: 0.8rem;
+  animation: honeyDrip 0.5s linear infinite;
+  opacity: 0.8;
+}
+    </style>
 </head>
 
 <body>
