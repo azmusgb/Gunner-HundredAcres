@@ -15,8 +15,9 @@ document.addEventListener('DOMContentLoaded', function() {
     const closeSettings = document.getElementById('closeSettings');
     
     // Current chapter state
-    let currentChapter = 1;
-    const totalChapters = 4;
+    const initialActivePage = document.querySelector('.page.active');
+    let currentChapter = initialActivePage ? parseInt(initialActivePage.getAttribute('data-chapter')) : 1;
+    let totalChapters = pages.length || 4;
     
     // ==================== MAIN NAVIGATION FUNCTIONS ====================
     
@@ -33,17 +34,22 @@ document.addEventListener('DOMContentLoaded', function() {
         currentChapter = chapter;
         
         // Hide all pages
+        let foundPage = false;
         pages.forEach(page => {
-            page.classList.remove('active');
+            const pageChapter = parseInt(page.getAttribute('data-chapter'));
+            const isActive = pageChapter === chapter;
+            page.classList.toggle('active', isActive);
+            page.setAttribute('aria-hidden', !isActive);
+
+            if (isActive) {
+                foundPage = true;
+                console.log('Page found and activated:', page);
+            }
         });
-        
-        // Show the active page
-        const activePage = document.querySelector(`.page[data-chapter="${chapter}"]`);
-        if (activePage) {
-            activePage.classList.add('active');
-            console.log('Page found and activated:', activePage);
-        } else {
+
+        if (!foundPage) {
             console.error('Page not found for chapter:', chapter);
+            return;
         }
         
         // Update pill states
@@ -63,6 +69,11 @@ document.addEventListener('DOMContentLoaded', function() {
         
         // Update navigation buttons
         updateNavigation();
+
+        // Update URL hash for deep-linking
+        if (window.location.hash !== `#chapter-${chapter}`) {
+            history.replaceState(null, '', `#chapter-${chapter}`);
+        }
         
         // Scroll to top of book
         const book = document.querySelector('.book');
@@ -429,6 +440,14 @@ document.addEventListener('DOMContentLoaded', function() {
             });
             console.log('Chapter pills initialized:', chapterPills.length);
         }
+
+        // Listen for hash changes triggered outside the UI
+        window.addEventListener('hashchange', () => {
+            const hashMatch = window.location.hash.match(/chapter-(\d+)/);
+            if (hashMatch && hashMatch[1]) {
+                navigateToChapter(parseInt(hashMatch[1]));
+            }
+        });
         
         // Initialize navigation buttons
         if (prevBtn) {
@@ -477,6 +496,18 @@ document.addEventListener('DOMContentLoaded', function() {
             });
         }
         
+        // Sync with URL hash if present
+        const hashChapter = window.location.hash.match(/chapter-(\d+)/);
+        if (hashChapter && hashChapter[1]) {
+            const chapterNum = parseInt(hashChapter[1]);
+            if (!isNaN(chapterNum)) {
+                navigateToChapter(chapterNum);
+            }
+        } else if (initialActivePage) {
+            // Ensure the UI is synced to the initial active page
+            navigateToChapter(currentChapter);
+        }
+
         console.log('Navigation system fully initialized');
     }
     
