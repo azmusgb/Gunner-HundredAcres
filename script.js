@@ -942,17 +942,6 @@
                 }
             }
 
-            @keyframes card-hover {
-                0% {
-                    transform: translate3d(var(--parallax-x, 0px), var(--parallax-y, 0px), 0) translateY(0) scale(1) translateZ(0);
-                    box-shadow: 0 5px 15px rgba(0,0,0,0.1);
-                }
-                100% {
-                    transform: translate3d(var(--parallax-x, 0px), var(--parallax-y, 0px), 0) translateY(-8px) scale(1.02) translateZ(0);
-                    box-shadow: 0 15px 30px var(--hover-shadow);
-                }
-            }
-
             @keyframes sparkleTrail {
                 0% { transform: scale(1) rotate(0deg); opacity: 1; }
                 100% { transform: scale(0) rotate(180deg); opacity: 0; }
@@ -1897,23 +1886,31 @@
 
         function updateParallax() {
             const scrolled = window.scrollY;
-            const rate = 0.1; // Reduced from 0.3 for smoother effect
+            const rate = 0.1;
             
             DOM.$$('.character-card').forEach((card, index) => {
-                // Only apply parallax if NOT hovering (CSS handles hover state)
-                if (!card.matches(':hover')) {
-                    const yPos = -(scrolled * rate * (0.03 + index * 0.01)); // Much smaller movement
-                    const xPos = Math.sin(scrolled * 0.005 + index) * 2; // Reduced from 5px
-
-                    // Use CSS variables so hover animations can layer with parallax
+                // Check if card is being hovered
+                const isHovered = card.matches(':hover');
+                
+                // Only apply parallax if NOT hovering
+                if (!isHovered) {
+                    const yPos = -(scrolled * rate * (0.03 + index * 0.01));
+                    const xPos = Math.sin(scrolled * 0.005 + index) * 2;
+        
                     card.style.setProperty('--parallax-x', `${xPos}px`);
                     card.style.setProperty('--parallax-y', `${yPos}px`);
+                    
+                    // Apply the parallax transform
+                    card.style.transform = `translate3d(${xPos}px, ${yPos}px, 0) translateZ(0)`;
+                } else {
+                    // When hovering, reset parallax values but keep hover transform
+                    card.style.setProperty('--parallax-x', '0px');
+                    card.style.setProperty('--parallax-y', '0px');
                 }
             });
             
             ticking = false;
         }
-
         // Throttle scroll events with requestAnimationFrame
             let scrollTimeout;
             window.addEventListener('scroll', () => {
