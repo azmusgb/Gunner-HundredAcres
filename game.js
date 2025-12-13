@@ -151,30 +151,43 @@ const joystickKnob =
     const bg = bgCanvas.getContext('2d');
 
     function resizeCanvas() {
-      const rect = canvas.getBoundingClientRect();
-      // If height is 0 (common if container not laid out yet), provide a reasonable default.
-      const cssW = Math.max(1, Math.floor(rect.width));
-      const cssH = Math.max(1, Math.floor(rect.height || rect.width * 0.62));
-
-      DPR = window.devicePixelRatio || 1;
-      W = cssW;
-      H = cssH;
-
+  // Debounce resize to prevent thrashing
+  if (resizeCanvas._debounce) {
+    clearTimeout(resizeCanvas._debounce);
+  }
+  resizeCanvas._debounce = setTimeout(() => {
+    const rect = canvas.getBoundingClientRect();
+    const cssW = Math.max(1, Math.floor(rect.width));
+    const cssH = Math.max(1, Math.floor(rect.height || rect.width * 0.62));
+    
+    // Prevent unnecessary resizes
+    if (cssW === W && cssH === H) return;
+    
+    DPR = window.devicePixelRatio || 1;
+    W = cssW;
+    H = cssH;
+    
+    // Set canvas size only if changed
+    if (canvas.width !== Math.floor(cssW * DPR) || 
+        canvas.height !== Math.floor(cssH * DPR)) {
       canvas.width = Math.floor(cssW * DPR);
       canvas.height = Math.floor(cssH * DPR);
       ctx.setTransform(DPR, 0, 0, DPR, 0, 0);
-
+    }
+    
+    // Resize background canvas
+    if (bgCanvas.width !== cssW || bgCanvas.height !== cssH) {
       bgCanvas.width = cssW;
       bgCanvas.height = cssH;
-
-      ctx.imageSmoothingEnabled = true;
       drawBackgroundOnce();
-
-      // Keep Pooh clamped after resize
-      state.poohX = clamp(state.poohX || cssW / 2, state.poohW / 2, cssW - state.poohW / 2);
-      state.poohY = cssH - 70;
     }
-
+    
+    // Keep Pooh positioned
+    state.poohX = clamp(state.poohX || cssW / 2, state.poohW / 2, cssW - state.poohW / 2);
+    state.poohY = cssH - 70;
+    
+  }, 100); // 100ms debounce
+}
     // Draw background into bgCanvas (CSS px)
     function drawBackgroundOnce() {
       if (!bg) return;
