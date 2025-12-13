@@ -7,6 +7,8 @@
       <meta name="description" content="A storybook-style Hundred Acre Wood adventure with honey-sweet games and a place to leave your wishes." />
       <meta name="theme-color" content="#f4a944" />
       <meta name="color-scheme" content="light dark" />
+      <!-- Favicon -->
+      <link rel="icon" href="data:image/svg+xml,<svg xmlns=%22http://www.w3.org/2000/svg%22 viewBox=%220 0 100 100%22><text y=%22.9em%22 font-size=%2290%22>🍯</text></svg>">
       <!-- Fonts -->
       <link rel="preconnect" href="https://fonts.googleapis.com">
       <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
@@ -23,6 +25,79 @@
          user-select: none !important;
          -webkit-tap-highlight-color: transparent;
          }
+         
+         /* Score popup styles for game.js */
+         .score-popup {
+            position: absolute;
+            font-family: 'Playfair Display', Georgia, serif;
+            font-weight: bold;
+            font-size: 1.2rem;
+            color: white;
+            text-shadow: 0 2px 4px rgba(0, 0, 0, 0.3);
+            pointer-events: none;
+            opacity: 0;
+            transform: translateY(0);
+            z-index: 10;
+         }
+         
+         .score-popup.visible {
+            animation: scoreFloat 1s ease-out forwards;
+         }
+         
+         @keyframes scoreFloat {
+            0% {
+               opacity: 0;
+               transform: translateY(0);
+            }
+            20% {
+               opacity: 1;
+            }
+            100% {
+               opacity: 0;
+               transform: translateY(-60px);
+            }
+         }
+         
+         .score-popup--golden {
+            color: #FFD700;
+            text-shadow: 0 0 8px rgba(255, 215, 0, 0.5);
+         }
+         
+         .score-popup--honey {
+            color: #FFD54F;
+         }
+         
+         .score-popup--power {
+            color: #9C27B0;
+         }
+         
+         /* Shake animation for game feedback */
+         @keyframes shake {
+            0%, 100% { transform: translateX(0); }
+            10%, 30%, 50%, 70%, 90% { transform: translateX(-5px); }
+            20%, 40%, 60%, 80% { transform: translateX(5px); }
+         }
+         
+         /* Character-specific modal icons */
+         .pooh-icon-modal {
+            background: linear-gradient(135deg, #FFC107, #FF9800);
+            color: #8B4513;
+         }
+         
+         .piglet-icon-modal {
+            background: linear-gradient(135deg, #FFB6C1, #FF69B4);
+            color: #C2185B;
+         }
+         
+         .eeyore-icon-modal {
+            background: linear-gradient(135deg, #B0BEC5, #78909C);
+            color: #37474F;
+         }
+         
+         .tigger-icon-modal {
+            background: linear-gradient(135deg, #FF9800, #F57C00);
+            color: #E65100;
+         }
       </style>
    </head>
    <body
@@ -35,15 +110,15 @@
       <div class="storybook-cover" id="cover" role="dialog" aria-modal="true" aria-label="Welcome screen">
          <div class="cover-card">
             <div class="cover-decoration" aria-hidden="true"></div>
-            <h1 class="cover-title">Baby Gunnar’s Hundred Acre Wood</h1>
+            <h1 class="cover-title">Baby Gunnar's Hundred Acre Wood</h1>
             <p class="cover-subtitle">Read a cozy storybook moment. Play a honey-sweet game. Leave a wish.</p>
             <div class="storybook-form">
-               <button class="btn btn-primary" id="enterStory" type="button">
+               <button class="btn btn-primary" id="enterStory" type="button" aria-label="Enter the storybook">
                <i class="fa-solid fa-book-open" aria-hidden="true"></i>
                Enter the Storybook
                </button>
                <p class="tip" style="max-width: 58ch; text-align:center;">
-                  Tip: On iPhone/iPad, your first tap helps “wake up” audio + canvas.
+                  Tip: On iPhone/iPad, your first tap helps "wake up" audio + canvas.
                </p>
             </div>
          </div>
@@ -51,7 +126,7 @@
       <!-- Top nav (kept clean; no floating junk up here) -->
       <header class="nav" role="navigation" aria-label="Primary">
          <div class="nav-brand">
-            <span aria-hidden="true">🍯</span>
+            <span aria-hidden="true" role="img">🍯</span>
             <div class="nav-title">Hundred Acre Celebration</div>
          </div>
          <button class="nav-toggle" id="navToggle" type="button" aria-label="Open menu" aria-expanded="false">
@@ -85,7 +160,7 @@
                      <header class="storybook-header">
                         <h2 class="storybook-heading" id="storyTitle">A Cozy Little Adventure</h2>
                         <p class="storybook-subheading">
-                           Welcome to Baby Gunnar’s Hundred Acre Wood celebration — a gentle storybook moment with friends,
+                           Welcome to Baby Gunnar's Hundred Acre Wood celebration — a gentle storybook moment with friends,
                            honey-sweet games, and a place to leave your wishes.
                         </p>
                      </header>
@@ -97,12 +172,11 @@
                      <h2 class="section-title" id="friendsTitle">Friends in the Wood</h2>
                      <p class="section-subtitle">Tap a friend for a little message.</p>
                      <div class="characters-grid-enhanced">
-                        <!-- Example cards (wire your real images/quotes as needed) -->
                         <article class="character-spotlight" data-character="pooh" tabindex="0" role="button" aria-label="Open Pooh message">
                            <div class="character-spotlight-content">
                               <div class="character-illustration">
-                                 <img src="media/characters/pooh.png" alt="Pooh" loading="lazy" decoding="async"
-                                    onerror="this.style.display='none';" />
+                                 <img src="media/characters/pooh.png" alt="Pooh holding a honey pot" loading="lazy" decoding="async"
+                                    onerror="this.style.display='none'; this.parentElement.innerHTML='🐻';" />
                               </div>
                               <h3 class="character-name">Pooh</h3>
                               <p class="character-quote">A little honey goes a long way.</p>
@@ -111,8 +185,8 @@
                         <article class="character-spotlight" data-character="piglet" tabindex="0" role="button" aria-label="Open Piglet message">
                            <div class="character-spotlight-content">
                               <div class="character-illustration">
-                                 <img src="media/characters/piglet.png" alt="Piglet" loading="lazy" decoding="async"
-                                    onerror="this.style.display='none';" />
+                                 <img src="media/characters/piglet.png" alt="Piglet looking thoughtful" loading="lazy" decoding="async"
+                                    onerror="this.style.display='none'; this.parentElement.innerHTML='🐷';" />
                               </div>
                               <h3 class="character-name">Piglet</h3>
                               <p class="character-quote">Small steps. Big heart.</p>
@@ -121,8 +195,8 @@
                         <article class="character-spotlight" data-character="eeyore" tabindex="0" role="button" aria-label="Open Eeyore message">
                            <div class="character-spotlight-content">
                               <div class="character-illustration">
-                                 <img src="media/characters/eeyore.png" alt="Eeyore" loading="lazy" decoding="async"
-                                    onerror="this.style.display='none';" />
+                                 <img src="media/characters/eeyore.png" alt="Eeyore with his tail" loading="lazy" decoding="async"
+                                    onerror="this.style.display='none'; this.parentElement.innerHTML='🐴';" />
                               </div>
                               <h3 class="character-name">Eeyore</h3>
                               <p class="character-quote">Quiet love still counts.</p>
@@ -131,8 +205,8 @@
                         <article class="character-spotlight" data-character="tigger" tabindex="0" role="button" aria-label="Open Tigger message">
                            <div class="character-spotlight-content">
                               <div class="character-illustration">
-                                 <img src="media/characters/tigger.png" alt="Tigger" loading="lazy" decoding="async"
-                                    onerror="this.style.display='none';" />
+                                 <img src="media/characters/tigger.png" alt="Tigger bouncing happily" loading="lazy" decoding="async"
+                                    onerror="this.style.display='none'; this.parentElement.innerHTML='🐯';" />
                               </div>
                               <h3 class="character-name">Tigger</h3>
                               <p class="character-quote">Bounce into the fun-fun.</p>
@@ -152,9 +226,9 @@
                         Move Pooh left/right. Catch honey. Dodge bees. Power-ups help.
                      </p>
                      <div class="game-mode-toggle" role="group" aria-label="Pick a tempo">
-                        <button class="mode-chip is-active" data-catch-mode="calm" type="button">Calm Stroll</button>
-                        <button class="mode-chip" data-catch-mode="brisk" type="button">Adventure</button>
-                        <button class="mode-chip" data-catch-mode="rush" type="button">Honey Rush</button>
+                        <button class="mode-chip is-active" data-catch-mode="calm" type="button" aria-pressed="true">Calm Stroll</button>
+                        <button class="mode-chip" data-catch-mode="brisk" type="button" aria-pressed="false">Adventure</button>
+                        <button class="mode-chip" data-catch-mode="rush" type="button" aria-pressed="false">Honey Rush</button>
                         <p class="mode-chip-note" id="catch-mode-description">A relaxed 70 second run with extra hearts.</p>
                      </div>
                   </header>
@@ -171,25 +245,29 @@
                      <div class="progress-block">
                         <div class="progress-label">Time left</div>
                         <div class="progress-track">
-                           <div class="progress-fill" id="catch-timebar"></div>
+                           <div class="progress-fill" id="catch-timebar" style="--w: 100%; width: 100%;"></div>
                         </div>
                      </div>
                      <div class="progress-block">
                         <div class="progress-label">Hearts</div>
                         <div class="progress-track hearts">
-                           <div class="progress-fill" id="catch-life-bar"></div>
+                           <div class="progress-fill" id="catch-life-bar" style="--w: 100%; width: 100%;"></div>
                         </div>
                      </div>
                   </div>
                   <div class="game-stage">
-                     <canvas id="honey-game" class="game-canvas" aria-label="Honey Pot Catch canvas"></canvas>
+                     <canvas id="honey-game" class="game-canvas" 
+                        aria-label="Honey Pot Catch game area. Use arrow keys or touch to move Pooh left and right to catch honey pots and avoid bees." 
+                        role="application"
+                        tabindex="0">
+                        Your browser does not support the canvas element. Please try using a modern browser.
+                     </canvas>
                      <!-- Overlay (required IDs) -->
                      <div class="game-overlay" id="catch-overlay" aria-live="polite">
                         <div class="countdown-display" id="catch-countdown">Ready when you are.</div>
                         <div class="overlay-hint" id="catch-hint">Press Start to begin a calm 60 second run.</div>
                      </div>
                   </div>
-                  <!-- Close game-stage div here -->
                   <div class="game-controls" aria-label="Game controls">
                      <button class="btn btn-primary" id="start-catch" type="button">
                      <i class="fa-solid fa-play" aria-hidden="true"></i> Start
@@ -198,41 +276,41 @@
                      <i class="fa-solid fa-pause" aria-hidden="true"></i> Pause
                      </button>
                      <div class="joystick-dock" aria-hidden="false">
-                        <div id="catchJoystick" class="virtual-joystick" aria-label="Drag to steer Pooh">
+                        <div id="catchJoystick" class="virtual-joystick" aria-label="Drag to steer Pooh" role="slider" aria-valuemin="-40" aria-valuemax="40" aria-valuenow="0">
                            <div class="joystick-base"></div>
                            <div class="joystick-knob" id="catchJoystickKnob"></div>
                         </div>
                         <p class="joystick-hint">Drag on phones. Arrow keys + mouse also work.</p>
                      </div>
                   </div>
-                  <!-- SINGLE status element, not duplicate -->
+                  <!-- Game status -->
                   <p class="tip" id="catchStatus" aria-live="polite" style="margin: 12px 14px 16px;">
-                     Ready.
+                     Ready. Select a mode and press Start to play.
                   </p>
                   <div class="game-guide-grid" aria-label="How to play">
                      <div class="guide-card">
-                        <div class="guide-icon">🍯</div>
+                        <div class="guide-icon" role="img" aria-label="Honey pot">🍯</div>
                         <div>
                            <h4>Sweet catches</h4>
                            <p>Golden pots boost your score and streak. Keep moving to chain them.</p>
                         </div>
                      </div>
                      <div class="guide-card">
-                        <div class="guide-icon">🐝</div>
+                        <div class="guide-icon" role="img" aria-label="Bee">🐝</div>
                         <div>
                            <h4>Watch the buzz</h4>
                            <p>Angry bees drift toward Pooh. A shield or quick sidestep keeps hearts safe.</p>
                         </div>
                      </div>
                      <div class="guide-card">
-                        <div class="guide-icon">⭐</div>
+                        <div class="guide-icon" role="img" aria-label="Star">⭐</div>
                         <div>
                            <h4>Power-up moments</h4>
                            <p>Clock adds time, hearts heal, lightning slows the world, stars double points.</p>
                         </div>
                      </div>
                      <div class="guide-card">
-                        <div class="guide-icon">🎯</div>
+                        <div class="guide-icon" role="img" aria-label="Target">🎯</div>
                         <div>
                            <h4>Chase a personal best</h4>
                            <p>Your best run is saved locally. Try the Honey Rush tempo for riskier rewards.</p>
@@ -248,7 +326,7 @@
                      <form class="wishes-form" id="wishesForm" novalidate>
                         <div class="wishes-grid">
                            <label class="wishes-field" for="wishName">
-                              <span class="field-label">Your name</span>
+                              <span class="field-label">Your name (optional)</span>
                               <input id="wishName" name="wishName" type="text" maxlength="60" autocomplete="name" placeholder="Christopher Robin" />
                            </label>
                            <label class="wishes-field" for="wishEmoji">
@@ -259,12 +337,13 @@
                                  <option value="🎈">🎈 Cheerful</option>
                                  <option value="⭐">⭐ Encouraging</option>
                                  <option value="💌">💌 Heartfelt</option>
+                                 <option value="🐻">🐻 Friendly bear hug</option>
                               </select>
                            </label>
                         </div>
                         <label class="wishes-field" for="wishMessage">
                            <span class="field-label">Your note</span>
-                           <textarea id="wishMessage" name="wishMessage" maxlength="240" placeholder="Write a gentle wish or encouragement."></textarea>
+                           <textarea id="wishMessage" name="wishMessage" maxlength="240" placeholder="Write a gentle wish or encouragement..." required></textarea>
                            <div class="field-meta" id="wishMeta" aria-live="polite">0 / 240 characters</div>
                         </label>
                         <div class="wishes-actions">
@@ -283,32 +362,64 @@
                         </div>
                         <div class="wish-status" id="wishStatus" role="status" aria-live="polite"></div>
                      </form>
-                     <div class="wishes-list" id="wishesList" aria-live="polite" aria-label="Recent wishes"></div>
+                     <div class="wishes-list" id="wishesList" aria-live="polite" aria-label="Recent wishes">
+                        <!-- Wishes will be loaded here dynamically -->
+                     </div>
                   </div>
                </section>
             </div>
          </div>
       </main>
       <!-- Character Modal (single consistent system) -->
-      <div class="character-modal" id="characterModal" role="dialog" aria-modal="true" aria-label="Character message">
+      <div class="character-modal" id="characterModal" role="dialog" aria-modal="true" aria-label="Character message" tabindex="-1">
          <div class="modal-content" role="document">
             <button class="close-modal" id="closeCharacterModal" type="button" aria-label="Close">
             <i class="fa-solid fa-xmark" aria-hidden="true"></i>
             </button>
             <div class="modal-character">
-               <div class="modal-character-icon" id="modalIcon" aria-hidden="true"></div>
+               <div class="modal-character-icon pooh-icon-modal" id="modalIcon" aria-hidden="true">
+                  🐻
+               </div>
                <div>
-                  <h3 class="modal-character-name" id="modalName">Friend</h3>
-                  <p class="modal-character-quote" id="modalQuote">Hello.</p>
+                  <h3 class="modal-character-name" id="modalName">Pooh</h3>
+                  <p class="modal-character-quote" id="modalQuote">A little honey goes a long way.</p>
                </div>
             </div>
             <div class="modal-character-bio" id="modalBio">
-               A gentle note from the Hundred Acre Wood.
+               Pooh reminds us that sometimes the sweetest things come in simple moments. 
+               Just like honey, kindness spreads and makes everything better.
             </div>
          </div>
       </div>
+      
+      <!-- Audio elements (hidden) -->
+      <audio id="clickSound" preload="auto">
+         <source src="data:audio/wav;base64,UklGRigAAABXQVZFZm10IBIAAAABAAEARKwAAIhYAQACABAAZGF0YQQAAAAAAA==" type="audio/wav">
+      </audio>
+      
       <!-- Scripts -->
       <script src="script.js" defer></script>
       <script src="game.js" defer></script>
+      
+      <!-- PWA support (optional) -->
+      <script>
+         // Register service worker for PWA capabilities
+         if ('serviceWorker' in navigator) {
+            window.addEventListener('load', function() {
+               navigator.serviceWorker.register('/sw.js').then(function(registration) {
+                  console.log('ServiceWorker registration successful with scope: ', registration.scope);
+               }, function(err) {
+                  console.log('ServiceWorker registration failed: ', err);
+               });
+            });
+         }
+         
+         // Add to home screen prompt
+         let deferredPrompt;
+         window.addEventListener('beforeinstallprompt', (e) => {
+            e.preventDefault();
+            deferredPrompt = e;
+         });
+      </script>
    </body>
 </html>
