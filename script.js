@@ -213,6 +213,9 @@
     const quote = $('#modalQuote');
     const bio = $('#modalBio');
 
+    if (name) name.tabIndex = 0;
+    if (bio) bio.tabIndex = 0;
+
     const DATA = {
       pooh: {
         name: 'Pooh',
@@ -274,6 +277,29 @@
 
     document.addEventListener('keydown', (e) => {
       if (e.key === 'Escape' && modal.classList.contains('active')) close();
+    });
+
+    modal.addEventListener('keydown', (e) => {
+      if (e.key !== 'Tab' || !modal.classList.contains('active')) return;
+
+      const focusables = [closeBtn, name, bio].filter(Boolean);
+      if (!focusables.length) return;
+
+      const first = focusables[0];
+      const last = focusables[focusables.length - 1];
+      const active = document.activeElement;
+
+      if (e.shiftKey) {
+        if (active === first || !modal.contains(active)) {
+          e.preventDefault();
+          last.focus();
+        }
+      } else {
+        if (active === last || !modal.contains(active)) {
+          e.preventDefault();
+          first.focus();
+        }
+      }
     });
 
     // Wire up friend cards

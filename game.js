@@ -68,6 +68,8 @@
   function EnhancedHoneyCatchGame() {
     console.log('[HoneyCatch] Enhanced Init…');
 
+    const PLAYER_GROUND_OFFSET = 70;
+
     // DOM Elements with null checks
     const canvas = document.getElementById('honey-game');
     if (!canvas) {
@@ -207,7 +209,7 @@
         // Update game state for new dimensions
         if (state.pooh) {
           state.pooh.x = clamp(state.pooh.x || cssW / 2, state.pooh.width / 2, cssW - state.pooh.width / 2);
-          state.pooh.y = cssH - 70;
+          state.pooh.y = cssH - PLAYER_GROUND_OFFSET;
         }
         
         console.log(`[HoneyCatch] Resized to ${cssW}x${cssH} (DPR: ${DPR})`);
@@ -324,7 +326,7 @@
       timerId: null,
       countdownId: null,
       overlayTimer: null,
-      
+
       // Controls
       joyActive: false,
       joyPointerId: null,
@@ -332,7 +334,9 @@
       joyCenterY: 0,
       joyDx: 0,
       joyDy: 0,
-      keys: {}
+      keys: {},
+      isPointerDown: false,
+      lastInputWasTouch: false
     };
 
     // Frame limiter
@@ -473,31 +477,28 @@
 
     function setStatus(message, type = 'info') {
       if (!statusEl) return;
-      
+
       statusEl.textContent = message;
       statusEl.className = 'tip';
-      
-      // Add visual feedback based on type
-      if (type === 'success') {
-        statusEl.style.color = '#4CAF50';
-        statusEl.style.fontWeight = 'bold';
-      } else if (type === 'error') {
-        statusEl.style.color = '#f44336';
-        statusEl.style.fontWeight = 'bold';
-      } else if (type === 'warning') {
-        statusEl.style.color = '#FF9800';
-      } else {
-        statusEl.style.color = '';
-        statusEl.style.fontWeight = '';
+
+      const typeClass = {
+        success: 'tip--success',
+        error: 'tip--error',
+        warning: 'tip--warning',
+        info: ''
+      }[type];
+
+      if (typeClass) {
+        statusEl.classList.add(typeClass);
       }
-      
+
       // Auto-clear after 3 seconds for non-persistent messages
       if (type !== 'persistent') {
         clearTimeout(setStatus.timer);
         setStatus.timer = setTimeout(() => {
           if (statusEl && !state.running) {
             statusEl.textContent = 'Ready to play';
-            statusEl.style.color = '';
+            statusEl.className = 'tip';
           }
         }, 3000);
       }
@@ -1265,7 +1266,7 @@
       
       // Reset Pooh position
       state.pooh.x = W / 2;
-      state.pooh.y = H - 70;
+      state.pooh.y = H - PLAYER_GROUND_OFFSET;
       state.pooh.targetX = W / 2;
       
       // Clear timers
@@ -1370,34 +1371,64 @@
     // -------------------------------------------------------------------------
     // Input Handling
     // -------------------------------------------------------------------------
+    function updateTargetFromClientX(clientX) {
+      const rect = canvas.getBoundingClientRect();
+      const logicalX = clientX - rect.left;
+
+      state.pooh.targetX = clamp(logicalX, state.pooh.width/2, W - state.pooh.width/2);
+    }
+
     function handlePointerDown(e) {
       if (!state.running || state.paused || state.gameOver) return;
-      
-      const rect = canvas.getBoundingClientRect();
-      const x = e.clientX - rect.left;
-      
-      state.pooh.targetX = clamp(x, state.pooh.width/2, W - state.pooh.width/2);
+
+      state.isPointerDown = true;
+      state.lastInputWasTouch = e.pointerType === 'touch';
+
+      updateTargetFromClientX(e.clientX);
+    }
+
+    function handlePointerUp() {
+      state.isPointerDown = false;
     }
 
     function handleMouseMove(e) {
       if (!state.running || state.paused || state.gameOver) return;
-      
-      const rect = canvas.getBoundingClientRect();
-      const x = e.clientX - rect.left;
-      
-      state.pooh.targetX = clamp(x, state.pooh.width/2, W - state.pooh.width/2);
+
+      const isDragging = state.isPointerDown || e.buttons > 0;
+
+      if (!isDragging) {
+        if (state.lastInputWasTouch) return;
+        return;
+      }
+
+      updateTargetFromClientX(e.clientX);
+    }
+
+    function handleTouchStart(e) {
+      if (!state.running || state.paused || state.gameOver) return;
+      if (!e.touches || e.touches.length === 0) return;
+
+      state.isPointerDown = true;
+      state.lastInputWasTouch = true;
+
+      const touch = e.touches[0];
+      updateTargetFromClientX(touch.clientX);
     }
 
     function handleTouchMove(e) {
       if (!state.running || state.paused || state.gameOver) return;
       if (!e.touches || e.touches.length === 0) return;
-      
+
       e.preventDefault();
-      
-      const rect = canvas.getBoundingClientRect();
-      const x = e.touches[0].clientX - rect.left;
-      
-      state.pooh.targetX = clamp(x, state.pooh.width/2, W - state.pooh.width/2);
+      state.lastInputWasTouch = true;
+      state.isPointerDown = true;
+
+      const touch = e.touches[0];
+      updateTargetFromClientX(touch.clientX);
+    }
+
+    function handleTouchEnd() {
+      state.isPointerDown = false;
     }
 
     function handleKeyDown(e) {
@@ -1536,11 +1567,17 @@
       
       // Setup controls
       setupJoystick();
-      
+
       // Add event listeners
       canvas.addEventListener('pointerdown', handlePointerDown);
+      canvas.addEventListener('pointerup', handlePointerUp);
+      canvas.addEventListener('pointerleave', handlePointerUp);
+      window.addEventListener('pointercancel', handlePointerUp);
       canvas.addEventListener('mousemove', handleMouseMove);
+      canvas.addEventListener('touchstart', handleTouchStart, { passive: false });
       canvas.addEventListener('touchmove', handleTouchMove, { passive: false });
+      canvas.addEventListener('touchend', handleTouchEnd);
+      canvas.addEventListener('touchcancel', handleTouchEnd);
       document.addEventListener('keydown', handleKeyDown);
       
       if (startBtn) {
@@ -1605,8 +1642,14 @@
       
       // Remove event listeners
       canvas.removeEventListener('pointerdown', handlePointerDown);
+      canvas.removeEventListener('pointerup', handlePointerUp);
+      canvas.removeEventListener('pointerleave', handlePointerUp);
+      window.removeEventListener('pointercancel', handlePointerUp);
       canvas.removeEventListener('mousemove', handleMouseMove);
+      canvas.removeEventListener('touchstart', handleTouchStart);
       canvas.removeEventListener('touchmove', handleTouchMove);
+      canvas.removeEventListener('touchend', handleTouchEnd);
+      canvas.removeEventListener('touchcancel', handleTouchEnd);
       document.removeEventListener('keydown', handleKeyDown);
       window.removeEventListener('resize', resizeCanvas);
       
