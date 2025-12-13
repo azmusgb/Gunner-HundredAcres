@@ -1,1212 +1,2955 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
-  <meta charset="UTF-8" />
-  <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover" />
-  <title>For Baby Gunnar — A Hundred Acre Wood Baby Shower Story</title>
-  <meta name="description" content="A calm, storybook baby shower invitation for Baby Gunnar — with Hundred Acre Wood warmth, friends, and a keepsake guestbook page." />
-  <meta name="theme-color" content="#FFB020" />
-  <link href="https://fonts.googleapis.com/css2?family=Patrick+Hand&family=Playfair+Display:wght@600;700&display=swap" rel="stylesheet" />
-
-  <style>
-    /* =========================================================
-       CORE TOKENS — QUIET, WARM, STORYBOOK
-    ========================================================= */
-    :root {
-      --paper: #FFF8E8;
-      --paper-shadow: #F1E4CF;
-      --ink: #3A2618;
-
-      --pooh-red: #C62828;
-      --honey: #FFB020;
-      --honey-soft: #FFD87A;
-
-      --leaf: #5A7A3B;
-      --sky: #E9F1F8;
-
-      --shadow: 0 18px 50px rgba(58, 38, 24, 0.18);
-      --shadow-soft: 0 10px 28px rgba(58, 38, 24, 0.14);
-      --slow: cubic-bezier(.22,.61,.36,1);
-
-      --font-story: 'Patrick Hand', cursive;
-      --font-title: 'Playfair Display', serif;
-
-      --radius: 18px;
-      --radius-sm: 12px;
-    }
-
-    /* =========================================================
-       BASE RESET + ACCESSIBILITY
-    ========================================================= */
-    * { box-sizing: border-box; margin: 0; padding: 0; }
-
-    html { scroll-behavior: smooth; }
-
-    body {
-      font-family: var(--font-story);
-      background: var(--paper);
-      color: var(--ink);
-      line-height: 1.7;
-      overflow-x: hidden;
-      -webkit-text-size-adjust: 100%;
-      text-rendering: optimizeLegibility;
-    }
-
-    a, button, input, textarea, select {
-      font-family: inherit;
-    }
-
-    :focus-visible {
-      outline: 3px solid rgba(255, 176, 32, 0.65);
-      outline-offset: 3px;
-      border-radius: 10px;
-    }
-
-    .skip-link {
-      position: absolute;
-      left: 14px;
-      top: 14px;
-      padding: 10px 14px;
-      background: rgba(255,255,255,0.95);
-      border: 1px solid rgba(58,38,24,0.25);
-      border-radius: 12px;
-      box-shadow: var(--shadow-soft);
-      transform: translateY(-160%);
-      transition: transform .25s var(--slow);
-      z-index: 999;
-      color: var(--ink);
-      text-decoration: none;
-      font-size: 1rem;
-    }
-
-    .skip-link:focus {
-      transform: translateY(0);
-    }
-
-    /* Subtle paper grain */
-    body::before {
-      content: "";
-      position: fixed;
-      inset: 0;
-      pointer-events: none;
-      background:
-        repeating-linear-gradient(
-          0deg,
-          rgba(58,38,24,0.05) 0px,
-          rgba(58,38,24,0.05) 1px,
-          transparent 2px,
-          transparent 6px
-        );
-      opacity: .32;
-      z-index: 0;
-    }
-
-    /* Gentle vignette to “hold” the page */
-    body::after {
-      content: "";
-      position: fixed;
-      inset: -10%;
-      pointer-events: none;
-      background: radial-gradient(circle at 50% 20%, transparent 35%, rgba(58,38,24,0.08) 75%, rgba(58,38,24,0.12) 100%);
-      opacity: .55;
-      z-index: 0;
-    }
-
-    /* =========================================================
-       OPENING COVER (THE BOOK OPENS ONCE)
-    ========================================================= */
-    .cover {
-      min-height: 100vh;
-      display: grid;
-      place-items: center;
-      background: linear-gradient(var(--paper), var(--paper-shadow));
-      position: relative;
-      z-index: 2;
-      padding: 28px;
-    }
-
-    .cover__paper {
-      background: rgba(255, 248, 232, 0.96);
-      padding: clamp(44px, 7vw, 88px) clamp(26px, 6vw, 62px);
-      border-radius: var(--radius);
-      box-shadow: var(--shadow);
-      text-align: center;
-      max-width: 820px;
-      width: 100%;
-      position: relative;
-      overflow: hidden;
-      border: 1px solid rgba(58, 38, 24, 0.20);
-    }
-
-    .cover__paper::before{
-      content:"";
-      position:absolute;
-      inset:-40%;
-      background:
-        radial-gradient(circle at 30% 25%, rgba(255, 216, 122, 0.45), transparent 52%),
-        radial-gradient(circle at 80% 30%, rgba(90, 122, 59, 0.10), transparent 55%),
-        repeating-linear-gradient(0deg, rgba(58,38,24,0.04) 0, rgba(58,38,24,0.04) 1px, transparent 2px, transparent 8px);
-      opacity: .55;
-      transform: rotate(-6deg);
-      pointer-events: none;
-      z-index: 0;
-    }
-
-    .cover__eyebrow {
-      letter-spacing: 2.4px;
-      text-transform: uppercase;
-      font-size: .92rem;
-      opacity: .78;
-      margin-bottom: 12px;
-      position: relative;
-      z-index: 1;
-    }
-
-    .cover h1 {
-      font-family: var(--font-title);
-      font-size: clamp(2.2rem, 4.8vw, 3.6rem);
-      margin-bottom: 12px;
-      position: relative;
-      z-index: 1;
-    }
-
-    .cover__sub {
-      font-size: clamp(1.15rem, 2.4vw, 1.5rem);
-      margin-bottom: 40px;
-      opacity: .92;
-      position: relative;
-      z-index: 1;
-    }
-
-    .cover__openRow {
-      display: flex;
-      gap: 12px;
-      align-items: center;
-      justify-content: center;
-      flex-wrap: wrap;
-      position: relative;
-      z-index: 1;
-    }
-
-    .btn {
-      border: none;
-      cursor: pointer;
-      border-radius: 999px;
-      padding: 14px 26px;
-      font-size: 1.1rem;
-      transition: transform .25s var(--slow), box-shadow .25s var(--slow), background .25s var(--slow);
-      user-select: none;
-      -webkit-tap-highlight-color: transparent;
-    }
-
-    .btn--primary {
-      background: var(--pooh-red);
-      color: white;
-      box-shadow: 0 12px 28px rgba(198, 40, 40, 0.22);
-    }
-
-    .btn--primary:hover {
-      transform: translateY(-3px);
-      box-shadow: 0 18px 42px rgba(198, 40, 40, 0.26);
-    }
-
-    .btn--ghost {
-      background: transparent;
-      color: var(--ink);
-      border: 1px solid rgba(58,38,24,0.28);
-      box-shadow: var(--shadow-soft);
-    }
-
-    .btn--ghost:hover {
-      transform: translateY(-2px);
-      box-shadow: 0 16px 40px rgba(58,38,24,0.16);
-    }
-
-    .cover__hint {
-      margin-top: 22px;
-      font-size: 1.06rem;
-      opacity: .78;
-      position: relative;
-      z-index: 1;
-    }
-
-    /* =========================================================
-       MAIN SECTIONS — BREATHING, KEEPSAKE SPACING
-    ========================================================= */
-    main { position: relative; z-index: 2; }
-
-    .section {
-      max-width: 860px;
-      margin: 110px auto;
-      padding: 0 24px;
-    }
-
-    .section h2 {
-      font-family: var(--font-title);
-      font-size: clamp(1.9rem, 3.4vw, 2.6rem);
-      margin-bottom: 18px;
-    }
-
-    .section p {
-      font-size: clamp(1.14rem, 2.2vw, 1.3rem);
-      margin-bottom: 18px;
-      opacity: .98;
-    }
-
-    .section .soft {
-      opacity: .86;
-    }
-
-    .divider {
-      max-width: 860px;
-      margin: 0 auto;
-      padding: 0 24px;
-      opacity: .55;
-    }
-
-    .divider hr {
-      border: none;
-      height: 1px;
-      background: linear-gradient(90deg, transparent, rgba(58,38,24,0.32), transparent);
-    }
-
-    /* =========================================================
-       GATHERING DETAILS — INVITATION, NOT BROCHURE
-    ========================================================= */
-    .gathering {
-      background: rgba(255,255,255,0.55);
-      padding: 44px 38px;
-      border-radius: var(--radius);
-      box-shadow: var(--shadow);
-      border: 1px solid rgba(58,38,24,0.20);
-      position: relative;
-      overflow: hidden;
-    }
-
-    .gathering::before{
-      content:"";
-      position:absolute;
-      inset:-40%;
-      background:
-        radial-gradient(circle at 25% 30%, rgba(255,176,32,0.12), transparent 55%),
-        radial-gradient(circle at 80% 25%, rgba(90,122,59,0.10), transparent 55%);
-      opacity: .9;
-      transform: rotate(10deg);
-      pointer-events:none;
-    }
-
-    .gathering__details {
-      display: grid;
-      gap: 12px;
-      margin-top: 18px;
-      position: relative;
-      z-index: 1;
-    }
-
-    .gathering__row {
-      display: flex;
-      justify-content: space-between;
-      gap: 18px;
-      font-size: 1.15rem;
-      padding: 10px 12px;
-      border-radius: 12px;
-      background: rgba(255,255,255,0.45);
-      border: 1px solid rgba(58,38,24,0.12);
-    }
-
-    .gathering__row strong {
-      font-family: var(--font-title);
-      letter-spacing: .2px;
-    }
-
-    .gathering__note {
-      margin-top: 14px;
-      font-size: 1.08rem;
-      opacity: .84;
-      position: relative;
-      z-index: 1;
-    }
-
-    /* =========================================================
-       “A LITTLE TRADITION” CALLOUT
-    ========================================================= */
-    .tradition {
-      background: rgba(255, 176, 32, 0.10);
-      border-left: 5px solid rgba(255, 176, 32, 0.85);
-      border-radius: 14px;
-      padding: 18px 18px;
-      margin-top: 14px;
-    }
-
-    /* =========================================================
-       FRIENDS — ILLUSTRATED CHARACTER GALLERY (YOUR IMAGES)
-    ========================================================= */
-    .friends {
-      background: rgba(255,255,255,0.55);
-      border-radius: var(--radius);
-      box-shadow: var(--shadow);
-      padding: 44px 38px;
-      border: 1px solid rgba(58,38,24,0.20);
-      position: relative;
-      overflow: hidden;
-    }
-
-    .friends::before{
-      content:"";
-      position:absolute;
-      inset:-40%;
-      background:
-        radial-gradient(circle at 30% 20%, rgba(255,176,32,0.12), transparent 52%),
-        radial-gradient(circle at 78% 28%, rgba(90,122,59,0.10), transparent 55%),
-        repeating-linear-gradient(0deg, rgba(58,38,24,0.03) 0, rgba(58,38,24,0.03) 1px, transparent 2px, transparent 9px);
-      opacity: .7;
-      transform: rotate(-7deg);
-      pointer-events:none;
-    }
-
-    .friends__grid {
-      display: grid;
-      grid-template-columns: repeat(auto-fit, minmax(190px, 1fr));
-      gap: 16px;
-      margin-top: 20px;
-      position: relative;
-      z-index: 1;
-    }
-
-    .friend-card {
-      appearance: none;
-      -webkit-appearance: none;
-      border: 1px solid rgba(58,38,24,0.22);
-      border-radius: 16px;
-      background: rgba(255,255,255,0.62);
-      padding: 18px 16px 16px;
-      cursor: pointer;
-      transition: transform .25s var(--slow), box-shadow .25s var(--slow);
-      position: relative;
-      overflow: hidden;
-      text-align: left;
-    }
-
-    .friend-card:hover {
-      transform: translateY(-4px);
-      box-shadow: 0 16px 40px rgba(58,38,24,0.18);
-    }
-
-    .friend-portrait {
-      width: 92px;
-      height: 92px;
-      border-radius: 999px;
-      margin: 0 auto 12px;
-      position: relative;
-      background: radial-gradient(circle at 40% 35%, var(--paper), var(--paper-shadow));
-      border: 2px solid rgba(58,38,24,0.42);
-      box-shadow: 0 10px 22px rgba(58,38,24,0.18);
-      overflow: hidden;
-    }
-
-    .friend-portrait img {
-      width: 100%;
-      height: 100%;
-      object-fit: cover;
-      transform: scale(1.05);
-      filter: saturate(1.05) contrast(1.02);
-      display: block;
-    }
-
-    .friend-name {
-      font-family: var(--font-title);
-      text-align: center;
-      font-size: 1.22rem;
-      margin-bottom: 6px;
-    }
-
-    .friend-trait {
-      text-align: center;
-      font-size: 1.03rem;
-      opacity: .84;
-      margin-bottom: 8px;
-    }
-
-    .friend-quote {
-      text-align: center;
-      font-style: italic;
-      opacity: .78;
-      font-size: 1.02rem;
-    }
-
-    /* Modal (calm, booklike) */
-    .friend-modal {
-      position: fixed;
-      inset: 0;
-      display: grid;
-      place-items: center;
-      background: rgba(0,0,0,0.55);
-      opacity: 0;
-      pointer-events: none;
-      transition: opacity .25s var(--slow);
-      z-index: 50;
-      padding: 18px;
-    }
-
-    .friend-modal.is-open {
-      opacity: 1;
-      pointer-events: auto;
-    }
-
-    .friend-modal__card {
-      width: min(720px, calc(100vw - 28px));
-      background: linear-gradient(var(--paper), var(--paper-shadow));
-      border-radius: var(--radius);
-      box-shadow: 0 30px 90px rgba(0,0,0,0.35);
-      padding: 26px 22px;
-      border: 1px solid rgba(58,38,24,0.28);
-      position: relative;
-    }
-
-    .friend-modal__close {
-      position: absolute;
-      top: 10px;
-      right: 12px;
-      border: 0;
-      background: transparent;
-      font-size: 24px;
-      cursor: pointer;
-      color: rgba(58,38,24,0.75);
-      padding: 6px 10px;
-      border-radius: 12px;
-    }
-
-    .friend-modal__close:hover {
-      background: rgba(255,255,255,0.55);
-    }
-
-    .friend-modal__top {
-      display: grid;
-      grid-template-columns: 112px 1fr;
-      gap: 18px;
-      align-items: center;
-      margin-bottom: 10px;
-    }
-
-    .friend-modal__portrait {
-      width: 112px;
-      height: 112px;
-      border-radius: 999px;
-      border: 2px solid rgba(58,38,24,0.42);
-      overflow: hidden;
-      background: radial-gradient(circle at 40% 35%, var(--paper), var(--paper-shadow));
-      box-shadow: 0 12px 28px rgba(58,38,24,0.22);
-    }
-
-    .friend-modal__portrait img {
-      width: 100%;
-      height: 100%;
-      object-fit: cover;
-      transform: scale(1.05);
-      display: block;
-    }
-
-    .friend-modal__title {
-      font-family: var(--font-title);
-      font-size: 2rem;
-      margin: 0;
-      line-height: 1.2;
-    }
-
-    .friend-modal__subtitle {
-      opacity: .82;
-      font-size: 1.15rem;
-      margin-top: 4px;
-    }
-
-    .friend-modal__body {
-      margin-top: 12px;
-      font-size: 1.2rem;
-      opacity: .95;
-    }
-
-    .friend-modal__quote {
-      margin-top: 14px;
-      padding: 14px 14px;
-      border-left: 4px solid var(--honey);
-      background: rgba(255,176,32,0.10);
-      border-radius: 10px;
-      font-style: italic;
-      opacity: .92;
-    }
-
-    /* =========================================================
-       GUESTBOOK — “KEPT” FEELING
-    ========================================================= */
-    .guestbookCard {
-      background: rgba(255,255,255,0.55);
-      border-radius: var(--radius);
-      box-shadow: var(--shadow);
-      padding: 44px 38px;
-      border: 1px solid rgba(58,38,24,0.20);
-      position: relative;
-      overflow: hidden;
-    }
-
-    .guestbookCard::before{
-      content:"";
-      position:absolute;
-      inset:-40%;
-      background:
-        radial-gradient(circle at 22% 30%, rgba(255,216,122,0.22), transparent 55%),
-        radial-gradient(circle at 75% 22%, rgba(90,122,59,0.08), transparent 55%);
-      opacity: .9;
-      transform: rotate(6deg);
-      pointer-events:none;
-    }
-
-    .guestbookForm {
-      margin-top: 14px;
-      position: relative;
-      z-index: 1;
-      display: grid;
-      gap: 14px;
-    }
-
-    .fieldRow {
-      display: grid;
-      grid-template-columns: 1fr 1fr;
-      gap: 14px;
-    }
-
-    .field {
-      display: grid;
-      gap: 6px;
-    }
-
-    .label {
-      font-family: var(--font-title);
-      font-size: 1.02rem;
-      opacity: .9;
-    }
-
-    .input, .textarea {
-      width: 100%;
-      background: rgba(255,255,255,0.40);
-      border: 1px solid rgba(58,38,24,0.18);
-      border-bottom: 2px solid rgba(58,38,24,0.42);
-      border-radius: 14px;
-      padding: 12px 12px;
-      font-size: 1.12rem;
-      color: var(--ink);
-    }
-
-    .textarea {
-      min-height: 150px;
-      resize: vertical;
-      padding: 14px 12px;
-      line-height: 1.6;
-    }
-
-    .guestbookActions {
-      display: flex;
-      gap: 12px;
-      flex-wrap: wrap;
-      align-items: center;
-      margin-top: 6px;
-    }
-
-    .btn--honey {
-      background: var(--honey);
-      color: #2b1a10;
-      box-shadow: 0 14px 34px rgba(255,176,32,0.20);
-    }
-
-    .btn--honey:hover {
-      transform: translateY(-2px);
-      box-shadow: 0 18px 44px rgba(255,176,32,0.24);
-    }
-
-    .guestbook__note {
-      margin-top: 8px;
-      font-style: italic;
-      opacity: .78;
-    }
-
-    .mini {
-      font-size: 1.02rem;
-      opacity: .80;
-    }
-
-    /* =========================================================
-       CORNER COMPANION — POOH IMAGE FLOAT (GENTLE, NOT LOUD)
-    ========================================================= */
-    .companion {
-      position: fixed;
-      right: 22px;
-      bottom: 22px;
-      width: 86px;
-      height: 86px;
-      border-radius: 999px;
-      background: radial-gradient(circle at 40% 35%, rgba(255,255,255,0.75), rgba(241,228,207,0.72));
-      border: 1px solid rgba(58,38,24,0.22);
-      box-shadow: 0 18px 44px rgba(58,38,24,0.20);
-      overflow: hidden;
-      opacity: .90;
-      z-index: 3;
-      transform: translateY(0);
-      transition: transform .15s linear, opacity .3s var(--slow);
-      pointer-events: none; /* purely decorative */
-    }
-
-    .companion img {
-      width: 100%;
-      height: 100%;
-      object-fit: cover;
-      transform: scale(1.06);
-      display: block;
-      filter: saturate(1.03) contrast(1.02);
-    }
-
-    @media (max-width: 520px) {
-      .companion { width: 74px; height: 74px; right: 14px; bottom: 14px; }
-      .fieldRow { grid-template-columns: 1fr; }
-      .gathering, .friends, .guestbookCard { padding: 34px 22px; }
-      .section { margin: 86px auto; }
-    }
-
-    /* =========================================================
-       GUNNAR — AUTO-HIGHLIGHT “HONEYLIGHT PROMISE”
-    ========================================================= */
-    .gunnar{
-      position: relative;
-      display: inline-block;
-      padding: 0 .10em;
-      color: var(--ink);
-      text-shadow:
-        0 1px 0 rgba(255,255,255,0.55),
-        0 12px 30px rgba(255,176,32,0.14);
-    }
-
-    .gunnar::before{
-      content:"";
-      position:absolute;
-      left:-0.10em; right:-0.10em;
-      bottom: .10em;
-      height: .58em;
-      border-radius: 999px;
-      background: linear-gradient(90deg,
-        rgba(255,176,32,0.14),
-        rgba(255,216,122,0.62),
-        rgba(255,176,32,0.14)
-      );
-      transform: rotate(-1deg);
-      z-index: -1;
-    }
-
-    .gunnar::after{
-      content:"";
-      position:absolute;
-      inset: -0.22em -0.35em -0.12em -0.35em;
-      border-radius: 999px;
-      background: radial-gradient(circle at 35% 40%,
-        rgba(255,216,122,0.40),
-        rgba(255,176,32,0.06) 58%,
-        transparent 72%
-      );
-      opacity: .85;
-      z-index: -2;
-      animation: gunnarPromise 4.8s var(--slow) infinite;
-    }
-
-    @keyframes gunnarPromise{
-      0%,100% { transform: scale(1); opacity: .68; }
-      50%     { transform: scale(1.03); opacity: .95; }
-    }
-
-    /* =========================================================
-       FOOTER
-    ========================================================= */
-    footer {
-      text-align: center;
-      padding: 90px 24px 70px;
-      opacity: .88;
-      position: relative;
-      z-index: 2;
-    }
-
-    footer p {
-      font-size: 1.18rem;
-      margin-bottom: 10px;
-    }
-
-    /* =========================================================
-       PRINT / KEEPSAKE MODE
-    ========================================================= */
-    @media print {
-      body::before, body::after, .companion, .btn, .friend-modal { display: none !important; }
-      body { background: white; color: black; }
-      .cover { display: none !important; }
-      .section { margin: 52px auto; }
-      .gathering, .friends, .guestbookCard { box-shadow: none; border: 1px solid #ddd; }
-    }
-
-    /* Reduce motion for folks who prefer it */
-    @media (prefers-reduced-motion: reduce) {
-      html { scroll-behavior: auto; }
-      .btn, .friend-card, .companion, .gunnar::after, .friend-modal { transition: none !important; animation: none !important; }
-    }
-  </style>
+    <meta charset="UTF-8">
+    <meta content="width=device-width, initial-scale=1.0, viewport-fit=cover" name="viewport">
+    <title>Baby Gunnar's Hundred Acre Wood Adventure</title>
+    <meta content="A storybook-style Hundred Acre Wood adventure with a honey-catching game to celebrate Baby Gunnar."
+          name="description">
+    <meta content="#f4a944" name="theme-color">
+    <meta content="light dark" name="color-scheme">
+    <meta content="Baby Gunnar's Hundred Acre Wood Shower" property="og:title">
+    <meta content="A sweet storybook and honey-catching game—read, play, and leave your wishes."
+          property="og:description">
+    <meta content="icons/icon.svg" property="og:image">
+    <meta content="website" property="og:type">
+
+    <style>
+        /* =========================================
+           1. ROOT + GLOBAL LAYOUT
+           ========================================= */
+        :root {
+            --bg: #fff9ec;
+            --bg-soft: #fff4dd;
+            --ink: #3b2604;
+            --ink-soft: #5a4330;
+            --accent: #f4b944;
+            --accent-soft: #ffe4a8;
+            --accent-strong: #f59e0b;
+            --border-soft: rgba(0, 0, 0, 0.06);
+            --card-bg: #ffffff;
+            --card-radius: 24px;
+            --shadow-soft: 0 18px 40px rgba(0, 0, 0, 0.16);
+            --shadow-subtle: 0 8px 20px rgba(0, 0, 0, 0.08);
+            --shadow-tiny: 0 2px 6px rgba(0, 0, 0, 0.08);
+            --transition-fast: 0.18s ease-out;
+            --transition-med: 0.28s ease;
+            --page-max-width: 1120px;
+            --page-padding-x: 1.5rem;
+            --page-padding-y: 1.5rem;
+            --font-body: system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
+            --font-title: "Playfair Display", "Georgia", serif;
+            --space-sm: 0.75rem;
+            --space-md: 1.25rem;
+            --touch-min: 44px;
+            --touch-padding: 0.75rem;
+        }
+
+        *,
+        *::before,
+        *::after {
+            box-sizing: border-box;
+        }
+
+        html,
+        body {
+            margin: 0;
+            padding: 0;
+        }
+
+        body {
+            min-height: 100vh;
+            font-family: var(--font-body);
+            color: var(--ink);
+            background: radial-gradient(circle at top, #fff4d4 0, #ffe5b0 28%, #ffe7c4 48%, #fff9ec 100%);
+            -webkit-font-smoothing: antialiased;
+            padding-left: env(safe-area-inset-left, 1rem);
+            padding-right: env(safe-area-inset-right, 1rem);
+            padding-top: env(safe-area-inset-top, 0);
+            padding-bottom: env(safe-area-inset-bottom, 0);
+        }
+
+        /* Global touch targets */
+        .hero-action-btn,
+        .chapter-nav-btn,
+        .footer-link,
+        .submit-btn,
+        .chapter-pill,
+        .registry-card,
+        .clickable-character,
+        .btn {
+            position: relative;
+            min-height: var(--touch-min);
+            min-width: var(--touch-min);
+        }
+
+        .footer-link,
+        .chapter-nav-btn {
+            padding: var(--touch-padding) calc(var(--touch-padding) * 1.5);
+        }
+
+        .hero-action-btn,
+        .submit-btn {
+            display: inline-flex;
+            align-items: center;
+            justify-content: center;
+        }
+
+        .btn-icon,
+        .pill-icon {
+            padding: 0.25rem;
+        }
+
+        /* A11y helper */
+        .sr-only {
+            position: absolute;
+            width: 1px;
+            height: 1px;
+            padding: 0;
+            margin: -1px;
+            overflow: hidden;
+            clip: rect(0, 0, 0, 0);
+            border: 0;
+        }
+
+        /* Simple text utilities */
+        .divider {
+            text-align: center;
+            margin: 2rem 0;
+            font-size: 0.95rem;
+            opacity: 0.8;
+        }
+
+        /* =========================================
+           2. DECORATIVE SCENE + CLOUDS
+           ========================================= */
+        .enhanced-scene {
+            position: fixed;
+            inset: 0;
+            pointer-events: none;
+            background:
+                radial-gradient(circle at top left, rgba(255, 255, 255, 0.8), transparent 55%),
+                radial-gradient(circle at top right, rgba(255, 243, 205, 0.8), transparent 50%),
+                radial-gradient(circle at bottom, rgba(255, 220, 185, 0.9), transparent 60%);
+            opacity: 0.6;
+            z-index: -2;
+        }
+
+        .cloud-layer {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            pointer-events: none;
+            display: flex;
+            justify-content: space-around;
+            padding-top: 0.5rem;
+            font-size: 1.8rem;
+            opacity: 0.45;
+            z-index: -1;
+        }
+
+        .cloud {
+            animation: floatClouds 24s linear infinite;
+        }
+
+        .cloud:nth-child(2) {
+            animation-delay: -8s;
+        }
+
+        .cloud:nth-child(3) {
+            animation-delay: -16s;
+        }
+
+        @keyframes floatClouds {
+            0% {
+                transform: translate3d(-10px, 0, 0);
+            }
+            50% {
+                transform: translate3d(10px, 4px, 0);
+            }
+            100% {
+                transform: translate3d(-10px, 0, 0);
+            }
+        }
+
+        /* =========================================
+           3. HERO / MASTHEAD
+           ========================================= */
+        .masthead-hero {
+            position: relative;
+            padding-bottom: 2rem;
+            color: var(--ink);
+        }
+
+        .hero-banner {
+            position: relative;
+            isolation: isolate;
+            max-width: 1200px;
+            margin: 0 auto 1.5rem;
+            border-radius: 32px;
+            overflow: hidden;
+            box-shadow: var(--shadow-soft);
+            background: linear-gradient(135deg, #ffe5b0, #ffd1a3);
+            padding-top: env(safe-area-inset-top, 0);
+        }
+
+        .hero-image-container {
+            position: relative;
+            width: 100%;
+            height: min(60vh, 520px);
+            overflow: hidden;
+        }
+
+        .hero-banner__img {
+            width: 100%;
+            height: 100%;
+            object-fit: cover;
+            filter: saturate(1.05) contrast(1.03);
+            transform: scale(1.02);
+            transform-origin: center;
+        }
+
+        /* Corner emojis */
+        .hero-corner-decoration {
+            position: absolute;
+            font-size: 1.8rem;
+            filter: drop-shadow(0 2px 4px rgba(0, 0, 0, 0.16));
+        }
+
+        .hero-corner-decoration.top-left {
+            top: 10px;
+            left: 14px;
+        }
+
+        .hero-corner-decoration.top-right {
+            top: 10px;
+            right: 14px;
+        }
+
+        .hero-corner-decoration.bottom-left {
+            bottom: 10px;
+            left: 14px;
+        }
+
+        .hero-corner-decoration.bottom-right {
+            bottom: 10px;
+            right: 14px;
+        }
+
+        /* Title overlay */
+        .hero-title-container {
+            position: absolute;
+            inset: auto 0 0;
+            display: flex;
+            justify-content: center;
+            padding: 1.25rem 1.5rem 1.6rem;
+            pointer-events: none;
+        }
+
+        .title-background {
+            pointer-events: auto;
+            max-width: 720px;
+            width: 100%;
+            padding: 1.25rem 1.5rem 1.5rem;
+            border-radius: 24px 24px 0 0;
+            background: linear-gradient(
+                135deg,
+                rgba(255, 255, 255, 0.99),
+                rgba(255, 248, 225, 0.9)
+            );
+            box-shadow: 0 -10px 30px rgba(0, 0, 0, 0.18);
+            border: 1px solid rgba(255, 255, 255, 0.9);
+            border-bottom: none;
+        }
+
+        .masthead-title {
+            margin: 0 0 0.5rem;
+            font-family: var(--font-title);
+            letter-spacing: 0.04em;
+            text-align: center;
+        }
+
+        .title-line {
+            display: block;
+        }
+
+        .title-line--primary {
+            font-size: clamp(1.3rem, 2vw + 1rem, 1.6rem);
+            text-transform: uppercase;
+            letter-spacing: 0.25em;
+            opacity: 0.9;
+        }
+
+        .title-line--secondary {
+            font-size: clamp(1.9rem, 3vw + 1.2rem, 2.4rem);
+            font-weight: 700;
+        }
+
+        .title-underline {
+            display: flex;
+            justify-content: center;
+            gap: 0.25rem;
+            margin-bottom: 0.35rem;
+        }
+
+        .underline-dot {
+            font-size: 0.95rem;
+            color: var(--accent-strong);
+        }
+
+        .hero-subtitle {
+            margin: 0;
+            text-align: center;
+            font-size: 0.95rem;
+            color: var(--ink-soft);
+        }
+
+        /* Sparkles / bunting / sheen */
+        .hero-sparkles {
+            position: absolute;
+            inset: 0;
+            pointer-events: none;
+            background:
+                radial-gradient(circle at 10% 10%, rgba(255, 255, 255, 0.7), transparent 60%),
+                radial-gradient(circle at 90% 30%, rgba(255, 225, 173, 0.7), transparent 55%);
+            mix-blend-mode: screen;
+            opacity: 0.6;
+            z-index: -1;
+        }
+
+        .hero-bunting {
+            max-width: 1200px;
+            margin: 0.25rem auto 0;
+            display: flex;
+            justify-content: center;
+            gap: 0.5rem;
+            font-size: 1.4rem;
+        }
+
+        .hero-sheen {
+            position: absolute;
+            inset: 0;
+            pointer-events: none;
+            background: linear-gradient(
+                135deg,
+                rgba(255, 255, 255, 0.16),
+                transparent 60%
+            );
+            mix-blend-mode: screen;
+            opacity: 0.8;
+        }
+
+        /* Hero inner panel */
+        .masthead-hero-inner {
+            max-width: var(--page-max-width);
+            margin: 0.5rem auto 0;
+            padding: 0 1.25rem;
+            padding-left: max(var(--page-padding-x), env(safe-area-inset-left, 1rem));
+            padding-right: max(var(--page-padding-x), env(safe-area-inset-right, 1rem));
+        }
+
+        .hero-panel {
+            margin-top: 1.5rem;
+            padding: 1.75rem 1.5rem;
+            border-radius: var(--card-radius);
+            background: rgba(255, 255, 255, 0.96);
+            box-shadow: var(--shadow-subtle);
+            border: 1px solid rgba(255, 255, 255, 0.8);
+        }
+
+        /* =========================================
+           4. HERO BADGE + DETAIL GRID + CTA
+           ========================================= */
+        .hero-badge {
+            display: grid;
+            grid-template-columns: auto minmax(0, 1.5fr);
+            gap: 1rem;
+            padding: 1rem 1.25rem;
+            border-radius: 999px;
+            background: linear-gradient(135deg, #fffaf0, #ffe8bb);
+            align-items: center;
+            border: 1px solid rgba(244, 185, 68, 0.3);
+            margin-bottom: 1.5rem;
+        }
+
+        .badge-icon {
+            display: flex;
+            align-items: center;
+            justify-content: center;
+        }
+
+        .badge-icon-inner {
+            width: 48px;
+            height: 48px;
+            border-radius: 999px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            background: radial-gradient(circle at 30% 20%, #fff9e8, #f4b944);
+            box-shadow: var(--shadow-tiny);
+            font-size: 1.6rem;
+        }
+
+        .badge-copy {
+            min-width: 0;
+        }
+
+        .badge-eyebrow {
+            margin: 0;
+            text-transform: uppercase;
+            letter-spacing: 0.16em;
+            font-size: 0.7rem;
+            opacity: 0.7;
+        }
+
+        .badge-label {
+            margin: 0.15rem 0 0;
+            font-size: 0.9rem;
+            font-weight: 600;
+        }
+
+        .badge-title {
+            margin: 0.15rem 0 0;
+            font-size: 1rem;
+            font-weight: 700;
+        }
+
+        .badge-meta {
+            display: flex;
+            gap: 0.5rem;
+            flex-wrap: wrap;
+            justify-content: flex-end;
+            align-items: center;
+            font-size: 0.8rem;
+        }
+
+        .badge-pill {
+            display: inline-flex;
+            align-items: center;
+            gap: 0.4rem;
+            border-radius: 999px;
+            padding: 0.3rem 0.7rem;
+            background: rgba(255, 255, 255, 0.92);
+            border: 1px solid rgba(255, 255, 255, 0.9);
+            box-shadow: 0 2px 6px rgba(244, 185, 68, 0.25);
+        }
+
+        .pill-icon {
+            font-size: 1rem;
+        }
+
+        .pill-text {
+            white-space: nowrap;
+        }
+
+        /* Detail grid */
+        .hero-details-grid {
+            display: grid;
+            grid-template-columns: repeat(3, minmax(0, 1fr));
+            gap: 1rem;
+            margin-bottom: 1.5rem;
+        }
+
+        .hero-detail {
+            display: flex;
+            gap: 0.75rem;
+            padding: 0.85rem 1rem;
+            border-radius: 16px;
+            background: #fffdfa;
+            box-shadow: 0 4px 12px rgba(244, 185, 68, 0.12);
+        }
+
+        .detail-icon {
+            font-size: 1.5rem;
+        }
+
+        .detail-title {
+            margin: 0;
+            font-size: 0.95rem;
+            font-weight: 600;
+        }
+
+        .detail-text {
+            margin: 0.15rem 0 0;
+            font-size: 0.85rem;
+            color: var(--ink-soft);
+        }
+
+        /* Hero CTAs */
+        .hero-actions {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 0.75rem;
+            margin-bottom: 1rem;
+        }
+
+        .hero-action-btn {
+            border-radius: 999px;
+            border: none;
+            padding: 0.6rem 1.1rem;
+            font-size: 0.9rem;
+            font-weight: 600;
+            display: inline-flex;
+            align-items: center;
+            gap: 0.4rem;
+            cursor: pointer;
+            transition: transform var(--transition-fast), box-shadow var(--transition-fast), background var(--transition-fast);
+        }
+
+        .hero-action-btn .btn-icon {
+            font-size: 1.1rem;
+        }
+
+        .hero-action-btn.primary {
+            background: linear-gradient(135deg, #f4b944, #f59e0b);
+            color: #3b2604;
+            box-shadow: 0 8px 18px rgba(244, 185, 68, 0.6);
+        }
+
+        .hero-action-btn.secondary {
+            background: #ffffff;
+            color: var(--ink);
+            box-shadow: var(--shadow-tiny);
+            border: 1px solid rgba(0, 0, 0, 0.06);
+        }
+
+        .hero-action-btn.ghost {
+            background: transparent;
+            color: var(--ink-soft);
+            border: 1px dashed rgba(0, 0, 0, 0.16);
+        }
+
+        .hero-action-btn:hover {
+            transform: translateY(-1px);
+            box-shadow: 0 10px 22px rgba(0, 0, 0, 0.14);
+        }
+
+        /* Orientation hint */
+        .orientation-hint {
+            display: flex;
+            align-items: center;
+            gap: 0.6rem;
+            padding-top: 0.5rem;
+            border-top: 1px dashed rgba(0, 0, 0, 0.08);
+            margin-top: 0.5rem;
+            font-size: 0.83rem;
+            color: var(--ink-soft);
+        }
+
+        .hint-icon {
+            font-size: 1.4rem;
+        }
+
+        /* =========================================
+           5. CHAPTER TRACKER
+           ========================================= */
+        .chapter-tracker {
+            margin: 1rem 0 0.75rem;
+        }
+
+        .tracker-row {
+            display: flex;
+            align-items: center;
+            gap: 0.75rem;
+            margin-bottom: 0.75rem;
+        }
+
+        .tracker-label {
+            font-size: 0.8rem;
+            text-transform: uppercase;
+            letter-spacing: 0.16em;
+            opacity: 0.7;
+            white-space: nowrap;
+        }
+
+        /* Progress bar */
+        .book-progress {
+            position: relative;
+            flex: 1;
+            height: 0.4rem;
+            border-radius: 999px;
+            background: rgba(0, 0, 0, 0.06);
+            overflow: hidden;
+        }
+
+        .book-progress .progress-fill {
+            width: 0%;
+            height: 100%;
+            border-radius: inherit;
+            background: linear-gradient(90deg, #f4b944, #f97316);
+            transition: width 0.25s ease-out;
+        }
+
+        .chapter-pill-row {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 0.5rem;
+            margin-top: 0.25rem;
+        }
+
+        .chapter-pill {
+            display: inline-flex;
+            align-items: center;
+            gap: 0.5rem;
+            padding: 0.4rem 0.9rem;
+            border-radius: 999px;
+            border: 1px solid rgba(0, 0, 0, 0.08);
+            background: #ffffff;
+            box-shadow: var(--shadow-tiny);
+            cursor: pointer;
+            font-size: 0.85rem;
+        }
+
+        .chapter-pill .pill-number {
+            display: inline-flex;
+            align-items: center;
+            justify-content: center;
+            width: 1.7rem;
+            height: 1.7rem;
+            border-radius: 999px;
+            background: #fff7dd;
+            font-weight: 700;
+            font-size: 0.85rem;
+        }
+
+        .chapter-pill .pill-text {
+            display: flex;
+            flex-direction: column;
+            align-items: flex-start;
+        }
+
+        .chapter-pill .pill-title {
+            font-weight: 600;
+            font-size: 0.85rem;
+        }
+
+        .chapter-pill .pill-detail {
+            font-size: 0.75rem;
+            opacity: 0.76;
+        }
+
+        .chapter-pill.active {
+            border-color: #f4b944;
+            background: linear-gradient(135deg, #fff8dd, #ffe4af);
+        }
+
+        /* Sparkle accent */
+        .sparkle {
+            position: relative;
+        }
+
+        .sparkle::after {
+            content: "";
+            position: absolute;
+            inset: -2px;
+            border-radius: inherit;
+            border: 1px solid rgba(255, 255, 255, 0.7);
+            opacity: 0;
+            pointer-events: none;
+            animation: sparklePulse 2.8s ease-in-out infinite;
+        }
+
+        .chapter-pill.active.sparkle::after {
+            opacity: 1;
+        }
+
+        @keyframes sparklePulse {
+            0%,
+            100% {
+                transform: scale(1);
+                opacity: 0.4;
+            }
+            50% {
+                transform: scale(1.03);
+                opacity: 1;
+            }
+        }
+
+        /* =========================================
+           6. BOOK LAYOUT + PAGES
+           ========================================= */
+        .book-container {
+            max-width: var(--page-max-width);
+            margin: 1.25rem auto 3rem;
+            padding: 0 var(--page-padding-x);
+            padding-left: max(var(--page-padding-x), env(safe-area-inset-left, 1rem));
+            padding-right: max(var(--page-padding-x), env(safe-area-inset-right, 1rem));
+        }
+
+        .book {
+            margin-top: 1rem;
+            border-radius: var(--card-radius);
+            background: #fffdf8;
+            box-shadow: var(--shadow-soft);
+            border: 1px solid rgba(255, 255, 255, 0.9);
+            overflow: hidden;
+        }
+
+        .pages-wrapper {
+            position: relative;
+            padding: var(--page-padding-y) var(--page-padding-x);
+        }
+
+        /* Page cards */
+        .page {
+            display: none;
+            opacity: 0;
+            transform: translateY(4px);
+            transition: opacity var(--transition-med), transform var(--transition-med);
+        }
+
+        .page.active {
+            display: block;
+            opacity: 1;
+            transform: translateY(0);
+        }
+
+        .chapter-header {
+            text-align: center;
+            margin-bottom: 1.5rem;
+            position: relative;
+        }
+
+        .chapter-number {
+            margin: 0;
+            font-size: 0.85rem;
+            text-transform: uppercase;
+            letter-spacing: 0.22em;
+            opacity: 0.7;
+        }
+
+        .chapter-title {
+            margin: 0.4rem 0 0.25rem;
+            font-family: var(--font-title);
+            font-size: 1.6rem;
+        }
+
+        .chapter-subtitle {
+            margin: 0;
+            font-size: 0.95rem;
+            color: var(--ink-soft);
+        }
+
+        .honey-drip {
+            position: absolute;
+            bottom: -0.4rem;
+            left: 50%;
+            transform: translateX(-50%);
+            width: 110px;
+            height: 12px;
+            border-radius: 999px;
+            background: linear-gradient(90deg, #fbbf24, #f97316);
+            opacity: 0.5;
+        }
+
+        /* Page body */
+        .page-content {
+            margin-top: 1.75rem;
+        }
+
+        .story-text {
+            margin: 0 0 1rem;
+            line-height: 1.7;
+            font-size: 0.98rem;
+        }
+
+        /* =========================================
+           7. FIGURES / CHARACTER CARDS
+           ========================================= */
+        .chapter-illustrations {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 1rem;
+            margin: 1.25rem 0 1.5rem;
+        }
+
+        .storybook-figure {
+            flex: 1 1 180px;
+            min-width: 0;
+            padding: 0.75rem 0.85rem;
+            border-radius: 18px;
+            background: #ffffff;
+            box-shadow: var(--shadow-tiny);
+            display: flex;
+            align-items: center;
+            gap: 0.75rem;
+        }
+
+        .storybook-figure img {
+            border-radius: 16px;
+            background: #fff6dc;
+            box-shadow: 0 4px 12px rgba(0, 0, 0, 0.16);
+            max-width: 96px;
+            max-height: 96px;
+        }
+
+        .figure-copy {
+            min-width: 0;
+        }
+
+        .figure-name {
+            font-weight: 600;
+            font-size: 0.9rem;
+        }
+
+        .figure-note {
+            margin: 0.15rem 0 0;
+            font-size: 0.8rem;
+            color: var(--ink-soft);
+        }
+
+        /* Theme tints */
+        .figure-theme-honey {
+            background: linear-gradient(135deg, #fff7dd, #ffe7b8);
+        }
+
+        .figure-theme-forest {
+            background: linear-gradient(135deg, #e5f4dd, #f3ffe3);
+        }
+
+        .figure-theme-sky {
+            background: linear-gradient(135deg, #e5f4ff, #f3f9ff);
+        }
+
+        /* Clickable characters */
+        .clickable-character {
+            cursor: pointer;
+            transition: transform var(--transition-fast), box-shadow var(--transition-fast);
+        }
+
+        .clickable-character:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 10px 22px rgba(0, 0, 0, 0.18);
+        }
+
+        /* Character message bubble */
+        .character-message {
+            margin-top: 0.5rem;
+            font-size: 0.8rem;
+            color: var(--ink);
+        }
+
+        /* Dialogue bubbles in narrative */
+        .dialogue-bubble {
+            position: relative;
+            margin: 1rem 0 1.25rem;
+            padding: 0.7rem 0.9rem;
+            border-radius: 16px;
+            font-size: 0.9rem;
+            line-height: 1.4;
+        }
+
+        .dialogue-piglet {
+            background: #fff0f5;
+        }
+
+        .dialogue-pooh {
+            background: #fff5dd;
+        }
+
+        .dialogue-bubble .speaker {
+            display: block;
+            margin-top: 0.3rem;
+            font-size: 0.8rem;
+            opacity: 0.8;
+        }
+
+        .bubble-arrow {
+            position: absolute;
+            left: 18px;
+            bottom: 100%;
+            width: 12px;
+            height: 12px;
+            background: inherit;
+            transform: translateY(1px) rotate(45deg);
+        }
+
+        /* =========================================
+           8. GAME EMBED + HONEY GAME
+           ========================================= */
+        .game-embed {
+            margin: 1.5rem auto;
+            max-width: 960px;
+            width: 100%;
+            border-radius: 24px;
+            overflow: hidden;
+            background: #000;
+            box-shadow: var(--shadow-soft);
+            border: 2px solid rgba(0, 0, 0, 0.08);
+            position: relative;
+            min-height: 320px;
+        }
+
+        .game-embed::before {
+            content: 'Loading game…';
+            position: absolute;
+            inset: 0;
+            background: linear-gradient(135deg, #ffe5b0, #ffd1a3);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 1.2rem;
+            color: var(--ink);
+            z-index: 1;
+            opacity: 1;
+            transition: opacity 0.3s ease;
+        }
+
+        .game-embed.loaded::before {
+            opacity: 0;
+            pointer-events: none;
+        }
+
+        .honey-game {
+            position: relative;
+            display: flex;
+            flex-direction: column;
+            height: 100%;
+            min-height: 320px;
+            background: radial-gradient(circle at top, #fff8e1 0, #ffe0b2 45%, #f6b26b 100%);
+            color: #2c1810;
+        }
+
+        .honey-game-header {
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            padding: 0.6rem 0.9rem;
+            font-size: 0.85rem;
+            background: linear-gradient(135deg, rgba(255, 255, 255, 0.9), rgba(255, 248, 225, 0.9));
+        }
+
+        .honey-game-header .title {
+            display: flex;
+            align-items: center;
+            gap: 0.4rem;
+        }
+
+        .honey-game-header .title span {
+            font-weight: 600;
+        }
+
+        .hud-row {
+            display: flex;
+            align-items: center;
+            gap: 0.75rem;
+        }
+
+        .hud-item {
+            padding: 0.2rem 0.6rem;
+            border-radius: 999px;
+            background: rgba(255, 255, 255, 0.8);
+            box-shadow: var(--shadow-tiny);
+        }
+
+        .hud-label {
+            font-size: 0.75rem;
+            opacity: 0.7;
+            margin-right: 0.2rem;
+        }
+
+        .honey-game-main {
+            position: relative;
+            flex: 1;
+            display: flex;
+            align-items: stretch;
+            justify-content: center;
+            padding: 0.6rem 0.6rem 0.4rem;
+        }
+
+        #gameCanvas {
+            border-radius: 18px;
+            background: linear-gradient(to top, #f4a261 0%, #f4e1a1 40%, #87ceeb 100%);
+            box-shadow: 0 10px 24px rgba(0, 0, 0, 0.3);
+            max-width: 100%;
+            max-height: 100%;
+        }
+
+        .honey-game-controls {
+            padding: 0.4rem 0.6rem 0.7rem;
+            display: flex;
+            flex-wrap: wrap;
+            gap: 0.5rem;
+            justify-content: center;
+            background: linear-gradient(180deg, rgba(255, 255, 255, 0.9), rgba(255, 248, 225, 0.9));
+        }
+
+        .control-btn {
+            border-radius: 999px;
+            border: 1px solid rgba(0, 0, 0, 0.14);
+            padding: 0.4rem 0.9rem;
+            font-size: 0.9rem;
+            font-weight: 600;
+            cursor: pointer;
+            background: #ffffff;
+            box-shadow: var(--shadow-tiny);
+            min-width: 80px;
+        }
+
+        .control-btn.primary {
+            border-color: transparent;
+            background: linear-gradient(135deg, #f4b944, #f59e0b);
+            color: #3b2604;
+            box-shadow: 0 6px 16px rgba(244, 185, 68, 0.6);
+        }
+
+        .control-btn:active {
+            transform: translateY(1px);
+            box-shadow: 0 2px 6px rgba(0, 0, 0, 0.18);
+        }
+
+        .control-btn-icon {
+            margin-right: 0.3rem;
+        }
+
+        /* Game description */
+        .game-description {
+            margin-top: 1.5rem;
+        }
+
+        .game-description h3 {
+            margin: 0 0 0.5rem;
+        }
+
+        .game-tips {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(180px, 1fr));
+            gap: 0.9rem;
+            margin-top: 0.75rem;
+        }
+
+        .tip {
+            display: flex;
+            gap: 0.5rem;
+            padding: 0.7rem 0.8rem;
+            border-radius: 16px;
+            background: #fffdfa;
+            box-shadow: var(--shadow-tiny);
+            font-size: 0.85rem;
+        }
+
+        .tip-icon {
+            font-size: 1.2rem;
+            flex-shrink: 0;
+        }
+
+        /* =========================================
+           9. REGISTRY + NURSERY DETAILS + WISHES
+           ========================================= */
+        .registry-container {
+            margin: 2rem 0 1.75rem;
+        }
+
+        .registry-section {
+            padding: 1.25rem 1.3rem;
+            border-radius: 22px;
+            background: linear-gradient(135deg, #fffaf3, #ffeede);
+            box-shadow: var(--shadow-subtle);
+        }
+
+        .registry-header {
+            display: flex;
+            gap: 0.8rem;
+            align-items: center;
+            margin-bottom: 1rem;
+        }
+
+        .registry-icon {
+            font-size: 1.8rem;
+        }
+
+        .registry-subtitle {
+            margin: 0.2rem 0 0;
+            font-size: 0.9rem;
+            color: var(--ink-soft);
+        }
+
+        .registry-grid {
+            display: grid;
+            grid-template-columns: minmax(0, 1.4fr) minmax(0, 1.2fr);
+            gap: 1rem;
+        }
+
+        .registry-card {
+            display: flex;
+            gap: 0.75rem;
+            padding: 0.9rem 1rem;
+            border-radius: 18px;
+            background: #ffffff;
+            text-decoration: none;
+            color: inherit;
+            box-shadow: var(--shadow-tiny);
+            transition: transform var(--transition-fast), box-shadow var(--transition-fast);
+        }
+
+        .registry-card:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 10px 24px rgba(0, 0, 0, 0.18);
+        }
+
+        .registry-card .card-icon {
+            font-size: 1.5rem;
+        }
+
+        .registry-card .card-content h4 {
+            margin: 0 0 0.2rem;
+            font-size: 0.95rem;
+        }
+
+        .registry-card .card-content p {
+            margin: 0;
+            font-size: 0.85rem;
+            color: var(--ink-soft);
+        }
+
+        .registry-card .card-link {
+            display: inline-block;
+            margin-top: 0.3rem;
+            font-size: 0.8rem;
+            color: #b45309;
+        }
+
+        .gift-idea-card {
+            flex-direction: column;
+        }
+
+        .gift-ideas {
+            margin: 0.25rem 0 0;
+            padding-left: 1.1rem;
+            font-size: 0.85rem;
+        }
+
+        /* Nursery details grid */
+        .nursery-details {
+            margin: 2rem 0 1.75rem;
+        }
+
+        .nursery-details h3 {
+            display: flex;
+            align-items: center;
+            gap: 0.4rem;
+        }
+
+        .details-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(190px, 1fr));
+            gap: 1rem;
+            margin-top: 0.9rem;
+        }
+
+        .detail-card {
+            padding: 0.85rem 1rem;
+            border-radius: 18px;
+            background: #ffffff;
+            box-shadow: var(--shadow-tiny);
+            display: flex;
+            gap: 0.7rem;
+        }
+
+        .detail-card .detail-icon {
+            font-size: 1.4rem;
+        }
+
+        /* Wishes section */
+        .wishes-section {
+            margin: 1.75rem 0 1.5rem;
+        }
+
+        .wishes-header h3 {
+            margin-bottom: 0.3rem;
+        }
+
+        .wishes-header p {
+            margin: 0;
+            font-size: 0.9rem;
+            color: var(--ink-soft);
+        }
+
+        .wishes-form-container {
+            margin-top: 1rem;
+        }
+
+        .enhanced-form {
+            padding: 1rem 1rem 1.1rem;
+            border-radius: 18px;
+            background: #fffdf8;
+            box-shadow: var(--shadow-tiny);
+        }
+
+        .form-grid {
+            display: grid;
+            grid-template-columns: repeat(2, minmax(0, 1fr));
+            gap: var(--space-md);
+            margin-bottom: 0.75rem;
+        }
+
+        .form-field label {
+            display: block;
+            margin-bottom: 0.15rem;
+            font-size: 0.85rem;
+            font-weight: 600;
+        }
+
+        .form-field input,
+        .form-field select,
+        .form-field textarea {
+            width: 100%;
+            padding: 0.55rem 0.6rem;
+            border-radius: 10px;
+            border: 1px solid rgba(0, 0, 0, 0.14);
+            font-family: inherit;
+            font-size: 0.9rem;
+            background: rgba(255, 255, 255, 0.96);
+        }
+
+        .form-field textarea {
+            resize: vertical;
+        }
+
+        .character-count {
+            margin-top: 0.25rem;
+            font-size: 0.75rem;
+            text-align: right;
+            color: var(--ink-soft);
+        }
+
+        .form-actions {
+            margin-top: 0.6rem;
+            display: flex;
+            flex-wrap: wrap;
+            gap: 0.75rem;
+            align-items: center;
+        }
+
+        .submit-btn {
+            border-radius: 999px;
+            border: none;
+            padding: 0.55rem 1.1rem;
+            background: linear-gradient(135deg, #f4b944, #f59e0b);
+            color: #3b2604;
+            font-weight: 600;
+            cursor: pointer;
+            display: inline-flex;
+            align-items: center;
+            gap: 0.4rem;
+            box-shadow: 0 6px 16px rgba(244, 185, 68, 0.6);
+            transition: transform var(--transition-fast), box-shadow var(--transition-fast);
+        }
+
+        .submit-btn:hover {
+            transform: translateY(-1px);
+            box-shadow: 0 10px 22px rgba(244, 185, 68, 0.7);
+        }
+
+        .form-feedback {
+            font-size: 0.8rem;
+            color: var(--ink-soft);
+        }
+
+        /* Sample wishes */
+        .sample-wishes {
+            margin-top: 1rem;
+        }
+
+        .wish-examples {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(190px, 1fr));
+            gap: 0.8rem;
+        }
+
+        .wish-example {
+            margin: 0;
+            padding: 0.7rem 0.9rem;
+            border-radius: 14px;
+            background: #ffffff;
+            box-shadow: var(--shadow-tiny);
+            font-size: 0.85rem;
+        }
+
+        .wish-example cite {
+            display: block;
+            margin-top: 0.3rem;
+            font-size: 0.8rem;
+            opacity: 0.8;
+        }
+
+        /* Dynamic wishes display */
+        .wishes-display {
+            margin-top: 1.25rem;
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(210px, 1fr));
+            gap: 0.9rem;
+        }
+
+        .wishes-display .wish-card {
+            padding: 0.8rem 0.9rem;
+            border-radius: 16px;
+            background: #fffdfa;
+            box-shadow: var(--shadow-tiny);
+            font-size: 0.9rem;
+        }
+
+        .wish-card .wish-meta {
+            font-size: 0.8rem;
+            opacity: 0.7;
+            margin-bottom: 0.25rem;
+        }
+
+        /* =========================================
+           10. CHAPTER 4 CELEBRATION / COUNTDOWN
+           ========================================= */
+        .welcome-panel {
+            margin: 1.75rem 0 1.5rem;
+            padding: 1rem 1.1rem;
+            border-radius: 20px;
+            background: linear-gradient(135deg, #fff6dd, #ffe4b2);
+            display: flex;
+            align-items: center;
+            gap: 0.8rem;
+        }
+
+        .welcome-icon {
+            font-size: 1.7rem;
+        }
+
+        .welcome-heading {
+            margin: 0;
+        }
+
+        .welcome-subtitle {
+            margin: 0.2rem 0 0;
+            font-size: 0.9rem;
+            color: var(--ink-soft);
+        }
+
+        /* Countdown */
+        .countdown-section {
+            margin: 1.5rem 0 1.75rem;
+        }
+
+        .countdown-display {
+            display: flex;
+            gap: 1rem;
+            margin: 0.7rem 0;
+        }
+
+        .countdown-item {
+            flex: 0 0 90px;
+            padding: 0.7rem 0.8rem;
+            border-radius: 16px;
+            background: #ffffff;
+            box-shadow: var(--shadow-tiny);
+            text-align: center;
+        }
+
+        .countdown-number {
+            display: block;
+            font-size: 1.35rem;
+            font-weight: 700;
+        }
+
+        .countdown-label {
+            font-size: 0.8rem;
+            opacity: 0.8;
+        }
+
+        .countdown-note {
+            margin: 0;
+            font-size: 0.9rem;
+            color: var(--ink-soft);
+        }
+
+        /* Honey jar hopes */
+        .honey-jar-interactive {
+            margin: 1.75rem 0 1.5rem;
+            padding: 1rem 1.1rem;
+            border-radius: 20px;
+            background: #fffdf5;
+            box-shadow: var(--shadow-tiny);
+        }
+
+        .honey-jar-interactive h3 {
+            margin: 0.3rem 0 0.3rem;
+        }
+
+        .honey-jar-interactive p {
+            margin: 0 0 0.6rem;
+        }
+
+        .hopes-list {
+            margin: 0.5rem 0 0;
+            padding-left: 1.1rem;
+            font-size: 0.9rem;
+        }
+
+        /* Generic button used here */
+        .btn {
+            border-radius: 999px;
+            border: 1px solid rgba(0, 0, 0, 0.14);
+            padding: 0.5rem 1.1rem;
+            font-size: 0.9rem;
+            font-weight: 600;
+            cursor: pointer;
+            background: #ffffff;
+            box-shadow: var(--shadow-tiny);
+            transition: transform var(--transition-fast), box-shadow var(--transition-fast), background var(--transition-fast);
+        }
+
+        .btn.primary {
+            border-color: transparent;
+            background: linear-gradient(135deg, #f4b944, #f59e0b);
+            color: #3b2604;
+            box-shadow: 0 6px 16px rgba(244, 185, 68, 0.6);
+        }
+
+        .btn.primary:hover {
+            transform: translateY(-1px);
+            box-shadow: 0 10px 22px rgba(244, 185, 68, 0.7);
+        }
+
+        /* Final quote */
+        .final-thought {
+            margin-top: 1.5rem;
+            padding-top: 1rem;
+            border-top: 1px dashed rgba(0, 0, 0, 0.12);
+        }
+
+        .final-thought blockquote {
+            margin: 0;
+            font-size: 0.95rem;
+            font-style: italic;
+        }
+
+        .final-thought cite {
+            font-style: normal;
+        }
+
+        .final-thought .signature {
+            margin-top: 0.6rem;
+            font-size: 0.9rem;
+        }
+
+        /* =========================================
+           11. NAVIGATION BUTTONS (Prev / Next)
+           ========================================= */
+        .chapter-nav {
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            gap: 0.75rem;
+            padding: 0.85rem 1.25rem 1.1rem;
+            border-top: 1px solid rgba(0, 0, 0, 0.06);
+            background: rgba(255, 255, 255, 0.96);
+        }
+
+        .chapter-nav-btn {
+            border-radius: 999px;
+            border: 1px solid rgba(0, 0, 0, 0.18);
+            padding: 0.45rem 0.9rem;
+            font-size: 0.9rem;
+            cursor: pointer;
+            background: #ffffff;
+            box-shadow: var(--shadow-tiny);
+            transition: transform var(--transition-fast), box-shadow var(--transition-fast), background var(--transition-fast);
+        }
+
+        .chapter-nav-btn.next {
+            border-color: transparent;
+            background: linear-gradient(135deg, #f4b944, #f59e0b);
+            color: #3b2604;
+        }
+
+        .chapter-nav-btn:hover {
+            transform: translateY(-1px);
+            box-shadow: 0 8px 18px rgba(0, 0, 0, 0.16);
+        }
+
+        .chapter-indicator {
+            font-size: 0.9rem;
+            color: var(--ink-soft);
+        }
+
+        /* =========================================
+           12. FOOTER
+           ========================================= */
+        .site-footer {
+            max-width: var(--page-max-width);
+            margin: 0 auto 2rem;
+            padding: 1.25rem var(--page-padding-x) 0;
+            text-align: center;
+            font-size: 0.85rem;
+            color: var(--ink-soft);
+        }
+
+        .footer-links {
+            margin-top: 0.5rem;
+            display: flex;
+            justify-content: center;
+            gap: 0.75rem;
+            flex-wrap: wrap;
+        }
+
+        .footer-link {
+            border-radius: 999px;
+            border: 1px solid rgba(0, 0, 0, 0.16);
+            padding: 0.35rem 0.8rem;
+            font-size: 0.8rem;
+            background: #ffffff;
+            cursor: pointer;
+            box-shadow: var(--shadow-tiny);
+        }
+
+        /* =========================================
+           13. ANIMATIONS TOGGLE
+           ========================================= */
+        body.animations-off .cloud {
+            animation: none !important;
+        }
+
+        body.animations-off .chapter-pill.sparkle::after {
+            display: none;
+        }
+
+        /* =========================================
+           14. GAME SPECIFIC STYLES (QUICK WINS)
+           ========================================= */
+        .game-container {
+            position: relative;
+            width: 100%;
+            height: 100%;
+        }
+
+        .overlay {
+            position: absolute;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background: rgba(0, 0, 0, 0.8);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            z-index: 100;
+            opacity: 0;
+            visibility: hidden;
+            transition: opacity 0.3s ease;
+        }
+
+        .overlay.visible {
+            opacity: 1;
+            visibility: visible;
+        }
+
+        .overlay-content {
+            background: linear-gradient(135deg, #1e293b, #0f172a);
+            padding: 2rem;
+            border-radius: 20px;
+            text-align: center;
+            max-width: 400px;
+            width: 90%;
+            border: 3px solid #fbbf24;
+            color: white;
+        }
+
+        .modal {
+            display: none;
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background-color: rgba(0, 0, 0, 0.8);
+            z-index: 2000;
+            align-items: center;
+            justify-content: center;
+        }
+
+        .modal.visible {
+            display: flex;
+        }
+
+        .modal-content {
+            background: linear-gradient(135deg, #1e293b, #0f172a);
+            border-radius: 20px;
+            padding: 30px;
+            width: 90%;
+            max-width: 500px;
+            max-height: 80vh;
+            overflow-y: auto;
+            border: 3px solid #fbbf24;
+            color: white;
+        }
+
+        .game-top-controls {
+            position: absolute;
+            top: 10px;
+            right: 10px;
+            display: flex;
+            gap: 10px;
+            z-index: 50;
+        }
+
+        .btn-icon {
+            background: rgba(255, 255, 255, 0.1);
+            border: 2px solid #fbbf24;
+            border-radius: 50%;
+            width: 40px;
+            height: 40px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            color: #fbbf24;
+            cursor: pointer;
+            font-size: 18px;
+            backdrop-filter: blur(10px);
+        }
+
+        .floating-score {
+            position: absolute;
+            font-weight: bold;
+            font-size: 24px;
+            pointer-events: none;
+            z-index: 100;
+            animation: floatUp 1s ease-out forwards;
+        }
+
+        @keyframes floatUp {
+            0% {
+                transform: translateY(0);
+                opacity: 1;
+            }
+            100% {
+                transform: translateY(-50px);
+                opacity: 0;
+            }
+        }
+
+        .floating-score.normal { color: #84cc16; }
+        .floating-score.gold { color: #fbbf24; }
+        .floating-score.shield { color: #60a5fa; }
+        .floating-score.powerup { color: #22c55e; }
+        .floating-score.combo { color: #f97316; }
+
+        .difficulty-indicator {
+            animation: fadeOut 1.5s ease forwards;
+        }
+
+        @keyframes fadeOut {
+            0% { opacity: 1; }
+            70% { opacity: 1; }
+            100% { opacity: 0; }
+        }
+
+        .share-success {
+            animation: pulseSuccess 0.5s ease;
+        }
+
+        @keyframes pulseSuccess {
+            0% { transform: scale(1); }
+            50% { transform: scale(1.1); }
+            100% { transform: scale(1); }
+        }
+
+        /* Settings Modal Styles */
+        #settingsModal {
+            display: none;
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background-color: rgba(0, 0, 0, 0.8);
+            z-index: 2000;
+            align-items: center;
+            justify-content: center;
+        }
+        
+        #settingsModal.visible {
+            display: flex;
+        }
+        
+        #settingsPanel {
+            background: linear-gradient(135deg, #1e293b, #0f172a);
+            border-radius: 20px;
+            padding: 30px;
+            width: 90%;
+            max-width: 500px;
+            max-height: 80vh;
+            overflow-y: auto;
+            border: 3px solid #fbbf24;
+            box-shadow: 0 10px 40px rgba(0, 0, 0, 0.5);
+        }
+        
+        .settings-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 30px;
+        }
+        
+        .settings-header h2 {
+            color: #fbbf24;
+            font-size: 28px;
+            margin: 0;
+        }
+        
+        .settings-close {
+            background: none;
+            border: none;
+            color: #fbbf24;
+            font-size: 24px;
+            cursor: pointer;
+            padding: 5px;
+            border-radius: 5px;
+        }
+        
+        .settings-close:hover {
+            background-color: rgba(251, 191, 36, 0.1);
+        }
+        
+        .settings-group {
+            margin-bottom: 25px;
+            background: rgba(255, 255, 255, 0.05);
+            padding: 20px;
+            border-radius: 15px;
+        }
+        
+        .settings-group h3 {
+            color: #fbbf24;
+            font-size: 20px;
+            margin: 0 0 15px 0;
+        }
+        
+        .settings-row {
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            margin-bottom: 15px;
+            padding: 10px 0;
+            border-bottom: 1px solid rgba(255, 255, 255, 0.1);
+        }
+        
+        .settings-row:last-child {
+            border-bottom: none;
+        }
+        
+        .settings-label {
+            color: white;
+            font-size: 16px;
+            font-weight: bold;
+        }
+        
+        .toggle-btn {
+            background: rgba(255, 255, 255, 0.1);
+            border: 2px solid #fbbf24;
+            border-radius: 50px;
+            width: 60px;
+            height: 30px;
+            position: relative;
+            cursor: pointer;
+            transition: all 0.3s ease;
+        }
+        
+        .toggle-btn[data-on="true"] {
+            background-color: #fbbf24;
+        }
+        
+        .toggle-btn::after {
+            content: '';
+            position: absolute;
+            top: 3px;
+            left: 3px;
+            width: 22px;
+            height: 22px;
+            background-color: white;
+            border-radius: 50%;
+            transition: all 0.3s ease;
+        }
+        
+        .toggle-btn[data-on="true"]::after {
+            left: calc(100% - 25px);
+        }
+        
+        .diff-btn {
+            background: rgba(255, 255, 255, 0.1);
+            border: 2px solid #fbbf24;
+            color: white;
+            padding: 8px 16px;
+            border-radius: 8px;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            font-weight: bold;
+        }
+        
+        .diff-btn:hover {
+            background: rgba(251, 191, 36, 0.2);
+        }
+        
+        .diff-btn.active {
+            background-color: #fbbf24;
+            color: #1e293b;
+        }
+        
+        .settings-btn {
+            background: linear-gradient(135deg, #fbbf24, #f59e0b);
+            color: #1e293b;
+            border: none;
+            padding: 12px 24px;
+            border-radius: 10px;
+            font-weight: bold;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            display: flex;
+            align-items: center;
+            gap: 8px;
+            width: 100%;
+            justify-content: center;
+            margin-top: 10px;
+        }
+        
+        .settings-btn:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 5px 15px rgba(251, 191, 36, 0.4);
+        }
+        
+        .settings-btn.danger {
+            background: linear-gradient(135deg, #ef4444, #dc2626);
+            color: white;
+        }
+        
+        .settings-btn.danger:hover {
+            box-shadow: 0 5px 15px rgba(239, 68, 68, 0.4);
+        }
+
+        /* =========================================
+           15. RESPONSIVE TWEAKS
+           ========================================= */
+        @media (max-width: 900px) {
+            .hero-banner {
+                border-radius: 0;
+                box-shadow: none;
+            }
+
+            .hero-image-container {
+                height: min(50vh, 420px);
+            }
+
+            .hero-title-container {
+                padding-inline: 1rem;
+            }
+
+            .title-background {
+                border-radius: 20px 20px 0 0;
+            }
+
+            .hero-panel {
+                margin-top: 1rem;
+                padding: 1.25rem 1rem 1.4rem;
+            }
+
+            .hero-badge {
+                grid-template-columns: 1fr;
+                border-radius: 20px;
+            }
+
+            .hero-details-grid {
+                grid-template-columns: minmax(0, 1fr);
+            }
+
+            .registry-grid {
+                grid-template-columns: minmax(0, 1fr);
+            }
+        }
+
+        @media (max-width: 768px) {
+            .book-container {
+                padding-inline: 1rem;
+            }
+
+            .pages-wrapper {
+                padding-inline: 1rem;
+            }
+
+            .form-grid {
+                grid-template-columns: 1fr;
+                gap: var(--space-sm);
+            }
+
+            input[type="text"],
+            input[type="email"],
+            input[type="tel"],
+            textarea,
+            select {
+                font-size: 16px !important;
+            }
+
+            .form-field input,
+            .form-field select,
+            .form-field textarea {
+                padding: 0.75rem 0.85rem;
+                min-height: var(--touch-min);
+            }
+
+            .chapter-illustrations {
+                flex-direction: column;
+            }
+
+            .hero-actions {
+                flex-direction: column;
+                align-items: stretch;
+            }
+
+            .hero-action-btn {
+                justify-content: center;
+            }
+
+            .countdown-display {
+                justify-content: center;
+            }
+
+            .hud-row {
+                flex-wrap: wrap;
+            }
+
+            .overlay-content {
+                padding: 1.5rem;
+                margin: 1rem;
+            }
+            
+            .modal-content {
+                padding: 20px;
+                margin: 1rem;
+            }
+        }
+    </style>
+
+    <link as="image" href="Images/Characters/Gunnar.png" rel="preload">
 </head>
-
 <body>
-  <a class="skip-link" href="#story">Skip to the story</a>
+<!-- Decorative Elements -->
+<div aria-hidden="true" class="enhanced-scene" id="enhancedScene"></div>
+<div aria-hidden="true" class="cloud-layer">
+    <div class="cloud">☁️</div>
+    <div class="cloud">☁️</div>
+    <div class="cloud">☁️</div>
+</div>
 
-  <!-- Ambient forest sound: starts only after user opens the book -->
-  <audio id="forestSound" preload="auto" loop>
-    <source src="https://assets.mixkit.co/sfx/preview/mixkit-light-wind-in-leaves-118.mp3" type="audio/mpeg">
-  </audio>
-
-  <!-- COVER -->
-  <section class="cover" id="cover" aria-label="Cover page">
-    <div class="cover__paper">
-      <p class="cover__eyebrow">A Baby Shower Story</p>
-      <h1>For Baby Gunnar</h1>
-      <p class="cover__sub">On the way, and already so loved.</p>
-
-      <div class="cover__openRow">
-        <button class="btn btn--primary" id="openBook" type="button">Open the Book</button>
-        <button class="btn btn--ghost" id="printStory" type="button">Print Keepsake</button>
-      </div>
-
-      <p class="cover__hint">A quiet little scroll. A warm little world.</p>
+<!-- Hero Header -->
+<header class="masthead-hero hero-enhancements">
+    <!-- Hero Banner with Image and Title Overlay -->
+    <div class="hero-banner">
+        <div class="hero-image-container">
+            <picture>
+                <source sizes="100vw"
+                        srcset="Images/Characters/Gunnar.png 800w, Images/Characters/Gunnar.png 1200w, Images/Characters/Gunnar.png 1600w">
+                <img alt="Baby Gunnar with Hundred Acre Wood friends in the Hundred Acre Wood" class="hero-banner__img" height="900" loading="eager"
+                     src="Images/Characters/Gunnar.png" width="1600">
+            </picture>
+            <!-- Decorative corner elements -->
+            <div aria-hidden="true" class="hero-corner-decoration top-left">🌿</div>
+            <div aria-hidden="true" class="hero-corner-decoration top-right">🍯</div>
+            <div aria-hidden="true" class="hero-corner-decoration bottom-left">💛</div>
+            <div aria-hidden="true" class="hero-corner-decoration bottom-right">🐝</div>
+        </div>
+        <!-- Title Container with Background -->
+        <div class="hero-title-container">
+            <div class="title-background">
+                <h1 class="masthead-title">
+                    <span class="title-line title-line--primary">Baby Gunnar's</span>
+                    <span class="title-line title-line--secondary">Hundred Acre Wood Shower</span>
+                </h1>
+                <div aria-hidden="true" class="title-underline">
+                    <span class="underline-dot">•</span>
+                    <span class="underline-dot">•</span>
+                    <span class="underline-dot">•</span>
+                </div>
+                <p class="hero-subtitle">A storybook celebration with Pooh &amp; friends</p>
+            </div>
+        </div>
     </div>
-  </section>
-
-  <main id="story">
-    <section class="section">
-      <h2>The News</h2>
-      <p>
-        In a calm corner of the Hundred Acre Wood, a wonderful thing became known.
-        A new little friend is on the way.
-      </p>
-      <p class="soft">
-        The trees seem to lean closer. The bees hum softer. Even the sunlight feels like it’s waiting.
-      </p>
-      <p>
-        Everyone agrees on one thing: when Baby Gunnar arrives, there should already be love waiting.
-      </p>
-    </section>
-
-    <div class="divider"><hr></div>
-
-    <section class="section gathering" aria-label="Gathering details">
-      <h2>A Gathering in the Wood</h2>
-      <p>
-        To celebrate Baby Gunnar—who’s on the way—we’re gathering for honey, stories,
-        and the kind of happiness that doesn’t hurry.
-      </p>
-
-      <div class="gathering__details">
-        <div class="gathering__row">
-          <strong>Date</strong>
-          <span>April 15</span>
-        </div>
-        <div class="gathering__row">
-          <strong>Time</strong>
-          <span>2–5 PM</span>
-        </div>
-        <div class="gathering__row">
-          <strong>Place</strong>
-          <span>The Hundred Acre Wood</span>
-        </div>
-      </div>
-
-      <p class="gathering__note">
-        Come as you are. Stay as long as you like. If you arrive early, that’s just more time for quiet joy.
-      </p>
-    </section>
-
-    <section class="section">
-      <h2>A Little Tradition</h2>
-      <p>
-        If you’d like to bring something, Pooh thought a book might be nice.
-      </p>
-      <div class="tradition">
-        <p style="margin-bottom:0;">
-          Write your name inside. Baby Gunnar will read it one day and know you were here from the beginning.
-        </p>
-      </div>
-    </section>
-
-    <div class="divider"><hr></div>
-
-    <!-- FRIENDS -->
-    <section class="section friends" id="friends" aria-label="Meet the friends">
-      <h2>Meet the Friends</h2>
-      <p class="soft">
-        In the Wood, everyone has a way of making you feel like you belong.
-        These friends are saving a place for Baby Gunnar.
-      </p>
-
-      <div class="friends__grid" id="friendsGrid">
-        <button class="friend-card" type="button" data-friend="pooh">
-          <div class="friend-portrait">
-            <img src="Images/Characters/honey-bear.png" alt="Winnie the Pooh holding honey" loading="lazy" decoding="async">
-          </div>
-          <div class="friend-name">Winnie the Pooh</div>
-          <div class="friend-trait">Gentle. Loyal. Slightly honey-motivated.</div>
-          <div class="friend-quote">“Sometimes the smallest things…”</div>
-        </button>
-
-        <button class="friend-card" type="button" data-friend="piglet">
-          <div class="friend-portrait">
-            <img src="Images/Characters/piglet.png" alt="Piglet" loading="lazy" decoding="async">
-          </div>
-          <div class="friend-name">Piglet</div>
-          <div class="friend-trait">Small, but brave when it matters.</div>
-          <div class="friend-quote">“Oh d-d-dear…”</div>
-        </button>
-
-        <button class="friend-card" type="button" data-friend="tigger">
-          <div class="friend-portrait">
-            <img src="Images/Characters/tigger.png" alt="Tigger" loading="lazy" decoding="async">
-          </div>
-          <div class="friend-name">Tigger</div>
-          <div class="friend-trait">Joy on springs. Energy for days.</div>
-          <div class="friend-quote">“TTFN!”</div>
-        </button>
-
-        <button class="friend-card" type="button" data-friend="eeyore">
-          <div class="friend-portrait">
-            <img src="Images/Characters/eeyore.png" alt="Eeyore" loading="lazy" decoding="async">
-          </div>
-          <div class="friend-name">Eeyore</div>
-          <div class="friend-trait">Quiet. Steady. Always shows up.</div>
-          <div class="friend-quote">“Thanks for noticing me.”</div>
-        </button>
-
-        <button class="friend-card" type="button" data-friend="roo">
-          <div class="friend-portrait">
-            <img src="Images/Characters/roo.png" alt="Roo" loading="lazy" decoding="async">
-          </div>
-          <div class="friend-name">Roo</div>
-          <div class="friend-trait">Curious heart. Big jumps ahead.</div>
-          <div class="friend-quote">“Can I come too?”</div>
-        </button>
-
-        <button class="friend-card" type="button" data-friend="owl">
-          <div class="friend-portrait">
-            <img src="Images/Characters/owl.png" alt="Owl" loading="lazy" decoding="async">
-          </div>
-          <div class="friend-name">Owl</div>
-          <div class="friend-trait">Stories, advice, and helpful opinions.</div>
-          <div class="friend-quote">“Ahem…”</div>
-        </button>
-      </div>
-    </section>
-
-    <!-- Friend Modal -->
-    <div class="friend-modal" id="friendModal" aria-hidden="true">
-      <div class="friend-modal__card" role="dialog" aria-modal="true" aria-labelledby="friendModalTitle">
-        <button class="friend-modal__close" type="button" id="friendModalClose" aria-label="Close">×</button>
-
-        <div class="friend-modal__top">
-          <div class="friend-modal__portrait">
-            <img id="friendModalImg" src="" alt="" decoding="async">
-          </div>
-          <div>
-            <h3 class="friend-modal__title" id="friendModalTitle"></h3>
-            <div class="friend-modal__subtitle" id="friendModalSubtitle"></div>
-          </div>
-        </div>
-
-        <div class="friend-modal__body" id="friendModalBody"></div>
-        <div class="friend-modal__quote" id="friendModalQuote"></div>
-      </div>
+    <!-- Decorative Elements -->
+    <div aria-hidden="true" class="hero-sparkles" id="heroSparkles"></div>
+    <div aria-hidden="true" class="hero-bunting">
+        <span>✨</span><span>🎈</span><span>🍯</span><span>💝</span><span>🧸</span><span>📖</span><span>✨</span>
     </div>
+    <div aria-hidden="true" class="hero-sheen"></div>
+    <!-- Hero Info Panel -->
+    <div class="masthead-hero-inner">
+        <section class="hero-panel">
+            <!-- Event Badge -->
+            <div class="hero-badge">
+                <div aria-hidden="true" class="badge-icon">
+                    <div class="badge-icon-inner">🎉</div>
+                </div>
+                <div class="badge-copy">
+                    <p class="badge-eyebrow">A Very Special</p>
+                    <p class="badge-label">Hundred Acre Gathering</p>
+                    <p class="badge-title">Virtual Baby Shower Celebration</p>
+                </div>
+                <div class="badge-meta">
+                    <time class="badge-pill date" datetime="2025-06-15">
+                        <span aria-hidden="true" class="pill-icon">📅</span>
+                        <span class="pill-text">June 15, 2025</span>
+                    </time>
+                    <div class="badge-pill location">
+                        <span aria-hidden="true" class="pill-icon">📍</span>
+                        <span class="pill-text">Online Celebration</span>
+                    </div>
+                </div>
+            </div>
+            <!-- Hero Details Grid -->
+            <div class="hero-details-grid">
+                <div class="hero-detail">
+                    <div aria-hidden="true" class="detail-icon">📚</div>
+                    <div class="detail-content">
+                        <h4 class="detail-title">Interactive Storybook</h4>
+                        <p class="detail-text">Read through four charming chapters</p>
+                    </div>
+                </div>
+                <div class="hero-detail">
+                    <div aria-hidden="true" class="detail-icon">🎮</div>
+                    <div class="detail-content">
+                        <h4 class="detail-title">Honey Game</h4>
+                        <p class="detail-text">Help Pooh catch honey pots</p>
+                    </div>
+                </div>
+                <div class="hero-detail">
+                    <div aria-hidden="true" class="detail-icon">🎁</div>
+                    <div class="detail-content">
+                        <h4 class="detail-title">Gift Registry</h4>
+                        <p class="detail-text">Share your wishes &amp; blessings</p>
+                    </div>
+                </div>
+            </div>
+            <!-- Quick Actions -->
+            <div class="hero-actions">
+                <button class="hero-action-btn primary" type="button" onclick="scrollToChapter(1)">
+                    <span aria-hidden="true" class="btn-icon">📖</span>
+                    <span class="btn-text">Begin the Story</span>
+                </button>
+                <button class="hero-action-btn secondary" type="button" onclick="scrollToChapter(2)">
+                    <span aria-hidden="true" class="btn-icon">🍯</span>
+                    <span class="btn-text">Play Honey Game</span>
+                </button>
+                <button class="hero-action-btn ghost" type="button" onclick="scrollToChapter(3)">
+                    <span aria-hidden="true" class="btn-icon">💝</span>
+                    <span class="btn-text">View Registry</span>
+                </button>
+            </div>
+            <!-- Orientation Hint -->
+            <div class="orientation-hint">
+                <div aria-hidden="true" class="hint-icon">📱</div>
+                <p class="hint-text">For the best experience: Rotate for wider game view, or stay in portrait for lovely
+                    story reading.</p>
+            </div>
+        </section>
+    </div>
+</header>
 
-    <div class="divider"><hr></div>
-
-    <!-- GUESTBOOK -->
-    <section class="section guestbookCard" id="guestbook" aria-label="Guestbook">
-      <h2>Your Page</h2>
-      <p>
-        If you’d like, leave a few words for Baby Gunnar.
-        They’ll be kept, the way a real book keeps things.
-      </p>
-
-      <form class="guestbookForm" id="guestbookForm" autocomplete="on">
-        <div class="fieldRow">
-          <div class="field">
-            <label class="label" for="guestName">Your name</label>
-            <input class="input" id="guestName" name="guestName" type="text" placeholder="Christopher Robin" required />
-          </div>
-
-          <div class="field">
-            <label class="label" for="guestRelation">How you know the family (optional)</label>
-            <input class="input" id="guestRelation" name="guestRelation" type="text" placeholder="Friend / Family / Coworker" />
-          </div>
+<!-- Main Content -->
+<main class="book-container" id="storybook">
+    <!-- Chapter Navigation -->
+    <nav aria-label="Story chapters" class="chapter-tracker">
+        <h2 class="sr-only">Chapter navigation</h2>
+        <div class="tracker-row">
+            <div class="tracker-label">Story path</div>
+            <div aria-valuemax="100" aria-valuemin="0" aria-valuenow="0" class="book-progress" role="progressbar">
+                <div class="progress-fill" id="progressFill"></div>
+            </div>
         </div>
-
-        <div class="field">
-          <label class="label" for="guestMessage">Your words</label>
-          <textarea class="textarea" id="guestMessage" name="guestMessage" placeholder="Write something gentle…" required></textarea>
+        <div class="chapter-pill-row">
+            <button aria-current="page" class="chapter-pill sparkle active" data-chapter-target="1" type="button">
+                <span class="pill-number">1</span>
+                <span class="pill-text">
+                    <span class="pill-title">Welcome</span>
+                    <span class="pill-detail">Invitation arrives</span>
+                </span>
+            </button>
+            <button class="chapter-pill sparkle" data-chapter-target="2" type="button">
+                <span class="pill-number">2</span>
+                <span class="pill-text">
+                    <span class="pill-title">Honey Hunt</span>
+                    <span class="pill-detail">Play the game</span>
+                </span>
+            </button>
+            <button class="chapter-pill sparkle" data-chapter-target="3" type="button">
+                <span class="pill-number">3</span>
+                <span class="pill-text">
+                    <span class="pill-title">Gifts &amp; Wishes</span>
+                    <span class="pill-detail">Registry &amp; guestbook</span>
+                </span>
+            </button>
+            <button class="chapter-pill sparkle" data-chapter-target="4" type="button">
+                <span class="pill-number">4</span>
+                <span class="pill-text">
+                    <span class="pill-title">Celebration</span>
+                    <span class="pill-detail">Welcome Gunnar</span>
+                </span>
+            </button>
         </div>
+    </nav>
 
-        <div class="guestbookActions">
-          <button class="btn btn--honey" type="submit">Add Your Words</button>
-          <button class="btn btn--ghost" type="button" id="printPage">Print This Story</button>
-          <span class="mini">Tip: keep it simple. A line is enough.</span>
+    <!-- Story Pages -->
+    <div class="book">
+        <div class="pages-wrapper">
+            <!-- Chapter 1 -->
+            <article class="page active" data-chapter="1">
+                <header class="chapter-header">
+                    <p class="chapter-number">Chapter One</p>
+                    <h2 class="chapter-title">A Special Day in the Hundred Acre Wood</h2>
+                    <p class="chapter-subtitle">An Invitation to Celebrate</p>
+                    <span aria-hidden="true" class="honey-drip"></span>
+                </header>
+                <div class="page-content">
+                    <p class="story-text">One fine spring day, in a corner of the Hundred Acre Wood where the sun shines
+                        warmly through the trees and the flowers bloom in cheerful colors, something wonderful was
+                        happening. All the forest friends were gathering, for there was to be a celebration unlike any
+                        other.</p>
+                    <p class="story-text">"What sort of celebration?" you might ask. Well, it was the very best sort—the
+                        kind that welcomes a new little friend to the world. A baby boy named Gunnar James was soon to
+                        arrive, and everyone in the Hundred Acre Wood wanted to share in the joy.</p>
+                    <div class="chapter-illustrations">
+                        <figure class="storybook-figure figure-theme-honey clickable-character" data-character="pooh">
+                            <img alt="Winnie the Pooh holding a honey pot" height="96"
+                                 loading="eager" src="Images/Characters/honey-bear.png" width="96">
+                            <figcaption class="figure-copy">
+                                <div class="figure-name">Pooh brings the first pot</div>
+                                <p class="figure-note">"A baby celebration needs extra honey," he whispered as he dusted
+                                    off the lid.</p>
+                            </figcaption>
+                            <div aria-live="polite" class="character-message"></div>
+                        </figure>
+                        <figure class="storybook-figure figure-theme-sky clickable-character" data-character="piglet">
+                            <img alt="Piglet carrying a welcome banner" height="96" loading="eager"
+                                 src="Images/Characters/piglet.png" width="96">
+                            <figcaption class="figure-copy">
+                                <div class="figure-name">Piglet pins up the banner</div>
+                                <p class="figure-note">He fluttered through the clearing making sure every friend felt
+                                    warmly invited.</p>
+                            </figcaption>
+                            <div aria-live="polite" class="character-message"></div>
+                        </figure>
+                    </div>
+                    <p class="story-text">Winnie the Pooh, being a Bear of Very Little Brain but a Very Big Heart, knew
+                        that the most important thing for any celebration was honey. And not just a little honey, but
+                        lots and lots of it. After all, welcoming Baby Gunnar was a Very Important Matter.</p>
+                    <p class="story-text">"But first," thought Pooh, looking up at his honey pots on the high shelf,
+                        "we'll need to gather more honey. Won't you help?"</p>
+                    <div aria-hidden="true" class="divider">🌳 ✿ 🐝 ✿ 🌳</div>
+                </div>
+            </article>
+
+            <!-- Chapter 2: Game -->
+            <article class="page" data-chapter="2" id="honey-game">
+                <header class="chapter-header">
+                    <p class="chapter-number">Chapter Two</p>
+                    <h2 class="chapter-title">Pooh's Honey Gathering Adventure</h2>
+                    <p class="chapter-subtitle">A Game of Skill and Sweetness</p>
+                    <span aria-hidden="true" class="honey-drip"></span>
+                </header>
+                <div class="chapter-illustrations">
+                    <figure class="storybook-figure figure-theme-forest clickable-character" data-character="tigger">
+                        <img alt="Tigger bouncing" height="96" loading="lazy" src="Images/Characters/tigger.png"
+                             width="96">
+                        <figcaption class="figure-copy">
+                            <div class="figure-name">Tigger stakes out the course</div>
+                            <p class="figure-note">He marked the path with springy footprints so every honey pot feels
+                                like an adventure to catch.</p>
+                        </figcaption>
+                        <div aria-live="polite" class="character-message"></div>
+                    </figure>
+                    <figure class="storybook-figure figure-theme-honey clickable-character" data-character="roo">
+                        <img alt="Roo cheering" height="96" loading="lazy" src="Images/Characters/roo.png" width="96">
+                        <figcaption class="figure-copy">
+                            <div class="figure-name">Roo cheers from the sidelines</div>
+                            <p class="figure-note">"Mind the bees!" he giggled, handing out cozy scarves.</p>
+                        </figcaption>
+                        <div aria-live="polite" class="character-message"></div>
+                    </figure>
+                </div>
+
+                <!-- Embedded Honey Game -->
+                <div class="game-embed" id="gameEmbed">
+                    <!-- Game Container with all UI elements -->
+                    <div id="gameContainer" class="game-container">
+                        <div class="honey-game" id="honeyGame">
+                            <div class="game-top-controls">
+                                <button id="settingsToggle" class="btn-icon" aria-label="Game settings">
+                                    <span>⚙️</span>
+                                </button>
+                                <button id="helpToggle" class="btn-icon" aria-label="How to play">
+                                    <span>❓</span>
+                                </button>
+                            </div>
+                            
+                            <div class="honey-game-header">
+                                <div class="title">
+                                    <span aria-hidden="true">🍯</span>
+                                    <span>Honey Hunt</span>
+                                </div>
+                                <div class="hud-row">
+                                    <div class="hud-item">
+                                        <span class="hud-label">Score</span><span id="hudScore">0</span>
+                                    </div>
+                                    <div class="hud-item">
+                                        <span class="hud-label">Time</span><span id="hudTime">60</span>s
+                                    </div>
+                                    <div class="hud-item">
+                                        <span class="hud-label">Streak</span><span id="hudStreak">0</span>
+                                    </div>
+                                    <div class="hud-item">
+                                        <span class="hud-label">Lives</span><span id="hudLives">❤️❤️❤️</span>
+                                    </div>
+                                    <div class="hud-item">
+                                        <span class="hud-label">Best</span><span id="hudBest">0</span>
+                                    </div>
+                                </div>
+                            </div>
+                            <div class="honey-game-main">
+                                <canvas id="gameCanvas" width="640" height="360" aria-label="Pooh catching honey pots"></canvas>
+                                
+                                <!-- Game Overlays -->
+                                <div id="startOverlay" class="overlay" aria-hidden="true">
+                                    <div class="overlay-content">
+                                        <h2>Honey Hunt</h2>
+                                        <p>Help Pooh catch honey pots!</p>
+                                        <button id="startButton" class="btn primary">Start Game</button>
+                                        <button id="helpToggleSecondary" class="btn secondary">How to Play</button>
+                                    </div>
+                                </div>
+                                
+                                <div id="pauseOverlay" class="overlay" aria-hidden="true">
+                                    <div class="overlay-content">
+                                        <h2>Game Paused</h2>
+                                        <button id="resumeButton" class="btn primary">Resume</button>
+                                        <button id="restartButton" class="btn">Restart</button>
+                                    </div>
+                                </div>
+                                
+                                <div id="gameOverOverlay" class="overlay" aria-hidden="true">
+                                    <div class="overlay-content">
+                                        <h2>Game Over</h2>
+                                        <div class="score-display">
+                                            <p>Score: <span id="finalScore">0</span></p>
+                                            <p>Best: <span id="finalBest">0</span></p>
+                                        </div>
+                                        <button id="restartButton2" class="btn primary">Play Again</button>
+                                        <button id="shareScoreButton" class="btn secondary">Share Score</button>
+                                    </div>
+                                </div>
+                            </div>
+                            <div class="honey-game-controls" aria-label="Game controls">
+                                <button class="control-btn" id="btnLeft" type="button">
+                                    <span class="control-btn-icon" aria-hidden="true">⬅️</span> Left
+                                </button>
+                                <button class="control-btn" id="btnRight" type="button">
+                                    <span class="control-btn-icon" aria-hidden="true">➡️</span> Right
+                                </button>
+                                <button class="control-btn primary" id="btnStart" type="button">
+                                    <span class="control-btn-icon" aria-hidden="true">▶️</span> Start
+                                </button>
+                                <button class="control-btn" id="btnPause" type="button">
+                                    ⏸ Pause
+                                </button>
+                            </div>
+                            <div class="game-status" id="statusBadge" role="status">Ready to play!</div>
+                        </div>
+                    </div>
+
+                    <!-- Settings Modal -->
+                    <div id="settingsModal" class="modal" aria-hidden="true">
+                        <div id="settingsPanel" class="modal-content" tabindex="-1">
+                            <div class="settings-header">
+                                <h2>Game Settings</h2>
+                                <button id="settingsClose" class="settings-close" aria-label="Close settings">×</button>
+                            </div>
+                            
+                            <div class="settings-group">
+                                <h3>Audio</h3>
+                                <div class="settings-row">
+                                    <span class="settings-label">Music</span>
+                                    <button id="musicToggle" class="toggle-btn" data-on="true" aria-pressed="true">
+                                        <span>🔊</span>
+                                    </button>
+                                </div>
+                                <div class="settings-row">
+                                    <span class="settings-label">Sound Effects</span>
+                                    <button id="sfxToggle" class="toggle-btn" data-on="true" aria-pressed="true">
+                                        <span>🔊</span>
+                                    </button>
+                                </div>
+                            </div>
+                            
+                            <div class="settings-group">
+                                <h3>Difficulty</h3>
+                                <div class="difficulty-buttons">
+                                    <button class="diff-btn active" data-level="0">Chill</button>
+                                    <button class="diff-btn" data-level="1">Classic</button>
+                                    <button class="diff-btn" data-level="2">Spicy</button>
+                                </div>
+                            </div>
+                            
+                            <div class="settings-group">
+                                <h3>Progress</h3>
+                                <div class="settings-row">
+                                    <span class="settings-label">Best Score</span>
+                                    <span id="settingsBest">0</span>
+                                </div>
+                                <div class="settings-row">
+                                    <span class="settings-label">Games Played</span>
+                                    <span id="overlayGames">0</span>
+                                </div>
+                                <button id="resetProgress" class="settings-btn danger">
+                                    <span>🔄</span> Reset Progress
+                                </button>
+                            </div>
+                        </div>
+                    </div>
+                    
+                    <!-- Help Panel -->
+                    <div id="helpPanel" class="modal" aria-hidden="true">
+                        <div class="modal-content">
+                            <h2>How to Play</h2>
+                            <ul class="game-instructions">
+                                <li>Use ← → arrow keys or on-screen buttons to move Pooh</li>
+                                <li>Catch honey pots for points</li>
+                                <li>Avoid bees - they cost you a life</li>
+                                <li>Chain catches for combo bonuses</li>
+                                <li>Special jars give power-ups</li>
+                                <li>Survive for 60 seconds!</li>
+                            </ul>
+                            <button class="btn primary" onclick="document.getElementById('helpPanel').classList.remove('visible')">Got it!</button>
+                        </div>
+                    </div>
+                    
+                    <!-- Tutorial Overlay -->
+                    <div id="tutorialOverlay" class="overlay" aria-hidden="true">
+                        <div class="tutorial-content">
+                            <div class="tutorial-step active" data-step="1">
+                                <h3>Welcome to Honey Hunt!</h3>
+                                <p>Help Winnie the Pooh catch as many honey pots as you can.</p>
+                            </div>
+                            <div class="tutorial-step" data-step="2">
+                                <h3>Controls</h3>
+                                <p>Use arrow keys or tap the buttons to move left and right.</p>
+                            </div>
+                            <div class="tutorial-step" data-step="3">
+                                <h3>Power-ups</h3>
+                                <p>Special jars give you special abilities. Watch for them!</p>
+                            </div>
+                            <div class="tutorial-step" data-step="4">
+                                <h3>Avoid Bees!</h3>
+                                <p>Bees will try to stop you. Use your shield or dodge them.</p>
+                            </div>
+                            <div class="tutorial-navigation">
+                                <button id="skipTutorial" class="btn">Skip</button>
+                                <button id="nextTutorial" class="btn primary">Next</button>
+                                <button id="startTutorial" class="btn primary" style="display: none;">Start Game</button>
+                            </div>
+                        </div>
+                    </div>
+                    
+                    <!-- Live region for screen readers -->
+                    <div id="liveRegion" aria-live="polite" class="sr-only"></div>
+                </div>
+
+                <div class="game-description">
+                    <h3>How to Play</h3>
+                    <p>Help Winnie the Pooh collect honey pots while avoiding bees! Move left and right with arrow keys
+                        or on-screen controls. Chain catches to build combos for higher scores. Watch for special jars
+                        that grant shields!</p>
+                    <div class="game-tips">
+                        <div class="tip">
+                            <span class="tip-icon">🎯</span>
+                            <p><strong>Goal:</strong> Score as many points as you can in 60 seconds!</p>
+                        </div>
+                        <div class="tip">
+                            <span class="tip-icon">🛡️</span>
+                            <p><strong>Blue Jars:</strong> Give temporary shield protection</p>
+                        </div>
+                        <div class="tip">
+                            <span class="tip-icon">🏆</span>
+                            <p><strong>Golden Jars:</strong> Worth bonus points</p>
+                        </div>
+                    </div>
+                </div>
+            </article>
+
+            <!-- Chapter 3: Gifts & Wishes -->
+            <article class="page" data-chapter="3">
+                <header class="chapter-header">
+                    <p class="chapter-number">Chapter Three</p>
+                    <h2 class="chapter-title">Gifts from the Heart</h2>
+                    <p class="chapter-subtitle">Preparing for Baby Gunnar's Arrival</p>
+                    <span aria-hidden="true" class="honey-drip"></span>
+                </header>
+                <div class="page-content">
+                    <section class="story-section">
+                        <p class="story-text">Back in the Hundred Acre Wood, Pooh sat thoughtfully by his honey pots.
+                            "Honey is wonderful," he mused, "but I wonder what else a growing bear—oh, I mean baby—might
+                            need?"</p>
+                        <p class="story-text">Just then, Piglet came scurrying up, holding something soft. "I was
+                            thinking, Pooh," he said in his small voice, "perhaps something cozy for chilly
+                            evenings?"</p>
+                        <div class="dialogue-bubble dialogue-piglet">
+                            <div class="bubble-arrow"></div>
+                            <p>"Something soft and warm, for when the wind howls!"</p>
+                            <span class="speaker">— Piglet</span>
+                        </div>
+                    </section>
+                    <div class="chapter-illustrations">
+                        <figure class="storybook-figure figure-theme-forest clickable-character"
+                                data-character="piglet">
+                            <img alt="Piglet with blanket" height="96" loading="lazy" src="Images/Characters/piglet.png"
+                                 width="96">
+                            <figcaption class="figure-copy">
+                                <div class="figure-name">Piglet's Cozy Corner</div>
+                                <p class="figure-note">Found the snuggliest blanket in all the Wood.</p>
+                            </figcaption>
+                            <div aria-live="polite" class="character-message"></div>
+                        </figure>
+                        <figure class="storybook-figure figure-theme-honey clickable-character" data-character="pooh">
+                            <img alt="Pooh thinking" height="96" loading="lazy" src="Images/Characters/honey-bear.png"
+                                 width="96">
+                            <figcaption class="figure-copy">
+                                <div class="figure-name">Pooh's Pondering</div>
+                                <p class="figure-note">Thinking of practical things (between honey snacks).</p>
+                            </figcaption>
+                            <div aria-live="polite" class="character-message"></div>
+                        </figure>
+                        <figure class="storybook-figure figure-theme-sky clickable-character" data-character="tigger">
+                            <img alt="Tigger bouncing" height="96" loading="lazy" src="Images/Characters/tigger.png"
+                                 width="96">
+                            <figcaption class="figure-copy">
+                                <div class="figure-name">Tigger's Toys</div>
+                                <p class="figure-note">Bounced in with the bounciest ideas!</p>
+                            </figcaption>
+                            <div aria-live="polite" class="character-message"></div>
+                        </figure>
+                    </div>
+                    <section class="story-section">
+                        <p class="story-text">Soon, all the friends had gathered with their ideas. Tigger bounced about
+                            toys that bounce, Eeyore suggested "something useful that won't blow away," and Rabbit began
+                            making a very organized list.</p>
+                        <div class="dialogue-bubble dialogue-pooh">
+                            <div class="bubble-arrow"></div>
+                            <p>"The most important thing," said Pooh wisely, "is that Baby Gunnar knows he is surrounded
+                                by love. But if you'd like to bring something special, his parents have shared a few
+                                ideas that would be helpful."</p>
+                            <span class="speaker">— Pooh Bear</span>
+                        </div>
+                    </section>
+                    <div class="registry-container">
+                        <aside class="registry-section">
+                            <div class="registry-header">
+                                <div aria-hidden="true" class="registry-icon">🎁</div>
+                                <div>
+                                    <h3>Baby Gunnar's Registry</h3>
+                                    <p class="registry-subtitle">Your presence is the greatest present, but if you'd
+                                        like to contribute to his woodland adventures:</p>
+                                </div>
+                            </div>
+                            <div class="registry-grid">
+                                <a class="registry-card" href="https://my.babylist.com/lea-hardesty" rel="noopener"
+                                   target="_blank">
+                                    <div class="card-icon">🎯</div>
+                                    <div class="card-content">
+                                        <h4>babylist Registry</h4>
+                                        <p>For everyday essentials and nursery items</p>
+                                        <span class="card-link">Browse registry →</span>
+                                    </div>
+                                </a>
+                                <div class="registry-card gift-idea-card">
+                                    <div class="card-icon">💝</div>
+                                    <div class="card-content">
+                                        <h4>Gift Ideas</h4>
+                                        <ul class="gift-ideas">
+                                            <li>Board books &amp; stories</li>
+                                            <li>Woodland-themed clothing</li>
+                                            <li>Soft blankets &amp; swaddles</li>
+                                            <li>Diapers &amp; essentials</li>
+                                        </ul>
+                                    </div>
+                                </div>
+                            </div>
+                        </aside>
+                    </div>
+                    <section class="nursery-details">
+                        <h3><span aria-hidden="true">🧸</span> Nursery Details</h3>
+                        <div class="details-grid">
+                            <div class="detail-card">
+                                <div class="detail-icon">🎨</div>
+                                <div class="detail-content">
+                                    <h4>Theme</h4>
+                                    <p>Hundred Acre Wood Adventures</p>
+                                    <small>Featuring Winnie the Pooh &amp; friends</small>
+                                </div>
+                            </div>
+                            <div class="detail-card">
+                                <div class="detail-icon">🌈</div>
+                                <div class="detail-content">
+                                    <h4>Colors</h4>
+                                    <p>Honey gold, Pooh red, sage green, cream</p>
+                                    <small>Soft &amp; soothing woodland palette</small>
+                                </div>
+                            </div>
+                            <div class="detail-card">
+                                <div class="detail-icon">📚</div>
+                                <div class="detail-content">
+                                    <h4>Favorite Items</h4>
+                                    <p>Swaddles, sleepers, board books, cozy blankets</p>
+                                </div>
+                            </div>
+                            <div class="detail-card">
+                                <div class="detail-icon">📍</div>
+                                <div class="detail-content">
+                                    <h4>Location</h4>
+                                    <p>Arizona</p>
+                                    <small>Where adventures begin</small>
+                                </div>
+                            </div>
+                        </div>
+                    </section>
+                    <section class="wishes-section">
+                        <div class="wishes-header">
+                            <h3>Share Your Wishes <span aria-hidden="true">✨</span></h3>
+                            <p>Leave wisdom, well-wishes, or favorite childhood memories for Gunnar's storybook</p>
+                        </div>
+                        <div class="wishes-form-container">
+                            <form class="enhanced-form" id="wishesForm">
+                                <div class="form-grid">
+                                    <div class="form-field">
+                                        <label for="guestName">Your Name</label>
+                                        <input id="guestName" placeholder="How should we call you?" required
+                                               type="text" maxlength="80">
+                                    </div>
+                                    <div class="form-field">
+                                        <label for="guestRelation">Your Relation</label>
+                                        <select id="guestRelation">
+                                            <option value="">Choose one...</option>
+                                            <option value="family">Family</option>
+                                            <option value="friend">Friend</option>
+                                            <option value="colleague">Colleague</option>
+                                            <option value="woodland-friend">Woodland Friend</option>
+                                        </select>
+                                    </div>
+                                </div>
+                                <div class="form-field">
+                                    <label for="wishMessage">Your Message</label>
+                                    <textarea id="wishMessage" placeholder="What wisdom or wishes would you like to share with Baby Gunnar?..."
+                                              required
+                                              rows="4" maxlength="500"></textarea>
+                                    <div class="character-count" id="wishCharCount">0/500 characters</div>
+                                </div>
+                                <div class="form-actions">
+                                    <button class="submit-btn" type="submit">
+                                        <span aria-hidden="true">📝</span> Add to Gunnar's Storybook
+                                    </button>
+                                    <div aria-live="polite" class="form-feedback" id="wishFeedback" role="status"></div>
+                                </div>
+                            </form>
+                        </div>
+                        <div class="sample-wishes">
+                            <h4>Wishes from the Wood:</h4>
+                            <div class="wish-examples">
+                                <blockquote class="wish-example">
+                                    <p>"May your days be filled with wonder and your nights with sweet dreams."</p>
+                                    <cite>— Owl</cite>
+                                </blockquote>
+                                <blockquote class="wish-example">
+                                    <p>"Remember: even the smallest creatures can have the biggest hearts."</p>
+                                    <cite>— Piglet</cite>
+                                </blockquote>
+                            </div>
+                        </div>
+                    </section>
+                    <div class="wishes-display" id="wishesDisplay">
+                        <!-- Dynamic wishes will appear here -->
+                    </div>
+                </div>
+            </article>
+
+            <!-- Chapter 4: Celebration -->
+            <article class="page" data-chapter="4">
+                <header class="chapter-header">
+                    <p class="chapter-number">Chapter Four</p>
+                    <h2 class="chapter-title">The Gathering</h2>
+                    <p class="chapter-subtitle">Celebrating What's to Come</p>
+                    <span aria-hidden="true" class="honey-drip"></span>
+                </header>
+                <div class="page-content">
+                    <p class="story-text">As the sun began to set over the Hundred Acre Wood, casting long golden
+                        shadows through the trees, Pooh and his friends gathered to celebrate the coming arrival of Baby
+                        Gunnar.</p>
+                    <div class="chapter-illustrations">
+                        <figure class="storybook-figure figure-theme-honey clickable-character" data-character="pooh">
+                            <img alt="Pooh with honey pot" height="96" loading="lazy" src="Images/Characters/honey-bear.png"
+                                 width="96">
+                            <figcaption class="figure-copy">
+                                <div class="figure-name">Pooh's special pot</div>
+                                <p class="figure-note">He saved one golden pot for Gunnar's first visit.</p>
+                            </figcaption>
+                            <div aria-live="polite" class="character-message"></div>
+                        </figure>
+                        <figure class="storybook-figure figure-theme-sky clickable-character" data-character="gunnar">
+                            <img alt="Baby Gunnar" height="96" loading="lazy" src="Images/Characters/Gunnar.png"
+                                 width="96">
+                            <figcaption class="figure-copy">
+                                <div class="figure-name">Coming Soon</div>
+                                <p class="figure-note">The Hundred Acre Wood awaits its newest friend.</p>
+                            </figcaption>
+                            <div aria-live="polite" class="character-message"></div>
+                        </figure>
+                    </div>
+                    <p class="story-text">With honey gathered, gifts prepared, and wishes shared, everyone in the
+                        Hundred Acre Wood looked forward to the day they would meet Baby Gunnar. For as Pooh always
+                        said, "How lucky I am to have something to look forward to."</p>
+                    <div class="welcome-panel">
+                        <div aria-hidden="true" class="welcome-icon">🌟</div>
+                        <h3 class="welcome-heading">We Can't Wait to Meet You!</h3>
+                        <p class="welcome-subtitle">Baby Gunnar, your adventure in the Hundred Acre Wood is about to
+                            begin</p>
+                    </div>
+                    <section class="countdown-section">
+                        <h3>Until We Meet 🐻</h3>
+                        <div class="countdown-display">
+                            <div class="countdown-item">
+                                <span class="countdown-number" id="days">--</span>
+                                <span class="countdown-label">Days</span>
+                            </div>
+                            <div class="countdown-item">
+                                <span class="countdown-number" id="hours">--</span>
+                                <span class="countdown-label">Hours</span>
+                            </div>
+                        </div>
+                        <p class="countdown-note">Expected arrival:
+                            <time datetime="2025-08">Late August 2025</time>
+                        </p>
+                    </section>
+                    <div class="honey-jar-interactive">
+                        <div aria-hidden="true">🍯</div>
+                        <h3>Gunnar's Honey Jar of Hopes</h3>
+                        <p>Share your hopes and dreams for Baby Gunnar's future adventures.</p>
+                        <button class="btn primary" id="addHopeBtn" type="button">➕ Add Your Hope</button>
+                        <ul class="hopes-list" id="hopesList"></ul>
+                    </div>
+                    <aside class="final-thought">
+                        <blockquote>
+                            <p>"Sometimes the smallest things take up the most room in your heart."<br>
+                                <cite>— Winnie the Pooh</cite>
+                            </p>
+                        </blockquote>
+                        <p class="signature">With love from all your friends in the Hundred Acre Wood</p>
+                    </aside>
+                </div>
+            </article>
         </div>
+        <!-- Navigation -->
+        <nav aria-label="Page navigation" class="chapter-nav">
+            <button class="chapter-nav-btn" id="prevBtn" type="button">← Previous</button>
+            <div class="chapter-indicator" id="pageIndicator">Chapter 1 of 4</div>
+            <button class="chapter-nav-btn next" id="nextBtn" type="button">Next →</button>
+        </nav>
+    </div>
+</main>
 
-        <p class="guestbook__note" id="guestNote" hidden>Your words have found their page.</p>
-      </form>
-    </section>
+<!-- Footer -->
+<footer class="site-footer">
+    <p>Made with 💙 and 🍯 for Baby Gunnar's special day</p>
+    <div class="footer-links">
+        <button class="footer-link" id="printPageBtn" type="button">🖨 Print</button>
+        <button class="footer-link" id="sharePageBtn" type="button">📤 Share</button>
+        <button class="footer-link" id="toggleAnimationsBtn" type="button">🎭 Animations: On</button>
+    </div>
+</footer>
 
-    <footer aria-label="Closing">
-      <p>With love, honey, and quiet joy.</p>
-      <p class="soft">Baby Gunnar is on the way. The story is already beginning.</p>
-    </footer>
-  </main>
+<!-- Audio Elements -->
+<audio id="bgMusic" loop preload="auto" src="media/hundred-acre-lullaby.mp3"></audio>
+<audio id="honeySound" preload="auto">
+    <source src="https://assets.mixkit.co/sfx/preview/mixkit-winning-chimes-2015.mp3">
+</audio>
+<audio id="pageSound" preload="auto">
+    <source src="https://assets.mixkit.co/sfx/preview/mixkit-page-turn-single-1100.mp3">
+</audio>
+<audio id="pageRustle1" preload="auto">
+    <source src="https://assets.mixkit.co/sfx/preview/mixkit-page-turn-single-1100.mp3">
+</audio>
+<audio id="pageRustle2" preload="auto">
+    <source src="https://assets.mixkit.co/sfx/preview/mixkit-page-turn-medium-1103.mp3">
+</audio>
+<audio id="paperThump" preload="auto">
+    <source src="https://assets.mixkit.co/sfx/preview/mixkit-soft-ui-click-2577.mp3">
+</audio>
+<audio id="ambientForest" loop preload="auto">
+    <source src="https://assets.mixkit.co/sfx/preview/mixkit-forest-birds-ambience-121.mp3">
+</audio>
 
-  <!-- Corner companion (your Pooh image), gently “present” -->
-  <div class="companion" id="companion" aria-hidden="true">
-    <img src="Images/Characters/honey-bear.png" alt="" decoding="async" loading="eager">
-  </div>
+<script>
+document.addEventListener("DOMContentLoaded", () => {
+    const pages = Array.from(document.querySelectorAll(".page"));
+    const nextBtn = document.getElementById("nextBtn");
+    const prevBtn = document.getElementById("prevBtn");
+    const indicator = document.getElementById("pageIndicator");
+    const progress = document.getElementById("progressFill");
+    const chapterPills = Array.from(document.querySelectorAll("[data-chapter-target]"));
+    const total = pages.length;
+    let current = 0;
 
-  <script>
-    /* =========================================================
-       AUTO-HIGHLIGHT “Gunnar” EVERYWHERE (safe DOM text-node wrap)
-       - wraps whole-word matches only
-       - skips scripts/styles/inputs/code/pre/textarea
-       - skips nodes already inside .gunnar
-    ========================================================= */
-    function highlightNameEverywhere(root = document.body, name = "Gunnar") {
-      const SKIP_TAGS = new Set(["SCRIPT", "STYLE", "NOSCRIPT", "TEXTAREA", "CODE", "PRE", "INPUT", "SELECT", "OPTION"]);
-      const re = new RegExp(`\\b(${name})\\b`, "g");
+    const pageSound = document.getElementById("pageSound");
 
-      const walker = document.createTreeWalker(root, NodeFilter.SHOW_TEXT, {
-        acceptNode(node) {
-          const parent = node.parentElement;
-          if (!parent) return NodeFilter.FILTER_REJECT;
+    function updateUI(scroll = true) {
+        pages.forEach((page, i) => page.classList.toggle("active", i === current));
+        indicator.textContent = `Chapter ${current + 1} of ${total}`;
+        if (progress) progress.style.width = `${((current + 1) / total) * 100}%`;
 
-          if (SKIP_TAGS.has(parent.tagName)) return NodeFilter.FILTER_REJECT;
-          if (parent.closest && parent.closest(".gunnar")) return NodeFilter.FILTER_REJECT;
-          if (!node.nodeValue || !node.nodeValue.trim()) return NodeFilter.FILTER_REJECT;
+        chapterPills.forEach(btn => {
+            const isActive = parseInt(btn.dataset.chapterTarget, 10) === current + 1;
+            btn.classList.toggle("active", isActive);
+            if (isActive) btn.setAttribute("aria-current", "page");
+            else btn.removeAttribute("aria-current");
+        });
 
-          re.lastIndex = 0;
-          return re.test(node.nodeValue) ? NodeFilter.FILTER_ACCEPT : NodeFilter.FILTER_REJECT;
+        if (pageSound) {
+            try {
+                pageSound.currentTime = 0;
+                pageSound.play().catch(() => {});
+            } catch (e) {}
         }
-      });
 
-      const nodes = [];
-      while (walker.nextNode()) nodes.push(walker.currentNode);
-
-      for (const textNode of nodes) {
-        const text = textNode.nodeValue;
-        re.lastIndex = 0;
-        if (!re.test(text)) continue;
-
-        const frag = document.createDocumentFragment();
-        let last = 0;
-        re.lastIndex = 0;
-
-        let m;
-        while ((m = re.exec(text)) !== null) {
-          const start = m.index;
-          const end = start + m[0].length;
-
-          if (start > last) frag.appendChild(document.createTextNode(text.slice(last, start)));
-
-          const span = document.createElement("span");
-          span.className = "gunnar";
-          span.textContent = m[0];
-          frag.appendChild(span);
-
-          last = end;
+        if (scroll && pages[current]) {
+            pages[current].scrollIntoView({ behavior: "smooth", block: "start" });
         }
-
-        if (last < text.length) frag.appendChild(document.createTextNode(text.slice(last)));
-        textNode.parentNode.replaceChild(frag, textNode);
-      }
     }
 
-    /* =========================================================
-       FRIENDS — MODAL DATA + WIRING (uses your local images)
-    ========================================================= */
-    const FRIENDS = {
-      pooh: {
-        name: "Winnie the Pooh",
-        subtitle: "Gentle bear with a heart full of honey",
-        img: "Images/Characters/honey-bear.png",
-        body: "Pooh doesn’t hurry. He notices. He stays. He makes room for people—especially small new people like Gunnar.",
-        quote: "“Sometimes the smallest things take up the most room in your heart.”"
-      },
-      piglet: {
-        name: "Piglet",
-        subtitle: "Small, but brave when it matters",
-        img: "Images/Characters/piglet.png",
-        body: "Piglet will teach Gunnar that courage isn’t loud. It’s showing up—even when you’re nervous.",
-        quote: "“It’s hard to be brave when you’re such a small animal.”"
-      },
-      tigger: {
-        name: "Tigger",
-        subtitle: "Joy on springs. Energy for days.",
-        img: "Images/Characters/tigger.png",
-        body: "Tigger will remind Gunnar that joy is allowed. That laughter can be a plan.",
-        quote: "“TTFN! Ta-ta for now!”"
-      },
-      eeyore: {
-        name: "Eeyore",
-        subtitle: "Quiet loyalty. A steady heart.",
-        img: "Images/Characters/eeyore.png",
-        body: "Eeyore will teach Gunnar the underrated superpower of being dependable. Not flashy. Just there.",
-        quote: "“Thanks for noticing me.”"
-      },
-      roo: {
-        name: "Roo",
-        subtitle: "Curious, kind, always ready",
-        img: "Images/Characters/roo.png",
-        body: "Roo understands being little. He’ll show Gunnar how to be brave in new places—with good friends nearby.",
-        quote: "“Can I come too?”"
-      },
-      owl: {
-        name: "Owl",
-        subtitle: "Storyteller of the Wood",
-        img: "Images/Characters/owl.png",
-        body: "Owl will fill Gunnar’s world with stories—some accurate, some improved. All told with love.",
-        quote: "“Ahem… as I was saying…”"
-      }
+    nextBtn?.addEventListener("click", () => {
+        if (current < total - 1) {
+            current++;
+            updateUI();
+        }
+    });
+
+    prevBtn?.addEventListener("click", () => {
+        if (current > 0) {
+            current--;
+            updateUI();
+        }
+    });
+
+    chapterPills.forEach(btn => {
+        btn.addEventListener("click", () => {
+            const target = parseInt(btn.dataset.chapterTarget, 10) - 1;
+            if (!Number.isNaN(target) && target >= 0 && target < total) {
+                current = target;
+                updateUI();
+            }
+        });
+    });
+
+    document.addEventListener("keydown", (e) => {
+        if (e.key === "ArrowRight") nextBtn?.click();
+        if (e.key === "ArrowLeft") prevBtn?.click();
+    });
+
+    // Expose scrollToChapter for hero buttons
+    window.scrollToChapter = (chapterNumber) => {
+        const index = chapterNumber - 1;
+        if (index >= 0 && index < total) {
+            current = index;
+            updateUI();
+        }
     };
 
-    const modal = document.getElementById('friendModal');
-    const modalClose = document.getElementById('friendModalClose');
-    const modalTitle = document.getElementById('friendModalTitle');
-    const modalSubtitle = document.getElementById('friendModalSubtitle');
-    const modalBody = document.getElementById('friendModalBody');
-    const modalQuote = document.getElementById('friendModalQuote');
-    const modalImg = document.getElementById('friendModalImg');
+    // Character click messages
+    const characterLines = {
+        pooh: [
+            "Pooh smiles and thinks this is the kind of day that simply needs more honey.",
+            "Pooh wonders if there's anything sweeter than welcoming a new little friend."
+        ],
+        piglet: [
+            "Piglet feels a little fluttery, but mostly excited for Baby Gunnar.",
+            "Piglet straightens the banner one more time, just to be sure."
+        ],
+        tigger: [
+            "Tigger announces that baby celebrations are what Tiggers do best!",
+            "Tigger promises to teach Gunnar the very bounciest bounces."
+        ],
+        roo: [
+            "Roo practices tiny jumps, imagining the games they'll play someday.",
+            "Roo says, \"I can't wait to show you all my favorite puddles!\""
+        ],
+        gunnar: [
+            "Everyone is already saving their warmest hugs for you.",
+            "Your story is just beginning, and the whole Wood is cheering."
+        ]
+    };
 
-    function openFriendModal(key){
-      const f = FRIENDS[key];
-      if (!f) return;
+    const honeySound = document.getElementById("honeySound");
 
-      modalTitle.textContent = f.name;
-      modalSubtitle.textContent = f.subtitle;
-      modalBody.textContent = f.body;
-      modalQuote.textContent = f.quote;
-
-      modalImg.src = f.img;
-      modalImg.alt = f.name;
-
-      modal.classList.add('is-open');
-      modal.setAttribute('aria-hidden', 'false');
-      document.body.style.overflow = 'hidden';
-      modalClose.focus();
-    }
-
-    function closeFriendModal(){
-      modal.classList.remove('is-open');
-      modal.setAttribute('aria-hidden', 'true');
-      document.body.style.overflow = '';
-    }
-
-    /* =========================================================
-       COVER OPEN + AMBIENT SOUND + PRINT
-    ========================================================= */
-    const forest = document.getElementById('forestSound');
-    const openBookBtn = document.getElementById('openBook');
-    const printStoryBtn = document.getElementById('printStory');
-    const printPageBtn = document.getElementById('printPage');
-
-    function openBook(){
-      const cover = document.getElementById('cover');
-      if (cover) cover.style.display = 'none';
-
-      // Start ambience only after user intent
-      if (forest) {
-        forest.volume = 0.22;
-        forest.play().catch(() => {});
-      }
-
-      // Ensure first section is visible at top
-      window.scrollTo({ top: 0, behavior: 'smooth' });
-    }
-
-    function printKeepsake(){
-      window.print();
-    }
-
-    /* =========================================================
-       COMPANION FLOAT — gentle follow (quiet presence)
-    ========================================================= */
-    function updateCompanion(){
-      const y = window.scrollY || 0;
-      const c = document.getElementById('companion');
-      if (!c) return;
-
-      const wobble = Math.sin(y * 0.002) * 2;
-      const drift = y * 0.06;
-      c.style.transform = `translateY(${drift}px) rotate(${wobble}deg)`;
-    }
-
-    /* =========================================================
-       GUESTBOOK — “kept” acknowledgement
-       (local-only; wire to backend later if you want)
-    ========================================================= */
-    const guestForm = document.getElementById('guestbookForm');
-    const guestNote = document.getElementById('guestNote');
-
-    function setNote(on){
-      if (!guestNote) return;
-      guestNote.hidden = !on;
-    }
-
-    /* =========================================================
-       INIT
-    ========================================================= */
-    document.addEventListener('DOMContentLoaded', () => {
-      // Auto-highlight Gunnar everywhere
-      highlightNameEverywhere(document.body, "Gunnar");
-
-      // Cover buttons
-      openBookBtn?.addEventListener('click', openBook);
-      printStoryBtn?.addEventListener('click', printKeepsake);
-      printPageBtn?.addEventListener('click', printKeepsake);
-
-      // Friends grid
-      document.getElementById('friendsGrid')?.addEventListener('click', (e) => {
-        const card = e.target.closest('.friend-card');
-        if (!card) return;
-        openFriendModal(card.dataset.friend);
-      });
-
-      // Modal close
-      modalClose?.addEventListener('click', closeFriendModal);
-      modal?.addEventListener('click', (e) => {
-        if (e.target === modal) closeFriendModal();
-      });
-
-      document.addEventListener('keydown', (e) => {
-        if (e.key === 'Escape' && modal.classList.contains('is-open')) closeFriendModal();
-      });
-
-      // Guestbook submit (keepsake acknowledgement)
-      guestForm?.addEventListener('submit', (e) => {
-        e.preventDefault();
-        setNote(true);
-
-        // Keep the message visible in case they want to copy it,
-        // but reset name fields to feel “submitted”
-        const name = document.getElementById('guestName');
-        const rel = document.getElementById('guestRelation');
-        if (name) name.value = "";
-        if (rel) rel.value = "";
-
-        // Gentle auto-scroll to the note
-        guestNote?.scrollIntoView({ behavior: 'smooth', block: 'nearest' });
-      });
-
-      // Companion follow
-      updateCompanion();
-      window.addEventListener('scroll', updateCompanion, { passive: true });
+    document.querySelectorAll(".clickable-character").forEach(fig => {
+        const character = fig.dataset.character;
+        const msgEl = fig.querySelector(".character-message");
+        fig.addEventListener("click", () => {
+            const lines = characterLines[character] || ["A quiet, happy thought drifts through the leaves."];
+            const line = lines[Math.floor(Math.random() * lines.length)];
+            if (msgEl) msgEl.textContent = line;
+            if (honeySound) {
+                try {
+                    honeySound.currentTime = 0;
+                    honeySound.play().catch(() => {});
+                } catch (e) {}
+            }
+        });
+        fig.addEventListener("keydown", (e) => {
+            if (e.key === "Enter" || e.key === " ") {
+                e.preventDefault();
+                fig.click();
+            }
+        });
     });
-  </script>
+
+    // Wishes form
+    const wishesForm = document.getElementById("wishesForm");
+    const wishCharCount = document.getElementById("wishCharCount");
+    const wishMessage = document.getElementById("wishMessage");
+    const wishesDisplay = document.getElementById("wishesDisplay");
+    const wishFeedback = document.getElementById("wishFeedback");
+
+    if (wishMessage && wishCharCount) {
+        const updateCount = () => {
+            const len = wishMessage.value.length;
+            wishCharCount.textContent = `${len}/500 characters`;
+        };
+        wishMessage.addEventListener("input", updateCount);
+        updateCount();
+    }
+
+    if (wishesForm && wishesDisplay) {
+        wishesForm.addEventListener("submit", (e) => {
+            e.preventDefault();
+            const name = document.getElementById("guestName").value.trim();
+            const relation = document.getElementById("guestRelation").value;
+            const message = wishMessage.value.trim();
+            if (!name || !message) {
+                if (wishFeedback) {
+                    wishFeedback.textContent = "Please add your name and a message.";
+                }
+                return;
+            }
+
+            const card = document.createElement("article");
+            card.className = "wish-card";
+
+            const meta = document.createElement("div");
+            meta.className = "wish-meta";
+            meta.textContent = relation
+                ? `${name} • ${relation.replace("-", " ")}`
+                : name;
+
+            const body = document.createElement("p");
+            body.textContent = message;
+
+            card.appendChild(meta);
+            card.appendChild(body);
+            wishesDisplay.prepend(card);
+
+            wishesForm.reset();
+            if (wishCharCount) wishCharCount.textContent = "0/500 characters";
+            if (wishFeedback) wishFeedback.textContent = "Thank you! Your wish has been added.";
+        });
+    }
+
+    // Countdown
+    const targetDate = new Date("2025-08-31T00:00:00");
+    const daysEl = document.getElementById("days");
+    const hoursEl = document.getElementById("hours");
+
+    function updateCountdown() {
+        const now = new Date();
+        const diff = targetDate.getTime() - now.getTime();
+        if (diff <= 0) {
+            if (daysEl) daysEl.textContent = "0";
+            if (hoursEl) hoursEl.textContent = "0";
+            return;
+        }
+        const days = Math.floor(diff / (1000 * 60 * 60 * 24));
+        const hours = Math.floor((diff / (1000 * 60 * 60)) % 24);
+        if (daysEl) daysEl.textContent = String(days);
+        if (hoursEl) hoursEl.textContent = String(hours);
+    }
+    updateCountdown();
+    setInterval(updateCountdown, 60 * 1000);
+
+    // Honey jar hopes
+    const addHopeBtn = document.getElementById("addHopeBtn");
+    const hopesList = document.getElementById("hopesList");
+
+    if (addHopeBtn && hopesList) {
+        addHopeBtn.addEventListener("click", () => {
+            const hope = window.prompt("What hope or dream would you like to share for Baby Gunnar?");
+            if (hope && hope.trim()) {
+                const li = document.createElement("li");
+                li.textContent = hope.trim();
+                hopesList.appendChild(li);
+            }
+        });
+    }
+
+    // Footer actions
+    const printBtn = document.getElementById("printPageBtn");
+    const shareBtn = document.getElementById("sharePageBtn");
+    const toggleAnimationsBtn = document.getElementById("toggleAnimationsBtn");
+
+    printBtn?.addEventListener("click", () => window.print());
+
+    shareBtn?.addEventListener("click", async () => {
+        const shareData = {
+            title: document.title,
+            text: "Join Baby Gunnar's Hundred Acre Wood Adventure!",
+            url: window.location.href
+        };
+        if (navigator.share) {
+            try {
+                await navigator.share(shareData);
+            } catch {
+                // ignored
+            }
+        } else {
+            navigator.clipboard?.writeText(window.location.href).catch(() => {});
+            alert("Link copied to clipboard.");
+        }
+    });
+
+    if (toggleAnimationsBtn) {
+        toggleAnimationsBtn.addEventListener("click", () => {
+            const body = document.body;
+            const isOff = body.classList.toggle("animations-off");
+            toggleAnimationsBtn.textContent = isOff ? "🎭 Animations: Off" : "🎭 Animations: On";
+        });
+    }
+
+    // Audio initialization on first interaction
+    const bgMusic = document.getElementById("bgMusic");
+    const ambientForest = document.getElementById("ambientForest");
+    let audioInitialized = false;
+
+    function initAudio() {
+        if (audioInitialized) return;
+        audioInitialized = true;
+        [bgMusic, ambientForest].forEach(el => {
+            if (el) {
+                try {
+                    el.play().catch(() => {});
+                } catch (e) {}
+            }
+        });
+    }
+
+    document.addEventListener("click", initAudio, { once: true });
+    document.addEventListener("keydown", initAudio, { once: true });
+
+});
+</script>
+<script src="game.js" defer></script>
 </body>
 </html>
