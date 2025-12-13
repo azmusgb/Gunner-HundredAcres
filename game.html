@@ -2,193 +2,53 @@
 <html lang="en">
 <head>
   <meta charset="UTF-8" />
-  <meta
-    name="viewport"
-    content="width=device-width, initial-scale=1.0, viewport-fit=cover"
-  />
-  <title>Honey Pot Catch — Hundred Acre Wood</title>
+  <title>Honey Catch</title>
 
-  <!-- Minimal, game-first styling -->
-  <style>
-    :root {
-      --color-surface: #1a1208;
-      --color-surface-strong: rgba(26, 18, 8, 0.92);
-      --color-contrast: #f4e9d8;
-      --color-accent: #f4a944;
-      --color-border: rgba(255, 255, 255, 0.08);
-      --space-sm: 12px;
-      --space-md: 16px;
-      --radius-sm: 6px;
-    }
+  <meta name="viewport"
+        content="width=device-width, initial-scale=1.0, viewport-fit=cover, user-scalable=no" />
+  <meta name="theme-color" content="#f4a944" />
+  <meta name="color-scheme" content="light dark" />
 
-    html, body {
-      margin: 0;
-      padding: 0;
-      height: 100%;
-      background: var(--color-surface);
-      color: var(--color-contrast);
-      font-family: system-ui, -apple-system, BlinkMacSystemFont, sans-serif;
-      overflow: hidden;
-    }
+  <meta name="description"
+        content="Catch honey, dodge bees, build streaks. A fast, cozy arcade game." />
 
-    .game-shell {
-      position: fixed;
-      inset: 0;
-      display: flex;
-      flex-direction: column;
-    }
-
-    .game-header {
-      display: flex;
-      align-items: center;
-      justify-content: space-between;
-      padding: var(--space-sm) var(--space-md);
-      background: var(--color-surface-strong);
-      border-bottom: 1px solid var(--color-border);
-      z-index: 10;
-    }
-
-    .game-title {
-      font-weight: 600;
-      font-size: 0.95rem;
-      letter-spacing: 0.02em;
-    }
-
-    .game-exit {
-      color: var(--color-accent);
-      text-decoration: none;
-      font-size: 0.9rem;
-    }
-
-    .game-exit:active {
-      opacity: 0.7;
-    }
-
-    .game-canvas-wrap {
-      flex: 1;
-      position: relative;
-    }
-
-    canvas {
-      display: block;
-      width: 100%;
-      height: 100%;
-      touch-action: none;
-      outline: none;
-    }
-
-    .sr-only {
-      border: 0;
-      clip: rect(0 0 0 0);
-      height: 1px;
-      margin: -1px;
-      overflow: hidden;
-      padding: 0;
-      position: absolute;
-      width: 1px;
-    }
-
-    .game-a11y-hint {
-      position: absolute;
-      inset: auto auto 12px 12px;
-      background: rgba(0, 0, 0, 0.55);
-      color: var(--color-contrast);
-      padding: 8px 10px;
-      border-radius: var(--radius-sm);
-      font-size: 0.85rem;
-      max-width: 240px;
-      line-height: 1.4;
-    }
-
-    @media (prefers-reduced-motion: reduce) {
-      * {
-        animation-duration: 0.01ms !important;
-        animation-iteration-count: 1 !important;
-        transition-duration: 0.01ms !important;
-      }
-    }
-  </style>
+  <link rel="stylesheet" href="styles-game.css" />
 </head>
+
 <body>
+<main id="game-root" role="main">
 
-  <div class="game-shell">
-    <header class="game-header">
-      <div class="game-title">🍯 Honey Pot Catch</div>
-      <a class="game-exit" href="index.html">← Back</a>
-    </header>
+  <header class="top-bar">
+    <div class="score">Score: <span id="score">0</span></div>
+    <div class="streak">Streak: <span id="streak">0</span></div>
+  </header>
 
-    <div class="game-canvas-wrap">
-      <p id="game-instructions" class="sr-only">
-        Use left and right arrow keys, A or D keys, or a connected gamepad stick to move Pooh. Catch honey pots, avoid bees, and
-        collect power-ups. Press Escape to pause.
-      </p>
-      <canvas
-        id="honey-game"
-        role="application"
-        aria-label="Honey Pot Catch game canvas"
-        aria-describedby="game-instructions"
-        tabindex="0"
-      ></canvas>
-      <div class="game-a11y-hint" aria-hidden="true">
-        Keyboard: ← → / A D · Gamepad: Left stick · Touch: Drag to move
-      </div>
-    </div>
+  <canvas
+    id="honey-game"
+    width="390"
+    height="640"
+    role="img"
+    aria-label="Honey Catch game play area"
+    aria-describedby="game-status"
+  ></canvas>
+
+  <div id="game-status" class="sr-only" aria-live="polite">
+    Game ready
   </div>
 
-  <!-- Game ONLY -->
-<link rel="stylesheet" href="styles-game.css">
-<script defer src="game.js"></script>
-<script>
-  // Lightweight, file-less service worker registration to cache game assets
-  if ('serviceWorker' in navigator) {
-    const assetList = [
-      './',
-      'index.html',
-      'game.html',
-      'game.js',
-      'script.js',
-      'styles-game.css',
-      'styles-index.css'
-    ];
+  <div class="overlay" id="start-overlay">
+    <h1>Honey Catch</h1>
+    <p>Drag to move. Catch honey. Avoid bees.</p>
+    <button id="start-btn">Start</button>
+  </div>
 
-    const swSource = `
-      const CACHE_NAME = 'honey-pwa-v1';
-      const ASSETS = ${JSON.stringify(assetList)};
-      self.addEventListener('install', event => {
-        event.waitUntil(
-          caches.open(CACHE_NAME).then(cache => cache.addAll(ASSETS)).then(() => self.skipWaiting())
-        );
-      });
-      self.addEventListener('activate', event => {
-        event.waitUntil(
-          caches.keys().then(keys => Promise.all(keys.filter(k => k !== CACHE_NAME).map(k => caches.delete(k)))).then(() => self.clients.claim())
-        );
-      });
-      self.addEventListener('fetch', event => {
-        if (event.request.method !== 'GET') return;
-        event.respondWith(
-          caches.match(event.request).then(cached => {
-            if (cached) return cached;
-            return fetch(event.request).then(response => {
-              if (response && response.status === 200 && response.type === 'basic') {
-                const clone = response.clone();
-                caches.open(CACHE_NAME).then(cache => cache.put(event.request, clone));
-              }
-              return response;
-            }).catch(() => caches.match('game.html'));
-          })
-        );
-      });
-    `;
+  <div class="overlay hidden" id="pause-overlay">
+    <h2>Paused</h2>
+    <button id="resume-btn">Resume</button>
+  </div>
 
-    const blob = new Blob([swSource], { type: 'text/javascript' });
-    const swUrl = window.__honeySwUrl || URL.createObjectURL(blob);
-    window.__honeySwUrl = swUrl;
-    navigator.serviceWorker.getRegistration('./').then(existing => {
-      if (existing) return existing;
-      return navigator.serviceWorker.register(swUrl, { scope: './' });
-    }).catch(err => console.error('[SW] registration failed', err));
-  }
-</script>
+</main>
+
+<script src="game.js"></script>
 </body>
 </html>
