@@ -1,313 +1,391 @@
 /* ==========================================================================
-   Baby Gunnar — Site UX Controller
-   script.js
-   --------------------------------------------------------------------------
-   Owns:
-   - Loading screen
-   - Storybook cover
-   - Navigation (desktop + mobile)
-   - Audio toggle (autoplay-safe)
-   - Character modal (single source of truth)
-   - Scroll helpers / progress
-   - Reduced motion toggle
-   - Wishes form UX
-
-   Does NOT touch:
-   - Canvas
-   - Game loop
-   - Game scoring / input
+   Baby Gunnar — Hundred Acre Wood Adventure
+   script.js — site-wide UI only (nav, cover, modals, progress, accessibility)
+   NOTE: Honey Pot Catch game logic is owned by game.js (do not duplicate here)
    ========================================================================== */
 
-(() => {
-  "use strict";
+/* eslint-disable no-console */
+'use strict';
 
-  /* -----------------------------------------------------------------------
-     0) UTILITIES
-  ----------------------------------------------------------------------- */
+(function () {
+  // ------------------------------------------------------------
+  // Tiny utils
+  // ------------------------------------------------------------
   const $ = (sel, root = document) => root.querySelector(sel);
   const $$ = (sel, root = document) => Array.from(root.querySelectorAll(sel));
 
-  const prefersReducedMotion = window.matchMedia("(prefers-reduced-motion: reduce)").matches;
+  const prefersReducedMotion = () =>
+    window.matchMedia && window.matchMedia('(prefers-reduced-motion: reduce)').matches;
 
-  /* -----------------------------------------------------------------------
-     1) LOADING SCREEN
-     Hide only when page is actually ready
-  ----------------------------------------------------------------------- */
-  const loadingScreen = $("#loadingScreen");
+  function safeFocus(el) {
+    try {
+      if (el && typeof el.focus === 'function') el.focus();
+    } catch (_) {}
+  }
 
-  window.addEventListener("load", () => {
-    if (!loadingScreen) return;
+  // ------------------------------------------------------------
+  // DOM refs (site)
+  // ------------------------------------------------------------
+  const dom = {
+    // Nav
+    navToggle: $('.nav-toggle'),
+    navMenu: $('.nav-menu'),
 
-    loadingScreen.style.opacity = "0";
-    loadingScreen.style.pointerEvents = "none";
+    // Cover / loading
+    cover: $('.storybook-cover'),
+    coverForm: $('.storybook-form'),
+    coverName: $('#guestName'),
+    coverBtn: $('#enterAdventure'),
+    loading: $('.loading-screen'),
+    loadingFill: $('.loading-progress-fill'),
+    loadingPct: $('.loading-percentage'),
 
-    setTimeout(() => {
-      loadingScreen.remove();
-    }, 400);
-  });
+    // Reading progress
+    readingProgress: $('.reading-progress'),
 
-  /* -----------------------------------------------------------------------
-     2) STORYBOOK COVER
-  ----------------------------------------------------------------------- */
-  const cover = $(".storybook-cover");
-  const openBookBtn = $("#openBookBtn");
+    // Character modal system (single)
+    characterModal: $('#characterModal'),
+    characterModalClose: $('#closeCharacterModal'),
+    characterModalContent: $('#characterModalContent'),
 
-  if (openBookBtn && cover) {
-    openBookBtn.addEventListener("click", () => {
-      cover.classList.add("closed");
-      document.body.style.overflow = "";
+    // Floating buttons (optional)
+    musicBtn: $('#musicToggle'),
+    accessibilityBtn: $('#accessibilityToggle'),
+    scrollTopBtn: $('#scrollTopBtn'),
+    favoriteBtn: $('#favoriteBtn'),
+
+    // Misc
+    page: $('.page') || document.body
+  };
+
+  // ------------------------------------------------------------
+  // NAV (hamburger + close-on-outside/esc)
+  // ------------------------------------------------------------
+  function initNav() {
+    if (!dom.navToggle || !dom.navMenu) return;
+
+    const closeMenu = () => {
+      dom.navToggle.classList.remove('active');
+      dom.navMenu.classList.remove('open');
+      dom.navToggle.setAttribute('aria-expanded', 'false');
+    };
+
+    const openMenu = () => {
+      dom.navToggle.classList.add('active');
+      dom.navMenu.classList.add('open');
+      dom.navToggle.setAttribute('aria-expanded', 'true');
+    };
+
+    const toggleMenu = () => {
+      const isOpen = dom.navMenu.classList.contains('open');
+      if (isOpen) closeMenu();
+      else openMenu();
+    };
+
+    // Harden attributes
+    dom.navToggle.setAttribute('aria-controls', dom.navMenu.id || 'navMenu');
+    dom.navToggle.setAttribute('aria-expanded', 'false');
+
+    dom.navToggle.addEventListener('click', (e) => {
+      e.preventDefault();
+      toggleMenu();
     });
-  }
 
-  /* -----------------------------------------------------------------------
-     3) NAVIGATION (single controller)
-  ----------------------------------------------------------------------- */
-  const navToggle = $("#navToggle");
-  const navMenu = $("#navMenu");
-
-  function setNav(open) {
-    if (!navMenu || !navToggle) return;
-
-    navMenu.classList.toggle("open", open);
-    navToggle.classList.toggle("active", open);
-    navToggle.setAttribute("aria-expanded", String(open));
-    navMenu.hidden = !open;
-  }
-
-  if (navToggle && navMenu) {
-    navToggle.addEventListener("click", () => {
-      const isOpen = navMenu.classList.contains("open");
-      setNav(!isOpen);
+    // Close when clicking a nav link (mobile)
+    dom.navMenu.addEventListener('click', (e) => {
+      const a = e.target.closest('a');
+      if (a) closeMenu();
     });
 
     // Close on outside click
-    document.addEventListener("click", (e) => {
-      if (!navMenu.classList.contains("open")) return;
-      if (navMenu.contains(e.target) || navToggle.contains(e.target)) return;
-      setNav(false);
+    document.addEventListener('click', (e) => {
+      const isClickInside =
+        dom.navMenu.contains(e.target) || dom.navToggle.contains(e.target);
+      if (!isClickInside) closeMenu();
     });
 
-    // Close on Escape
-    document.addEventListener("keydown", (e) => {
-      if (e.key === "Escape") setNav(false);
+    // Close on ESC
+    document.addEventListener('keydown', (e) => {
+      if (e.key === 'Escape') closeMenu();
     });
   }
 
-  /* -----------------------------------------------------------------------
-     4) AUDIO TOGGLE (autoplay-safe)
-  ----------------------------------------------------------------------- */
-  const audio = $("#bgMusic");
-  const musicToggle = $("#musicToggle");
-
-  let audioState = {
-    enabled: localStorage.getItem("musicEnabled") === "true",
-    armed: false
-  };
-
-  function updateMusicIcon() {
-    if (!musicToggle) return;
-    const icon = musicToggle.querySelector("i");
-    if (!icon) return;
-
-    icon.className = audioState.enabled
-      ? "fa-solid fa-volume-high"
-      : "fa-solid fa-volume-xmark";
-
-    musicToggle.setAttribute("aria-pressed", String(audioState.enabled));
+  // ------------------------------------------------------------
+  // COVER + LOADING (lightweight “enter” flow)
+  // ------------------------------------------------------------
+  function setLoadingProgress(pct) {
+    if (!dom.loadingFill || !dom.loadingPct) return;
+    const clamped = Math.max(0, Math.min(100, pct));
+    dom.loadingFill.style.width = `${clamped}%`;
+    dom.loadingPct.textContent = `${Math.round(clamped)}%`;
   }
 
-  function tryPlayAudio() {
-    if (!audio || !audioState.enabled) return;
-
-    audio.play()
-      .then(() => {
-        audioState.armed = true;
-      })
-      .catch(() => {
-        // iOS needs user gesture — arm instead
-        audioState.armed = true;
-      });
+  function showLoading() {
+    if (!dom.loading) return;
+    dom.loading.style.opacity = '1';
+    dom.loading.style.transform = 'translateY(0)';
+    dom.loading.classList.remove('hidden');
   }
 
-  if (musicToggle && audio) {
-    updateMusicIcon();
+  function hideLoading() {
+    if (!dom.loading) return;
+    dom.loading.style.opacity = '0';
+    dom.loading.style.transform = 'translateY(8px)';
+    setTimeout(() => dom.loading.classList.add('hidden'), 240);
+  }
 
-    musicToggle.addEventListener("click", () => {
-      audioState.enabled = !audioState.enabled;
-      localStorage.setItem("musicEnabled", String(audioState.enabled));
-      updateMusicIcon();
+  function closeCover() {
+    if (!dom.cover) return;
+    dom.cover.classList.add('closed');
+    // Prevent focus traps behind overlay
+    setTimeout(() => {
+      dom.cover.setAttribute('aria-hidden', 'true');
+    }, 400);
+  }
 
-      if (audioState.enabled) {
-        tryPlayAudio();
-      } else {
-        audio.pause();
+  function initCover() {
+    if (!dom.cover || !dom.coverBtn) return;
+
+    // Enter button should work even if form markup varies
+    const onEnter = (e) => {
+      e.preventDefault();
+
+      // Start a tiny “loading” progression (purely cosmetic)
+      showLoading();
+      setLoadingProgress(12);
+
+      const steps = prefersReducedMotion()
+        ? [40, 70, 100]
+        : [20, 38, 52, 68, 82, 92, 100];
+
+      let i = 0;
+      const tick = () => {
+        setLoadingProgress(steps[i]);
+        i++;
+        if (i < steps.length) {
+          setTimeout(tick, prefersReducedMotion() ? 80 : 120);
+        } else {
+          setTimeout(() => {
+            hideLoading();
+            closeCover();
+            // Focus first heading for accessibility
+            const h1 = $('.storybook-heading') || $('h1') || $('main');
+            safeFocus(h1);
+          }, 180);
+        }
+      };
+
+      // Store guest name (optional)
+      const name = dom.coverName ? String(dom.coverName.value || '').trim() : '';
+      if (name) {
+        try {
+          localStorage.setItem('gunnar_guest_name', name);
+        } catch (_) {}
       }
-    });
 
-    // First user interaction unlocks audio
-    document.addEventListener("click", () => {
-      if (audioState.enabled && audioState.armed) {
-        tryPlayAudio();
-      }
-    }, { once: true });
-  }
+      tick();
+    };
 
-  /* -----------------------------------------------------------------------
-     5) REDUCED MOTION TOGGLE
-  ----------------------------------------------------------------------- */
-  const motionToggle = $("#motionToggle");
+    dom.coverBtn.addEventListener('click', onEnter);
 
-  function setReducedMotion(enabled) {
-    document.documentElement.classList.toggle("reduce-motion", enabled);
-    motionToggle?.setAttribute("aria-pressed", String(enabled));
-    localStorage.setItem("reduceMotion", String(enabled));
-  }
-
-  if (motionToggle) {
-    const saved = localStorage.getItem("reduceMotion") === "true";
-    setReducedMotion(saved || prefersReducedMotion);
-
-    motionToggle.addEventListener("click", () => {
-      const enabled = !document.documentElement.classList.contains("reduce-motion");
-      setReducedMotion(enabled);
-    });
-  }
-
-  /* -----------------------------------------------------------------------
-     6) SCROLL TO TOP + READING PROGRESS
-  ----------------------------------------------------------------------- */
-  const scrollTopBtn = $("#scrollTopBtn");
-  const progressBar = $(".reading-progress");
-
-  if (scrollTopBtn) {
-    scrollTopBtn.addEventListener("click", () => {
-      window.scrollTo({ top: 0, behavior: "smooth" });
-    });
-  }
-
-  if (progressBar) {
-    window.addEventListener("scroll", () => {
-      const scrollTop = window.scrollY;
-      const height = document.documentElement.scrollHeight - window.innerHeight;
-      const progress = height > 0 ? (scrollTop / height) * 100 : 0;
-      progressBar.style.width = `${progress}%`;
-    });
-  }
-
-  /* -----------------------------------------------------------------------
-     7) CHARACTER MODAL (single canonical system)
-  ----------------------------------------------------------------------- */
-  const modal = $("#characterModal");
-  const modalBackdrop = modal?.querySelector("[data-close-modal]");
-  const modalClose = modal?.querySelector(".modal-close");
-
-  const modalEls = {
-    title: $("#characterModalTitle"),
-    role: $("#characterModalRole"),
-    quote: $("#characterModalQuote"),
-    bio: $("#characterModalBio"),
-    icon: $("#characterModalIcon"),
-    funFact: $("#characterModalFunFact"),
-    responsibilities: $("#characterModalResponsibilities")
-  };
-
-  const characterData = {
-    pooh: {
-      name: "Winnie the Pooh",
-      role: "Lover of honey",
-      quote: "Sometimes the smallest things take up the most room in your heart.",
-      bio: "A gentle bear with a big heart and an even bigger appreciation for honey.",
-      iconClass: "pooh-icon-modal",
-      funFact: "Pooh is left-handed.",
-      responsibilities: ["Honey tasting", "Thoughtful advice", "Quiet friendship"]
-    },
-    piglet: {
-      name: "Piglet",
-      role: "Bravest small friend",
-      quote: "Even the smallest person can change the course of the future.",
-      bio: "Soft-spoken, loyal, and far braver than he realizes.",
-      iconClass: "piglet-icon-modal",
-      funFact: "Piglet is afraid of many things — except being a good friend.",
-      responsibilities: ["Encouragement", "Listening", "Sticking close"]
-    },
-    tigger: {
-      name: "Tigger",
-      role: "Bounce specialist",
-      quote: "Bouncing is what Tiggers do best!",
-      bio: "Endless energy, optimism, and a tendency to land on his friends.",
-      iconClass: "tigger-icon-modal",
-      funFact: "Tigger can only bounce.",
-      responsibilities: ["Morale boosting", "Exploration", "Chaos management"]
-    },
-    eeyore: {
-      name: "Eeyore",
-      role: "Quiet observer",
-      quote: "It’s not much of a tail, but I’m sort of attached to it.",
-      bio: "A thoughtful soul who loves deeply, even when he expects the worst.",
-      iconClass: "eeyore-icon-modal",
-      funFact: "Eeyore’s house is made of sticks.",
-      responsibilities: ["Perspective", "Loyalty", "Honest insight"]
+    // Support submit on Enter
+    if (dom.coverForm) {
+      dom.coverForm.addEventListener('submit', onEnter);
     }
-  };
 
-  function openCharacterModal(key) {
-    const data = characterData[key];
-    if (!data || !modal) return;
+    // Pre-fill name if stored
+    if (dom.coverName) {
+      try {
+        const stored = localStorage.getItem('gunnar_guest_name');
+        if (stored) dom.coverName.value = stored;
+      } catch (_) {}
+    }
+  }
 
-    modalEls.title.textContent = data.name;
-    modalEls.role.textContent = data.role;
-    modalEls.quote.textContent = data.quote;
-    modalEls.bio.textContent = data.bio;
-    modalEls.funFact.textContent = data.funFact;
+  // ------------------------------------------------------------
+  // READING PROGRESS BAR
+  // ------------------------------------------------------------
+  function initReadingProgress() {
+    if (!dom.readingProgress) return;
 
-    modalEls.icon.className = `modal-character-icon ${data.iconClass}`;
+    const update = () => {
+      const doc = document.documentElement;
+      const scrollTop = window.scrollY || doc.scrollTop || 0;
+      const height = Math.max(1, doc.scrollHeight - window.innerHeight);
+      const pct = Math.max(0, Math.min(1, scrollTop / height));
+      dom.readingProgress.style.width = `${pct * 100}%`;
+    };
 
-    modalEls.responsibilities.innerHTML = "";
-    data.responsibilities.forEach(item => {
-      const li = document.createElement("li");
-      li.textContent = item;
-      modalEls.responsibilities.appendChild(li);
-    });
+    update();
+    window.addEventListener('scroll', update, { passive: true });
+    window.addEventListener('resize', update);
+  }
 
-    modal.hidden = false;
-    modal.classList.add("active");
-    document.body.style.overflow = "hidden";
+  // ------------------------------------------------------------
+  // CHARACTER MODAL (single system; cards just need data-attrs)
+  // ------------------------------------------------------------
+  function openCharacterModal(payload) {
+    if (!dom.characterModal || !dom.characterModalContent) return;
+
+    dom.characterModalContent.innerHTML = `
+      <div class="modal-character">
+        <div class="modal-character-icon ${payload.iconClass || ''}">
+          ${payload.img ? `<img src="${payload.img}" alt="${payload.name || 'Character'}">` : ''}
+        </div>
+        <div>
+          <h3 class="modal-character-name">${payload.name || 'Friend'}</h3>
+        </div>
+      </div>
+      ${payload.quote ? `<p class="modal-character-quote">“${payload.quote}”</p>` : ''}
+      ${payload.bio ? `<div class="modal-character-bio">${payload.bio}</div>` : ''}
+    `;
+
+    dom.characterModal.classList.add('active');
+    dom.characterModal.setAttribute('aria-hidden', 'false');
+
+    // focus close button
+    safeFocus(dom.characterModalClose || $('.close-modal', dom.characterModal));
   }
 
   function closeCharacterModal() {
-    if (!modal) return;
-    modal.classList.remove("active");
-    modal.hidden = true;
-    document.body.style.overflow = "";
+    if (!dom.characterModal) return;
+    dom.characterModal.classList.remove('active');
+    dom.characterModal.setAttribute('aria-hidden', 'true');
   }
 
-  // Character card wiring
-  $$(".character-spotlight").forEach(card => {
-    card.addEventListener("click", () => {
-      const key = card.dataset.character;
-      openCharacterModal(key);
+  function initCharacterCards() {
+    // Supports: .clickable-character, .character-card-enhanced, .character-spotlight
+    const cards = $$('.clickable-character, .character-card-enhanced, .character-spotlight');
+    if (!cards.length) return;
+
+    cards.forEach((card) => {
+      card.addEventListener('click', () => {
+        const name =
+          card.getAttribute('data-name') ||
+          card.getAttribute('data-character') ||
+          card.querySelector('.character-name')?.textContent?.trim() ||
+          'Friend';
+
+        const quote =
+          card.getAttribute('data-quote') ||
+          card.querySelector('.character-quote')?.textContent?.trim() ||
+          '';
+
+        const bio = card.getAttribute('data-bio') || card.getAttribute('data-message') || '';
+
+        const img = card.querySelector('img')?.getAttribute('src') || '';
+        const iconClass = card.getAttribute('data-icon-class') || '';
+
+        openCharacterModal({ name, quote, bio, img, iconClass });
+      });
+
+      card.addEventListener('keydown', (e) => {
+        if (e.key === 'Enter' || e.key === ' ') {
+          e.preventDefault();
+          card.click();
+        }
+      });
     });
-  });
 
-  modalBackdrop?.addEventListener("click", closeCharacterModal);
-  modalClose?.addEventListener("click", closeCharacterModal);
+    // Close handlers
+    if (dom.characterModal) {
+      dom.characterModal.addEventListener('click', (e) => {
+        if (e.target === dom.characterModal) closeCharacterModal();
+      });
+    }
+    if (dom.characterModalClose) dom.characterModalClose.addEventListener('click', closeCharacterModal);
 
-  document.addEventListener("keydown", (e) => {
-    if (e.key === "Escape") closeCharacterModal();
-  });
-
-  /* -----------------------------------------------------------------------
-     8) WISH FORM UX (no backend assumed)
-  ----------------------------------------------------------------------- */
-  const wishForm = $("#wishForm");
-  const wishNote = $("#wishNote");
-
-  if (wishForm) {
-    wishForm.addEventListener("submit", (e) => {
-      e.preventDefault();
-      wishNote.textContent = "Your wish has been sent with love 💛";
-      wishForm.reset();
+    document.addEventListener('keydown', (e) => {
+      if (e.key === 'Escape' && dom.characterModal?.classList.contains('active')) {
+        closeCharacterModal();
+      }
     });
   }
 
+  // ------------------------------------------------------------
+  // FLOATING BUTTONS (optional wiring)
+  // ------------------------------------------------------------
+  function initFloatingButtons() {
+    // Scroll to top
+    if (dom.scrollTopBtn) {
+      dom.scrollTopBtn.addEventListener('click', () => {
+        window.scrollTo({ top: 0, behavior: prefersReducedMotion() ? 'auto' : 'smooth' });
+      });
+    }
+
+    // Favorites (simple UI-only toggle)
+    if (dom.favoriteBtn) {
+      dom.favoriteBtn.addEventListener('click', () => {
+        dom.favoriteBtn.classList.toggle('active');
+        try {
+          localStorage.setItem(
+            'gunnar_favorite_active',
+            dom.favoriteBtn.classList.contains('active') ? '1' : '0'
+          );
+        } catch (_) {}
+      });
+
+      try {
+        const v = localStorage.getItem('gunnar_favorite_active');
+        if (v === '1') dom.favoriteBtn.classList.add('active');
+      } catch (_) {}
+    }
+
+    // Accessibility quick toggle (example: bigger text)
+    if (dom.accessibilityBtn) {
+      dom.accessibilityBtn.addEventListener('click', () => {
+        document.documentElement.classList.toggle('a11y-bigtext');
+        const on = document.documentElement.classList.contains('a11y-bigtext');
+        dom.accessibilityBtn.setAttribute('aria-pressed', on ? 'true' : 'false');
+        try {
+          localStorage.setItem('gunnar_a11y_bigtext', on ? '1' : '0');
+        } catch (_) {}
+      });
+
+      try {
+        const on = localStorage.getItem('gunnar_a11y_bigtext') === '1';
+        if (on) {
+          document.documentElement.classList.add('a11y-bigtext');
+          dom.accessibilityBtn.setAttribute('aria-pressed', 'true');
+        }
+      } catch (_) {}
+    }
+
+    // Music toggle (delegates to window.audioManager if present)
+    if (dom.musicBtn) {
+      dom.musicBtn.addEventListener('click', async () => {
+        const am = window.audioManager;
+        if (!am) {
+          console.warn('audioManager not found (ok if you removed audio).');
+          return;
+        }
+
+        try {
+          const isMuted = !!am.isMuted;
+          if (typeof am.setMuted === 'function') am.setMuted(!isMuted);
+          else am.isMuted = !isMuted;
+
+          dom.musicBtn.classList.toggle('muted', !(!am.isMuted));
+          dom.musicBtn.setAttribute('aria-pressed', am.isMuted ? 'true' : 'false');
+        } catch (e) {
+          console.error('Music toggle failed:', e);
+        }
+      });
+    }
+  }
+
+  // ------------------------------------------------------------
+  // Boot
+  // ------------------------------------------------------------
+  document.addEventListener('DOMContentLoaded', () => {
+    try {
+      initNav();
+      initCover();
+      initReadingProgress();
+      initCharacterCards();
+      initFloatingButtons();
+    } catch (err) {
+      console.error('script.js init failed:', err);
+    }
+  });
 })();
