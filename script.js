@@ -5,6 +5,15 @@
 'use strict';
 
 (function () {
+    // HARD DISABLE COVER AFTER FIRST LOAD
+  document.addEventListener('DOMContentLoaded', () => {
+    const cover = document.getElementById('cover');
+    if (!cover) return;
+
+    cover.classList.add('closed');
+    cover.setAttribute('aria-hidden', 'true');
+    document.body.classList.remove('cover-open');
+  });
   // ---------------------------------------------------------------------------
   // INITIALIZATION AND UTILITIES
   // ---------------------------------------------------------------------------
