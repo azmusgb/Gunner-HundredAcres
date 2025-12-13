@@ -6,38 +6,45 @@
   <title>Baby Gunnar's Hundred Acre Wood Adventure</title>
   <meta name="description" content="A storybook-style Hundred Acre Wood adventure to celebrate Baby Gunnar." />
   <meta name="theme-color" content="#f4a944" />
-  <meta name="color-scheme" content="light dark" />
   <meta property="og:title" content="Baby Gunnar's Hundred Acre Wood Shower" />
   <meta property="og:description" content="A sweet storybook—read, explore, and leave your wishes for Baby Gunnar." />
   <meta property="og:image" content="icons/icon.svg" />
   <meta property="og:type" content="website" />
 
   <link rel="preload" as="image" href="Images/Characters/Gunnar-header.png" />
-
-  <link rel="preconnect" href="https://fonts.googleapis.com" />
+  <link rel="prefetch" href="game.html" /> <link rel="preconnect" href="https://fonts.googleapis.com" />
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
   <link href="https://fonts.googleapis.com/css2?family=Playfair+Display:wght@600;700;800&family=Patrick+Hand&family=Nunito:wght@400;600;700;800&display=swap" rel="stylesheet">
 
   <style>
+    /* -------------------------------------------------- */
+    /* 1. Deepened Color Palette using HSL for Better Theming */
+    /* -------------------------------------------------- */
     :root{
-      /* Base palette */
-      --bg:#fff9ec;
-      --bg-soft:#fff4dd;
-      --ink:#2b1a04;
-      --ink-soft:rgba(43,26,4,.72);
+      /* Base HSL Definitions for Honey/Gold (H=38) */
+      --hue-honey: 38;
+      --sat-high: 86%;
+      --light-base: 72%;
+      --light-dark: 8%;
 
-      --accent:#f4b944;
-      --accent-soft:#ffe4a8;
-      --accent-strong:#f59e0b;
+      /* Base Palette */
+      --bg: hsl(var(--hue-honey), 80%, 98%);
+      --bg-soft: hsl(var(--hue-honey), 70%, 95%);
+      --ink: hsl(var(--hue-honey), 30%, 15%);
+      --ink-soft: hsla(var(--hue-honey), 30%, 15%, .72);
 
-      --sage:#7aa06e;
-      --sage-soft:#e9f4e6;
+      --accent: hsl(var(--hue-honey), var(--sat-high), 60%); /* Adjusted base lightness */
+      --accent-soft: hsl(var(--hue-honey), 90%, 90%);
+      --accent-strong: hsl(var(--hue-honey), 90%, 50%); /* Deeper gold */
 
-      --card-bg:#ffffff;
-      --card-radius:26px;
+      --sage: #7aa06e;
+      --sage-soft: #e9f4e6;
 
-      --border-soft:rgba(0,0,0,.06);
-      --border-mid:rgba(0,0,0,.12);
+      --card-bg: #ffffff;
+      --card-radius: 26px;
+
+      --border-soft: rgba(0,0,0,.06);
+      --border-mid: rgba(0,0,0,.12);
 
       --shadow-soft:0 26px 70px rgba(0,0,0,.14);
       --shadow-subtle:0 12px 34px rgba(0,0,0,.10);
@@ -47,8 +54,8 @@
       --transition-med:.26s cubic-bezier(.2,.8,.2,1);
 
       --page-max-width:1120px;
-      --page-padding-x:1.5rem;
-      --page-padding-y:1.6rem;
+      --page-padding-inline:1.5rem; /* Using logical properties */
+      --page-padding-block:1.6rem;
 
       --touch-min:44px;
       --touch-padding:.75rem;
@@ -67,21 +74,21 @@
       --paper:
         radial-gradient(circle at 10% 10%, rgba(255,255,255,.55), transparent 45%),
         radial-gradient(circle at 90% 15%, rgba(255,255,255,.45), transparent 40%),
-        radial-gradient(circle at 40% 70%, rgba(255,255,255,.35), transparent 55%),
         linear-gradient(180deg, rgba(255,255,255,.55), rgba(255,255,255,0));
 
       --grain-opacity:.08;
+      --reading-progress-height: 4px;
     }
 
     :root[data-theme="dark"]{
-      --bg:#0e0b07;
-      --bg-soft:#16110b;
-      --ink:#f6efe6;
-      --ink-soft:rgba(246,239,230,.72);
+      --bg: hsl(var(--hue-honey), 30%, var(--light-dark));
+      --bg-soft: hsl(var(--hue-honey), 40%, calc(var(--light-dark) + 5%));
+      --ink: hsl(var(--hue-honey), 70%, 90%);
+      --ink-soft: hsla(var(--hue-honey), 70%, 90%, .72);
 
-      --card-bg:rgba(20,15,10,.92);
-      --border-soft:rgba(255,255,255,.08);
-      --border-mid:rgba(255,255,255,.14);
+      --card-bg: hsla(var(--hue-honey), 20%, 12%, .92);
+      --border-soft: rgba(255,255,255,.08);
+      --border-mid: rgba(255,255,255,.14);
 
       --shadow-soft:0 26px 70px rgba(0,0,0,.52);
       --shadow-subtle:0 12px 34px rgba(0,0,0,.44);
@@ -90,170 +97,47 @@
       --paper:
         radial-gradient(circle at 10% 10%, rgba(255,255,255,.10), transparent 45%),
         radial-gradient(circle at 90% 15%, rgba(255,255,255,.09), transparent 40%),
-        radial-gradient(circle at 40% 70%, rgba(255,255,255,.07), transparent 55%),
         linear-gradient(180deg, rgba(255,255,255,.06), rgba(255,255,255,0));
 
       --grain-opacity:.10;
     }
 
+    /* -------------------------------------------------- */
+    /* 2. Base & Utility Improvements */
+    /* -------------------------------------------------- */
     *,*::before,*::after{box-sizing:border-box}
-    html,body{margin:0;padding:0}
+    html,body{margin:0;padding:0;scroll-behavior: smooth;} /* Added smooth scroll */
     body{
       min-height:100vh;
       font-family:var(--font-body);
       color:var(--ink);
       background:
-        radial-gradient(circle at top, rgba(255,218,140,.72) 0, rgba(255,231,196,.55) 35%, rgba(255,249,236,1) 72%),
+        radial-gradient(circle at top, hsl(38, 70%, 80%, .72) 0, hsl(38, 80%, 90%, .55) 35%, var(--bg) 72%),
         linear-gradient(180deg, var(--bg-soft), var(--bg));
       -webkit-font-smoothing:antialiased;
-      padding-left:env(safe-area-inset-left, 1rem);
-      padding-right:env(safe-area-inset-right, 1rem);
-      padding-top:env(safe-area-inset-top, 0);
-      padding-bottom:env(safe-area-inset-bottom, 0);
+      padding-inline: env(safe-area-inset-left, 1rem) env(safe-area-inset-right, 1rem); /* Using logical properties */
+      padding-block-start:env(safe-area-inset-top, 0);
+      padding-block-end:env(safe-area-inset-bottom, 0);
       overflow-x:hidden;
     }
 
-    body::before{
-      content:"";
-      position:fixed; inset:0;
-      pointer-events:none;
-      background-image:
-        url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='220' height='220'%3E%3Cfilter id='n'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='.9' numOctaves='3' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='220' height='220' filter='url(%23n)' opacity='.35'/%3E%3C/svg%3E");
-      mix-blend-mode:overlay;
-      opacity:var(--grain-opacity);
-      z-index:-1;
-    }
-
-    .hero-action-btn,.chapter-nav-btn,.footer-link,.submit-btn,.chapter-pill,.registry-card,.clickable-character,.btn{
-      position:relative;
-      min-height:var(--touch-min);
-      min-width:var(--touch-min);
-    }
-    .footer-link,.chapter-nav-btn{padding:var(--touch-padding) calc(var(--touch-padding)*1.4)}
-    .hero-action-btn,.submit-btn{display:inline-flex;align-items:center;justify-content:center}
-    .btn-icon,.pill-icon{padding:.25rem}
-
-    :where(button,a,input,select,textarea,[role="button"]):focus-visible{
+    /* Input Focus: Use :has() for a better focus state */
+    .form-field:has(:focus-visible), .clickable-character:focus-visible{
       outline:3px solid color-mix(in srgb, var(--accent-strong) 70%, white 30%);
       outline-offset:3px;
       border-radius:14px;
     }
 
-    .sr-only{
-      position:absolute;width:1px;height:1px;padding:0;margin:-1px;overflow:hidden;clip:rect(0,0,0,0);border:0
-    }
-
-    .divider{
-      text-align:center;
-      margin:2rem 0;
-      font-size:.95rem;
-      opacity:.8
-    }
-
-    .enhanced-scene{
-      position:fixed;inset:0;pointer-events:none;
-      background:
-        radial-gradient(circle at top left, rgba(255,255,255,.70), transparent 55%),
-        radial-gradient(circle at top right, rgba(255,243,205,.64), transparent 50%),
-        radial-gradient(circle at bottom, rgba(255,220,185,.68), transparent 60%);
-      opacity:.65;z-index:-2
-    }
-    .cloud-layer{
-      position:fixed;top:0;left:0;width:100%;
-      pointer-events:none;display:flex;justify-content:space-around;
-      padding-top:.55rem;font-size:1.7rem;opacity:.38;z-index:-1;
-      filter:drop-shadow(0 6px 14px rgba(0,0,0,.10));
-    }
-    .cloud{animation:floatClouds 22s linear infinite}
-    .cloud:nth-child(2){animation-delay:-7s}
-    .cloud:nth-child(3){animation-delay:-14s}
-    @keyframes floatClouds{
-      0%{transform:translate3d(-12px,0,0)}
-      50%{transform:translate3d(12px,4px,0)}
-      100%{transform:translate3d(-12px,0,0)}
-    }
-
-    .topbar{
-      position:sticky; top:0;
-      z-index:20;
-      backdrop-filter:saturate(1.2) blur(12px);
-      background:color-mix(in srgb, var(--card-bg) 78%, transparent);
-      border-bottom:1px solid var(--border-soft);
-    }
-    .topbar-inner{
-      max-width:var(--page-max-width);
-      margin:0 auto;
-      padding:.6rem max(var(--page-padding-x), env(safe-area-inset-left, 1rem));
-      padding-right:max(var(--page-padding-x), env(safe-area-inset-right, 1rem));
-      display:flex; align-items:center; justify-content:space-between; gap:.75rem;
-    }
-    .brandmark{
-      display:flex; align-items:center; gap:.55rem;
-      min-width:0;
-    }
-    .brand-badge{
-      width:38px;height:38px;border-radius:14px;
-      display:grid;place-items:center;
-      background:radial-gradient(circle at 30% 25%, #fff6dc, var(--accent));
-      box-shadow:var(--shadow-tiny);
-      border:1px solid color-mix(in srgb, var(--accent) 40%, transparent);
-      flex:0 0 auto;
-      user-select:none;
-    }
-    .brand-title{
-      display:flex; flex-direction:column; min-width:0;
-      line-height:1.1;
-    }
-    .brand-title strong{
-      font-family:var(--font-title);
-      font-weight:800;
-      letter-spacing:.02em;
-      font-size:.98rem;
-      white-space:nowrap;
-      overflow:hidden;
-      text-overflow:ellipsis;
-    }
-    .brand-title span{
-      font-size:.78rem;
-      color:var(--ink-soft);
-      white-space:nowrap;
-      overflow:hidden;
-      text-overflow:ellipsis;
-    }
-    .topbar-actions{display:flex; gap:.5rem; flex-wrap:wrap; justify-content:flex-end;}
-    .chip{
-      display:inline-flex; align-items:center; gap:.45rem;
-      border-radius:999px;
-      padding:.45rem .8rem;
-      border:1px solid var(--border-mid);
-      background:color-mix(in srgb, var(--card-bg) 92%, transparent);
-      box-shadow:var(--shadow-tiny);
-      font-weight:800;
-      font-size:.86rem;
-      cursor:pointer;
-      user-select:none;
-      transition:transform var(--transition-fast), box-shadow var(--transition-fast);
-      text-decoration:none;
-      -webkit-tap-highlight-color: transparent;
-    }
-    .chip:hover{transform:translateY(-1px); box-shadow:0 10px 24px rgba(0,0,0,.14);}
-    .chip .mini{opacity:.85}
-
-    .masthead-hero{position:relative;padding-bottom:2.2rem;color:var(--ink)}
-    .hero-banner{
-      position:relative;isolation:isolate;
-      max-width:1200px;margin:0 auto 1.35rem;
-      border-radius:34px;overflow:hidden;
-      box-shadow:var(--shadow-soft);
-      background:linear-gradient(135deg,#ffe5b0,#ffd1a3);
-      border:1px solid color-mix(in srgb, var(--border-soft) 85%, transparent);
-    }
-
+    /* -------------------------------------------------- */
+    /* 3. Hero Parallax Preparation */
+    /* -------------------------------------------------- */
     .hero-image-container{
       position:relative;width:100%;
       height:min(60vh, 540px);
       overflow:hidden;
       background:#000;
+      /* Custom property for JS parallax */
+      --scroll-translate: 0px;
     }
 
     .hero-image-container::before{
@@ -263,783 +147,102 @@
       background-size:cover;
       background-position:center 30%;
       filter: blur(18px) saturate(1.06) contrast(1.06);
-      transform: scale(1.10);
+      transform: scale(1.10) translateY(var(--scroll-translate)); /* Linked to JS scroll */
       opacity:.62;
       z-index:0;
+      transition: transform 0.1s linear; /* Smooth micro-movements */
     }
-    .hero-image-container::after{
-      content:"";
-      position:absolute;inset:0;
-      background: var(--hero-warmwash), var(--hero-vignette);
-      mix-blend-mode:multiply;
-      opacity:.95;
-      z-index:2;
-      pointer-events:none;
+    .cloud-layer{
+      /* ... existing styles ... */
+      transform: translateY(var(--cloud-translate, 0)); /* Linked to JS scroll */
+      transition: transform 0.1s linear;
     }
 
-    .hero-banner__img{
-      position:relative;
-      width:100%;height:100%;
-      object-fit:contain;
-      object-position:center 30%;
-      z-index:1;
-      filter: saturate(1.02) contrast(1.03);
+    /* -------------------------------------------------- */
+    /* 4. Reading Progress Bar */
+    /* -------------------------------------------------- */
+    #readingProgressBar {
+      position: fixed;
+      top: 0; left: 0;
+      height: var(--reading-progress-height);
+      width: 0%;
+      background: linear-gradient(90deg, #f4b944, #f97316);
+      z-index: 100;
+      transition: width 0.1s linear;
+      box-shadow: 0 0 8px rgba(244,185,68,.7);
     }
 
-    .hero-frame{
-      position:absolute; inset:18px;
-      border-radius:28px;
-      pointer-events:none;
-      border:1px solid rgba(255,255,255,.28);
-      box-shadow:
-        inset 0 0 0 1px rgba(255,255,255,.12),
-        0 18px 60px rgba(0,0,0,.24);
-      z-index:3;
+    /* -------------------------------------------------- */
+    /* 5. Character Dialogue Panel */
+    /* -------------------------------------------------- */
+    #dialogueBox {
+      position: fixed;
+      bottom: 0; left: 0; right: 0;
+      max-width: 480px;
+      margin: 0 auto 1.5rem;
+      padding: 1rem 1.25rem;
+      background: linear-gradient(135deg, #fff7dd, #ffe4b2);
+      color: var(--ink);
+      border-radius: 18px;
+      box-shadow: 0 10px 30px rgba(0,0,0,.2);
+      border: 2px solid var(--accent-strong);
+      font-family: var(--font-hand);
+      font-size: 1.05rem;
+      line-height: 1.4;
+      z-index: 50;
+      transform: translateY(150%);
+      opacity: 0;
+      transition: transform var(--transition-med), opacity var(--transition-med);
+      pointer-events: none;
     }
 
-    .hero-corner-decoration{
-      position:absolute;font-size:1.7rem;
-      filter:drop-shadow(0 6px 14px rgba(0,0,0,.18));
-      z-index:4;
-      opacity:.92;
-      user-select:none;
-    }
-    .hero-corner-decoration.top-left{top:12px;left:16px}
-    .hero-corner-decoration.top-right{top:12px;right:16px}
-    .hero-corner-decoration.bottom-left{bottom:12px;left:16px}
-    .hero-corner-decoration.bottom-right{bottom:12px;right:16px}
-
-    .hero-title-container{
-      position:absolute;inset:auto 0 0;
-      display:flex;justify-content:center;
-      padding:1.25rem 1.35rem 1.55rem;
-      pointer-events:none;
-      z-index:6;
-    }
-    .title-background{
-      pointer-events:auto;max-width:820px;width:100%;
-      padding:1.05rem 1.25rem 1.2rem;
-      border-radius:26px 26px 0 0;
-      background:
-        var(--paper),
-        linear-gradient(135deg, rgba(255,255,255,.98), rgba(255,248,225,.90));
-      box-shadow:0 -12px 36px rgba(0,0,0,.18);
-      border:1px solid rgba(255,255,255,.82);
-      border-bottom:none;
-    }
-    .masthead-title{
-      margin:0 0 .45rem;
-      font-family:var(--font-title);
-      letter-spacing:.03em;
-      text-align:center;
-      line-height:1.05;
-    }
-    .title-line{display:block}
-    .title-line--primary{
-      font-size:clamp(1.05rem, 2vw + .9rem, 1.35rem);
-      text-transform:uppercase;
-      letter-spacing:.26em;
-      opacity:.92;
-    }
-    .title-line--secondary{
-      font-size:clamp(1.85rem, 3.2vw + 1.05rem, 2.5rem);
-      font-weight:800;
+    #dialogueBox.active {
+      transform: translateY(0);
+      opacity: 1;
+      pointer-events: auto;
     }
 
-    .gunnar-shine{
-      position:relative;
-      display:inline-block;
-      padding:.08em .26em;
-      border-radius:.7em;
-      background: linear-gradient(90deg, rgba(255,255,255,.22), rgba(255,228,168,.78), rgba(255,255,255,.18));
-      box-shadow:
-        0 0 0 1px rgba(245,158,11,.22),
-        0 12px 30px rgba(245,158,11,.22);
-      text-shadow: 0 1px 0 rgba(255,255,255,.35);
-      transform:translateZ(0);
-    }
-    .gunnar-shine::after{
-      content:"";
-      position:absolute;inset:-2px;
-      border-radius:inherit;
-      background: radial-gradient(circle at 30% 20%, rgba(255,255,255,.78), transparent 56%);
-      opacity:.55;
-      pointer-events:none;
-      animation: shineSweep 2.8s ease-in-out infinite;
-      mix-blend-mode: screen;
-    }
-    @keyframes shineSweep{
-      0%,100%{transform:translateX(-7px);opacity:.30}
-      50%{transform:translateX(7px);opacity:.90}
+    #dialogueBox .speaker-name {
+      display: block;
+      font-weight: 800;
+      margin-top: .4rem;
+      font-size: .85rem;
+      opacity: .85;
+      color: #b45309;
     }
 
-    .title-underline{display:flex;justify-content:center;gap:.25rem;margin-bottom:.25rem}
-    .underline-dot{font-size:.9rem;color:var(--accent-strong)}
-    .hero-subtitle{
-      margin:0;
-      text-align:center;
-      font-size:.98rem;
-      color:var(--ink-soft);
-      font-family:var(--font-hand);
-      letter-spacing:.02em;
+    /* -------------------------------------------------- */
+    /* 6. Navigation Enhancements */
+    /* -------------------------------------------------- */
+    .chapter-nav-btn[disabled]{
+      opacity:.5;
+      cursor:not-allowed;
+      transform:translateY(0) !important;
+      box-shadow:none !important;
     }
-
-    .hero-sparkles{
-      position:absolute;inset:0;pointer-events:none;
-      background:
-        radial-gradient(circle at 12% 12%, rgba(255,255,255,.62), transparent 60%),
-        radial-gradient(circle at 88% 28%, rgba(255,225,173,.60), transparent 55%);
-      mix-blend-mode:screen;opacity:.55;z-index:1;
-    }
-
-    .hero-bunting{
-      max-width:1200px;margin:.25rem auto 0;
-      display:flex;justify-content:center;gap:.45rem;font-size:1.35rem;
-      opacity:.95;
-      user-select:none;
-    }
-    .hero-sheen{
-      position:absolute;inset:0;pointer-events:none;
-      background:linear-gradient(135deg, rgba(255,255,255,.16), transparent 58%);
-      mix-blend-mode:screen;opacity:.75
-    }
-
-    .masthead-hero-inner{
-      max-width:var(--page-max-width);
-      margin:.55rem auto 0;
-      padding:0 1.25rem;
-      padding-left:max(var(--page-padding-x), env(safe-area-inset-left, 1rem));
-      padding-right:max(var(--page-padding-x), env(safe-area-inset-right, 1rem));
-    }
-    .hero-panel{
-      margin-top:1.35rem;
-      padding:1.6rem 1.5rem;
-      border-radius:var(--card-radius);
-      background:
-        var(--paper),
-        color-mix(in srgb, var(--card-bg) 92%, transparent);
-      box-shadow:var(--shadow-subtle);
-      border:1px solid var(--border-soft);
-    }
-
-    .hero-badge{
-      display:grid;
-      grid-template-columns:auto minmax(0, 1.5fr);
-      gap:1rem;
-      padding:.95rem 1.1rem;
-      border-radius:999px;
-      background:
-        radial-gradient(circle at 15% 30%, rgba(255,255,255,.65), transparent 48%),
-        linear-gradient(135deg, color-mix(in srgb, var(--accent-soft) 70%, white 30%), rgba(255,255,255,.65));
-      align-items:center;
-      border:1px solid color-mix(in srgb, var(--accent) 35%, transparent);
-      margin-bottom:1.35rem;
-    }
-    .badge-icon{display:flex;align-items:center;justify-content:center}
-    .badge-icon-inner{
-      width:50px;height:50px;border-radius:16px;
-      display:flex;align-items:center;justify-content:center;
-      background:radial-gradient(circle at 30% 20%, #fff9e8, var(--accent));
-      box-shadow:var(--shadow-tiny);
-      font-size:1.55rem;
-      border:1px solid rgba(255,255,255,.55);
-    }
-    .badge-copy{min-width:0}
-    .badge-eyebrow{margin:0;text-transform:uppercase;letter-spacing:.16em;font-size:.7rem;opacity:.72}
-    .badge-label{margin:.12rem 0 0;font-size:.92rem;font-weight:900}
-    .badge-title{margin:.12rem 0 0;font-size:1.02rem;font-weight:900}
-    .badge-meta{
-      display:flex;gap:.5rem;flex-wrap:wrap;justify-content:flex-end;align-items:center;font-size:.8rem
-    }
-    .badge-pill{
-      display:inline-flex;align-items:center;gap:.4rem;
-      border-radius:999px;padding:.32rem .74rem;
-      background:color-mix(in srgb, var(--card-bg) 88%, transparent);
-      border:1px solid var(--border-soft);
-      box-shadow:0 2px 10px rgba(244,185,68,.18);
-      backdrop-filter: blur(8px);
-    }
-    .pill-icon{font-size:1rem}
-    .pill-text{white-space:nowrap}
-
-    /* Adjusted: make "how this works" feel guided */
-    .hero-details-grid{
-      display:grid;
-      grid-template-columns:repeat(3, minmax(0,1fr));
-      gap:1rem;
-      margin-bottom:1.05rem;
-    }
-    .hero-detail{
-      display:flex;gap:.75rem;
-      padding:.9rem 1rem;
-      border-radius:18px;
-      background:color-mix(in srgb, var(--card-bg) 92%, transparent);
-      border:1px solid var(--border-soft);
-      box-shadow:0 10px 22px rgba(0,0,0,.07);
-    }
-    .detail-icon{font-size:1.5rem}
-    .detail-title{margin:0;font-size:.95rem;font-weight:900}
-    .detail-text{margin:.15rem 0 0;font-size:.86rem;color:var(--ink-soft)}
-
-    .hero-actions{display:flex;flex-wrap:wrap;gap:.75rem;margin-bottom:1rem}
-    .hero-action-btn{
-      border-radius:999px;border:none;
-      padding:.7rem 1.1rem;
-      font-size:.92rem;font-weight:900;
-      display:inline-flex;align-items:center;gap:.45rem;
-      cursor:pointer;
-      transition:transform var(--transition-fast), box-shadow var(--transition-fast), filter var(--transition-fast);
-      text-decoration:none;
-      user-select:none;
-      -webkit-tap-highlight-color: transparent;
-    }
-    .hero-action-btn .btn-icon{font-size:1.08rem}
-    .hero-action-btn.primary{
-      background:linear-gradient(135deg,#f4b944,#f59e0b);
-      color:#2b1a04;
-      box-shadow:0 10px 24px rgba(244,185,68,.52);
-    }
-    .hero-action-btn.secondary{
-      background:color-mix(in srgb, var(--card-bg) 92%, transparent);
-      color:var(--ink);
-      box-shadow:var(--shadow-tiny);
-      border:1px solid var(--border-soft);
-    }
-    .hero-action-btn.ghost{
-      background:transparent;color:var(--ink-soft);
-      border:1px dashed color-mix(in srgb, var(--border-mid) 80%, transparent);
-    }
-    .hero-action-btn:hover{
-      transform:translateY(-1px);
-      box-shadow:0 16px 36px rgba(0,0,0,.14);
-      filter:saturate(1.02);
-    }
-    .hero-action-btn:active{transform:translateY(0);}
-
-    .orientation-hint{
-      display:flex;align-items:center;gap:.6rem;
-      padding-top:.7rem;border-top:1px dashed var(--border-soft);
-      margin-top:.65rem;font-size:.86rem;color:var(--ink-soft);
-    }
-    .hint-icon{font-size:1.35rem}
-
-    .chapter-tracker{
-      margin:1rem 0 .9rem;
-      position:sticky;
-      top:64px;
-      z-index:10;
-      padding:.75rem .9rem;
-      border-radius:20px;
-      background:color-mix(in srgb, var(--card-bg) 82%, transparent);
-      border:1px solid var(--border-soft);
-      backdrop-filter: blur(12px);
-      box-shadow:0 12px 34px rgba(0,0,0,.10);
-    }
-    .tracker-row{display:flex;align-items:center;gap:.75rem;margin-bottom:.7rem}
-    .tracker-label{
-      font-size:.75rem;
-      text-transform:uppercase;
-      letter-spacing:.16em;
-      opacity:.75;
-      white-space:nowrap
-    }
-
-    .book-progress{position:relative;flex:1;height:.46rem;border-radius:999px;background:color-mix(in srgb, var(--border-soft) 60%, transparent);overflow:hidden}
-    .book-progress .progress-fill{
-      width:0%;height:100%;border-radius:inherit;
-      background:linear-gradient(90deg,#f4b944,#f97316);
-      transition:width .25s ease-out;
-    }
-
     .chapter-pill-row{
-      display:flex;
-      gap:.55rem;
-      overflow:auto;
-      padding-bottom:.2rem;
-      -webkit-overflow-scrolling: touch;
-      scroll-snap-type:x mandatory;
-    }
-    .chapter-pill-row::-webkit-scrollbar{height:10px}
-    .chapter-pill-row::-webkit-scrollbar-thumb{background:color-mix(in srgb, var(--border-mid) 50%, transparent); border-radius:999px}
-
-    .chapter-pill{
-      flex:0 0 auto;
-      scroll-snap-align:start;
-      display:inline-flex;align-items:center;gap:.55rem;
-      padding:.45rem .9rem;border-radius:999px;
-      border:1px solid var(--border-soft);
-      background:color-mix(in srgb, var(--card-bg) 92%, transparent);
-      box-shadow:var(--shadow-tiny);
-      cursor:pointer;font-size:.86rem;
-      transition:transform var(--transition-fast), box-shadow var(--transition-fast), background var(--transition-fast);
-      user-select:none;
-      -webkit-tap-highlight-color: transparent;
-    }
-    .chapter-pill:hover{transform:translateY(-1px); box-shadow:0 14px 28px rgba(0,0,0,.12);}
-    .chapter-pill:active{transform:translateY(0);}
-    .chapter-pill .pill-number{
-      display:inline-flex;align-items:center;justify-content:center;
-      width:1.75rem;height:1.75rem;border-radius:999px;
-      background:color-mix(in srgb, var(--accent-soft) 70%, white 30%);
-      font-weight:900;font-size:.86rem;
-      border:1px solid color-mix(in srgb, var(--accent) 22%, transparent);
-    }
-    .chapter-pill .pill-text{display:flex;flex-direction:column;align-items:flex-start;line-height:1.05}
-    .chapter-pill .pill-title{font-weight:900;font-size:.86rem}
-    .chapter-pill .pill-detail{font-size:.74rem;opacity:.76}
-
-    .chapter-pill.active{
-      border-color:color-mix(in srgb, var(--accent) 60%, transparent);
-      background:
-        radial-gradient(circle at 20% 20%, rgba(255,255,255,.60), transparent 42%),
-        linear-gradient(135deg, #fff8dd, #ffe4af);
+      /* Enable smooth scrolling inside the pill row when active pill changes */
+      scroll-behavior: smooth;
     }
 
-    .sparkle{position:relative}
-    .sparkle::after{
-      content:"";position:absolute;inset:-2px;border-radius:inherit;
-      border:1px solid rgba(255,255,255,.65);
-      opacity:0;pointer-events:none;
-      animation:sparklePulse 2.8s ease-in-out infinite;
-    }
-    .chapter-pill.active.sparkle::after{opacity:1}
-    @keyframes sparklePulse{
-      0%,100%{transform:scale(1);opacity:.35}
-      50%{transform:scale(1.03);opacity:.9}
-    }
+    /* -------------------------------------------------- */
+    /* Existing Styles Retained & Minimal Adjustments */
+    /* -------------------------------------------------- */
+    .pages-wrapper{position:relative;padding-block:var(--page-padding-block);padding-inline:var(--page-padding-inline);}
+    .topbar-inner{padding-inline: max(var(--page-padding-inline), env(safe-area-inset-left, 1rem)) max(var(--page-padding-inline), env(safe-area-inset-right, 1rem));}
+    .masthead-hero-inner{padding-inline: max(var(--page-padding-inline), env(safe-area-inset-left, 1rem)) max(var(--page-padding-inline), env(safe-area-inset-right, 1rem));}
+    .book-container{padding-inline: max(var(--page-padding-inline), env(safe-area-inset-left, 1rem)) max(var(--page-padding-inline), env(safe-area-inset-right, 1rem));}
 
-    .book-container{
-      max-width:var(--page-max-width);
-      margin:1.2rem auto 3rem;
-      padding:0 var(--page-padding-x);
-      padding-left:max(var(--page-padding-x), env(safe-area-inset-left, 1rem));
-      padding-right:max(var(--page-padding-x), env(safe-area-inset-right, 1rem));
-    }
-    .book{
-      margin-top:1rem;
-      border-radius:var(--card-radius);
-      background:
-        radial-gradient(circle at 12% 10%, rgba(255,255,255,.60), transparent 42%),
-        var(--paper),
-        color-mix(in srgb, var(--card-bg) 92%, transparent);
-      box-shadow:var(--shadow-soft);
-      border:1px solid var(--border-soft);
-      overflow:hidden;
-    }
-    .pages-wrapper{position:relative;padding:var(--page-padding-y) var(--page-padding-x)}
-    .page{
-      display:none;
-      opacity:0;
-      transform:translateY(6px);
-      transition:opacity var(--transition-med), transform var(--transition-med);
-    }
-    .page.active{display:block;opacity:1;transform:translateY(0)}
-
-    .chapter-header{text-align:center;margin-bottom:1.4rem;position:relative}
-    .chapter-number{
-      margin:0;
-      font-size:.78rem;
-      text-transform:uppercase;
-      letter-spacing:.24em;
-      opacity:.78;
-      font-weight:900;
-    }
-    .chapter-title{
-      margin:.45rem 0 .25rem;
-      font-family:var(--font-title);
-      font-size:1.72rem;
-      font-weight:800;
-      letter-spacing:.01em;
-    }
-    .chapter-subtitle{
-      margin:0;
-      font-size:1.0rem;
-      color:var(--ink-soft);
-      font-family:var(--font-hand);
-      letter-spacing:.02em;
-    }
-    .honey-drip{
-      position:absolute;bottom:-.45rem;left:50%;transform:translateX(-50%);
-      width:120px;height:12px;border-radius:999px;
-      background:linear-gradient(90deg,#fbbf24,#f97316);
-      opacity:.48;
-      filter:blur(.1px);
-    }
-
-    .page-content{margin-top:1.6rem}
-    .story-text{
-      margin:0 0 1rem;
-      line-height:1.75;
-      font-size:1.02rem;
-      color:color-mix(in srgb, var(--ink) 88%, transparent);
-    }
-    .story-text strong{font-weight:900}
-
-    .chapter-illustrations{display:flex;flex-wrap:wrap;gap:1rem;margin:1.15rem 0 1.4rem}
-    .storybook-figure{
-      flex:1 1 190px;min-width:0;
-      padding:.8rem .9rem;border-radius:20px;
-      background:color-mix(in srgb, var(--card-bg) 92%, transparent);
-      box-shadow:var(--shadow-tiny);
-      border:1px solid var(--border-soft);
-      display:flex;align-items:center;gap:.85rem;
-      outline:none;
-      transition:transform var(--transition-fast), box-shadow var(--transition-fast);
-    }
-    .storybook-figure img{
-      border-radius:18px;
-      background:color-mix(in srgb, var(--accent-soft) 55%, white 45%);
-      box-shadow:0 10px 26px rgba(0,0,0,.16);
-      max-width:98px;max-height:98px;
-      object-fit:contain;
-      object-position:center;
-      border:1px solid rgba(255,255,255,.55);
-    }
-    .figure-copy{min-width:0}
-    .figure-name{font-weight:900;font-size:.92rem}
-    .figure-note{margin:.15rem 0 0;font-size:.82rem;color:var(--ink-soft)}
-    .figure-theme-honey{background:linear-gradient(135deg,#fff7dd,#ffe7b8)}
-    .figure-theme-forest{background:linear-gradient(135deg,#e6f5e2,#f4ffe9)}
-    .figure-theme-sky{background:linear-gradient(135deg,#e6f4ff,#f5fbff)}
-
-    .clickable-character{cursor:pointer}
-    .clickable-character:hover{transform:translateY(-2px);box-shadow:0 16px 38px rgba(0,0,0,.18)}
-    .character-message{
-      margin-top:.55rem;
-      font-size:.82rem;
-      color:var(--ink);
-      font-family:var(--font-hand);
-      letter-spacing:.01em;
-    }
-
-    .dialogue-bubble{position:relative;margin:1rem 0 1.2rem;padding:.85rem 1rem;border-radius:18px;font-size:.95rem;line-height:1.45;border:1px solid var(--border-soft); box-shadow:var(--shadow-tiny)}
-    .dialogue-piglet{background:linear-gradient(135deg, #fff0f5, #ffe8f2)}
-    .dialogue-pooh{background:linear-gradient(135deg, #fff5dd, #ffe8bf)}
-    .dialogue-bubble .speaker{display:block;margin-top:.35rem;font-size:.82rem;opacity:.8}
-    .bubble-arrow{position:absolute;left:20px;bottom:100%;width:12px;height:12px;background:inherit;transform:translateY(1px) rotate(45deg);border-left:1px solid var(--border-soft);border-top:1px solid var(--border-soft)}
-
-    .adventure-callout{
-      margin:1.25rem 0 0;
-      padding:1.15rem 1.15rem;
-      border-radius:22px;
-      background:
-        radial-gradient(circle at 10% 10%, rgba(255,255,255,.62), transparent 50%),
-        linear-gradient(135deg, #fffaf3, #ffeede);
-      box-shadow: var(--shadow-subtle);
-      border: 1px solid color-mix(in srgb, var(--accent) 22%, transparent);
-    }
-    .adventure-callout-header{display:flex;gap:.9rem;align-items:center;margin-bottom:.9rem;}
-    .adventure-icon{
-      width:54px;height:54px;border-radius:18px;
-      display:flex;align-items:center;justify-content:center;
-      background: radial-gradient(circle at 30% 20%, #fff9e8, var(--accent));
-      box-shadow: var(--shadow-tiny);
-      font-size:1.55rem;
-      flex:0 0 auto;
-      border:1px solid rgba(255,255,255,.60);
-    }
-    .adventure-callout h3{margin:0;font-family:var(--font-title); font-weight:800; letter-spacing:.01em}
-    .adventure-callout p{margin:.25rem 0 0;color:var(--ink-soft);font-size:.98rem}
-    .adventure-actions{display:flex;flex-wrap:wrap;gap:.75rem;margin-top:1rem;}
-    .adventure-actions a{text-decoration:none;}
-    .callout-note{
-      margin-top:.85rem;
-      padding-top:.85rem;
-      border-top:1px dashed var(--border-soft);
-      font-size:.88rem;
-      color:var(--ink-soft);
-    }
-
-    .btn{
-      border-radius:999px;border:1px solid var(--border-mid);
-      padding:.55rem 1.05rem;font-size:.92rem;font-weight:900;
-      cursor:pointer;background:color-mix(in srgb, var(--card-bg) 92%, transparent);
-      box-shadow:var(--shadow-tiny);
-      transition:transform var(--transition-fast), box-shadow var(--transition-fast), filter var(--transition-fast);
-      display:inline-flex;align-items:center;justify-content:center;gap:.45rem;
-      user-select:none;
-      -webkit-tap-highlight-color: transparent;
-    }
-    .btn.primary{
-      border-color:transparent;background:linear-gradient(135deg,#f4b944,#f59e0b);
-      color:#2b1a04;box-shadow:0 10px 24px rgba(244,185,68,.52);
-    }
-    .btn.primary:hover{transform:translateY(-1px);box-shadow:0 16px 36px rgba(244,185,68,.52);filter:saturate(1.02)}
-    .btn.secondary:hover{transform:translateY(-1px);box-shadow:0 16px 36px rgba(0,0,0,.14)}
-    .btn:active{transform:translateY(0);}
-
-    .registry-container{margin:2rem 0 1.75rem}
-    .registry-section{
-      padding:1.25rem 1.3rem;border-radius:22px;
-      background:
-        radial-gradient(circle at 10% 10%, rgba(255,255,255,.62), transparent 52%),
-        linear-gradient(135deg,#fffaf3,#ffeede);
-      box-shadow:var(--shadow-subtle);
-      border:1px solid color-mix(in srgb, var(--accent) 18%, transparent);
-    }
-    .registry-header{display:flex;gap:.8rem;align-items:center;margin-bottom:1rem}
-    .registry-icon{font-size:1.85rem}
-    .registry-subtitle{margin:.2rem 0 0;font-size:.92rem;color:var(--ink-soft)}
-    .registry-grid{display:grid;grid-template-columns:minmax(0,1.4fr) minmax(0,1.2fr);gap:1rem}
-    .registry-card{
-      display:flex;gap:.8rem;padding:1rem 1.05rem;border-radius:20px;
-      background:color-mix(in srgb, var(--card-bg) 92%, transparent);
-      text-decoration:none;color:inherit;
-      box-shadow:var(--shadow-tiny);
-      border:1px solid var(--border-soft);
-      transition:transform var(--transition-fast), box-shadow var(--transition-fast);
-    }
-    .registry-card:hover{transform:translateY(-2px);box-shadow:0 18px 44px rgba(0,0,0,.18)}
-    .registry-card .card-icon{font-size:1.55rem}
-    .registry-card .card-content h4{margin:0 0 .2rem;font-size:1.0rem;font-weight:900}
-    .registry-card .card-content p{margin:0;font-size:.9rem;color:var(--ink-soft)}
-    .registry-card .card-link{display:inline-block;margin-top:.4rem;font-size:.85rem;color:#b45309;font-weight:900}
-    .gift-idea-card{flex-direction:column}
-    .gift-ideas{margin:.25rem 0 0;padding-left:1.1rem;font-size:.9rem}
-
-    .nursery-details{margin:2rem 0 1.75rem}
-    .nursery-details h3{display:flex;align-items:center;gap:.4rem;margin:0}
-    .details-grid{display:grid;grid-template-columns:repeat(auto-fit, minmax(190px, 1fr));gap:1rem;margin-top:.95rem}
-    .detail-card{
-      padding:.95rem 1.05rem;border-radius:20px;
-      background:color-mix(in srgb, var(--card-bg) 92%, transparent);
-      box-shadow:var(--shadow-tiny);
-      border:1px solid var(--border-soft);
-      display:flex;gap:.75rem;
-    }
-    .detail-card h4{margin:.02rem 0 .2rem;font-weight:900}
-    .detail-card p{margin:0;color:color-mix(in srgb, var(--ink) 90%, transparent)}
-    .detail-card small{color:var(--ink-soft)}
-    .detail-card .detail-icon{font-size:1.4rem}
-
-    .wishes-section{margin:1.75rem 0 1.5rem}
-    .wishes-header h3{margin:0 0 .35rem;font-family:var(--font-title);font-weight:800}
-    .wishes-header p{margin:0;font-size:.95rem;color:var(--ink-soft)}
-    .wishes-form-container{margin-top:1rem}
-
-    .enhanced-form{
-      padding:1.05rem 1.05rem 1.1rem;
-      border-radius:20px;
-      background:
-        radial-gradient(circle at 10% 10%, rgba(255,255,255,.58), transparent 52%),
-        color-mix(in srgb, var(--card-bg) 92%, transparent);
-      box-shadow:var(--shadow-tiny);
-      border:1px solid var(--border-soft);
-    }
-    .form-grid{display:grid;grid-template-columns:repeat(2, minmax(0,1fr));gap:1rem;margin-bottom:.85rem}
-    .form-field label{display:block;margin-bottom:.2rem;font-size:.88rem;font-weight:900}
-    .form-field input,.form-field select,.form-field textarea{
-      width:100%;
-      padding:.65rem .7rem;
-      border-radius:12px;
-      border:1px solid color-mix(in srgb, var(--border-mid) 70%, transparent);
-      font-family:inherit;
-      font-size:.95rem;
-      background:color-mix(in srgb, var(--card-bg) 94%, transparent);
-      color:var(--ink);
-      box-shadow: inset 0 1px 0 rgba(255,255,255,.28);
-      transition:border-color var(--transition-fast), box-shadow var(--transition-fast);
-    }
-    .form-field input:focus,.form-field select:focus,.form-field textarea:focus{
-      border-color:color-mix(in srgb, var(--accent-strong) 55%, transparent);
-      box-shadow:0 0 0 4px color-mix(in srgb, var(--accent-soft) 45%, transparent);
-      outline:none;
-    }
-    .form-field textarea{resize:vertical}
-    .character-count{margin-top:.3rem;font-size:.8rem;text-align:right;color:var(--ink-soft)}
-    .form-actions{margin-top:.7rem;display:flex;flex-wrap:wrap;gap:.75rem;align-items:center}
-    .submit-btn{
-      border-radius:999px;border:none;padding:.62rem 1.15rem;
-      background:linear-gradient(135deg,#f4b944,#f59e0b);
-      color:#2b1a04;font-weight:900;cursor:pointer;
-      display:inline-flex;align-items:center;gap:.45rem;
-      box-shadow:0 10px 24px rgba(244,185,68,.52);
-      transition:transform var(--transition-fast), box-shadow var(--transition-fast), filter var(--transition-fast);
-      user-select:none;
-      -webkit-tap-highlight-color: transparent;
-    }
-    .submit-btn:hover{transform:translateY(-1px);box-shadow:0 16px 36px rgba(244,185,68,.52);filter:saturate(1.02)}
-    .submit-btn:active{transform:translateY(0)}
-    .form-feedback{font-size:.86rem;color:var(--ink-soft);font-family:var(--font-hand)}
-
-    .sample-wishes{margin-top:1.05rem}
-    .sample-wishes h4{margin:.2rem 0 .6rem;font-weight:900}
-    .wish-examples{display:grid;grid-template-columns:repeat(auto-fit, minmax(190px, 1fr));gap:.85rem}
-    .wish-example{
-      margin:0;padding:.85rem 1rem;border-radius:18px;
-      background:color-mix(in srgb, var(--card-bg) 92%, transparent);
-      border:1px solid var(--border-soft);
-      box-shadow:var(--shadow-tiny);
-      font-size:.9rem
-    }
-    .wish-example p{margin:0}
-    .wish-example cite{display:block;margin-top:.45rem;font-size:.85rem;opacity:.8;font-family:var(--font-hand)}
-
-    .wishes-display{
-      margin-top:1.25rem;
-      display:grid;
-      grid-template-columns:repeat(auto-fit, minmax(210px,1fr));
-      gap:.9rem
-    }
-    .wishes-display .wish-card{
-      padding:.9rem 1rem;border-radius:20px;
-      background:color-mix(in srgb, var(--card-bg) 92%, transparent);
-      border:1px solid var(--border-soft);
-      box-shadow:var(--shadow-tiny);
-      font-size:.95rem
-    }
-    .wish-card .wish-meta{
-      font-size:.82rem;
-      opacity:.8;
-      margin-bottom:.35rem;
-      font-weight:900;
-      letter-spacing:.01em;
-    }
-
-    .welcome-panel{
-      margin:1.75rem 0 1.5rem;
-      padding:1.05rem 1.1rem;border-radius:22px;
-      background:
-        radial-gradient(circle at 10% 10%, rgba(255,255,255,.62), transparent 52%),
-        linear-gradient(135deg, #fff6dd, #ffe4b2);
-      display:flex;align-items:center;gap:.85rem;
-      box-shadow:var(--shadow-tiny);
-      border:1px solid color-mix(in srgb, var(--accent) 22%, transparent);
-    }
-    .welcome-icon{font-size:1.65rem}
-    .welcome-heading{margin:0;font-family:var(--font-title);font-weight:800}
-    .welcome-subtitle{margin:.25rem 0 0;font-size:.95rem;color:var(--ink-soft);font-family:var(--font-hand)}
-
-    .countdown-section{margin:1.5rem 0 1.75rem}
-    .countdown-section h3{margin:0 0 .55rem;font-family:var(--font-title);font-weight:800}
-    .countdown-display{display:flex;gap:1rem;margin:.75rem 0}
-    .countdown-item{
-      flex:0 0 96px;
-      padding:.8rem .85rem;border-radius:20px;
-      background:color-mix(in srgb, var(--card-bg) 92%, transparent);
-      border:1px solid var(--border-soft);
-      box-shadow:var(--shadow-tiny);
-      text-align:center;
-    }
-    .countdown-number{display:block;font-size:1.45rem;font-weight:900}
-    .countdown-label{font-size:.82rem;opacity:.82}
-    .countdown-note{margin:0;font-size:.95rem;color:var(--ink-soft);font-family:var(--font-hand)}
-
-    .honey-jar-interactive{
-      margin:1.75rem 0 1.5rem;
-      padding:1.05rem 1.1rem;border-radius:22px;
-      background:
-        radial-gradient(circle at 10% 10%, rgba(255,255,255,.58), transparent 52%),
-        color-mix(in srgb, var(--card-bg) 92%, transparent);
-      border:1px solid var(--border-soft);
-      box-shadow:var(--shadow-tiny);
-    }
-    .honey-jar-interactive h3{margin:.35rem 0 .35rem;font-family:var(--font-title);font-weight:800}
-    .honey-jar-interactive p{margin:0 0 .7rem;color:color-mix(in srgb, var(--ink) 85%, transparent)}
-    .hopes-list{margin:.6rem 0 0;padding-left:1.1rem;font-size:.95rem}
-    .hopes-list li{margin:.25rem 0}
-
-    .final-thought{
-      margin-top:1.6rem;
-      padding-top:1.1rem;
-      border-top:1px dashed var(--border-soft)
-    }
-    .final-thought blockquote{margin:0;font-size:1.0rem;font-style:italic}
-    .final-thought cite{font-style:normal}
-    .final-thought .signature{margin-top:.65rem;font-size:.95rem;color:var(--ink-soft);font-family:var(--font-hand)}
-
-    .chapter-nav{
-      display:flex;align-items:center;justify-content:space-between;gap:.75rem;
-      padding:.95rem 1.25rem 1.1rem;
-      border-top:1px solid var(--border-soft);
-      background:color-mix(in srgb, var(--card-bg) 88%, transparent);
-      backdrop-filter: blur(10px);
-    }
-    .chapter-nav-btn{
-      border-radius:999px;border:1px solid var(--border-mid);
-      padding:.52rem 1rem;font-size:.92rem;font-weight:900;
-      cursor:pointer;background:color-mix(in srgb, var(--card-bg) 92%, transparent);
-      box-shadow:var(--shadow-tiny);
-      transition:transform var(--transition-fast), box-shadow var(--transition-fast), filter var(--transition-fast);
-      user-select:none;
-      -webkit-tap-highlight-color: transparent;
-    }
-    .chapter-nav-btn.next{
-      border-color:transparent;background:linear-gradient(135deg,#f4b944,#f59e0b);color:#2b1a04;
-      box-shadow:0 10px 24px rgba(244,185,68,.52);
-    }
-    .chapter-nav-btn:hover{transform:translateY(-1px);box-shadow:0 16px 36px rgba(0,0,0,.14);filter:saturate(1.02)}
-    .chapter-nav-btn:active{transform:translateY(0)}
-    .chapter-indicator{font-size:.92rem;color:var(--ink-soft);font-weight:900}
-
-    .site-footer{
-      max-width:var(--page-max-width);
-      margin:0 auto 2rem;
-      padding:1.25rem var(--page-padding-x) 0;
-      text-align:center;
-      font-size:.9rem;
-      color:var(--ink-soft);
-    }
-    .footer-links{
-      margin-top:.65rem;
-      display:flex;justify-content:center;gap:.75rem;flex-wrap:wrap;
-    }
-    .footer-link{
-      border-radius:999px;border:1px solid var(--border-mid);
-      padding:.45rem .9rem;font-size:.86rem;font-weight:900;
-      background:color-mix(in srgb, var(--card-bg) 92%, transparent);
-      cursor:pointer;box-shadow:var(--shadow-tiny);
-      transition:transform var(--transition-fast), box-shadow var(--transition-fast);
-      user-select:none;
-      -webkit-tap-highlight-color: transparent;
-      text-decoration:none;
-      color:inherit;
-      display:inline-flex;
-      align-items:center;
-      justify-content:center;
-      gap:.45rem;
-    }
-    .footer-link:hover{transform:translateY(-1px);box-shadow:0 16px 36px rgba(0,0,0,.14)}
-    .footer-link:active{transform:translateY(0)}
-
-    @media (prefers-reduced-motion: reduce){
-      *{scroll-behavior:auto !important}
-      .cloud{animation:none !important}
-      .gunnar-shine::after{animation:none !important}
-      .chapter-pill.sparkle::after{animation:none !important}
-    }
-    body.animations-off .cloud{animation:none !important}
-    body.animations-off .chapter-pill.sparkle::after{display:none}
-    body.animations-off .gunnar-shine::after{animation:none !important}
-
-    @media (max-width:900px){
-      .hero-banner{border-radius:0;box-shadow:none;border-left:none;border-right:none}
-      .hero-image-container{height:min(52vh, 460px)}
-      .hero-title-container{padding-inline:1rem}
-      .title-background{border-radius:22px 22px 0 0}
-      .hero-panel{margin-top:1rem;padding:1.25rem 1rem 1.35rem}
-      .hero-badge{grid-template-columns:1fr;border-radius:22px}
-      .hero-details-grid{grid-template-columns:minmax(0,1fr)}
-      .registry-grid{grid-template-columns:minmax(0,1fr)}
-      .chapter-tracker{top:58px}
-    }
     @media (max-width:768px){
       .book-container{padding-inline:1rem}
       .pages-wrapper{padding-inline:1rem}
-      .form-grid{grid-template-columns:1fr;gap:.85rem}
-      input[type="text"],input[type="email"],input[type="tel"],textarea,select{font-size:16px !important}
-      .form-field input,.form-field select,.form-field textarea{padding:.8rem .9rem;min-height:var(--touch-min)}
-      .chapter-illustrations{flex-direction:column}
-      .hero-actions{flex-direction:column;align-items:stretch}
-      .hero-action-btn{justify-content:center}
-      .countdown-display{justify-content:center}
-      .hero-frame{inset:12px;border-radius:22px}
+      .topbar-inner{padding-inline:1rem}
     }
   </style>
 </head>
 
 <body>
-  <div aria-hidden="true" class="enhanced-scene" id="enhancedScene"></div>
+  <div id="readingProgressBar"></div> <div aria-hidden="true" class="enhanced-scene" id="enhancedScene"></div>
   <div aria-hidden="true" class="cloud-layer">
     <div class="cloud">☁️</div>
     <div class="cloud">☁️</div>
@@ -1063,7 +266,7 @@
           <span class="mini" aria-hidden="true">📖</span> Story
         </button>
         <a class="chip" href="game.html" rel="noopener">
-          <span class="mini" aria-hidden="true">🎮</span> game.html
+          <span class="mini" aria-hidden="true">🎮</span> Game
         </a>
       </div>
     </div>
@@ -1084,9 +287,7 @@
             decoding="async"
           />
         </picture>
-
         <div class="hero-frame" aria-hidden="true"></div>
-
         <div aria-hidden="true" class="hero-corner-decoration top-left">🌿</div>
         <div aria-hidden="true" class="hero-corner-decoration top-right">🍯</div>
         <div aria-hidden="true" class="hero-corner-decoration bottom-left">💛</div>
@@ -1137,54 +338,47 @@
           </div>
         </div>
 
-        <!-- FLOW FIX: Make the “path” obvious -->
         <div class="hero-details-grid" aria-label="How this works">
-          <div class="hero-detail">
+          <button class="hero-detail" type="button" onclick="scrollToChapter(1)">
             <div aria-hidden="true" class="detail-icon">①</div>
             <div class="detail-content">
               <h4 class="detail-title">Read the Short Story</h4>
               <p class="detail-text">A quick, cozy intro in this page</p>
             </div>
-          </div>
+          </button>
 
-          <div class="hero-detail">
+          <a class="hero-detail" href="game.html" rel="noopener">
             <div aria-hidden="true" class="detail-icon">②</div>
             <div class="detail-content">
               <h4 class="detail-title">Play the Full Adventure</h4>
               <p class="detail-text">The complete experience is in <strong>game.html</strong></p>
             </div>
-          </div>
+          </a>
 
-          <div class="hero-detail">
+          <button class="hero-detail" type="button" onclick="location.hash='#registry'; scrollToChapter(3)">
             <div aria-hidden="true" class="detail-icon">③</div>
             <div class="detail-content">
               <h4 class="detail-title">Leave a Wish</h4>
               <p class="detail-text">Add a note for <span class="gunnar-shine">Gunnar</span>’s storybook</p>
             </div>
-          </div>
+          </button>
         </div>
 
-        <!-- FLOW FIX: Primary CTA is game.html -->
         <div class="hero-actions" role="navigation" aria-label="Primary actions">
           <a class="hero-action-btn primary" href="game.html" rel="noopener">
             <span aria-hidden="true" class="btn-icon">🎮</span>
-            <span class="btn-text">Open the Full Adventure</span>
+            <span class="btn-text">Open the Full Adventure (game.html)</span>
           </a>
 
-          <button class="hero-action-btn secondary" type="button" onclick="scrollToChapter(1)">
-            <span aria-hidden="true" class="btn-icon">📖</span>
-            <span class="btn-text">Read the Storybook</span>
-          </button>
-
-          <button class="hero-action-btn ghost" type="button" onclick="location.hash='#registry'; scrollToChapter(3)">
+          <button class="hero-action-btn secondary" type="button" onclick="location.hash='#registry'; scrollToChapter(3)">
             <span aria-hidden="true" class="btn-icon">💝</span>
-            <span class="btn-text">Leave a Wish</span>
+            <span class="btn-text">Leave a Wish for Gunnar</span>
           </button>
         </div>
 
         <div class="orientation-hint">
           <div aria-hidden="true" class="hint-icon">🧭</div>
-          <p class="hint-text"><strong>Suggested path:</strong> Play <strong>game.html</strong> → read this storybook → leave your wish for <strong>Gunnar</strong>.</p>
+          <p class="hint-text"><strong>Suggested path:</strong> Play <strong>game.html</strong> first, then return here to read the story and leave your wish.</p>
         </div>
       </section>
     </div>
@@ -1199,7 +393,6 @@
           <div class="progress-fill" id="progressFill" style="width: 25%;"></div>
         </div>
       </div>
-
       <div class="chapter-pill-row">
         <button class="chapter-pill sparkle active" data-chapter-target="1" type="button" aria-current="page">
           <span class="pill-number">1</span>
@@ -1208,7 +401,6 @@
             <span class="pill-detail">Welcome + quick steps</span>
           </span>
         </button>
-
         <button class="chapter-pill sparkle" data-chapter-target="2" type="button">
           <span class="pill-number">2</span>
           <span class="pill-text">
@@ -1216,7 +408,6 @@
             <span class="pill-detail">Open game.html</span>
           </span>
         </button>
-
         <button class="chapter-pill sparkle" data-chapter-target="3" type="button">
           <span class="pill-number">3</span>
           <span class="pill-text">
@@ -1224,7 +415,6 @@
             <span class="pill-detail">Gift link + guestbook</span>
           </span>
         </button>
-
         <button class="chapter-pill sparkle" data-chapter-target="4" type="button">
           <span class="pill-number">4</span>
           <span class="pill-text">
@@ -1237,7 +427,6 @@
 
     <div class="book">
       <div class="pages-wrapper">
-        <!-- Chapter 1 -->
         <article class="page active" data-chapter="1" id="chapter-1">
           <header class="chapter-header">
             <p class="chapter-number">Start Here</p>
@@ -1245,7 +434,6 @@
             <p class="chapter-subtitle">A cozy welcome for Baby <span class="gunnar-shine">Gunnar</span></p>
             <span aria-hidden="true" class="honey-drip"></span>
           </header>
-
           <div class="page-content">
             <p class="story-text">
               One fine day, in a corner of the Hundred Acre Wood where the sun shines warmly through the trees and the flowers bloom in cheerful colors, something wonderful was happening.
@@ -1253,7 +441,6 @@
             <p class="story-text">
               It was the very best sort of celebration—the kind that welcomes a new little friend to the world. A baby boy named <span class="gunnar-shine">Gunnar</span> James was soon to arrive, and everyone wanted to share in the joy.
             </p>
-
             <div class="chapter-illustrations">
               <figure class="storybook-figure figure-theme-honey clickable-character" data-character="pooh" tabindex="0" role="button" aria-label="Pooh brings the first pot">
                 <img alt="Winnie the Pooh holding a honey pot" width="96" height="96" loading="eager" decoding="async" src="Images/Characters/honey-bear.png" />
@@ -1261,23 +448,18 @@
                   <div class="figure-name">Pooh brings the first pot</div>
                   <p class="figure-note">"A baby celebration needs extra honey," he whispered as he dusted off the lid.</p>
                 </figcaption>
-                <div aria-live="polite" class="character-message"></div>
               </figure>
-
               <figure class="storybook-figure figure-theme-sky clickable-character" data-character="piglet" tabindex="0" role="button" aria-label="Piglet pins up the banner">
                 <img alt="Piglet carrying a welcome banner" width="96" height="96" loading="eager" decoding="async" src="Images/Characters/piglet.png" />
                 <figcaption class="figure-copy">
                   <div class="figure-name">Piglet pins up the banner</div>
                   <p class="figure-note">He fluttered through the clearing making sure every friend felt warmly invited.</p>
                 </figcaption>
-                <div aria-live="polite" class="character-message"></div>
               </figure>
             </div>
-
             <p class="story-text">
               Pooh, being a Bear of Very Little Brain but a Very Big Heart, knew the most important thing for any celebration was sweetness, laughter, and a little bit of honey.
             </p>
-
             <section class="adventure-callout" aria-label="Quick steps">
               <div class="adventure-callout-header">
                 <div class="adventure-icon" aria-hidden="true">🧭</div>
@@ -1298,12 +480,9 @@
                 Hosting tip: keep <strong>index.html</strong> and <strong>game.html</strong> in the same folder.
               </div>
             </section>
-
             <div aria-hidden="true" class="divider">🌳 ✿ 🐝 ✿ 🌳</div>
           </div>
         </article>
-
-        <!-- Chapter 2 (NO GAME EMBED — callout only) -->
         <article class="page" data-chapter="2" id="adventure">
           <header class="chapter-header">
             <p class="chapter-number">Full Adventure</p>
@@ -1311,9 +490,7 @@
             <p class="chapter-subtitle">Launch <strong>game.html</strong>, then come back for the guestbook</p>
             <span aria-hidden="true" class="honey-drip"></span>
           </header>
-
           <div class="page-content">
-            <!-- FLOW FIX: crisp explanation -->
             <p class="story-text">
               This page is the cozy storybook + guestbook for Baby <span class="gunnar-shine">Gunnar</span>’s shower.
               The <strong>full interactive Hundred Acre adventure</strong> (the whole experience) is in <strong>game.html</strong>.
@@ -1321,7 +498,6 @@
             <p class="story-text">
               Tap below to launch it, then come back here to add your wish.
             </p>
-
             <div class="chapter-illustrations">
               <figure class="storybook-figure figure-theme-forest clickable-character" data-character="tigger" tabindex="0" role="button" aria-label="Tigger stakes out the course">
                 <img alt="Tigger bouncing" width="96" height="96" loading="lazy" decoding="async" src="Images/Characters/tigger.png" />
@@ -1329,19 +505,15 @@
                   <div class="figure-name">Tigger stakes out the course</div>
                   <p class="figure-note">He marked the path with springy footprints so every moment feels like an adventure.</p>
                 </figcaption>
-                <div aria-live="polite" class="character-message"></div>
               </figure>
-
               <figure class="storybook-figure figure-theme-honey clickable-character" data-character="roo" tabindex="0" role="button" aria-label="Roo cheers from the sidelines">
                 <img alt="Roo cheering" width="96" height="96" loading="lazy" decoding="async" src="Images/Characters/roo.png" />
                 <figcaption class="figure-copy">
                   <div class="figure-name">Roo cheers from the sidelines</div>
                   <p class="figure-note">"Mind the bees!" he giggled, handing out cozy scarves.</p>
                 </figcaption>
-                <div aria-live="polite" class="character-message"></div>
               </figure>
             </div>
-
             <section class="adventure-callout" aria-label="Open the full adventure in game.html">
               <div class="adventure-callout-header">
                 <div class="adventure-icon" aria-hidden="true">🍯</div>
@@ -1350,7 +522,6 @@
                   <p>Tap below to launch <strong>game.html</strong> (the whole experience).</p>
                 </div>
               </div>
-
               <div class="adventure-actions">
                 <a class="btn primary" href="game.html" rel="noopener">
                   <span aria-hidden="true">🎮</span> Launch game.html
@@ -1363,15 +534,12 @@
                   <span aria-hidden="true">💝</span> Go to Wishes
                 </button>
               </div>
-
               <div class="callout-note">
                 Tip: Keep <strong>index.html</strong> and <strong>game.html</strong> in the same folder so this works everywhere.
               </div>
             </section>
           </div>
         </article>
-
-        <!-- Chapter 3 -->
         <article class="page" data-chapter="3" id="registry">
           <header class="chapter-header">
             <p class="chapter-number">Registry &amp; Wishes</p>
@@ -1379,7 +547,6 @@
             <p class="chapter-subtitle">Preparing for Baby <span class="gunnar-shine">Gunnar</span>'s Arrival</p>
             <span aria-hidden="true" class="honey-drip"></span>
           </header>
-
           <div class="page-content">
             <section class="story-section">
               <p class="story-text">
@@ -1388,14 +555,12 @@
               <p class="story-text">
                 Piglet came scurrying up, holding something soft. "Perhaps something cozy for chilly evenings?"
               </p>
-
               <div class="dialogue-bubble dialogue-piglet">
                 <div class="bubble-arrow"></div>
                 <p>"Something soft and warm, for when the wind howls!"</p>
                 <span class="speaker">— Piglet</span>
               </div>
             </section>
-
             <div class="chapter-illustrations">
               <figure class="storybook-figure figure-theme-forest clickable-character" data-character="piglet" tabindex="0" role="button" aria-label="Piglet's cozy corner">
                 <img alt="Piglet with blanket" width="96" height="96" loading="lazy" decoding="async" src="Images/Characters/piglet.png" />
@@ -1403,33 +568,26 @@
                   <div class="figure-name">Piglet's Cozy Corner</div>
                   <p class="figure-note">Found the snuggliest blanket in all the Wood.</p>
                 </figcaption>
-                <div aria-live="polite" class="character-message"></div>
               </figure>
-
               <figure class="storybook-figure figure-theme-honey clickable-character" data-character="pooh" tabindex="0" role="button" aria-label="Pooh's pondering">
                 <img alt="Pooh thinking" width="96" height="96" loading="lazy" decoding="async" src="Images/Characters/honey-bear.png" />
                 <figcaption class="figure-copy">
                   <div class="figure-name">Pooh's Pondering</div>
                   <p class="figure-note">Thinking of practical things (between honey snacks).</p>
                 </figcaption>
-                <div aria-live="polite" class="character-message"></div>
               </figure>
-
               <figure class="storybook-figure figure-theme-sky clickable-character" data-character="tigger" tabindex="0" role="button" aria-label="Tigger's toys">
                 <img alt="Tigger bouncing" width="96" height="96" loading="lazy" decoding="async" src="Images/Characters/tigger.png" />
                 <figcaption class="figure-copy">
                   <div class="figure-name">Tigger's Toys</div>
                   <p class="figure-note">Bounced in with the bounciest ideas!</p>
                 </figcaption>
-                <div aria-live="polite" class="character-message"></div>
               </figure>
             </div>
-
             <section class="story-section">
               <p class="story-text">
                 Soon, all the friends gathered with their ideas. Tigger bounced about toys, Eeyore suggested something useful, and Rabbit began making a very organized list.
               </p>
-
               <div class="dialogue-bubble dialogue-pooh">
                 <div class="bubble-arrow"></div>
                 <p>
@@ -1438,7 +596,6 @@
                 <span class="speaker">— Pooh Bear</span>
               </div>
             </section>
-
             <div class="registry-container">
               <aside class="registry-section">
                 <div class="registry-header">
@@ -1448,7 +605,6 @@
                     <p class="registry-subtitle">Your presence is the greatest present, but if you'd like to contribute:</p>
                   </div>
                 </div>
-
                 <div class="registry-grid">
                   <a class="registry-card" href="https://my.babylist.com/lea-hardesty" rel="noopener" target="_blank">
                     <div class="card-icon">🎯</div>
@@ -1458,7 +614,6 @@
                       <span class="card-link">Browse registry →</span>
                     </div>
                   </a>
-
                   <div class="registry-card gift-idea-card">
                     <div class="card-icon">💝</div>
                     <div class="card-content">
@@ -1474,7 +629,6 @@
                 </div>
               </aside>
             </div>
-
             <section class="nursery-details">
               <h3><span aria-hidden="true">🧸</span> Nursery Details</h3>
               <div class="details-grid">
@@ -1511,13 +665,11 @@
                 </div>
               </div>
             </section>
-
             <section class="wishes-section">
               <div class="wishes-header">
                 <h3>Share Your Wishes <span aria-hidden="true">✨</span></h3>
                 <p>Leave wisdom, well-wishes, or favorite childhood memories for Gunnar's storybook</p>
               </div>
-
               <div class="wishes-form-container">
                 <form class="enhanced-form" id="wishesForm">
                   <div class="form-grid">
@@ -1536,22 +688,19 @@
                       </select>
                     </div>
                   </div>
-
                   <div class="form-field">
                     <label for="wishMessage">Your Message</label>
                     <textarea id="wishMessage" placeholder="What wisdom or wishes would you like to share with Baby Gunnar?..." required rows="4" maxlength="500"></textarea>
                     <div class="character-count" id="wishCharCount">0/500 characters</div>
                   </div>
-
                   <div class="form-actions">
-                    <button class="submit-btn" type="submit">
+                    <button class="submit-btn" type="submit" id="submitWishBtn">
                       <span aria-hidden="true">📝</span> Add to Gunnar's Storybook
                     </button>
                     <div class="form-feedback" id="wishFeedback" role="status" aria-live="polite"></div>
                   </div>
                 </form>
               </div>
-
               <div class="sample-wishes">
                 <h4>Wishes from the Wood:</h4>
                 <div class="wish-examples">
@@ -1565,13 +714,10 @@
                   </blockquote>
                 </div>
               </div>
+              <div class="wishes-display" id="wishesDisplay"></div>
             </section>
-
-            <div class="wishes-display" id="wishesDisplay"></div>
           </div>
         </article>
-
-        <!-- Chapter 4 -->
         <article class="page" data-chapter="4" id="chapter-4">
           <header class="chapter-header">
             <p class="chapter-number">Final Page</p>
@@ -1579,12 +725,10 @@
             <p class="chapter-subtitle">Celebrating what's to come</p>
             <span aria-hidden="true" class="honey-drip"></span>
           </header>
-
           <div class="page-content">
             <p class="story-text">
               As the sun began to set over the Hundred Acre Wood, casting long golden shadows through the trees, Pooh and his friends gathered to celebrate the coming arrival of Baby <span class="gunnar-shine">Gunnar</span>.
             </p>
-
             <div class="chapter-illustrations">
               <figure class="storybook-figure figure-theme-honey clickable-character" data-character="pooh" tabindex="0" role="button" aria-label="Pooh's special pot">
                 <img alt="Pooh with honey pot" width="96" height="96" loading="lazy" decoding="async" src="Images/Characters/honey-bear.png" />
@@ -1592,23 +736,18 @@
                   <div class="figure-name">Pooh's special pot</div>
                   <p class="figure-note">He saved one golden pot for Gunnar's first visit.</p>
                 </figcaption>
-                <div aria-live="polite" class="character-message"></div>
               </figure>
-
               <figure class="storybook-figure figure-theme-sky clickable-character" data-character="gunnar" tabindex="0" role="button" aria-label="Coming soon, Baby Gunnar">
                 <img alt="Baby Gunnar" width="96" height="96" loading="lazy" decoding="async" src="Images/Characters/Gunnar.png" />
                 <figcaption class="figure-copy">
                   <div class="figure-name">Coming Soon</div>
                   <p class="figure-note">The Hundred Acre Wood awaits its newest friend.</p>
                 </figcaption>
-                <div aria-live="polite" class="character-message"></div>
               </figure>
             </div>
-
             <p class="story-text">
               With gifts prepared and wishes shared, everyone looked forward to the day they would finally meet him.
             </p>
-
             <div class="welcome-panel">
               <div aria-hidden="true" class="welcome-icon">🌟</div>
               <div>
@@ -1616,7 +755,6 @@
                 <p class="welcome-subtitle">Baby <span class="gunnar-shine">Gunnar</span>, your adventure is about to begin.</p>
               </div>
             </div>
-
             <section class="countdown-section">
               <h3>Until We Meet 🐻</h3>
               <div class="countdown-display">
@@ -1633,7 +771,6 @@
                 Expected arrival: <time id="expectedArrival" datetime="">Late August</time>
               </p>
             </section>
-
             <div class="honey-jar-interactive">
               <div aria-hidden="true">🍯</div>
               <h3>Gunnar's Honey Jar of Hopes</h3>
@@ -1641,7 +778,6 @@
               <button class="btn primary" id="addHopeBtn" type="button">➕ Add Your Hope</button>
               <ul class="hopes-list" id="hopesList"></ul>
             </div>
-
             <aside class="final-thought">
               <blockquote>
                 <p>"Sometimes the smallest things take up the most room in your heart."<br /><cite>— Winnie the Pooh</cite></p>
@@ -1653,14 +789,14 @@
       </div>
 
       <nav aria-label="Page navigation" class="chapter-nav">
-        <button class="chapter-nav-btn" id="prevBtn" type="button">← Previous</button>
-        <div class="chapter-indicator" id="pageIndicator">Chapter 1 of 4</div>
+        <button class="chapter-nav-btn" id="prevBtn" type="button" disabled>← Previous</button>
+        <div class="chapter-indicator" id="pageIndicator">Step 1 of 4</div>
         <button class="chapter-nav-btn next" id="nextBtn" type="button">Next →</button>
       </nav>
     </div>
   </main>
 
-  <footer class="site-footer">
+  <div id="dialogueBox" role="alert" aria-live="polite"></div> <footer class="site-footer">
     <p>Made with 💙 and 🍯 for Baby <span class="gunnar-shine">Gunnar</span>'s special day</p>
     <div class="footer-links">
       <button class="footer-link" id="printPageBtn" type="button">🖨 Print</button>
@@ -1689,6 +825,8 @@
       const indicator = document.getElementById("pageIndicator");
       const progress = document.getElementById("progressFill");
       const chapterPills = Array.from(document.querySelectorAll("[data-chapter-target]"));
+      const dialogueBox = document.getElementById("dialogueBox");
+      const readingProgressBar = document.getElementById("readingProgressBar");
       const total = pages.length;
       let current = 0;
 
@@ -1719,15 +857,11 @@
         document.getElementById("storybook")?.scrollIntoView({ behavior: "smooth", block: "start" });
       });
 
-      /* ---- FLOW FIX: Allow direct links like #registry, #adventure, #chapter-3 ---- */
+      /* ---- Deepened Chapter Navigation Logic ---- */
       const hash = (location.hash || "").toLowerCase();
       const hashMap = {
-        "#chapter-1": 0,
-        "#chapter-2": 1,
-        "#adventure": 1,
-        "#chapter-3": 2,
-        "#registry": 2,
-        "#chapter-4": 3
+        "#chapter-1": 0, "#chapter-2": 1, "#adventure": 1,
+        "#chapter-3": 2, "#registry": 2, "#chapter-4": 3
       };
       if (hashMap[hash] !== undefined) current = hashMap[hash];
 
@@ -1736,6 +870,12 @@
         indicator.textContent = `Step ${current + 1} of ${total}`;
         if (progress) progress.style.width = `${((current + 1) / total) * 100}%`;
 
+        // Navigation Button State
+        prevBtn.disabled = current <= 0;
+        nextBtn.disabled = current >= total - 1;
+        if (nextBtn.disabled) nextBtn.textContent = "Finished! 🎉";
+        else nextBtn.textContent = "Next →";
+
         chapterPills.forEach(btn => {
           const isActive = parseInt(btn.dataset.chapterTarget, 10) === current + 1;
           btn.classList.toggle("active", isActive);
@@ -1743,8 +883,9 @@
           else btn.removeAttribute("aria-current");
         });
 
+        // Scroll active pill into view
         const activePill = chapterPills.find(b => parseInt(b.dataset.chapterTarget, 10) === current + 1);
-        activePill?.scrollIntoView({ behavior: "smooth", inline: "nearest", block: "nearest" });
+        activePill?.scrollIntoView({ behavior: "smooth", block: "nearest", inline: "center" });
 
         if (pageSound) {
           try { pageSound.currentTime = 0; pageSound.play().catch(() => {}); } catch (_) {}
@@ -1787,66 +928,45 @@
         }
       };
 
-      /* ---- Tiny toast ---- */
+      /* ---- Global Toast Utility ---- */
       const toastEl = document.createElement("div");
-      toastEl.style.position = "fixed";
-      toastEl.style.left = "50%";
-      toastEl.style.bottom = "18px";
-      toastEl.style.transform = "translateX(-50%)";
-      toastEl.style.background = "rgba(0,0,0,.74)";
-      toastEl.style.color = "white";
-      toastEl.style.padding = "10px 14px";
-      toastEl.style.borderRadius = "999px";
-      toastEl.style.fontSize = "14px";
-      toastEl.style.opacity = "0";
-      toastEl.style.pointerEvents = "none";
-      toastEl.style.transition = "opacity .2s ease, transform .2s ease";
-      toastEl.style.zIndex = "9999";
+      toastEl.id = "customToast";
+      toastEl.style.cssText = `position:fixed;left:50%;bottom:18px;transform:translateX(-50%) translateY(100%);background:rgba(0,0,0,.78);color:white;padding:10px 14px;border-radius:999px;font-size:14px;opacity:0;pointer-events:none;transition:transform .3s cubic-bezier(.2,.8,.2,1), opacity .3s ease;z-index:9999;`;
       document.body.appendChild(toastEl);
 
       let toastTimer = null;
       window.toast = (msg) => {
         toastEl.textContent = msg;
         toastEl.style.opacity = "1";
-        toastEl.style.transform = "translateX(-50%) translateY(-2px)";
+        toastEl.style.transform = "translateX(-50%) translateY(0)";
         clearTimeout(toastTimer);
         toastTimer = setTimeout(() => {
           toastEl.style.opacity = "0";
-          toastEl.style.transform = "translateX(-50%) translateY(0)";
-        }, 1400);
+          toastEl.style.transform = "translateX(-50%) translateY(100%)";
+        }, 1800);
       };
 
-      /* ---- Character click messages ---- */
+      /* ---- Character Dialogue Panel (Deep UX) ---- */
       const characterLines = {
-        pooh: [
-          "Pooh smiles and decides this day needs just a bit more honey.",
-          "Pooh thinks welcoming Gunnar is the sweetest kind of important."
-        ],
-        piglet: [
-          "Piglet feels fluttery, but mostly excited for Baby Gunnar.",
-          "Piglet straightens the banner one more time, just to be sure."
-        ],
-        tigger: [
-          "Tigger announces baby celebrations are what Tiggers do best!",
-          "Tigger promises to teach Gunnar the very bounciest bounces."
-        ],
-        roo: [
-          "Roo practices tiny jumps, imagining the games they'll play someday.",
-          "Roo says, “I can’t wait to show you my favorite puddles!”"
-        ],
-        gunnar: [
-          "Everyone is already saving their warmest hugs for you.",
-          "Your story is just beginning, and the whole Wood is cheering."
-        ]
+        pooh: { name: "Pooh Bear", lines: ["A baby celebration needs extra honey, or perhaps just a very warm hug.", "Pooh thinks welcoming Gunnar is the sweetest kind of important."] },
+        piglet: { name: "Piglet", lines: ["Oh dear! I'm so excited! Even the smallest of us can have the biggest hearts.", "Piglet straightens the banner one more time, just to be sure."] },
+        tigger: { name: "Tigger", lines: ["Hoo-hoo-hoo! Baby celebrations are what Tiggers do best! T-I-double-G-E-R!", "Tigger promises to teach Gunnar the very bounciest bounces."] },
+        roo: { name: "Roo", lines: ["I can't wait to show him my favorite puddles and bouncy games!", "Roo practices tiny jumps, imagining the fun they'll have someday."] },
+        gunnar: { name: "The Narrator", lines: ["Everyone is already saving their warmest hugs for Baby Gunnar.", "Your story is just beginning, and the whole Wood is cheering."] }
       };
 
       document.querySelectorAll(".clickable-character").forEach(fig => {
         const character = fig.dataset.character;
-        const msgEl = fig.querySelector(".character-message");
         fig.addEventListener("click", () => {
-          const lines = characterLines[character] || ["A quiet, happy thought drifts through the leaves."];
-          const line = lines[Math.floor(Math.random() * lines.length)];
-          if (msgEl) msgEl.textContent = line;
+          const charData = characterLines[character];
+          if (charData) {
+            const line = charData.lines[Math.floor(Math.random() * charData.lines.length)];
+            dialogueBox.innerHTML = `${line} <span class="speaker-name">— ${charData.name}</span>`;
+            dialogueBox.classList.add("active");
+          } else {
+            dialogueBox.classList.remove("active");
+          }
+
           if (honeySound) {
             try { honeySound.currentTime = 0; honeySound.play().catch(() => {}); } catch (_) {}
           }
@@ -1855,13 +975,21 @@
           if (e.key === "Enter" || e.key === " ") { e.preventDefault(); fig.click(); }
         });
       });
+      // Close dialogue on scroll or next interaction
+      document.addEventListener("scroll", () => dialogueBox.classList.remove("active"));
+      document.addEventListener("click", (e) => {
+        if (!e.target.closest(".clickable-character") && !e.target.closest("#dialogueBox")) {
+          dialogueBox.classList.remove("active");
+        }
+      });
 
-      /* ---- Wishes form ---- */
+      /* ---- Wishes form (Enhanced Feedback) ---- */
       const wishesForm = document.getElementById("wishesForm");
       const wishCharCount = document.getElementById("wishCharCount");
       const wishMessage = document.getElementById("wishMessage");
       const wishesDisplay = document.getElementById("wishesDisplay");
       const wishFeedback = document.getElementById("wishFeedback");
+      const submitWishBtn = document.getElementById("submitWishBtn");
 
       if (wishMessage && wishCharCount) {
         const updateCount = () => {
@@ -1884,34 +1012,46 @@
             return;
           }
 
+          // Successful Submission UX
+          submitWishBtn.disabled = true;
+          const originalText = submitWishBtn.textContent;
+          submitWishBtn.textContent = "Wish Added! 🎉";
+          if (wishFeedback) wishFeedback.textContent = "Thank you! Your wish has been added.";
+
           const card = document.createElement("article");
           card.className = "wish-card";
-
+          // ... (card creation logic retained)
           const meta = document.createElement("div");
           meta.className = "wish-meta";
           meta.textContent = relation ? `${name} • ${relation.replace("-", " ")}` : name;
-
           const body = document.createElement("p");
           body.textContent = message;
-
           card.appendChild(meta);
           card.appendChild(body);
           wishesDisplay.prepend(card);
 
-          wishesForm.reset();
-          if (wishCharCount) wishCharCount.textContent = "0/500 characters";
-          if (wishFeedback) wishFeedback.textContent = "Thank you! Your wish has been added.";
+          setTimeout(() => {
+            wishesForm.reset();
+            if (wishCharCount) wishCharCount.textContent = "0/500 characters";
+            submitWishBtn.textContent = originalText;
+            submitWishBtn.disabled = false;
+          }, 1500);
         });
       }
 
-      /* ---- Countdown ---- */
+      /* ---- Countdown (Enhanced Time Logic) ---- */
       const now = new Date();
       let year = now.getFullYear();
       let targetDate = new Date(`${year}-08-31T00:00:00`);
-      if (targetDate.getTime() < now.getTime()) {
+      // If the target date has passed, assume next year's date
+      if (targetDate.getTime() < now.getTime() && now.getMonth() >= 8) {
         year += 1;
         targetDate = new Date(`${year}-08-31T00:00:00`);
+      } else if (targetDate.getTime() < now.getTime()) {
+        // If it's early in the current year, keep the current year's date
+        targetDate = new Date(`${year}-08-31T00:00:00`);
       }
+
       const expectedArrival = document.getElementById("expectedArrival");
       if (expectedArrival) {
         expectedArrival.textContent = `Late August ${year}`;
@@ -1924,20 +1064,75 @@
       function updateCountdown() {
         const n = new Date();
         const diff = targetDate.getTime() - n.getTime();
+
         if (diff <= 0) {
           if (daysEl) daysEl.textContent = "0";
           if (hoursEl) hoursEl.textContent = "0";
           return;
         }
+
         const days = Math.floor(diff / (1000 * 60 * 60 * 24));
         const hours = Math.floor((diff / (1000 * 60 * 60)) % 24);
-        if (daysEl) daysEl.textContent = String(days);
-        if (hoursEl) hoursEl.textContent = String(hours);
+
+        // Simple transition check (can be expanded with a CSS flip animation)
+        if (daysEl && daysEl.textContent !== String(days)) daysEl.textContent = String(days);
+        if (hoursEl && hoursEl.textContent !== String(hours)) hoursEl.textContent = String(hours);
       }
       updateCountdown();
-      setInterval(updateCountdown, 60 * 1000);
+      setInterval(updateCountdown, 60 * 1000); // Check every minute
 
-      /* ---- Honey jar hopes ---- */
+      /* ---- Parallax & Reading Progress (Deep UX) ---- */
+      const heroContainer = document.querySelector('.hero-image-container');
+      const cloudLayer = document.querySelector('.cloud-layer');
+      const bookContainer = document.getElementById('storybook');
+
+      function updateParallaxAndReadingProgress() {
+        const scrollY = window.scrollY;
+
+        // 1. Hero Parallax (Slow scroll for background)
+        if (heroContainer) {
+          // Move background image (::before) at 20% of scroll speed
+          heroContainer.style.setProperty('--scroll-translate', `${scrollY * 0.2}px`);
+        }
+        // Move clouds layer at 5% of scroll speed
+        if (cloudLayer) {
+            cloudLayer.style.setProperty('--cloud-translate', `${scrollY * 0.05}px`);
+        }
+
+        // 2. Reading Progress Bar
+        if (readingProgressBar && bookContainer) {
+          const bookTop = bookContainer.offsetTop;
+          const bookHeight = bookContainer.scrollHeight;
+          const viewportHeight = window.innerHeight;
+          const contentStart = bookTop - viewportHeight;
+          const contentEnd = bookTop + bookHeight;
+
+          // Only show bar when scrolling through the book content
+          if (scrollY > contentStart && scrollY < contentEnd) {
+            const scrollDistance = scrollY - bookTop;
+            const contentReadHeight = bookHeight - viewportHeight * 0.5; // Estimate visible content height
+            let progressRatio = Math.min(1, Math.max(0, scrollDistance / contentReadHeight));
+
+            // Adjust for very short pages if needed
+            if (progressRatio > 0.01 && progressRatio < 0.99) {
+                readingProgressBar.style.width = `${progressRatio * 100}%`;
+                readingProgressBar.style.opacity = 1;
+            } else if (progressRatio >= 0.99) {
+                readingProgressBar.style.width = `100%`;
+                readingProgressBar.style.opacity = 1;
+            } else {
+                readingProgressBar.style.opacity = 0;
+            }
+
+          } else {
+            readingProgressBar.style.opacity = 0;
+          }
+        }
+      }
+      window.addEventListener('scroll', updateParallaxAndReadingProgress);
+      updateParallaxAndReadingProgress(); // Initial run
+
+      /* ---- Honey jar hopes (retained) ---- */
       const addHopeBtn = document.getElementById("addHopeBtn");
       const hopesList = document.getElementById("hopesList");
       if (addHopeBtn && hopesList) {
@@ -1947,11 +1142,12 @@
             const li = document.createElement("li");
             li.textContent = hope.trim();
             hopesList.appendChild(li);
+            toast("Hope added to the jar!");
           }
         });
       }
 
-      /* ---- Footer actions ---- */
+      /* ---- Footer actions (retained) ---- */
       document.getElementById("printPageBtn")?.addEventListener("click", () => window.print());
 
       document.getElementById("sharePageBtn")?.addEventListener("click", async () => {
@@ -1969,10 +1165,11 @@
         toggleAnimationsBtn.addEventListener("click", () => {
           const isOff = document.body.classList.toggle("animations-off");
           toggleAnimationsBtn.textContent = isOff ? "🎭 Animations: Off" : "🎭 Animations: On";
+          toast(isOff ? "Animations turned off." : "Animations turned on.");
         });
       }
 
-      /* ---- Audio init on first interaction ---- */
+      /* ---- Audio init on first interaction (retained) ---- */
       const bgMusic = document.getElementById("bgMusic");
       const ambientForest = document.getElementById("ambientForest");
       let audioInitialized = false;
