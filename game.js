@@ -322,7 +322,10 @@
       this.lastInputTime = 0;
       this.inputBuffer = [];
       this.maxBufferSize = 10;
-      
+      this.pointerMoveThrottle = 16;
+      this.lastPointerMove = 0;
+      this.deadZone = 0.18;
+
       this.setupEventListeners();
     }
     
@@ -410,6 +413,9 @@
     handlePointerMove(e) {
       const pointer = this.pointers.get(e.pointerId || 0);
       if (pointer && pointer.pressed) {
+        const now = performance.now();
+        if (now - this.lastPointerMove < this.pointerMoveThrottle) return;
+        this.lastPointerMove = now;
         pointer.x = e.clientX;
         pointer.y = e.clientY;
         pointer.moved = true;
@@ -475,7 +481,10 @@
     getGamepadAxis(axisIndex) {
       if (!this.gamepad) return 0;
       const value = this.gamepad.axes[axisIndex];
-      return Math.abs(value) > 0.1 ? value : 0;
+      const abs = Math.abs(value);
+      if (abs < this.deadZone) return 0;
+      const scaled = (abs - this.deadZone) / (1 - this.deadZone);
+      return Math.sign(value) * Math.min(1, scaled);
     }
     
     getGamepadButton(buttonIndex) {
@@ -503,7 +512,15 @@
       this.lastFrameTime = 0;
       this.accumulatedTime = 0;
       this.fixedTimeStep = 1000 / 60; // 60 FPS target
-      
+
+      // Accessibility & motion preferences
+      this.motionQuery = window.matchMedia('(prefers-reduced-motion: reduce)');
+      this.reducedMotion = this.motionQuery.matches;
+      this.motionQuery.addEventListener('change', (event) => {
+        this.reducedMotion = event.matches;
+        this.updateMotionBudgets();
+      });
+
       // Core systems
       this.canvas = null;
       this.ctx = null;
@@ -519,12 +536,29 @@
       
       // Particle system
       this.particles = new OptimizedParticleSystem();
-      
+
       // Score system
       this.scorePopups = new ScorePopupSystem();
-      
+
+      this.updateMotionBudgets();
+
+      // Collision helpers
+      this.collisionCellSize = 96;
+      this.spatialBuckets = {
+        pots: new Map(),
+        bees: new Map(),
+        powerUps: new Map()
+      };
+
       // Initialize
       this.init();
+    }
+
+    updateMotionBudgets() {
+      this.screenShakeIntensityScale = this.reducedMotion ? 0 : 1;
+      if (this.particles?.setMotionBudget) {
+        this.particles.setMotionBudget({ reduced: this.reducedMotion });
+      }
     }
     
     createInitialState() {
@@ -1019,50 +1053,110 @@
       
       this.state.powerUps.push(powerUp);
     }
-    
-    checkCollisions() {
-      const pooh = this.state.pooh;
-      const poohRadius = pooh.width * 0.35;
-      
-      // Check pot collisions
-      for (let i = this.state.pots.length - 1; i >= 0; i--) {
-        const pot = this.state.pots[i];
-        const dx = pot.x - pooh.x;
-        const dy = pot.y - (pooh.y - pooh.height * 0.4);
-        const distance = Math.sqrt(dx * dx + dy * dy);
-        
-        if (distance < pot.radius + poohRadius) {
-          this.collectPot(pot, i);
-        }
-      }
-      
-      // Check bee collisions (skip if invincible)
-      if (!this.state.activePowerUps.has('shield')) {
-        for (let i = this.state.bees.length - 1; i >= 0; i--) {
-          const bee = this.state.bees[i];
-          const dx = bee.x - pooh.x;
-          const dy = bee.y - (pooh.y - pooh.height * 0.4);
-          const distance = Math.sqrt(dx * dx + dy * dy);
-          
-          if (distance < bee.radius + poohRadius) {
-            this.hitByBee(bee, i);
+
+    buildSpatialBuckets() {
+      const cellSize = this.collisionCellSize;
+      const resetBucket = (bucket) => bucket.clear();
+      Object.values(this.spatialBuckets).forEach(resetBucket);
+
+      const addToBucket = (map, entity) => {
+        const cellX = Math.floor(entity.x / cellSize);
+        const cellY = Math.floor(entity.y / cellSize);
+        const key = `${cellX}|${cellY}`;
+        if (!map.has(key)) map.set(key, []);
+        map.get(key).push(entity);
+      };
+
+      this.state.pots.forEach((pot) => addToBucket(this.spatialBuckets.pots, pot));
+      this.state.bees.forEach((bee) => addToBucket(this.spatialBuckets.bees, bee));
+      this.state.powerUps.forEach((pu) => addToBucket(this.spatialBuckets.powerUps, pu));
+    }
+
+    getNearby(map, x, y) {
+      const cellSize = this.collisionCellSize;
+      const cellX = Math.floor(x / cellSize);
+      const cellY = Math.floor(y / cellSize);
+      const candidates = [];
+
+      for (let dx = -1; dx <= 1; dx++) {
+        for (let dy = -1; dy <= 1; dy++) {
+          const key = `${cellX + dx}|${cellY + dy}`;
+          const bucket = map.get(key);
+          if (bucket) {
+            candidates.push(...bucket);
           }
         }
       }
-      
+
+      return candidates;
+    }
+
+    checkCollisions() {
+      const pooh = this.state.pooh;
+      const poohRadius = pooh.width * 0.35;
+
+      this.buildSpatialBuckets();
+      const potCandidates = this.getNearby(this.spatialBuckets.pots, pooh.x, pooh.y);
+      const beeCandidates = this.getNearby(this.spatialBuckets.bees, pooh.x, pooh.y);
+      const powerUpCandidates = this.getNearby(this.spatialBuckets.powerUps, pooh.x, pooh.y);
+
+      // Check pot collisions
+      for (let i = potCandidates.length - 1; i >= 0; i--) {
+        const pot = potCandidates[i];
+        const dx = pot.x - pooh.x;
+        const dy = pot.y - (pooh.y - pooh.height * 0.4);
+        const radius = pot.radius + poohRadius;
+
+        if ((dx * dx + dy * dy) < radius * radius) {
+          const index = this.state.pots.indexOf(pot);
+          if (index !== -1) this.collectPot(pot, index);
+        }
+      }
+
+      // Check bee collisions (skip if invincible)
+      if (!this.state.activePowerUps.has('shield')) {
+        for (let i = beeCandidates.length - 1; i >= 0; i--) {
+          const bee = beeCandidates[i];
+          const dx = bee.x - pooh.x;
+          const dy = bee.y - (pooh.y - pooh.height * 0.4);
+          const radius = bee.radius + poohRadius;
+
+          if ((dx * dx + dy * dy) < radius * radius) {
+            const index = this.state.bees.indexOf(bee);
+            if (index !== -1) this.hitByBee(bee, index);
+          }
+        }
+      }
+
       // Check power-up collisions
-      for (let i = this.state.powerUps.length - 1; i >= 0; i--) {
-        const powerUp = this.state.powerUps[i];
+      for (let i = powerUpCandidates.length - 1; i >= 0; i--) {
+        const powerUp = powerUpCandidates[i];
         const dx = powerUp.x - pooh.x;
         const dy = powerUp.y - (pooh.y - pooh.height * 0.4);
-        const distance = Math.sqrt(dx * dx + dy * dy);
-        
-        if (distance < powerUp.radius + poohRadius) {
-          this.collectPowerUp(powerUp, i);
+        const radius = powerUp.radius + poohRadius;
+
+        if ((dx * dx + dy * dy) < radius * radius) {
+          const index = this.state.powerUps.indexOf(powerUp);
+          if (index !== -1) this.collectPowerUp(powerUp, index);
         }
       }
     }
-    
+
+    emitParticles(x, y, count, color, options = {}) {
+      if (this.reducedMotion) {
+        const trimmedCount = Math.max(0, Math.round(count * 0.35));
+        if (trimmedCount === 0) return;
+        this.particles.burst(x, y, trimmedCount, color, {
+          ...options,
+          speed: (options.speed || 3) * 0.6,
+          spread: options.spread || 45
+        });
+        return;
+      }
+
+      this.particles.burst(x, y, count, color, options);
+    }
+
     collectPot(pot, index) {
       const mode = this.modeConfig[this.state.mode];
       const isGolden = pot.type === 'golden';
@@ -1108,7 +1202,7 @@
       this.scorePopups.create(pot.x, pot.y, points, isGolden ? 'golden' : 'normal');
       
       // Particle effect
-      this.particles.burst(pot.x, pot.y, isGolden ? 20 : 12, 
+      this.emitParticles(pot.x, pot.y, isGolden ? 20 : 12,
                           isGolden ? '#FFD700' : '#FFD54F',
                           { size: isGolden ? 5 : 3, speed: 4 });
       
@@ -1130,7 +1224,7 @@
       this.state.streak = 0;
       
       // Particle effect
-      this.particles.burst(bee.x, bee.y, 15, '#FF6B6B', { size: 4, speed: 3 });
+      this.emitParticles(bee.x, bee.y, 15, '#FF6B6B', { size: 4, speed: 3 });
       
       // Release bee
       this.objectPools.bees.release(bee);
@@ -1172,7 +1266,7 @@
         lightning: '#9C27B0'
       };
       
-      this.particles.burst(powerUp.x, powerUp.y, 15, colors[type] || '#FFFFFF',
+      this.emitParticles(powerUp.x, powerUp.y, 15, colors[type] || '#FFFFFF',
                           { size: 5, speed: 4 });
       
       // Release power-up
@@ -1708,7 +1802,7 @@
       this.playSound(timeExpired ? 'victory' : 'defeat');
       
       // Celebration particles
-      this.particles.burst(this.canvas.width / 2, this.canvas.height / 2, 50, 
+      this.emitParticles(this.canvas.width / 2, this.canvas.height / 2, 50,
                           timeExpired ? '#4CAF50' : '#FF9800',
                           { size: 6, speed: 6, gravity: 0.1 });
       
@@ -1929,18 +2023,22 @@
     }
     
     screenShake(intensity, duration) {
-      // Implement screen shake effect
-      const originalX = this.canvas.style.transform;
+      if (this.screenShakeIntensityScale === 0) return;
+
+      const scaledIntensity = intensity * this.screenShakeIntensityScale;
+      const scaledDuration = this.reducedMotion ? Math.min(duration, 120) : duration;
+
+      const originalTransform = this.canvas.style.transform;
       const shakeInterval = setInterval(() => {
-        const x = (Math.random() - 0.5) * intensity;
-        const y = (Math.random() - 0.5) * intensity;
+        const x = (Math.random() - 0.5) * scaledIntensity;
+        const y = (Math.random() - 0.5) * scaledIntensity;
         this.canvas.style.transform = `translate(${x}px, ${y}px)`;
-      }, 16);
-      
+      }, this.reducedMotion ? 32 : 16);
+
       setTimeout(() => {
         clearInterval(shakeInterval);
-        this.canvas.style.transform = originalX;
-      }, duration);
+        this.canvas.style.transform = originalTransform;
+      }, scaledDuration);
     }
     
     playSound(type) {
@@ -2113,7 +2211,10 @@
   class OptimizedParticleSystem {
     constructor(maxParticles = 200) {
       this.particles = [];
+      this.baseMaxParticles = maxParticles;
       this.maxParticles = maxParticles;
+      this.motionScale = 1;
+      this.reducedMotion = false;
       this.pool = new MemoryManagedPool(
         () => ({
           x: 0, y: 0, vx: 0, vy: 0,
@@ -2129,11 +2230,21 @@
         50, maxParticles
       );
     }
-    
+
+    setMotionBudget({ reduced }) {
+      this.reducedMotion = reduced;
+      this.motionScale = reduced ? 0.35 : 1;
+      this.maxParticles = reduced
+        ? Math.max(60, Math.floor(this.baseMaxParticles * 0.6))
+        : this.baseMaxParticles;
+    }
+
     burst(x, y, count, color, options = {}) {
       const { size = 4, speed = 3, gravity = 0.1, spread = 360 } = options;
-      
-      for (let i = 0; i < count && this.particles.length < this.maxParticles; i++) {
+
+      const targetCount = Math.max(1, Math.round(count * this.motionScale));
+
+      for (let i = 0; i < targetCount && this.particles.length < this.maxParticles; i++) {
         const particle = this.pool.get();
         
         const angle = (Math.random() * spread * Math.PI / 180) - (spread * Math.PI / 360);
