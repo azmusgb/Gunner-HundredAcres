@@ -1,54 +1,1348 @@
 <!DOCTYPE html>
+
 <html lang="en">
 <head>
   <meta charset="UTF-8" />
-  <title>Honey Catch</title>
-
-  <meta name="viewport"
-        content="width=device-width, initial-scale=1.0, viewport-fit=cover, user-scalable=no" />
+  <title>Honey Catch - Enhanced</title>
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover, user-scalable=no" />
   <meta name="theme-color" content="#f4a944" />
-  <meta name="color-scheme" content="light dark" />
+  <meta name="description" content="Catch honey, dodge bees, build streaks. An immersive arcade experience." />
 
-  <meta name="description"
-        content="Catch honey, dodge bees, build streaks. A fast, cozy arcade game." />
+  <style>
+    /* ===============================
+       THEME & ANIMATIONS
+    ================================ */
+    :root {
+      --honey: #f4a944;
+      --honey-light: #ffd77a;
+      --honey-dark: #e69500;
+      --bee-yellow: #ffd700;
+      --bee-black: #1a1a1a;
+      --ink: #2c1810;
+      --panel: rgba(255, 255, 255, 0.95);
+      --danger: #d62e2e;
+      --success: #4caf50;
+      --radius: 16px;
+      --shadow-lg: 0 20px 60px rgba(0,0,0,0.25);
+      --shadow-md: 0 8px 24px rgba(0,0,0,0.15);
+    }
 
-  <link rel="stylesheet" href="styles-game.css" />
+    @keyframes float {
+      0%, 100% { transform: translateY(0px); }
+      50% { transform: translateY(-8px); }
+    }
+
+    @keyframes pulse {
+      0%, 100% { transform: scale(1); }
+      50% { transform: scale(1.05); }
+    }
+
+    @keyframes slideIn {
+      from { opacity: 0; transform: translateY(20px); }
+      to { opacity: 1; transform: translateY(0); }
+    }
+
+    @keyframes scorePopIn {
+      0% { transform: scale(0.5); opacity: 0; }
+      50% { transform: scale(1.2); }
+      100% { transform: scale(1); opacity: 1; }
+    }
+
+    @keyframes shake {
+      0%, 100% { transform: translateX(0); }
+      25% { transform: translateX(-4px); }
+      75% { transform: translateX(4px); }
+    }
+
+    /* ===============================
+       RESET & BASE
+    ================================ */
+    *, *::before, *::after {
+      box-sizing: border-box;
+      margin: 0;
+      padding: 0;
+      -webkit-tap-highlight-color: transparent;
+    }
+
+    html, body {
+      height: 100%;
+      background: linear-gradient(135deg, #fff8e1 0%, #ffe0b2 50%, #ffcc80 100%);
+      font-family: 'SF Pro Display', system-ui, -apple-system, BlinkMacSystemFont, sans-serif;
+      color: var(--ink);
+      overflow: hidden;
+    }
+
+    main {
+      height: 100%;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      justify-content: center;
+      padding: 20px;
+      position: relative;
+    }
+
+    /* ===============================
+       TOP BAR
+    ================================ */
+    .top-bar {
+      position: absolute;
+      top: 20px;
+      left: 50%;
+      transform: translateX(-50%);
+      width: 100%;
+      max-width: 420px;
+      display: flex;
+      justify-content: space-between;
+      padding: 0 24px;
+      z-index: 10;
+    }
+
+    .stat-card {
+      background: var(--panel);
+      backdrop-filter: blur(10px);
+      padding: 12px 20px;
+      border-radius: 12px;
+      box-shadow: var(--shadow-md);
+      font-weight: 700;
+      font-size: 0.95rem;
+      display: flex;
+      flex-direction: column;
+      gap: 2px;
+      min-width: 100px;
+      animation: slideIn 0.4s ease-out;
+    }
+
+    .stat-label {
+      font-size: 0.75rem;
+      opacity: 0.6;
+      text-transform: uppercase;
+      letter-spacing: 0.5px;
+    }
+
+    .stat-value {
+      font-size: 1.5rem;
+      color: var(--honey-dark);
+      animation: scorePopIn 0.3s ease-out;
+    }
+
+    /* ===============================
+       CANVAS CONTAINER
+    ================================ */
+    .game-container {
+      position: relative;
+      animation: float 3s ease-in-out infinite;
+    }
+
+    #honey-game {
+      background: radial-gradient(circle at 30% 30%, rgba(255,253,231,0.9), rgba(255,224,130,0.95));
+      border-radius: var(--radius);
+      box-shadow: var(--shadow-lg), inset 0 2px 10px rgba(255,255,255,0.4);
+      touch-action: none;
+      cursor: none;
+      image-rendering: auto;
+      border: 3px solid rgba(255,255,255,0.5);
+    }
+
+    /* ===============================
+       FLOATING SCORE INDICATORS
+    ================================ */
+    .score-popup {
+      position: absolute;
+      font-weight: 800;
+      font-size: 1.5rem;
+      color: var(--success);
+      pointer-events: none;
+      text-shadow: 0 2px 8px rgba(0,0,0,0.3);
+      animation: popupFloat 1s ease-out forwards;
+      z-index: 100;
+    }
+
+    @keyframes popupFloat {
+      0% { 
+        opacity: 1; 
+        transform: translate(-50%, 0) scale(0.8);
+      }
+      100% { 
+        opacity: 0; 
+        transform: translate(-50%, -60px) scale(1.2);
+      }
+    }
+
+    /* ===============================
+       OVERLAYS
+    ================================ */
+    .overlay {
+      position: absolute;
+      inset: 0;
+      background: rgba(255, 248, 225, 0.98);
+      backdrop-filter: blur(12px);
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      justify-content: center;
+      gap: 24px;
+      text-align: center;
+      z-index: 1000;
+      animation: slideIn 0.3s ease-out;
+    }
+
+    .overlay.hidden {
+      display: none;
+    }
+
+    .overlay h1 {
+      font-size: 3rem;
+      font-weight: 900;
+      background: linear-gradient(135deg, var(--honey-dark), var(--honey-light));
+      -webkit-background-clip: text;
+      -webkit-text-fill-color: transparent;
+      background-clip: text;
+      letter-spacing: -1px;
+      text-shadow: 0 4px 20px rgba(244,169,68,0.3);
+    }
+
+    .overlay h2 {
+      font-size: 2rem;
+      color: var(--ink);
+    }
+
+    .overlay p {
+      font-size: 1.1rem;
+      opacity: 0.8;
+      max-width: 300px;
+      line-height: 1.5;
+    }
+
+    .btn {
+      background: linear-gradient(135deg, var(--honey-dark), var(--honey));
+      border: none;
+      padding: 16px 40px;
+      font-size: 1.2rem;
+      font-weight: 700;
+      border-radius: 999px;
+      cursor: pointer;
+      box-shadow: var(--shadow-md), inset 0 1px 0 rgba(255,255,255,0.3);
+      color: white;
+      text-transform: uppercase;
+      letter-spacing: 1px;
+      transition: all 0.2s ease;
+      position: relative;
+      overflow: hidden;
+    }
+
+    .btn::before {
+      content: '';
+      position: absolute;
+      inset: 0;
+      background: linear-gradient(135deg, transparent, rgba(255,255,255,0.2));
+      opacity: 0;
+      transition: opacity 0.2s;
+    }
+
+    .btn:hover::before {
+      opacity: 1;
+    }
+
+    .btn:active {
+      transform: scale(0.96);
+      box-shadow: var(--shadow-md);
+    }
+
+    /* ===============================
+       GAME OVER
+    ================================ */
+    .final-score {
+      font-size: 4rem;
+      font-weight: 900;
+      color: var(--honey-dark);
+      text-shadow: 0 4px 20px rgba(244,169,68,0.4);
+    }
+
+    .stats-grid {
+      display: grid;
+      grid-template-columns: repeat(2, 1fr);
+      gap: 16px;
+      margin: 20px 0;
+    }
+
+    .stat-box {
+      background: white;
+      padding: 16px;
+      border-radius: 12px;
+      box-shadow: var(--shadow-md);
+    }
+
+    .stat-box-label {
+      font-size: 0.85rem;
+      opacity: 0.6;
+      margin-bottom: 4px;
+    }
+
+    .stat-box-value {
+      font-size: 1.8rem;
+      font-weight: 800;
+      color: var(--honey-dark);
+    }
+
+    /* ===============================
+       ACCESSIBILITY
+    ================================ */
+    .sr-only {
+      position: absolute;
+      width: 1px;
+      height: 1px;
+      overflow: hidden;
+      clip: rect(0 0 0 0);
+    }
+
+    /* ===============================
+       RESPONSIVE
+    ================================ */
+    @media (max-width: 480px) {
+      .top-bar {
+        padding: 0 16px;
+      }
+      
+      .stat-card {
+        min-width: 80px;
+        padding: 10px 16px;
+      }
+
+      .overlay h1 {
+        font-size: 2.5rem;
+      }
+    }
+  </style>
+
 </head>
 
 <body>
 <main id="game-root" role="main">
 
   <header class="top-bar">
-    <div class="score">Score: <span id="score">0</span></div>
-    <div class="streak">Streak: <span id="streak">0</span></div>
+    <div class="stat-card">
+      <div class="stat-label">Score</div>
+      <div class="stat-value" id="score">0</div>
+    </div>
+    <div class="stat-card">
+      <div class="stat-label">Streak</div>
+      <div class="stat-value" id="streak">0</div>
+    </div>
   </header>
 
-  <canvas
-    id="honey-game"
-    width="390"
-    height="640"
-    role="img"
-    aria-label="Honey Catch game play area"
-    aria-describedby="game-status"
-  ></canvas>
+  <div class="game-container">
+    <canvas
+      id="honey-game"
+      width="390"
+      height="640"
+      role="img"
+      aria-label="Honey Catch game play area"
+      aria-describedby="game-status"
+    ></canvas>
+  </div>
 
   <div id="game-status" class="sr-only" aria-live="polite">
     Game ready
   </div>
 
+  <!-- Start Overlay -->
+
   <div class="overlay" id="start-overlay">
-    <h1>Honey Catch</h1>
-    <p>Drag to move. Catch honey. Avoid bees.</p>
-    <button id="start-btn">Start</button>
+    <h1>🍯 Honey Catch</h1>
+    <p>Drag or use arrow keys to move.<br>Catch honey drops, avoid angry bees!</p>
+    <button class="btn" id="start-btn">Start Game</button>
   </div>
 
+  <!-- Pause Overlay -->
+
   <div class="overlay hidden" id="pause-overlay">
-    <h2>Paused</h2>
-    <button id="resume-btn">Resume</button>
+    <h2>⏸️ Paused</h2>
+    <p>Press ESC or tap Resume to continue</p>
+    <button class="btn" id="resume-btn">Resume</button>
+  </div>
+
+  <!-- Game Over Overlay -->
+
+  <div class="overlay hidden" id="gameover-overlay">
+    <h2>Game Over!</h2>
+    <div class="final-score" id="final-score">0</div>
+    <div class="stats-grid">
+      <div class="stat-box">
+        <div class="stat-box-label">Best Streak</div>
+        <div class="stat-box-value" id="best-streak">0</div>
+      </div>
+      <div class="stat-box">
+        <div class="stat-box-label">Honey Caught</div>
+        <div class="stat-box-value" id="honey-caught">0</div>
+      </div>
+    </div>
+    <button class="btn" id="restart-btn">Play Again</button>
   </div>
 
 </main>
 
-<script src="game.js"></script>
+<script>
+(() => {
+  'use strict';
+
+  /* ===============================
+     DOM
+  ================================ */
+  const canvas = document.getElementById('honey-game');
+  const ctx = canvas.getContext('2d', { alpha: false, desynchronized: true });
+
+  const scoreEl = document.getElementById('score');
+  const streakEl = document.getElementById('streak');
+  const statusEl = document.getElementById('game-status');
+
+  const startOverlay = document.getElementById('start-overlay');
+  const pauseOverlay = document.getElementById('pause-overlay');
+  const gameoverOverlay = document.getElementById('gameover-overlay');
+
+  const startBtn = document.getElementById('start-btn');
+  const resumeBtn = document.getElementById('resume-btn');
+  const restartBtn = document.getElementById('restart-btn');
+
+  const gameContainer = document.querySelector('.game-container');
+
+  /* ===============================
+     GAME STATE
+  ================================ */
+  let lastTime = 0;
+  let running = false;
+  let paused = false;
+
+  let score = 0;
+  let streak = 0;
+  let bestStreak = 0;
+  let honeyCaught = 0;
+  let lives = 3;
+
+  const player = {
+    x: canvas.width / 2,
+    y: canvas.height - 60,
+    vx: 0,
+    radius: 24,
+    trail: []
+  };
+
+  /* ===============================
+     PARTICLES
+  ================================ */
+  const particles = [];
+
+  function createParticles(x, y, color, count = 8) {
+    for (let i = 0; i < count; i++) {
+      const angle = (Math.PI * 2 * i) / count;
+      particles.push({
+        x,
+        y,
+        vx: Math.cos(angle) * (50 + Math.random() * 50),
+        vy: Math.sin(angle) * (50 + Math.random() * 50),
+        life: 1,
+        decay: 0.02 + Math.random() * 0.02,
+        size: 3 + Math.random() * 4,
+        color
+      });
+    }
+  }
+
+  function updateParticles(dt) {
+    for (let i = particles.length - 1; i >= 0; i--) {
+      const p = particles[i];
+      p.x += p.vx * dt;
+      p.y += p.vy * dt;
+      p.vy += 200 * dt; // gravity
+      p.life -= p.decay;
+      
+      if (p.life <= 0) {
+        particles.splice(i, 1);
+      }
+    }
+  }
+
+  function renderParticles() {
+    for (const p of particles) {
+      ctx.globalAlpha = p.life;
+      ctx.fillStyle = p.color;
+      ctx.beginPath();
+      ctx.arc(p.x, p.y, p.size * p.life, 0, Math.PI * 2);
+      ctx.fill();
+    }
+    ctx.globalAlpha = 1;
+  }
+
+  /* ===============================
+     OBJECT POOLS
+  ================================ */
+  const honeyPool = [];
+  const beePool = [];
+
+  function spawnHoney() {
+    const h = honeyPool.pop() || {};
+    h.x = 30 + Math.random() * (canvas.width - 60);
+    h.y = -20;
+    h.vy = 120 + Math.random() * 80 + score / 100;
+    h.active = true;
+    h.wobble = Math.random() * Math.PI * 2;
+    return h;
+  }
+
+  function spawnBee() {
+    const b = beePool.pop() || {};
+    b.x = Math.random() * canvas.width;
+    b.y = -30;
+    b.vx = (Math.random() - 0.5) * 100;
+    b.vy = 100 + Math.random() * 60 + score / 150;
+    b.active = true;
+    b.wobble = Math.random() * Math.PI * 2;
+    return b;
+  }
+
+  function releaseHoney(h) {
+    h.active = false;
+    honeyPool.push(h);
+  }
+
+  function releaseBee(b) {
+    b.active = false;
+    beePool.push(b);
+  }
+
+  const honeys = [];
+  const bees = [];
+
+  /* ===============================
+     INPUT
+  ================================ */
+  let targetX = player.x;
+  let mouseX = player.x;
+
+  canvas.addEventListener('touchstart', e => e.preventDefault(), { passive: false });
+  canvas.addEventListener('touchmove', e => {
+    e.preventDefault();
+    const rect = canvas.getBoundingClientRect();
+    targetX = e.touches[0].clientX - rect.left;
+  }, { passive: false });
+
+  canvas.addEventListener('mousemove', e => {
+    const rect = canvas.getBoundingClientRect();
+    mouseX = e.clientX - rect.left;
+    targetX = mouseX;
+  });
+
+  window.addEventListener('keydown', e => {
+    if (e.key === 'ArrowLeft') targetX = Math.max(0, targetX - 50);
+    if (e.key === 'ArrowRight') targetX = Math.min(canvas.width, targetX + 50);
+    if (e.key === 'Escape') togglePause();
+  });
+
+  /* ===============================
+     GAME LOOP
+  ================================ */
+  function loop(now) {
+    if (!running) return;
+
+    const dt = Math.min((now - lastTime) / 1000, 0.033);
+    lastTime = now;
+
+    if (!paused) {
+      update(dt);
+      updateParticles(dt);
+    }
+    render();
+
+    requestAnimationFrame(loop);
+  }
+
+  /* ===============================
+     UPDATE
+  ================================ */
+  let spawnTimer = 0;
+  let beeSpawnTimer = 0;
+
+  function update(dt) {
+    // Player smooth movement
+    const dx = targetX - player.x;
+    player.vx += dx * 0.18;
+    player.vx *= 0.8;
+    player.x += player.vx * dt * 60;
+    player.x = Math.max(player.radius, Math.min(canvas.width - player.radius, player.x));
+
+    // Player trail
+    player.trail.push({ x: player.x, y: player.y, alpha: 0.6 });
+    if (player.trail.length > 8) player.trail.shift();
+    player.trail.forEach((t, i) => {
+      t.alpha -= 0.1;
+    });
+
+    // Spawn honey
+    spawnTimer += dt;
+    if (spawnTimer > 0.6 - score / 5000) {
+      honeys.push(spawnHoney());
+      spawnTimer = 0;
+    }
+
+    // Spawn bees (less frequent)
+    beeSpawnTimer += dt;
+    if (beeSpawnTimer > 3 - score / 2000) {
+      bees.push(spawnBee());
+      beeSpawnTimer = 0;
+    }
+
+    // Update honey
+    for (let i = honeys.length - 1; i >= 0; i--) {
+      const h = honeys[i];
+      h.y += h.vy * dt;
+      h.wobble += dt * 3;
+
+      const dist = Math.hypot(h.x - player.x, h.y - player.y);
+      if (dist < player.radius + 18) {
+        const points = 10 + streak * 3;
+        score += points;
+        streak++;
+        honeyCaught++;
+        if (streak > bestStreak) bestStreak = streak;
+        
+        createParticles(h.x, h.y, '#ffa500', 16, 'star');
+        createParticles(h.x, h.y, '#ffd700', 8, 'circle');
+        showScorePopup(h.x, h.y, `+${points}`);
+        
+        if (streak % 5 === 0) {
+          showHoneyWord(h.x, h.y, 'HUNNY!');
+        }
+        
+        updateHUD();
+        releaseHoney(h);
+        honeys.splice(i, 1);
+        continue;
+      }
+
+      if (h.y > canvas.height + 40) {
+        if (streak > 0) {
+          streak = Math.max(0, streak - 1);
+          updateHUD();
+        }
+        releaseHoney(h);
+        honeys.splice(i, 1);
+      }
+    }
+
+    // Update bees
+    for (let i = bees.length - 1; i >= 0; i--) {
+      const b = bees[i];
+      b.x += b.vx * dt;
+      b.y += b.vy * dt;
+      b.wobble += dt * 8;
+      b.wingFlap += dt * 20;
+
+      const dist = Math.hypot(b.x - player.x, b.y - player.y);
+      if (dist < player.radius + 18) {
+        lives--;
+        streak = 0;
+        createParticles(b.x, b.y, '#000', 20, 'circle');
+        createParticles(player.x, player.y, '#d4a574', 12, 'star');
+        shakeScreen();
+        showHoneyWord(player.x, player.y, 'OH BOTHER!');
+        
+        if (lives <= 0) {
+          endGame();
+        }
+        
+        updateHUD();
+        releaseBee(b);
+        bees.splice(i, 1);
+        continue;
+      }
+
+      if (b.x < -50 || b.x > canvas.width + 50 || b.y < -50 || b.y > canvas.height + 50) {
+        releaseBee(b);
+        bees.splice(i, 1);
+      }
+    }
+  }
+
+  /* ===============================
+     RENDER
+  ================================ */
+  function render() {
+    // Sky gradient
+    const skyGradient = ctx.createLinearGradient(0, 0, 0, canvas.height);
+    skyGradient.addColorStop(0, '#87ceeb');
+    skyGradient.addColorStop(0.4, '#b0e0e6');
+    skyGradient.addColorStop(0.7, '#a8d5a3');
+    skyGradient.addColorStop(1, '#7cb342');
+    ctx.fillStyle = skyGradient;
+    ctx.fillRect(0, 0, canvas.width, canvas.height);
+
+    // Sun
+    const sunGradient = ctx.createRadialGradient(320, 80, 0, 320, 80, 40);
+    sunGradient.addColorStop(0, '#fff9e6');
+    sunGradient.addColorStop(0.5, '#ffe066');
+    sunGradient.addColorStop(1, '#ffcc00');
+    ctx.fillStyle = sunGradient;
+    ctx.beginPath();
+    ctx.arc(320, 80, 40, 0, Math.PI * 2);
+    ctx.fill();
+
+    // Trees in background
+    for (const tree of trees) {
+      ctx.save();
+      ctx.translate(tree.x, tree.y);
+      
+      const sway = Math.sin(tree.sway) * 3;
+      ctx.rotate(sway * 0.01);
+      
+      // Trunk
+      ctx.fillStyle = '#5d4e37';
+      ctx.fillRect(-12, -60, 24, 60);
+      
+      // Leaves (3 circles)
+      const leafGradient = ctx.createRadialGradient(0, -80, 0, 0, -80, 45);
+      leafGradient.addColorStop(0, '#7cb342');
+      leafGradient.addColorStop(1, '#558b2f');
+      ctx.fillStyle = leafGradient;
+      
+      ctx.beginPath();
+      ctx.arc(-20, -70, 35, 0, Math.PI * 2);
+      ctx.fill();
+      
+      ctx.beginPath();
+      ctx.arc(20, -70, 35, 0, Math.PI * 2);
+      ctx.fill();
+      
+      ctx.beginPath();
+      ctx.arc(0, -95, 40, 0, Math.PI * 2);
+      ctx.fill();
+      
+      ctx.restore();
+    }
+
+    // Ground/grass
+    ctx.fillStyle = '#558b2f';
+    ctx.fillRect(0, canvas.height - 30, canvas.width, 30);
+    
+    // Grass texture
+    ctx.strokeStyle = '#7cb342';
+    ctx.lineWidth = 2;
+    for (let i = 0; i < canvas.width; i += 8) {
+      ctx.beginPath();
+      ctx.moveTo(i, canvas.height - 30);
+      ctx.lineTo(i + 2, canvas.height - 35);
+      ctx.stroke();
+    }
+
+    // Honey pots
+    for (const h of honeys) {
+      ctx.save();
+      ctx.translate(h.x, h.y);
+      ctx.rotate(h.rotation);
+      
+      const wobbleX = Math.sin(h.wobble) * 2;
+      
+      // Pot shadow
+      ctx.globalAlpha = 0.2;
+      ctx.fillStyle = '#000';
+      ctx.beginPath();
+      ctx.ellipse(wobbleX, 18, 14, 4, 0, 0, Math.PI * 2);
+      ctx.fill();
+      ctx.globalAlpha = 1;
+      
+      // Pot body
+      const potGradient = ctx.createLinearGradient(-12, -10, 12, 15);
+      potGradient.addColorStop(0, '#a0633b');
+      potGradient.addColorStop(0.5, '#8b4513');
+      potGradient.addColorStop(1, '#6b3410');
+      ctx.fillStyle = potGradient;
+      
+      ctx.beginPath();
+      ctx.moveTo(-10, -8);
+      ctx.quadraticCurveTo(-12, 0, -10, 12);
+      ctx.lineTo(10, 12);
+      ctx.quadraticCurveTo(12, 0, 10, -8);
+      ctx.closePath();
+      ctx.fill();
+      
+      // Pot rim
+      ctx.fillStyle = '#6b3410';
+      ctx.fillRect(-12, -10, 24, 3);
+      
+      // Honey dripping
+      const honeyGradient = ctx.createLinearGradient(0, -5, 0, 8);
+      honeyGradient.addColorStop(0, '#ffd700');
+      honeyGradient.addColorStop(1, '#ffa500');
+      ctx.fillStyle = honeyGradient;
+      
+      ctx.beginPath();
+      ctx.moveTo(-8, -8);
+      ctx.quadraticCurveTo(-6, -2, -8, 4);
+      ctx.lineTo(-4, 4);
+      ctx.quadraticCurveTo(-2, -2, -4, -8);
+      ctx.closePath();
+      ctx.fill();
+      
+      ctx.beginPath();
+      ctx.moveTo(4, -8);
+      ctx.quadraticCurveTo(6, -2, 4, 4);
+      ctx.lineTo(8, 4);
+      ctx.quadraticCurveTo(10, -2, 8, -8);
+      ctx.closePath();
+      ctx.fill();
+      
+      // Shine
+      ctx.fillStyle = 'rgba(255, 255, 255, 0.3)';
+      ctx.beginPath();
+      ctx.arc(-6, -4, 4, 0, Math.PI * 2);
+      ctx.fill();
+      
+      // "HUNNY" label
+      ctx.fillStyle = '#fff8e1';
+      ctx.font = 'bold 8px Comic Sans MS';
+      ctx.textAlign = 'center';
+      ctx.fillText('HUNNY', 0, 5);
+      
+      ctx.restore();
+    }
+
+    // Pooh Bear!
+    ctx.save();
+    ctx.translate(player.x, player.y);
+    
+    const wobble = Math.sin(player.wobble) * 2;
+    
+    // Shadow
+    ctx.globalAlpha = 0.25;
+    ctx.fillStyle = '#000';
+    ctx.beginPath();
+    ctx.ellipse(0, player.radius + 10, player.radius * 0.8, 8, 0, 0, Math.PI * 2);
+    ctx.fill();
+    ctx.globalAlpha = 1;
+    
+    // Body (bigger circle)
+    const bodyGradient = ctx.createRadialGradient(-5, -5, 0, 0, 0, player.radius);
+    bodyGradient.addColorStop(0, '#e8c9a3');
+    bodyGradient.addColorStop(0.7, '#d4a574');
+    bodyGradient.addColorStop(1, '#c19463');
+    ctx.fillStyle = bodyGradient;
+    ctx.beginPath();
+    ctx.arc(0, wobble, player.radius, 0, Math.PI * 2);
+    ctx.fill();
+    
+    // Red shirt
+    ctx.fillStyle = '#e63946';
+    ctx.beginPath();
+    ctx.arc(0, wobble + 8, player.radius - 4, 0, Math.PI);
+    ctx.fill();
+    
+    // Arms
+    ctx.save();
+    ctx.rotate(player.armAngle);
+    
+    // Left arm
+    ctx.fillStyle = '#d4a574';
+    ctx.beginPath();
+    ctx.ellipse(-player.radius + 6, wobble, 8, 14, -0.3, 0, Math.PI * 2);
+    ctx.fill();
+    
+    ctx.restore();
+    
+    ctx.save();
+    ctx.rotate(-player.armAngle);
+    
+    // Right arm
+    ctx.fillStyle = '#d4a574';
+    ctx.beginPath();
+    ctx.ellipse(player.radius - 6, wobble, 8, 14, 0.3, 0, Math.PI * 2);
+    ctx.fill();
+    
+    ctx.restore();
+    
+    // Ears
+    ctx.fillStyle = '#d4a574';
+    ctx.beginPath();
+    ctx.arc(-player.radius + 8, wobble - player.radius + 8, 10, 0, Math.PI * 2);
+    ctx.fill();
+    ctx.beginPath();
+    ctx.arc(player.radius - 8, wobble - player.radius + 8, 10, 0, Math.PI * 2);
+    ctx.fill();
+    
+    // Inner ears
+    ctx.fillStyle = '#c19463';
+    ctx.beginPath();
+    ctx.arc(-player.radius + 8, wobble - player.radius + 8, 6, 0, Math.PI * 2);
+    ctx.fill();
+    ctx.beginPath();
+    ctx.arc(player.radius - 8, wobble - player.radius + 8, 6, 0, Math.PI * 2);
+    ctx.fill();
+    
+    // Snout
+    ctx.fillStyle = '#e8c9a3';
+    ctx.beginPath();
+    ctx.ellipse(0, wobble + 5, 12, 10, 0, 0, Math.PI * 2);
+    ctx.fill();
+    
+    // Nose
+    ctx.fillStyle = '#1a1a1a';
+    ctx.beginPath();
+    ctx.arc(0, wobble + 2, 4, 0, Math.PI * 2);
+    ctx.fill();
+    
+    // Eyes
+    ctx.fillStyle = '#1a1a1a';
+    ctx.beginPath();
+    ctx.arc(-8, wobble - 6, 3, 0, Math.PI * 2);
+    ctx.arc(8, wobble - 6, 3, 0, Math.PI * 2);
+    ctx.fill();
+    
+    // Eye shine
+    ctx.fillStyle = '#fff';
+    ctx.beginPath();
+    ctx.arc(-7, wobble - 7, 1.5, 0, Math.PI * 2);
+    ctx.arc(9, wobble - 7, 1.5, 0, Math.PI * 2);
+    ctx.fill();
+    
+    // Eyebrows
+    ctx.strokeStyle = '#8b6f47';
+    ctx.lineWidth = 2;
+    ctx.lineCap = 'round';
+    ctx.beginPath();
+    ctx.moveTo(-12, wobble - 10);
+    ctx.lineTo(-6, wobble - 11);
+    ctx.moveTo(12, wobble - 10);
+    ctx.lineTo(6, wobble - 11);
+    ctx.stroke();
+    
+    // Smile
+    ctx.strokeStyle = '#1a1a1a';
+    ctx.lineWidth = 1.5;
+    ctx.beginPath();
+    ctx.arc(0, wobble + 2, 6, 0.2, Math.PI - 0.2);
+    ctx.stroke();
+    
+    ctx.restore();
+
+    // Bees
+    for (const b of bees) {
+      const wobbleY = Math.sin(b.wobble) * 4;
+      const wingFlap = Math.sin(b.wingFlap) * 0.3;
+      
+      ctx.save();
+      ctx.translate(b.x, b.y + wobbleY);
+      
+      // Wings
+      ctx.globalAlpha = 0.5;
+      ctx.fillStyle = '#e8f4f8';
+      ctx.save();
+      ctx.rotate(wingFlap);
+      ctx.beginPath();
+      ctx.ellipse(-10, -8, 10, 16, -0.4, 0, Math.PI * 2);
+      ctx.fill();
+      ctx.restore();
+      
+      ctx.save();
+      ctx.rotate(-wingFlap);
+      ctx.beginPath();
+      ctx.ellipse(10, -8, 10, 16, 0.4, 0, Math.PI * 2);
+      ctx.fill();
+      ctx.restore();
+      ctx.globalAlpha = 1;
+      
+      // Body
+      const beeGradient = ctx.createLinearGradient(0, -12, 0, 12);
+      beeGradient.addColorStop(0, '#ffd700');
+      beeGradient.addColorStop(1, '#daa520');
+      ctx.fillStyle = beeGradient;
+      ctx.beginPath();
+      ctx.ellipse(0, 0, 13, 18, 0, 0, Math.PI * 2);
+      ctx.fill();
+      
+      // Stripes
+      ctx.fillStyle = '#1a1a1a';
+      for (let i = 0; i < 3; i++) {
+        ctx.fillRect(-13, -10 + i * 8, 26, 4);
+      }
+      
+      // Head
+      ctx.fillStyle = '#1a1a1a';
+      ctx.beginPath();
+      ctx.arc(0, -16, 8, 0, Math.PI * 2);
+      ctx.fill();
+      
+      // Eyes (angry)
+      ctx.fillStyle = '#fff';
+      ctx.beginPath();
+      ctx.arc(-3, -17, 2.5, 0, Math.PI * 2);
+      ctx.arc(3, -17, 2.5, 0, Math.PI * 2);
+      ctx.fill();
+      
+      ctx.fillStyle = '#e63946';
+      ctx.beginPath();
+      ctx.arc(-3, -16.5, 1.5, 0, Math.PI * 2);
+      ctx.arc(3, -16.5, 1.5, 0, Math.PI * 2);
+      ctx.fill();
+      
+      // Stinger
+      ctx.fillStyle = '#1a1a1a';
+      ctx.beginPath();
+      ctx.moveTo(0, 16);
+      ctx.lineTo(-3, 22);
+      ctx.lineTo(3, 22);
+      ctx.closePath();
+      ctx.fill();
+      
+      ctx.restore();
+    }
+
+    // Particles
+    renderParticles();
+
+    // Lives hearts
+    ctx.fillStyle = '#e63946';
+    for (let i = 0; i < lives; i++) {
+      const x = 25 + i * 35;
+      const y = canvas.height - 25;
+      
+      ctx.save();
+      ctx.translate(x, y);
+      ctx.scale(0.8, 0.8);
+      
+      ctx.beginPath();
+      ctx.moveTo(0, 4);
+      ctx.bezierCurveTo(-8, -4, -4, -8, 0, 0);
+      ctx.bezierCurveTo(4, -8, 8, -4, 0, 4);
+      ctx.fill();
+      
+      // Shine
+      ctx.fillStyle = 'rgba(255, 255, 255, 0.5)';
+      ctx.beginPath();
+      ctx.arc(-3, -2, 2, 0, Math.PI * 2);
+      ctx.fill();
+      
+      ctx.restore();
+    }
+  }
+
+  /* ===============================
+     UI / STATE
+  ================================ */
+  function updateHUD() {
+    scoreEl.textContent = score;
+    streakEl.textContent = streak;
+    statusEl.textContent = `Score ${score}, streak ${streak}, lives ${lives}`;
+  }
+
+  function showScorePopup(x, y, text) {
+    const popup = document.createElement('div');
+    popup.className = 'score-popup';
+    popup.textContent = text;
+    popup.style.left = x + 'px';
+    popup.style.top = y + 'px';
+    gameContainer.appendChild(popup);
+    
+    setTimeout(() => popup.remove(), 1200);
+  }
+
+  function showHoneyWord(x, y, text) {
+    const word = document.createElement('div');
+    word.className = 'honey-word';
+    word.textContent = text;
+    word.style.left = x + 'px';
+    word.style.top = y + 'px';
+    gameContainer.appendChild(word);
+    
+    setTimeout(() => word.remove(), 2000);
+  }
+
+  function shakeScreen() {
+    gameContainer.style.animation = 'none';
+    setTimeout(() => {
+      gameContainer.style.animation = 'shake 0.4s ease-in-out, float 4s ease-in-out infinite';
+    }, 10);
+  }
+
+  function startGame() {
+    startOverlay.classList.add('hidden');
+    gameoverOverlay.classList.add('hidden');
+    running = true;
+    paused = false;
+    score = 0;
+    streak = 0;
+    bestStreak = 0;
+    honeyCaught = 0;
+    lives = 3;
+    honeys.length = 0;
+    bees.length = 0;
+    particles.length = 0;
+    spawnTimer = 0;
+    beeSpawnTimer = 0;
+    player.x = canvas.width / 2;
+    player.wobble = 0;
+    targetX = player.x;
+    updateHUD();
+    lastTime = performance.now();
+    requestAnimationFrame(loop);
+  }
+
+  function togglePause() {
+    if (!running) return;
+    paused = !paused;
+    pauseOverlay.classList.toggle('hidden', !paused);
+  }
+
+  function endGame() {
+    running = false;
+    document.getElementById('final-score').textContent = score;
+    document.getElementById('best-streak').textContent = bestStreak;
+    document.getElementById('honey-caught').textContent = honeyCaught;
+    gameoverOverlay.classList.remove('hidden');
+  }
+
+  /* ===============================
+     EVENTS
+  ================================ */
+  startBtn.addEventListener('click', startGame);
+  resumeBtn.addEventListener('click', togglePause);
+  restartBtn.addEventListener('click', startGame);
+
+})();
+</script>
+
+</body>
+</html>dist < player.radius + 12) {
+        const points = 10 + streak * 2;
+        score += points;
+        streak++;
+        honeyCaught++;
+        if (streak > bestStreak) bestStreak = streak;
+
+```
+    createParticles(h.x, h.y, '#ffb300', 12);
+    showScorePopup(h.x, h.y, `+${points}`);
+    updateHUD();
+    releaseHoney(h);
+    honeys.splice(i, 1);
+    continue;
+  }
+
+  if (h.y > canvas.height + 30) {
+    if (streak > 0) {
+      streak = Math.max(0, streak - 1);
+      updateHUD();
+    }
+    releaseHoney(h);
+    honeys.splice(i, 1);
+  }
+}
+
+// Update bees
+for (let i = bees.length - 1; i >= 0; i--) {
+  const b = bees[i];
+  b.y += b.vy * dt;
+  b.x += b.vx * dt;
+  b.wobble += dt * 5;
+
+  const dist = Math.hypot(b.x - player.x, b.y - player.y);
+  if (dist < player.radius + 15) {
+    lives--;
+    streak = 0;
+    createParticles(b.x, b.y, '#d62e2e', 16);
+    shakeScreen();
+    
+    if (lives <= 0) {
+      endGame();
+    }
+    
+    updateHUD();
+    releaseBee(b);
+    bees.splice(i, 1);
+    continue;
+  }
+
+  if (b.y > canvas.height + 30 || b.x < -30 || b.x > canvas.width + 30) {
+    releaseBee(b);
+    bees.splice(i, 1);
+  }
+}
+```
+
+}
+
+/* ===============================
+RENDER
+================================ */
+function render() {
+// Clear with gradient
+const gradient = ctx.createRadialGradient(
+canvas.width / 2, canvas.height / 3, 0,
+canvas.width / 2, canvas.height / 3, canvas.height
+);
+gradient.addColorStop(0, ‘#fffde7’);
+gradient.addColorStop(1, ‘#ffe082’);
+ctx.fillStyle = gradient;
+ctx.fillRect(0, 0, canvas.width, canvas.height);
+
+```
+// Player trail
+for (const t of player.trail) {
+  if (t.alpha > 0) {
+    ctx.globalAlpha = t.alpha;
+    ctx.fillStyle = '#f4a944';
+    ctx.beginPath();
+    ctx.arc(t.x, t.y, player.radius * 0.8, 0, Math.PI * 2);
+    ctx.fill();
+  }
+}
+ctx.globalAlpha = 1;
+
+// Player (bear/collector)
+const grd = ctx.createRadialGradient(player.x, player.y - 5, 0, player.x, player.y, player.radius);
+grd.addColorStop(0, '#ffd77a');
+grd.addColorStop(1, '#f4a944');
+ctx.fillStyle = grd;
+ctx.beginPath();
+ctx.arc(player.x, player.y, player.radius, 0, Math.PI * 2);
+ctx.fill();
+
+// Player eyes
+ctx.fillStyle = '#2c1810';
+ctx.beginPath();
+ctx.arc(player.x - 8, player.y - 4, 3, 0, Math.PI * 2);
+ctx.arc(player.x + 8, player.y - 4, 3, 0, Math.PI * 2);
+ctx.fill();
+
+// Honey drops
+for (const h of honeys) {
+  const wobble = Math.sin(h.wobble) * 2;
+  
+  ctx.fillStyle = '#ffb300';
+  ctx.shadowColor = '#ff9800';
+  ctx.shadowBlur = 10;
+  ctx.beginPath();
+  ctx.arc(h.x + wobble, h.y, 10, 0, Math.PI * 2);
+  ctx.fill();
+  
+  ctx.shadowBlur = 0;
+  ctx.fillStyle = '#ffe57f';
+  ctx.beginPath();
+  ctx.arc(h.x + wobble - 3, h.y - 3, 3, 0, Math.PI * 2);
+  ctx.fill();
+}
+
+// Bees
+for (const b of bees) {
+  const wobble = Math.sin(b.wobble) * 3;
+  
+  // Body
+  ctx.fillStyle = '#ffd700';
+  ctx.beginPath();
+  ctx.ellipse(b.x, b.y + wobble, 12, 16, 0, 0, Math.PI * 2);
+  ctx.fill();
+  
+  // Stripes
+  ctx.fillStyle = '#1a1a1a';
+  ctx.fillRect(b.x - 12, b.y + wobble - 6, 24, 3);
+  ctx.fillRect(b.x - 12, b.y + wobble + 3, 24, 3);
+  
+  // Wings
+  ctx.globalAlpha = 0.4;
+  ctx.fillStyle = '#ffffff';
+  ctx.beginPath();
+  ctx.ellipse(b.x - 8, b.y + wobble - 10, 8, 12, -0.3, 0, Math.PI * 2);
+  ctx.ellipse(b.x + 8, b.y + wobble - 10, 8, 12, 0.3, 0, Math.PI * 2);
+  ctx.fill();
+  ctx.globalAlpha = 1;
+}
+
+// Particles
+renderParticles();
+
+// Lives indicator
+ctx.fillStyle = '#d62e2e';
+for (let i = 0; i < lives; i++) {
+  ctx.beginPath();
+  ctx.arc(20 + i * 30, canvas.height - 20, 8, 0, Math.PI * 2);
+  ctx.fill();
+}
+```
+
+}
+
+/* ===============================
+UI / STATE
+================================ */
+function updateHUD() {
+scoreEl.textContent = score;
+streakEl.textContent = streak;
+statusEl.textContent = `Score ${score}, streak ${streak}, lives ${lives}`;
+}
+
+function showScorePopup(x, y, text) {
+const popup = document.createElement(‘div’);
+popup.className = ‘score-popup’;
+popup.textContent = text;
+popup.style.left = x + ‘px’;
+popup.style.top = y + ‘px’;
+gameContainer.appendChild(popup);
+
+```
+setTimeout(() => popup.remove(), 1000);
+```
+
+}
+
+function shakeScreen() {
+gameContainer.style.animation = ‘none’;
+setTimeout(() => {
+gameContainer.style.animation = ‘shake 0.3s ease-in-out, float 3s ease-in-out infinite’;
+}, 10);
+}
+
+function startGame() {
+startOverlay.classList.add(‘hidden’);
+gameoverOverlay.classList.add(‘hidden’);
+running = true;
+paused = false;
+score = 0;
+streak = 0;
+bestStreak = 0;
+honeyCaught = 0;
+lives = 3;
+honeys.length = 0;
+bees.length = 0;
+particles.length = 0;
+spawnTimer = 0;
+beeSpawnTimer = 0;
+player.x = canvas.width / 2;
+targetX = player.x;
+updateHUD();
+lastTime = performance.now();
+requestAnimationFrame(loop);
+}
+
+function togglePause() {
+if (!running) return;
+paused = !paused;
+pauseOverlay.classList.toggle(‘hidden’, !paused);
+}
+
+function endGame() {
+running = false;
+document.getElementById(‘final-score’).textContent = score;
+document.getElementById(‘best-streak’).textContent = bestStreak;
+document.getElementById(‘honey-caught’).textContent = honeyCaught;
+gameoverOverlay.classList.remove(‘hidden’);
+}
+
+/* ===============================
+EVENTS
+================================ */
+startBtn.addEventListener(‘click’, startGame);
+resumeBtn.addEventListener(‘click’, togglePause);
+restartBtn.addEventListener(‘click’, startGame);
+
+})();
+</script>
+
 </body>
 </html>
