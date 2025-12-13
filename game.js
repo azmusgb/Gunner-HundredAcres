@@ -1,22 +1,80 @@
-// game.js — Honey Pot Catch (improved version)
+// game.js — Honey Pot Catch (Ultimate Edition)
 'use strict';
 
 (function () {
   // ---------------------------------------------------------------------------
-  // Improved Utilities
+  // Enhanced Utilities
   // ---------------------------------------------------------------------------
   const clamp = (v, min, max) => Math.max(min, Math.min(max, v));
   const nowMs = () => (typeof performance !== 'undefined' ? performance.now() : Date.now());
+
+  // Object Pooling System
+  class ObjectPool {
+    constructor(createFn, resetFn, initialSize = 50) {
+      this.createFn = createFn;
+      this.resetFn = resetFn;
+      this.pool = [];
+      this.active = [];
+      
+      for (let i = 0; i < initialSize; i++) {
+        this.pool.push(createFn());
+      }
+    }
+    
+    get() {
+      if (this.pool.length > 0) {
+        const obj = this.pool.pop();
+        this.active.push(obj);
+        return obj;
+      } else {
+        const obj = this.createFn();
+        this.active.push(obj);
+        return obj;
+      }
+    }
+    
+    release(obj) {
+      const index = this.active.indexOf(obj);
+      if (index > -1) {
+        this.active.splice(index, 1);
+      }
+      
+      if (this.resetFn) {
+        this.resetFn(obj);
+      }
+      
+      this.pool.push(obj);
+    }
+    
+    releaseAll() {
+      for (const obj of this.active) {
+        if (this.resetFn) {
+          this.resetFn(obj);
+        }
+        this.pool.push(obj);
+      }
+      this.active.length = 0;
+    }
+    
+    getActiveCount() {
+      return this.active.length;
+    }
+    
+    getPoolSize() {
+      return this.pool.length + this.active.length;
+    }
+  }
 
   function isMobileDevice() {
     const ua = navigator.userAgent || navigator.vendor || window.opera;
     const touch = (navigator.maxTouchPoints && navigator.maxTouchPoints > 0) || 
                   'ontouchstart' in window ||
-                  window.DocumentTouch && document instanceof DocumentTouch;
+                  (window.DocumentTouch && document instanceof DocumentTouch);
     return (/Android|webOS|iPhone|iPad|iPod|BlackBerry|IEMobile|Opera Mini/i.test(ua) ||
             (touch && window.innerWidth <= 900));
   }
 
+  // Enhanced FrameRateLimiter with adaptive FPS
   class FrameRateLimiter {
     constructor(targetFPS = 60) {
       this.setTarget(targetFPS);
@@ -24,6 +82,8 @@
       this.frameCount = 0;
       this.lastFpsUpdate = 0;
       this.currentFPS = 0;
+      this.frameTimes = [];
+      this.maxFrameTime = 0;
     }
     
     setTarget(targetFPS) {
@@ -34,10 +94,27 @@
     
     shouldRender(ts) {
       this.frameCount++;
+      
+      // Update FPS counter every second
       if (ts - this.lastFpsUpdate >= 1000) {
         this.currentFPS = Math.round((this.frameCount * 1000) / (ts - this.lastFpsUpdate));
         this.frameCount = 0;
         this.lastFpsUpdate = ts;
+        
+        // Adaptive frame rate adjustment
+        if (this.currentFPS < this.targetFPS * 0.8) {
+          console.log(`[Performance] Low FPS: ${this.currentFPS}, adjusting...`);
+        }
+      }
+      
+      // Track frame times for performance monitoring
+      if (this.lastFrameTime > 0) {
+        const frameTime = ts - this.lastFrameTime;
+        this.frameTimes.push(frameTime);
+        if (this.frameTimes.length > 60) {
+          this.frameTimes.shift();
+        }
+        this.maxFrameTime = Math.max(...this.frameTimes);
       }
       
       if (ts - this.lastFrameTime >= this.frameInterval) {
@@ -51,10 +128,17 @@
       this.lastFrameTime = 0;
       this.frameCount = 0;
       this.lastFpsUpdate = nowMs();
+      this.frameTimes = [];
+      this.maxFrameTime = 0;
     }
     
     getFPS() {
       return this.currentFPS;
+    }
+    
+    getAverageFrameTime() {
+      if (this.frameTimes.length === 0) return 0;
+      return this.frameTimes.reduce((a, b) => a + b, 0) / this.frameTimes.length;
     }
   }
 
@@ -62,13 +146,62 @@
     return current + (target - current) * factor;
   }
 
+  // Accessibility: Screen Reader Announcements
+  function announceToScreenReader(message, priority = 'polite') {
+    let announcementEl = document.getElementById('sr-announcement');
+    
+    if (!announcementEl) {
+      announcementEl = document.createElement('div');
+      announcementEl.id = 'sr-announcement';
+      announcementEl.className = 'sr-only';
+      announcementEl.setAttribute('aria-live', 'polite');
+      announcementEl.setAttribute('aria-atomic', 'true');
+      announcementEl.style.position = 'absolute';
+      announcementEl.style.width = '1px';
+      announcementEl.style.height = '1px';
+      announcementEl.style.padding = '0';
+      announcementEl.style.margin = '-1px';
+      announcementEl.style.overflow = 'hidden';
+      announcementEl.style.clip = 'rect(0, 0, 0, 0)';
+      announcementEl.style.whiteSpace = 'nowrap';
+      announcementEl.style.border = '0';
+      document.body.appendChild(announcementEl);
+    }
+    
+    announcementEl.setAttribute('aria-live', priority);
+    announcementEl.textContent = message;
+    
+    // Reset priority after announcement
+    setTimeout(() => {
+      announcementEl.setAttribute('aria-live', 'polite');
+    }, 100);
+  }
+
+  // Polyfill for roundRect if needed
+  if (!CanvasRenderingContext2D.prototype.roundRect) {
+    CanvasRenderingContext2D.prototype.roundRect = function(x, y, width, height, radius) {
+      if (width < 2 * radius) radius = width / 2;
+      if (height < 2 * radius) radius = height / 2;
+      this.beginPath();
+      this.moveTo(x + radius, y);
+      this.arcTo(x + width, y, x + width, y + height, radius);
+      this.arcTo(x + width, y + height, x, y + height, radius);
+      this.arcTo(x, y + height, x, y, radius);
+      this.arcTo(x, y, x + width, y, radius);
+      this.closePath();
+      return this;
+    };
+  }
+
   // ---------------------------------------------------------------------------
   // Enhanced Honey Catch Game
   // ---------------------------------------------------------------------------
   function EnhancedHoneyCatchGame() {
-    console.log('[HoneyCatch] Enhanced Init…');
+    console.log('[HoneyCatch] Ultimate Edition Initializing…');
 
     const PLAYER_GROUND_OFFSET = 70;
+    const MAX_TRAIL_LENGTH = 10;
+    const SAVE_TIMEOUT = 5 * 60 * 1000; // 5 minutes
 
     // DOM Elements with null checks
     const canvas = document.getElementById('honey-game');
@@ -81,7 +214,7 @@
     const ctx = canvas.getContext('2d', { 
       alpha: true, 
       desynchronized: true,
-      powerPreference: 'low-power' // Better for mobile
+      powerPreference: 'low-power'
     });
     
     if (!ctx) {
@@ -115,6 +248,30 @@
     const modeButtons = Array.from(document.querySelectorAll('[data-catch-mode]'));
     const modeDescription = getElement('catch-mode-description');
     const bestScoreEl = getElement('catch-best');
+    const statsBtn = getElement('stats-button') || (() => {
+      const btn = document.createElement('button');
+      btn.id = 'stats-button';
+      btn.className = 'btn-secondary';
+      btn.innerHTML = '<i class="fas fa-chart-bar"></i> Stats';
+      if (card) card.appendChild(btn);
+      return btn;
+    })();
+    const saveBtn = getElement('save-button') || (() => {
+      const btn = document.createElement('button');
+      btn.id = 'save-button';
+      btn.className = 'btn-secondary';
+      btn.innerHTML = '<i class="fas fa-save"></i> Save';
+      if (card) card.appendChild(btn);
+      return btn;
+    })();
+    const shareBtn = getElement('share-button') || (() => {
+      const btn = document.createElement('button');
+      btn.id = 'share-button';
+      btn.className = 'btn-secondary';
+      btn.innerHTML = '<i class="fas fa-share-alt"></i> Share';
+      if (card) card.appendChild(btn);
+      return btn;
+    })();
 
     // Game Modes
     const MODES = {
@@ -128,6 +285,7 @@
         honeyValue: 10,
         goldenValue: 50,
         hint: 'A relaxed 70 second run with extra hearts.',
+        color: '#4CAF50'
       },
       brisk: {
         label: 'Adventure',
@@ -139,6 +297,7 @@
         honeyValue: 15,
         goldenValue: 75,
         hint: 'Balanced pace. Great for personal bests.',
+        color: '#2196F3'
       },
       rush: {
         label: 'Honey Rush',
@@ -150,6 +309,7 @@
         honeyValue: 20,
         goldenValue: 100,
         hint: 'Short, spicy, and higher scoring.',
+        color: '#FF5722'
       },
     };
 
@@ -164,7 +324,23 @@
     const bgCanvas = document.createElement('canvas');
     const bgCtx = bgCanvas.getContext('2d');
 
-    // Improved resize function
+    // Object Pools
+    const potPool = new ObjectPool(
+      () => ({ x: 0, y: 0, radius: 14, speed: 0, type: 'normal', wobble: 0, baseSpeed: 0 }),
+      (obj) => { obj.x = 0; obj.y = 0; obj.type = 'normal'; }
+    );
+
+    const beePool = new ObjectPool(
+      () => ({ x: 0, y: 0, radius: 12, speed: 0, type: 'normal', wobble: 0, vx: 0, baseSpeed: 0 }),
+      (obj) => { obj.x = 0; obj.y = 0; obj.type = 'normal'; obj.vx = 0; }
+    );
+
+    const powerUpPool = new ObjectPool(
+      () => ({ x: 0, y: 0, radius: 14, speed: 0, type: 'heart', wobble: 0 }),
+      (obj) => { obj.x = 0; obj.y = 0; obj.type = 'heart'; }
+    );
+
+    // Improved resize function with performance monitoring
     function resizeCanvas() {
       if (resizeCanvas.debounceTimer) {
         clearTimeout(resizeCanvas.debounceTimer);
@@ -210,6 +386,13 @@
         if (state.pooh) {
           state.pooh.x = clamp(state.pooh.x || cssW / 2, state.pooh.width / 2, cssW - state.pooh.width / 2);
           state.pooh.y = cssH - PLAYER_GROUND_OFFSET;
+          state.pooh.targetX = state.pooh.x;
+        }
+        
+        // Update joystick position
+        if (joystick) {
+          joystick.style.bottom = '20px';
+          joystick.style.left = '20px';
         }
         
         console.log(`[HoneyCatch] Resized to ${cssW}x${cssH} (DPR: ${DPR})`);
@@ -223,11 +406,12 @@
       // Clear
       bgCtx.clearRect(0, 0, W, H);
       
-      // Sky gradient
+      // Sky gradient based on mode
+      const modeColor = state.modeCfg.color || '#87CEEB';
       const skyGradient = bgCtx.createLinearGradient(0, 0, 0, H);
-      skyGradient.addColorStop(0, '#87CEEB');
-      skyGradient.addColorStop(0.6, '#B3E5FC');
-      skyGradient.addColorStop(1, '#E3F2FD');
+      skyGradient.addColorStop(0, lightenColor(modeColor, 60));
+      skyGradient.addColorStop(0.6, lightenColor(modeColor, 70));
+      skyGradient.addColorStop(1, lightenColor(modeColor, 80));
       bgCtx.fillStyle = skyGradient;
       bgCtx.fillRect(0, 0, W, H);
       
@@ -271,6 +455,21 @@
       });
     }
 
+    function lightenColor(color, percent) {
+      const num = parseInt(color.replace('#', ''), 16);
+      const amt = Math.round(2.55 * percent);
+      const R = (num >> 16) + amt;
+      const G = (num >> 8 & 0x00FF) + amt;
+      const B = (num & 0x0000FF) + amt;
+      
+      return '#' + (
+        0x1000000 +
+        (R < 255 ? R < 1 ? 0 : R : 255) * 0x10000 +
+        (G < 255 ? G < 1 ? 0 : G : 255) * 0x100 +
+        (B < 255 ? B < 1 ? 0 : B : 255)
+      ).toString(16).slice(1);
+    }
+
     // -------------------------------------------------------------------------
     // Game State Object
     // -------------------------------------------------------------------------
@@ -288,6 +487,7 @@
       multiplier: 1,
       streak: 0,
       lastCatchTime: 0,
+      totalBonuses: 0,
       
       // Player object
       pooh: {
@@ -296,7 +496,8 @@
         width: 58,
         height: 58,
         targetX: 0,
-        speed: 12
+        speed: 12,
+        trail: []
       },
       
       // Power-ups
@@ -308,7 +509,7 @@
       slowMoUntil: 0,
       honeyRushUntil: 0,
       
-      // Game objects
+      // Game objects (using pools)
       pots: [],
       bees: [],
       powerUps: [],
@@ -320,13 +521,27 @@
       difficulty: 0,
       bestScore: 0,
       
+      // Statistics
+      stats: {
+        potsCaught: 0,
+        goldenPotsCaught: 0,
+        beesAvoided: 0,
+        powerUpsCollected: 0,
+        gamesPlayed: 0,
+        totalScore: 0,
+        totalTimePlayed: 0,
+        highestCombo: 0,
+        highestStreak: 0
+      },
+      
       // Timing
       lastUpdateTime: nowMs(),
       frameId: null,
       timerId: null,
       countdownId: null,
       overlayTimer: null,
-
+      gameStartTime: 0,
+      
       // Controls
       joyActive: false,
       joyPointerId: null,
@@ -336,38 +551,60 @@
       joyDy: 0,
       keys: {},
       isPointerDown: false,
-      lastInputWasTouch: false
+      lastInputWasTouch: false,
+      
+      // Gamepad
+      gamepadIndex: null,
+      
+      // Performance
+      performanceStats: {
+        objectCount: 0,
+        frameRate: 0,
+        averageFrameTime: 0
+      }
     };
 
-    // Frame limiter
+    // Frame limiter with adaptive FPS
     const frameLimiter = new FrameRateLimiter(isMobileDevice() ? 30 : 60);
 
     // -------------------------------------------------------------------------
-    // Particles System
+    // Particles System with pooling
     // -------------------------------------------------------------------------
     class ParticleSystem {
       constructor(maxParticles = 200) {
         this.particles = [];
         this.maxParticles = maxParticles;
+        this.particlePool = new ObjectPool(
+          () => ({
+            x: 0, y: 0, vx: 0, vy: 0, life: 1, decay: 0.03,
+            size: 4, color: '#FFFFFF', gravity: 0.1
+          }),
+          (p) => {
+            p.x = 0; p.y = 0; p.vx = 0; p.vy = 0; p.life = 1;
+          }
+        );
       }
       
       burst(x, y, count, color, options = {}) {
         const { size = 4, speed = 3, gravity = 0.1, decay = 0.03 } = options;
         
         for (let i = 0; i < count && this.particles.length < this.maxParticles; i++) {
+          const particle = this.particlePool.get();
+          
           const angle = Math.random() * Math.PI * 2;
           const velocity = speed * (0.5 + Math.random() * 0.5);
           
-          this.particles.push({
-            x, y,
-            vx: Math.cos(angle) * velocity,
-            vy: Math.sin(angle) * velocity,
-            life: 1,
-            decay: decay * (0.8 + Math.random() * 0.4),
-            size: size * (0.5 + Math.random()),
-            color,
-            gravity
-          });
+          particle.x = x;
+          particle.y = y;
+          particle.vx = Math.cos(angle) * velocity;
+          particle.vy = Math.sin(angle) * velocity;
+          particle.life = 1;
+          particle.decay = decay * (0.8 + Math.random() * 0.4);
+          particle.size = size * (0.5 + Math.random());
+          particle.color = color;
+          particle.gravity = gravity;
+          
+          this.particles.push(particle);
         }
       }
       
@@ -386,6 +623,7 @@
           p.life -= p.decay * dt;
           
           if (p.life <= 0 || p.y > H + 50 || p.x < -50 || p.x > W + 50) {
+            this.particlePool.release(p);
             this.particles.splice(i, 1);
           }
         }
@@ -404,7 +642,14 @@
       }
       
       clear() {
+        for (const p of this.particles) {
+          this.particlePool.release(p);
+        }
         this.particles.length = 0;
+      }
+      
+      getCount() {
+        return this.particles.length;
       }
     }
 
@@ -418,30 +663,148 @@
         color: '#FF6B6B', 
         icon: '❤️', 
         duration: 0,
-        value: 1 
+        value: 1,
+        name: 'Extra Heart'
       },
       shield: { 
         color: '#4285F4', 
         icon: '🛡️', 
-        duration: 5000 
+        duration: 5000,
+        name: 'Shield'
       },
       clock: { 
         color: '#4CAF50', 
         icon: '⏱️', 
         duration: 0,
-        value: 10 
+        value: 10,
+        name: 'Bonus Time'
       },
       star: { 
         color: '#FFD700', 
         icon: '⭐', 
-        duration: 8000 
+        duration: 8000,
+        name: 'Double Points'
       },
       lightning: { 
         color: '#9C27B0', 
         icon: '⚡', 
-        duration: 6000 
+        duration: 6000,
+        name: 'Slow Motion'
       }
     };
+
+    // -------------------------------------------------------------------------
+    // Statistics Management
+    // -------------------------------------------------------------------------
+    function loadStatistics() {
+      try {
+        const saved = localStorage.getItem('honeyCatch_stats');
+        if (saved) {
+          const statsData = JSON.parse(saved);
+          Object.assign(state.stats, statsData);
+        }
+      } catch (e) {
+        console.warn('[HoneyCatch] Could not load statistics:', e);
+      }
+    }
+
+    function saveStatistics() {
+      try {
+        localStorage.setItem('honeyCatch_stats', JSON.stringify(state.stats));
+      } catch (e) {
+        console.warn('[HoneyCatch] Could not save statistics:', e);
+      }
+    }
+
+    function updateStat(type, value = 1) {
+      if (state.stats[type] !== undefined) {
+        state.stats[type] += value;
+        
+        // Update high scores
+        if (type === 'highestCombo' && value > state.stats.highestCombo) {
+          state.stats.highestCombo = value;
+        }
+        if (type === 'highestStreak' && value > state.stats.highestStreak) {
+          state.stats.highestStreak = value;
+        }
+        
+        saveStatistics();
+      }
+    }
+
+    // -------------------------------------------------------------------------
+    // Save/Load Game State
+    // -------------------------------------------------------------------------
+    function saveGameState() {
+      if (!state.running || state.gameOver) return false;
+      
+      const saveData = {
+        score: state.score,
+        timeLeft: state.timeLeft,
+        lives: state.lives,
+        mode: state.mode,
+        difficulty: state.difficulty,
+        combos: state.combos,
+        streak: state.streak,
+        multiplier: state.multiplier,
+        timestamp: Date.now(),
+        version: '1.0'
+      };
+      
+      try {
+        localStorage.setItem('honeyCatch_save', JSON.stringify(saveData));
+        setStatus('Game saved', 'success');
+        announceToScreenReader('Game saved');
+        return true;
+      } catch (e) {
+        console.warn('[HoneyCatch] Could not save game:', e);
+        setStatus('Failed to save game', 'error');
+        return false;
+      }
+    }
+
+    function loadGameState() {
+      try {
+        const saved = localStorage.getItem('honeyCatch_save');
+        if (!saved) return false;
+        
+        const data = JSON.parse(saved);
+        
+        // Check if save is not too old
+        if (Date.now() - data.timestamp > SAVE_TIMEOUT) {
+          localStorage.removeItem('honeyCatch_save');
+          setStatus('Saved game expired', 'warning');
+          return false;
+        }
+        
+        // Check version compatibility
+        if (data.version !== '1.0') {
+          setStatus('Save file incompatible', 'warning');
+          return false;
+        }
+        
+        if (confirm('Load saved game? Current progress will be lost.')) {
+          state.score = data.score;
+          state.timeLeft = data.timeLeft;
+          state.lives = data.lives;
+          state.difficulty = data.difficulty || 0;
+          state.combos = data.combos || 0;
+          state.streak = data.streak || 0;
+          state.multiplier = data.multiplier || 1;
+          setGameMode(data.mode);
+          
+          updateHUD();
+          setStatus('Game loaded', 'success');
+          announceToScreenReader('Game loaded');
+          
+          return true;
+        }
+      } catch (e) {
+        console.warn('[HoneyCatch] Could not load game:', e);
+        setStatus('Failed to load game', 'error');
+      }
+      return false;
+    }
 
     // -------------------------------------------------------------------------
     // HUD and UI Functions
@@ -459,6 +822,7 @@
       if (pauseBtn) {
         pauseBtn.setAttribute('aria-pressed', state.paused ? 'true' : 'false');
         pauseBtn.querySelector('i').className = state.paused ? 'fa-solid fa-play' : 'fa-solid fa-pause';
+        pauseBtn.setAttribute('aria-label', state.paused ? 'Resume game' : 'Pause game');
       }
 
       // Update progress bars
@@ -466,13 +830,21 @@
       if (timeBar) {
         timeBar.style.width = `${timePercent}%`;
         timeBar.style.setProperty('--w', `${timePercent}%`);
+        timeBar.style.backgroundColor = state.modeCfg.color;
       }
 
       const lifePercent = clamp((state.lives / state.modeCfg.lives) * 100, 0, 100);
       if (lifeBar) {
         lifeBar.style.width = `${lifePercent}%`;
         lifeBar.style.setProperty('--w', `${lifePercent}%`);
+        lifeBar.style.backgroundColor = lifePercent < 30 ? '#FF6B6B' : '#4CAF50';
       }
+
+      // Update performance stats
+      state.performanceStats.objectCount = 
+        state.pots.length + state.bees.length + state.powerUps.length + particles.getCount();
+      state.performanceStats.frameRate = frameLimiter.getFPS();
+      state.performanceStats.averageFrameTime = frameLimiter.getAverageFrameTime();
     }
 
     function setStatus(message, type = 'info') {
@@ -490,6 +862,11 @@
 
       if (typeClass) {
         statusEl.classList.add(typeClass);
+      }
+
+      // Announce to screen reader for important messages
+      if (type === 'error' || type === 'success') {
+        announceToScreenReader(message);
       }
 
       // Auto-clear after 3 seconds for non-persistent messages
@@ -510,6 +887,9 @@
       overlayLine.textContent = title;
       overlayHint.textContent = subtitle;
       overlay.classList.add('active');
+      
+      // Announce to screen reader
+      announceToScreenReader(`${title}. ${subtitle}`, 'assertive');
       
       if (state.overlayTimer) {
         clearTimeout(state.overlayTimer);
@@ -532,6 +912,113 @@
       }
     }
 
+    function showStatisticsModal() {
+      const modal = document.createElement('div');
+      modal.className = 'stats-modal';
+      modal.style.position = 'fixed';
+      modal.style.top = '0';
+      modal.style.left = '0';
+      modal.style.width = '100%';
+      modal.style.height = '100%';
+      modal.style.backgroundColor = 'rgba(0, 0, 0, 0.8)';
+      modal.style.display = 'flex';
+      modal.style.justifyContent = 'center';
+      modal.style.alignItems = 'center';
+      modal.style.zIndex = '1000';
+      
+      modal.innerHTML = `
+        <div class="stats-content" style="
+          background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+          padding: 2rem;
+          border-radius: 15px;
+          max-width: 500px;
+          width: 90%;
+          max-height: 80vh;
+          overflow-y: auto;
+          color: white;
+          box-shadow: 0 10px 30px rgba(0, 0, 0, 0.3);
+        ">
+          <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 1.5rem;">
+            <h3 style="margin: 0; font-size: 1.5rem; color: white;">Game Statistics</h3>
+            <button id="close-stats" style="
+              background: none;
+              border: none;
+              color: white;
+              font-size: 1.5rem;
+              cursor: pointer;
+              padding: 0.5rem;
+            ">×</button>
+          </div>
+          <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(200px, 1fr)); gap: 1rem;">
+            <div class="stat-card" style="background: rgba(255, 255, 255, 0.1); padding: 1rem; border-radius: 10px;">
+              <div style="font-size: 0.9rem; opacity: 0.9;">Games Played</div>
+              <div style="font-size: 2rem; font-weight: bold;">${state.stats.gamesPlayed || 0}</div>
+            </div>
+            <div class="stat-card" style="background: rgba(255, 255, 255, 0.1); padding: 1rem; border-radius: 10px;">
+              <div style="font-size: 0.9rem; opacity: 0.9;">Total Score</div>
+              <div style="font-size: 2rem; font-weight: bold;">${state.stats.totalScore || 0}</div>
+            </div>
+            <div class="stat-card" style="background: rgba(255, 255, 255, 0.1); padding: 1rem; border-radius: 10px;">
+              <div style="font-size: 0.9rem; opacity: 0.9;">Honey Pots</div>
+              <div style="font-size: 2rem; font-weight: bold;">${state.stats.potsCaught || 0}</div>
+            </div>
+            <div class="stat-card" style="background: rgba(255, 255, 255, 0.1); padding: 1rem; border-radius: 10px;">
+              <div style="font-size: 0.9rem; opacity: 0.9;">Golden Pots</div>
+              <div style="font-size: 2rem; font-weight: bold;">${state.stats.goldenPotsCaught || 0}</div>
+            </div>
+            <div class="stat-card" style="background: rgba(255, 255, 255, 0.1); padding: 1rem; border-radius: 10px;">
+              <div style="font-size: 0.9rem; opacity: 0.9;">Power-ups</div>
+              <div style="font-size: 2rem; font-weight: bold;">${state.stats.powerUpsCollected || 0}</div>
+            </div>
+            <div class="stat-card" style="background: rgba(255, 255, 255, 0.1); padding: 1rem; border-radius: 10px;">
+              <div style="font-size: 0.9rem; opacity: 0.9;">Highest Combo</div>
+              <div style="font-size: 2rem; font-weight: bold;">${state.stats.highestCombo || 0}</div>
+            </div>
+            <div class="stat-card" style="background: rgba(255, 255, 255, 0.1); padding: 1rem; border-radius: 10px;">
+              <div style="font-size: 0.9rem; opacity: 0.9;">Highest Streak</div>
+              <div style="font-size: 2rem; font-weight: bold;">${state.stats.highestStreak || 0}</div>
+            </div>
+            <div class="stat-card" style="background: rgba(255, 255, 255, 0.1); padding: 1rem; border-radius: 10px;">
+              <div style="font-size: 0.9rem; opacity: 0.9;">Bees Avoided</div>
+              <div style="font-size: 2rem; font-weight: bold;">${state.stats.beesAvoided || 0}</div>
+            </div>
+          </div>
+          <div style="margin-top: 1.5rem; text-align: center;">
+            <div style="font-size: 0.9rem; opacity: 0.8;">Performance</div>
+            <div style="display: flex; justify-content: space-around; margin-top: 0.5rem;">
+              <span>Objects: ${state.performanceStats.objectCount}</span>
+              <span>FPS: ${state.performanceStats.frameRate}</span>
+              <span>Frame: ${Math.round(state.performanceStats.averageFrameTime)}ms</span>
+            </div>
+          </div>
+        </div>
+      `;
+      
+      document.body.appendChild(modal);
+      
+      // Close button functionality
+      const closeBtn = modal.querySelector('#close-stats');
+      closeBtn.addEventListener('click', () => {
+        document.body.removeChild(modal);
+      });
+      
+      // Close on outside click
+      modal.addEventListener('click', (e) => {
+        if (e.target === modal) {
+          document.body.removeChild(modal);
+        }
+      });
+      
+      // Close on Escape key
+      const handleEscape = (e) => {
+        if (e.key === 'Escape') {
+          document.body.removeChild(modal);
+          document.removeEventListener('keydown', handleEscape);
+        }
+      };
+      document.addEventListener('keydown', handleEscape);
+    }
+
     // -------------------------------------------------------------------------
     // Game Mode Management
     // -------------------------------------------------------------------------
@@ -546,11 +1033,15 @@
       // Update UI
       modeButtons.forEach(btn => {
         btn.classList.toggle('is-active', btn.dataset.catchMode === modeKey);
+        btn.setAttribute('aria-pressed', btn.dataset.catchMode === modeKey);
       });
       
       if (modeDescription) {
         modeDescription.textContent = state.modeCfg.hint;
       }
+      
+      // Update background
+      drawBackground();
       
       // Reset game state if not running
       if (!state.running) {
@@ -593,51 +1084,91 @@
       }
     }
 
+    function shareScore() {
+      const text = `I scored ${state.score} points in Honey Pot Catch (${state.modeCfg.label} mode)! Can you beat me?`;
+      const url = window.location.href;
+      
+      if (navigator.share) {
+        navigator.share({
+          title: 'Honey Pot Catch',
+          text: text,
+          url: url
+        }).then(() => {
+          setStatus('Score shared!', 'success');
+        }).catch((err) => {
+          console.log('Sharing cancelled:', err);
+        });
+      } else if (navigator.clipboard) {
+        navigator.clipboard.writeText(`${text} ${url}`)
+          .then(() => {
+            setStatus('Score copied to clipboard!', 'success');
+            announceToScreenReader('Score copied to clipboard');
+          })
+          .catch(() => {
+            setStatus('Failed to copy score', 'error');
+          });
+      } else {
+        // Fallback: open mailto link
+        const mailtoLink = `mailto:?subject=My Honey Pot Catch Score&body=${encodeURIComponent(text + ' ' + url)}`;
+        window.open(mailtoLink, '_blank');
+        setStatus('Share dialog opened', 'info');
+      }
+    }
+
     // -------------------------------------------------------------------------
-    // Spawn Functions
+    // Spawn Functions with Object Pooling
     // -------------------------------------------------------------------------
     function spawnHoneyPot() {
       const rushActive = Date.now() < state.honeyRushUntil;
       const goldenChance = 0.15 + (state.difficulty * 0.02) + (rushActive ? 0.3 : 0);
       const isGolden = Math.random() < goldenChance;
       
-      state.pots.push({
-        x: 20 + Math.random() * (W - 40),
-        y: -20,
-        radius: 14,
-        speed: (2 + Math.random() * 1.5) * state.modeCfg.speedScale,
-        type: isGolden ? 'golden' : 'normal',
-        wobble: Math.random() * Math.PI * 2
-      });
+      const pot = potPool.get();
+      pot.x = 20 + Math.random() * (W - 40);
+      pot.y = -20;
+      pot.radius = 14;
+      pot.baseSpeed = (2 + Math.random() * 1.5) * state.modeCfg.speedScale;
+      pot.speed = pot.baseSpeed;
+      pot.type = isGolden ? 'golden' : 'normal';
+      pot.wobble = Math.random() * Math.PI * 2;
+      
+      state.pots.push(pot);
+      return pot;
     }
 
     function spawnBee() {
       const angryChance = state.difficulty >= 2 ? 0.2 : 0.1;
       const isAngry = Math.random() < angryChance;
       
-      state.bees.push({
-        x: 20 + Math.random() * (W - 40),
-        y: -20,
-        radius: 12,
-        speed: (2.5 + Math.random() * 1.5) * state.modeCfg.speedScale,
-        type: isAngry ? 'angry' : 'normal',
-        wobble: Math.random() * Math.PI * 2,
-        vx: 0
-      });
+      const bee = beePool.get();
+      bee.x = 20 + Math.random() * (W - 40);
+      bee.y = -20;
+      bee.radius = 12;
+      bee.baseSpeed = (2.5 + Math.random() * 1.5) * state.modeCfg.speedScale;
+      bee.speed = bee.baseSpeed;
+      bee.type = isAngry ? 'angry' : 'normal';
+      bee.wobble = Math.random() * Math.PI * 2;
+      bee.vx = 0;
+      
+      state.bees.push(bee);
+      updateStat('beesAvoided', 1);
+      return bee;
     }
 
     function spawnPowerUp() {
       const keys = Object.keys(POWER_UPS);
       const type = keys[Math.floor(Math.random() * keys.length)];
       
-      state.powerUps.push({
-        x: 24 + Math.random() * (W - 48),
-        y: -20,
-        radius: 14,
-        speed: (1.8 + Math.random() * 1) * state.modeCfg.speedScale,
-        type: type,
-        wobble: Math.random() * Math.PI * 2
-      });
+      const powerUp = powerUpPool.get();
+      powerUp.x = 24 + Math.random() * (W - 48);
+      powerUp.y = -20;
+      powerUp.radius = 14;
+      powerUp.speed = (1.8 + Math.random() * 1) * state.modeCfg.speedScale;
+      powerUp.type = type;
+      powerUp.wobble = Math.random() * Math.PI * 2;
+      
+      state.powerUps.push(powerUp);
+      return powerUp;
     }
 
     // -------------------------------------------------------------------------
@@ -675,33 +1206,40 @@
       
       if (!config) return;
       
+      updateStat('powerUpsCollected', 1);
+      
       switch (type) {
         case 'heart':
           state.lives = Math.min(state.modeCfg.lives + 2, state.lives + 1);
           showOverlay('Extra Heart!', 'Pooh feels refreshed', 1000);
+          announceToScreenReader('Extra heart collected');
           break;
           
         case 'shield':
           state.invincible = true;
           state.invincibleUntil = now + config.duration;
           showOverlay('Shield Activated!', 'Bees can\'t hurt you', 1000);
+          announceToScreenReader('Shield activated');
           break;
           
         case 'clock':
           state.timeLeft = Math.min(state.modeCfg.time, state.timeLeft + config.value);
           showOverlay('Bonus Time!', `+${config.value} seconds`, 1000);
+          announceToScreenReader(`Bonus time added: ${config.value} seconds`);
           break;
           
         case 'star':
           state.doublePoints = true;
           state.doublePointsUntil = now + config.duration;
           showOverlay('Double Points!', 'All honey is extra sweet', 1000);
+          announceToScreenReader('Double points activated');
           break;
           
         case 'lightning':
           state.slowMo = true;
           state.slowMoUntil = now + config.duration;
           showOverlay('Slow Motion!', 'Everything slows down', 1000);
+          announceToScreenReader('Slow motion activated');
           break;
       }
       
@@ -718,11 +1256,43 @@
     // -------------------------------------------------------------------------
     // Drawing Functions
     // -------------------------------------------------------------------------
+    function drawPoohTrail() {
+      if (!state.running || state.paused) return;
+      
+      // Add current position to trail
+      state.pooh.trail.push({
+        x: state.pooh.x,
+        y: state.pooh.y - state.pooh.height * 0.4,
+        alpha: 1,
+        size: state.pooh.width * 0.3
+      });
+      
+      // Keep trail length manageable
+      if (state.pooh.trail.length > MAX_TRAIL_LENGTH) {
+        state.pooh.trail.shift();
+      }
+      
+      // Draw trail with fading effect
+      ctx.save();
+      state.pooh.trail.forEach((pos, i) => {
+        const alpha = (i / state.pooh.trail.length) * 0.3;
+        ctx.globalAlpha = alpha;
+        ctx.fillStyle = '#FF9800';
+        ctx.beginPath();
+        ctx.arc(pos.x, pos.y, pos.size, 0, Math.PI * 2);
+        ctx.fill();
+      });
+      ctx.restore();
+    }
+
     function drawPooh() {
       const x = state.pooh.x;
       const y = state.pooh.y;
       const w = state.pooh.width;
       const h = state.pooh.height;
+      
+      // Draw trail first (behind Pooh)
+      drawPoohTrail();
       
       // Shadow
       ctx.save();
@@ -743,7 +1313,7 @@
       ctx.fill();
       
       // Shirt
-      ctx.fillStyle = '#D62E2E';
+      ctx.fillStyle = state.modeCfg.color || '#D62E2E';
       ctx.fillRect(x - w/2, y - h * 0.7, w, h * 0.25);
       
       // Belly
@@ -922,13 +1492,19 @@
       const now = Date.now();
       if (state.invincible && now > state.invincibleUntil) {
         state.invincible = false;
+        announceToScreenReader('Shield expired');
       }
       if (state.doublePoints && now > state.doublePointsUntil) {
         state.doublePoints = false;
+        announceToScreenReader('Double points expired');
       }
       if (state.slowMo && now > state.slowMoUntil) {
         state.slowMo = false;
+        announceToScreenReader('Slow motion expired');
       }
+      
+      // Update difficulty
+      updateDifficulty();
       
       // Spawn objects
       updateSpawning(scaledDt);
@@ -948,25 +1524,44 @@
       }
     }
 
+    function updateDifficulty() {
+      const elapsed = state.modeCfg.time - state.timeLeft;
+      
+      // Progressive difficulty scaling
+      if (elapsed > 45 && state.difficulty < 3) {
+        state.difficulty = 3;
+        showOverlay('Extreme!', 'Maximum speed!', 1000);
+        announceToScreenReader('Maximum difficulty!');
+      } else if (elapsed > 30 && state.difficulty < 2) {
+        state.difficulty = 2;
+        showOverlay('Hard!', 'Bees are faster!', 1000);
+        announceToScreenReader('Hard difficulty!');
+      } else if (elapsed > 15 && state.difficulty < 1) {
+        state.difficulty = 1;
+        showOverlay('Moderate', 'Game is speeding up!', 1000);
+        announceToScreenReader('Moderate difficulty');
+      }
+    }
+
     function updateSpawning(dt) {
       const rushActive = Date.now() < state.honeyRushUntil;
-      const spawnRate = state.modeCfg.spawnScale;
+      const spawnRate = state.modeCfg.spawnScale * (1 + state.difficulty * 0.2);
 
       // Honey pots
-      const honeyChance = 0.02 * spawnRate * dt; // ~1.2/sec at 60fps
-      if (state.pots.length < 10 && Math.random() < honeyChance) {
+      const honeyChance = 0.02 * spawnRate * dt;
+      if (state.pots.length < 12 && Math.random() < honeyChance) {
         spawnHoneyPot();
       }
 
       // Bees (less during honey rush)
       const beeChance = (rushActive ? 0.008 : 0.012) * spawnRate * dt;
-      if (state.bees.length < 6 && Math.random() < beeChance) {
+      if (state.bees.length < 8 && Math.random() < beeChance) {
         spawnBee();
       }
 
       // Power-ups
       const powerChance = 0.004 * spawnRate * dt;
-      if (state.powerUps.length < 3 && Math.random() < powerChance) {
+      if (state.powerUps.length < 4 && Math.random() < powerChance) {
         spawnPowerUp();
       }
     }
@@ -980,6 +1575,11 @@
         pot.y += pot.speed * dt;
         pot.wobble += 0.05 * dt;
         
+        // Apply difficulty speed increase
+        if (state.difficulty > 0) {
+          pot.speed = pot.baseSpeed * (1 + state.difficulty * 0.2);
+        }
+        
         // Check collision with Pooh
         if (checkPoohCollision(pot.x, pot.y, pot.radius)) {
           handlePotCollected(pot, i);
@@ -988,6 +1588,7 @@
         
         // Remove if off screen
         if (pot.y > H + 30) {
+          potPool.release(pot);
           state.pots.splice(i, 1);
           // Break streak if pot is missed
           if (state.streak > 0) {
@@ -1001,6 +1602,11 @@
         const bee = state.bees[i];
         bee.y += bee.speed * dt;
         bee.wobble += 0.03 * dt;
+        
+        // Apply difficulty speed increase
+        if (state.difficulty > 0) {
+          bee.speed = bee.baseSpeed * (1 + state.difficulty * 0.3);
+        }
         
         // Angry bees chase Pooh
         if (bee.type === 'angry') {
@@ -1019,6 +1625,7 @@
         
         // Remove if off screen
         if (bee.y > H + 30) {
+          beePool.release(bee);
           state.bees.splice(i, 1);
         }
       }
@@ -1032,12 +1639,14 @@
         // Check collision with Pooh
         if (checkPoohCollision(pu.x, pu.y, pu.radius)) {
           applyPowerUp(pu.type);
+          powerUpPool.release(pu);
           state.powerUps.splice(i, 1);
           continue;
         }
         
         // Remove if off screen
         if (pu.y > H + 30) {
+          powerUpPool.release(pu);
           state.powerUps.splice(i, 1);
         }
       }
@@ -1054,12 +1663,24 @@
       // Update score
       state.score += points;
       
+      // Update statistics
+      updateStat('potsCaught', 1);
+      updateStat('totalScore', points);
+      if (isGolden) {
+        updateStat('goldenPotsCaught', 1);
+      }
+      
       // Update combo
       const now = Date.now();
       if (now - state.lastCatchTime < 2000) {
         state.combos++;
         state.streak++;
         state.multiplier = clamp(1 + state.combos * 0.15, 1, 5);
+        
+        // Update highest combo
+        if (state.combos > state.stats.highestCombo) {
+          updateStat('highestCombo', state.combos);
+        }
       } else {
         state.combos = 1;
         state.streak = 1;
@@ -1071,6 +1692,12 @@
       if (state.streak >= 8 && Date.now() > state.honeyRushUntil) {
         state.honeyRushUntil = Date.now() + 6000;
         showOverlay('Honey Rush!', 'Golden pots everywhere!', 1500);
+        announceToScreenReader('Honey rush activated!');
+      }
+      
+      // Update highest streak
+      if (state.streak > state.stats.highestStreak) {
+        updateStat('highestStreak', state.streak);
       }
       
       // Visual effects
@@ -1078,7 +1705,8 @@
                      isGolden ? '#FFD700' : '#FFD54F',
                      { size: isGolden ? 5 : 3, speed: 4 });
       
-      // Remove pot
+      // Release pot back to pool
+      potPool.release(pot);
       state.pots.splice(index, 1);
       
       // Update HUD
@@ -1088,6 +1716,9 @@
       if (window.audioManager && typeof window.audioManager.playGameSound === 'function') {
         window.audioManager.playGameSound(isGolden ? 'golden' : 'collect');
       }
+      
+      // Announce to screen reader
+      announceToScreenReader(`${isGolden ? 'Golden pot' : 'Honey pot'} collected! ${points} points`);
     }
 
     function handleBeeCollision(bee, index) {
@@ -1102,7 +1733,8 @@
       // Visual effects
       particles.burst(bee.x, bee.y, 15, '#FF6B6B', { size: 4, speed: 3 });
       
-      // Remove bee
+      // Release bee back to pool
+      beePool.release(bee);
       state.bees.splice(index, 1);
       
       // Update HUD
@@ -1112,7 +1744,9 @@
       if (state.lives <= 0) {
         endGame(false);
       } else {
-        showOverlay('Ouch!', `Bee stung Pooh! ${state.lives} ${state.lives === 1 ? 'life' : 'lives'} left`, 1200);
+        const livesText = `${state.lives} ${state.lives === 1 ? 'life' : 'lives'} left`;
+        showOverlay('Ouch!', `Bee stung Pooh! ${livesText}`, 1200);
+        announceToScreenReader(`Bee stung! ${livesText}`);
         
         // Shake effect
         if (card) {
@@ -1195,6 +1829,31 @@
         });
         ctx.restore();
       }
+      
+      // Draw performance overlay (debug mode)
+      if (localStorage.getItem('debugMode') === 'true') {
+        ctx.save();
+        ctx.font = '12px monospace';
+        ctx.textAlign = 'right';
+        ctx.fillStyle = '#FFF';
+        ctx.shadowColor = '#000';
+        ctx.shadowBlur = 2;
+        
+        const stats = [
+          `FPS: ${frameLimiter.getFPS()}`,
+          `Objects: ${state.performanceStats.objectCount}`,
+          `Pots: ${potPool.getActiveCount()}/${potPool.getPoolSize()}`,
+          `Bees: ${beePool.getActiveCount()}/${beePool.getPoolSize()}`,
+          `Power-ups: ${powerUpPool.getActiveCount()}/${powerUpPool.getPoolSize()}`,
+          `Particles: ${particles.getCount()}`
+        ];
+        
+        stats.forEach((stat, i) => {
+          ctx.fillText(stat, W - 10, 20 + i * 16);
+        });
+        
+        ctx.restore();
+      }
     }
 
     // -------------------------------------------------------------------------
@@ -1203,19 +1862,41 @@
     function startGame() {
       if (state.running && !state.gameOver) return;
       
-      // Reset game state
+      // Try to load saved game first
+      if (!state.running && loadGameState()) {
+        // Game was loaded, just resume
+        state.running = true;
+        state.gameOver = false;
+        state.paused = false;
+        
+        showOverlay('Game Loaded!', 'Continue your adventure!', 1000);
+        setStatus('Game loaded and resumed', 'success');
+        
+        // Start game timer
+        startGameTimer();
+        
+        // Start game loop if not already running
+        if (!state.frameId) {
+          gameLoop();
+        }
+        return;
+      }
+      
+      // Otherwise start new game
       resetGame();
       
       // Start countdown
       let countdown = 3;
       showOverlay(`Starting in ${countdown}...`, 'Get ready!', 0);
       setStatus('Get ready...', 'warning');
+      announceToScreenReader(`Starting in ${countdown}`);
       
       const countdownInterval = setInterval(() => {
         countdown--;
         
         if (countdown > 0) {
           showOverlay(`Starting in ${countdown}...`, 'Get ready!', 0);
+          announceToScreenReader(`${countdown}`);
         } else {
           clearInterval(countdownInterval);
           
@@ -1223,9 +1904,14 @@
           state.running = true;
           state.gameOver = false;
           state.paused = false;
+          state.gameStartTime = Date.now();
+          
+          // Update statistics
+          updateStat('gamesPlayed', 1);
           
           showOverlay('Go!', 'Catch honey, avoid bees!', 800);
           setStatus('Game in progress', 'success');
+          announceToScreenReader('Game started!');
           
           // Start game timer
           startGameTimer();
@@ -1244,10 +1930,16 @@
     }
 
     function resetGame() {
-      // Clear all game objects
+      // Clear all game objects using pools
+      state.pots.forEach(pot => potPool.release(pot));
       state.pots.length = 0;
+      
+      state.bees.forEach(bee => beePool.release(bee));
       state.bees.length = 0;
+      
+      state.powerUps.forEach(pu => powerUpPool.release(pu));
       state.powerUps.length = 0;
+      
       particles.clear();
       
       // Reset game state
@@ -1259,6 +1951,10 @@
       state.streak = 0;
       state.lastCatchTime = 0;
       state.difficulty = 0;
+      state.totalBonuses = 0;
+      
+      // Reset Pooh trail
+      state.pooh.trail = [];
       
       // Reset power-ups
       state.invincible = false;
@@ -1296,11 +1992,15 @@
         
         state.timeLeft--;
         
-        // Increase difficulty every 15 seconds
-        const elapsed = state.modeCfg.time - state.timeLeft;
-        state.difficulty = Math.floor(elapsed / 15);
+        // Update total time played
+        state.stats.totalTimePlayed++;
         
         updateHUD();
+        
+        // Auto-save every 30 seconds
+        if (state.timeLeft % 30 === 0) {
+          saveGameState();
+        }
         
         if (state.timeLeft <= 0) {
           endGame(true);
@@ -1316,9 +2016,14 @@
       if (state.paused) {
         showOverlay('Paused', 'Click pause again to resume', 0);
         setStatus('Game paused', 'warning');
+        announceToScreenReader('Game paused');
+        
+        // Auto-save when paused
+        saveGameState();
       } else {
         hideOverlay();
         setStatus('Game resumed', 'success');
+        announceToScreenReader('Game resumed');
       }
       
       updateHUD();
@@ -1330,10 +2035,21 @@
       state.running = false;
       state.gameOver = true;
       
+      // Calculate game duration
+      const gameDuration = Date.now() - state.gameStartTime;
+      state.stats.totalTimePlayed += Math.floor(gameDuration / 1000);
+      
       // Clear timers
       if (state.timerId) {
         clearInterval(state.timerId);
         state.timerId = null;
+      }
+      
+      // Clear saved game
+      try {
+        localStorage.removeItem('honeyCatch_save');
+      } catch (e) {
+        console.warn('Could not clear saved game:', e);
       }
       
       // Calculate final score with bonuses
@@ -1341,14 +2057,22 @@
         lives: Math.max(0, state.lives - 1) * 25,
         combo: state.combos >= 10 ? 50 : 0,
         streak: state.streak >= 15 ? 75 : 0,
-        difficulty: state.difficulty * 20
+        difficulty: state.difficulty * 20,
+        timeBonus: Math.max(0, Math.floor(state.timeLeft / 5)) * 5
       };
       
       const totalBonus = Object.values(bonuses).reduce((a, b) => a + b, 0);
+      state.totalBonuses = totalBonus;
       const finalScore = Math.round((state.score + totalBonus) * state.modeCfg.scoreScale);
+      
+      // Update total score in stats
+      updateStat('totalScore', finalScore);
       
       // Check if new high score
       const isNewBest = saveBestScore(finalScore);
+      
+      // Save statistics
+      saveStatistics();
       
       // Show game over screen
       const message = timeExpired ? "Time's Up!" : "Game Over!";
@@ -1356,6 +2080,7 @@
       
       showOverlay(message, details, 0);
       setStatus(`Game Over - Score: ${finalScore}`, 'error');
+      announceToScreenReader(`${message} Final score: ${finalScore} points${isNewBest ? '. New high score!' : ''}`);
       
       // Celebration particles
       particles.burst(W / 2, H / 2, 50, timeExpired ? '#4CAF50' : '#FF9800', {
@@ -1434,6 +2159,40 @@
     }
 
     function handleKeyDown(e) {
+      // Global keyboard shortcuts
+      switch(e.key) {
+        case 'Escape':
+          if (state.running && !state.gameOver) {
+            togglePause();
+            e.preventDefault();
+          }
+          break;
+          
+        case '1':
+        case '2':
+        case '3':
+          if (!state.running) {
+            const modes = ['calm', 'brisk', 'rush'];
+            const modeIndex = parseInt(e.key) - 1;
+            if (modes[modeIndex]) {
+              setGameMode(modes[modeIndex]);
+              e.preventDefault();
+            }
+          }
+          break;
+          
+        case 'd':
+        case 'D':
+          if (e.ctrlKey && e.shiftKey) {
+            // Ctrl+Shift+D: Toggle debug mode
+            const debugMode = localStorage.getItem('debugMode') === 'true';
+            localStorage.setItem('debugMode', !debugMode);
+            setStatus(`Debug mode ${!debugMode ? 'enabled' : 'disabled'}`, 'info');
+            e.preventDefault();
+          }
+          break;
+      }
+      
       if (!state.running || state.paused || state.gameOver) return;
       
       const step = 25;
@@ -1454,12 +2213,21 @@
           break;
           
         case ' ':
-          // Optional: add a dash/boost
+          // Space bar: dash/boost
           particles.burst(state.pooh.x, state.pooh.y - 20, 10, '#FFFFFF', {
             size: 3,
             speed: 2
           });
           e.preventDefault();
+          break;
+          
+        case 's':
+        case 'S':
+          if (e.ctrlKey) {
+            // Ctrl+S: Quick save
+            saveGameState();
+            e.preventDefault();
+          }
           break;
       }
     }
@@ -1534,6 +2302,52 @@
     }
 
     // -------------------------------------------------------------------------
+    // Gamepad Support
+    // -------------------------------------------------------------------------
+    function setupGamepad() {
+      window.addEventListener('gamepadconnected', (e) => {
+        state.gamepadIndex = e.gamepad.index;
+        setStatus('Gamepad connected', 'success');
+        announceToScreenReader('Gamepad connected');
+      });
+      
+      window.addEventListener('gamepaddisconnected', () => {
+        state.gamepadIndex = null;
+        setStatus('Gamepad disconnected', 'warning');
+        announceToScreenReader('Gamepad disconnected');
+      });
+    }
+    
+    function checkGamepad() {
+      if (state.gamepadIndex === null || !state.running || state.paused) return;
+      
+      const gamepad = navigator.getGamepads()[state.gamepadIndex];
+      if (!gamepad) return;
+      
+      // Use left stick for movement
+      const axisX = gamepad.axes[0];
+      if (Math.abs(axisX) > 0.1) {
+        const speed = 20;
+        state.pooh.targetX += axisX * speed;
+        state.pooh.targetX = clamp(state.pooh.targetX, state.pooh.width/2, W - state.pooh.width/2);
+      }
+      
+      // Check buttons
+      if (gamepad.buttons[0].pressed) {
+        // A button - dash/boost
+        particles.burst(state.pooh.x, state.pooh.y - 20, 10, '#FFFFFF', {
+          size: 3,
+          speed: 2
+        });
+      }
+      
+      if (gamepad.buttons[9].pressed) {
+        // Start button - pause
+        togglePause();
+      }
+    }
+
+    // -------------------------------------------------------------------------
     // Game Loop
     // -------------------------------------------------------------------------
     function gameLoop(timestamp) {
@@ -1548,8 +2362,11 @@
 
       const dtMs = Math.min(100, timestamp - state.lastUpdateTime);
       state.lastUpdateTime = timestamp;
-      const normalizedDt = clamp(dtMs / (1000 / 60), 0, 3); // smooth, frame-size units
+      const normalizedDt = clamp(dtMs / (1000 / 60), 0, 3);
 
+      // Check gamepad input
+      checkGamepad();
+      
       updateGame(normalizedDt);
       renderGame();
 
@@ -1560,16 +2377,19 @@
     // Initialization
     // -------------------------------------------------------------------------
     function initialize() {
-      console.log('[HoneyCatch] Initializing game...');
+      console.log('[HoneyCatch] Ultimate Edition Initializing...');
       
-      // Load best score
+      // Load saved data
       loadBestScore();
+      loadStatistics();
+      loadGameState(); // Try to load saved game
       
       // Set initial mode
       setGameMode('calm');
       
       // Setup controls
       setupJoystick();
+      setupGamepad();
 
       // Add event listeners
       canvas.addEventListener('pointerdown', handlePointerDown);
@@ -1583,8 +2403,17 @@
       canvas.addEventListener('touchcancel', handleTouchEnd);
       document.addEventListener('keydown', handleKeyDown);
       
+      // Prevent accidental zoom on mobile
+      canvas.addEventListener('touchstart', (e) => {
+        if (e.touches.length > 1) {
+          e.preventDefault();
+        }
+      }, { passive: false });
+      
+      // UI buttons
       if (startBtn) {
         startBtn.addEventListener('click', startGame);
+        startBtn.setAttribute('aria-label', 'Start game');
       }
       
       if (pauseBtn) {
@@ -1598,19 +2427,54 @@
           setGameMode(mode);
           setStatus(`${MODES[mode].label} mode selected`, 'info');
           showOverlay(MODES[mode].label, MODES[mode].hint, 1200);
+          announceToScreenReader(`${MODES[mode].label} mode selected`);
         });
       });
+      
+      // Statistics button
+      if (statsBtn) {
+        statsBtn.addEventListener('click', showStatisticsModal);
+        statsBtn.setAttribute('aria-label', 'Show statistics');
+      }
+      
+      // Save button
+      if (saveBtn) {
+        saveBtn.addEventListener('click', saveGameState);
+        saveBtn.setAttribute('aria-label', 'Save game');
+      }
+      
+      // Share button
+      if (shareBtn) {
+        shareBtn.addEventListener('click', shareScore);
+        shareBtn.setAttribute('aria-label', 'Share score');
+      }
       
       // Initial resize and render
       resizeCanvas();
       renderGame();
       
       // Show ready message
-      setStatus('Ready to play - Select a mode and press Start', 'info');
-      showOverlay('Honey Pot Catch', 'Select a mode and press Start to play', 0);
+      if (state.running) {
+        setStatus('Game loaded - Press Start to continue', 'info');
+        showOverlay('Game Loaded', 'Press Start to continue your saved game', 0);
+      } else {
+        setStatus('Ready to play - Select a mode and press Start', 'info');
+        showOverlay('Honey Pot Catch', 'Select a mode and press Start to play', 0);
+      }
       
       // Handle window resize
       window.addEventListener('resize', resizeCanvas);
+      
+      // Handle page visibility change
+      document.addEventListener('visibilitychange', () => {
+        if (document.hidden && state.running && !state.paused && !state.gameOver) {
+          // Auto-pause when tab is hidden
+          state.paused = true;
+          showOverlay('Auto-paused', 'Tab was hidden', 0);
+          setStatus('Game auto-paused', 'warning');
+          updateHUD();
+        }
+      });
       
       console.log('[HoneyCatch] Game initialized successfully');
     }
@@ -1620,6 +2484,11 @@
     // -------------------------------------------------------------------------
     function cleanup() {
       console.log('[HoneyCatch] Cleaning up...');
+      
+      // Auto-save if game is running
+      if (state.running && !state.gameOver) {
+        saveGameState();
+      }
       
       // Stop game loop
       if (state.frameId) {
@@ -1643,6 +2512,12 @@
         state.overlayTimer = null;
       }
       
+      // Release all pooled objects
+      potPool.releaseAll();
+      beePool.releaseAll();
+      powerUpPool.releaseAll();
+      particles.clear();
+      
       // Remove event listeners
       canvas.removeEventListener('pointerdown', handlePointerDown);
       canvas.removeEventListener('pointerup', handlePointerUp);
@@ -1655,7 +2530,9 @@
       canvas.removeEventListener('touchcancel', handleTouchEnd);
       document.removeEventListener('keydown', handleKeyDown);
       window.removeEventListener('resize', resizeCanvas);
+      document.removeEventListener('visibilitychange', () => {});
       
+      // Remove UI button listeners
       if (startBtn) {
         startBtn.removeEventListener('click', startGame);
       }
@@ -1663,6 +2540,24 @@
       if (pauseBtn) {
         pauseBtn.removeEventListener('click', togglePause);
       }
+      
+      if (statsBtn) {
+        statsBtn.removeEventListener('click', showStatisticsModal);
+      }
+      
+      if (saveBtn) {
+        saveBtn.removeEventListener('click', saveGameState);
+      }
+      
+      if (shareBtn) {
+        shareBtn.removeEventListener('click', shareScore);
+      }
+      
+      // Remove gamepad listeners
+      window.removeEventListener('gamepadconnected', () => {});
+      window.removeEventListener('gamepaddisconnected', () => {});
+      
+      console.log('[HoneyCatch] Cleanup complete');
     }
 
     // Initialize the game
@@ -1673,7 +2568,12 @@
       startGame,
       togglePause,
       setGameMode,
+      saveGame: saveGameState,
+      loadGame: loadGameState,
+      showStats: showStatisticsModal,
+      shareScore,
       getState: () => ({ ...state }),
+      getStats: () => ({ ...state.stats }),
       cleanup
     };
   }
@@ -1685,7 +2585,14 @@
     try {
       if (document.getElementById('honey-game')) {
         window.honeyCatchGame = EnhancedHoneyCatchGame();
-        console.log('[HoneyCatch] Game loaded and ready');
+        console.log('[HoneyCatch] Ultimate Edition loaded and ready');
+        
+        // Add debug toggle to window
+        window.toggleDebugMode = () => {
+          const debugMode = localStorage.getItem('debugMode') === 'true';
+          localStorage.setItem('debugMode', !debugMode);
+          console.log(`Debug mode ${!debugMode ? 'enabled' : 'disabled'}`);
+        };
       }
     } catch (err) {
       console.error('[HoneyCatch] Failed to initialize:', err);
