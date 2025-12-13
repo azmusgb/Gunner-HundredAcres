@@ -1,1924 +1,318 @@
 <!DOCTYPE html>
 <html lang="en">
-
 <head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>The Hundred Acre Celebration: Welcoming Baby Gunner</title>
-
-    <!-- SEO & Social -->
-    <meta name="description" content="A storybook-style Winnie the Pooh baby shower experience for Baby Gunner, with invitations, characters, and gentle Hundred Acre Wood games.">
-    <meta property="og:title" content="The Hundred Acre Celebration: Welcoming Baby Gunner">
-    <meta property="og:description" content="Join us in the Hundred Acre Wood to celebrate Baby Gunner with stories, honey-sweet moments, and cozy games.">
-    <meta property="og:type" content="website">
-    <meta name="theme-color" content="#FFC42B">
-
-    <!-- Fonts & Icons -->
-    <link rel="preconnect" href="https://fonts.googleapis.com">
-    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-    <link
-        href="https://fonts.googleapis.com/css2?family=Playfair+Display:wght@400;600;700&family=Lato:wght@300;400;700&family=Patrick+Hand&display=swap"
-        rel="stylesheet">
-    <link rel="stylesheet"
-        href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.1/css/all.min.css">
-
-    <!-- Main Styles -->
-    <link rel="stylesheet" href="styles.css">
-    <style>
-   /* ============================================
-   CSS VARIABLES & ROOT STYLES
-   ============================================ */
-:root {
-  /* Color Palette */
-  --storybook-brown: #8B4513;
-  --honey-yellow: #FFC42B;
-  --light-cream: #FFF9E6;
-  --cream: #FFEFCC;
-  --dark-brown: #5C4033;
-  --medium-brown: #A0522D;
-  --pale-yellow: #FFEBB7;
-  --pink: #FFB6C1;
-  --orange: #FF8C00;
-  --gray: #A9A9A9;
-  --white: #FFFFFF;
-  --black: #000000;
-  
-  /* Character Colors */
-  --color-pooh: #FFC42B;
-  --color-piglet: #FFB6C1;
-  --color-tigger: #FF8C00;
-  --color-eeyore: #A9A9A9;
-  
-  /* Font Families */
-  --font-heading: 'Playfair Display', serif;
-  --font-body: 'Lato', sans-serif;
-  --font-handwriting: 'Patrick Hand', cursive;
-  
-  /* Spacing Scale */
-  --space-xs: 0.5rem;
-  --space-sm: 1rem;
-  --space-md: 1.5rem;
-  --space-lg: 2rem;
-  --space-xl: 2.5rem;
-  --space-xxl: 3rem;
-  
-  /* Border Radius */
-  --radius-sm: 8px;
-  --radius-md: 15px;
-  --radius-lg: 20px;
-  --radius-circle: 50%;
-  
-  /* Shadows */
-  --shadow-sm: 0 4px 8px rgba(139, 69, 19, 0.15);
-  --shadow-md: 0 8px 20px rgba(139, 69, 19, 0.2);
-  --shadow-lg: 0 12px 25px rgba(139, 69, 19, 0.25);
-  --shadow-xl: 0 20px 50px rgba(0, 0, 0, 0.3);
-  
-  /* Transitions */
-  --transition-fast: 0.2s ease;
-  --transition-base: 0.3s ease;
-  --transition-slow: 0.5s ease;
-  
-  /* Z-index Layers */
-  --z-modal: 1000;
-  --z-nav: 100;
-  --z-fab: 90;
-  --z-overlay: 10;
-  --z-base: 1;
-  
-  /* Container Widths */
-  --container-sm: 100%;
-  --container-md: 720px;
-  --container-lg: 960px;
-  --container-xl: 1200px;
-  
-  /* Game Specific */
-  --game-canvas-height: min(250px, 40vh);
-}
-
-@media (prefers-reduced-motion: reduce) {
-  :root {
-    --transition-fast: 0.01s;
-    --transition-base: 0.01s;
-    --transition-slow: 0.01s;
-  }
-}
-
-/* ============================================
-   BASE RESETS & ACCESSIBILITY
-   ============================================ */
-*,
-*::before,
-*::after {
-  box-sizing: border-box;
-  margin: 0;
-  padding: 0;
-}
-
-html {
-  scroll-behavior: smooth;
-  font-size: 16px;
-}
-
-@media (prefers-reduced-motion: reduce) {
-  html {
-    scroll-behavior: auto;
-  }
-}
-
-body {
-  font-family: var(--font-body);
-  line-height: 1.6;
-  color: var(--dark-brown);
-  background: linear-gradient(135deg, var(--light-cream) 0%, var(--cream) 100%);
-  min-height: 100vh;
-  overflow-x: hidden;
-  position: relative;
-}
-
-/* Focus States for Accessibility */
-:focus-visible {
-  outline: 3px solid var(--honey-yellow);
-  outline-offset: 3px;
-  box-shadow: 0 0 0 4px rgba(139, 69, 19, 0.3);
-}
-
-/* Skip Link */
-.skip-link {
-  position: absolute;
-  top: -40px;
-  left: 0;
-  background: var(--honey-yellow);
-  color: var(--storybook-brown);
-  padding: var(--space-xs) var(--space-sm);
-  text-decoration: none;
-  z-index: 9999;
-  transition: top var(--transition-base);
-  font-weight: 600;
-}
-
-.skip-link:focus {
-  top: 0;
-}
-
-/* ============================================
-   CHARACTER HOVER ANIMATIONS & MODAL STYLES
-   ============================================ */
-
-/* Character Spotlight */
-.character-spotlight {
-  position: relative;
-  transition: all var(--transition-base);
-  overflow: hidden;
-  cursor: pointer;
-  border: 2px solid transparent;
-  border-radius: var(--radius-md);
-  padding: var(--space-md);
-  margin: var(--space-md) 0;
-  background: var(--white);
-  display: flex;
-  flex-direction: column;
-  align-items: center;
-  text-align: center;
-  will-change: transform, box-shadow;
-}
-
-.character-spotlight:hover,
-.character-spotlight:focus-visible {
-  transform: translate3d(0, -5px, 0);
-  box-shadow: var(--shadow-lg);
-  border-color: var(--honey-yellow);
-}
-
-/* Honey Glow Effect */
-.character-spotlight:hover .character-illustration::after {
-  content: '';
-  position: absolute;
-  top: 0;
-  left: 0;
-  right: 0;
-  bottom: 0;
-  background: radial-gradient(circle, rgba(255, 196, 43, 0.2) 0%, transparent 70%);
-  z-index: var(--z-base);
-  opacity: 0.6;
-}
-
-/* Character Illustration */
-.character-illustration {
-  position: relative;
-  width: 120px;
-  height: 120px;
-  margin-bottom: var(--space-sm);
-  transition: transform var(--transition-slow);
-  will-change: transform;
-}
-
-.character-spotlight:hover .character-illustration {
-  transform: scale3d(1.05, 1.05, 1) rotate(-2deg);
-}
-
-.character-illustration img {
-  width: 100%;
-  height: 100%;
-  object-fit: contain;
-  aspect-ratio: 1/1;
-  transition: transform var(--transition-base);
-}
-
-/* Character Quote */
-.character-quote {
-  position: relative;
-  transition: all var(--transition-base);
-  font-family: var(--font-handwriting);
-  font-size: 1.1rem;
-  color: var(--medium-brown);
-  margin-bottom: var(--space-xs);
-  padding: 0 var(--space-sm);
-}
-
-.character-spotlight:hover .character-quote {
-  color: var(--storybook-brown);
-  transform: translateX(5px);
-}
-
-.character-name {
-  font-family: var(--font-heading);
-  font-weight: 600;
-  color: var(--dark-brown);
-  font-size: 1.2rem;
-}
-
-/* Character-specific hover backgrounds */
-.character-spotlight[onclick*="pooh"]:hover {
-  background: linear-gradient(135deg, rgba(255, 196, 43, 0.1) 0%, transparent 100%);
-}
-
-.character-spotlight[onclick*="piglet"]:hover {
-  background: linear-gradient(135deg, rgba(255, 182, 193, 0.1) 0%, transparent 100%);
-}
-
-.character-spotlight[onclick*="tigger"]:hover {
-  background: linear-gradient(135deg, rgba(255, 165, 0, 0.1) 0%, transparent 100%);
-}
-
-.character-spotlight[onclick*="eeyore"]:hover {
-  background: linear-gradient(135deg, rgba(169, 169, 169, 0.1) 0%, transparent 100%);
-}
-
-/* Woodland Sign */
-.woodland-sign {
-  transition: all var(--transition-base);
-  cursor: pointer;
-  background: var(--medium-brown);
-  color: var(--white);
-  border: 3px solid var(--honey-yellow);
-  border-radius: var(--radius-lg);
-  padding: var(--space-sm) var(--space-lg);
-  font-family: var(--font-heading);
-  font-size: 1.2rem;
-  font-weight: 600;
-  margin: var(--space-md) auto;
-  display: block;
-  text-align: center;
-  will-change: transform;
-}
-
-.woodland-sign:hover,
-.woodland-sign:focus-visible {
-  transform: scale3d(1.05, 1.05, 1) rotate(-1deg);
-  box-shadow: var(--shadow-md);
-  background-color: var(--medium-brown);
-  color: var(--pale-yellow);
-}
-
-/* ============================================
-   CHARACTER MODAL STYLES
-   ============================================ */
-.character-modal {
-  display: none;
-  position: fixed;
-  top: 0;
-  left: 0;
-  width: 100%;
-  height: 100%;
-  background-color: rgba(0, 0, 0, 0.8);
-  z-index: var(--z-modal);
-  opacity: 0;
-  transition: opacity var(--transition-base);
-  backdrop-filter: blur(5px);
-}
-
-@media (prefers-reduced-motion: reduce) {
-  .character-modal {
-    transition: none;
-  }
-}
-
-.character-modal.active {
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  opacity: 1;
-}
-
-.modal-content {
-  background: linear-gradient(135deg, var(--light-cream) 0%, var(--cream) 100%);
-  border-radius: var(--radius-lg);
-  padding: var(--space-xl);
-  max-width: 500px;
-  width: 90%;
-  max-height: 80vh;
-  overflow-y: auto;
-  position: relative;
-  border: 3px solid var(--honey-yellow);
-  box-shadow: var(--shadow-xl);
-  animation: modalAppear 0.4s cubic-bezier(0.175, 0.885, 0.32, 1.275);
-  font-family: var(--font-body);
-  contain: layout style paint;
-}
-
-@keyframes modalAppear {
-  from {
-    opacity: 0;
-    transform: scale3d(0.8, 0.8, 1) translateY(20px);
-  }
-  to {
-    opacity: 1;
-    transform: scale3d(1, 1, 1) translateY(0);
-  }
-}
-
-@media (prefers-reduced-motion: reduce) {
-  @keyframes modalAppear {
-    from { opacity: 0; }
-    to { opacity: 1; }
-  }
-}
-
-.close-modal {
-  position: absolute;
-  top: var(--space-sm);
-  right: var(--space-sm);
-  background: var(--storybook-brown);
-  color: var(--white);
-  border: none;
-  width: 40px;
-  height: 40px;
-  border-radius: var(--radius-circle);
-  cursor: pointer;
-  font-size: 1.2rem;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  transition: all var(--transition-base);
-  z-index: 10;
-}
-
-.close-modal:hover,
-.close-modal:focus-visible {
-  background: var(--medium-brown);
-  transform: rotate(90deg) scale3d(1.1, 1.1, 1);
-}
-
-.modal-character {
-  display: flex;
-  align-items: center;
-  gap: var(--space-md);
-  margin-bottom: var(--space-md);
-  padding-bottom: var(--space-md);
-  border-bottom: 2px dashed var(--honey-yellow);
-}
-
-.modal-character-icon {
-  width: 80px;
-  height: 80px;
-  background-size: contain;
-  background-repeat: no-repeat;
-  background-position: center;
-  filter: drop-shadow(var(--shadow-sm));
-  flex-shrink: 0;
-}
-
-.modal-character-name {
-  font-family: var(--font-heading);
-  font-size: clamp(1.5rem, 4vw, 2rem);
-  font-weight: 700;
-  color: var(--storybook-brown);
-  margin-bottom: var(--space-xs);
-}
-
-.modal-character-quote {
-  font-style: italic;
-  font-size: clamp(1rem, 3vw, 1.2rem);
-  color: var(--medium-brown);
-  margin-bottom: var(--space-md);
-  padding-left: var(--space-sm);
-  border-left: 3px solid var(--honey-yellow);
-  font-family: var(--font-handwriting);
-}
-
-.modal-character-bio {
-  font-size: clamp(0.9rem, 2.5vw, 1.1rem);
-  line-height: 1.6;
-  color: var(--dark-brown);
-  background: rgba(255, 255, 255, 0.7);
-  padding: var(--space-md);
-  border-radius: var(--radius-sm);
-  border: 1px solid #E8D4B9;
-}
-
-/* ============================================
-   GAME STYLES
-   ============================================ */
-
-.games-container {
-  display: grid;
-  grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
-  gap: var(--space-lg);
-  margin-top: var(--space-lg);
-  max-width: var(--container-xl);
-  margin-left: auto;
-  margin-right: auto;
-  padding: 0 var(--space-md);
-  contain: layout;
-}
-
-.game-card {
-  background: linear-gradient(135deg, var(--light-cream) 0%, var(--cream) 100%);
-  border-radius: var(--radius-md);
-  padding: var(--space-md);
-  border: 2px solid var(--honey-yellow);
-  box-shadow: var(--shadow-md);
-  transition: transform var(--transition-base);
-  width: 100%;
-  max-width: 600px;
-  margin: 0 auto;
-  contain: layout style paint;
-  will-change: transform;
-}
-
-.game-card:hover,
-.game-card:focus-within {
-  transform: translate3d(0, -5px, 0);
-  box-shadow: var(--shadow-lg);
-}
-
-.game-header {
-  margin-bottom: var(--space-sm);
-  text-align: center;
-}
-
-.game-title {
-  font-family: var(--font-heading);
-  font-size: clamp(1.2rem, 3vw, 1.5rem);
-  color: var(--storybook-brown);
-  margin-bottom: var(--space-xs);
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  gap: var(--space-xs);
-}
-
-.game-description {
-  color: var(--dark-brown);
-  font-size: clamp(0.85rem, 2vw, 0.95rem);
-  line-height: 1.4;
-}
-
-.game-canvas-container {
-  position: relative;
-  width: 100%;
-  height: var(--game-canvas-height);
-  background: var(--white);
-  border-radius: var(--radius-sm);
-  overflow: hidden;
-  border: 2px solid #E8D4B9;
-  margin: var(--space-sm) auto;
-  max-width: 100%;
-  contain: strict;
-}
-
-.game-canvas {
-  width: 100% !important;
-  height: 100% !important;
-  display: block;
-}
-
-.game-overlay {
-  position: absolute;
-  top: 0;
-  left: 0;
-  width: 100%;
-  height: 100%;
-  background: rgba(255, 255, 255, 0.95);
-  display: flex;
-  flex-direction: column;
-  align-items: center;
-  justify-content: center;
-  font-family: var(--font-handwriting);
-  color: var(--storybook-brown);
-  font-size: clamp(1rem, 3vw, 1.2rem);
-}
-
-.game-controls {
-  margin: var(--space-sm) 0;
-  max-width: 100%;
-}
-
-.game-stats {
-  display: flex;
-  justify-content: space-around;
-  background: rgba(255, 196, 43, 0.1);
-  padding: var(--space-sm);
-  border-radius: var(--radius-sm);
-  margin-bottom: var(--space-sm);
-  max-width: 100%;
-}
-
-.stat-item {
-  display: flex;
-  flex-direction: column;
-  align-items: center;
-  min-width: 60px;
-}
-
-.stat-label {
-  font-size: 0.8rem;
-  color: var(--medium-brown);
-  font-weight: 600;
-  margin-bottom: 2px;
-}
-
-.stat-value {
-  font-size: clamp(1rem, 3vw, 1.2rem);
-  font-weight: 700;
-  color: var(--storybook-brown);
-  font-family: var(--font-handwriting);
-}
-
-.tower-selection {
-  display: flex;
-  gap: var(--space-xs);
-  justify-content: center;
-  flex-wrap: wrap;
-  margin-bottom: var(--space-sm);
-  max-width: 100%;
-}
-
-.tower-option {
-  padding: var(--space-xs) var(--space-sm);
-  border: 2px solid var(--honey-yellow);
-  background: var(--white);
-  border-radius: 20px;
-  font-family: var(--font-body);
-  font-weight: 600;
-  color: var(--storybook-brown);
-  cursor: pointer;
-  transition: all var(--transition-fast);
-  display: flex;
-  align-items: center;
-  gap: var(--space-xs);
-  min-width: 80px;
-  justify-content: center;
-}
-
-.tower-option:hover,
-.tower-option:focus-visible {
-  background: var(--light-cream);
-  transform: translate3d(0, -2px, 0);
-}
-
-.tower-option.selected {
-  background: var(--honey-yellow);
-  color: var(--white);
-}
-
-.game-buttons {
-  display: flex;
-  gap: var(--space-sm);
-  justify-content: center;
-  max-width: 100%;
-  flex-wrap: wrap;
-}
-
-.game-btn {
-  padding: var(--space-sm) var(--space-md);
-  border: none;
-  border-radius: 25px;
-  font-family: var(--font-body);
-  font-weight: 600;
-  font-size: 0.9rem;
-  cursor: pointer;
-  transition: all var(--transition-fast);
-  display: flex;
-  align-items: center;
-  gap: var(--space-xs);
-  min-width: 140px;
-  justify-content: center;
-}
-
-.game-btn.primary {
-  background: linear-gradient(135deg, var(--honey-yellow) 0%, #E8B42B 100%);
-  color: var(--white);
-}
-
-.game-btn.secondary {
-  background: var(--white);
-  color: var(--storybook-brown);
-  border: 2px solid var(--honey-yellow);
-}
-
-.game-btn:hover,
-.game-btn:focus-visible {
-  transform: translate3d(0, -2px, 0);
-  box-shadow: var(--shadow-sm);
-}
-
-.game-tips {
-  display: grid;
-  grid-template-columns: repeat(3, 1fr);
-  gap: var(--space-sm);
-  margin-top: var(--space-sm);
-  padding-top: var(--space-sm);
-  border-top: 1px dashed var(--honey-yellow);
-  max-width: 100%;
-}
-
-.tip {
-  text-align: center;
-  font-size: clamp(0.75rem, 2vw, 0.8rem);
-  color: var(--dark-brown);
-  padding: var(--space-xs);
-}
-
-.tip i {
-  color: var(--honey-yellow);
-  margin-bottom: var(--space-xs);
-  display: block;
-  font-size: 1.2rem;
-}
-
-.mobile-controls {
-  display: none;
-  gap: var(--space-md);
-  justify-content: center;
-  margin-top: var(--space-sm);
-  width: 100%;
-  max-width: 300px;
-  margin: var(--space-sm) auto 0;
-}
-
-.mobile-btn {
-  padding: var(--space-sm);
-  font-size: 1.5rem;
-  background: var(--honey-yellow);
-  color: var(--white);
-  border: none;
-  border-radius: var(--radius-circle);
-  width: 60px;
-  height: 60px;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  transition: all var(--transition-base);
-}
-
-.mobile-btn:hover,
-.mobile-btn:focus-visible {
-  background: var(--medium-brown);
-  transform: scale3d(1.1, 1.1, 1);
-}
-
-/* ============================================
-   RESPONSIVE DESIGN
-   ============================================ */
-
-@media (max-width: 768px) {
-  :root {
-    --game-canvas-height: 200px;
-  }
-  
-  .games-container {
-    grid-template-columns: 1fr;
-    gap: var(--space-md);
-    padding: 0 var(--space-sm);
-  }
-  
-  .game-card {
-    padding: var(--space-sm);
-    max-width: 100%;
-  }
-  
-  .game-tips {
-    grid-template-columns: 1fr;
-    gap: var(--space-xs);
-  }
-  
-  .tower-selection {
-    gap: 4px;
-  }
-  
-  .tower-option {
-    padding: 6px 12px;
-    font-size: 0.85rem;
-    min-width: 70px;
-  }
-  
-  .game-btn {
-    min-width: 120px;
-    padding: 10px 20px;
-  }
-  
-  .mobile-controls {
-    display: flex;
-  }
-  
-  .character-illustration {
-    width: 100px;
-    height: 100px;
-  }
-  
-  .modal-content {
-    padding: var(--space-md);
-    width: 95%;
-  }
-  
-  .modal-character {
-    flex-direction: column;
-    text-align: center;
-    gap: var(--space-sm);
-  }
-  
-  .modal-character-icon {
-    width: 100px;
-    height: 100px;
-  }
-  
-  .game-stats {
-    padding: var(--space-xs);
-  }
-  
-  .stat-item {
-    min-width: 50px;
-  }
-}
-
-@media (min-width: 769px) and (max-width: 1199px) {
-  .games-container {
-    max-width: var(--container-lg);
-  }
-  
-  .game-card {
-    max-width: 550px;
-  }
-}
-
-@media (min-width: 1200px) {
-  .games-container {
-    max-width: var(--container-xl);
-  }
-  
-  .game-card {
-    max-width: 550px;
-  }
-}
-
-/* Large desktop adjustments */
-@media (min-width: 1600px) {
-  .games-container {
-    grid-template-columns: repeat(auto-fit, minmax(350px, 1fr));
-    gap: var(--space-xl);
-  }
-  
-  .game-card {
-    padding: var(--space-lg);
-  }
-}
-
-/* Touch device optimizations */
-@media (hover: none) and (pointer: coarse) {
-  .character-spotlight:hover {
-    transform: none;
-  }
-  
-  .tower-option:hover {
-    transform: none;
-  }
-  
-  .game-btn:hover {
-    transform: none;
-  }
-  
-  .character-spotlight:active {
-    transform: scale3d(0.98, 0.98, 1);
-  }
-}
-
-/* High contrast mode support */
-@media (prefers-contrast: high) {
-  :root {
-    --honey-yellow: #FFA500;
-    --storybook-brown: #000000;
-    --dark-brown: #000000;
-  }
-  
-  .character-spotlight {
-    border: 3px solid var(--storybook-brown);
-  }
-  
-  .game-card {
-    border: 3px solid var(--storybook-brown);
-  }
-}
-
-/* Dark mode support */
-@media (prefers-color-scheme: dark) {
-  :root {
-    --light-cream: #1a1a1a;
-    --cream: #2d2d2d;
-    --white: #2d2d2d;
-    --pale-yellow: #333333;
-    --dark-brown: #e0e0e0;
-    --medium-brown: #cccccc;
-    --storybook-brown: #e0e0e0;
-  }
-  
-  .game-card,
-  .modal-content {
-    background: linear-gradient(135deg, #2d2d2d 0%, #1a1a1a 100%);
-  }
-  
-  .game-canvas-container {
-    background: #333333;
-  }
-  
-  .game-overlay {
-    background: rgba(45, 45, 45, 0.95);
-  }
-}
-
-/* Print styles */
-@media print {
-  .game-card,
-  .character-modal,
-  .music-controls,
-  .fab-container,
-  .character-spotlight,
-  .woodland-sign {
-    display: none !important;
-  }
-  
-  .story-text {
-    font-size: 12pt;
-    line-height: 1.6;
-    color: #000000;
-  }
-  
-  .games-container {
-    display: block;
-  }
-  
-  a[href]::after {
-    content: " (" attr(href) ")";
-    font-size: 0.9em;
-    font-weight: normal;
-  }
-}
-
-/* ============================================
-   UTILITY CLASSES
-   ============================================ */
-.text-center { text-align: center; }
-.mt-1 { margin-top: var(--space-sm); }
-.mt-2 { margin-top: var(--space-md); }
-.mb-1 { margin-bottom: var(--space-sm); }
-.mb-2 { margin-bottom: var(--space-md); }
-.p-1 { padding: var(--space-sm); }
-.p-2 { padding: var(--space-md); }
-
-/* Loading states */
-.loading {
-  opacity: 0.7;
-  pointer-events: none;
-}
-
-.loading::after {
-  content: '';
-  position: absolute;
-  top: 0;
-  left: 0;
-  right: 0;
-  bottom: 0;
-  background: linear-gradient(90deg, transparent, rgba(255,255,255,0.4), transparent);
-  animation: loading-shimmer 1.5s infinite;
-}
-
-@keyframes loading-shimmer {
-  0% { transform: translateX(-100%); }
-  100% { transform: translateX(100%); }
-}
-
-/* Performance optimizations */
-@media (prefers-reduced-motion: reduce) {
-  *,
-  *::before,
-  *::after {
-    animation-duration: 0.01ms !important;
-    animation-iteration-count: 1 !important;
-    transition-duration: 0.01ms !important;
-  }
-}
-
-/* Ensure content-section matches games section */
-.content-section.scroll-animate#games .content-section-inner {
-  max-width: var(--container-xl);
-  margin: 0 auto;
-  padding: 0 var(--space-md);
-}
-    </style>
+  <meta charset="UTF-8" />
+  <meta content="width=device-width, initial-scale=1.0, viewport-fit=cover" name="viewport" />
+  <meta name="apple-mobile-web-app-capable" content="yes" />
+  <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent" />
+
+  <title>Baby Gunnar's Hundred Acre Wood Adventure</title>
+
+  <!-- SEO -->
+  <meta name="description" content="A storybook-style Hundred Acre Wood adventure to celebrate Baby Gunnar — read, play Honey Pot Catch, and leave your wishes." />
+  <meta name="theme-color" content="#f4a944" />
+  <meta name="color-scheme" content="light dark" />
+
+  <!-- Social -->
+  <meta property="og:title" content="Baby Gunnar's Hundred Acre Wood Adventure" />
+  <meta property="og:description" content="A sweet storybook and Honey Pot Catch — read, play, and leave your wishes." />
+  <meta property="og:type" content="website" />
+  <meta property="og:image" content="icons/icon.svg" />
+
+  <!-- Icons -->
+  <link rel="icon" href="icons/favicon.ico" />
+  <link rel="apple-touch-icon" href="icons/apple-touch-icon.png" />
+
+  <!-- Fonts & Icons -->
+  <link rel="preconnect" href="https://fonts.googleapis.com" />
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+  <link href="https://fonts.googleapis.com/css2?family=Playfair+Display:wght@400;600;700&family=Lato:wght@300;400;700&family=Patrick+Hand&display=swap" rel="stylesheet" />
+  <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.1/css/all.min.css" rel="stylesheet" />
+
+  <!-- Main CSS -->
+  <link rel="stylesheet" href="styles.css" />
 </head>
 
 <body>
+  <a class="skip-link" href="#main">Skip to content</a>
 
-    <a href="#mainContent" class="skip-link">Skip to main content</a>
-    <div class="reading-progress" id="readingProgress" aria-hidden="true"></div>
+  <!-- Loading Screen -->
+  <div class="loading-screen" id="loadingScreen" role="status" aria-live="polite" aria-label="Loading">
+    <div class="loading-animation">
+      <div class="honey-spinner" aria-hidden="true">
+        <div class="loading-jar">
+          <div class="loading-honey-fill"></div>
+        </div>
+      </div>
+      <div class="loading-text">Opening the Storybook…</div>
+      <div class="loading-subtext">A little honey, a little magic, and we’re in.</div>
+      <div class="loading-dots" aria-hidden="true">
+        <div class="loading-dot"></div>
+        <div class="loading-dot"></div>
+        <div class="loading-dot"></div>
+      </div>
+      <div class="loading-hint">Tip: Tap the music button if your device blocks autoplay.</div>
+    </div>
+  </div>
 
-    <!-- Loading -->
-    <div class="loading-screen hidden" id="loadingScreen" role="status" aria-live="polite">
-        <div class="honey-spinner" aria-hidden="true">
-            <div class="loading-jar">
-                <div class="loading-honey-fill"></div>
-            </div>
-        </div>
-        <div class="loading-text">Stirring the Honey...</div>
-        <div class="loading-subtext">
-            The Hundred Acre Wood is getting ready for Baby Gunner's celebration.
-        </div>
-        <div class="loading-dots" aria-hidden="true">
-            <div class="loading-dot"></div>
-            <div class="loading-dot"></div>
-            <div class="loading-dot"></div>
-        </div>
-        <div class="loading-hint">
-            If this takes more than a few seconds, try a little refresh—just like tapping a honey jar.
-        </div>
+  <!-- Audio (optional: keep src pointing to your real file) -->
+  <audio id="bgMusic" preload="auto" loop>
+    <!-- Set your real path here -->
+    <source src="audio/bg-music.mp3" type="audio/mpeg" />
+  </audio>
+
+  <!-- Top Navigation -->
+  <header class="topbar" role="banner">
+    <div class="topbar-inner">
+      <a class="brand" href="#cover" aria-label="Go to storybook cover">
+        <span class="brand-mark" aria-hidden="true">🍯</span>
+        <span class="brand-text">Hundred Acre Celebration</span>
+      </a>
+
+      <nav class="topbar-actions" aria-label="Primary">
+        <button class="icon-btn" id="musicToggle" type="button" aria-label="Toggle music" aria-pressed="false">
+          <i class="fa-solid fa-volume-high" aria-hidden="true"></i>
+        </button>
+
+        <button class="icon-btn" id="motionToggle" type="button" aria-label="Reduce motion" aria-pressed="false">
+          <i class="fa-solid fa-person-walking" aria-hidden="true"></i>
+        </button>
+
+        <button class="nav-toggle" id="navToggle" type="button" aria-label="Open menu" aria-controls="navMenu" aria-expanded="false">
+          <i class="fa-solid fa-bars" aria-hidden="true"></i>
+        </button>
+      </nav>
     </div>
 
-    <!-- Background layers -->
-    <div class="honeycomb-bg" aria-hidden="true"></div>
-    <div class="golden-light" aria-hidden="true"></div>
-
-    <div class="enchanted-forest" aria-hidden="true">
-        <div class="tree" style="left: -40px;"></div>
-        <div class="tree" style="right: -40px; height: 260px; width: 200px;"></div>
-        <div class="floating-leaf" style="left: 10%; animation-delay: -4s;"></div>
-        <div class="floating-leaf" style="left: 40%; animation-delay: -8s;"></div>
-        <div class="floating-leaf" style="left: 70%; animation-delay: -2s;"></div>
-        <div class="floating-leaf" style="left: 85%; animation-delay: -10s;"></div>
+    <div class="nav-menu" id="navMenu" hidden>
+      <a href="#story" class="nav-link">Story</a>
+      <a href="#characters" class="nav-link">Friends</a>
+      <a href="#games" class="nav-link">Games</a>
+      <a href="#wishes" class="nav-link">Wishes</a>
     </div>
+  </header>
 
-    <!-- Nav -->
-    <nav class="main-nav" id="mainNav" aria-label="Primary">
-        <div class="nav-container">
-            <div class="nav-brand">
-                <a href="#mainContent" class="nav-title">Hundred Acre Wood</a>
-                <div class="nav-subtitle">Baby Gunner's Celebration</div>
+  <!-- Floating Action Buttons -->
+  <div class="floating-actions" aria-label="Quick actions">
+    <button class="fab" id="scrollTopBtn" type="button" aria-label="Scroll to top">
+      <i class="fa-solid fa-arrow-up" aria-hidden="true"></i>
+    </button>
+    <button class="fab" id="favoriteBtn" type="button" aria-label="Favorite">
+      <i class="fa-solid fa-heart" aria-hidden="true"></i>
+    </button>
+  </div>
+
+  <!-- Cover / Hero -->
+  <section class="storybook-cover" id="cover" aria-labelledby="coverTitle">
+    <div class="storybook-cover-inner">
+      <h1 class="cover-title" id="coverTitle">Hundred Acre Wood</h1>
+      <p class="cover-subtitle">Baby Gunnar’s Celebration</p>
+
+      <div class="cover-cta">
+        <button class="primary-btn open-book-btn" id="openBookBtn" type="button">
+          <span>Open the Storybook</span>
+          <i class="fa-solid fa-book-open" aria-hidden="true"></i>
+        </button>
+      </div>
+
+      <!-- Decorative side characters (optional, depends on your CSS art) -->
+      <div class="cover-decor" aria-hidden="true">
+        <div class="character pooh-header">🧸</div>
+        <div class="character tigger-header">🐯</div>
+      </div>
+    </div>
+  </section>
+
+  <main id="main">
+    <!-- Story -->
+    <section class="page-section" id="story" aria-labelledby="storyTitle">
+      <div class="container">
+        <h2 class="section-title" id="storyTitle">A Cozy Little Adventure</h2>
+        <div class="storybook-panel">
+          <p>
+            Welcome to Baby Gunnar’s Hundred Acre Wood celebration — a gentle storybook moment with friends,
+            honey-sweet games, and a place to leave your wishes.
+          </p>
+        </div>
+      </div>
+    </section>
+
+    <!-- Characters -->
+    <section class="page-section" id="characters" aria-labelledby="charactersTitle">
+      <div class="container">
+        <h2 class="section-title" id="charactersTitle">Friends in the Wood</h2>
+
+        <!-- script.js can populate this dynamically; keep the ID -->
+        <div class="characters-grid" id="charactersGrid" aria-label="Character cards">
+          <!-- Optional static fallback cards (safe even if JS replaces them) -->
+          <button class="character-spotlight" type="button" data-character="pooh" aria-label="Open Winnie the Pooh details">
+            <div class="character-illustration">
+              <img src="images/Characters/pooh.png" alt="Winnie the Pooh" loading="lazy" decoding="async" />
+            </div>
+            <div class="character-quote">A little honey goes a long way.</div>
+            <div class="character-name">Winnie the Pooh</div>
+          </button>
+
+          <button class="character-spotlight" type="button" data-character="piglet" aria-label="Open Piglet details">
+            <div class="character-illustration">
+              <img src="images/Characters/piglet.png" alt="Piglet" loading="lazy" decoding="async" />
+            </div>
+            <div class="character-quote">Small steps. Big heart.</div>
+            <div class="character-name">Piglet</div>
+          </button>
+
+          <button class="character-spotlight" type="button" data-character="tigger" aria-label="Open Tigger details">
+            <div class="character-illustration">
+              <img src="images/Characters/tigger.png" alt="Tigger" loading="lazy" decoding="async" />
+            </div>
+            <div class="character-quote">Bouncy, trouncy, fun-fun-fun.</div>
+            <div class="character-name">Tigger</div>
+          </button>
+
+          <button class="character-spotlight" type="button" data-character="eeyore" aria-label="Open Eeyore details">
+            <div class="character-illustration">
+              <img src="images/Characters/eeyore.png" alt="Eeyore" loading="lazy" decoding="async" />
+            </div>
+            <div class="character-quote">Quiet love still counts.</div>
+            <div class="character-name">Eeyore</div>
+          </button>
+        </div>
+      </div>
+    </section>
+
+    <!-- Games -->
+    <section class="page-section" id="games" aria-labelledby="gamesTitle">
+      <div class="container">
+        <h2 class="section-title" id="gamesTitle">Games</h2>
+
+        <div class="games-container">
+          <!-- Honey Pot Catch -->
+          <article class="game-card" id="catch-card" aria-label="Honey Pot Catch game">
+            <header class="game-header">
+              <h3 class="game-title">
+                <i class="fa-solid fa-basketball" aria-hidden="true"></i>
+                Honey Pot Catch
+              </h3>
+              <p class="game-description">
+                Help Pooh catch falling honey pots while avoiding angry bees! Use arrow keys, touch, or the joystick.
+              </p>
+            </header>
+
+            <!-- Quick stats / meta (these IDs are required by JS) -->
+            <div class="game-meta" aria-label="Game status">
+              <span class="meta-pill"><strong>Score:</strong> <span id="score-count">0</span></span>
+              <span class="meta-pill"><strong>Time:</strong> <span id="time-count">60</span>s</span>
+              <span class="meta-pill"><strong>Lives:</strong> <span id="catch-lives">3</span></span>
+              <span class="meta-pill"><strong>Combo:</strong> <span id="catch-combo">0</span></span>
+              <span class="meta-pill"><strong>×</strong><span id="catch-multiplier">1</span></span>
             </div>
 
-            <button class="nav-toggle" id="navToggle" aria-label="Toggle navigation menu" aria-expanded="false"
-                aria-controls="navMenu">
-                <i class="fas fa-bars" aria-hidden="true"></i>
+            <div class="game-canvas-container">
+              <canvas id="honey-game" class="game-canvas" aria-label="Honey Pot Catch canvas"></canvas>
+
+              <!-- Overlay (IDs required by JS) -->
+              <div class="game-overlay" id="catch-overlay" aria-live="polite">
+                <div class="countdown-display" id="catch-countdown">Press Start to Play</div>
+                <div class="overlay-hint" id="catch-hint">Keep Pooh under the falling honey.</div>
+              </div>
+
+              <!-- Mobile joystick (CSS already supports this) -->
+              <div class="virtual-joystick" id="catchJoystick" aria-label="Virtual joystick" role="application">
+                <div class="joystick-base" aria-hidden="true"></div>
+                <div class="joystick-handle" aria-hidden="true"></div>
+              </div>
+            </div>
+
+            <div class="game-controls" aria-label="Game controls">
+              <button class="primary-btn" id="start-catch" type="button">
+                <i class="fa-solid fa-play" aria-hidden="true"></i>
+                Start
+              </button>
+
+              <button class="secondary-btn" id="pause-catch" type="button" aria-pressed="false">
+                <i class="fa-solid fa-pause" aria-hidden="true"></i>
+                Pause
+              </button>
+            </div>
+
+            <p class="game-status-badge" id="catchStatus" aria-live="polite">
+              Tip: iOS Safari likes a first tap before audio + canvas feel “alive”.
+            </p>
+          </article>
+        </div>
+      </div>
+    </section>
+
+    <!-- Wishes -->
+    <section class="page-section" id="wishes" aria-labelledby="wishesTitle">
+      <div class="container">
+        <h2 class="section-title" id="wishesTitle">Leave a Wish</h2>
+
+        <form class="wish-form" id="wishForm" autocomplete="on">
+          <div class="form-row">
+            <label class="form-label" for="wishName">Your name</label>
+            <input class="form-input" id="wishName" name="name" type="text" placeholder="e.g., Aunt Melissa" />
+          </div>
+
+          <div class="form-row">
+            <label class="form-label" for="wishMessage">Your wish for Gunnar</label>
+            <textarea class="form-textarea" id="wishMessage" name="message" rows="4" placeholder="A short note…"></textarea>
+          </div>
+
+          <div class="form-actions">
+            <button class="primary-btn" type="submit">
+              <i class="fa-solid fa-paper-plane" aria-hidden="true"></i>
+              Send Wish
             </button>
+            <button class="secondary-btn" type="reset">Clear</button>
+          </div>
 
-            <div class="nav-menu" id="navMenu">
-                <a href="#section1" class="nav-item active" data-section="section1">
-                    <i class="fas fa-book" aria-hidden="true"></i>
-                    <span>Story Beginning</span>
-                </a>
-                <a href="#section2" class="nav-item" data-section="section2">
-                    <i class="fas fa-envelope" aria-hidden="true"></i>
-                    <span>Invitation &amp; RSVP</span>
-                </a>
-                <a href="#section6" class="nav-item" data-section="section6">
-                    <i class="fas fa-map-marker-alt" aria-hidden="true"></i>
-                    <span>Location &amp; Details</span>
-                </a>
-                <a href="#section3" class="nav-item" data-section="section3">
-                    <i class="fas fa-users" aria-hidden="true"></i>
-                    <span>Meet the Characters</span>
-                </a>
-                <a href="#section5" class="nav-item" data-section="section5">
-                    <i class="fas fa-gift" aria-hidden="true"></i>
-                    <span>Gunner's Treasure Trove</span>
-                </a>
-                <a href="#games" class="nav-item" data-section="games">
-                    <i class="fas fa-gamepad" aria-hidden="true"></i>
-                    <span>Bonus Pooh Games</span>
-                </a>
-            </div>
+          <p class="form-note" id="wishNote" aria-live="polite"></p>
+        </form>
+      </div>
+    </section>
+
+    <footer class="site-footer" role="contentinfo">
+      <div class="container">
+        <p>Made with honey, books, and a suspicious amount of HTML.</p>
+      </div>
+    </footer>
+  </main>
+
+  <!-- Character Modal (safe, optional; your script may also build its own) -->
+  <div class="modal" id="characterModal" role="dialog" aria-modal="true" aria-hidden="true" hidden>
+    <div class="modal-backdrop" data-close-modal></div>
+    <div class="modal-panel" role="document" aria-labelledby="characterModalTitle">
+      <button class="modal-close" type="button" aria-label="Close" data-close-modal>
+        <i class="fa-solid fa-xmark" aria-hidden="true"></i>
+      </button>
+
+      <div class="modal-header">
+        <div class="modal-icon" id="characterModalIcon" aria-hidden="true"></div>
+        <h3 class="modal-title" id="characterModalTitle">Character</h3>
+        <p class="modal-subtitle" id="characterModalRole"></p>
+      </div>
+
+      <div class="modal-body">
+        <p class="modal-quote" id="characterModalQuote"></p>
+        <p class="modal-bio" id="characterModalBio"></p>
+
+        <div class="modal-grid">
+          <div class="modal-card">
+            <div class="modal-card-title">Fun fact</div>
+            <div class="modal-card-body" id="characterModalFunFact"></div>
+          </div>
+          <div class="modal-card">
+            <div class="modal-card-title">Responsibilities</div>
+            <ul class="modal-list" id="characterModalResponsibilities"></ul>
+          </div>
         </div>
-    </nav>
-
-    <!-- Storybook cover -->
-    <div class="storybook-cover" id="storybookCover" aria-labelledby="coverTitle">
-        <div class="cover-decoration" aria-hidden="true"></div>
-        <h1 class="cover-title" id="coverTitle">The Hundred Acre Celebration</h1>
-        <p class="cover-subtitle">Welcoming Baby Gunner to Our Story</p>
-        <button class="open-book-btn" id="openBookBtn">
-            <i class="fas fa-book-open" aria-hidden="true"></i>
-            <span>Open the Story</span>
-        </button>
+      </div>
     </div>
+  </div>
 
-    <!-- Music & accessibility controls -->
-    <div class="music-controls" aria-label="Page controls">
-        <button class="music-btn" id="musicToggle" aria-label="Toggle background music">
-            <i class="fas fa-music" aria-hidden="true"></i>
-        </button>
-        <button class="accessibility-btn" id="motionToggle" aria-label="Toggle reduced motion">
-            <i class="fas fa-universal-access" aria-hidden="true"></i>
-        </button>
-    </div>
-
-    <!-- Background music element -->
-    <audio id="bgMusic" loop preload="auto">
-        <source src="media/hundred-acre-lullaby.mp3" type="audio/mpeg">
-    </audio>
-
-    <!-- FABs -->
-    <div class="fab-container" aria-label="Quick navigation">
-        <button class="fab" id="scrollTopFab" aria-label="Back to top of page">
-            <i class="fas fa-arrow-up" aria-hidden="true"></i>
-        </button>
-        <button class="fab" id="scrollRsvpFab" aria-label="Jump to RSVP form">
-            <i class="fas fa-heart" aria-hidden="true"></i>
-        </button>
-    </div>
-
-    <!-- Main content - Celebration Storybook -->
-    <main id="mainContent" tabindex="-1">
-        <div class="storybook-shell">
-            <div class="storybook" id="storybook">
-                <div class="storybook-inner">
-                    <header class="storybook-header">
-                        <h2 class="storybook-heading">Once upon a very special day...</h2>
-                        <p class="storybook-subheading">A new little friend joins the Hundred Acre Wood</p>
-                    </header>
-
-                    <!-- Section 1: Story beginning -->
-                    <section class="content-section scroll-animate" id="section1" aria-labelledby="storyStartTitle">
-                        <div class="content-section-inner">
-                            <div class="section-number">1</div>
-                            <div class="section-header">
-                                <h2 class="story-title" id="storyStartTitle">
-                                    Once Upon a Time in the Hundred Acre Wood...
-                                </h2>
-                            </div>
-
-                            <button class="woodland-sign" type="button" onclick="playWoodlandSound(event)">
-                                Welcome to the Hundred Acre Wood
-                            </button>
-
-                            <div class="story-section">
-                                <p class="story-text">
-                                    In a corner of the world where stories grow on trees and adventures wait around every bend,
-                                    a very special celebration is being prepared. The friends of the Hundred Acre Wood are gathering
-                                    together, for they've heard the most wonderful news – a new friend is coming to join their adventures:
-                                    Baby Gunner.
-                                </p>
-                            </div>
-
-                            <!-- Pooh spotlight uses honey-bear.png -->
-                            <button class="character-spotlight" type="button" data-character="pooh"
-                                onclick="showCharacterModal('pooh')">
-                                <div class="character-illustration" aria-hidden="true">
-                                    <img src="Images/Characters/honey-bear.png" alt="" />
-                                </div>
-                                <div class="character-spotlight-content">
-                                    <div class="character-quote">
-                                        "Oh, bother! I do believe this calls for a Very Special Something. Perhaps with a little honey?"
-                                    </div>
-                                    <div class="character-name">- Winnie the Pooh</div>
-                                </div>
-                            </button>
-
-                            <div class="story-section">
-                                <p class="story-text">
-                                    And so it was decided that all the creatures of the wood would come together for a Grand Celebration
-                                    to welcome this new little friend. They would share stories, play games, and of course, enjoy
-                                    plenty of honey and treats. For when a new friend arrives in the Hundred Acre Wood, it is always
-                                    a cause for the happiest of gatherings.
-                                </p>
-                            </div>
-                        </div>
-                    </section>
-
-                    <!-- Section 2: Invitation & RSVP -->
-                    <section class="content-section scroll-animate" id="section2" aria-labelledby="invitationTitle">
-                        <div class="content-section-inner">
-                            <div class="section-number">2</div>
-                            <div class="section-header">
-                                <h2 class="story-title" id="invitationTitle">You Are Cordially Invited</h2>
-                            </div>
-
-                            <button class="woodland-sign" type="button" onclick="playWoodlandSound(event)">
-                                Party This Way →
-                            </button>
-
-                            <div class="story-section">
-                                <p class="story-text">
-                                    The friends of the Hundred Acre Wood request the pleasure of your company at a Very Special
-                                    Celebration in honor of Baby Gunner. Come share in the joy, laughter, and honey-sweet moments
-                                    as we prepare to welcome this new little adventurer to our story.
-                                </p>
-                            </div>
-
-                            <div class="invitation-details" aria-label="Event details">
-                                <div class="detail-card">
-                                    <div class="detail-title">Date &amp; Time</div>
-                                    <div class="detail-content">
-                                        Saturday, February 15, 2025<br>
-                                        1:00 PM – 4:00 PM<br>
-                                        <small>(Arrive a few minutes early to visit the honey jars and guestbook.)</small>
-                                    </div>
-                                </div>
-                                <div class="detail-card">
-                                    <div class="detail-title">Location</div>
-                                    <div class="detail-content">
-                                        The Hundred Acre Gathering Hall<br>
-                                        123 Storybook Lane<br>
-                                        Hometown, USA<br>
-                                        <em>Follow the balloons and honey pots from the parking lot.</em>
-                                    </div>
-                                </div>
-                            </div>
-
-                            <div class="rsvp-form" id="rsvp">
-                                <h3
-                                    style="font-family: var(--font-heading); font-size: 1.4rem; margin-bottom: 8px; color: var(--storybook-brown);">
-                                    RSVP to Join the Celebration
-                                </h3>
-                                <form class="storybook-form" id="rsvpForm" novalidate>
-                                    <div class="form-grid">
-                                        <div class="form-field">
-                                            <label class="field-label" for="guestName">
-                                                <i class="fas fa-user" aria-hidden="true"></i>
-                                                <span>Your Name</span>
-                                            </label>
-                                            <input id="guestName" name="guestName" type="text" required
-                                                autocomplete="name"
-                                                placeholder="Who's coming from your Hundred Acre Wood?">
-                                        </div>
-                                        <div class="form-field">
-                                            <label class="field-label" for="guestCount">
-                                                <i class="fas fa-users" aria-hidden="true"></i>
-                                                <span>Number of Guests</span>
-                                            </label>
-                                            <select id="guestCount" name="guestCount" required>
-                                                <option value="">Select</option>
-                                                <option value="1">Just me</option>
-                                                <option value="2">2</option>
-                                                <option value="3">3</option>
-                                                <option value="4">4</option>
-                                                <option value="5">5</option>
-                                            </select>
-                                        </div>
-                                    </div>
-                                    <div class="form-field">
-                                        <label class="field-label" for="guestNote">
-                                            <i class="fas fa-comment-dots" aria-hidden="true"></i>
-                                            <span>Notes for the Hosts</span>
-                                        </label>
-                                        <textarea id="guestNote" name="guestNote" rows="3"
-                                            placeholder="Share favorite snacks, allergies, or a short note for Baby Gunner."></textarea>
-                                    </div>
-                                    <button type="submit" class="magical-btn">
-                                        <i class="fas fa-paper-plane" aria-hidden="true"></i>
-                                        <span>Send RSVP</span>
-                                    </button>
-                                    <div class="form-status" id="rsvpStatus" aria-live="polite"></div>
-                                </form>
-                            </div>
-                        </div>
-                    </section>
-
-                    <!-- Section 3: Location / logistics -->
-                    <section class="content-section scroll-animate" id="section6"
-                        aria-labelledby="locationTitle">
-                        <div class="content-section-inner">
-                            <div class="section-number">3</div>
-
-                            <div class="section-header">
-                                <h2 class="story-title" id="locationTitle">Finding Our Woodland Gathering</h2>
-                            </div>
-
-                            <button class="woodland-sign" type="button" onclick="playWoodlandSound(event)">
-                                Directions &amp; Details
-                            </button>
-
-                            <div class="story-section">
-                                <p class="story-text">
-                                    Even the most wonderful adventures require a bit of practical planning. Here you'll find
-                                    all the details needed to join our celebration without any bother. From parking spots to
-                                    dress code (storybook-comfy), we've tucked the important notes just below.
-                                </p>
-                            </div>
-
-                            <div class="invitation-details" aria-label="Logistics">
-                                <div class="detail-card">
-                                    <div class="detail-title">Parking &amp; Arrival</div>
-                                    <div class="detail-content">
-                                        Follow the balloons and wooden signs from the main entrance. Parking attendants (disguised
-                                        as friendly grown-ups) will help you find a spot.
-                                    </div>
-                                </div>
-                                <div class="detail-card">
-                                    <div class="detail-title">Dress Code</div>
-                                    <div class="detail-content">
-                                        Soft, cozy, and picture-ready. Pastels, florals, or a nod to your favorite Hundred Acre
-                                        friend are all welcome.
-                                    </div>
-                                </div>
-                            </div>
-                        </div>
-                    </section>
-
-                    <!-- Section 4: Characters -->
-                    <section class="content-section scroll-animate" id="section3"
-                        aria-labelledby="charactersTitle">
-                        <div class="content-section-inner">
-                            <div class="section-number">4</div>
-
-                            <div class="section-header">
-                                <h2 class="story-title" id="charactersTitle">Meet Our Hosts</h2>
-                            </div>
-
-                            <button class="woodland-sign" type="button" onclick="playWoodlandSound(event)">
-                                Character Meet &amp; Greet
-                            </button>
-
-                            <div class="story-section">
-                                <p class="story-text">
-                                    All your favorite friends from the Hundred Acre Wood will be there to welcome you and share
-                                    in the celebration. Each has prepared a little something special for Baby Gunner (and for you).
-                                    Tap or click on a character to learn more about how they're helping with the party.
-                                </p>
-                            </div>
-
-                            <div id="charactersGrid" class="characters-grid-enhanced" aria-live="polite"></div>
-
-                            <!-- Character PNGs here -->
-                            <button class="character-spotlight" type="button" onclick="showCharacterModal('pooh')">
-                                <div class="character-illustration" aria-hidden="true">
-                                    <img src="Images/Characters/honey-bear.png" alt="" />
-                                </div>
-                                <div class="character-spotlight-content">
-                                    <div class="character-quote">
-                                        "Sometimes the smallest things take up the most room in your heart."
-                                    </div>
-                                    <div class="character-name">Winnie the Pooh</div>
-                                </div>
-                            </button>
-
-                            <button class="character-spotlight" type="button" onclick="showCharacterModal('piglet')">
-                                <div class="character-illustration" aria-hidden="true">
-                                    <img src="Images/Characters/piglet.png" alt="" />
-                                </div>
-                                <div class="character-spotlight-content">
-                                    <div class="character-quote">
-                                        "Even the littlest friend can bring the greatest joy."
-                                    </div>
-                                    <div class="character-name">Piglet</div>
-                                </div>
-                            </button>
-
-                            <button class="character-spotlight" type="button" onclick="showCharacterModal('tigger')">
-                                <div class="character-illustration" aria-hidden="true">
-                                    <img src="Images/Characters/tigger.png" alt="" />
-                                </div>
-                                <div class="character-spotlight-content">
-                                    <div class="character-quote">
-                                        "New babies are what Tiggers like best!"
-                                    </div>
-                                    <div class="character-name">Tigger</div>
-                                </div>
-                            </button>
-
-                            <button class="character-spotlight" type="button" onclick="showCharacterModal('eeyore')">
-                                <div class="character-illustration" aria-hidden="true">
-                                    <img src="Images/Characters/eeyore.png" alt="" />
-                                </div>
-                                <div class="character-spotlight-content">
-                                    <div class="character-quote">
-                                        "Not that I'm complaining, but it will be rather nice to have someone new around."
-                                    </div>
-                                    <div class="character-name">Eeyore</div>
-                                </div>
-                            </button>
-                        </div>
-                    </section>
-
-                    <!-- Section 5: Gifts -->
-                    <section class="content-section scroll-animate" id="section5"
-                        aria-labelledby="treasureTitle">
-                        <div class="content-section-inner">
-                            <div class="section-number">5</div>
-
-                            <div class="section-header">
-                                <h2 class="story-title" id="treasureTitle">Gunner's Treasure Trove</h2>
-                            </div>
-
-                            <button class="woodland-sign" type="button" onclick="playWoodlandSound(event)">
-                                Baby's First Treasures
-                            </button>
-
-                            <div class="story-section">
-                                <p class="story-text">
-                                    Your presence at our celebration is the greatest gift we could imagine. For those who have
-                                    asked about gifts, we've created a small treasure trove of items that would help welcome
-                                    our little one to the world. But handwritten notes, favorite children's books,
-                                    or simple well-wishes are equally treasured.
-                                </p>
-                            </div>
-
-                            <div class="invitation-details" aria-label="Gift suggestions">
-                                <div class="detail-card">
-                                    <div class="detail-title">Book Nook</div>
-                                    <div class="detail-content">
-                                        Bring your favorite childhood book (new or gently loved) with a note inside for Baby Gunner.
-                                        The Hundred Acre Wood will become his first library.
-                                    </div>
-                                </div>
-                                <div class="detail-card">
-                                    <div class="detail-title">Registry</div>
-                                    <div class="detail-content">
-                                        For anyone who asked, registry details can be shared by the hosts. Think cozy blankets,
-                                        soft friends, and just enough honey-colored things to make a nursery glow.
-                                    </div>
-                                </div>
-                            </div>
-                        </div>
-                    </section>
-
-                  <!-- Games Section - Bonus Pooh Games -->
-                  <!-- Section 6: Games (bonus) -->
-                    <section class="content-section scroll-animate" id="games" aria-labelledby="gamesTitle">
-                        <div class="content-section-inner">
-                            <div class="section-number">6</div>
-                            
-                            <div class="section-header">
-                                <h2 class="story-title" id="gamesTitle">Bonus Pooh Games</h2>
-                            </div>
-                            
-                            <button class="woodland-sign" type="button" onclick="playWoodlandSound(event)">
-                                Playful Adventures
-                            </button>
-                            
-                            <div class="story-section">
-                                <p class="story-text">
-                                    Enjoy some Hundred Acre Wood fun while you wait for the celebration to begin. 
-                                    These gentle games are designed for all ages and celebrate our woodland friends.
-                                </p>
-                            </div>
-                            
-                            <!-- Honey Hive Defense Game -->
-                            <div class="game-card">
-                                <div class="game-header">
-                                    <h3 class="game-title">
-                                        <i class="fas fa-shield-alt"></i>
-                                        Honey Hive Defense
-                                    </h3>
-                                    <p class="game-description">
-                                        Protect the honey jars from Heffalumps and Woozles! Place your Hundred Acre Wood friends along the path.
-                                    </p>
-                                </div>
-                                
-                                <div class="game-canvas-container">
-                                    <canvas id="defense-game" class="game-canvas"></canvas>
-                                    <div class="game-overlay" id="defense-overlay">
-                                        <div class="countdown-display">Click Start to Begin</div>
-                                    </div>
-                                </div>
-                                
-                                <div class="game-controls">
-                                    <div class="game-stats">
-                                        <div class="stat-item">
-                                            <span class="stat-label">Honey:</span>
-                                            <span id="honey-count" class="stat-value">100</span>
-                                        </div>
-                                        <div class="stat-item">
-                                            <span class="stat-label">Lives:</span>
-                                            <span id="lives-count" class="stat-value">10</span>
-                                        </div>
-                                        <div class="stat-item">
-                                            <span class="stat-label">Wave:</span>
-                                            <span id="wave-count" class="stat-value">1</span>
-                                        </div>
-                                    </div>
-                                    
-                                    <div class="tower-selection">
-                                        <button class="tower-option selected" data-tower="pooh" onclick="selectTower('pooh')">
-                                            <i class="fas fa-bear"></i> Pooh
-                                        </button>
-                                        <button class="tower-option" data-tower="tigger" onclick="selectTower('tigger')">
-                                            <i class="fas fa-paw"></i> Tigger
-                                        </button>
-                                        <button class="tower-option" data-tower="piglet" onclick="selectTower('piglet')">
-                                            <i class="fas fa-heart"></i> Piglet
-                                        </button>
-                                        <button class="tower-option" data-tower="eeyore" onclick="selectTower('eeyore')">
-                                            <i class="fas fa-cloud"></i> Eeyore
-                                        </button>
-                                    </div>
-                                    
-                                    <div class="game-buttons">
-                                        <button onclick="startDefenseGame()" class="game-btn primary">
-                                            <i class="fas fa-play"></i> Start Wave
-                                        </button>
-                                        <button onclick="upgradeAllTowers()" class="game-btn secondary">
-                                            <i class="fas fa-level-up-alt"></i> Upgrade All
-                                        </button>
-                                    </div>
-                                </div>
-                                
-                                <div class="game-tips">
-                                    <div class="tip">
-                                        <i class="fas fa-mouse-pointer"></i>
-                                        <p><strong>Click</strong> on the field to place towers</p>
-                                    </div>
-                                    <div class="tip">
-                                        <i class="fas fa-coins"></i>
-                                        <p>Collect <strong>honey</strong> by defeating enemies</p>
-                                    </div>
-                                    <div class="tip">
-                                        <i class="fas fa-sync-alt"></i>
-                                        <p><strong>Upgrade</strong> towers for more power</p>
-                                    </div>
-                                </div>
-                            </div>
-                            
-                            <!-- Honey Pot Catch Game -->
-                            <div class="game-card">
-                                <div class="game-header">
-                                    <h3 class="game-title">
-                                        <i class="fas fa-basketball-ball"></i>
-                                        Honey Pot Catch
-                                    </h3>
-                                    <p class="game-description">
-                                        Help Pooh catch falling honey pots while avoiding angry bees! Use arrow keys or touch to move.
-                                    </p>
-                                </div>
-                                
-                                <div class="game-canvas-container">
-                                    <canvas id="honey-game" class="game-canvas"></canvas>
-                                    <div class="game-overlay" id="catch-overlay">
-                                        <div class="countdown-display">Press Start to Play</div>
-                                    </div>
-                                </div>
-                                
-                                <div class="game-controls">
-                                    <div class="game-stats">
-                                        <div class="stat-item">
-                                            <span class="stat-label">Score:</span>
-                                            <span id="score-count" class="stat-value">0</span>
-                                        </div>
-                                        <div class="stat-item">
-                                            <span class="stat-label">Time:</span>
-                                            <span id="time-count" class="stat-value">60</span>
-                                        </div>
-                                        <div class="stat-item">
-                                            <span class="stat-label">Lives:</span>
-                                            <span id="catch-lives" class="stat-value">3</span>
-                                        </div>
-                                    </div>
-                                    
-                                    <div class="game-buttons">
-                                        <button onclick="startCatchGame()" class="game-btn primary">
-                                            <i class="fas fa-play"></i> Start Game
-                                        </button>
-                                        <button onclick="pauseCatchGame()" class="game-btn secondary">
-                                            <i class="fas fa-pause"></i> Pause
-                                        </button>
-                                        <div class="mobile-controls" id="mobile-controls">
-                                            <button class="mobile-btn left-btn" onclick="movePoohLeft()">
-                                                <i class="fas fa-arrow-left"></i>
-                                            </button>
-                                            <button class="mobile-btn right-btn" onclick="movePoohRight()">
-                                                <i class="fas fa-arrow-right"></i>
-                                            </button>
-                                        </div>
-                                    </div>
-                                </div>
-                                
-                                <div class="game-tips">
-                                    <div class="tip">
-                                        <i class="fas fa-arrow-left"></i>
-                                        <i class="fas fa-arrow-right"></i>
-                                        <p>Use <strong>arrow keys</strong> or <strong>buttons</strong> to move</p>
-                                    </div>
-                                    <div class="tip">
-                                        <i class="fas fa-star"></i>
-                                        <p>Catch <strong>honey pots</strong> for 10 points</p>
-                                    </div>
-                                    <div class="tip">
-                                        <i class="fas fa-bug"></i>
-                                        <p>Avoid <strong>bees</strong> - they cost 1 life</p>
-                                    </div>
-                                </div>
-                            </div>
-                        </div>
-                    </section>
-
-
-                    <footer class="footer">
-                        <p>"Sometimes the smallest things take up the most room in your heart."</p>
-                        <p>We can't wait to celebrate Baby Gunner with you in our own little Hundred Acre Wood.</p>
-                    </footer>
-                </div>
-            </div>
-        </div>
-    </main>
-
-    <!-- Character modal -->
-    <div class="character-modal" id="characterModal" role="dialog" aria-modal="true"
-        aria-labelledby="characterModalTitle">
-        <div class="modal-content">
-            <button class="close-modal" id="closeCharacterModal" aria-label="Close character details">
-                <i class="fas fa-times" aria-hidden="true"></i>
-            </button>
-            <div class="modal-character">
-                <div class="modal-character-icon" id="modalCharacterIcon" aria-hidden="true"></div>
-                <div>
-                    <div class="modal-character-name" id="characterModalTitle"></div>
-                </div>
-            </div>
-            <div class="modal-character-quote" id="modalCharacterQuote"></div>
-            <p class="modal-character-bio" id="modalCharacterBio"></p>
-        </div>
-    </div>
-        <!-- Scripts -->
-    <!-- Main UI functionality -->
-    <script src="script.js"></script>
-    
-    <!-- Consolidated game module -->
-    <script src="game.js"></script>
-    
-    <!-- Optional: Load Font Awesome for icons -->
-    <script src="https://kit.fontawesome.com/your-fontawesome-kit.js" crossorigin="anonymous"></script>
-
-    <!-- Game Scripts (replace the old script tags) -->
-<script>
-    // ============================================
-    // HONEY HIVE DEFENSE GAME
-    // ============================================
-    let defenseGameActive = false;
-    let currentWave = 1;
-    let honey = 100;
-    let lives = 10;
-    let selectedTower = 'pooh';
-    let towers = [];
-    
-    const defenseCanvas = document.getElementById('defense-game');
-    const defenseCtx = defenseCanvas.getContext('2d');
-    
-    // Initialize canvas size
-    function initDefenseCanvas() {
-        const container = defenseCanvas.parentElement;
-        defenseCanvas.width = container.clientWidth;
-        defenseCanvas.height = container.clientHeight;
-    }
-    
-    // Tower selection
-    function selectTower(towerType) {
-        selectedTower = towerType;
-        document.querySelectorAll('.tower-option').forEach(btn => {
-            btn.classList.remove('selected');
-        });
-        event.target.closest('.tower-option').classList.add('selected');
-    }
-    
-    // Start defense game
-    function startDefenseGame() {
-        if (defenseGameActive) return;
-        
-        defenseGameActive = true;
-        document.getElementById('defense-overlay').style.display = 'none';
-        currentWave++;
-        document.getElementById('wave-count').textContent = currentWave;
-        
-        // Simulate game for demonstration
-        setTimeout(() => {
-            honey += 25;
-            lives -= 1;
-            document.getElementById('honey-count').textContent = honey;
-            document.getElementById('lives-count').textContent = lives;
-            
-            // Draw something on canvas
-            defenseCtx.clearRect(0, 0, defenseCanvas.width, defenseCanvas.height);
-            
-            // Draw background
-            defenseCtx.fillStyle = '#FFF9E6';
-            defenseCtx.fillRect(0, 0, defenseCanvas.width, defenseCanvas.height);
-            
-            // Draw path
-            defenseCtx.strokeStyle = '#8B4513';
-            defenseCtx.lineWidth = 4;
-            defenseCtx.beginPath();
-            defenseCtx.moveTo(20, defenseCanvas.height/2);
-            defenseCtx.lineTo(defenseCanvas.width - 20, defenseCanvas.height/2);
-            defenseCtx.stroke();
-            
-            // Draw towers
-            if (towers.length === 0) {
-                towers.push({x: 100, y: defenseCanvas.height/2 - 30, type: 'pooh'});
-                towers.push({x: defenseCanvas.width/2, y: defenseCanvas.height/2 - 30, type: 'tigger'});
-            }
-            
-            towers.forEach(tower => {
-                defenseCtx.fillStyle = getTowerColor(tower.type);
-                defenseCtx.fillRect(tower.x, tower.y, 40, 40);
-                defenseCtx.fillStyle = '#8B4513';
-                defenseCtx.font = '12px Arial';
-                defenseCtx.fillText(tower.type.charAt(0).toUpperCase(), tower.x + 15, tower.y + 25);
-            });
-            
-            // Draw enemies
-            defenseCtx.fillStyle = '#FF0000';
-            defenseCtx.beginPath();
-            defenseCtx.arc(defenseCanvas.width - 50, defenseCanvas.height/2, 15, 0, Math.PI * 2);
-            defenseCtx.fill();
-            defenseCtx.fillStyle = 'white';
-            defenseCtx.font = '10px Arial';
-            defenseCtx.fillText('H', defenseCanvas.width - 54, defenseCanvas.height/2 + 4);
-            
-            defenseGameActive = false;
-        }, 1000);
-    }
-    
-    function getTowerColor(type) {
-        const colors = {
-            pooh: '#FFC42B',
-            tigger: '#FF8C00',
-            piglet: '#FFB6C1',
-            eeyore: '#A9A9A9'
-        };
-        return colors[type] || '#8B4513';
-    }
-    
-    function upgradeAllTowers() {
-        if (honey >= 50) {
-            honey -= 50;
-            document.getElementById('honey-count').textContent = honey;
-            alert('All towers upgraded! They are now twice as strong.');
-        } else {
-            alert('Not enough honey! Collect more by defeating enemies.');
-        }
-    }
-    
-    // ============================================
-    // HONEY POT CATCH GAME
-    // ============================================
-    let catchGameActive = false;
-    let score = 0;
-    let timeLeft = 60;
-    let catchLives = 3;
-    let poohX = 0;
-    let gameInterval;
-    
-    const catchCanvas = document.getElementById('honey-game');
-    const catchCtx = catchCanvas.getContext('2d');
-    const mobileControls = document.getElementById('mobile-controls');
-    
-    // Initialize canvas size
-    function initCatchCanvas() {
-        const container = catchCanvas.parentElement;
-        catchCanvas.width = container.clientWidth;
-        catchCanvas.height = container.clientHeight;
-        poohX = catchCanvas.width / 2;
-        drawCatchGame();
-    }
-    
-    // Start catch game
-    function startCatchGame() {
-        if (catchGameActive) return;
-        
-        catchGameActive = true;
-        score = 0;
-        timeLeft = 60;
-        catchLives = 3;
-        poohX = catchCanvas.width / 2;
-        
-        document.getElementById('catch-overlay').style.display = 'none';
-        document.getElementById('score-count').textContent = score;
-        document.getElementById('time-count').textContent = timeLeft;
-        document.getElementById('catch-lives').textContent = catchLives;
-        
-        // Show mobile controls on small screens
-        if (window.innerWidth < 768) {
-            mobileControls.style.display = 'flex';
-        }
-        
-        // Start game loop
-        gameInterval = setInterval(gameLoop, 100);
-        
-        // Add keyboard controls
-        document.addEventListener('keydown', handleKeyPress);
-    }
-    
-    function gameLoop() {
-        if (!catchGameActive) return;
-        
-        timeLeft -= 0.1;
-        document.getElementById('time-count').textContent = Math.ceil(timeLeft);
-        
-        // Randomly add items
-        if (Math.random() < 0.2) {
-            // Simulate catching honey pot or hitting bee
-            if (Math.random() < 0.7) {
-                score += 10;
-                document.getElementById('score-count').textContent = score;
-            } else {
-                catchLives -= 1;
-                document.getElementById('catch-lives').textContent = catchLives;
-            }
-        }
-        
-        drawCatchGame();
-        
-        // Check game end conditions
-        if (timeLeft <= 0 || catchLives <= 0) {
-            endCatchGame();
-        }
-    }
-    
-    function drawCatchGame() {
-        catchCtx.clearRect(0, 0, catchCanvas.width, catchCanvas.height);
-        
-        // Draw sky
-        catchCtx.fillStyle = '#87CEEB';
-        catchCtx.fillRect(0, 0, catchCanvas.width, catchCanvas.height * 0.8);
-        
-        // Draw ground
-        catchCtx.fillStyle = '#8B4513';
-        catchCtx.fillRect(0, catchCanvas.height * 0.8, catchCanvas.width, catchCanvas.height * 0.2);
-        
-        // Draw Pooh
-        catchCtx.fillStyle = '#FFC42B';
-        catchCtx.beginPath();
-        catchCtx.arc(poohX, catchCanvas.height * 0.8, 20, 0, Math.PI * 2);
-        catchCtx.fill();
-        
-        // Draw Pooh's face
-        catchCtx.fillStyle = '#8B4513';
-        catchCtx.beginPath();
-        catchCtx.arc(poohX - 8, catchCanvas.height * 0.8 - 5, 3, 0, Math.PI * 2); // Left eye
-        catchCtx.arc(poohX + 8, catchCanvas.height * 0.8 - 5, 3, 0, Math.PI * 2); // Right eye
-        catchCtx.fill();
-        
-        catchCtx.beginPath();
-        catchCtx.arc(poohX, catchCanvas.height * 0.8 + 5, 5, 0, Math.PI); // Smile
-        catchCtx.stroke();
-        
-        // Draw falling items
-        for (let i = 0; i < 5; i++) {
-            const x = catchCanvas.width * Math.random();
-            const y = catchCanvas.height * Math.random() * 0.7;
-            
-            if (i % 3 === 0) {
-                // Draw bee
-                catchCtx.fillStyle = '#FFD700';
-                catchCtx.beginPath();
-                catchCtx.arc(x, y, 8, 0, Math.PI * 2);
-                catchCtx.fill();
-                
-                catchCtx.fillStyle = '#000000';
-                catchCtx.font = '10px Arial';
-                catchCtx.fillText('🐝', x - 6, y + 4);
-            } else {
-                // Draw honey pot
-                catchCtx.fillStyle = '#FFA500';
-                catchCtx.fillRect(x - 10, y - 10, 20, 15);
-                catchCtx.fillStyle = '#8B4513';
-                catchCtx.fillRect(x - 6, y - 15, 12, 5);
-            }
-        }
-    }
-    
-    function handleKeyPress(e) {
-        if (!catchGameActive) return;
-        
-        const moveAmount = 20;
-        
-        switch(e.key) {
-            case 'ArrowLeft':
-                poohX = Math.max(30, poohX - moveAmount);
-                break;
-            case 'ArrowRight':
-                poohX = Math.min(catchCanvas.width - 30, poohX + moveAmount);
-                break;
-        }
-    }
-    
-    function movePoohLeft() {
-        if (catchGameActive) {
-            poohX = Math.max(30, poohX - 20);
-        }
-    }
-    
-    function movePoohRight() {
-        if (catchGameActive) {
-            poohX = Math.min(catchCanvas.width - 30, poohX + 20);
-        }
-    }
-    
-    function pauseCatchGame() {
-        if (catchGameActive) {
-            catchGameActive = false;
-            clearInterval(gameInterval);
-            event.target.innerHTML = '<i class="fas fa-play"></i> Resume';
-            event.target.onclick = resumeCatchGame;
-        }
-    }
-    
-    function resumeCatchGame() {
-        catchGameActive = true;
-        gameInterval = setInterval(gameLoop, 100);
-        event.target.innerHTML = '<i class="fas fa-pause"></i> Pause';
-        event.target.onclick = pauseCatchGame;
-    }
-    
-    function endCatchGame() {
-        catchGameActive = false;
-        clearInterval(gameInterval);
-        document.removeEventListener('keydown', handleKeyPress);
-        
-        const overlay = document.getElementById('catch-overlay');
-        overlay.style.display = 'flex';
-        overlay.querySelector('.countdown-display').textContent = 
-            `Game Over! Final Score: ${score}`;
-        
-        // Reset button
-        const pauseBtn = document.querySelector('button[onclick="pauseCatchGame()"]');
-        if (pauseBtn) {
-            pauseBtn.innerHTML = '<i class="fas fa-pause"></i> Pause';
-            pauseBtn.onclick = pauseCatchGame;
-        }
-        
-        mobileControls.style.display = 'none';
-    }
-    
-    // ============================================
-    // INITIALIZATION
-    // ============================================
-    window.addEventListener('load', () => {
-        initDefenseCanvas();
-        initCatchCanvas();
-        
-        // Add click to place towers for defense game
-        defenseCanvas.addEventListener('click', (e) => {
-            if (!defenseGameActive) return;
-            
-            const rect = defenseCanvas.getBoundingClientRect();
-            const x = e.clientX - rect.left;
-            const y = e.clientY - rect.top;
-            
-            if (honey >= 30) {
-                honey -= 30;
-                document.getElementById('honey-count').textContent = honey;
-                towers.push({x: x - 20, y: y - 20, type: selectedTower});
-                drawDefenseGame();
-            }
-        });
-        
-        // Show mobile controls based on screen size
-        if (window.innerWidth < 768) {
-            mobileControls.style.display = 'flex';
-        }
-    });
-    
-    window.addEventListener('resize', () => {
-        initDefenseCanvas();
-        initCatchCanvas();
-    });
-    
-    // Simple draw function for defense game
-    function drawDefenseGame() {
-        defenseCtx.clearRect(0, 0, defenseCanvas.width, defenseCanvas.height);
-        
-        // Draw background
-        defenseCtx.fillStyle = '#FFF9E6';
-        defenseCtx.fillRect(0, 0, defenseCanvas.width, defenseCanvas.height);
-        
-        // Draw towers if any
-        towers.forEach(tower => {
-            defenseCtx.fillStyle = getTowerColor(tower.type);
-            defenseCtx.fillRect(tower.x, tower.y, 40, 40);
-            defenseCtx.fillStyle = '#8B4513';
-            defenseCtx.font = '12px Arial';
-            defenseCtx.fillText(tower.type.charAt(0).toUpperCase(), tower.x + 15, tower.y + 25);
-        });
-    }
-</script>
+  <!-- Scripts -->
+  <script src="script.js" defer></script>
+  <script src="game.js" defer></script>
 </body>
 </html>
-
