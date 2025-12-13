@@ -10,12 +10,23 @@
 
   <!-- Minimal, game-first styling -->
   <style>
+    :root {
+      --color-surface: #1a1208;
+      --color-surface-strong: rgba(26, 18, 8, 0.92);
+      --color-contrast: #f4e9d8;
+      --color-accent: #f4a944;
+      --color-border: rgba(255, 255, 255, 0.08);
+      --space-sm: 12px;
+      --space-md: 16px;
+      --radius-sm: 6px;
+    }
+
     html, body {
       margin: 0;
       padding: 0;
       height: 100%;
-      background: #1a1208;
-      color: #f4e9d8;
+      background: var(--color-surface);
+      color: var(--color-contrast);
       font-family: system-ui, -apple-system, BlinkMacSystemFont, sans-serif;
       overflow: hidden;
     }
@@ -31,9 +42,9 @@
       display: flex;
       align-items: center;
       justify-content: space-between;
-      padding: 12px 16px;
-      background: rgba(26, 18, 8, 0.9);
-      border-bottom: 1px solid rgba(255,255,255,0.08);
+      padding: var(--space-sm) var(--space-md);
+      background: var(--color-surface-strong);
+      border-bottom: 1px solid var(--color-border);
       z-index: 10;
     }
 
@@ -44,7 +55,7 @@
     }
 
     .game-exit {
-      color: #f4a944;
+      color: var(--color-accent);
       text-decoration: none;
       font-size: 0.9rem;
     }
@@ -63,6 +74,38 @@
       width: 100%;
       height: 100%;
       touch-action: none;
+      outline: none;
+    }
+
+    .sr-only {
+      border: 0;
+      clip: rect(0 0 0 0);
+      height: 1px;
+      margin: -1px;
+      overflow: hidden;
+      padding: 0;
+      position: absolute;
+      width: 1px;
+    }
+
+    .game-a11y-hint {
+      position: absolute;
+      inset: auto auto 12px 12px;
+      background: rgba(0, 0, 0, 0.55);
+      color: var(--color-contrast);
+      padding: 8px 10px;
+      border-radius: var(--radius-sm);
+      font-size: 0.85rem;
+      max-width: 240px;
+      line-height: 1.4;
+    }
+
+    @media (prefers-reduced-motion: reduce) {
+      * {
+        animation-duration: 0.01ms !important;
+        animation-iteration-count: 1 !important;
+        transition-duration: 0.01ms !important;
+      }
     }
   </style>
 </head>
@@ -75,11 +118,77 @@
     </header>
 
     <div class="game-canvas-wrap">
-      <canvas id="honey-game"></canvas>
+      <p id="game-instructions" class="sr-only">
+        Use left and right arrow keys, A or D keys, or a connected gamepad stick to move Pooh. Catch honey pots, avoid bees, and
+        collect power-ups. Press Escape to pause.
+      </p>
+      <canvas
+        id="honey-game"
+        role="application"
+        aria-label="Honey Pot Catch game canvas"
+        aria-describedby="game-instructions"
+        tabindex="0"
+      ></canvas>
+      <div class="game-a11y-hint" aria-hidden="true">
+        Keyboard: ← → / A D · Gamepad: Left stick · Touch: Drag to move
+      </div>
     </div>
   </div>
 
   <!-- Game ONLY -->
 <link rel="stylesheet" href="styles-game.css">
+<script defer src="game.js"></script>
+<script>
+  // Lightweight, file-less service worker registration to cache game assets
+  if ('serviceWorker' in navigator) {
+    const assetList = [
+      './',
+      'index.html',
+      'game.html',
+      'game.js',
+      'script.js',
+      'styles-game.css',
+      'styles-index.css'
+    ];
+
+    const swSource = `
+      const CACHE_NAME = 'honey-pwa-v1';
+      const ASSETS = ${JSON.stringify(assetList)};
+      self.addEventListener('install', event => {
+        event.waitUntil(
+          caches.open(CACHE_NAME).then(cache => cache.addAll(ASSETS)).then(() => self.skipWaiting())
+        );
+      });
+      self.addEventListener('activate', event => {
+        event.waitUntil(
+          caches.keys().then(keys => Promise.all(keys.filter(k => k !== CACHE_NAME).map(k => caches.delete(k)))).then(() => self.clients.claim())
+        );
+      });
+      self.addEventListener('fetch', event => {
+        if (event.request.method !== 'GET') return;
+        event.respondWith(
+          caches.match(event.request).then(cached => {
+            if (cached) return cached;
+            return fetch(event.request).then(response => {
+              if (response && response.status === 200 && response.type === 'basic') {
+                const clone = response.clone();
+                caches.open(CACHE_NAME).then(cache => cache.put(event.request, clone));
+              }
+              return response;
+            }).catch(() => caches.match('game.html'));
+          })
+        );
+      });
+    `;
+
+    const blob = new Blob([swSource], { type: 'text/javascript' });
+    const swUrl = window.__honeySwUrl || URL.createObjectURL(blob);
+    window.__honeySwUrl = swUrl;
+    navigator.serviceWorker.getRegistration('./').then(existing => {
+      if (existing) return existing;
+      return navigator.serviceWorker.register(swUrl, { scope: './' });
+    }).catch(err => console.error('[SW] registration failed', err));
+  }
+</script>
 </body>
 </html>

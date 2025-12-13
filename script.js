@@ -30,6 +30,55 @@
     gamepadConnected: false
   };
 
+  // PWA service worker (blob-based to avoid new files)
+  (function registerServiceWorker() {
+    if (!('serviceWorker' in navigator)) return;
+
+    const assets = [
+      './',
+      'index.html',
+      'game.html',
+      'game.js',
+      'script.js',
+      'styles-game.css',
+      'styles-index.css'
+    ];
+
+    const swScript = `
+      const CACHE_NAME = 'honey-pwa-v1';
+      const ASSETS = ${JSON.stringify(assets)};
+      self.addEventListener('install', event => {
+        event.waitUntil(caches.open(CACHE_NAME).then(cache => cache.addAll(ASSETS)).then(() => self.skipWaiting()));
+      });
+      self.addEventListener('activate', event => {
+        event.waitUntil(caches.keys().then(keys => Promise.all(keys.filter(k => k !== CACHE_NAME).map(k => caches.delete(k)))).then(() => self.clients.claim()));
+      });
+      self.addEventListener('fetch', event => {
+        if (event.request.method !== 'GET') return;
+        event.respondWith(
+          caches.match(event.request).then(cached => {
+            if (cached) return cached;
+            return fetch(event.request).then(response => {
+              if (response && response.status === 200 && response.type === 'basic') {
+                const copy = response.clone();
+                caches.open(CACHE_NAME).then(cache => cache.put(event.request, copy));
+              }
+              return response;
+            }).catch(() => caches.match('index.html'));
+          })
+        );
+      });
+    `;
+
+    const blob = new Blob([swScript], { type: 'text/javascript' });
+    const swUrl = window.__honeySwUrl || URL.createObjectURL(blob);
+    window.__honeySwUrl = swUrl;
+    navigator.serviceWorker.getRegistration('./').then(existing => {
+      if (existing) return existing;
+      return navigator.serviceWorker.register(swUrl, { scope: './' });
+    }).catch((err) => console.error('[SW] registration failed', err));
+  })();
+
   // Performance tracking
   let lastFrameTime = 0;
   let frameCount = 0;
