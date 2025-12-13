@@ -251,27 +251,44 @@ class EnhancedParticleSystem {
   // Honey Pot Catch — extracted from the enhanced build
   // ---------------------------------------------------------------------------
 function initEnhancedHoneyCatchGame() {
-        console.log("Initializing enhanced Honey Catch Game...");
-        
-        const canvas = document.getElementById('honey-game');
-        if (!canvas) {
-            console.error("Honey catch game canvas not found!");
-            return;
-        }
-        
-        const ctx = canvas.getContext('2d');
-        const frameLimiter = new FrameRateLimiter(window.GAME_FPS_TARGET);
-        
-        // Performance optimizations
-        canvas.style.imageRendering = isMobileDevice() ? 'pixelated' : 'auto';
-        ctx.imageSmoothingEnabled = !isMobileDevice();
-        
-        // Enhanced background canvas
-        const catchBackgroundCanvas = document.createElement('canvas');
-        catchBackgroundCanvas.width = canvas.width;
-        catchBackgroundCanvas.height = canvas.height;
-        const catchBgCtx = catchBackgroundCanvas.getContext('2d');
-        
+  console.log("Initializing enhanced Honey Catch Game...");
+
+  const canvas = document.getElementById('honey-game');
+  if (!canvas) {
+    console.error("Honey catch game canvas not found!");
+    return;
+  }
+
+  const ctx = canvas.getContext('2d');
+
+  /* ✅ REQUIRED: size drawing buffer to match CSS (fixes blank canvas on iOS) */
+  function resizeCanvas() {
+    const rect = canvas.getBoundingClientRect();
+    const dpr = window.devicePixelRatio || 1;
+
+    canvas.width = Math.floor(rect.width * dpr);
+    canvas.height = Math.floor(rect.height * dpr);
+
+    // Normalize coordinate system so 1 unit = 1 CSS pixel
+    ctx.setTransform(dpr, 0, 0, dpr, 0, 0);
+  }
+
+  window.addEventListener('resize', resizeCanvas);
+  resizeCanvas();
+
+  const frameLimiter = new FrameRateLimiter(window.GAME_FPS_TARGET);
+
+  // Performance optimizations
+  canvas.style.imageRendering = isMobileDevice() ? 'pixelated' : 'auto';
+  ctx.imageSmoothingEnabled = !isMobileDevice();
+
+  // ✅ Enhanced background canvas MUST be created AFTER resizeCanvas()
+  const catchBackgroundCanvas = document.createElement('canvas');
+  catchBackgroundCanvas.width = canvas.width;
+  catchBackgroundCanvas.height = canvas.height;
+  const catchBgCtx = catchBackgroundCanvas.getContext('2d');
+
+  
         // Enhanced particle system
         const catchParticles = new EnhancedParticleSystem(canvas);
         
