@@ -1,2011 +1,1222 @@
-/* ==========================================================================
-   Baby Gunnar — Hundred Acre Wood Adventure
-   styles.css — consolidated, production-ready UI/UX stylesheet
-   ========================================================================== */
-
-/* -----------------------------------------
-   0) TOKENS / THEME
------------------------------------------ */
+/* styles.css - Hundred Acre Wood Adventure */
 :root {
-  /* Brand */
-  --pooh-yellow: #ffc42b;
-  --pooh-red: #d62e2e;
-  --honey-gold: #e6b86a;
-  --storybook-brown: #8b4513;
-  --forest-green: #2f7a3f;
-  --deep-ink: #2f1a0e;
-
-  /* Surfaces */
-  --cream: #fff7ec;
-  --page-yellow: #fef9e7;
-  --panel: rgba(255, 250, 241, 0.92);
-  --panel-strong: rgba(255, 250, 241, 0.98);
-  --glass: rgba(255, 255, 255, 0.7);
-
-  /* Text */
-  --text-dark: #43302a;
-  --text-muted: rgba(67, 48, 42, 0.72);
-
-  /* Shadows */
-  --shadow-soft: 0 20px 60px rgba(15, 23, 42, 0.16);
-  --shadow-raised: 0 16px 40px rgba(15, 23, 42, 0.24);
-  --shadow-xl: 0 28px 80px rgba(0, 0, 0, 0.55);
-
-  /* Radius */
-  --radius-sm: 12px;
-  --radius-md: 16px;
-  --radius-lg: 24px;
-  --radius-xl: 30px;
-  --radius-pill: 999px;
-  --radius-circle: 999px;
-
-  /* Motion */
-  --transition-fast: 160ms ease;
-  --transition-base: 260ms ease;
-  --transition-smooth: 500ms cubic-bezier(0.25, 0.46, 0.45, 0.94);
-
+  /* Color palette - warm, storybook tones */
+  --color-honey: #f4a944;
+  --color-honey-light: #ffd166;
+  --color-honey-dark: #d18c2a;
+  --color-wood: #8b4513;
+  --color-wood-light: #a0522d;
+  --color-green: #689f38;
+  --color-green-light: #8bc34a;
+  --color-sky: #87ceeb;
+  --color-sky-light: #b3e5fc;
+  --color-cloud: #ffffff;
+  --color-red: #d62e2e;
+  --color-red-light: #ff6b6b;
+  --color-text: #2c1810;
+  --color-text-light: #5a3921;
+  --color-bg: #fff9f0;
+  --color-card: #fff;
+  --color-shadow: rgba(139, 69, 19, 0.15);
+  --color-shadow-heavy: rgba(139, 69, 19, 0.3);
+  
   /* Typography */
-  --font-heading: "Playfair Display", ui-serif, Georgia, serif;
-  --font-body: "Lato", system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
-  --font-handwriting: "Patrick Hand", ui-rounded, cursive;
-
-  /* Layout */
-  --container-max: 1200px;
-
-  /* Layering */
-  --z-base: 1;
-  --z-nav: 100;
-  --z-fab: 120;
-  --z-progress: 1000;
-  --z-modal: 10000;
-
-  /* Safe area */
-  --safe-top: env(safe-area-inset-top, 0px);
-  --safe-right: env(safe-area-inset-right, 0px);
-  --safe-bottom: env(safe-area-inset-bottom, 0px);
-  --safe-left: env(safe-area-inset-left, 0px);
+  --font-heading: 'Playfair Display', Georgia, serif;
+  --font-body: 'Lato', system-ui, -apple-system, sans-serif;
+  --font-handwritten: 'Patrick Hand', cursive;
+  
+  /* Spacing */
+  --space-xs: 0.25rem;
+  --space-sm: 0.5rem;
+  --space-md: 1rem;
+  --space-lg: 1.5rem;
+  --space-xl: 2rem;
+  --space-2xl: 3rem;
+  
+  /* Border radius */
+  --radius-sm: 8px;
+  --radius-md: 12px;
+  --radius-lg: 16px;
+  --radius-xl: 24px;
+  --radius-round: 999px;
+  
+  /* Transitions */
+  --transition-fast: 150ms ease;
+  --transition-normal: 250ms ease;
+  --transition-slow: 400ms ease;
 }
 
-/* Reduced motion: respect the user */
-@media (prefers-reduced-motion: reduce) {
+/* Dark mode adjustments */
+@media (prefers-color-scheme: dark) {
   :root {
-    --transition-fast: 1ms linear;
-    --transition-base: 1ms linear;
-    --transition-smooth: 1ms linear;
+    --color-text: #f0e6d6;
+    --color-text-light: #d4c4b0;
+    --color-bg: #1a1208;
+    --color-card: #2a1f12;
+    --color-shadow: rgba(0, 0, 0, 0.3);
+    --color-shadow-heavy: rgba(0, 0, 0, 0.5);
   }
 }
 
-/* -----------------------------------------
-   1) RESET / BASE
------------------------------------------ */
-*,
-*::before,
-*::after {
+/* Reset and base styles */
+* {
+  margin: 0;
+  padding: 0;
   box-sizing: border-box;
 }
 
 html {
   scroll-behavior: smooth;
-  scroll-padding-top: calc(92px + var(--safe-top));
-}
-
-@media (prefers-reduced-motion: reduce) {
-  html {
-    scroll-behavior: auto;
-  }
-}
-
-html {
-  -webkit-touch-callout: none;
+  font-size: 16px;
+  -webkit-text-size-adjust: 100%;
 }
 
 body {
-  margin: 0;
   font-family: var(--font-body);
-  color: var(--text-dark);
-  line-height: 1.65;
-  -webkit-font-smoothing: antialiased;
-  text-rendering: optimizeLegibility;
-  overflow-x: hidden;
-
-  /* Prevent text selection and iOS touch magnifier for the game surface */
-  -webkit-touch-callout: none;
-  -webkit-user-select: none;
-  user-select: none;
-
-  /* Background parchment-y warmth */
-  background: radial-gradient(circle at top, #fff7ec 0%, #f9e6b3 40%, #f5d98c 100%);
+  line-height: 1.6;
+  color: var(--color-text);
+  background-color: var(--color-bg);
   min-height: 100vh;
-
-  padding: 20px;
-  padding-top: calc(20px + var(--safe-top));
-  padding-right: calc(20px + var(--safe-right));
-  padding-bottom: calc(20px + var(--safe-bottom));
-  padding-left: calc(20px + var(--safe-left));
+  overflow-x: hidden;
+  -webkit-font-smoothing: antialiased;
+  -moz-osx-font-smoothing: grayscale;
 }
 
-/* Hard stop for text selection and touch callouts across the experience */
-/* ===============================
-   iOS: KILL TEXT MAGNIFIER / LOUPE
-   =============================== */
-
-html,
-body,
-body * {
-  -webkit-touch-callout: none !important;
-  -webkit-user-select: none !important;
-  user-select: none !important;
-  -webkit-tap-highlight-color: transparent;
-}
-
-#honey-game,
-.game-canvas {
-  touch-action: none;
-}
-
-img,
-svg,
-video,
-canvas,
-.game-stage,
-.game-card {
-  touch-action: none;
-}
-
-a {
-  color: inherit;
-  text-decoration: none;
-}
-
-button,
-input,
-textarea,
-select {
-  font: inherit;
-}
-
-/* Accessible focus */
-:focus-visible {
-  outline: 3px solid rgba(255, 196, 43, 0.95);
-  outline-offset: 3px;
-  box-shadow: 0 0 0 5px rgba(139, 69, 19, 0.28);
-}
-
-/* Skip link (if present) */
+/* Skip link */
 .skip-link {
   position: absolute;
-  top: -50px;
-  left: 12px;
-  z-index: 99999;
-  padding: 10px 12px;
-  border-radius: 12px;
-  background: var(--pooh-yellow);
-  color: var(--deep-ink);
-  font-weight: 700;
-  transition: top var(--transition-base);
+  top: -40px;
+  left: 0;
+  background: var(--color-honey);
+  color: white;
+  padding: var(--space-sm) var(--space-md);
+  text-decoration: none;
+  z-index: 1000;
+  border-radius: 0 0 var(--radius-sm) 0;
+  transition: top var(--transition-normal);
 }
+
 .skip-link:focus {
-  top: 12px;
+  top: 0;
 }
 
-/* Utilities */
-.hidden {
-  display: none !important;
-}
-.visually-hidden {
-  position: absolute !important;
-  width: 1px !important;
-  height: 1px !important;
-  padding: 0 !important;
-  margin: -1px !important;
-  overflow: hidden !important;
-  clip: rect(0, 0, 0, 0) !important;
-  white-space: nowrap !important;
-  border: 0 !important;
+/* Reading progress */
+.reading-progress {
+  position: fixed;
+  top: 0;
+  left: 0;
+  width: 0%;
+  height: 4px;
+  background: linear-gradient(90deg, var(--color-honey), var(--color-red-light));
+  z-index: 9999;
+  transition: width 0.1s linear;
 }
 
-/* -----------------------------------------
-   2) CONTAINER / GENERAL LAYOUT
------------------------------------------ */
-.page {
-  max-width: var(--container-max);
-  margin: 0 auto;
+/* Cover/Intro screen */
+.storybook-cover {
+  position: fixed;
+  top: 0;
+  left: 0;
+  width: 100%;
+  height: 100%;
+  background: linear-gradient(135deg, var(--color-sky) 0%, var(--color-green-light) 100%);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  z-index: 1000;
+  animation: fadeIn 1s ease-out;
+  padding: var(--space-md);
 }
 
-.storybook-shell {
-  max-width: var(--container-max);
-  margin: 0 auto;
-  padding: 20px 14px 40px;
+.storybook-cover.closed {
+  display: none;
 }
 
-.storybook {
-  background: linear-gradient(180deg, rgba(255, 255, 255, 0.72), rgba(255, 255, 255, 0.55));
-  border: 1px solid rgba(139, 69, 19, 0.14);
-  border-radius: var(--radius-xl);
-  box-shadow: var(--shadow-soft);
+@keyframes fadeIn {
+  from { opacity: 0; }
+  to { opacity: 1; }
+}
+
+.cover-card {
+  background: rgba(255, 255, 255, 0.95);
   backdrop-filter: blur(10px);
-  -webkit-backdrop-filter: blur(10px);
-
-  padding: 34px 34px 46px;
-  overflow: hidden;
-  position: relative;
+  border-radius: var(--radius-xl);
+  padding: var(--space-2xl);
+  max-width: 600px;
+  width: 100%;
+  text-align: center;
+  box-shadow: 0 20px 40px var(--color-shadow-heavy);
+  animation: slideUp 0.8s ease-out;
+  border: 2px solid rgba(255, 255, 255, 0.2);
 }
 
-.storybook-inner {
-  max-width: 980px;
-  margin: 0 auto;
+@keyframes slideUp {
+  from {
+    opacity: 0;
+    transform: translateY(40px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
 }
 
-.storybook-header {
-  display: grid;
-  gap: 10px;
-  margin-bottom: 18px;
+.cover-decoration {
+  height: 100px;
+  margin-bottom: var(--space-xl);
+  background-image: url('data:image/svg+xml,<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 100 100"><path fill="%23f4a944" d="M50,20 C65,20 75,30 80,45 C85,60 80,75 65,80 C50,85 30,80 20,65 C10,50 20,30 35,25 C50,20 65,20 80,25 C95,30 100,45 95,55 C90,65 75,70 65,75 C55,80 40,85 30,80 C20,75 10,65 5,50 C0,35 10,20 25,15 C40,10 60,15 70,25"/></svg>');
+  background-repeat: no-repeat;
+  background-position: center;
+  background-size: contain;
 }
 
-.storybook-heading {
+.cover-title {
   font-family: var(--font-heading);
-  font-weight: 700;
-  letter-spacing: 0.3px;
-  font-size: clamp(2rem, 3.6vw, 3.1rem);
-  color: var(--deep-ink);
-  margin: 0;
+  font-size: clamp(2rem, 5vw, 3.5rem);
+  font-weight: 800;
+  color: var(--color-wood);
+  margin-bottom: var(--space-md);
+  line-height: 1.2;
 }
 
-.storybook-subheading {
-  font-family: var(--font-handwriting);
-  font-size: clamp(1.15rem, 2.2vw, 1.45rem);
-  color: var(--text-muted);
-  margin: 0;
+.cover-subtitle {
+  font-size: clamp(1rem, 2vw, 1.25rem);
+  color: var(--color-text-light);
+  margin-bottom: var(--space-xl);
+  max-width: 40ch;
+  margin-left: auto;
+  margin-right: auto;
 }
 
-/* Content sections */
-.content-section {
-  margin-top: 22px;
-}
-.content-section-inner {
-  background: rgba(254, 249, 231, 0.7);
-  border: 1px solid rgba(139, 69, 19, 0.12);
-  border-radius: var(--radius-lg);
-  padding: 20px 20px 18px;
-  box-shadow: 0 10px 28px rgba(15, 23, 42, 0.08);
-}
-
-.section-title {
-  font-family: var(--font-heading);
-  color: var(--deep-ink);
-  font-size: 1.7rem;
-  margin: 0 0 10px;
-}
-.section-subtitle {
-  color: var(--text-muted);
-  margin: 0 0 14px;
-}
-
-/* -----------------------------------------
-   3) NAVIGATION (FIXED + MOBILE HARDENED)
------------------------------------------ */
+/* Navigation */
 .nav {
-  position: sticky;
-  top: calc(10px + var(--safe-top));
-  z-index: var(--z-nav);
+  position: fixed;
+  top: 0;
+  left: 0;
+  width: 100%;
+  background: rgba(255, 255, 255, 0.95);
+  backdrop-filter: blur(10px);
+  padding: var(--space-sm) var(--space-lg);
   display: flex;
   align-items: center;
   justify-content: space-between;
+  z-index: 100;
+  border-bottom: 1px solid rgba(139, 69, 19, 0.1);
+  box-shadow: 0 2px 20px var(--color-shadow);
+}
 
-  background: rgba(255, 250, 241, 0.78);
-  border: 1px solid rgba(139, 69, 19, 0.14);
-  box-shadow: 0 10px 24px rgba(15, 23, 42, 0.12);
-  border-radius: var(--radius-pill);
-  padding: 10px 12px;
-  backdrop-filter: blur(12px);
-  -webkit-backdrop-filter: blur(12px);
+.dark .nav {
+  background: rgba(42, 31, 18, 0.95);
+  border-bottom-color: rgba(139, 69, 19, 0.3);
 }
 
 .nav-brand {
   display: flex;
   align-items: center;
-  gap: 10px;
-  min-width: 0;
-}
-.nav-title {
+  gap: var(--space-sm);
   font-family: var(--font-heading);
   font-weight: 700;
-  color: var(--deep-ink);
-  letter-spacing: 0.3px;
-  font-size: 1.05rem;
-  white-space: nowrap;
-  overflow: hidden;
-  text-overflow: ellipsis;
+  font-size: 1.25rem;
+  color: var(--color-wood);
 }
 
-/* Desktop nav menu */
+.nav-title {
+  font-size: 1rem;
+}
+
+.nav-toggle {
+  background: none;
+  border: none;
+  font-size: 1.5rem;
+  color: var(--color-wood);
+  cursor: pointer;
+  padding: var(--space-sm);
+  display: none;
+}
+
 .nav-menu {
   display: flex;
-  align-items: center;
-  gap: 10px;
+  gap: var(--space-lg);
 }
 
-/* Nav items */
 .nav-item {
-  display: inline-flex;
+  text-decoration: none;
+  color: var(--color-text-light);
+  font-weight: 600;
+  font-size: 0.95rem;
+  padding: var(--space-sm) var(--space-md);
+  border-radius: var(--radius-round);
+  transition: all var(--transition-normal);
+  display: flex;
   align-items: center;
-  gap: 10px;
-
-  padding: 10px 14px;
-  border-radius: var(--radius-pill);
-  border: 1px solid rgba(139, 69, 19, 0.14);
-  background: linear-gradient(180deg, rgba(255, 255, 255, 0.86), rgba(255, 255, 255, 0.66));
-  color: var(--deep-ink);
-  font-weight: 800;
-  letter-spacing: 0.2px;
-
-  box-shadow: 0 10px 20px rgba(15, 23, 42, 0.08);
-  transition: transform var(--transition-fast), box-shadow var(--transition-fast), background var(--transition-fast);
-  user-select: none;
+  gap: var(--space-xs);
 }
-.nav-item i {
-  font-size: 1rem;
-  opacity: 0.95;
-  transition: transform var(--transition-fast);
-}
+
 .nav-item:hover,
-.nav-item:focus-visible {
-  transform: translateY(-1px);
-  box-shadow: 0 14px 26px rgba(15, 23, 42, 0.14);
-  background: linear-gradient(180deg, rgba(255, 255, 255, 0.92), rgba(255, 255, 255, 0.72));
-}
-.nav-item:hover i {
-  transform: scale(1.12);
+.nav-item:focus {
+  color: var(--color-wood);
+  background: rgba(244, 169, 68, 0.1);
 }
 
-/* THE IMPORTANT PART:
-   Hamburger must never inflate — even if you have global button styling elsewhere.
-*/
-.nav-toggle {
-  /* reset/harden */
-  appearance: none;
-  -webkit-appearance: none;
-  border: 0;
-  background: none;
-  margin: 0;
-  padding: 0;
-  min-width: 0 !important;
-  width: 44px !important;
-  height: 44px !important;
-
-  display: none; /* enabled on mobile in media query */
-  align-items: center;
-  justify-content: center;
-
-  border-radius: 14px;
-  cursor: pointer;
-  user-select: none;
-
-  background: linear-gradient(135deg, rgba(255, 196, 43, 0.95), rgba(230, 184, 106, 0.92));
-  box-shadow: 0 10px 22px rgba(15, 23, 42, 0.18);
-  border: 1px solid rgba(139, 69, 19, 0.16);
-
-  transition: transform var(--transition-fast), box-shadow var(--transition-fast), filter var(--transition-fast);
-}
-.nav-toggle i {
-  font-size: 20px;
-  color: rgba(47, 26, 14, 0.96);
-}
-.nav-toggle:hover,
-.nav-toggle:focus-visible {
-  transform: translateY(-1px);
-  box-shadow: 0 14px 28px rgba(15, 23, 42, 0.22);
-}
-.nav-toggle:active {
-  transform: translateY(0) scale(0.98);
-  filter: saturate(1.05);
-}
-.nav-toggle.active {
-  outline: none;
-  box-shadow: 0 0 0 5px rgba(255, 196, 43, 0.26), 0 18px 34px rgba(15, 23, 42, 0.22);
+.nav-item i {
+  font-size: 0.9em;
 }
 
-/* Mobile nav dropdown */
-@media (max-width: 900px) {
-  .nav-toggle {
-    display: inline-flex;
-  }
-
-  .nav-menu {
-    position: absolute;
-    top: 62px;
-    right: 14px;
-    left: 14px;
-
-    display: none;
-    flex-direction: column;
-    align-items: stretch;
-    gap: 8px;
-
-    padding: 12px;
-    border-radius: 18px;
-    background: var(--panel-strong);
-    border: 1px solid rgba(139, 69, 19, 0.14);
-    box-shadow: 0 18px 44px rgba(15, 23, 42, 0.22);
-
-    /* safe area */
-    margin-right: var(--safe-right);
-    margin-left: var(--safe-left);
-  }
-
-  .nav-menu.open {
-    display: flex;
-  }
-
-  .nav-item {
-    width: 100%;
-    justify-content: flex-start;
-    white-space: normal;
-  }
+/* Main content */
+.storybook-shell {
+  padding-top: 70px;
+  min-height: 100vh;
 }
 
-/* -----------------------------------------
-   4) BUTTON SYSTEM (USE .btn INSTEAD OF GLOBAL button)
------------------------------------------ */
-.btn {
-  appearance: none;
-  -webkit-appearance: none;
-  border: 0;
-  cursor: pointer;
-  border-radius: var(--radius-pill);
-  padding: 12px 16px;
-  font-weight: 900;
-  letter-spacing: 0.2px;
-  display: inline-flex;
-  align-items: center;
-  justify-content: center;
-  gap: 10px;
-  user-select: none;
-
-  transition: transform var(--transition-fast), box-shadow var(--transition-fast), background var(--transition-fast);
+.storybook {
+  max-width: 1200px;
+  margin: 0 auto;
+  padding: var(--space-xl);
 }
 
-.btn-primary {
-  background: linear-gradient(135deg, var(--pooh-yellow), var(--honey-gold));
-  color: var(--deep-ink);
-  box-shadow: 0 16px 34px rgba(15, 23, 42, 0.18);
-  border: 1px solid rgba(139, 69, 19, 0.16);
-}
-.btn-primary:hover,
-.btn-primary:focus-visible {
-  transform: translateY(-1px);
-  box-shadow: 0 20px 44px rgba(15, 23, 42, 0.22);
+.storybook-inner {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-2xl);
 }
 
-.btn-secondary {
-  background: rgba(255, 255, 255, 0.74);
-  color: var(--deep-ink);
-  border: 1px solid rgba(139, 69, 19, 0.14);
-  box-shadow: 0 12px 24px rgba(15, 23, 42, 0.1);
+/* Content sections */
+.content-section {
+  background: var(--color-card);
+  border-radius: var(--radius-xl);
+  padding: var(--space-xl);
+  box-shadow: 0 8px 32px var(--color-shadow);
+  border: 1px solid rgba(139, 69, 19, 0.1);
 }
 
-.btn-ghost {
-  background: transparent;
-  border: 1px solid rgba(139, 69, 19, 0.18);
-  color: var(--deep-ink);
+.content-section-inner {
+  max-width: 800px;
+  margin: 0 auto;
 }
 
-/* -----------------------------------------
-   5) STORYBOOK COVER (intro overlay)
------------------------------------------ */
-.storybook-cover {
-  position: fixed;
-  inset: 0;
-  z-index: calc(var(--z-modal) + 1);
-
-  display: grid;
-  place-items: center;
-
-  background: radial-gradient(circle at top, rgba(255, 247, 236, 0.98), rgba(245, 217, 140, 0.98));
-  padding: calc(20px + var(--safe-top)) calc(18px + var(--safe-right)) calc(20px + var(--safe-bottom))
-    calc(18px + var(--safe-left));
+/* Story section */
+.storybook-header {
+  text-align: center;
+  padding: var(--space-xl) 0;
 }
 
-.storybook-cover.closed {
-  pointer-events: none;
-  opacity: 0;
-  transform: scale(1.02);
-  transition: opacity var(--transition-smooth), transform var(--transition-smooth);
-}
-
-.cover-card {
-  width: min(920px, 92vw);
-  border-radius: 34px;
-  background: rgba(255, 255, 255, 0.74);
-  border: 1px solid rgba(139, 69, 19, 0.14);
-  box-shadow: var(--shadow-xl);
-  backdrop-filter: blur(14px);
-  -webkit-backdrop-filter: blur(14px);
-  overflow: hidden;
-  position: relative;
-  padding: 28px 26px 26px;
-}
-
-.cover-title {
+.storybook-heading {
   font-family: var(--font-heading);
-  font-size: clamp(2.2rem, 5vw, 3.6rem);
-  margin: 0;
-  color: var(--deep-ink);
-  text-align: center;
-}
-.cover-subtitle {
-  font-family: var(--font-handwriting);
-  font-size: clamp(1.2rem, 2.8vw, 1.7rem);
-  margin: 10px 0 18px;
-  color: var(--text-muted);
-  text-align: center;
+  font-size: clamp(2rem, 4vw, 3rem);
+  font-weight: 800;
+  color: var(--color-wood);
+  margin-bottom: var(--space-md);
 }
 
-.cover-decoration {
-  position: absolute;
-  inset: 0;
-  pointer-events: none;
-  opacity: 0.22;
-  background: radial-gradient(circle at 10% 10%, rgba(255, 196, 43, 0.35), transparent 40%),
-    radial-gradient(circle at 90% 30%, rgba(214, 46, 46, 0.22), transparent 45%),
-    radial-gradient(circle at 35% 85%, rgba(139, 69, 19, 0.16), transparent 55%);
+.storybook-subheading {
+  font-size: clamp(1rem, 2vw, 1.25rem);
+  color: var(--color-text-light);
+  max-width: 60ch;
+  margin: 0 auto;
 }
 
-.storybook-form {
-  display: grid;
-  gap: 12px;
-  place-items: center;
-  margin-top: 8px;
-}
-
-/* -----------------------------------------
-   6) LOADING SCREEN
------------------------------------------ */
-.loading-screen {
-  position: fixed;
-  inset: 0;
-  z-index: calc(var(--z-modal) + 2);
-  display: grid;
-  place-items: center;
-  background: rgba(15, 23, 42, 0.84);
-  backdrop-filter: blur(10px);
-  -webkit-backdrop-filter: blur(10px);
-  transition: opacity var(--transition-base), transform var(--transition-base);
-}
-.loading-content {
-  width: min(520px, 92vw);
-  border-radius: 26px;
-  padding: 18px 18px 16px;
-  background: rgba(255, 250, 241, 0.95);
-  border: 1px solid rgba(139, 69, 19, 0.16);
-  box-shadow: var(--shadow-xl);
-  text-align: center;
-}
-.loading-title {
+/* Friends section */
+.section-title {
   font-family: var(--font-heading);
-  margin: 0 0 6px;
-  color: var(--deep-ink);
-  font-size: 1.6rem;
-}
-.loading-subtitle {
-  margin: 0 0 12px;
-  color: var(--text-muted);
-}
-.loading-progress {
-  height: 10px;
-  border-radius: 999px;
-  overflow: hidden;
-  background: rgba(139, 69, 19, 0.1);
-}
-.loading-progress-fill {
-  height: 100%;
-  width: 0%;
-  background: linear-gradient(90deg, var(--pooh-yellow), var(--pooh-red));
-  transition: width var(--transition-base);
-}
-.loading-percentage {
-  margin-top: 10px;
-  font-weight: 900;
-  color: rgba(47, 26, 14, 0.8);
+  font-size: clamp(1.75rem, 3vw, 2.5rem);
+  font-weight: 700;
+  color: var(--color-wood);
+  margin-bottom: var(--space-sm);
+  text-align: center;
 }
 
-/* -----------------------------------------
-   7) CHARACTER SECTION
------------------------------------------ */
+.section-subtitle {
+  color: var(--color-text-light);
+  text-align: center;
+  margin-bottom: var(--space-xl);
+}
+
+/* Characters grid */
 .characters-grid-enhanced {
   display: grid;
-  grid-template-columns: repeat(12, 1fr);
-  gap: 14px;
-  overflow: visible;
-  position: relative;
-  z-index: 1;
+  grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+  gap: var(--space-lg);
+  margin-top: var(--space-xl);
 }
 
-.character-card-enhanced,
 .character-spotlight {
-  grid-column: span 6;
+  background: var(--color-bg);
   border-radius: var(--radius-lg);
-  background: rgba(255, 255, 255, 0.74);
-  border: 1px solid rgba(139, 69, 19, 0.12);
-  box-shadow: 0 12px 28px rgba(15, 23, 42, 0.1);
-  transition: transform var(--transition-base), box-shadow var(--transition-base);
-  overflow: hidden;
-  position: relative;
-  cursor: pointer;
-}
-
-.character-spotlight-content {
-  padding: 16px;
-  display: grid;
-  gap: 10px;
-  place-items: center;
+  padding: var(--space-lg);
   text-align: center;
-}
-
-.character-name {
-  font-family: var(--font-heading);
-  font-weight: 700;
-  color: var(--deep-ink);
-  font-size: 1.25rem;
-  margin: 0;
-}
-.character-quote {
-  font-family: var(--font-handwriting);
-  color: var(--text-muted);
-  font-size: 1.05rem;
-  margin: 0;
-  transition: transform var(--transition-fast), color var(--transition-fast);
-}
-
-.character-illustration {
-  width: 100%;
-  max-width: 260px;
-  border-radius: 18px;
-  overflow: hidden;
-  box-shadow: 0 12px 26px rgba(15, 23, 42, 0.12);
+  cursor: pointer;
+  transition: all var(--transition-normal);
+  border: 2px solid transparent;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: var(--space-md);
 }
 
 .character-spotlight:hover,
-.character-spotlight:focus-visible,
-.character-card-enhanced:hover,
-.character-card-enhanced:focus-visible {
-  transform: translateY(-3px);
-  box-shadow: 0 18px 38px rgba(15, 23, 42, 0.16);
+.character-spotlight:focus {
+  transform: translateY(-4px);
+  border-color: var(--color-honey);
+  box-shadow: 0 8px 24px var(--color-shadow);
 }
 
-.character-spotlight:hover .character-quote {
-  color: rgba(67, 48, 42, 0.92);
-  transform: translateY(-1px);
-}
-
-/* Responsive grid */
-@media (max-width: 900px) {
-  .character-card-enhanced,
-  .character-spotlight {
-    grid-column: span 12;
-  }
-}
-
-/* -----------------------------------------
-   8) CHARACTER MODAL (single consistent system)
------------------------------------------ */
-.character-modal {
-  position: fixed;
-  inset: 0;
-  background: rgba(15, 23, 42, 0.78);
-  display: flex;
-  justify-content: center;
-  align-items: center;
-  z-index: var(--z-modal);
-  opacity: 0;
-  visibility: hidden;
-  transition: opacity var(--transition-base), visibility var(--transition-base);
-  padding: calc(16px + var(--safe-top)) calc(16px + var(--safe-right)) calc(16px + var(--safe-bottom))
-    calc(16px + var(--safe-left));
-}
-
-.character-modal.active {
-  opacity: 1;
-  visibility: visible;
-}
-
-.modal-content {
-  background: linear-gradient(135deg, var(--page-yellow) 0%, rgba(255, 247, 236, 0.95) 100%);
-  width: min(680px, 92vw);
-  max-height: min(82vh, 720px);
-  overflow: auto;
-  border-radius: 22px;
-  padding: 22px 22px 18px;
-  position: relative;
-  transform: scale(0.92);
-  transition: transform var(--transition-base);
-  box-shadow: var(--shadow-xl);
-  border: 1px solid rgba(139, 69, 19, 0.16);
-}
-
-.character-modal.active .modal-content {
-  transform: scale(1);
-}
-
-/* Close button (do NOT depend on global button rules) */
-.close-modal {
-  appearance: none;
-  -webkit-appearance: none;
-  border: 0;
-  background: rgba(47, 26, 14, 0.1);
-  width: 44px;
-  height: 44px;
-  border-radius: 14px;
-  cursor: pointer;
-  position: absolute;
-  top: 12px;
-  right: 12px;
-  display: grid;
-  place-items: center;
-  color: rgba(47, 26, 14, 0.8);
-  transition: transform var(--transition-fast), background var(--transition-fast);
-}
-.close-modal:hover,
-.close-modal:focus-visible {
-  background: rgba(214, 46, 46, 0.14);
-  transform: rotate(8deg) scale(1.04);
-}
-
-.modal-character {
-  display: grid;
-  grid-template-columns: 84px 1fr;
-  gap: 14px;
-  align-items: center;
-  margin-bottom: 12px;
-  padding-bottom: 12px;
-  border-bottom: 2px dashed rgba(139, 69, 19, 0.25);
-}
-
-.modal-character-icon {
-  width: 76px;
-  height: 76px;
+.character-illustration {
+  width: 120px;
+  height: 120px;
   border-radius: 50%;
-  display: grid;
-  place-items: center;
+  background: linear-gradient(135deg, var(--color-sky-light), var(--color-green-light));
+  display: flex;
+  align-items: center;
+  justify-content: center;
   overflow: hidden;
-  box-shadow: 0 12px 22px rgba(15, 23, 42, 0.14);
+  border: 4px solid var(--color-honey-light);
 }
-.modal-character-icon img {
+
+.character-illustration img {
   width: 100%;
   height: 100%;
   object-fit: cover;
 }
 
-.modal-character-name {
+.character-name {
   font-family: var(--font-heading);
-  font-size: 1.8rem;
-  color: var(--pooh-red);
+  font-size: 1.5rem;
+  color: var(--color-wood);
   margin: 0;
 }
-.modal-character-quote {
-  font-family: var(--font-handwriting);
-  font-size: 1.35rem;
-  color: var(--storybook-brown);
-  margin: 10px 0 12px;
-  text-align: center;
-}
-.modal-character-bio {
-  font-size: 1rem;
-  color: rgba(67, 48, 42, 0.92);
-  line-height: 1.75;
+
+.character-quote {
+  font-family: var(--font-handwritten);
+  font-size: 1.1rem;
+  color: var(--color-text-light);
+  font-style: italic;
+  margin: 0;
 }
 
-/* character icon themes */
-.pooh-icon-modal {
-  background: var(--pooh-yellow);
-}
-.piglet-icon-modal {
-  background: #f8bbd9;
-}
-.tigger-icon-modal {
-  background: #ff8c42;
-}
-.eeyore-icon-modal {
-  background: #9ca3af;
-}
-
-/* -----------------------------------------
-   9) READING PROGRESS BAR
------------------------------------------ */
-.reading-progress {
-  position: fixed;
-  top: 0;
-  left: 0;
-  height: 4px;
-  width: 0%;
-  background: linear-gradient(90deg, var(--pooh-yellow), var(--pooh-red));
-  z-index: var(--z-progress);
-  transition: width var(--transition-base);
-}
-
-/* -----------------------------------------
-   10) GAME SHELL (Honey Pot Catch)
------------------------------------------ */
-.game-section {
-  display: grid;
-  gap: 12px;
-}
+/* Game section */
 .game-card {
-  background: rgba(15, 23, 42, 0.86);
-  color: rgba(255, 255, 255, 0.92);
-  border-radius: 22px;
-  border: 1px solid rgba(255, 196, 43, 0.22);
-  box-shadow: 0 18px 44px rgba(15, 23, 42, 0.22);
-  overflow: hidden;
+  background: var(--color-card);
+  border-radius: var(--radius-xl);
+  padding: var(--space-xl);
+  box-shadow: 0 8px 32px var(--color-shadow);
+  border: 2px solid rgba(244, 169, 68, 0.2);
 }
 
 .game-header {
-  padding: 16px 16px 12px;
-  border-bottom: 1px solid rgba(255, 196, 43, 0.18);
+  text-align: center;
+  margin-bottom: var(--space-xl);
 }
+
 .game-title {
   font-family: var(--font-heading);
-  margin: 0;
-  font-size: 1.7rem;
-  letter-spacing: 0.2px;
-}
-.game-help {
-  margin: 6px 0 0;
-  color: rgba(255, 255, 255, 0.78);
-}
-
-/* Canvas wrapper */
-.game-stage {
-  position: relative;
-  padding: 14px;
-}
-.game-canvas {
-  width: 100%;
-  height: auto;
-  border-radius: 18px;
-  background: rgba(0, 0, 0, 0.18);
-  border: 1px solid rgba(255, 196, 43, 0.18);
-}
-.score-popup {
-  position: absolute;
-  pointer-events: none;
-  font-weight: 900;
-  transform: translate(-50%, -30%);
-  opacity: 0;
-  transition: transform 0.35s ease, opacity 0.35s ease;
-  color: #1a1a1a;
-  text-shadow: 0 1px 0 rgba(255, 255, 255, 0.6);
-}
-.score-popup.visible {
-  opacity: 1;
-  transform: translate(-50%, -70%);
-}
-.score-popup--golden {
-  color: #b8860b;
-  text-shadow: 0 2px 10px rgba(255, 215, 0, 0.75);
-}
-.score-popup--honey {
-  color: #8b5a2b;
-}
-.score-popup--power {
-  color: #6a1b9a;
-}
-
-/* On-screen joystick (mobile) */
-.joystick {
-  position: absolute;
-  left: 16px;
-  bottom: calc(16px + var(--safe-bottom));
-  width: 140px;
-  height: 140px;
-  border-radius: 26px;
-  background: rgba(255, 250, 241, 0.12);
-  border: 1px solid rgba(255, 196, 43, 0.18);
-  box-shadow: 0 18px 40px rgba(15, 23, 42, 0.28);
-  backdrop-filter: blur(10px);
-  -webkit-backdrop-filter: blur(10px);
-  display: grid;
-  place-items: center;
-  touch-action: none;
-}
-.joystick-knob {
-  width: 62px;
-  height: 62px;
-  border-radius: 999px;
-  background: linear-gradient(135deg, rgba(255, 196, 43, 0.95), rgba(230, 184, 106, 0.9));
-  box-shadow: 0 18px 34px rgba(15, 23, 42, 0.3);
-  border: 1px solid rgba(139, 69, 19, 0.18);
-}
-
-/* Game HUD (score/lives etc.) */
-.game-hud {
+  font-size: clamp(1.5rem, 3vw, 2rem);
+  font-weight: 700;
+  color: var(--color-wood);
+  margin-bottom: var(--space-sm);
   display: flex;
-  flex-wrap: wrap;
-  gap: 10px;
   align-items: center;
-  justify-content: space-between;
-  padding: 12px 16px;
-  border-top: 1px solid rgba(255, 196, 43, 0.14);
-}
-.hud-stat {
-  display: inline-flex;
-  align-items: center;
-  gap: 8px;
-  font-weight: 900;
-}
-.hud-pill {
-  border-radius: var(--radius-pill);
-  padding: 6px 10px;
-  background: rgba(255, 255, 255, 0.1);
-  border: 1px solid rgba(255, 196, 43, 0.18);
+  justify-content: center;
+  gap: var(--space-sm);
 }
 
+.game-help {
+  color: var(--color-text-light);
+  margin-bottom: var(--space-lg);
+  font-size: 1.1rem;
+}
+
+/* Game mode toggle */
 .game-mode-toggle {
   display: flex;
   flex-wrap: wrap;
-  gap: 10px;
-  align-items: center;
-  margin-top: 12px;
+  gap: var(--space-sm);
+  justify-content: center;
+  margin-bottom: var(--space-md);
 }
 
 .mode-chip {
-  border: 1px solid rgba(139, 69, 19, 0.16);
-  background: rgba(255, 250, 241, 0.9);
-  color: var(--deep-ink);
-  border-radius: var(--radius-pill);
-  padding: 8px 14px;
-  font-weight: 800;
+  background: var(--color-bg);
+  border: 2px solid rgba(139, 69, 19, 0.2);
+  border-radius: var(--radius-round);
+  padding: var(--space-sm) var(--space-lg);
+  font-family: var(--font-body);
+  font-weight: 600;
+  color: var(--color-text-light);
   cursor: pointer;
-  box-shadow: 0 10px 28px rgba(15, 23, 42, 0.14);
-  transition: transform var(--transition-fast), box-shadow var(--transition-fast), background var(--transition-fast);
+  transition: all var(--transition-normal);
 }
 
-.mode-chip:hover,
-.mode-chip:focus-visible {
-  transform: translateY(-1px);
-  box-shadow: 0 16px 38px rgba(15, 23, 42, 0.18);
+.mode-chip:hover {
+  border-color: var(--color-honey);
+  color: var(--color-wood);
 }
 
 .mode-chip.is-active {
-  background: linear-gradient(135deg, rgba(255, 196, 43, 0.98), rgba(230, 184, 106, 0.92));
-  border-color: rgba(139, 69, 19, 0.24);
-  box-shadow: 0 18px 44px rgba(15, 23, 42, 0.22);
+  background: var(--color-honey);
+  border-color: var(--color-honey);
+  color: white;
 }
 
 .mode-chip-note {
-  margin: 0;
-  color: var(--text-muted);
-  font-weight: 700;
-  flex: 1 1 100%;
+  width: 100%;
+  text-align: center;
+  color: var(--color-text-light);
+  font-size: 0.9rem;
+  margin-top: var(--space-sm);
 }
 
+/* Game HUD */
+.game-hud {
+  display: flex;
+  flex-wrap: wrap;
+  gap: var(--space-sm);
+  justify-content: center;
+  margin-bottom: var(--space-lg);
+}
+
+.hud-stat {
+  display: inline-flex;
+}
+
+.hud-pill {
+  background: rgba(244, 169, 68, 0.1);
+  border: 1px solid rgba(244, 169, 68, 0.3);
+  border-radius: var(--radius-round);
+  padding: var(--space-xs) var(--space-md);
+  font-family: var(--font-body);
+  font-weight: 600;
+  color: var(--color-wood);
+  font-size: 0.9rem;
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+}
+
+/* Progress bars */
 .hud-progress {
-  display: grid;
-  grid-template-columns: repeat(auto-fit, minmax(240px, 1fr));
-  gap: 12px;
-  padding: 12px 16px 4px;
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-md);
+  margin-bottom: var(--space-lg);
 }
 
 .progress-block {
-  display: grid;
-  gap: 6px;
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-xs);
 }
 
 .progress-label {
-  font-weight: 800;
-  color: var(--text-muted);
-  letter-spacing: 0.2px;
+  font-size: 0.9rem;
+  font-weight: 600;
+  color: var(--color-text-light);
+  display: flex;
+  justify-content: space-between;
 }
 
 .progress-track {
-  position: relative;
-  width: 100%;
-  height: 14px;
-  border-radius: var(--radius-pill);
-  background: linear-gradient(90deg, rgba(255, 255, 255, 0.32), rgba(255, 255, 255, 0.12));
-  border: 1px solid rgba(139, 69, 19, 0.1);
+  height: 12px;
+  background: rgba(139, 69, 19, 0.1);
+  border-radius: var(--radius-round);
   overflow: hidden;
 }
 
 .progress-track.hearts {
-  background: linear-gradient(90deg, rgba(255, 107, 107, 0.22), rgba(255, 196, 43, 0.2));
+  background: rgba(214, 46, 46, 0.1);
 }
 
 .progress-fill {
-  --w: 100%;
-  position: absolute;
-  inset: 0;
-  width: var(--w);
-  background: linear-gradient(90deg, rgba(255, 196, 43, 0.95), rgba(255, 152, 0, 0.9));
-  box-shadow: inset 0 0 8px rgba(0, 0, 0, 0.08);
-  transition: width var(--transition-smooth);
+  height: 100%;
+  background: linear-gradient(90deg, var(--color-honey), var(--color-honey-dark));
+  border-radius: var(--radius-round);
+  transition: width var(--transition-normal);
+  width: var(--w, 100%);
 }
 
 .progress-track.hearts .progress-fill {
-  background: linear-gradient(90deg, rgba(255, 107, 107, 0.96), rgba(255, 196, 43, 0.92));
+  background: linear-gradient(90deg, var(--color-red-light), var(--color-red));
 }
 
-/* ==========================================================================
-   GAME.JS PATCH: game-over overlay + ripple + joystick compatibility
-   (Drop-in: append after section 10) GAME SHELL
-   ========================================================================== */
-
-/* Ensure the game stage can host absolute overlays cleanly */
+/* Game stage */
 .game-stage {
-  position: relative; /* already set, reaffirm */
-  isolation: isolate; /* prevents z-index surprises with blurred parents */
+  position: relative;
+  width: 100%;
+  max-width: 800px;
+  margin: 0 auto var(--space-xl);
+  border-radius: var(--radius-lg);
+  overflow: hidden;
+  background: linear-gradient(180deg, var(--color-sky) 0%, var(--color-sky-light) 100%);
+  box-shadow: 0 8px 32px var(--color-shadow);
+  aspect-ratio: 4/3;
 }
 
-/* Make sure canvas has a predictable height on all devices.
-   (If your HTML already sets height attributes, this won’t fight it.) */
-#honey-game.game-canvas {
+.game-canvas {
   width: 100%;
-  height: min(58vh, 520px);
+  height: 100%;
   display: block;
 }
 
-/* ---------- Catch overlay (if present in HTML) ---------- */
-#catch-overlay {
-  position: absolute;
-  inset: 14px;
-  border-radius: 18px;
-  z-index: 20;
-  display: grid;
-  place-items: center;
-  text-align: center;
-  padding: 18px 16px;
-  background: rgba(15, 23, 42, 0.7);
-  border: 1px solid rgba(255, 196, 43, 0.22);
-  box-shadow: 0 18px 44px rgba(0, 0, 0, 0.4);
-  backdrop-filter: blur(10px);
-  -webkit-backdrop-filter: blur(10px);
-
-  opacity: 0;
-  pointer-events: none;
-  transform: translateY(6px) scale(0.99);
-  transition: opacity var(--transition-base), transform var(--transition-base);
-}
-#catch-overlay.active {
-  opacity: 1;
-  pointer-events: none;
-  transform: translateY(0) scale(1);
-}
-
-#catch-countdown {
-  font-family: var(--font-heading);
-  font-weight: 800;
-  font-size: clamp(1.6rem, 3.2vw, 2.4rem);
-  color: rgba(255, 255, 255, 0.94);
-  letter-spacing: 0.3px;
-  margin: 0 0 6px;
-  text-shadow: 0 10px 30px rgba(0, 0, 0, 0.45);
-}
-#catch-hint {
-  font-family: var(--font-handwriting);
-  font-size: clamp(1.05rem, 2.2vw, 1.35rem);
-  color: rgba(255, 255, 255, 0.78);
-  margin: 0;
-}
-
-/* ---------- Game Over overlay (created by game.js) ---------- */
-.catch-game-over {
-  position: absolute;
-  inset: 14px;
-  z-index: 30;
-  display: grid;
-  place-items: center;
-  text-align: center;
-
-  border-radius: 18px;
-  background: rgba(15, 23, 42, 0.78);
-  border: 1px solid rgba(255, 196, 43, 0.2);
-  box-shadow: 0 24px 60px rgba(0, 0, 0, 0.45);
-  backdrop-filter: blur(12px);
-  -webkit-backdrop-filter: blur(12px);
-
-  transition: opacity var(--transition-base), transform var(--transition-base);
-}
-
-.catch-game-over-content {
-  width: min(560px, 92%);
-  border-radius: 20px;
-  padding: 18px 16px 16px;
-  background: rgba(255, 250, 241, 0.94);
-  border: 1px solid rgba(139, 69, 19, 0.16);
-  box-shadow: 0 18px 50px rgba(15, 23, 42, 0.25);
-}
-
-.catch-game-over-title {
-  font-family: var(--font-heading);
-  font-size: clamp(1.8rem, 3.8vw, 2.3rem);
-  margin: 0 0 10px;
-  color: var(--deep-ink);
-  letter-spacing: 0.2px;
-}
-
-.catch-game-over-stats {
-  display: grid;
-  grid-template-columns: repeat(2, minmax(0, 1fr));
-  gap: 10px;
-  margin: 10px 0 14px;
-}
-@media (max-width: 520px) {
-  .catch-game-over-stats {
-    grid-template-columns: 1fr;
-  }
-}
-
-.catch-stat {
-  border-radius: 16px;
-  padding: 10px 12px;
-  background: rgba(255, 255, 255, 0.7);
-  border: 1px solid rgba(139, 69, 19, 0.12);
-  box-shadow: 0 10px 26px rgba(15, 23, 42, 0.1);
-}
-.catch-stat.bonus {
-  background: rgba(255, 196, 43, 0.18);
-  border-color: rgba(255, 196, 43, 0.28);
-}
-
-.catch-stat-label {
-  font-size: 0.92rem;
-  font-weight: 900;
-  color: rgba(67, 48, 42, 0.7);
-  letter-spacing: 0.2px;
-}
-.catch-stat-value {
-  font-family: var(--font-heading);
-  font-weight: 800;
-  font-size: 1.55rem;
-  color: var(--deep-ink);
-  margin-top: 2px;
-}
-
-/* Buttons inside game over overlay (do not depend on .btn system) */
-.catch-game-over-actions {
-  display: flex;
-  gap: 10px;
-  justify-content: center;
-  flex-wrap: wrap;
-}
-
-.catch-game-over-btn {
-  appearance: none;
-  -webkit-appearance: none;
-  border: 0;
-  cursor: pointer;
-  user-select: none;
-
-  padding: 12px 14px;
-  border-radius: var(--radius-pill);
-  font-weight: 900;
-  letter-spacing: 0.2px;
-
-  display: inline-flex;
-  align-items: center;
-  justify-content: center;
-  gap: 10px;
-
-  transition: transform var(--transition-fast), box-shadow var(--transition-fast), background var(--transition-fast);
-}
-
-.catch-game-over-btn.restart {
-  background: linear-gradient(135deg, var(--pooh-yellow), var(--honey-gold));
-  color: var(--deep-ink);
-  border: 1px solid rgba(139, 69, 19, 0.16);
-  box-shadow: 0 16px 34px rgba(15, 23, 42, 0.18);
-}
-.catch-game-over-btn.menu {
-  background: rgba(255, 255, 255, 0.76);
-  color: var(--deep-ink);
-  border: 1px solid rgba(139, 69, 19, 0.14);
-  box-shadow: 0 12px 24px rgba(15, 23, 42, 0.1);
-}
-.catch-game-over-btn:hover,
-.catch-game-over-btn:focus-visible {
-  transform: translateY(-1px);
-  box-shadow: 0 20px 44px rgba(15, 23, 42, 0.22);
-}
-
-/* ---------- Ripple animation used by game.js power-up pickup ---------- */
-@keyframes rippleEffect {
-  from {
-    transform: scale(0.5);
-    opacity: 0.9;
-  }
-  to {
-    transform: scale(2);
-    opacity: 0;
-  }
-}
-
-/* ---------- Virtual joystick compatibility ----------
-   game.js looks for #catchJoystick and expects:
-   .virtual-joystick, .joystick-base, .joystick-handle
-   You currently have .joystick and .joystick-knob.
-   This maps both without breaking your existing markup.
------------------------------------------------------- */
-
-/* If you already have <div id="catchJoystick" class="joystick">,
-   this will style it correctly either way. */
-#catchJoystick.virtual-joystick,
-#catchJoystick.joystick,
-.virtual-joystick {
-  position: absolute;
-  left: 16px;
-  bottom: calc(16px + var(--safe-bottom));
-  width: 140px;
-  height: 140px;
-  border-radius: 26px;
-  background: rgba(255, 250, 241, 0.12);
-  border: 1px solid rgba(255, 196, 43, 0.18);
-  box-shadow: 0 18px 40px rgba(15, 23, 42, 0.28);
-  backdrop-filter: blur(10px);
-  -webkit-backdrop-filter: blur(10px);
-  display: grid;
-  place-items: center;
-  touch-action: none;
-  z-index: 25;
-}
-
-/* Base ring (optional) */
-.virtual-joystick .joystick-base,
-#catchJoystick .joystick-base {
-  width: 100px;
-  height: 100px;
-  border-radius: 999px;
-  border: 2px solid rgba(255, 196, 43, 0.22);
-  background: rgba(0, 0, 0, 0.06);
-  box-shadow: inset 0 0 0 1px rgba(255, 255, 255, 0.06);
-}
-
-/* Handle (maps to your existing .joystick-knob if present) */
-.virtual-joystick .joystick-handle,
-#catchJoystick .joystick-handle,
-#catchJoystick .joystick-knob,
-.joystick .joystick-knob {
-  width: 62px;
-  height: 62px;
-  border-radius: 999px;
-  background: linear-gradient(135deg, rgba(255, 196, 43, 0.95), rgba(230, 184, 106, 0.9));
-  box-shadow: 0 18px 34px rgba(15, 23, 42, 0.3);
-  border: 1px solid rgba(139, 69, 19, 0.18);
-  transform: translate(0, 0);
-  transition: transform 60ms linear;
-}
-
-/* Active state feedback */
-.virtual-joystick.active,
-#catchJoystick.active {
-  box-shadow: 0 0 0 5px rgba(255, 196, 43, 0.16), 0 22px 50px rgba(15, 23, 42, 0.34);
-}
-
-/* Mobile sizing tweaks (match your current responsive intent) */
-@media (max-width: 768px) {
-  #catchJoystick.virtual-joystick,
-  #catchJoystick.joystick,
-  .virtual-joystick {
-    width: 128px;
-    height: 128px;
-    border-radius: 24px;
-  }
-  .virtual-joystick .joystick-handle,
-  #catchJoystick .joystick-handle,
-  #catchJoystick .joystick-knob,
-  .joystick .joystick-knob {
-    width: 56px;
-    height: 56px;
-  }
-}
-
-/* -----------------------------------------
-   11) FLOATING CONTROLS (music, accessibility, scroll top, etc.)
------------------------------------------ */
-.fab-stack {
-  position: fixed;
-  right: calc(16px + var(--safe-right));
-  bottom: calc(16px + var(--safe-bottom));
-  z-index: var(--z-fab);
-  display: grid;
-  gap: 10px;
-}
-
-.fab,
-.accessibility-btn {
-  appearance: none;
-  -webkit-appearance: none;
-  border: 0;
-  cursor: pointer;
-  width: 56px;
-  height: 56px;
-  border-radius: 999px;
-
-  display: grid;
-  place-items: center;
-
-  background: linear-gradient(135deg, rgba(255, 196, 43, 0.95), rgba(230, 184, 106, 0.9));
-  color: rgba(47, 26, 14, 0.96);
-
-  box-shadow: 0 18px 40px rgba(15, 23, 42, 0.24);
-  border: 1px solid rgba(139, 69, 19, 0.16);
-  transition: transform var(--transition-fast), box-shadow var(--transition-fast);
-  user-select: none;
-}
-
-.fab:hover,
-.fab:focus-visible,
-.accessibility-btn:hover,
-.accessibility-btn:focus-visible {
-  transform: translateY(-2px);
-  box-shadow: 0 22px 50px rgba(15, 23, 42, 0.28);
-}
-
-.fab:active,
-.accessibility-btn:active {
-  transform: translateY(0) scale(0.98);
-}
-
-/* -----------------------------------------
-   12) EXTRAS: countdown, tips, misc blocks
------------------------------------------ */
-.countdown-display {
-  display: flex;
-  flex-wrap: wrap;
-  gap: 10px;
-  justify-content: center;
-  margin-top: 10px;
-}
-.countdown-item {
-  min-width: 96px;
-  border-radius: 18px;
-  padding: 10px 12px;
-  background: rgba(255, 255, 255, 0.76);
-  border: 1px solid rgba(139, 69, 19, 0.12);
-  box-shadow: 0 12px 26px rgba(15, 23, 42, 0.1);
-  text-align: center;
-}
-.countdown-number {
-  font-family: var(--font-heading);
-  font-size: 1.9rem;
-  color: var(--deep-ink);
-  margin: 0;
-}
-.countdown-label {
-  margin: 0;
-  color: var(--text-muted);
-  font-weight: 800;
-  letter-spacing: 0.3px;
-}
-
-.tip {
-  border-radius: 18px;
-  padding: 12px 14px;
-  background: rgba(255, 196, 43, 0.16);
-  border: 1px solid rgba(255, 196, 43, 0.24);
-  color: rgba(47, 26, 14, 0.92);
-}
-
-/* Woodland sign CTA (if used) */
-.woodland-sign {
-  display: inline-flex;
-  align-items: center;
-  justify-content: center;
-  margin: 12px auto 0;
-  padding: 12px 18px;
-  border-radius: var(--radius-lg);
-  background: rgba(139, 69, 19, 0.92);
-  color: rgba(255, 255, 255, 0.92);
-  border: 2px solid rgba(255, 196, 43, 0.7);
-  box-shadow: 0 18px 40px rgba(15, 23, 42, 0.18);
-  font-family: var(--font-heading);
-  font-weight: 800;
-  transition: transform var(--transition-fast), box-shadow var(--transition-fast);
-  cursor: pointer;
-}
-.woodland-sign:hover,
-.woodland-sign:focus-visible {
-  transform: translateY(-2px) rotate(-1deg);
-  box-shadow: 0 22px 54px rgba(15, 23, 42, 0.22);
-}
-
-/* -----------------------------------------
-   13) RESPONSIVE REFINEMENTS
------------------------------------------ */
-@media (max-width: 768px) {
-  body {
-    padding: 12px;
-    padding-top: calc(12px + var(--safe-top));
-    padding-right: calc(12px + var(--safe-right));
-    padding-bottom: calc(12px + var(--safe-bottom));
-    padding-left: calc(12px + var(--safe-left));
-  }
-
-  .storybook {
-    padding: 26px 18px 32px;
-    border-radius: 22px;
-  }
-
-  .content-section-inner {
-    padding: 16px 16px 14px;
-  }
-
-  .joystick {
-    width: 128px;
-    height: 128px;
-    border-radius: 24px;
-  }
-  .joystick-knob {
-    width: 56px;
-    height: 56px;
-  }
-}
-
-@media (max-width: 520px) {
-  .storybook-shell {
-    padding: 18px 8px 34px;
-  }
-
-  .cover-card {
-    padding: 22px 18px 18px;
-    border-radius: 28px;
-  }
-
-  .fab,
-  .accessibility-btn {
-    width: 54px;
-    height: 54px;
-  }
-
-  .modal-content {
-    padding: 18px 16px 14px;
-    border-radius: 20px;
-  }
-
-  .modal-character {
-    grid-template-columns: 76px 1fr;
-  }
-  .modal-character-icon {
-    width: 68px;
-    height: 68px;
-  }
-}
-
-/* -----------------------------------------
-   14) PRINT (optional)
------------------------------------------ */
-@media print {
-  .nav,
-  .fab-stack,
-  .storybook-cover,
-  .loading-screen,
-  .joystick {
-    display: none !important;
-  }
-  body {
-    background: #fff !important;
-    padding: 0 !important;
-  }
-  .storybook {
-    box-shadow: none !important;
-    border: 0 !important;
-  }
-}
-/* ==========================================================================
-   PATCH: Top controls + floating buttons (prevents hero overlap on mobile)
-   Add at END of styles.css
-   ========================================================================== */
-
-/* If you have a wrapper for the top buttons, this styles it.
-   If not, it won't hurt anything. */
-.top-controls,
-.utility-controls,
-.floating-controls {
-  position: fixed;
-  top: calc(76px + var(--safe-top)); /* below sticky nav */
-  right: calc(14px + var(--safe-right));
-  left: auto;
-  z-index: calc(var(--z-nav) + 2);
-  display: flex;
-  gap: 10px;
-  align-items: center;
-  justify-content: flex-end;
-  pointer-events: none; /* wrapper doesn't block text */
-}
-.top-controls > *,
-.utility-controls > *,
-.floating-controls > * {
-  pointer-events: auto; /* buttons still clickable */
-}
-
-/* Make sure any "round icon buttons" used up top don't balloon */
-.top-controls button,
-.utility-controls button,
-.floating-controls button {
-  width: 44px;
-  height: 44px;
-  border-radius: 14px;
-  padding: 0;
-}
-
-/* Your FAB stack SHOULD be bottom-right. Your screenshot shows it left-ish,
-   so this hardens it regardless of other global rules. */
-.fab-stack {
-  position: fixed !important;
-  right: calc(16px + var(--safe-right)) !important;
-  left: auto !important;
-  bottom: calc(16px + var(--safe-bottom)) !important;
-  top: auto !important;
-  z-index: var(--z-fab) !important;
-}
-
-/* If you have a second stack that was placed top-left for some reason */
-.fab-stack-left,
-.fab-stack--left,
-.left-fab-stack {
-  left: auto !important;
-  right: calc(16px + var(--safe-right)) !important;
-  bottom: calc(16px + var(--safe-bottom)) !important;
-  top: auto !important;
-}
-
-/* On mobile: slightly smaller buttons + tighter spacing */
-@media (max-width: 520px) {
-  .top-controls,
-  .utility-controls,
-  .floating-controls {
-    top: calc(68px + var(--safe-top));
-    right: calc(12px + var(--safe-right));
-    gap: 8px;
-  }
-
-  .top-controls button,
-  .utility-controls button,
-  .floating-controls button {
-    width: 42px;
-    height: 42px;
-    border-radius: 14px;
-  }
-
-  .fab,
-  .accessibility-btn {
-    width: 52px;
-    height: 52px;
-  }
-}
-
-/* Optional: give the first content section breathing room
-   so the fixed control row never overlaps headings */
-.storybook-header,
-.hero,
-.page-hero,
-.page-intro {
-  scroll-margin-top: calc(140px + var(--safe-top));
-}
-
-/* ==========================================================================
-   PATCH (2025-12-12): Game markup compatibility + iOS Safari hardening
-   Drop-in safe overrides (kept last to win specificity)
-   ========================================================================== */
-
-/* --- 1) Map legacy button classes used by index.html to the .btn system --- */
-.primary-btn,
-.secondary-btn,
-.ghost-btn {
-  appearance: none;
-  -webkit-appearance: none;
-  border: 0;
-  cursor: pointer;
-  border-radius: var(--radius-pill);
-  padding: 12px 16px;
-  font-weight: 900;
-  letter-spacing: 0.2px;
-  display: inline-flex;
-  align-items: center;
-  justify-content: center;
-  gap: 10px;
-  user-select: none;
-  transition: transform var(--transition-fast), box-shadow var(--transition-fast), background var(--transition-fast);
-}
-
-.primary-btn {
-  background: linear-gradient(135deg, var(--pooh-yellow), var(--honey-gold));
-  color: var(--deep-ink);
-  box-shadow: 0 16px 34px rgba(15, 23, 42, 0.18);
-  border: 1px solid rgba(139, 69, 19, 0.16);
-}
-.primary-btn:hover,
-.primary-btn:focus-visible {
-  transform: translateY(-1px);
-  box-shadow: 0 20px 44px rgba(15, 23, 42, 0.22);
-}
-
-.secondary-btn {
-  background: rgba(255, 255, 255, 0.74);
-  color: var(--deep-ink);
-  border: 1px solid rgba(139, 69, 19, 0.14);
-  box-shadow: 0 12px 24px rgba(15, 23, 42, 0.1);
-}
-.secondary-btn:hover,
-.secondary-btn:focus-visible {
-  transform: translateY(-1px);
-  box-shadow: 0 18px 38px rgba(15, 23, 42, 0.16);
-}
-
-/* --- 2) Index.html game section compatibility (IDs/classes you’re using) --- */
-.games-container {
-  display: grid;
-  gap: 14px;
-}
-
-.game-description {
-  margin: 6px 0 0;
-  color: rgba(255, 255, 255, 0.78);
-}
-
-.game-meta {
-  display: flex;
-  flex-wrap: wrap;
-  gap: 10px;
-  align-items: center;
-  justify-content: flex-start;
-  padding: 12px 16px;
-  border-bottom: 1px solid rgba(255, 196, 43, 0.14);
-}
-
-.meta-pill {
-  display: inline-flex;
-  align-items: baseline;
-  gap: 8px;
-  padding: 6px 10px;
-  border-radius: var(--radius-pill);
-  background: rgba(255, 255, 255, 0.1);
-  border: 1px solid rgba(255, 196, 43, 0.18);
-  font-weight: 900;
-  line-height: 1.1;
-}
-
-.game-canvas-container {
-  position: relative;
-  padding: 14px;
-  isolation: isolate; /* prevents z-index surprises with blurred parents */
-}
-
+/* Game overlay */
 .game-overlay {
   position: absolute;
-  inset: 14px;
-  border-radius: 18px;
-  z-index: 20;
-  display: grid;
-  place-items: center;
-  text-align: center;
-  padding: 18px 16px;
-  background: rgba(15, 23, 42, 0.7);
-  border: 1px solid rgba(255, 196, 43, 0.22);
-  box-shadow: 0 18px 44px rgba(0, 0, 0, 0.4);
-  backdrop-filter: blur(10px);
-  -webkit-backdrop-filter: blur(10px);
-
+  top: 0;
+  left: 0;
+  width: 100%;
+  height: 100%;
+  background: rgba(0, 0, 0, 0.7);
+  backdrop-filter: blur(4px);
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
   opacity: 0;
-  pointer-events: none;
-  transform: translateY(6px) scale(0.99);
-  transition: opacity var(--transition-base), transform var(--transition-base);
+  visibility: hidden;
+  transition: all var(--transition-normal);
+  padding: var(--space-xl);
+  text-align: center;
 }
 
 .game-overlay.active {
   opacity: 1;
-  pointer-events: auto;
-  transform: translateY(0) scale(1);
+  visibility: visible;
+}
+
+.countdown-display {
+  font-family: var(--font-heading);
+  font-size: clamp(2rem, 4vw, 3rem);
+  font-weight: 800;
+  color: white;
+  margin-bottom: var(--space-md);
+  text-shadow: 0 2px 8px rgba(0, 0, 0, 0.3);
 }
 
 .overlay-hint {
-  font-family: var(--font-handwriting);
-  font-size: clamp(1.05rem, 2.2vw, 1.35rem);
-  color: rgba(255, 255, 255, 0.78);
-  margin: 0;
+  font-size: clamp(1rem, 2vw, 1.25rem);
+  color: rgba(255, 255, 255, 0.9);
+  max-width: 40ch;
 }
 
-/* Keep a predictable on-screen play area. Your JS should size the canvas to match. */
-#honey-game.game-canvas {
-  width: 100%;
-  height: min(58vh, 520px);
-  display: block;
-}
-
-/* Controls row under canvas */
+/* Game controls */
 .game-controls {
   display: flex;
-  gap: 10px;
-  justify-content: center;
   flex-wrap: wrap;
-  padding: 14px 16px 16px;
-  border-top: 1px solid rgba(255, 196, 43, 0.14);
+  gap: var(--space-lg);
+  justify-content: center;
+  align-items: center;
+  margin-bottom: var(--space-xl);
 }
 
-.game-controls .joystick-dock {
-  margin-left: auto;
-  display: grid;
-  gap: 6px;
+/* Buttons */
+.btn {
+  display: inline-flex;
   align-items: center;
-  text-align: center;
+  justify-content: center;
+  gap: var(--space-sm);
+  padding: var(--space-md) var(--space-xl);
+  font-family: var(--font-body);
+  font-weight: 600;
+  font-size: 1rem;
+  border: none;
+  border-radius: var(--radius-round);
+  cursor: pointer;
+  transition: all var(--transition-normal);
+  text-decoration: none;
+  min-height: 48px;
+}
+
+.btn-primary {
+  background: linear-gradient(135deg, var(--color-honey), var(--color-honey-dark));
+  color: white;
+  box-shadow: 0 4px 12px rgba(244, 169, 68, 0.3);
+}
+
+.btn-primary:hover,
+.btn-primary:focus {
+  transform: translateY(-2px);
+  box-shadow: 0 6px 20px rgba(244, 169, 68, 0.4);
+}
+
+.btn-secondary {
+  background: rgba(139, 69, 19, 0.1);
+  color: var(--color-wood);
+  border: 2px solid rgba(139, 69, 19, 0.3);
+}
+
+.btn-secondary:hover,
+.btn-secondary:focus {
+  background: rgba(139, 69, 19, 0.2);
+  border-color: var(--color-wood);
+}
+
+.btn-ghost {
+  background: transparent;
+  color: var(--color-text-light);
+  border: 2px solid transparent;
+}
+
+.btn-ghost:hover,
+.btn-ghost:focus {
+  color: var(--color-wood);
+  border-color: rgba(139, 69, 19, 0.2);
+}
+
+/* Joystick */
+.joystick-dock {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: var(--space-sm);
+}
+
+.virtual-joystick {
+  position: relative;
+  width: 120px;
+  height: 120px;
+  touch-action: none;
+  user-select: none;
+}
+
+.joystick-base {
+  position: absolute;
+  width: 100%;
+  height: 100%;
+  background: rgba(255, 255, 255, 0.2);
+  backdrop-filter: blur(8px);
+  border: 2px solid rgba(255, 255, 255, 0.4);
+  border-radius: 50%;
+  box-shadow: 0 4px 20px rgba(0, 0, 0, 0.2);
+}
+
+.joystick-knob {
+  position: absolute;
+  width: 60px;
+  height: 60px;
+  background: linear-gradient(135deg, var(--color-honey), var(--color-honey-dark));
+  border-radius: 50%;
+  top: 50%;
+  left: 50%;
+  transform: translate(-50%, -50%);
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.3);
+  cursor: grab;
+  transition: transform 0.1s;
+}
+
+.joystick-knob:active {
+  cursor: grabbing;
+  transform: translate(-50%, -50%) scale(0.95);
 }
 
 .joystick-hint {
-  margin: 0;
-  color: var(--text-muted);
-  font-size: 0.95rem;
+  font-size: 0.9rem;
+  color: var(--color-text-light);
+  text-align: center;
+  margin-top: var(--space-sm);
 }
 
+/* Game status */
+.tip {
+  font-size: 0.9rem;
+  color: var(--color-text-light);
+  text-align: center;
+  padding: var(--space-sm);
+  background: rgba(244, 169, 68, 0.05);
+  border-radius: var(--radius-md);
+  border-left: 3px solid var(--color-honey);
+}
+
+/* Game guide */
 .game-guide-grid {
   display: grid;
-  gap: 12px;
-  grid-template-columns: repeat(auto-fit, minmax(240px, 1fr));
-  padding: 12px 0 4px;
+  grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
+  gap: var(--space-lg);
+  margin-top: var(--space-xl);
 }
 
 .guide-card {
-  display: grid;
-  grid-template-columns: auto 1fr;
-  gap: 10px;
-  align-items: start;
-  background: rgba(255, 250, 241, 0.9);
-  border: 1px solid rgba(139, 69, 19, 0.12);
-  border-radius: 16px;
-  padding: 12px 12px;
-  box-shadow: 0 14px 30px rgba(15, 23, 42, 0.12);
+  background: var(--color-bg);
+  border-radius: var(--radius-lg);
+  padding: var(--space-lg);
+  display: flex;
+  align-items: flex-start;
+  gap: var(--space-md);
+  border: 1px solid rgba(139, 69, 19, 0.1);
+  transition: transform var(--transition-normal);
+}
+
+.guide-card:hover {
+  transform: translateY(-2px);
 }
 
 .guide-icon {
-  width: 42px;
-  height: 42px;
-  border-radius: 12px;
-  display: grid;
-  place-items: center;
-  background: rgba(255, 196, 43, 0.18);
-  font-size: 1.4rem;
+  font-size: 2rem;
+  flex-shrink: 0;
 }
 
 .guide-card h4 {
-  margin: 0 0 4px;
   font-family: var(--font-heading);
   font-size: 1.1rem;
-  color: var(--deep-ink);
+  color: var(--color-wood);
+  margin-bottom: var(--space-xs);
 }
 
 .guide-card p {
-  margin: 0;
-  color: var(--text-muted);
-  line-height: 1.4;
+  font-size: 0.9rem;
+  color: var(--color-text-light);
+  line-height: 1.5;
 }
 
-.game-status-badge {
-  margin: 0;
-  padding: 12px 16px 16px;
-  color: rgba(255, 255, 255, 0.72);
-  font-weight: 800;
-}
-
-/* --- 3) iOS Safari magnifier / text selection / callout hard stop --- */
-.game-card,
-.game-card *,
-.game-canvas-container,
-.game-canvas-container *,
-.game-controls,
-.game-controls *,
-.game-overlay,
-.game-overlay * {
-  -webkit-user-select: none;
-  user-select: none;
-}
-
-#honey-game,
-.game-canvas {
-  -webkit-user-select: none;
-  user-select: none;
-  -webkit-touch-callout: none;
-}
-
-/* Ensure joystick never triggers callout or selection and doesn’t scroll the page */
-#catchJoystick,
-#catchJoystick *,
-.virtual-joystick,
-.virtual-joystick *,
-.joystick,
-.joystick * {
-  -webkit-user-select: none;
-  user-select: none;
-  -webkit-touch-callout: none;
-  touch-action: none;
-}
-
-/* --- 4) Virtual joystick styling (supports BOTH markup styles) --- */
-/* Your HTML uses:
-   <div id="catchJoystick" class="virtual-joystick">
-     <div class="joystick-base"></div>
-     <div class="joystick-handle"></div>
-   </div>
-*/
-#catchJoystick.virtual-joystick,
-#catchJoystick.joystick,
-.virtual-joystick {
-  position: absolute;
-  left: 16px;
-  bottom: calc(16px + var(--safe-bottom));
-  width: 140px;
-  height: 140px;
-  border-radius: 26px;
-  background: rgba(255, 250, 241, 0.12);
-  border: 1px solid rgba(255, 196, 43, 0.18);
-  box-shadow: 0 18px 40px rgba(15, 23, 42, 0.28);
-  backdrop-filter: blur(10px);
-  -webkit-backdrop-filter: blur(10px);
-  display: grid;
-  place-items: center;
-  z-index: 25;
-}
-
-/* Base ring */
-.virtual-joystick .joystick-base,
-#catchJoystick .joystick-base {
-  width: 100px;
-  height: 100px;
-  border-radius: 999px;
-  border: 2px solid rgba(255, 196, 43, 0.22);
-  background: rgba(0, 0, 0, 0.06);
-  box-shadow: inset 0 0 0 1px rgba(255, 255, 255, 0.06);
-}
-
-/* Handle (also maps to .joystick-knob if you still have that markup) */
-.virtual-joystick .joystick-handle,
-#catchJoystick .joystick-handle,
-#catchJoystick .joystick-knob,
-.joystick .joystick-knob {
-  width: 62px;
-  height: 62px;
-  border-radius: 999px;
-  background: linear-gradient(135deg, rgba(255, 196, 43, 0.95), rgba(230, 184, 106, 0.9));
-  box-shadow: 0 18px 34px rgba(15, 23, 42, 0.3);
-  border: 1px solid rgba(139, 69, 19, 0.18);
-  transform: translate(0, 0);
-  transition: transform 60ms linear;
-}
-
-.virtual-joystick.active,
-#catchJoystick.active {
-  box-shadow: 0 0 0 5px rgba(255, 196, 43, 0.16), 0 22px 50px rgba(15, 23, 42, 0.34);
-}
-
-/* -----------------------------------------
-   11) WISHES (form + saved entries)
------------------------------------------ */
+/* Wishes section */
 .wishes-form {
-  background: linear-gradient(135deg, rgba(255, 247, 236, 0.9), rgba(245, 217, 140, 0.9));
-  border: 1px solid rgba(139, 69, 19, 0.16);
-  border-radius: 22px;
-  padding: 18px;
-  box-shadow: 0 14px 30px rgba(15, 23, 42, 0.12);
-  display: grid;
-  gap: 14px;
+  background: var(--color-bg);
+  border-radius: var(--radius-lg);
+  padding: var(--space-xl);
+  margin-bottom: var(--space-xl);
+  border: 1px solid rgba(139, 69, 19, 0.1);
 }
 
 .wishes-grid {
   display: grid;
-  gap: 12px;
-  grid-template-columns: repeat(auto-fit, minmax(240px, 1fr));
+  grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+  gap: var(--space-lg);
+  margin-bottom: var(--space-lg);
 }
 
 .wishes-field {
-  display: grid;
-  gap: 6px;
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-xs);
+}
+
+.field-label {
+  font-size: 0.9rem;
+  font-weight: 600;
+  color: var(--color-wood);
 }
 
 .wishes-field input,
 .wishes-field select,
 .wishes-field textarea {
-  width: 100%;
-  border-radius: 14px;
-  border: 1px solid rgba(139, 69, 19, 0.24);
-  padding: 12px 14px;
-  background: rgba(255, 255, 255, 0.72);
-  color: var(--text-dark);
-  box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.4);
-  transition: border-color var(--transition-fast), box-shadow var(--transition-fast), background var(--transition-fast);
+  font-family: var(--font-body);
+  font-size: 1rem;
+  padding: var(--space-md);
+  border: 2px solid rgba(139, 69, 19, 0.2);
+  border-radius: var(--radius-md);
+  background: var(--color-card);
+  color: var(--color-text);
+  transition: all var(--transition-normal);
 }
 
 .wishes-field input:focus,
 .wishes-field select:focus,
 .wishes-field textarea:focus {
   outline: none;
-  border-color: rgba(214, 46, 46, 0.45);
-  box-shadow: 0 0 0 4px rgba(255, 196, 43, 0.24);
-  background: white;
+  border-color: var(--color-honey);
+  box-shadow: 0 0 0 3px rgba(244, 169, 68, 0.1);
 }
 
-.field-label {
-  font-weight: 800;
-  color: var(--text-dark);
+.wishes-field textarea {
+  min-height: 120px;
+  resize: vertical;
 }
 
 .field-meta {
-  font-size: 0.9rem;
-  color: var(--text-muted);
+  font-size: 0.8rem;
+  color: var(--color-text-light);
+  text-align: right;
+  margin-top: var(--space-xs);
 }
 
 .wishes-actions {
   display: flex;
   flex-wrap: wrap;
-  gap: 10px;
-  align-items: center;
+  gap: var(--space-md);
+  justify-content: center;
+  margin-top: var(--space-xl);
 }
 
 .wish-status {
-  min-height: 22px;
-  font-weight: 700;
-  color: var(--text-dark);
+  text-align: center;
+  padding: var(--space-md);
+  margin-top: var(--space-lg);
+  border-radius: var(--radius-md);
+  background: rgba(104, 159, 56, 0.1);
+  color: var(--color-green);
+  font-weight: 600;
+  display: none;
 }
 
-.wish-status[data-tone='error'] {
-  color: var(--pooh-red);
+.wish-status.show {
+  display: block;
+  animation: fadeInUp 0.3s ease-out;
 }
 
-.wish-status[data-tone='success'] {
-  color: var(--forest-green);
+@keyframes fadeInUp {
+  from {
+    opacity: 0;
+    transform: translateY(10px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
 }
 
 .wishes-list {
-  margin-top: 18px;
-  display: grid;
-  gap: 12px;
-}
-
-.wish-card {
-  background: var(--panel);
-  border: 1px solid rgba(139, 69, 19, 0.12);
-  border-radius: 18px;
-  padding: 14px 16px;
-  box-shadow: 0 10px 22px rgba(15, 23, 42, 0.1);
-  display: grid;
-  gap: 6px;
-}
-
-.wish-card header {
   display: flex;
-  align-items: baseline;
-  gap: 6px;
-  font-weight: 800;
+  flex-direction: column;
+  gap: var(--space-md);
+}
+
+.wish-item {
+  background: var(--color-card);
+  border-radius: var(--radius-lg);
+  padding: var(--space-lg);
+  border-left: 4px solid var(--color-honey);
+  animation: slideIn 0.3s ease-out;
+}
+
+@keyframes slideIn {
+  from {
+    opacity: 0;
+    transform: translateX(-20px);
+  }
+  to {
+    opacity: 1;
+    transform: translateX(0);
+  }
+}
+
+.wish-header {
+  display: flex;
+  align-items: center;
+  gap: var(--space-sm);
+  margin-bottom: var(--space-sm);
 }
 
 .wish-emoji {
-  font-size: 1.2rem;
+  font-size: 1.5rem;
 }
 
 .wish-name {
-  color: var(--pooh-red);
+  font-weight: 600;
+  color: var(--color-wood);
 }
 
 .wish-time {
+  font-size: 0.8rem;
+  color: var(--color-text-light);
   margin-left: auto;
-  color: var(--text-muted);
-  font-size: 0.9rem;
 }
 
 .wish-message {
-  color: var(--text-dark);
-  line-height: 1.5;
+  color: var(--color-text);
+  line-height: 1.6;
+  white-space: pre-wrap;
+  word-break: break-word;
 }
 
-@media (max-width: 768px) {
-  #catchJoystick.virtual-joystick,
-  #catchJoystick.joystick,
-  .virtual-joystick {
-    width: 128px;
-    height: 128px;
-    border-radius: 24px;
+/* Character modal */
+.character-modal {
+  position: fixed;
+  top: 0;
+  left: 0;
+  width: 100%;
+  height: 100%;
+  background: rgba(0, 0, 0, 0.8);
+  backdrop-filter: blur(8px);
+  display: none;
+  align-items: center;
+  justify-content: center;
+  z-index: 1000;
+  padding: var(--space-md);
+  animation: fadeIn 0.3s ease-out;
+}
+
+.character-modal.active {
+  display: flex;
+}
+
+.modal-content {
+  background: var(--color-card);
+  border-radius: var(--radius-xl);
+  padding: var(--space-xl);
+  max-width: 500px;
+  width: 100%;
+  position: relative;
+  animation: modalSlideUp 0.3s ease-out;
+  box-shadow: 0 20px 60px rgba(0, 0, 0, 0.3);
+  border: 2px solid rgba(244, 169, 68, 0.3);
+}
+
+@keyframes modalSlideUp {
+  from {
+    opacity: 0;
+    transform: translateY(40px);
   }
-  .virtual-joystick .joystick-handle,
-  #catchJoystick .joystick-handle,
-  #catchJoystick .joystick-knob,
-  .joystick .joystick-knob {
-    width: 56px;
-    height: 56px;
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+.close-modal {
+  position: absolute;
+  top: var(--space-md);
+  right: var(--space-md);
+  background: none;
+  border: none;
+  font-size: 1.5rem;
+  color: var(--color-text-light);
+  cursor: pointer;
+  padding: var(--space-xs);
+  transition: color var(--transition-normal);
+}
+
+.close-modal:hover {
+  color: var(--color-wood);
+}
+
+.modal-character {
+  display: flex;
+  align-items: center;
+  gap: var(--space-lg);
+  margin-bottom: var(--space-lg);
+}
+
+.modal-character-icon {
+  width: 80px;
+  height: 80px;
+  border-radius: 50%;
+  background: linear-gradient(135deg, var(--color-sky-light), var(--color-green-light));
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 2.5rem;
+  flex-shrink: 0;
+}
+
+.modal-character-name {
+  font-family: var(--font-heading);
+  font-size: 2rem;
+  color: var(--color-wood);
+  margin-bottom: var(--space-xs);
+}
+
+.modal-character-quote {
+  font-family: var(--font-handwritten);
+  font-size: 1.5rem;
+  color: var(--color-text-light);
+  font-style: italic;
+}
+
+.modal-character-bio {
+  font-size: 1.1rem;
+  line-height: 1.7;
+  color: var(--color-text);
+  padding-top: var(--space-lg);
+  border-top: 2px solid rgba(139, 69, 19, 0.1);
+}
+
+/* FAB (Floating Action Button) stack */
+.fab-stack {
+  position: fixed;
+  bottom: var(--space-xl);
+  right: var(--space-xl);
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-sm);
+  z-index: 99;
+}
+
+.fab,
+.accessibility-btn {
+  width: 56px;
+  height: 56px;
+  border-radius: 50%;
+  border: none;
+  background: var(--color-honey);
+  color: white;
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 1.25rem;
+  box-shadow: 0 4px 12px rgba(244, 169, 68, 0.3);
+  transition: all var(--transition-normal);
+}
+
+.fab:hover,
+.accessibility-btn:hover {
+  transform: translateY(-2px) scale(1.05);
+  box-shadow: 0 6px 20px rgba(244, 169, 68, 0.4);
+}
+
+.accessibility-btn {
+  background: var(--color-green);
+}
+
+/* Score popup animation */
+.score-popup {
+  position: absolute;
+  font-family: var(--font-heading);
+  font-weight: bold;
+  font-size: 1.2rem;
+  color: white;
+  text-shadow: 0 2px 4px rgba(0, 0, 0, 0.3);
+  pointer-events: none;
+  opacity: 0;
+  transform: translateY(0);
+  animation: scoreFloat 1s ease-out forwards;
+  z-index: 10;
+}
+
+@keyframes scoreFloat {
+  0% {
+    opacity: 0;
+    transform: translateY(0);
+  }
+  20% {
+    opacity: 1;
+  }
+  100% {
+    opacity: 0;
+    transform: translateY(-60px);
+  }
+}
+
+.score-popup--golden {
+  color: #FFD700;
+  text-shadow: 0 0 8px rgba(255, 215, 0, 0.5);
+}
+
+.score-popup--honey {
+  color: #FFD54F;
+}
+
+.score-popup--power {
+  color: #9C27B0;
+}
+
+/* Shake animation */
+@keyframes shake {
+  0%, 100% { transform: translateX(0); }
+  10%, 30%, 50%, 70%, 90% { transform: translateX(-5px); }
+  20%, 40%, 60%, 80% { transform: translateX(5px); }
+}
+
+/* Responsive adjustments */
+@media (max-width: 768px) {
+  .nav-menu {
+    position: fixed;
+    top: 60px;
+    left: 0;
+    width: 100%;
+    background: var(--color-card);
+    flex-direction: column;
+    padding: var(--space-md);
+    box-shadow: 0 8px 32px var(--color-shadow);
+    transform: translateY(-100%);
+    opacity: 0;
+    visibility: hidden;
+    transition: all var(--transition-normal);
+    border-bottom-left-radius: var(--radius-lg);
+    border-bottom-right-radius: var(--radius-lg);
+    z-index: 99;
+  }
+
+  .nav-menu.active {
+    transform: translateY(0);
+    opacity: 1;
+    visibility: visible;
+  }
+
+  .nav-toggle {
+    display: block;
+  }
+
+  .storybook {
+    padding: var(--space-md);
+  }
+
+  .content-section {
+    padding: var(--space-lg);
+  }
+
+  .characters-grid-enhanced {
+    grid-template-columns: repeat(2, 1fr);
+    gap: var(--space-md);
+  }
+
+  .game-controls {
+    flex-direction: column;
+  }
+
+  .joystick-dock {
+    order: -1;
+    margin-bottom: var(--space-lg);
+  }
+
+  .fab-stack {
+    bottom: var(--space-md);
+    right: var(--space-md);
+  }
+
+  .modal-content {
+    padding: var(--space-lg);
+  }
+
+  .modal-character {
+    flex-direction: column;
+    text-align: center;
+    gap: var(--space-md);
+  }
+}
+
+@media (max-width: 480px) {
+  .characters-grid-enhanced {
+    grid-template-columns: 1fr;
+  }
+
+  .game-guide-grid {
+    grid-template-columns: 1fr;
+  }
+
+  .cover-card {
+    padding: var(--space-lg);
+  }
+
+  .cover-title {
+    font-size: 2rem;
+  }
+
+  .game-hud {
+    flex-direction: column;
+    align-items: center;
+  }
+
+  .hud-stat {
+    width: 100%;
+    justify-content: center;
+  }
+}
+
+/* Print styles */
+@media print {
+  .storybook-cover,
+  .nav,
+  .fab-stack,
+  .game-controls,
+  .wishes-actions {
+    display: none;
+  }
+
+  .storybook-shell {
+    padding-top: 0;
+  }
+
+  .content-section {
+    box-shadow: none;
+    border: 1px solid #ddd;
+    page-break-inside: avoid;
   }
 }
