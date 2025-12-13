@@ -97,22 +97,33 @@
   // ---------------------------------------------------------------------------
   // Enhanced Honey Catch Game
   // ---------------------------------------------------------------------------
-  function EnhancedHoneyCatchGame() {
-    console.log('[HoneyCatch] Init…');
+function EnhancedHoneyCatchGame() {
+  console.log('[HoneyCatch] Init…');
 
-    // DOM (required IDs)
-    const canvas = document.getElementById('honey-game');
-    if (!canvas) {
-      console.error('[HoneyCatch] #honey-game canvas not found.');
-      return null;
-    }
+  // DOM (required IDs)
+  const canvas = document.getElementById('honey-game');
+  if (!canvas) {
+    console.error('[HoneyCatch] #honey-game canvas not found.');
+    return null;
+  }
 
-    // Use desynchronized where supported for lower latency on mobile
-    const ctx = canvas.getContext('2d', { alpha: true, desynchronized: true });
-    if (!ctx) {
-      console.error('[HoneyCatch] 2D context not available.');
-      return null;
-    }
+  // iOS Safari: hard-stop long-press loupe/callout on the canvas
+  const stop = (e) => {
+    // Only block interactions intended for gameplay
+    e.preventDefault();
+  };
+  canvas.addEventListener('contextmenu', stop, { passive: false });
+  canvas.addEventListener('selectstart', stop, { passive: false });
+  canvas.addEventListener('touchstart', stop, { passive: false });
+  canvas.addEventListener('touchmove', stop, { passive: false });
+
+  // Use desynchronized where supported for lower latency on mobile
+  const ctx = canvas.getContext('2d', { alpha: true, desynchronized: true });
+  if (!ctx) {
+    console.error('[HoneyCatch] 2D context not available.');
+    return null;
+  }
+
 
     const scoreSpan = document.getElementById('score-count');
     const timeSpan = document.getElementById('time-count');
