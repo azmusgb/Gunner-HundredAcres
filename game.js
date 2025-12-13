@@ -1333,6 +1333,442 @@
     g.fillText(p.icon, 15, 15);
   }
 }
+  // ---------------------------------------------------------------------------
+  // Controls
+  // ---------------------------------------------------------------------------
+  function startEnhancedGame() {
+    if (gameState.gameRunning || gameState.countdownInterval) return;
+
+    // reset
+    gameState.score = 0;
+    gameState.lives = 3;
+    gameState.timeLeft = 60;
+    gameState.combos = 0;
+    gameState.multiplier = 1;
+    gameState.streak = 0;
+    gameState.lastCatchTime = 0;
+    gameState.effects = [];
+    gameState.isInvincible = false;
+    gameState.doublePoints = false;
+    gameState.slowMotion = false;
+
+    honeyPotPool.reset();
+    beePool.reset();
+    powerUpPool.reset();
+    catchParticles.clear();
+
+    resizeCanvas();
+
+    syncEnhancedCatchStats();
+
+    // countdown
+    let count = 3;
+    setEnhancedCatchOverlay("Starting in 3...", "Get Pooh ready to move.", true);
+
+    gameState.countdownInterval = setInterval(() => {
+      count--;
+      if (count > 0) {
+        setEnhancedCatchOverlay(`Starting in ${count}...`, "Catch honey, dodge bees.", true);
+        window.audioManager?.playTone?.([440, 440, 440], 0.08);
+      } else {
+        clearInterval(gameState.countdownInterval);
+        gameState.countdownInterval = null;
+
+        setEnhancedCatchOverlay("Go!", "Keep Pooh under the falling honey.", false, 900);
+        gameState.gameRunning = true;
+        gameState.startedAt = Date.now();
+
+        clearInterval(gameState.timerInterval);
+        gameState.timerInterval = setInterval(() => {
+          gameState.timeLeft--;
+          syncEnhancedCatchStats();
+          if (gameState.timeLeft <= 0) endEnhancedGame(true);
+        }, 1000);
+
+        window.audioManager?.playTone?.([523, 659, 784], 0.14);
+      }
+    }, 800);
+  }
+
+  function endEnhancedGame(timeExpired) {
+    if (!gameState.gameRunning) return;
+
+    gameState.gameRunning = false;
+    clearInterval(gameState.timerInterval);
+    gameState.timerInterval = null;
+
+    // bonus
+    let finalScore = gameState.score;
+    let bonus = 0;
+    if (gameState.lives === 3) bonus += 100;
+    if (gameState.combos > 10) bonus += 50;
+    if (gameState.streak > 15) bonus += 75;
+    finalScore += bonus;
+
+    setEnhancedCatchOverlay(
+      timeExpired ? "Time's up!" : "Ouch! The bees won this round.",
+      `Final Score: ${finalScore}${bonus ? ` (+${bonus} bonus)` : ""}`,
+      true
+    );
+
+    shakeElement(catchCard);
+
+    if (window.audioManager) {
+      window.audioManager.playGameSound?.(timeExpired ? "victory" : "defeat");
+    }
+  }
+
+  function toggleEnhancedPause() {
+    if (!gameState.gameRunning && gameState.timeLeft > 0 && gameState.lives > 0) {
+      // resume
+      gameState.gameRunning = true;
+      if (!gameState.timerInterval) {
+        gameState.timerInterval = setInterval(() => {
+          gameState.timeLeft--;
+          syncEnhancedCatchStats();
+          if (gameState.timeLeft <= 0) endEnhancedGame(true);
+        }, 1000);
+      }
+      catchOverlay?.classList.remove("active");
+      pauseBtn?.setAttribute("aria-pressed", "false");
+    } else if (gameState.gameRunning) {
+      // pause
+      gameState.gameRunning = false;
+      clearInterval(gameState.timerInterval);
+      gameState.timerInterval = null;
+      setEnhancedCatchOverlay("Paused", "Tap start or pause to continue when ready.", true);
+      pauseBtn?.setAttribute("aria-pressed", "true");
+    }
+    window.audioManager?.playSound?.("click");
+  }
+
+  // Keyboard
+  document.addEventListener("keydown", (ev) => {
+    if (!gameState.gameRunning) return;
+    const step = 26;
+
+    if (ev.key === "ArrowLeft") {
+      gameState.poohX = clamp(gameState.poohX - step, gameState.poohWidth / 2, cw - gameState.poohWidth / 2);
+    } else if (ev.key === "ArrowRight") {
+      gameState.poohX = clamp(gameState.poohX + step, gameState.poohWidth / 2, cw - gameState.poohWidth / 2);
+    }
+  });
+
+  // Mouse / touch direct control on canvas
+  canvas.addEventListener("mousemove", (ev) => {
+    if (!gameState.gameRunning) return;
+    const rect = canvas.getBoundingClientRect();
+    const x = ev.clientX - rect.left;
+    gameState.poohX = clamp(x, gameState.poohWidth / 2, cw - gameState.poohWidth / 2);
+  });
+
+  canvas.addEventListener("touchstart", (ev) => {
+    if (!gameState.gameRunning) return;
+    ev.preventDefault();
+    const rect = canvas.getBoundingClientRect();
+    const t = ev.touches[0];
+    const x = t.clientX - rect.left;
+    gameState.poohX = clamp(x, gameState.poohWidth / 2, cw - gameState.poohWidth / 2);
+  }, { passive: false });
+
+  canvas.addEventListener("touchmove", (ev) => {
+    if (!gameState.gameRunning) return;
+    ev.preventDefault();
+    const rect = canvas.getBoundingClientRect();
+    const t = ev.touches[0];
+    const x = t.clientX - rect.left;
+    gameState.poohX = clamp(x, gameState.poohWidth / 2, cw - gameState.poohWidth / 2);
+  }, { passive: false });
+
+  // Joystick (uses your existing #catchJoystick DOM)
+  if (IS_MOBILE && joystickEl) {
+    let dragging = false;
+
+    joystickEl.addEventListener("touchstart", (ev) => {
+      ev.preventDefault();
+      dragging = true;
+      joystickEl.classList.add("active");
+    }, { passive: false });
+
+    document.addEventListener("touchmove", (ev) => {
+      if (!dragging || !gameState.gameRunning) return;
+      ev.preventDefault();
+
+      const rect = joystickEl.getBoundingClientRect();
+      const cx = rect.left + rect.width / 2;
+      const cy = rect.top + rect.height / 2;
+      const t = ev.touches[0];
+
+      const dx = t.clientX - cx;
+      const dy = t.clientY - cy;
+
+      const dist = Math.hypot(dx, dy);
+      const maxDist = 40;
+
+      const nx = dist > 0 ? dx / Math.max(dist, 1) : 0;
+      const power = Math.min(1, dist / maxDist);
+
+      const speed = 18; // tune
+      gameState.poohX = clamp(
+        gameState.poohX + nx * power * speed,
+        gameState.poohWidth / 2,
+        cw - gameState.poohWidth / 2
+      );
+    }, { passive: false });
+
+    document.addEventListener("touchend", () => {
+      dragging = false;
+      joystickEl.classList.remove("active");
+    });
+  }
+
+  // Buttons
+  startBtn?.addEventListener("click", startEnhancedGame);
+  pauseBtn?.addEventListener("click", toggleEnhancedPause);
+
+  // ---------------------------------------------------------------------------
+  // Cleanup
+  // ---------------------------------------------------------------------------
+  window.addEventListener("beforeunload", () => {
+    if (rafId) cancelAnimationFrame(rafId);
+    if (gameState.timerInterval) clearInterval(gameState.timerInterval);
+    if (gameState.countdownInterval) clearInterval(gameState.countdownInterval);
+  });
+
+  console.log("Enhanced Honey Catch Game initialized");
+
+  // ---------------------------------------------------------------------------
+  // Small helpers (kept inside to stay “isolated”)
+  // ---------------------------------------------------------------------------
+  function makePool() {
+    return {
+      pool: [],
+      active: 0,
+      get(obj) {
+        let item;
+        if (this.active < this.pool.length) {
+          item = this.pool[this.active];
+          Object.assign(item, obj);
+        } else {
+          item = obj;
+          this.pool.push(item);
+        }
+        this.active++;
+        return item;
+      },
+      update(fn) {
+        for (let i = 0; i < this.active; i++) {
+          const it = this.pool[i];
+          if (it.active) fn(it, i);
+        }
+        // compact from end (cheap)
+        let write = 0;
+        for (let i = 0; i < this.active; i++) {
+          const it = this.pool[i];
+          if (it.active) {
+            if (write !== i) this.pool[write] = it;
+            write++;
+          }
+        }
+        this.active = write;
+      },
+      reset() {
+        for (let i = 0; i < this.pool.length; i++) this.pool[i].active = false;
+        this.active = 0;
+      },
+      activeCount() {
+        return this.active;
+      }
+    };
+  }
+
+  function clamp(v, min, max) {
+    return Math.max(min, Math.min(max, v));
+  }
+
+  function rand(min, max) {
+    return min + Math.random() * (max - min);
+  }
+
+  // Background painter (one-time into bgCtx)
+  function drawCatchBackgroundTo(g, w, h) {
+    // sky
+    const sky = g.createLinearGradient(0, 0, 0, h);
+    sky.addColorStop(0, "#87CEEB");
+    sky.addColorStop(0.6, "#B3E5FC");
+    sky.addColorStop(1, "#E3F2FD");
+    g.fillStyle = sky;
+    g.fillRect(0, 0, w, h);
+
+    // sun
+    g.save();
+    g.shadowColor = "#FFD700";
+    g.shadowBlur = 50;
+    g.fillStyle = "#FFEB3B";
+    g.beginPath();
+    g.arc(80, 80, 35, 0, Math.PI * 2);
+    g.fill();
+    g.restore();
+
+    // clouds (simple)
+    g.save();
+    g.fillStyle = "rgba(255,255,255,0.9)";
+    for (let i = 0; i < 3; i++) {
+      const x = 60 + i * (w * 0.32);
+      const y = 60 + Math.sin(i) * 18;
+      g.beginPath();
+      g.arc(x, y, 18, 0, Math.PI * 2);
+      g.arc(x + 24, y - 10, 24, 0, Math.PI * 2);
+      g.arc(x + 48, y, 18, 0, Math.PI * 2);
+      g.fill();
+    }
+    g.restore();
+
+    // ground
+    const groundH = 70;
+    const groundY = h - groundH;
+
+    const grd = g.createLinearGradient(0, groundY, 0, h);
+    grd.addColorStop(0, "#8BC34A");
+    grd.addColorStop(1, "#689F38");
+    g.fillStyle = grd;
+    g.fillRect(0, groundY, w, groundH);
+
+    // trees (scaled a bit)
+    g.fillStyle = "#8B4513";
+    g.fillRect(w * 0.18, h * 0.45, 28, h * 0.25);
+    g.fillStyle = "#2E7D32";
+    g.beginPath();
+    g.arc(w * 0.18 + 14, h * 0.42, 55, 0, Math.PI * 2);
+    g.fill();
+
+    g.fillStyle = "#A0522D";
+    g.fillRect(w * 0.78, h * 0.50, 30, h * 0.22);
+    g.fillStyle = "#388E3C";
+    g.beginPath();
+    g.arc(w * 0.78 + 15, h * 0.47, 50, 0, Math.PI * 2);
+    g.fill();
+  }
+
+  // Fallback drawings
+  function drawEnhancedPoohFallback(g) {
+    const grad = g.createLinearGradient(0, 0, 0, 80);
+    grad.addColorStop(0, "#FFC107");
+    grad.addColorStop(1, "#FF9800");
+
+    g.fillStyle = grad;
+    g.beginPath();
+    g.arc(40, 40, 30, 0, Math.PI * 2);
+    g.fill();
+
+    g.fillStyle = "#FFD8A6";
+    g.beginPath();
+    g.ellipse(40, 48, 18, 12, 0, 0, Math.PI * 2);
+    g.fill();
+
+    g.fillStyle = "#D62E2E";
+    g.fillRect(20, 55, 40, 15);
+
+    g.fillStyle = "#000";
+    g.beginPath();
+    g.arc(32, 32, 3, 0, Math.PI * 2);
+    g.arc(48, 32, 3, 0, Math.PI * 2);
+    g.fill();
+
+    g.fillStyle = "#8B4513";
+    g.beginPath();
+    g.arc(40, 40, 5, 0, Math.PI * 2);
+    g.fill();
+
+    g.strokeStyle = "#000";
+    g.lineWidth = 2;
+    g.beginPath();
+    g.arc(40, 46, 10, 0.2, Math.PI - 0.2);
+    g.stroke();
+  }
+
+  function drawEnhancedHoneyPotFallback(g, type = "normal") {
+    const grad = g.createRadialGradient(16, 16, 0, 16, 16, 16);
+    grad.addColorStop(0, "#FFEB3B");
+    grad.addColorStop(0.7, "#FFD54F");
+    grad.addColorStop(1, "#FFB300");
+
+    g.fillStyle = grad;
+    g.beginPath();
+    g.arc(16, 16, 16, 0, Math.PI * 2);
+    g.fill();
+
+    g.strokeStyle = "#8B4513";
+    g.lineWidth = 3;
+    g.stroke();
+
+    g.fillStyle = "#8B4513";
+    g.fillRect(8, 6, 16, 5);
+    g.fillRect(12, 3, 8, 3);
+
+    g.fillStyle = "#FF9800";
+    g.beginPath();
+    g.ellipse(16, 22, 7, 10, 0, 0, Math.PI * 2);
+    g.fill();
+
+    if (type === "golden") {
+      g.strokeStyle = "#FFD700";
+      g.lineWidth = 2;
+      g.setLineDash([2, 2]);
+      g.beginPath();
+      g.arc(16, 16, 18, 0, Math.PI * 2);
+      g.stroke();
+      g.setLineDash([]);
+    }
+  }
+
+  function drawEnhancedBee(g) {
+    const grad = g.createRadialGradient(15, 15, 0, 15, 15, 12);
+    grad.addColorStop(0, "#FFEB3B");
+    grad.addColorStop(1, "#FF9800");
+
+    g.fillStyle = grad;
+    g.beginPath();
+    g.arc(15, 15, 12, 0, Math.PI * 2);
+    g.fill();
+
+    g.fillStyle = "#000";
+    g.fillRect(8, 10, 5, 8);
+    g.fillRect(18, 10, 5, 8);
+
+    g.beginPath();
+    g.arc(12, 12, 2, 0, Math.PI * 2);
+    g.arc(18, 12, 2, 0, Math.PI * 2);
+    g.fill();
+
+    g.fillStyle = "rgba(255,255,255,0.8)";
+    g.beginPath();
+    g.arc(8, 5, 8, 0, Math.PI * 2);
+    g.arc(22, 5, 8, 0, Math.PI * 2);
+    g.fill();
+  }
+
+  function drawPowerUp(g, type, types) {
+    const p = types[type];
+    if (!p) return;
+
+    g.fillStyle = p.color + "33";
+    g.beginPath();
+    g.arc(15, 15, 15, 0, Math.PI * 2);
+    g.fill();
+
+    g.strokeStyle = p.color;
+    g.lineWidth = 2;
+    g.beginPath();
+    g.arc(15, 15, 14, 0, Math.PI * 2);
+    g.stroke();
+
+    g.font = "18px Arial";
+    g.textAlign = "center";
+    g.textBaseline = "middle";
+    g.fillText(p.icon, 15, 15);
+  }
+}
     if (beePool.activeCount() < 7 && Math.random() < beeSpawn) {
       const angryChance = Math.min(0.22, elapsed * 0.006);
       const type = Math.random() < angryChance ? "angry" : "normal";
