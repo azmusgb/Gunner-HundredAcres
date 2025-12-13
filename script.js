@@ -16,6 +16,43 @@
   function clamp(n, a, b) { return Math.max(a, Math.min(b, n)); }
 
   // ---------------------------------------------------------------------------
+  // Lightweight audio helper (UI bleeps only)
+  // ---------------------------------------------------------------------------
+  const audio = (() => {
+    let ctx = null;
+    let enabled = false;
+
+    const ensure = () => {
+      if (ctx || state.muted) return;
+      const Ctor = window.AudioContext || window.webkitAudioContext;
+      if (!Ctor) return;
+      ctx = new Ctor();
+      enabled = true;
+    };
+
+    const play = (frequency = 440, duration = 0.12, type = 'sine') => {
+      ensure();
+      if (!enabled || state.muted || !ctx) return;
+      const osc = ctx.createOscillator();
+      const gain = ctx.createGain();
+
+      osc.type = type;
+      osc.frequency.value = frequency;
+
+      osc.connect(gain);
+      gain.connect(ctx.destination);
+
+      gain.gain.setValueAtTime(0.28, ctx.currentTime);
+      gain.gain.exponentialRampToValueAtTime(0.01, ctx.currentTime + duration);
+
+      osc.start(ctx.currentTime);
+      osc.stop(ctx.currentTime + duration);
+    };
+
+    return { ensure, play };
+  })();
+
+  // ---------------------------------------------------------------------------
   // Cover
   // ---------------------------------------------------------------------------
   function initCover() {
@@ -33,6 +70,8 @@
     document.body.classList.add('cover-open');
 
     enter.addEventListener('click', () => {
+      audio.ensure();
+      audio.play(523, 0.18, 'sine');
       closeCover();
       // Nudge focus to main content for accessibility
       const main = $('#main');
@@ -65,6 +104,7 @@
     toggle.addEventListener('click', () => {
       const open = !menu.classList.contains('open');
       setOpen(open);
+      audio.play(open ? 440 : 392, 0.1);
     });
 
     // Close when clicking a link
@@ -72,6 +112,7 @@
       const a = e.target.closest('a[href^="#"]');
       if (!a) return;
       setOpen(false);
+      audio.play(523, 0.08);
     });
 
     // Close on outside click
@@ -133,6 +174,7 @@
         if (window.audioManager && typeof window.audioManager.setMuted === 'function') {
           window.audioManager.setMuted(state.muted);
         }
+        audio.play(state.muted ? 330 : 494, 0.12);
         sync();
       });
 
@@ -147,6 +189,8 @@
 
       accBtn.addEventListener('click', () => {
         state.accessibility = !state.accessibility;
+        document.body.classList.toggle('accessibility-mode', state.accessibility);
+        audio.play(523, 0.12);
         sync();
       });
 
@@ -209,11 +253,14 @@
       modal.classList.add('active');
       closeBtn.focus({ preventScroll: true });
       document.body.style.overflow = 'hidden';
+      audio.ensure();
+      audio.play(523, 0.16, 'triangle');
     }
 
     function close() {
       modal.classList.remove('active');
       document.body.style.overflow = '';
+      audio.play(392, 0.12);
     }
 
     closeBtn.addEventListener('click', close);
@@ -240,9 +287,90 @@
       });
     });
   }
-// iOS magnifier hard stop
-document.addEventListener('contextmenu', e => e.preventDefault(), { passive: false });
-document.addEventListener('selectstart', e => e.preventDefault(), { passive: false });
+
+  // ---------------------------------------------------------------------------
+  // Smooth scroll for anchored links (offset header)
+  // ---------------------------------------------------------------------------
+  function initSmoothScroll() {
+    $$('a[href^="#"]').forEach((anchor) => {
+      anchor.addEventListener('click', (e) => {
+        const targetId = anchor.getAttribute('href');
+        if (!targetId || targetId === '#') return;
+        const target = document.querySelector(targetId);
+        if (!target) return;
+        e.preventDefault();
+        const headerOffset = 80;
+        const top = target.getBoundingClientRect().top + window.scrollY - headerOffset;
+        window.scrollTo({ top, behavior: 'smooth' });
+        audio.play(494, 0.1);
+      });
+    });
+  }
+
+  // ---------------------------------------------------------------------------
+  // Entrance animations for sections/cards
+  // ---------------------------------------------------------------------------
+  function initEntranceAnimations() {
+    const observed = $$('.content-section, .game-card, .character-spotlight');
+    if (!observed.length) return;
+
+    const observer = new IntersectionObserver((entries) => {
+      entries.forEach((entry) => {
+        if (entry.isIntersecting) {
+          entry.target.style.opacity = '1';
+          entry.target.style.transform = 'translateY(0)';
+          observer.unobserve(entry.target);
+        }
+      });
+    }, { threshold: 0.1, rootMargin: '0px 0px -50px 0px' });
+
+    observed.forEach((el) => {
+      el.style.opacity = '0';
+      el.style.transform = 'translateY(20px)';
+      el.style.transition = 'opacity 0.6s ease, transform 0.6s ease';
+      observer.observe(el);
+    });
+  }
+
+  // ---------------------------------------------------------------------------
+  // Fun particle burst for CTA buttons
+  // ---------------------------------------------------------------------------
+  function initParticles() {
+    window.createParticle = (x, y, emoji = '✨') => {
+      const particle = document.createElement('div');
+      particle.className = 'particle';
+      particle.textContent = emoji;
+      particle.style.left = `${x}px`;
+      particle.style.top = `${y}px`;
+      particle.style.position = 'fixed';
+      particle.style.fontSize = '24px';
+      particle.style.zIndex = '10000';
+      particle.style.pointerEvents = 'none';
+
+      const tx = (Math.random() - 0.5) * 120;
+      const ty = -50 - Math.random() * 80;
+      particle.style.setProperty('--tx', `${tx}px`);
+      particle.style.setProperty('--ty', `${ty}px`);
+
+      document.body.appendChild(particle);
+      setTimeout(() => particle.remove(), 1000);
+    };
+
+    $$('.btn-primary, .btn-secondary').forEach((btn) => {
+      btn.addEventListener('click', () => {
+        const rect = btn.getBoundingClientRect();
+        const x = rect.left + rect.width / 2;
+        const y = rect.top + rect.height / 2;
+        for (let i = 0; i < 5; i += 1) {
+          window.setTimeout(() => window.createParticle(x, y, '🍯'), i * 60);
+        }
+      });
+    });
+  }
+  
+  // iOS magnifier hard stop
+  document.addEventListener('contextmenu', (e) => e.preventDefault(), { passive: false });
+  document.addEventListener('selectstart', (e) => e.preventDefault(), { passive: false });
   // ---------------------------------------------------------------------------
   // Boot
   // ---------------------------------------------------------------------------
@@ -252,5 +380,8 @@ document.addEventListener('selectstart', e => e.preventDefault(), { passive: fal
     initReadingProgress();
     initFABs();
     initCharacterModal();
+    initSmoothScroll();
+    initEntranceAnimations();
+    initParticles();
   });
 })();
