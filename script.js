@@ -240,7 +240,9 @@
       });
     });
   }
-
+// iOS magnifier hard stop
+document.addEventListener('contextmenu', e => e.preventDefault(), { passive: false });
+document.addEventListener('selectstart', e => e.preventDefault(), { passive: false });
   // ---------------------------------------------------------------------------
   // Boot
   // ---------------------------------------------------------------------------
