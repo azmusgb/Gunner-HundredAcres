@@ -18,6 +18,21 @@
     gamepadConnected: false
   };
 
+  // Reflect motion preferences immediately for animation and scroll behavior
+  document.body.classList.toggle('reduced-motion', state.reducedMotion);
+
+  const reducedMotionMedia = window.matchMedia('(prefers-reduced-motion: reduce)');
+  if (typeof reducedMotionMedia.addEventListener === 'function') {
+    reducedMotionMedia.addEventListener('change', (event) => {
+      state.reducedMotion = event.matches;
+      document.body.classList.toggle('reduced-motion', state.reducedMotion);
+    });
+  }
+
+  document.addEventListener('visibilitychange', () => {
+    document.body.classList.toggle('paused-animations', document.hidden);
+  });
+
   const WISHES_KEY = 'hundred-wishes-v2';
   const MAX_WISHES = 50;
   const ANIMATION_DELAY = 300;

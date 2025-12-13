@@ -27,6 +27,7 @@
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/animate.css/4.1.1/animate.min.css">
     
     <!-- Main CSS -->
+    <link rel="preload" href="styles.css" as="style">
     <link rel="stylesheet" href="styles.css" />
     <style>
         :root {
@@ -1166,7 +1167,53 @@
     
     <!-- Scripts -->
     <script src="script.js" defer></script>
-    <script src="game.js" defer></script>
+    <script>
+        // Lazy-load the heavy game bundle when the mini game is in view or on first interaction
+        (function () {
+            const miniGame = document.getElementById('catch-card');
+            let gameLoaded = false;
+
+            const loadGameScript = () => {
+                if (gameLoaded) return;
+                gameLoaded = true;
+
+                document.body.classList.add('game-loading');
+
+                const script = document.createElement('script');
+                script.src = 'game.js';
+                script.defer = true;
+                script.onload = () => document.body.classList.remove('game-loading');
+                script.onerror = () => document.body.classList.remove('game-loading');
+                document.body.appendChild(script);
+            };
+
+            const queueIdleLoad = () => {
+                if ('requestIdleCallback' in window) {
+                    requestIdleCallback(loadGameScript, { timeout: 1500 });
+                } else {
+                    setTimeout(loadGameScript, 500);
+                }
+            };
+
+            if (miniGame && 'IntersectionObserver' in window) {
+                const observer = new IntersectionObserver((entries) => {
+                    if (entries.some((entry) => entry.isIntersecting)) {
+                        loadGameScript();
+                        observer.disconnect();
+                    }
+                }, { rootMargin: '200px' });
+                observer.observe(miniGame);
+            } else {
+                queueIdleLoad();
+            }
+
+            ['touchstart', 'pointerdown', 'keydown'].forEach((eventName) => {
+                document.addEventListener(eventName, loadGameScript, { once: true, passive: true });
+            });
+
+            window.addEventListener('load', queueIdleLoad, { once: true });
+        })();
+    </script>
     
     <!-- Enhanced Audio and Interaction Script -->
     <script>
