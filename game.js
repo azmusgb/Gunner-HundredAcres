@@ -1,154 +1,120 @@
-// game.js — Honey Pot Catch (isolated, production-ready)
-// Owns ONLY the Honey Pot Catch canvas + HUD IDs.
-// Does NOT control site-wide nav, cover, modals, or audio systems.
+// game.js — Honey Pot Catch (improved version)
 'use strict';
 
 (function () {
   // ---------------------------------------------------------------------------
-  // Utilities
+  // Improved Utilities
   // ---------------------------------------------------------------------------
   const clamp = (v, min, max) => Math.max(min, Math.min(max, v));
   const nowMs = () => (typeof performance !== 'undefined' ? performance.now() : Date.now());
 
   function isMobileDevice() {
     const ua = navigator.userAgent || navigator.vendor || window.opera;
-    const touch =
-      (navigator.maxTouchPoints && navigator.maxTouchPoints > 0) || 'ontouchstart' in window;
-    return (
-      /Android|webOS|iPhone|iPad|iPod|BlackBerry|IEMobile|Opera Mini/i.test(ua) ||
-      (touch && window.innerWidth <= 900)
-    );
+    const touch = (navigator.maxTouchPoints && navigator.maxTouchPoints > 0) || 
+                  'ontouchstart' in window ||
+                  window.DocumentTouch && document instanceof DocumentTouch;
+    return (/Android|webOS|iPhone|iPad|iPod|BlackBerry|IEMobile|Opera Mini/i.test(ua) ||
+            (touch && window.innerWidth <= 900));
   }
 
   class FrameRateLimiter {
     constructor(targetFPS = 60) {
       this.setTarget(targetFPS);
       this.lastFrameTime = 0;
+      this.frameCount = 0;
+      this.lastFpsUpdate = 0;
+      this.currentFPS = 0;
     }
+    
     setTarget(targetFPS) {
       const fps = Number(targetFPS) || 60;
       this.targetFPS = clamp(fps, 10, 120);
       this.frameInterval = 1000 / this.targetFPS;
     }
+    
     shouldRender(ts) {
+      this.frameCount++;
+      if (ts - this.lastFpsUpdate >= 1000) {
+        this.currentFPS = Math.round((this.frameCount * 1000) / (ts - this.lastFpsUpdate));
+        this.frameCount = 0;
+        this.lastFpsUpdate = ts;
+      }
+      
       if (ts - this.lastFrameTime >= this.frameInterval) {
         this.lastFrameTime = ts;
         return true;
       }
       return false;
     }
+    
     reset() {
       this.lastFrameTime = 0;
+      this.frameCount = 0;
+      this.lastFpsUpdate = nowMs();
+    }
+    
+    getFPS() {
+      return this.currentFPS;
     }
   }
 
-  function shakeElement(el, intensity = 5, duration = 260) {
-    if (!el || !el.style) return;
-    const base = el.style.transform || '';
-    const start = nowMs();
-
-    function tick(t) {
-      const p = (t - start) / duration;
-      if (p >= 1) {
-        el.style.transform = base;
-        return;
-      }
-      const k = 1 - p;
-      const dx = (Math.random() - 0.5) * intensity * k;
-      const dy = (Math.random() - 0.5) * intensity * k;
-      el.style.transform = `${base} translate(${dx}px, ${dy}px)`;
-      requestAnimationFrame(tick);
-    }
-    requestAnimationFrame(tick);
-  }
-
-  // Best-effort: unlock iOS audio context (if a site audio manager exists, we won't fight it)
-  function unlockAudioOnce() {
-    if (unlockAudioOnce._done) return;
-    unlockAudioOnce._done = true;
-
-    try {
-      const AC = window.AudioContext || window.webkitAudioContext;
-      if (!AC) return;
-
-      const ctx = unlockAudioOnce._ctx || new AC();
-      unlockAudioOnce._ctx = ctx;
-
-      const resume = () => {
-        try {
-          if (ctx.state === 'suspended') ctx.resume();
-          // tiny blip (inaudible) to fully unlock on some Safari versions
-          const o = ctx.createOscillator();
-          const g = ctx.createGain();
-          g.gain.value = 0.0001;
-          o.connect(g).connect(ctx.destination);
-          o.start();
-          o.stop(ctx.currentTime + 0.02);
-        } catch (_) {}
-      };
-
-      resume();
-      window.removeEventListener('touchstart', resume);
-      window.removeEventListener('pointerdown', resume);
-      window.removeEventListener('click', resume);
-    } catch (_) {}
+  function smoothLerp(current, target, factor = 0.2) {
+    return current + (target - current) * factor;
   }
 
   // ---------------------------------------------------------------------------
   // Enhanced Honey Catch Game
   // ---------------------------------------------------------------------------
-function EnhancedHoneyCatchGame() {
-  console.log('[HoneyCatch] Init…');
+  function EnhancedHoneyCatchGame() {
+    console.log('[HoneyCatch] Enhanced Init…');
 
-  // DOM (required IDs)
-  const canvas = document.getElementById('honey-game');
-  if (!canvas) {
-    console.error('[HoneyCatch] #honey-game canvas not found.');
-    return null;
-  }
+    // DOM Elements with null checks
+    const canvas = document.getElementById('honey-game');
+    if (!canvas) {
+      console.error('[HoneyCatch] #honey-game canvas not found.');
+      return null;
+    }
 
-  // iOS Safari: hard-stop long-press loupe/callout on the canvas
-  const stop = (e) => {
-    // Only block interactions intended for gameplay
-    e.preventDefault();
-  };
-  canvas.addEventListener('contextmenu', stop, { passive: false });
-  canvas.addEventListener('selectstart', stop, { passive: false });
-  canvas.addEventListener('touchstart', stop, { passive: false });
-  canvas.addEventListener('touchmove', stop, { passive: false });
+    // Get context with better options
+    const ctx = canvas.getContext('2d', { 
+      alpha: true, 
+      desynchronized: true,
+      powerPreference: 'low-power' // Better for mobile
+    });
+    
+    if (!ctx) {
+      console.error('[HoneyCatch] 2D context not available.');
+      return null;
+    }
 
-  // Use desynchronized where supported for lower latency on mobile
-  const ctx = canvas.getContext('2d', { alpha: true, desynchronized: true });
-  if (!ctx) {
-    console.error('[HoneyCatch] 2D context not available.');
-    return null;
-  }
+    // Get DOM elements safely
+    const getElement = (id) => {
+      const el = document.getElementById(id);
+      if (!el) console.warn(`[HoneyCatch] Element #${id} not found`);
+      return el;
+    };
 
-
-    const scoreSpan = document.getElementById('score-count');
-    const timeSpan = document.getElementById('time-count');
-    const livesSpan = document.getElementById('catch-lives');
-    const startBtn = document.getElementById('start-catch');
-    const pauseBtn = document.getElementById('pause-catch');
-    const overlay = document.getElementById('catch-overlay');
-    const overlayLine = document.getElementById('catch-countdown');
-    const overlayHint = document.getElementById('catch-hint');
-    const card = document.getElementById('catch-card');
-    const multiplierSpan = document.getElementById('catch-multiplier');
-    const comboSpan = document.getElementById('catch-combo');
-    const statusEl = document.getElementById('catchStatus');
-
-    const joystick = document.getElementById('catchJoystick');
-    const joystickKnob =
-      document.getElementById('catchJoystickKnob') ||
-      (joystick ? joystick.querySelector('.joystick-handle, .joystick-knob') : null);
-    const timeBar = document.getElementById('catch-timebar');
-    const lifeBar = document.getElementById('catch-life-bar');
+    const scoreSpan = getElement('score-count');
+    const timeSpan = getElement('time-count');
+    const livesSpan = getElement('catch-lives');
+    const startBtn = getElement('start-catch');
+    const pauseBtn = getElement('pause-catch');
+    const overlay = getElement('catch-overlay');
+    const overlayLine = getElement('catch-countdown');
+    const overlayHint = getElement('catch-hint');
+    const card = document.querySelector('.game-card');
+    const multiplierSpan = getElement('catch-multiplier');
+    const comboSpan = getElement('catch-combo');
+    const statusEl = getElement('catchStatus');
+    const joystick = getElement('catchJoystick');
+    const joystickKnob = joystick ? joystick.querySelector('.joystick-knob') : null;
+    const timeBar = getElement('catch-timebar');
+    const lifeBar = getElement('catch-life-bar');
     const modeButtons = Array.from(document.querySelectorAll('[data-catch-mode]'));
-    const modeDescription = document.getElementById('catch-mode-description');
-    const bestScoreEl = document.getElementById('catch-best');
-    const stageEl = canvas.closest('.game-stage');
+    const modeDescription = getElement('catch-mode-description');
+    const bestScoreEl = getElement('catch-best');
 
+    // Game Modes
     const MODES = {
       calm: {
         label: 'Calm Stroll',
@@ -157,6 +123,8 @@ function EnhancedHoneyCatchGame() {
         spawnScale: 0.92,
         speedScale: 0.92,
         scoreScale: 0.95,
+        honeyValue: 10,
+        goldenValue: 50,
         hint: 'A relaxed 70 second run with extra hearts.',
       },
       brisk: {
@@ -166,6 +134,8 @@ function EnhancedHoneyCatchGame() {
         spawnScale: 1,
         speedScale: 1,
         scoreScale: 1,
+        honeyValue: 15,
+        goldenValue: 75,
         hint: 'Balanced pace. Great for personal bests.',
       },
       rush: {
@@ -175,1227 +145,1504 @@ function EnhancedHoneyCatchGame() {
         spawnScale: 1.14,
         speedScale: 1.08,
         scoreScale: 1.12,
+        honeyValue: 20,
+        goldenValue: 100,
         hint: 'Short, spicy, and higher scoring.',
       },
     };
-    // Canvas sizing: CSS px coordinates, DPR drawing buffer
+
+    // Canvas variables
     let W = 0;
     let H = 0;
     let DPR = 1;
+    let targetWidth = 0;
+    let targetHeight = 0;
 
+    // Background canvas for optimization
     const bgCanvas = document.createElement('canvas');
-    const bg = bgCanvas.getContext('2d');
+    const bgCtx = bgCanvas.getContext('2d');
 
+    // Improved resize function
     function resizeCanvas() {
-  // Debounce resize to prevent thrashing
-  if (resizeCanvas._debounce) {
-    clearTimeout(resizeCanvas._debounce);
-  }
-  resizeCanvas._debounce = setTimeout(() => {
-    const rect = canvas.getBoundingClientRect();
-    const cssW = Math.max(1, Math.floor(rect.width));
-    const cssH = Math.max(1, Math.floor(rect.height || rect.width * 0.62));
-    
-    // Prevent unnecessary resizes
-    if (cssW === W && cssH === H) return;
-    
-    DPR = window.devicePixelRatio || 1;
-    W = cssW;
-    H = cssH;
-    
-    // Set canvas size only if changed
-    if (canvas.width !== Math.floor(cssW * DPR) || 
-        canvas.height !== Math.floor(cssH * DPR)) {
-      canvas.width = Math.floor(cssW * DPR);
-      canvas.height = Math.floor(cssH * DPR);
-      ctx.setTransform(DPR, 0, 0, DPR, 0, 0);
+      if (resizeCanvas.debounceTimer) {
+        clearTimeout(resizeCanvas.debounceTimer);
+      }
+      
+      resizeCanvas.debounceTimer = setTimeout(() => {
+        const container = canvas.parentElement;
+        if (!container) return;
+        
+        const rect = container.getBoundingClientRect();
+        const cssW = Math.max(300, Math.floor(rect.width));
+        const cssH = Math.max(200, Math.floor(rect.height || cssW * 0.66));
+        
+        // Avoid unnecessary resizes
+        if (cssW === W && cssH === H) return;
+        
+        DPR = window.devicePixelRatio || 1;
+        W = cssW;
+        H = cssH;
+        
+        // Set canvas display size (CSS)
+        canvas.style.width = `${cssW}px`;
+        canvas.style.height = `${cssH}px`;
+        
+        // Set canvas drawing buffer size
+        const bufferWidth = Math.floor(cssW * DPR);
+        const bufferHeight = Math.floor(cssH * DPR);
+        
+        if (canvas.width !== bufferWidth || canvas.height !== bufferHeight) {
+          canvas.width = bufferWidth;
+          canvas.height = bufferHeight;
+          ctx.setTransform(DPR, 0, 0, DPR, 0, 0);
+        }
+        
+        // Resize background canvas (CSS pixels for drawing)
+        if (bgCanvas.width !== cssW || bgCanvas.height !== cssH) {
+          bgCanvas.width = cssW;
+          bgCanvas.height = cssH;
+          drawBackground();
+        }
+        
+        // Update game state for new dimensions
+        if (state.pooh) {
+          state.pooh.x = clamp(state.pooh.x || cssW / 2, state.pooh.width / 2, cssW - state.pooh.width / 2);
+          state.pooh.y = cssH - 70;
+        }
+        
+        console.log(`[HoneyCatch] Resized to ${cssW}x${cssH} (DPR: ${DPR})`);
+      }, 150);
     }
-    
-    // Resize background canvas
-    if (bgCanvas.width !== cssW || bgCanvas.height !== cssH) {
-      bgCanvas.width = cssW;
-      bgCanvas.height = cssH;
-      drawBackgroundOnce();
-    }
-    
-    // Keep Pooh positioned
-    state.poohX = clamp(state.poohX || cssW / 2, state.poohW / 2, cssW - state.poohW / 2);
-    state.poohY = cssH - 70;
-    
-  }, 100); // 100ms debounce
-}
-    // Draw background into bgCanvas (CSS px)
-    function drawBackgroundOnce() {
-      if (!bg) return;
 
-      // sky
-      const sky = bg.createLinearGradient(0, 0, 0, H);
-      sky.addColorStop(0, '#87CEEB');
-      sky.addColorStop(0.62, '#B3E5FC');
-      sky.addColorStop(1, '#E3F2FD');
-      bg.fillStyle = sky;
-      bg.fillRect(0, 0, W, H);
-
-      // sun
-      bg.save();
-      bg.shadowColor = 'rgba(255, 215, 0, 0.45)';
-      bg.shadowBlur = 28;
-      bg.fillStyle = '#FFEB3B';
-      bg.beginPath();
-      bg.arc(80, 80, 26, 0, Math.PI * 2);
-      bg.fill();
-      bg.restore();
-
-      // clouds
-      bg.fillStyle = 'rgba(255,255,255,0.9)';
+    // Draw optimized background
+    function drawBackground() {
+      if (!bgCtx) return;
+      
+      // Clear
+      bgCtx.clearRect(0, 0, W, H);
+      
+      // Sky gradient
+      const skyGradient = bgCtx.createLinearGradient(0, 0, 0, H);
+      skyGradient.addColorStop(0, '#87CEEB');
+      skyGradient.addColorStop(0.6, '#B3E5FC');
+      skyGradient.addColorStop(1, '#E3F2FD');
+      bgCtx.fillStyle = skyGradient;
+      bgCtx.fillRect(0, 0, W, H);
+      
+      // Sun with glow
+      bgCtx.save();
+      bgCtx.shadowColor = 'rgba(255, 215, 0, 0.4)';
+      bgCtx.shadowBlur = 25;
+      bgCtx.fillStyle = '#FFEB3B';
+      bgCtx.beginPath();
+      bgCtx.arc(W * 0.15, H * 0.15, Math.min(W, H) * 0.07, 0, Math.PI * 2);
+      bgCtx.fill();
+      bgCtx.restore();
+      
+      // Ground
+      const groundHeight = Math.max(60, H * 0.15);
+      const groundY = H - groundHeight;
+      const groundGradient = bgCtx.createLinearGradient(0, groundY, 0, H);
+      groundGradient.addColorStop(0, '#8BC34A');
+      groundGradient.addColorStop(1, '#689F38');
+      bgCtx.fillStyle = groundGradient;
+      bgCtx.fillRect(0, groundY, W, groundHeight);
+      
+      // Simple clouds (3 max for performance)
+      bgCtx.fillStyle = 'rgba(255, 255, 255, 0.85)';
       const clouds = [
-        { x: W * 0.25, y: 70, s: 1.0 },
-        { x: W * 0.62, y: 112, s: 1.15 },
-        { x: W * 0.82, y: 64, s: 0.92 },
+        { x: W * 0.3, y: H * 0.2, size: 0.8 },
+        { x: W * 0.6, y: H * 0.3, size: 1.0 },
+        { x: W * 0.8, y: H * 0.15, size: 0.7 }
       ];
-      clouds.forEach((c) => {
-        bg.save();
-        bg.translate(c.x, c.y);
-        bg.scale(c.s, c.s);
-        bg.beginPath();
-        bg.arc(0, 0, 18, 0, Math.PI * 2);
-        bg.arc(22, -10, 22, 0, Math.PI * 2);
-        bg.arc(46, 0, 18, 0, Math.PI * 2);
-        bg.fill();
-        bg.restore();
+      
+      clouds.forEach(cloud => {
+        const size = Math.min(W, H) * 0.05 * cloud.size;
+        bgCtx.save();
+        bgCtx.translate(cloud.x, cloud.y);
+        bgCtx.beginPath();
+        bgCtx.arc(0, 0, size, 0, Math.PI * 2);
+        bgCtx.arc(size * 1.2, -size * 0.5, size * 1.1, 0, Math.PI * 2);
+        bgCtx.arc(size * 2.4, 0, size, 0, Math.PI * 2);
+        bgCtx.fill();
+        bgCtx.restore();
       });
-
-      // ground
-      const groundH = 72;
-      const groundY = H - groundH;
-      const ground = bg.createLinearGradient(0, groundY, 0, H);
-      ground.addColorStop(0, '#8BC34A');
-      ground.addColorStop(1, '#689F38');
-      bg.fillStyle = ground;
-      bg.fillRect(0, groundY, W, groundH);
-
-      // trees
-      bg.fillStyle = '#8B4513';
-      bg.fillRect(90, groundY - 120, 24, 140);
-      bg.fillRect(W - 120, groundY - 110, 26, 130);
-      bg.fillStyle = '#2E7D32';
-      bg.beginPath();
-      bg.arc(102, groundY - 130, 52, 0, Math.PI * 2);
-      bg.arc(W - 107, groundY - 125, 48, 0, Math.PI * 2);
-      bg.fill();
     }
 
     // -------------------------------------------------------------------------
-    // Particles (simple + fast)
+    // Game State Object
     // -------------------------------------------------------------------------
-    const particles = [];
-    const MAX_PARTICLES = isMobileDevice() ? 90 : 220;
-
-    function burst(x, y, count, color) {
-      for (let i = 0; i < count; i++) {
-        if (particles.length >= MAX_PARTICLES) break;
-        const a = Math.random() * Math.PI * 2;
-        const s = 1.5 + Math.random() * 3.2;
-        particles.push({
-          x,
-          y,
-          vx: Math.cos(a) * s,
-          vy: Math.sin(a) * s - 1.2,
-          life: 1,
-          decay: 0.03 + Math.random() * 0.03,
-          r: 2 + Math.random() * 4,
-          color,
-        });
-      }
-    }
-
-    function updateParticles(dt) {
-      for (let i = particles.length - 1; i >= 0; i--) {
-        const p = particles[i];
-        p.x += p.vx * dt;
-        p.y += p.vy * dt;
-        p.vy += 0.08 * dt;
-        p.vx *= 0.985;
-        p.vy *= 0.985;
-        p.life -= p.decay * dt;
-        if (p.life <= 0) particles.splice(i, 1);
-      }
-    }
-
-    function renderParticles() {
-      ctx.save();
-      for (const p of particles) {
-        ctx.globalAlpha = Math.max(0, p.life);
-        ctx.fillStyle = p.color;
-        ctx.beginPath();
-        ctx.arc(p.x, p.y, p.r, 0, Math.PI * 2);
-        ctx.fill();
-      }
-      ctx.restore();
-    }
-
-    // -------------------------------------------------------------------------
-    // Power-ups
-    // -------------------------------------------------------------------------
-    const powerUpTypes = {
-      heart: { color: '#FF6B6B', icon: '❤️', duration: 0 },
-      shield: { color: '#4285F4', icon: '🛡️', duration: 5000 },
-      clock: { color: '#4CAF50', icon: '⏱️', duration: 0 },
-      star: { color: '#FFD700', icon: '⭐', duration: 8000 },
-      lightning: { color: '#9C27B0', icon: '⚡', duration: 6000 },
-    };
-
-    // -------------------------------------------------------------------------
-    // State
-    // -------------------------------------------------------------------------
-    const frameLimiter = new FrameRateLimiter(isMobileDevice() ? 30 : 60);
-
     const state = {
+      // Game status
       running: false,
       paused: false,
-      over: false,
-
+      gameOver: false,
+      
+      // Player stats
       score: 0,
       timeLeft: 60,
       lives: 3,
-
       combos: 0,
       multiplier: 1,
       streak: 0,
-      lastCatchAt: 0,
-
-      poohX: 0,
-      poohY: 0,
-      poohW: 58,
-      poohH: 58,
-
+      lastCatchTime: 0,
+      
+      // Player object
+      pooh: {
+        x: 0,
+        y: 0,
+        width: 58,
+        height: 58,
+        targetX: 0,
+        speed: 12
+      },
+      
+      // Power-ups
       invincible: false,
       invincibleUntil: 0,
       doublePoints: false,
       doublePointsUntil: 0,
       slowMo: false,
       slowMoUntil: 0,
-
       honeyRushUntil: 0,
-      bestScore: 0,
-
-      mode: 'calm',
-      modeCfg: MODES.calm,
-
-      difficulty: 0,
-
-      lastTs: nowMs(),
-      rafId: null,
-      timerId: null,
-      countdownId: null,
-      overlayT: null,
-
+      
+      // Game objects
       pots: [],
       bees: [],
       powerUps: [],
-
-      // joystick
+      particles: [],
+      
+      // Game settings
+      mode: 'calm',
+      modeCfg: MODES.calm,
+      difficulty: 0,
+      bestScore: 0,
+      
+      // Timing
+      lastUpdateTime: nowMs(),
+      frameId: null,
+      timerId: null,
+      countdownId: null,
+      overlayTimer: null,
+      
+      // Controls
       joyActive: false,
       joyPointerId: null,
       joyCenterX: 0,
       joyCenterY: 0,
       joyDx: 0,
       joyDy: 0,
+      keys: {}
     };
 
-    function syncHUD() {
-      if (scoreSpan) scoreSpan.textContent = String(state.score);
-      if (timeSpan) timeSpan.textContent = String(state.timeLeft);
-      if (livesSpan) livesSpan.textContent = String(state.lives);
-      if (comboSpan) comboSpan.textContent = String(state.combos || 0);
-      if (multiplierSpan) multiplierSpan.textContent = String(Math.round(state.multiplier * 10) / 10);
-      if (pauseBtn) pauseBtn.setAttribute('aria-pressed', state.paused ? 'true' : 'false');
-      if (bestScoreEl) bestScoreEl.textContent = String(state.bestScore);
+    // Frame limiter
+    const frameLimiter = new FrameRateLimiter(isMobileDevice() ? 30 : 60);
 
-      const timePct = clamp((state.timeLeft / state.modeCfg.time) * 100, 0, 100);
+    // -------------------------------------------------------------------------
+    // Particles System
+    // -------------------------------------------------------------------------
+    class ParticleSystem {
+      constructor(maxParticles = 200) {
+        this.particles = [];
+        this.maxParticles = maxParticles;
+      }
+      
+      burst(x, y, count, color, options = {}) {
+        const { size = 4, speed = 3, gravity = 0.1, decay = 0.03 } = options;
+        
+        for (let i = 0; i < count && this.particles.length < this.maxParticles; i++) {
+          const angle = Math.random() * Math.PI * 2;
+          const velocity = speed * (0.5 + Math.random() * 0.5);
+          
+          this.particles.push({
+            x, y,
+            vx: Math.cos(angle) * velocity,
+            vy: Math.sin(angle) * velocity,
+            life: 1,
+            decay: decay * (0.8 + Math.random() * 0.4),
+            size: size * (0.5 + Math.random()),
+            color,
+            gravity
+          });
+        }
+      }
+      
+      update(dt) {
+        for (let i = this.particles.length - 1; i >= 0; i--) {
+          const p = this.particles[i];
+          
+          p.x += p.vx * dt;
+          p.y += p.vy * dt;
+          p.vy += p.gravity * dt;
+          
+          // Apply friction
+          p.vx *= 0.98;
+          p.vy *= 0.98;
+          
+          p.life -= p.decay * dt;
+          
+          if (p.life <= 0 || p.y > H + 50 || p.x < -50 || p.x > W + 50) {
+            this.particles.splice(i, 1);
+          }
+        }
+      }
+      
+      render() {
+        ctx.save();
+        for (const p of this.particles) {
+          ctx.globalAlpha = Math.max(0, p.life);
+          ctx.fillStyle = p.color;
+          ctx.beginPath();
+          ctx.arc(p.x, p.y, p.size, 0, Math.PI * 2);
+          ctx.fill();
+        }
+        ctx.restore();
+      }
+      
+      clear() {
+        this.particles.length = 0;
+      }
+    }
+
+    const particles = new ParticleSystem(isMobileDevice() ? 150 : 300);
+
+    // -------------------------------------------------------------------------
+    // Power-ups Configuration
+    // -------------------------------------------------------------------------
+    const POWER_UPS = {
+      heart: { 
+        color: '#FF6B6B', 
+        icon: '❤️', 
+        duration: 0,
+        value: 1 
+      },
+      shield: { 
+        color: '#4285F4', 
+        icon: '🛡️', 
+        duration: 5000 
+      },
+      clock: { 
+        color: '#4CAF50', 
+        icon: '⏱️', 
+        duration: 0,
+        value: 10 
+      },
+      star: { 
+        color: '#FFD700', 
+        icon: '⭐', 
+        duration: 8000 
+      },
+      lightning: { 
+        color: '#9C27B0', 
+        icon: '⚡', 
+        duration: 6000 
+      }
+    };
+
+    // -------------------------------------------------------------------------
+    // HUD and UI Functions
+    // -------------------------------------------------------------------------
+    function updateHUD() {
+      if (scoreSpan) scoreSpan.textContent = state.score.toLocaleString();
+      if (timeSpan) timeSpan.textContent = Math.max(0, state.timeLeft);
+      if (livesSpan) livesSpan.textContent = state.lives;
+      if (comboSpan) comboSpan.textContent = state.combos;
+      if (multiplierSpan) {
+        const mult = Math.round(state.multiplier * 10) / 10;
+        multiplierSpan.textContent = mult % 1 === 0 ? mult : mult.toFixed(1);
+      }
+      if (bestScoreEl) bestScoreEl.textContent = state.bestScore.toLocaleString();
+      if (pauseBtn) {
+        pauseBtn.setAttribute('aria-pressed', state.paused ? 'true' : 'false');
+        pauseBtn.querySelector('i').className = state.paused ? 'fa-solid fa-play' : 'fa-solid fa-pause';
+      }
+
+      // Update progress bars
+      const timePercent = clamp((state.timeLeft / state.modeCfg.time) * 100, 0, 100);
       if (timeBar) {
-        timeBar.style.setProperty('--w', `${timePct}%`);
-        timeBar.style.width = `${timePct}%`;
+        timeBar.style.width = `${timePercent}%`;
+        timeBar.style.setProperty('--w', `${timePercent}%`);
       }
 
-      const lifePct = clamp((state.lives / state.modeCfg.lives) * 100, 0, 100);
+      const lifePercent = clamp((state.lives / state.modeCfg.lives) * 100, 0, 100);
       if (lifeBar) {
-        lifeBar.style.setProperty('--w', `${lifePct}%`);
-        lifeBar.style.width = `${lifePct}%`;
+        lifeBar.style.width = `${lifePercent}%`;
+        lifeBar.style.setProperty('--w', `${lifePercent}%`);
       }
     }
 
-    function setStatus(text) {
-      if (statusEl) statusEl.textContent = text;
+    function setStatus(message, type = 'info') {
+      if (!statusEl) return;
+      
+      statusEl.textContent = message;
+      statusEl.className = 'tip';
+      
+      // Add visual feedback based on type
+      if (type === 'success') {
+        statusEl.style.color = '#4CAF50';
+        statusEl.style.fontWeight = 'bold';
+      } else if (type === 'error') {
+        statusEl.style.color = '#f44336';
+        statusEl.style.fontWeight = 'bold';
+      } else if (type === 'warning') {
+        statusEl.style.color = '#FF9800';
+      } else {
+        statusEl.style.color = '';
+        statusEl.style.fontWeight = '';
+      }
+      
+      // Auto-clear after 3 seconds for non-persistent messages
+      if (type !== 'persistent') {
+        clearTimeout(setStatus.timer);
+        setStatus.timer = setTimeout(() => {
+          if (statusEl && !state.running) {
+            statusEl.textContent = 'Ready to play';
+            statusEl.style.color = '';
+          }
+        }, 3000);
+      }
     }
 
-    function setOverlay(line, hint, persistent = false, duration = 1500) {
+    function showOverlay(title, subtitle, duration = 1500) {
       if (!overlay || !overlayLine || !overlayHint) return;
-
-      overlayLine.textContent = line || '';
-      overlayHint.textContent = hint || '';
+      
+      overlayLine.textContent = title;
+      overlayHint.textContent = subtitle;
       overlay.classList.add('active');
-
-      if (state.overlayT) clearTimeout(state.overlayT);
-
-      if (!persistent) {
-        state.overlayT = setTimeout(() => {
+      
+      if (state.overlayTimer) {
+        clearTimeout(state.overlayTimer);
+      }
+      
+      if (duration > 0) {
+        state.overlayTimer = setTimeout(() => {
           overlay.classList.remove('active');
         }, duration);
       }
     }
 
-    function showScorePopup(label, x, y, variant = 'default') {
-      if (!stageEl) return;
-
-      const stageRect = stageEl.getBoundingClientRect();
-      const canvasRect = canvas.getBoundingClientRect();
-
-      const popup = document.createElement('div');
-      popup.className = `score-popup score-popup--${variant}`;
-      popup.textContent = label;
-
-      const relX = canvasRect.left - stageRect.left + x;
-      const relY = canvasRect.top - stageRect.top + y;
-      popup.style.left = `${relX}px`;
-      popup.style.top = `${relY}px`;
-
-      stageEl.appendChild(popup);
-
-      requestAnimationFrame(() => {
-        popup.classList.add('visible');
-      });
-
-      setTimeout(() => popup.remove(), 1050);
-    }
-
-    function setMode(modeKey) {
-      const cfg = MODES[modeKey] || MODES.calm;
-      state.mode = modeKey in MODES ? modeKey : 'calm';
-      state.modeCfg = cfg;
-
-      modeButtons.forEach((btn) => btn.classList.toggle('is-active', btn.dataset.catchMode === state.mode));
-      if (modeDescription) modeDescription.textContent = cfg.hint;
-
-      if (!state.running) {
-        state.timeLeft = cfg.time;
-        state.lives = cfg.lives;
-        syncHUD();
+    function hideOverlay() {
+      if (overlay) {
+        overlay.classList.remove('active');
+      }
+      if (state.overlayTimer) {
+        clearTimeout(state.overlayTimer);
+        state.overlayTimer = null;
       }
     }
 
+    // -------------------------------------------------------------------------
+    // Game Mode Management
+    // -------------------------------------------------------------------------
+    function setGameMode(modeKey) {
+      if (!MODES[modeKey]) {
+        modeKey = 'calm';
+      }
+      
+      state.mode = modeKey;
+      state.modeCfg = MODES[modeKey];
+      
+      // Update UI
+      modeButtons.forEach(btn => {
+        btn.classList.toggle('is-active', btn.dataset.catchMode === modeKey);
+      });
+      
+      if (modeDescription) {
+        modeDescription.textContent = state.modeCfg.hint;
+      }
+      
+      // Reset game state if not running
+      if (!state.running) {
+        state.timeLeft = state.modeCfg.time;
+        state.lives = state.modeCfg.lives;
+        updateHUD();
+      }
+      
+      console.log(`[HoneyCatch] Mode set to: ${state.modeCfg.label}`);
+    }
+
+    // -------------------------------------------------------------------------
+    // Score Management
+    // -------------------------------------------------------------------------
     function loadBestScore() {
       try {
-        const stored = Number(localStorage.getItem('catchBest') || '0');
-        if (!Number.isNaN(stored) && stored > 0) {
-          state.bestScore = stored;
+        const saved = localStorage.getItem('honeyCatchBestScore');
+        if (saved) {
+          const score = parseInt(saved, 10);
+          if (!isNaN(score)) {
+            state.bestScore = score;
+          }
         }
-      } catch (_) {}
+      } catch (e) {
+        console.warn('[HoneyCatch] Could not load best score:', e);
+      }
     }
 
-    function maybeUpdateBest(score) {
+    function saveBestScore(score) {
       if (score <= state.bestScore) return false;
+      
       state.bestScore = score;
+      
       try {
-        localStorage.setItem('catchBest', String(score));
-      } catch (_) {}
-      syncHUD();
-      return true;
+        localStorage.setItem('honeyCatchBestScore', score.toString());
+        return true;
+      } catch (e) {
+        console.warn('[HoneyCatch] Could not save best score:', e);
+        return false;
+      }
     }
 
     // -------------------------------------------------------------------------
-    // Spawn + collisions
+    // Spawn Functions
     // -------------------------------------------------------------------------
-    function spawnPot() {
-      const rushActive = state.honeyRushUntil > Date.now();
-      const goldenChance = 0.16 + state.difficulty * 0.02 + (rushActive ? 0.35 : 0);
-      const type = Math.random() < goldenChance ? 'golden' : 'normal';
-
+    function spawnHoneyPot() {
+      const rushActive = Date.now() < state.honeyRushUntil;
+      const goldenChance = 0.15 + (state.difficulty * 0.02) + (rushActive ? 0.3 : 0);
+      const isGolden = Math.random() < goldenChance;
+      
       state.pots.push({
         x: 20 + Math.random() * (W - 40),
-        y: -18,
-        r: 14,
-        vy: (2.2 + Math.random() * (1.6 + state.difficulty * 0.22)) * state.modeCfg.speedScale,
-        type,
+        y: -20,
+        radius: 14,
+        speed: (2 + Math.random() * 1.5) * state.modeCfg.speedScale,
+        type: isGolden ? 'golden' : 'normal',
+        wobble: Math.random() * Math.PI * 2
       });
     }
 
     function spawnBee() {
-      const angryChance = state.difficulty >= 2 ? 0.22 : 0.08;
-      const type = Math.random() < angryChance ? 'angry' : 'normal';
-
+      const angryChance = state.difficulty >= 2 ? 0.2 : 0.1;
+      const isAngry = Math.random() < angryChance;
+      
       state.bees.push({
         x: 20 + Math.random() * (W - 40),
-        y: -18,
-        r: 14,
-        vy: (2.9 + Math.random() * (1.8 + state.difficulty * 0.22)) * state.modeCfg.speedScale,
-        type,
-        vx: 0,
+        y: -20,
+        radius: 12,
+        speed: (2.5 + Math.random() * 1.5) * state.modeCfg.speedScale,
+        type: isAngry ? 'angry' : 'normal',
+        wobble: Math.random() * Math.PI * 2,
+        vx: 0
       });
     }
 
     function spawnPowerUp() {
-      const keys = Object.keys(powerUpTypes);
-      const type = keys[(Math.random() * keys.length) | 0];
+      const keys = Object.keys(POWER_UPS);
+      const type = keys[Math.floor(Math.random() * keys.length)];
+      
       state.powerUps.push({
         x: 24 + Math.random() * (W - 48),
-        y: -18,
-        r: 14,
-        vy: (2.0 + Math.random() * 1.2) * state.modeCfg.speedScale,
-        type,
+        y: -20,
+        radius: 14,
+        speed: (1.8 + Math.random() * 1) * state.modeCfg.speedScale,
+        type: type,
+        wobble: Math.random() * Math.PI * 2
       });
     }
 
-    function hitPooh(x, y, r) {
-      const cx = state.poohX;
-      const cy = state.poohY - state.poohH * 0.5;
-      const hw = state.poohW * 0.5;
-      const hh = state.poohH * 0.5;
-
-      // circle-vs-AABB
-      const nx = clamp(x, cx - hw, cx + hw);
-      const ny = clamp(y, cy - hh, cy + hh);
-      const dx = x - nx;
-      const dy = y - ny;
-      return dx * dx + dy * dy <= r * r;
+    // -------------------------------------------------------------------------
+    // Collision Detection
+    // -------------------------------------------------------------------------
+    function checkCollision(x1, y1, r1, x2, y2, r2) {
+      const dx = x1 - x2;
+      const dy = y1 - y2;
+      const distance = Math.sqrt(dx * dx + dy * dy);
+      return distance < (r1 + r2);
     }
 
+    function checkPoohCollision(x, y, radius) {
+      const poohX = state.pooh.x;
+      const poohY = state.pooh.y - state.pooh.height * 0.4;
+      const poohWidth = state.pooh.width * 0.7;
+      const poohHeight = state.pooh.height * 0.7;
+      
+      // Circle vs rounded rectangle collision
+      const closestX = clamp(x, poohX - poohWidth / 2, poohX + poohWidth / 2);
+      const closestY = clamp(y, poohY - poohHeight / 2, poohY + poohHeight / 2);
+      
+      const dx = x - closestX;
+      const dy = y - closestY;
+      
+      return (dx * dx + dy * dy) <= (radius * radius);
+    }
+
+    // -------------------------------------------------------------------------
+    // Power-up Effects
+    // -------------------------------------------------------------------------
     function applyPowerUp(type) {
       const now = Date.now();
-      if (type === 'heart') {
-        state.lives = Math.min(5, state.lives + 1);
-        syncHUD();
-        setOverlay('Sweet!', 'A little extra heart for Pooh.', false, 900);
-        return;
+      const config = POWER_UPS[type];
+      
+      if (!config) return;
+      
+      switch (type) {
+        case 'heart':
+          state.lives = Math.min(state.modeCfg.lives + 2, state.lives + 1);
+          showOverlay('Extra Heart!', 'Pooh feels refreshed', 1000);
+          break;
+          
+        case 'shield':
+          state.invincible = true;
+          state.invincibleUntil = now + config.duration;
+          showOverlay('Shield Activated!', 'Bees can\'t hurt you', 1000);
+          break;
+          
+        case 'clock':
+          state.timeLeft = Math.min(state.modeCfg.time, state.timeLeft + config.value);
+          showOverlay('Bonus Time!', `+${config.value} seconds`, 1000);
+          break;
+          
+        case 'star':
+          state.doublePoints = true;
+          state.doublePointsUntil = now + config.duration;
+          showOverlay('Double Points!', 'All honey is extra sweet', 1000);
+          break;
+          
+        case 'lightning':
+          state.slowMo = true;
+          state.slowMoUntil = now + config.duration;
+          showOverlay('Slow Motion!', 'Everything slows down', 1000);
+          break;
       }
-      if (type === 'clock') {
-        state.timeLeft += 10;
-        syncHUD();
-        setOverlay('Bonus time!', '+10 seconds.', false, 900);
-        return;
-      }
-      if (type === 'shield') {
-        state.invincible = true;
-        state.invincibleUntil = now + powerUpTypes.shield.duration;
-        setOverlay('Shield!', 'Bees can’t hurt you for a bit.', false, 900);
-        return;
-      }
-      if (type === 'star') {
-        state.doublePoints = true;
-        state.doublePointsUntil = now + powerUpTypes.star.duration;
-        setOverlay('Double points!', 'Honey is extra sweet right now.', false, 900);
-        return;
-      }
-      if (type === 'lightning') {
-        state.slowMo = true;
-        state.slowMoUntil = now + powerUpTypes.lightning.duration;
-        setOverlay('Slow motion!', 'Everything slows down.', false, 900);
-      }
-    }
-
-    function triggerHoneyRush() {
-      state.honeyRushUntil = Date.now() + 5200;
-      setOverlay('Honey rush!', 'Golden pots pouring in. Bees ease up briefly.', false, 1100);
-      if (window.audioManager && typeof window.audioManager.playTone === 'function') {
-        window.audioManager.playTone([523.25, 659.25], 0.12);
-      }
+      
+      updateHUD();
+      
+      // Visual feedback
+      particles.burst(state.pooh.x, state.pooh.y - 30, 15, config.color, {
+        size: 5,
+        speed: 4,
+        gravity: 0.05
+      });
     }
 
     // -------------------------------------------------------------------------
-    // Rendering (CSS px coords)
+    // Drawing Functions
     // -------------------------------------------------------------------------
     function drawPooh() {
-      const x = state.poohX;
-      const y = state.poohY;
-      const w = state.poohW;
-      const h = state.poohH;
-
-      // shadow
+      const x = state.pooh.x;
+      const y = state.pooh.y;
+      const w = state.pooh.width;
+      const h = state.pooh.height;
+      
+      // Shadow
       ctx.save();
-      ctx.globalAlpha = 0.25;
+      ctx.globalAlpha = 0.2;
       ctx.fillStyle = '#000';
       ctx.beginPath();
-      ctx.ellipse(x, y + 18, w * 0.42, h * 0.18, 0, 0, Math.PI * 2);
+      ctx.ellipse(x, y + 15, w * 0.4, h * 0.1, 0, 0, Math.PI * 2);
       ctx.fill();
       ctx.restore();
-
-      // body
-      const bodyGrad = ctx.createLinearGradient(0, y - h, 0, y);
-      bodyGrad.addColorStop(0, '#FFC107');
-      bodyGrad.addColorStop(1, '#FF9800');
-      ctx.fillStyle = bodyGrad;
+      
+      // Body
+      const bodyGradient = ctx.createLinearGradient(x - w/2, y - h, x - w/2, y);
+      bodyGradient.addColorStop(0, '#FFC107');
+      bodyGradient.addColorStop(1, '#FF9800');
+      ctx.fillStyle = bodyGradient;
       ctx.beginPath();
-      ctx.roundRect(x - w / 2, y - h, w, h, 16);
+      ctx.roundRect(x - w/2, y - h, w, h, 12);
       ctx.fill();
-
-      // belly
-      ctx.fillStyle = 'rgba(255, 216, 166, 0.95)';
-      ctx.beginPath();
-      ctx.ellipse(x, y - h * 0.35, w * 0.28, h * 0.18, 0, 0, Math.PI * 2);
-      ctx.fill();
-
-      // shirt
+      
+      // Shirt
       ctx.fillStyle = '#D62E2E';
-      ctx.fillRect(x - w / 2, y - h * 0.25, w, h * 0.25);
-
-      // face
+      ctx.fillRect(x - w/2, y - h * 0.7, w, h * 0.25);
+      
+      // Belly
+      ctx.fillStyle = 'rgba(255, 216, 166, 0.9)';
+      ctx.beginPath();
+      ctx.ellipse(x, y - h * 0.5, w * 0.25, h * 0.15, 0, 0, Math.PI * 2);
+      ctx.fill();
+      
+      // Eyes
       ctx.fillStyle = '#000';
       ctx.beginPath();
-      ctx.arc(x - w * 0.18, y - h * 0.72, 2.5, 0, Math.PI * 2);
-      ctx.arc(x + w * 0.18, y - h * 0.72, 2.5, 0, Math.PI * 2);
+      ctx.arc(x - w * 0.2, y - h * 0.8, 2.5, 0, Math.PI * 2);
+      ctx.arc(x + w * 0.2, y - h * 0.8, 2.5, 0, Math.PI * 2);
       ctx.fill();
-
-      // nose
+      
+      // Nose
       ctx.fillStyle = '#8B4513';
       ctx.beginPath();
-      ctx.arc(x, y - h * 0.58, 4.2, 0, Math.PI * 2);
+      ctx.arc(x, y - h * 0.65, 4, 0, Math.PI * 2);
       ctx.fill();
-
-      // invincibility ring
+      
+      // Invincibility effect
       if (state.invincible) {
         ctx.save();
-        const a = 0.45 + Math.sin(Date.now() / 180) * 0.25;
-        ctx.strokeStyle = `rgba(76,175,80,${a})`;
-        ctx.lineWidth = 3.5;
-        ctx.shadowColor = 'rgba(76,175,80,0.55)';
-        ctx.shadowBlur = 18;
+        const alpha = 0.4 + Math.sin(Date.now() / 150) * 0.3;
+        ctx.strokeStyle = `rgba(66, 133, 244, ${alpha})`;
+        ctx.lineWidth = 3;
+        ctx.shadowColor = 'rgba(66, 133, 244, 0.5)';
+        ctx.shadowBlur = 15;
         ctx.beginPath();
-        ctx.arc(x, y - h * 0.55, w * 0.55, 0, Math.PI * 2);
+        ctx.arc(x, y - h * 0.5, w * 0.6, 0, Math.PI * 2);
         ctx.stroke();
         ctx.restore();
       }
     }
 
-    function drawPot(p) {
-      const x = p.x;
-      const y = p.y;
-
-      // glow for golden
-      if (p.type === 'golden') {
+    function drawHoneyPot(pot) {
+      const x = pot.x + Math.sin(pot.wobble + Date.now() / 500) * 2;
+      const y = pot.y;
+      const isGolden = pot.type === 'golden';
+      
+      // Glow for golden pots
+      if (isGolden) {
         ctx.save();
-        ctx.shadowColor = 'rgba(255, 215, 0, 0.8)';
-        ctx.shadowBlur = 14;
-        ctx.globalAlpha = 0.9;
+        ctx.shadowColor = 'rgba(255, 215, 0, 0.7)';
+        ctx.shadowBlur = 12;
         ctx.fillStyle = '#FFD54F';
         ctx.beginPath();
-        ctx.arc(x, y, 14, 0, Math.PI * 2);
+        ctx.arc(x, y, pot.radius, 0, Math.PI * 2);
         ctx.fill();
         ctx.restore();
       }
-
-      const grad = ctx.createRadialGradient(x - 4, y - 4, 2, x, y, 16);
-      grad.addColorStop(0, '#FFEB3B');
-      grad.addColorStop(0.75, '#FFD54F');
-      grad.addColorStop(1, '#FFB300');
-      ctx.fillStyle = grad;
+      
+      // Pot body
+      const gradient = ctx.createRadialGradient(
+        x - 3, y - 3, 1,
+        x, y, pot.radius
+      );
+      gradient.addColorStop(0, '#FFEB3B');
+      gradient.addColorStop(0.8, '#FFD54F');
+      gradient.addColorStop(1, '#FFB300');
+      
+      ctx.fillStyle = gradient;
       ctx.beginPath();
-      ctx.arc(x, y, 14, 0, Math.PI * 2);
+      ctx.arc(x, y, pot.radius, 0, Math.PI * 2);
       ctx.fill();
-
+      
+      // Pot outline
       ctx.strokeStyle = '#8B4513';
-      ctx.lineWidth = 2.5;
+      ctx.lineWidth = 2;
       ctx.stroke();
-
-      // lid
+      
+      // Lid
       ctx.fillStyle = '#8B4513';
-      ctx.fillRect(x - 8, y - 14, 16, 4);
-      ctx.fillRect(x - 4, y - 17, 8, 3);
-
-      // honey drip
+      ctx.fillRect(x - 7, y - 12, 14, 3);
+      ctx.fillRect(x - 3, y - 15, 6, 3);
+      
+      // Honey drip
       ctx.fillStyle = '#FF9800';
       ctx.beginPath();
-      ctx.ellipse(x, y + 4, 6, 9, 0, 0, Math.PI * 2);
+      ctx.ellipse(x, y + 3, 5, 8, 0, 0, Math.PI * 2);
       ctx.fill();
     }
 
-    function drawBee(b) {
-      const x = b.x;
-      const y = b.y + Math.sin(Date.now() / 90 + x) * 2.5;
-
-      // wings
-      ctx.fillStyle = 'rgba(255,255,255,0.85)';
+    function drawBee(bee) {
+      const x = bee.x + Math.sin(bee.wobble + Date.now() / 300) * 3;
+      const y = bee.y + Math.cos(bee.wobble * 1.5 + Date.now() / 400) * 2;
+      
+      // Wings
+      ctx.fillStyle = 'rgba(255, 255, 255, 0.8)';
+      const wingTime = Date.now() / 80;
+      const wingOffset = Math.sin(wingTime) * 3;
+      
       ctx.beginPath();
-      ctx.arc(x - 10, y - 10, 8, 0, Math.PI * 2);
-      ctx.arc(x + 10, y - 10, 8, 0, Math.PI * 2);
+      ctx.arc(x - 9, y - 8 + wingOffset, 7, 0, Math.PI * 2);
+      ctx.arc(x + 9, y - 8 - wingOffset, 7, 0, Math.PI * 2);
       ctx.fill();
-
-      // body
-      const grad = ctx.createRadialGradient(x, y, 2, x, y, 14);
-      grad.addColorStop(0, '#FFEB3B');
-      grad.addColorStop(1, '#FF9800');
-      ctx.fillStyle = grad;
+      
+      // Body
+      const bodyGradient = ctx.createRadialGradient(x, y, 2, x, y, 10);
+      bodyGradient.addColorStop(0, '#FFEB3B');
+      bodyGradient.addColorStop(1, '#FF9800');
+      
+      ctx.fillStyle = bodyGradient;
       ctx.beginPath();
-      ctx.arc(x, y, 12, 0, Math.PI * 2);
+      ctx.arc(x, y, 10, 0, Math.PI * 2);
       ctx.fill();
-
-      // stripes
+      
+      // Stripes
       ctx.fillStyle = '#000';
-      ctx.fillRect(x - 6, y - 6, 4, 10);
-      ctx.fillRect(x + 2, y - 6, 4, 10);
-
-      // eyes
+      ctx.fillRect(x - 5, y - 5, 3, 8);
+      ctx.fillRect(x + 2, y - 5, 3, 8);
+      
+      // Eyes
+      ctx.fillStyle = '#000';
       ctx.beginPath();
-      ctx.arc(x - 4, y - 3, 2, 0, Math.PI * 2);
-      ctx.arc(x + 4, y - 3, 2, 0, Math.PI * 2);
+      ctx.arc(x - 3, y - 2, 1.5, 0, Math.PI * 2);
+      ctx.arc(x + 3, y - 2, 1.5, 0, Math.PI * 2);
       ctx.fill();
-
-      if (b.type === 'angry') {
-        ctx.font = '12px Arial';
+      
+      // Angry face
+      if (bee.type === 'angry') {
+        ctx.font = '16px Arial';
         ctx.textAlign = 'center';
-        ctx.fillText('💢', x, y - 18);
+        ctx.fillText('💢', x, y - 20);
       }
     }
 
     function drawPowerUp(pu) {
-      const cfg = powerUpTypes[pu.type];
-      if (!cfg) return;
-      const x = pu.x;
-      const y = pu.y + Math.sin(Date.now() / 300 + x) * 3;
-
+      const x = pu.x + Math.sin(pu.wobble + Date.now() / 600) * 3;
+      const y = pu.y;
+      const config = POWER_UPS[pu.type];
+      
+      if (!config) return;
+      
+      // Glow
       ctx.save();
-      ctx.fillStyle = cfg.color + '33';
+      ctx.shadowColor = config.color + '80';
+      ctx.shadowBlur = 10;
+      ctx.fillStyle = config.color + '40';
       ctx.beginPath();
-      ctx.arc(x, y, 14, 0, Math.PI * 2);
+      ctx.arc(x, y, pu.radius, 0, Math.PI * 2);
       ctx.fill();
-
-      ctx.strokeStyle = cfg.color;
+      ctx.restore();
+      
+      // Outline
+      ctx.strokeStyle = config.color;
       ctx.lineWidth = 2;
       ctx.beginPath();
-      ctx.arc(x, y, 13, 0, Math.PI * 2);
+      ctx.arc(x, y, pu.radius, 0, Math.PI * 2);
       ctx.stroke();
-
-      ctx.font = '16px Arial';
+      
+      // Icon
+      ctx.font = '20px Arial';
       ctx.textAlign = 'center';
       ctx.textBaseline = 'middle';
       ctx.fillStyle = '#111';
-      ctx.fillText(cfg.icon, x, y + 0.5);
-      ctx.restore();
+      ctx.fillText(config.icon, x, y);
     }
 
-    function drawUI() {
+    // -------------------------------------------------------------------------
+    // Game Loop Functions
+    // -------------------------------------------------------------------------
+    function updateGame(dt) {
+      if (!state.running || state.paused || state.gameOver) return;
+      
+      // Apply slow motion if active
+      const timeScale = state.slowMo ? 0.5 : 1.0;
+      const scaledDt = dt * timeScale;
+      
+      // Update Pooh position with smoothing
+      state.pooh.targetX = clamp(state.pooh.targetX, state.pooh.width/2, W - state.pooh.width/2);
+      state.pooh.x = smoothLerp(state.pooh.x, state.pooh.targetX, 0.2);
+      
+      // Update power-up timers
+      const now = Date.now();
+      if (state.invincible && now > state.invincibleUntil) {
+        state.invincible = false;
+      }
+      if (state.doublePoints && now > state.doublePointsUntil) {
+        state.doublePoints = false;
+      }
+      if (state.slowMo && now > state.slowMoUntil) {
+        state.slowMo = false;
+      }
+      
+      // Spawn objects
+      updateSpawning(scaledDt);
+      
+      // Update objects
+      updateObjects(scaledDt);
+      
+      // Update particles
+      particles.update(scaledDt);
+      
+      // Update combo timer
+      if (state.combos > 0 && now - state.lastCatchTime > 2000) {
+        state.combos = 0;
+        state.multiplier = 1;
+        state.streak = 0;
+        updateHUD();
+      }
+    }
+
+    function updateSpawning(dt) {
+      const rushActive = Date.now() < state.honeyRushUntil;
+      const spawnRate = state.modeCfg.spawnScale;
+      
+      // Honey pots
+      if (state.pots.length < 10 && Math.random() < 0.04 * spawnRate * dt) {
+        spawnHoneyPot();
+      }
+      
+      // Bees (less during honey rush)
+      const beeChance = rushActive ? 0.02 : 0.03;
+      if (state.bees.length < 6 && Math.random() < beeChance * spawnRate * dt) {
+        spawnBee();
+      }
+      
+      // Power-ups
+      if (state.powerUps.length < 3 && Math.random() < 0.01 * spawnRate * dt) {
+        spawnPowerUp();
+      }
+    }
+
+    function updateObjects(dt) {
+      const now = Date.now();
+      
+      // Update honey pots
+      for (let i = state.pots.length - 1; i >= 0; i--) {
+        const pot = state.pots[i];
+        pot.y += pot.speed * dt;
+        pot.wobble += 0.05 * dt;
+        
+        // Check collision with Pooh
+        if (checkPoohCollision(pot.x, pot.y, pot.radius)) {
+          handlePotCollected(pot, i);
+          continue;
+        }
+        
+        // Remove if off screen
+        if (pot.y > H + 30) {
+          state.pots.splice(i, 1);
+          // Break streak if pot is missed
+          if (state.streak > 0) {
+            state.streak = 0;
+          }
+        }
+      }
+      
+      // Update bees
+      for (let i = state.bees.length - 1; i >= 0; i--) {
+        const bee = state.bees[i];
+        bee.y += bee.speed * dt;
+        bee.wobble += 0.03 * dt;
+        
+        // Angry bees chase Pooh
+        if (bee.type === 'angry') {
+          const dx = state.pooh.x - bee.x;
+          bee.vx += Math.sign(dx) * 0.02 * dt;
+          bee.vx = clamp(bee.vx, -2, 2);
+          bee.x += bee.vx * dt;
+          bee.x = clamp(bee.x, 20, W - 20);
+        }
+        
+        // Check collision with Pooh
+        if (!state.invincible && checkPoohCollision(bee.x, bee.y, bee.radius)) {
+          handleBeeCollision(bee, i);
+          continue;
+        }
+        
+        // Remove if off screen
+        if (bee.y > H + 30) {
+          state.bees.splice(i, 1);
+        }
+      }
+      
+      // Update power-ups
+      for (let i = state.powerUps.length - 1; i >= 0; i--) {
+        const pu = state.powerUps[i];
+        pu.y += pu.speed * dt;
+        pu.wobble += 0.02 * dt;
+        
+        // Check collision with Pooh
+        if (checkPoohCollision(pu.x, pu.y, pu.radius)) {
+          applyPowerUp(pu.type);
+          state.powerUps.splice(i, 1);
+          continue;
+        }
+        
+        // Remove if off screen
+        if (pu.y > H + 30) {
+          state.powerUps.splice(i, 1);
+        }
+      }
+    }
+
+    function handlePotCollected(pot, index) {
+      const isGolden = pot.type === 'golden';
+      let points = isGolden ? state.modeCfg.goldenValue : state.modeCfg.honeyValue;
+      
+      // Apply multiplier
+      if (state.doublePoints) points *= 2;
+      points = Math.round(points * state.multiplier);
+      
+      // Update score
+      state.score += points;
+      
+      // Update combo
+      const now = Date.now();
+      if (now - state.lastCatchTime < 2000) {
+        state.combos++;
+        state.streak++;
+        state.multiplier = clamp(1 + state.combos * 0.15, 1, 5);
+      } else {
+        state.combos = 1;
+        state.streak = 1;
+        state.multiplier = 1.15;
+      }
+      state.lastCatchTime = now;
+      
+      // Trigger honey rush on long streaks
+      if (state.streak >= 8 && Date.now() > state.honeyRushUntil) {
+        state.honeyRushUntil = Date.now() + 6000;
+        showOverlay('Honey Rush!', 'Golden pots everywhere!', 1500);
+      }
+      
+      // Visual effects
+      particles.burst(pot.x, pot.y, isGolden ? 20 : 12, 
+                     isGolden ? '#FFD700' : '#FFD54F',
+                     { size: isGolden ? 5 : 3, speed: 4 });
+      
+      // Remove pot
+      state.pots.splice(index, 1);
+      
+      // Update HUD
+      updateHUD();
+      
+      // Audio feedback
+      if (window.audioManager && typeof window.audioManager.playGameSound === 'function') {
+        window.audioManager.playGameSound(isGolden ? 'golden' : 'collect');
+      }
+    }
+
+    function handleBeeCollision(bee, index) {
+      const damage = bee.type === 'angry' ? 2 : 1;
+      state.lives -= damage;
+      
+      // Reset combo
+      state.combos = 0;
+      state.multiplier = 1;
+      state.streak = 0;
+      
+      // Visual effects
+      particles.burst(bee.x, bee.y, 15, '#FF6B6B', { size: 4, speed: 3 });
+      
+      // Remove bee
+      state.bees.splice(index, 1);
+      
+      // Update HUD
+      updateHUD();
+      
+      // Show feedback
+      if (state.lives <= 0) {
+        endGame(false);
+      } else {
+        showOverlay('Ouch!', `Bee stung Pooh! ${state.lives} ${state.lives === 1 ? 'life' : 'lives'} left`, 1200);
+        
+        // Shake effect
+        if (card) {
+          card.style.animation = 'shake 0.3s ease-in-out';
+          setTimeout(() => {
+            card.style.animation = '';
+          }, 300);
+        }
+      }
+      
+      // Audio feedback
+      if (window.audioManager && typeof window.audioManager.playGameSound === 'function') {
+        window.audioManager.playGameSound('damage');
+      }
+    }
+
+    function renderGame() {
+      // Clear canvas
+      ctx.clearRect(0, 0, W, H);
+      
+      // Draw background
+      if (bgCanvas) {
+        ctx.drawImage(bgCanvas, 0, 0);
+      }
+      
+      // Draw game objects
+      state.pots.forEach(pot => drawHoneyPot(pot));
+      state.bees.forEach(bee => drawBee(bee));
+      state.powerUps.forEach(pu => drawPowerUp(pu));
+      
+      // Draw particles
+      particles.render();
+      
+      // Draw Pooh
+      drawPooh();
+      
+      // Draw UI text
+      drawGameUI();
+    }
+
+    function drawGameUI() {
+      // Draw combo text if active
       if (state.combos >= 3) {
         ctx.save();
         ctx.font = 'bold 18px Arial';
         ctx.textAlign = 'center';
         ctx.fillStyle = '#FFD700';
-        ctx.shadowColor = 'rgba(255, 215, 0, 0.6)';
-        ctx.shadowBlur = 12;
-        ctx.fillText(`${state.combos} Combo!  x${Math.round(state.multiplier * 10) / 10}`, W / 2, 52);
+        ctx.shadowColor = 'rgba(0, 0, 0, 0.5)';
+        ctx.shadowBlur = 4;
+        ctx.fillText(`${state.combos} Combo! ×${state.multiplier.toFixed(1)}`, W / 2, 40);
         ctx.restore();
       }
-      if (state.streak >= 6) {
-        ctx.save();
-        ctx.font = 'bold 14px Arial';
-        ctx.textAlign = 'center';
-        ctx.fillStyle = '#4CAF50';
-        ctx.fillText(`🔥 ${state.streak} streak`, W / 2, H - 18);
-        ctx.restore();
-      }
-
-      const activeBuffs = [];
+      
+      // Draw active power-ups
       const now = Date.now();
-      if (state.doublePoints) {
-        const seconds = Math.max(0, Math.ceil((state.doublePointsUntil - now) / 1000));
-        activeBuffs.push(`⭐ Double Points (${seconds}s)`);
+      const activeEffects = [];
+      
+      if (state.doublePoints && now < state.doublePointsUntil) {
+        const seconds = Math.ceil((state.doublePointsUntil - now) / 1000);
+        activeEffects.push(`⭐ ${seconds}s`);
       }
-      if (state.invincible) {
-        const seconds = Math.max(0, Math.ceil((state.invincibleUntil - now) / 1000));
-        activeBuffs.push(`🛡️ Shield (${seconds}s)`);
+      if (state.invincible && now < state.invincibleUntil) {
+        const seconds = Math.ceil((state.invincibleUntil - now) / 1000);
+        activeEffects.push(`🛡️ ${seconds}s`);
       }
-      if (state.slowMo) {
-        const seconds = Math.max(0, Math.ceil((state.slowMoUntil - now) / 1000));
-        activeBuffs.push(`⏱️ Slow Time (${seconds}s)`);
+      if (state.slowMo && now < state.slowMoUntil) {
+        const seconds = Math.ceil((state.slowMoUntil - now) / 1000);
+        activeEffects.push(`⚡ ${seconds}s`);
       }
-
-      if (activeBuffs.length) {
+      
+      if (activeEffects.length > 0) {
         ctx.save();
-        ctx.font = '13px Arial';
+        ctx.font = '14px Arial';
         ctx.textAlign = 'left';
         ctx.fillStyle = '#0b2d17';
-        ctx.shadowColor = 'rgba(255,255,255,0.4)';
-        ctx.shadowBlur = 8;
-        activeBuffs.forEach((buff, i) => {
-          ctx.fillText(buff, 14, 24 + i * 18);
+        ctx.shadowColor = 'rgba(255, 255, 255, 0.8)';
+        ctx.shadowBlur = 3;
+        activeEffects.forEach((effect, i) => {
+          ctx.fillText(effect, 10, 25 + i * 20);
         });
         ctx.restore();
       }
     }
 
     // -------------------------------------------------------------------------
-    // Game update
+    // Game Control Functions
     // -------------------------------------------------------------------------
-    function update(dt) {
-      if (!state.running || state.paused || state.over) return;
-
-      const scale = state.slowMo ? 0.55 : 1;
-      const step = (dt / 16) * scale;
-
-      // timers
-      const wall = Date.now();
-      if (state.invincible && wall > state.invincibleUntil) state.invincible = false;
-      if (state.doublePoints && wall > state.doublePointsUntil) state.doublePoints = false;
-      if (state.slowMo && wall > state.slowMoUntil) state.slowMo = false;
-
-      // joystick motion
-      if (state.joyActive) {
-        const maxD = 40;
-        const speed = 10 + state.difficulty * 1.2;
-        const dx = clamp(state.joyDx, -maxD, maxD) / maxD;
-        state.poohX += dx * speed * step;
-        state.poohX = clamp(state.poohX, state.poohW / 2, W - state.poohW / 2);
-      }
-
-      // combos decay
-      if (state.combos > 0 && wall - state.lastCatchAt > 2000) {
-        state.combos = 0;
-        state.multiplier = 1;
-        state.streak = 0;
-        syncHUD();
-      }
-
-      // spawn cadence
-      const potCap = 12;
-      const beeCap = 7;
-      const powCap = 3;
-
-      const rushActive = state.honeyRushUntil > Date.now();
-      const spawnScale = state.modeCfg.spawnScale || 1;
-
-      const potChance = (0.05 + state.difficulty * 0.01 + (rushActive ? 0.08 : 0)) * spawnScale;
-      if (state.pots.length < potCap && Math.random() < potChance) spawnPot();
-
-      const beeChance = (0.02 + state.difficulty * 0.006) * spawnScale * (rushActive ? 0.75 : 1);
-      if (state.bees.length < beeCap && Math.random() < beeChance) spawnBee();
-
-      const powerChance = 0.01 * spawnScale;
-      if (state.powerUps.length < powCap && Math.random() < powerChance) spawnPowerUp();
-
-      // move pots
-      for (let i = state.pots.length - 1; i >= 0; i--) {
-        const p = state.pots[i];
-        p.y += p.vy * step;
-
-        if (hitPooh(p.x, p.y, p.r)) {
-          let points = p.type === 'golden' ? 50 : 10;
-          if (state.doublePoints) points *= 2;
-
-          // combo logic
-          const t = Date.now();
-          if (t - state.lastCatchAt < 2000) {
-            state.combos++;
-            state.streak++;
-            state.multiplier = clamp(1 + state.combos * 0.12, 1, 5);
-          } else {
-            state.combos = 1;
-            state.streak = 1;
-            state.multiplier = 1.12;
+    function startGame() {
+      if (state.running && !state.gameOver) return;
+      
+      // Reset game state
+      resetGame();
+      
+      // Start countdown
+      let countdown = 3;
+      showOverlay(`Starting in ${countdown}...`, 'Get ready!', 0);
+      setStatus('Get ready...', 'warning');
+      
+      const countdownInterval = setInterval(() => {
+        countdown--;
+        
+        if (countdown > 0) {
+          showOverlay(`Starting in ${countdown}...`, 'Get ready!', 0);
+        } else {
+          clearInterval(countdownInterval);
+          
+          // Start the game
+          state.running = true;
+          state.gameOver = false;
+          state.paused = false;
+          
+          showOverlay('Go!', 'Catch honey, avoid bees!', 800);
+          setStatus('Game in progress', 'success');
+          
+          // Start game timer
+          startGameTimer();
+          
+          // Start game loop if not already running
+          if (!state.frameId) {
+            gameLoop();
           }
-          state.lastCatchAt = t;
-
-          if (state.streak >= 6 && state.honeyRushUntil < Date.now()) {
-            triggerHoneyRush();
+          
+          // Audio feedback
+          if (window.audioManager && typeof window.audioManager.playTone === 'function') {
+            window.audioManager.playTone([523.25, 659.25, 783.99], 0.15);
           }
-
-          points = Math.round(points * state.multiplier);
-          state.score += points;
-
-          burst(p.x, p.y, p.type === 'golden' ? 18 : 10, p.type === 'golden' ? '#FFD700' : '#FFD54F');
-          showScorePopup(`+${points}`, p.x, p.y, p.type === 'golden' ? 'golden' : 'honey');
-          state.pots.splice(i, 1);
-
-          if (window.audioManager && typeof window.audioManager.playGameSound === 'function') {
-            window.audioManager.playGameSound('collect');
-          }
-          syncHUD();
-          continue;
         }
-
-        if (p.y > H + 22) {
-          if (state.streak > 0) state.streak = 0;
-          state.pots.splice(i, 1);
-        }
-      }
-
-      // move bees
-      for (let i = state.bees.length - 1; i >= 0; i--) {
-        const b = state.bees[i];
-
-        // angry bees drift toward Pooh a bit
-        if (b.type === 'angry') {
-          const toward = (state.poohX - b.x) * 0.015;
-          b.vx = clamp(b.vx + toward, -2.2, 2.2);
-          b.x += b.vx * step;
-          b.x = clamp(b.x, 16, W - 16);
-        }
-
-        b.y += b.vy * step;
-
-        if (!state.invincible && hitPooh(b.x, b.y, b.r)) {
-          const dmg = b.type === 'angry' ? 2 : 1;
-          state.lives -= dmg;
-
-          burst(b.x, b.y, 12, '#FF6B6B');
-          state.bees.splice(i, 1);
-
-          // reset combos
-          state.combos = 0;
-          state.multiplier = 1;
-          state.streak = 0;
-
-          syncHUD();
-          setOverlay('Ouch!', `A bee buzzed Pooh. Hearts: ${state.lives}.`, false, 1200);
-          shakeElement(card, 6, 220);
-
-          if (window.audioManager && typeof window.audioManager.playGameSound === 'function') {
-            window.audioManager.playGameSound('damage');
-          }
-
-          if (state.lives <= 0) {
-            endGame(false);
-          }
-          continue;
-        }
-
-        if (b.y > H + 22) {
-          state.bees.splice(i, 1);
-        }
-      }
-
-      // move powerups
-      for (let i = state.powerUps.length - 1; i >= 0; i--) {
-        const pu = state.powerUps[i];
-        pu.y += pu.vy * step;
-
-        if (hitPooh(pu.x, pu.y, pu.r)) {
-          applyPowerUp(pu.type);
-          burst(pu.x, pu.y, 14, powerUpTypes[pu.type]?.color || '#FFFFFF');
-          showScorePopup(powerUpTypes[pu.type]?.icon || '⭐', pu.x, pu.y, 'power');
-          state.powerUps.splice(i, 1);
-
-          if (window.audioManager && typeof window.audioManager.playGameSound === 'function') {
-            window.audioManager.playGameSound('powerup');
-          }
-          continue;
-        }
-
-        if (pu.y > H + 22) {
-          state.powerUps.splice(i, 1);
-        }
-      }
-
-      updateParticles(step);
+      }, 1000);
     }
 
-    function render() {
-      ctx.clearRect(0, 0, W, H);
-      ctx.drawImage(bgCanvas, 0, 0);
-
-      for (const p of state.pots) drawPot(p);
-      for (const b of state.bees) drawBee(b);
-      for (const pu of state.powerUps) drawPowerUp(pu);
-
-      renderParticles();
-      drawPooh();
-      drawUI();
-    }
-
-    function loop(ts) {
-      if (!frameLimiter.shouldRender(ts)) {
-        state.rafId = requestAnimationFrame(loop);
-        return;
-      }
-
-      const dt = Math.min(100, ts - state.lastTs);
-      state.lastTs = ts;
-
-      update(dt);
-      render();
-
-      state.rafId = requestAnimationFrame(loop);
-    }
-
-    // -------------------------------------------------------------------------
-    // Controls
-    // -------------------------------------------------------------------------
-    function setPoohFromClientX(clientX) {
-      const rect = canvas.getBoundingClientRect();
-      const x = clientX - rect.left;
-      state.poohX = clamp(x, state.poohW / 2, W - state.poohW / 2);
-    }
-
-    function onKeyDown(ev) {
-      if (!state.running || state.paused || state.over) return;
-      const step = 26 + state.difficulty * 2;
-
-      if (ev.key === 'ArrowLeft') {
-        state.poohX = clamp(state.poohX - step, state.poohW / 2, W - state.poohW / 2);
-      } else if (ev.key === 'ArrowRight') {
-        state.poohX = clamp(state.poohX + step, state.poohW / 2, W - state.poohW / 2);
-      } else if (ev.key === ' ') {
-        burst(state.poohX, state.poohY - 20, 10, '#FFFFFF');
-      }
-    }
-
-    function onMouseMove(ev) {
-      if (!state.running || state.paused || state.over) return;
-      setPoohFromClientX(ev.clientX);
-    }
-
-    function onTouchMove(ev) {
-      if (!state.running || state.paused || state.over) return;
-      if (!ev.touches || ev.touches.length === 0) return;
-      ev.preventDefault();
-      setPoohFromClientX(ev.touches[0].clientX);
-    }
-
-    function setupJoystick() {
-      if (!joystick || !joystickKnob) return;
-
-      const maxD = 40;
-
-      function updateKnob(dx) {
-        const x = clamp(dx, -maxD, maxD);
-        joystickKnob.style.transform = `translate(${x}px, 0px)`;
-      }
-
-      function startJoy(e) {
-        if (!state.running || state.paused || state.over) return;
-        state.joyActive = true;
-        state.joyPointerId = e.pointerId ?? null;
-
-        const r = joystick.getBoundingClientRect();
-        state.joyCenterX = r.left + r.width / 2;
-        state.joyCenterY = r.top + r.height / 2;
-
-        joystick.setPointerCapture?.(e.pointerId);
-        updateJoy(e);
-      }
-
-      function updateJoy(e) {
-        if (!state.joyActive) return;
-        if (state.joyPointerId != null && e.pointerId != null && e.pointerId !== state.joyPointerId) return;
-
-        const dx = e.clientX - state.joyCenterX;
-        const dy = e.clientY - state.joyCenterY;
-        state.joyDx = clamp(dx, -maxD, maxD);
-        state.joyDy = clamp(dy, -maxD, maxD);
-        updateKnob(state.joyDx);
-      }
-
-      function endJoy(e) {
-        if (state.joyPointerId != null && e.pointerId != null && e.pointerId !== state.joyPointerId) return;
-        state.joyActive = false;
-        state.joyPointerId = null;
-        state.joyDx = 0;
-        state.joyDy = 0;
-        updateKnob(0);
-      }
-
-      joystick.addEventListener('pointerdown', (e) => {
-        e.preventDefault();
-        startJoy(e);
-      });
-
-      window.addEventListener(
-        'pointermove',
-        (e) => {
-          if (!state.joyActive) return;
-          updateJoy(e);
-        },
-        { passive: false }
-      );
-
-      window.addEventListener('pointerup', (e) => {
-        if (!state.joyActive) return;
-        endJoy(e);
-      });
-      window.addEventListener('pointercancel', (e) => {
-        if (!state.joyActive) return;
-        endJoy(e);
-      });
-    }
-
-    // -------------------------------------------------------------------------
-    // Start / pause / end
-    // -------------------------------------------------------------------------
-    function resetGameState() {
+    function resetGame() {
+      // Clear all game objects
+      state.pots.length = 0;
+      state.bees.length = 0;
+      state.powerUps.length = 0;
+      particles.clear();
+      
+      // Reset game state
       state.score = 0;
       state.timeLeft = state.modeCfg.time;
       state.lives = state.modeCfg.lives;
       state.combos = 0;
       state.multiplier = 1;
       state.streak = 0;
-      state.lastCatchAt = 0;
-
+      state.lastCatchTime = 0;
+      state.difficulty = 0;
+      
+      // Reset power-ups
       state.invincible = false;
       state.doublePoints = false;
       state.slowMo = false;
-
       state.honeyRushUntil = 0;
-
-      state.difficulty = 0;
-
-      state.pots.length = 0;
-      state.bees.length = 0;
-      state.powerUps.length = 0;
-      particles.length = 0;
-
-      state.over = false;
-      state.paused = false;
-
-      state.poohX = W / 2;
-      state.poohY = H - 70;
-
-      syncHUD();
+      
+      // Reset Pooh position
+      state.pooh.x = W / 2;
+      state.pooh.y = H - 70;
+      state.pooh.targetX = W / 2;
+      
+      // Clear timers
+      if (state.timerId) {
+        clearInterval(state.timerId);
+        state.timerId = null;
+      }
+      
+      if (state.countdownId) {
+        clearInterval(state.countdownId);
+        state.countdownId = null;
+      }
+      
+      // Update HUD
+      updateHUD();
     }
 
-    function startTimer() {
-      clearInterval(state.timerId);
+    function startGameTimer() {
+      if (state.timerId) {
+        clearInterval(state.timerId);
+      }
+      
       state.timerId = setInterval(() => {
-        if (!state.running || state.paused || state.over) return;
-
-        state.timeLeft -= 1;
-
-        // ramp difficulty every 15 seconds
-        const totalTime = state.modeCfg.time;
-        const elapsed = totalTime - state.timeLeft;
+        if (!state.running || state.paused || state.gameOver) return;
+        
+        state.timeLeft--;
+        
+        // Increase difficulty every 15 seconds
+        const elapsed = state.modeCfg.time - state.timeLeft;
         state.difficulty = Math.floor(elapsed / 15);
-
-        syncHUD();
-
+        
+        updateHUD();
+        
         if (state.timeLeft <= 0) {
           endGame(true);
         }
       }, 1000);
     }
 
-    function startGame() {
-      unlockAudioOnce();
-
-      if (state.running && !state.over) return;
-
-      resetGameState();
-      syncHUD();
-
-      let c = 3;
-      setOverlay('Starting in 3…', 'Get Pooh ready to move.', true);
-      clearInterval(state.countdownId);
-
-      state.countdownId = setInterval(() => {
-        c -= 1;
-        if (c > 0) {
-          setOverlay(`Starting in ${c}…`, 'Catch honey, dodge bees.', true);
-          if (window.audioManager && typeof window.audioManager.playTone === 'function') {
-            window.audioManager.playTone([440], 0.08);
-          }
-        } else {
-          clearInterval(state.countdownId);
-          state.countdownId = null;
-
-          state.running = true;
-          state.paused = false;
-          state.over = false;
-
-          setOverlay('Go!', 'Keep Pooh under the falling honey.', false, 900);
-          setStatus('Go!');
-
-          startTimer();
-
-          frameLimiter.reset();
-          state.lastTs = nowMs();
-
-          if (!state.rafId) state.rafId = requestAnimationFrame(loop);
-
-          if (window.audioManager && typeof window.audioManager.playTone === 'function') {
-            window.audioManager.playTone([523, 659, 784], 0.12);
-          }
-        }
-      }, 750);
-    }
-
-    function setPaused(paused) {
-      if (!state.running || state.over) return;
-
-      state.paused = !!paused;
-      if (pauseBtn) pauseBtn.setAttribute('aria-pressed', state.paused ? 'true' : 'false');
-
-      if (state.paused) {
-        setOverlay('Paused', 'Tap pause again to continue.', true);
-        setStatus('Paused');
-      } else {
-        if (overlay) overlay.classList.remove('active');
-        setStatus('Playing…');
-      }
-
-      if (window.audioManager && typeof window.audioManager.playSound === 'function') {
-        window.audioManager.playSound('click');
-      }
-    }
-
     function togglePause() {
-      if (!state.running || state.over) return;
-      setPaused(!state.paused);
+      if (!state.running || state.gameOver) return;
+      
+      state.paused = !state.paused;
+      
+      if (state.paused) {
+        showOverlay('Paused', 'Click pause again to resume', 0);
+        setStatus('Game paused', 'warning');
+      } else {
+        hideOverlay();
+        setStatus('Game resumed', 'success');
+      }
+      
+      updateHUD();
     }
 
     function endGame(timeExpired) {
-      if (!state.running || state.over) return;
-
-      state.over = true;
+      if (!state.running || state.gameOver) return;
+      
       state.running = false;
-
-      clearInterval(state.timerId);
-      state.timerId = null;
-
-      clearInterval(state.countdownId);
-      state.countdownId = null;
-
-      const bonus =
-        (state.lives >= state.modeCfg.lives ? 100 : 0) +
-        (state.combos >= 10 ? 50 : 0) +
-        (state.streak >= 15 ? 75 : 0);
-
-      const finalScore = Math.round((state.score + bonus) * (state.modeCfg.scoreScale || 1));
-      const isBest = maybeUpdateBest(finalScore);
-
-      setOverlay(
-        timeExpired ? "Time's up!" : 'Bees win this round!',
-        `Final Score: ${finalScore}${bonus ? ` (+${bonus} bonus)` : ''}${isBest ? ' — New best!' : ''}`,
-        true
-      );
-      setStatus('Game over.');
-      shakeElement(card, 7, 260);
-
-      burst(W / 2, H / 2, 40, timeExpired ? '#FFD700' : '#FF6B6B');
-
+      state.gameOver = true;
+      
+      // Clear timers
+      if (state.timerId) {
+        clearInterval(state.timerId);
+        state.timerId = null;
+      }
+      
+      // Calculate final score with bonuses
+      const bonuses = {
+        lives: Math.max(0, state.lives - 1) * 25,
+        combo: state.combos >= 10 ? 50 : 0,
+        streak: state.streak >= 15 ? 75 : 0,
+        difficulty: state.difficulty * 20
+      };
+      
+      const totalBonus = Object.values(bonuses).reduce((a, b) => a + b, 0);
+      const finalScore = Math.round((state.score + totalBonus) * state.modeCfg.scoreScale);
+      
+      // Check if new high score
+      const isNewBest = saveBestScore(finalScore);
+      
+      // Show game over screen
+      const message = timeExpired ? "Time's Up!" : "Game Over!";
+      const details = `Final Score: ${finalScore}${totalBonus > 0 ? ` (+${totalBonus} bonus)` : ''}${isNewBest ? ' - New Best!' : ''}`;
+      
+      showOverlay(message, details, 0);
+      setStatus(`Game Over - Score: ${finalScore}`, 'error');
+      
+      // Celebration particles
+      particles.burst(W / 2, H / 2, 50, timeExpired ? '#4CAF50' : '#FF9800', {
+        size: 6,
+        speed: 6,
+        gravity: 0.1
+      });
+      
+      // Audio feedback
       if (window.audioManager && typeof window.audioManager.playGameSound === 'function') {
         window.audioManager.playGameSound(timeExpired ? 'victory' : 'defeat');
       }
-
-      // Keep loop running briefly to show particles; then stop to save battery
-      setTimeout(() => {
-        stopLoop();
-      }, 2500);
     }
 
-    function stopLoop() {
-      if (state.rafId) {
-        cancelAnimationFrame(state.rafId);
-        state.rafId = null;
+    // -------------------------------------------------------------------------
+    // Input Handling
+    // -------------------------------------------------------------------------
+    function handlePointerDown(e) {
+      if (!state.running || state.paused || state.gameOver) return;
+      
+      const rect = canvas.getBoundingClientRect();
+      const x = e.clientX - rect.left;
+      
+      state.pooh.targetX = clamp(x, state.pooh.width/2, W - state.pooh.width/2);
+    }
+
+    function handleMouseMove(e) {
+      if (!state.running || state.paused || state.gameOver) return;
+      
+      const rect = canvas.getBoundingClientRect();
+      const x = e.clientX - rect.left;
+      
+      state.pooh.targetX = clamp(x, state.pooh.width/2, W - state.pooh.width/2);
+    }
+
+    function handleTouchMove(e) {
+      if (!state.running || state.paused || state.gameOver) return;
+      if (!e.touches || e.touches.length === 0) return;
+      
+      e.preventDefault();
+      
+      const rect = canvas.getBoundingClientRect();
+      const x = e.touches[0].clientX - rect.left;
+      
+      state.pooh.targetX = clamp(x, state.pooh.width/2, W - state.pooh.width/2);
+    }
+
+    function handleKeyDown(e) {
+      if (!state.running || state.paused || state.gameOver) return;
+      
+      const step = 25;
+      
+      switch(e.key) {
+        case 'ArrowLeft':
+        case 'a':
+        case 'A':
+          state.pooh.targetX = Math.max(state.pooh.width/2, state.pooh.targetX - step);
+          e.preventDefault();
+          break;
+          
+        case 'ArrowRight':
+        case 'd':
+        case 'D':
+          state.pooh.targetX = Math.min(W - state.pooh.width/2, state.pooh.targetX + step);
+          e.preventDefault();
+          break;
+          
+        case ' ':
+          // Optional: add a dash/boost
+          particles.burst(state.pooh.x, state.pooh.y - 20, 10, '#FFFFFF', {
+            size: 3,
+            speed: 2
+          });
+          e.preventDefault();
+          break;
       }
     }
 
     // -------------------------------------------------------------------------
-    // Wiring
+    // Joystick Controls
     // -------------------------------------------------------------------------
-    document.addEventListener('keydown', onKeyDown);
-    canvas.addEventListener('mousemove', onMouseMove);
-    canvas.addEventListener('touchmove', onTouchMove, { passive: false });
-
-    // Touch start: move Pooh + unlock audio
-    canvas.addEventListener(
-      'touchstart',
-      (ev) => {
-        unlockAudioOnce();
-        if (!ev.touches || ev.touches.length === 0) return;
-        setPoohFromClientX(ev.touches[0].clientX);
-      },
-      { passive: true }
-    );
-
-    // Pointer down: quick reposition (mobile/desktop)
-    canvas.addEventListener(
-      'pointerdown',
-      (ev) => {
-        unlockAudioOnce();
-        if (!state.running || state.paused || state.over) return;
-        setPoohFromClientX(ev.clientX);
-      },
-      { passive: true }
-    );
-
-    if (startBtn) startBtn.addEventListener('click', startGame);
-    if (pauseBtn) pauseBtn.addEventListener('click', togglePause);
-
-    modeButtons.forEach((btn) => {
-      btn.addEventListener('click', () => {
-        const modeKey = btn.dataset.catchMode;
-        setMode(modeKey);
-        setStatus(`${state.modeCfg.label} mode armed.`);
-        setOverlay(state.modeCfg.label, state.modeCfg.hint, false, 900);
+    function setupJoystick() {
+      if (!joystick || !joystickKnob) return;
+      
+      const maxDistance = 40;
+      
+      function updateKnobPosition(dx) {
+        const x = clamp(dx, -maxDistance, maxDistance);
+        joystickKnob.style.transform = `translate(${x}px, 0px)`;
+      }
+      
+      function startJoystick(e) {
+        if (!state.running || state.paused || state.gameOver) return;
+        
+        state.joyActive = true;
+        state.joyPointerId = e.pointerId;
+        
+        const rect = joystick.getBoundingClientRect();
+        state.joyCenterX = rect.left + rect.width / 2;
+        state.joyCenterY = rect.top + rect.height / 2;
+        
+        if (joystick.setPointerCapture) {
+          joystick.setPointerCapture(e.pointerId);
+        }
+        
+        updateJoystick(e);
+      }
+      
+      function updateJoystick(e) {
+        if (!state.joyActive) return;
+        if (state.joyPointerId !== null && e.pointerId !== state.joyPointerId) return;
+        
+        const dx = e.clientX - state.joyCenterX;
+        state.joyDx = clamp(dx, -maxDistance, maxDistance);
+        updateKnobPosition(state.joyDx);
+        
+        // Update Pooh target based on joystick
+        const speed = 15;
+        state.pooh.targetX += (state.joyDx / maxDistance) * speed;
+        state.pooh.targetX = clamp(state.pooh.targetX, state.pooh.width/2, W - state.pooh.width/2);
+      }
+      
+      function endJoystick(e) {
+        if (state.joyPointerId !== null && e.pointerId !== state.joyPointerId) return;
+        
+        state.joyActive = false;
+        state.joyPointerId = null;
+        state.joyDx = 0;
+        state.joyDy = 0;
+        updateKnobPosition(0);
+      }
+      
+      // Event listeners
+      joystick.addEventListener('pointerdown', (e) => {
+        e.preventDefault();
+        startJoystick(e);
       });
-    });
-
-    // Global unlock hooks (first interaction anywhere)
-// Touch start: move Pooh + unlock audio (and block iOS long-press loupe)
-canvas.addEventListener(
-  'touchstart',
-  (ev) => {
-    unlockAudioOnce();
-    ev.preventDefault(); // <-- critical (requires passive:false)
-    if (!ev.touches || ev.touches.length === 0) return;
-    setPoohFromClientX(ev.touches[0].clientX);
-  },
-  { passive: false }
-);
-    window.addEventListener('pointerdown', unlockAudioOnce, { passive: true, once: true });
-    window.addEventListener('click', unlockAudioOnce, { passive: true, once: true });
-
-    setupJoystick();
-
-    loadBestScore();
-    setMode(state.mode);
-
-    // Resize once now and again shortly after layout settles (mobile Safari)
-    resizeCanvas();
-    setTimeout(resizeCanvas, 50);
-    setTimeout(resizeCanvas, 250);
-    window.addEventListener('resize', resizeCanvas, { passive: true });
-
-    // Initial HUD/overlay
-    syncHUD();
-    setOverlay('Ready when you are.', `Press Start to begin a ${state.modeCfg.label} run.`, true);
-    setStatus('Ready.');
-
-    // Render idle frame
-    render();
-
-    // Cleanup
-    function destroy() {
-      try {
-        document.removeEventListener('keydown', onKeyDown);
-        canvas.removeEventListener('mousemove', onMouseMove);
-        canvas.removeEventListener('touchmove', onTouchMove);
-        window.removeEventListener('resize', resizeCanvas);
-
-        clearInterval(state.timerId);
-        clearInterval(state.countdownId);
-
-        stopLoop();
-      } catch (_) {}
+      
+      window.addEventListener('pointermove', (e) => {
+        if (!state.joyActive) return;
+        updateJoystick(e);
+      });
+      
+      window.addEventListener('pointerup', endJoystick);
+      window.addEventListener('pointercancel', endJoystick);
     }
 
-    // Expose minimal API for debugging (optional)
+    // -------------------------------------------------------------------------
+    // Game Loop
+    // -------------------------------------------------------------------------
+    function gameLoop(timestamp) {
+      if (!state.frameId) {
+        state.frameId = requestAnimationFrame(gameLoop);
+      }
+      
+      if (!frameLimiter.shouldRender(timestamp)) {
+        state.frameId = requestAnimationFrame(gameLoop);
+        return;
+      }
+      
+      const dt = Math.min(100, timestamp - state.lastUpdateTime);
+      state.lastUpdateTime = timestamp;
+      
+      updateGame(dt);
+      renderGame();
+      
+      state.frameId = requestAnimationFrame(gameLoop);
+    }
+
+    // -------------------------------------------------------------------------
+    // Initialization
+    // -------------------------------------------------------------------------
+    function initialize() {
+      console.log('[HoneyCatch] Initializing game...');
+      
+      // Load best score
+      loadBestScore();
+      
+      // Set initial mode
+      setGameMode('calm');
+      
+      // Setup controls
+      setupJoystick();
+      
+      // Add event listeners
+      canvas.addEventListener('pointerdown', handlePointerDown);
+      canvas.addEventListener('mousemove', handleMouseMove);
+      canvas.addEventListener('touchmove', handleTouchMove, { passive: false });
+      document.addEventListener('keydown', handleKeyDown);
+      
+      if (startBtn) {
+        startBtn.addEventListener('click', startGame);
+      }
+      
+      if (pauseBtn) {
+        pauseBtn.addEventListener('click', togglePause);
+      }
+      
+      // Mode buttons
+      modeButtons.forEach(btn => {
+        btn.addEventListener('click', () => {
+          const mode = btn.dataset.catchMode;
+          setGameMode(mode);
+          setStatus(`${MODES[mode].label} mode selected`, 'info');
+          showOverlay(MODES[mode].label, MODES[mode].hint, 1200);
+        });
+      });
+      
+      // Initial resize and render
+      resizeCanvas();
+      renderGame();
+      
+      // Show ready message
+      setStatus('Ready to play - Select a mode and press Start', 'info');
+      showOverlay('Honey Pot Catch', 'Select a mode and press Start to play', 0);
+      
+      // Handle window resize
+      window.addEventListener('resize', resizeCanvas);
+      
+      console.log('[HoneyCatch] Game initialized successfully');
+    }
+
+    // -------------------------------------------------------------------------
+    // Cleanup
+    // -------------------------------------------------------------------------
+    function cleanup() {
+      console.log('[HoneyCatch] Cleaning up...');
+      
+      // Stop game loop
+      if (state.frameId) {
+        cancelAnimationFrame(state.frameId);
+        state.frameId = null;
+      }
+      
+      // Clear timers
+      if (state.timerId) {
+        clearInterval(state.timerId);
+        state.timerId = null;
+      }
+      
+      if (state.countdownId) {
+        clearInterval(state.countdownId);
+        state.countdownId = null;
+      }
+      
+      if (state.overlayTimer) {
+        clearTimeout(state.overlayTimer);
+        state.overlayTimer = null;
+      }
+      
+      // Remove event listeners
+      canvas.removeEventListener('pointerdown', handlePointerDown);
+      canvas.removeEventListener('mousemove', handleMouseMove);
+      canvas.removeEventListener('touchmove', handleTouchMove);
+      document.removeEventListener('keydown', handleKeyDown);
+      window.removeEventListener('resize', resizeCanvas);
+      
+      if (startBtn) {
+        startBtn.removeEventListener('click', startGame);
+      }
+      
+      if (pauseBtn) {
+        pauseBtn.removeEventListener('click', togglePause);
+      }
+    }
+
+    // Initialize the game
+    initialize();
+
+    // Return public API
     return {
-      start: startGame,
-      pause: () => setPaused(true),
-      resume: () => setPaused(false),
+      startGame,
       togglePause,
-      destroy,
-      resize: resizeCanvas,
+      setGameMode,
       getState: () => ({ ...state }),
+      cleanup
     };
   }
 
   // ---------------------------------------------------------------------------
-  // Bootstrap only the Honey Catch game. No site UI here.
+  // Bootstrap the game when DOM is ready
   // ---------------------------------------------------------------------------
   document.addEventListener('DOMContentLoaded', () => {
     try {
       if (document.getElementById('honey-game')) {
-        window.__HoneyCatch = EnhancedHoneyCatchGame();
+        window.honeyCatchGame = EnhancedHoneyCatchGame();
+        console.log('[HoneyCatch] Game loaded and ready');
       }
     } catch (err) {
-      console.error('[HoneyCatch] failed to initialize:', err);
+      console.error('[HoneyCatch] Failed to initialize:', err);
     }
   });
 })();
