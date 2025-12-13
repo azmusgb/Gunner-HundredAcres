@@ -1,104 +1,113 @@
-/* =========================================================
-   Honey Pot Catch
-   GAME STYLES
-   ========================================================= */
-
+/* ===============================
+   THEME TOKENS
+================================ */
 :root {
-  --color-surface: #1a1208;
-  --color-surface-strong: rgba(26, 18, 8, 0.92);
-  --color-contrast: #f4e9d8;
-  --color-accent: #f4a944;
-  --color-danger: #ff6b6b;
-  --color-warning: #ffd54f;
-  --color-border: rgba(255, 255, 255, 0.08);
-  --space-sm: 12px;
-  --space-md: 16px;
-  --radius-sm: 6px;
+  --honey: #f4a944;
+  --honey-light: #f9d8a6;
+  --ink: #2c1810;
+  --panel: rgba(255, 255, 255, 0.92);
+  --danger: #d62e2e;
+  --radius: 14px;
+  --shadow: 0 12px 30px rgba(0,0,0,0.18);
 }
 
-* {
+/* ===============================
+   RESET / BASE
+================================ */
+*,
+*::before,
+*::after {
   box-sizing: border-box;
-}
-
-html,
-body {
   margin: 0;
   padding: 0;
-  height: 100%;
-  background: var(--color-surface);
-  color: var(--color-contrast);
-  font-family: system-ui, -apple-system, BlinkMacSystemFont, sans-serif;
-  overflow: hidden;
+  -webkit-tap-highlight-color: transparent;
 }
 
-/* ---------- Shell ---------- */
-.game-shell {
-  position: fixed;
-  inset: 0;
+html, body {
+  height: 100%;
+  background: linear-gradient(#fff8e1, #ffe0b2);
+  font-family: system-ui, -apple-system, BlinkMacSystemFont, sans-serif;
+  color: var(--ink);
+}
+
+main {
+  height: 100%;
   display: flex;
   flex-direction: column;
-}
-
-/* ---------- Header ---------- */
-.game-header {
-  display: flex;
   align-items: center;
-  justify-content: space-between;
-  padding: var(--space-sm) var(--space-md);
-  background: var(--color-surface-strong);
-  border-bottom: 1px solid var(--color-border);
 }
 
-.game-title {
-  font-weight: 600;
-  letter-spacing: 0.03em;
-  font-size: 0.9rem;
-}
-
-.game-exit {
-  color: var(--color-accent);
-  text-decoration: none;
-  font-size: 0.85rem;
-}
-
-.game-exit:active {
-  opacity: 0.7;
-}
-
-/* ---------- Canvas ---------- */
-.game-canvas-wrap {
-  flex: 1;
-  position: relative;
-}
-
-canvas {
-  display: block;
+/* ===============================
+   TOP BAR
+================================ */
+.top-bar {
   width: 100%;
-  height: 100%;
+  max-width: 420px;
+  display: flex;
+  justify-content: space-between;
+  padding: 10px 16px;
+  font-weight: 600;
+}
+
+/* ===============================
+   CANVAS
+================================ */
+#honey-game {
+  background: radial-gradient(circle at top, #fffde7, #ffe082);
+  border-radius: var(--radius);
+  box-shadow: var(--shadow);
+  margin-bottom: 12px;
+
   touch-action: none;
-  image-rendering: crisp-edges;
-  outline: none;
+  will-change: transform;
+  image-rendering: pixelated;
 }
 
-.game-exit:focus,
-.game-exit:hover,
-canvas:focus-visible {
-  outline: 2px solid var(--color-accent);
-  outline-offset: 2px;
+/* ===============================
+   OVERLAYS
+================================ */
+.overlay {
+  position: absolute;
+  inset: 0;
+  background: rgba(255, 255, 255, 0.95);
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: 14px;
+  text-align: center;
 }
 
-.hud-warning {
-  color: var(--color-warning);
+.overlay.hidden {
+  display: none;
 }
 
-.hud-danger {
-  color: var(--color-danger);
+.overlay h1,
+.overlay h2 {
+  font-size: 2rem;
 }
 
-@media (prefers-reduced-motion: reduce) {
-  * {
-    animation-duration: 0.01ms !important;
-    animation-iteration-count: 1 !important;
-    transition-duration: 0.01ms !important;
-  }
+.overlay button {
+  background: var(--honey);
+  border: none;
+  padding: 12px 22px;
+  font-size: 1.1rem;
+  border-radius: 999px;
+  cursor: pointer;
+  box-shadow: var(--shadow);
+}
+
+.overlay button:active {
+  transform: scale(0.97);
+}
+
+/* ===============================
+   ACCESSIBILITY
+================================ */
+.sr-only {
+  position: absolute;
+  width: 1px;
+  height: 1px;
+  overflow: hidden;
+  clip: rect(0 0 0 0);
 }
