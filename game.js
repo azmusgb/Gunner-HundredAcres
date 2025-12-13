@@ -907,16 +907,16 @@
     // -------------------------------------------------------------------------
     // Game Loop Functions
     // -------------------------------------------------------------------------
-    function updateGame(dt) {
+    function updateGame(frameDt) {
       if (!state.running || state.paused || state.gameOver) return;
-      
+
       // Apply slow motion if active
       const timeScale = state.slowMo ? 0.5 : 1.0;
-      const scaledDt = dt * timeScale;
-      
+      const scaledDt = frameDt * timeScale;
+
       // Update Pooh position with smoothing
       state.pooh.targetX = clamp(state.pooh.targetX, state.pooh.width/2, W - state.pooh.width/2);
-      state.pooh.x = smoothLerp(state.pooh.x, state.pooh.targetX, 0.2);
+      state.pooh.x = smoothLerp(state.pooh.x, state.pooh.targetX, 0.22);
       
       // Update power-up timers
       const now = Date.now();
@@ -951,20 +951,22 @@
     function updateSpawning(dt) {
       const rushActive = Date.now() < state.honeyRushUntil;
       const spawnRate = state.modeCfg.spawnScale;
-      
+
       // Honey pots
-      if (state.pots.length < 10 && Math.random() < 0.04 * spawnRate * dt) {
+      const honeyChance = 0.02 * spawnRate * dt; // ~1.2/sec at 60fps
+      if (state.pots.length < 10 && Math.random() < honeyChance) {
         spawnHoneyPot();
       }
-      
+
       // Bees (less during honey rush)
-      const beeChance = rushActive ? 0.02 : 0.03;
-      if (state.bees.length < 6 && Math.random() < beeChance * spawnRate * dt) {
+      const beeChance = (rushActive ? 0.008 : 0.012) * spawnRate * dt;
+      if (state.bees.length < 6 && Math.random() < beeChance) {
         spawnBee();
       }
-      
+
       // Power-ups
-      if (state.powerUps.length < 3 && Math.random() < 0.01 * spawnRate * dt) {
+      const powerChance = 0.004 * spawnRate * dt;
+      if (state.powerUps.length < 3 && Math.random() < powerChance) {
         spawnPowerUp();
       }
     }
@@ -1538,18 +1540,19 @@
       if (!state.frameId) {
         state.frameId = requestAnimationFrame(gameLoop);
       }
-      
+
       if (!frameLimiter.shouldRender(timestamp)) {
         state.frameId = requestAnimationFrame(gameLoop);
         return;
       }
-      
-      const dt = Math.min(100, timestamp - state.lastUpdateTime);
+
+      const dtMs = Math.min(100, timestamp - state.lastUpdateTime);
       state.lastUpdateTime = timestamp;
-      
-      updateGame(dt);
+      const normalizedDt = clamp(dtMs / (1000 / 60), 0, 3); // smooth, frame-size units
+
+      updateGame(normalizedDt);
       renderGame();
-      
+
       state.frameId = requestAnimationFrame(gameLoop);
     }
 
