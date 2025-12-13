@@ -1,262 +1,222 @@
 <!DOCTYPE html>
 <html lang="en">
-<head>
-  <meta charset="UTF-8" />
-  <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover" />
-  <title>Baby Gunnar's Hundred Acre Wood Adventure</title>
-
-  <meta name="description" content="A storybook-style Hundred Acre Wood adventure with honey-sweet games and a place to leave your wishes." />
-  <meta name="theme-color" content="#f4a944" />
-  <meta name="color-scheme" content="light dark" />
-
-  <!-- Fonts -->
-  <link rel="preconnect" href="https://fonts.googleapis.com">
-  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-  <link href="https://fonts.googleapis.com/css2?family=Lato:wght@400;700;900&family=Patrick+Hand&family=Playfair+Display:wght@600;700;800&display=swap" rel="stylesheet">
-
-  <!-- Font Awesome -->
-  <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.1/css/all.min.css" rel="stylesheet" />
-
-  <!-- Your consolidated CSS -->
-  <link rel="stylesheet" href="styles.css" />
-<style>
-  /* iOS: reduce text loupe / callout behavior */
-  html, body, body * {
-    -webkit-touch-callout: none !important;
-    -webkit-user-select: none !important;
-    user-select: none !important;
-    -webkit-tap-highlight-color: transparent;
-  }
-</style>
-</head>
-
-<body
-    onselectstart="return false"
-  oncontextmenu="return false">
-  <a class="skip-link" href="#main">Skip to content</a>
-
-  <!-- Reading progress -->
-  <div class="reading-progress" id="readingProgress" aria-hidden="true"></div>
-
-  <!-- Cover / Intro -->
-  <div class="storybook-cover" id="cover" role="dialog" aria-modal="true" aria-label="Welcome screen">
-    <div class="cover-card">
-      <div class="cover-decoration" aria-hidden="true"></div>
-
-      <h1 class="cover-title">Baby Gunnar’s Hundred Acre Wood</h1>
-      <p class="cover-subtitle">Read a cozy storybook moment. Play a honey-sweet game. Leave a wish.</p>
-
-      <div class="storybook-form">
-        <button class="btn btn-primary" id="enterStory" type="button">
-          <i class="fa-solid fa-book-open" aria-hidden="true"></i>
-          Enter the Storybook
-        </button>
-        <p class="tip" style="max-width: 58ch; text-align:center;">
-          Tip: On iPhone/iPad, your first tap helps “wake up” audio + canvas.
-        </p>
-      </div>
-    </div>
-  </div>
-
-  <!-- Top nav (kept clean; no floating junk up here) -->
-  <header class="nav" role="navigation" aria-label="Primary">
-    <div class="nav-brand">
-      <span aria-hidden="true">🍯</span>
-      <div class="nav-title">Hundred Acre Celebration</div>
-    </div>
-
-    <button class="nav-toggle" id="navToggle" type="button" aria-label="Open menu" aria-expanded="false">
-      <i class="fa-solid fa-bars" aria-hidden="true"></i>
-    </button>
-
-    <nav class="nav-menu" id="navMenu" aria-label="Site sections">
-      <a class="nav-item" href="#story"><i class="fa-solid fa-feather" aria-hidden="true"></i> Story</a>
-      <a class="nav-item" href="#friends"><i class="fa-solid fa-people-group" aria-hidden="true"></i> Friends</a>
-      <a class="nav-item" href="#games"><i class="fa-solid fa-gamepad" aria-hidden="true"></i> Games</a>
-      <a class="nav-item" href="#wishes"><i class="fa-solid fa-heart" aria-hidden="true"></i> Wishes</a>
-    </nav>
-  </header>
-
-  <!-- Floating action buttons (bottom-right, not top-left) -->
-  <div class="fab-stack" aria-label="Quick actions">
-    <button class="fab" id="muteToggle" type="button" aria-label="Toggle sound" aria-pressed="false" title="Sound">
-      <i class="fa-solid fa-volume-xmark" aria-hidden="true"></i>
-    </button>
-
-    <button class="accessibility-btn" id="accessibilityToggle" type="button" aria-label="Toggle accessibility mode" aria-pressed="false" title="Accessibility">
-      <i class="fa-solid fa-person-walking" aria-hidden="true"></i>
-    </button>
-
-    <button class="fab" id="scrollTop" type="button" aria-label="Scroll to top" title="Top">
-      <i class="fa-solid fa-arrow-up" aria-hidden="true"></i>
-    </button>
-  </div>
-
-  <main id="main" class="storybook-shell">
-    <div class="storybook">
-      <div class="storybook-inner">
-
-        <!-- Story -->
-        <section class="content-section" id="story" aria-labelledby="storyTitle">
-          <div class="content-section-inner">
-            <header class="storybook-header">
-              <h2 class="storybook-heading" id="storyTitle">A Cozy Little Adventure</h2>
-              <p class="storybook-subheading">
-                Welcome to Baby Gunnar’s Hundred Acre Wood celebration — a gentle storybook moment with friends,
-                honey-sweet games, and a place to leave your wishes.
-              </p>
-            </header>
-          </div>
-        </section>
-
-        <!-- Friends -->
-        <section class="content-section" id="friends" aria-labelledby="friendsTitle">
-          <div class="content-section-inner">
-            <h2 class="section-title" id="friendsTitle">Friends in the Wood</h2>
-            <p class="section-subtitle">Tap a friend for a little message.</p>
-
-            <div class="characters-grid-enhanced">
-              <!-- Example cards (wire your real images/quotes as needed) -->
-              <article class="character-spotlight" data-character="pooh" tabindex="0" role="button" aria-label="Open Pooh message">
-                <div class="character-spotlight-content">
-                  <div class="character-illustration">
-                    <img src="media/characters/pooh.png" alt="Pooh" loading="lazy" decoding="async"
-                         onerror="this.style.display='none';" />
-                  </div>
-                  <h3 class="character-name">Pooh</h3>
-                  <p class="character-quote">A little honey goes a long way.</p>
-                </div>
-              </article>
-
-              <article class="character-spotlight" data-character="piglet" tabindex="0" role="button" aria-label="Open Piglet message">
-                <div class="character-spotlight-content">
-                  <div class="character-illustration">
-                    <img src="media/characters/piglet.png" alt="Piglet" loading="lazy" decoding="async"
-                         onerror="this.style.display='none';" />
-                  </div>
-                  <h3 class="character-name">Piglet</h3>
-                  <p class="character-quote">Small steps. Big heart.</p>
-                </div>
-              </article>
-
-              <article class="character-spotlight" data-character="eeyore" tabindex="0" role="button" aria-label="Open Eeyore message">
-                <div class="character-spotlight-content">
-                  <div class="character-illustration">
-                    <img src="media/characters/eeyore.png" alt="Eeyore" loading="lazy" decoding="async"
-                         onerror="this.style.display='none';" />
-                  </div>
-                  <h3 class="character-name">Eeyore</h3>
-                  <p class="character-quote">Quiet love still counts.</p>
-                </div>
-              </article>
-
-              <article class="character-spotlight" data-character="tigger" tabindex="0" role="button" aria-label="Open Tigger message">
-                <div class="character-spotlight-content">
-                  <div class="character-illustration">
-                    <img src="media/characters/tigger.png" alt="Tigger" loading="lazy" decoding="async"
-                         onerror="this.style.display='none';" />
-                  </div>
-                  <h3 class="character-name">Tigger</h3>
-                  <p class="character-quote">Bounce into the fun-fun.</p>
-                </div>
-              </article>
+   <head>
+      <meta charset="UTF-8" />
+      <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover" />
+      <title>Baby Gunnar's Hundred Acre Wood Adventure</title>
+      <meta name="description" content="A storybook-style Hundred Acre Wood adventure with honey-sweet games and a place to leave your wishes." />
+      <meta name="theme-color" content="#f4a944" />
+      <meta name="color-scheme" content="light dark" />
+      <!-- Fonts -->
+      <link rel="preconnect" href="https://fonts.googleapis.com">
+      <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+      <link href="https://fonts.googleapis.com/css2?family=Lato:wght@400;700;900&family=Patrick+Hand&family=Playfair+Display:wght@600;700;800&display=swap" rel="stylesheet">
+      <!-- Font Awesome -->
+      <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.1/css/all.min.css" rel="stylesheet" />
+      <!-- Your consolidated CSS -->
+      <link rel="stylesheet" href="styles.css" />
+      <style>
+         /* iOS: reduce text loupe / callout behavior */
+         html, body, body * {
+         -webkit-touch-callout: none !important;
+         -webkit-user-select: none !important;
+         user-select: none !important;
+         -webkit-tap-highlight-color: transparent;
+         }
+      </style>
+   </head>
+   <body
+      onselectstart="return false"
+      oncontextmenu="return false">
+      <a class="skip-link" href="#main">Skip to content</a>
+      <!-- Reading progress -->
+      <div class="reading-progress" id="readingProgress" aria-hidden="true"></div>
+      <!-- Cover / Intro -->
+      <div class="storybook-cover" id="cover" role="dialog" aria-modal="true" aria-label="Welcome screen">
+         <div class="cover-card">
+            <div class="cover-decoration" aria-hidden="true"></div>
+            <h1 class="cover-title">Baby Gunnar’s Hundred Acre Wood</h1>
+            <p class="cover-subtitle">Read a cozy storybook moment. Play a honey-sweet game. Leave a wish.</p>
+            <div class="storybook-form">
+               <button class="btn btn-primary" id="enterStory" type="button">
+               <i class="fa-solid fa-book-open" aria-hidden="true"></i>
+               Enter the Storybook
+               </button>
+               <p class="tip" style="max-width: 58ch; text-align:center;">
+                  Tip: On iPhone/iPad, your first tap helps “wake up” audio + canvas.
+               </p>
             </div>
-          </div>
-        </section>
-
-        <!-- Games -->
-        <section class="content-section" id="games" aria-labelledby="gamesTitle">
-          <div class="content-section-inner">
-            <h2 class="section-title" id="gamesTitle">Games</h2>
-            <p class="section-subtitle">Honey Pot Catch is fully wired to the IDs below.</p>
-
-            <article class="game-card" id="catch-card" aria-label="Honey Pot Catch game">
-              <header class="game-header">
-                <h3 class="game-title">
-                  <i class="fa-solid fa-gamepad" aria-hidden="true"></i>
-                  Honey Pot Catch
-                </h3>
-                <p class="game-help">
-                  Move Pooh left/right. Catch honey. Dodge bees. Power-ups help.
-                </p>
-              </header>
-
-              <!-- Required HUD IDs for game.js -->
-              <div class="game-hud" aria-label="Game status">
-                <span class="hud-stat"><span class="hud-pill">Score: <span id="score-count">0</span></span></span>
-                <span class="hud-stat"><span class="hud-pill">Time: <span id="time-count">60</span>s</span></span>
-                <span class="hud-stat"><span class="hud-pill">Lives: <span id="catch-lives">3</span></span></span>
-                <span class="hud-stat"><span class="hud-pill"><span id="catch-combo">0</span> Combo</span></span>
-                <span class="hud-stat"><span class="hud-pill">×<span id="catch-multiplier">1</span></span></span>
-              </div>
-
-              <div class="game-stage">
-                <canvas id="honey-game" class="game-canvas" aria-label="Honey Pot Catch canvas"></canvas>
-
-                <!-- Overlay (required IDs) -->
-                <div class="game-overlay" id="catch-overlay" aria-live="polite">
-                  <div class="countdown-display" id="catch-countdown">Ready when you are.</div>
-                  <div class="overlay-hint" id="catch-hint">Press Start to begin a calm 60 second run.</div>
-                </div>
-                
-           <div class="game-controls" aria-label="Game controls">
-    <button class="btn btn-primary" id="start-catch" type="button">
-        <i class="fa-solid fa-play" aria-hidden="true"></i> Start
-    </button>
-    <button class="btn btn-secondary" id="pause-catch" type="button" aria-pressed="false">
-        <i class="fa-solid fa-pause" aria-hidden="true"></i> Pause
-    </button>
-</div>
-
-<p class="tip" id="catchStatus" aria-live="polite" style="margin: 12px 14px 16px;">
-    Tip: First tap wakes iOS Safari. Then the game feels snappier.
-</p>
-
-              <p class="tip" id="catchStatus" aria-live="polite" style="margin: 12px 14px 16px;">
-                Tip: First tap wakes iOS Safari. Then the game feels snappier.
-              </p>
-            </article>
-          </div>
-        </section>
-
-        <!-- Wishes -->
-        <section class="content-section" id="wishes" aria-labelledby="wishesTitle">
-          <div class="content-section-inner">
+         </div>
+      </div>
+      <!-- Top nav (kept clean; no floating junk up here) -->
+      <header class="nav" role="navigation" aria-label="Primary">
+         <div class="nav-brand">
+            <span aria-hidden="true">🍯</span>
+            <div class="nav-title">Hundred Acre Celebration</div>
+         </div>
+         <button class="nav-toggle" id="navToggle" type="button" aria-label="Open menu" aria-expanded="false">
+         <i class="fa-solid fa-bars" aria-hidden="true"></i>
+         </button>
+         <nav class="nav-menu" id="navMenu" aria-label="Site sections">
+            <a class="nav-item" href="#story"><i class="fa-solid fa-feather" aria-hidden="true"></i> Story</a>
+            <a class="nav-item" href="#friends"><i class="fa-solid fa-people-group" aria-hidden="true"></i> Friends</a>
+            <a class="nav-item" href="#games"><i class="fa-solid fa-gamepad" aria-hidden="true"></i> Games</a>
+            <a class="nav-item" href="#wishes"><i class="fa-solid fa-heart" aria-hidden="true"></i> Wishes</a>
+         </nav>
+      </header>
+      <!-- Floating action buttons (bottom-right, not top-left) -->
+      <div class="fab-stack" aria-label="Quick actions">
+         <button class="fab" id="muteToggle" type="button" aria-label="Toggle sound" aria-pressed="false" title="Sound">
+         <i class="fa-solid fa-volume-xmark" aria-hidden="true"></i>
+         </button>
+         <button class="accessibility-btn" id="accessibilityToggle" type="button" aria-label="Toggle accessibility mode" aria-pressed="false" title="Accessibility">
+         <i class="fa-solid fa-person-walking" aria-hidden="true"></i>
+         </button>
+         <button class="fab" id="scrollTop" type="button" aria-label="Scroll to top" title="Top">
+         <i class="fa-solid fa-arrow-up" aria-hidden="true"></i>
+         </button>
+      </div>
+      <main id="main" class="storybook-shell">
+         <div class="storybook">
+         <div class="storybook-inner">
+            <!-- Story -->
+            <section class="content-section" id="story" aria-labelledby="storyTitle">
+               <div class="content-section-inner">
+                  <header class="storybook-header">
+                     <h2 class="storybook-heading" id="storyTitle">A Cozy Little Adventure</h2>
+                     <p class="storybook-subheading">
+                        Welcome to Baby Gunnar’s Hundred Acre Wood celebration — a gentle storybook moment with friends,
+                        honey-sweet games, and a place to leave your wishes.
+                     </p>
+                  </header>
+               </div>
+            </section>
+            <!-- Friends -->
+            <section class="content-section" id="friends" aria-labelledby="friendsTitle">
+               <div class="content-section-inner">
+                  <h2 class="section-title" id="friendsTitle">Friends in the Wood</h2>
+                  <p class="section-subtitle">Tap a friend for a little message.</p>
+                  <div class="characters-grid-enhanced">
+                     <!-- Example cards (wire your real images/quotes as needed) -->
+                     <article class="character-spotlight" data-character="pooh" tabindex="0" role="button" aria-label="Open Pooh message">
+                        <div class="character-spotlight-content">
+                           <div class="character-illustration">
+                              <img src="media/characters/pooh.png" alt="Pooh" loading="lazy" decoding="async"
+                                 onerror="this.style.display='none';" />
+                           </div>
+                           <h3 class="character-name">Pooh</h3>
+                           <p class="character-quote">A little honey goes a long way.</p>
+                        </div>
+                     </article>
+                     <article class="character-spotlight" data-character="piglet" tabindex="0" role="button" aria-label="Open Piglet message">
+                        <div class="character-spotlight-content">
+                           <div class="character-illustration">
+                              <img src="media/characters/piglet.png" alt="Piglet" loading="lazy" decoding="async"
+                                 onerror="this.style.display='none';" />
+                           </div>
+                           <h3 class="character-name">Piglet</h3>
+                           <p class="character-quote">Small steps. Big heart.</p>
+                        </div>
+                     </article>
+                     <article class="character-spotlight" data-character="eeyore" tabindex="0" role="button" aria-label="Open Eeyore message">
+                        <div class="character-spotlight-content">
+                           <div class="character-illustration">
+                              <img src="media/characters/eeyore.png" alt="Eeyore" loading="lazy" decoding="async"
+                                 onerror="this.style.display='none';" />
+                           </div>
+                           <h3 class="character-name">Eeyore</h3>
+                           <p class="character-quote">Quiet love still counts.</p>
+                        </div>
+                     </article>
+                     <article class="character-spotlight" data-character="tigger" tabindex="0" role="button" aria-label="Open Tigger message">
+                        <div class="character-spotlight-content">
+                           <div class="character-illustration">
+                              <img src="media/characters/tigger.png" alt="Tigger" loading="lazy" decoding="async"
+                                 onerror="this.style.display='none';" />
+                           </div>
+                           <h3 class="character-name">Tigger</h3>
+                           <p class="character-quote">Bounce into the fun-fun.</p>
+                        </div>
+                     </article>
+                  </div>
+               </div>
+            </section>
+            <!-- Games -->
+            <section class="content-section" id="games" aria-labelledby="gamesTitle">
+               <div class="content-section-inner">
+                  <h2 class="section-title" id="gamesTitle">Games</h2>
+                  <p class="section-subtitle">Honey Pot Catch is fully wired to the IDs below.</p>
+                  <article class="game-card" id="catch-card" aria-label="Honey Pot Catch game">
+                     <header class="game-header">
+                        <h3 class="game-title">
+                           <i class="fa-solid fa-gamepad" aria-hidden="true"></i>
+                           Honey Pot Catch
+                        </h3>
+                        <p class="game-help">
+                           Move Pooh left/right. Catch honey. Dodge bees. Power-ups help.
+                        </p>
+                     </header>
+                     <!-- Required HUD IDs for game.js -->
+                     <div class="game-hud" aria-label="Game status">
+                        <span class="hud-stat"><span class="hud-pill">Score: <span id="score-count">0</span></span></span>
+                        <span class="hud-stat"><span class="hud-pill">Time: <span id="time-count">60</span>s</span></span>
+                        <span class="hud-stat"><span class="hud-pill">Lives: <span id="catch-lives">3</span></span></span>
+                        <span class="hud-stat"><span class="hud-pill"><span id="catch-combo">0</span> Combo</span></span>
+                        <span class="hud-stat"><span class="hud-pill">×<span id="catch-multiplier">1</span></span></span>
+                     </div>
+                     <div class="game-stage">
+                        <canvas id="honey-game" class="game-canvas" aria-label="Honey Pot Catch canvas"></canvas>
+                        <!-- Overlay (required IDs) -->
+                        <div class="game-overlay" id="catch-overlay" aria-live="polite">
+                           <div class="countdown-display" id="catch-countdown">Ready when you are.</div>
+                           <div class="overlay-hint" id="catch-hint">Press Start to begin a calm 60 second run.</div>
+                        </div>
+                        <div class="game-controls" aria-label="Game controls">
+                           <button class="btn btn-primary" id="start-catch" type="button">
+                           <i class="fa-solid fa-play" aria-hidden="true"></i> Start
+                           </button>
+                           <button class="btn btn-secondary" id="pause-catch" type="button" aria-pressed="false">
+                           <i class="fa-solid fa-pause" aria-hidden="true"></i> Pause
+                           </button>
+                        </div>
+                        <p class="tip" id="catchStatus" aria-live="polite" style="margin: 12px 14px 16px;">
+                           Tip: First tap wakes iOS Safari. Then the game feels snappier.
+                        </p>
+                  </article>
+                  </div>
+            </section>
+            <!-- Wishes -->
+            <section class="content-section" id="wishes" aria-labelledby="wishesTitle">
+            <div class="content-section-inner">
             <h2 class="section-title" id="wishesTitle">Leave a Wish</h2>
             <p class="section-subtitle">A simple spot to leave kind words for Baby Gunnar.</p>
-
             <!-- Keep your existing form here -->
             <div class="tip">Drop your form markup here (kept out of this patch so we don’t trample your backend).</div>
-          </div>
-        </section>
-
+            </div>
+            </section>
+            </div>
+         </div>
+      </main>
+      <!-- Character Modal (single consistent system) -->
+      <div class="character-modal" id="characterModal" role="dialog" aria-modal="true" aria-label="Character message">
+         <div class="modal-content" role="document">
+            <button class="close-modal" id="closeCharacterModal" type="button" aria-label="Close">
+            <i class="fa-solid fa-xmark" aria-hidden="true"></i>
+            </button>
+            <div class="modal-character">
+               <div class="modal-character-icon" id="modalIcon" aria-hidden="true"></div>
+               <div>
+                  <h3 class="modal-character-name" id="modalName">Friend</h3>
+                  <p class="modal-character-quote" id="modalQuote">Hello.</p>
+               </div>
+            </div>
+            <div class="modal-character-bio" id="modalBio">
+               A gentle note from the Hundred Acre Wood.
+            </div>
+         </div>
       </div>
-    </div>
-  </main>
-
-  <!-- Character Modal (single consistent system) -->
-  <div class="character-modal" id="characterModal" role="dialog" aria-modal="true" aria-label="Character message">
-    <div class="modal-content" role="document">
-      <button class="close-modal" id="closeCharacterModal" type="button" aria-label="Close">
-        <i class="fa-solid fa-xmark" aria-hidden="true"></i>
-      </button>
-
-      <div class="modal-character">
-        <div class="modal-character-icon" id="modalIcon" aria-hidden="true"></div>
-        <div>
-          <h3 class="modal-character-name" id="modalName">Friend</h3>
-          <p class="modal-character-quote" id="modalQuote">Hello.</p>
-        </div>
-      </div>
-
-      <div class="modal-character-bio" id="modalBio">
-        A gentle note from the Hundred Acre Wood.
-      </div>
-    </div>
-  </div>
-
-  <!-- Scripts -->
-  <script src="script.js" defer></script>
-  <script src="game.js" defer></script>
-</body>
+      <!-- Scripts -->
+      <script src="script.js" defer></script>
+      <script src="game.js" defer></script>
+   </body>
 </html>
