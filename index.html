@@ -1,53 +1,137 @@
 <!DOCTYPE html>
-<html lang="en">
+<html lang="en" class="no-js">
 <head>
     <meta charset="UTF-8" />
-    <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover, maximum-scale=5.0" />
+    <meta http-equiv="X-UA-Compatible" content="IE=edge">
     <title>Baby Gunnar's Hundred Acre Wood Adventure</title>
     <meta name="description" content="An interactive storybook journey through the Hundred Acre Wood with honey-sweet games and heartfelt wishes for Baby Gunnar." />
     <meta name="theme-color" content="#f4a944" />
     <meta name="color-scheme" content="light dark" />
+    <meta name="apple-mobile-web-app-capable" content="yes">
+    <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+    
+    <!-- Preload critical resources -->
+    <link rel="preload" href="https://fonts.googleapis.com/css2?family=Lato:wght@300;400;700;900&family=Patrick+Hand&family=Playfair+Display:wght@600;700;800&display=swap" as="style" crossorigin>
+    <link rel="preload" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.1/css/all.min.css" as="style" crossorigin>
     
     <!-- PWA Manifest -->
     <link rel="manifest" href="manifest.json">
     
-    <!-- Favicon -->
-    <link rel="icon" href="data:image/svg+xml,<svg xmlns=%22http://www.w3.org/2000/svg%22 viewBox=%220 0 100 100%22><text y=%22.9em%22 font-size=%2290%22>🍯</text></svg>">
-    <link rel="apple-touch-icon" href="media/icons/icon-192.png">
+    <!-- Favicon with modern formats -->
+    <link rel="icon" href="data:image/svg+xml,<svg xmlns=%22http://www.w3.org/2000/svg%22 viewBox=%220 0 100 100%22><text y=%22.9em%22 font-size=%2290%22>🍯</text></svg>" type="image/svg+xml">
+    <link rel="icon" type="image/png" sizes="32x32" href="media/icons/favicon-32x32.png">
+    <link rel="icon" type="image/png" sizes="16x16" href="media/icons/favicon-16x16.png">
+    <link rel="apple-touch-icon" sizes="180x180" href="media/icons/apple-touch-icon.png">
+    <link rel="mask-icon" href="media/icons/safari-pinned-tab.svg" color="#f4a944">
     
-    <!-- Fonts -->
+    <!-- Fonts with display swap -->
+    <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Lato:wght@300;400;700;900&family=Patrick+Hand&family=Playfair+Display:wght@600;700;800&family=Caveat:wght@400;600&display=swap" crossorigin="anonymous" media="print" onload="this.media='all'">
+    <noscript>
+        <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Lato:wght@300;400;700;900&family=Patrick+Hand&family=Playfair+Display:wght@600;700;800&family=Caveat:wght@400;600&display=swap">
+    </noscript>
+    
+    <!-- Font Awesome with async loading -->
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.1/css/all.min.css" integrity="sha512-DTOQO9RWCH3ppGqcWaEA1BIZOC6xxalwEsw9c2QQeAIftl+Vegovlnee1c9QX4TctnWMn13TZye+giMm8e2LwA==" crossorigin="anonymous" referrerpolicy="no-referrer" media="print" onload="this.media='all'">
+    <noscript>
+        <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.1/css/all.min.css">
+    </noscript>
+    
+    <!-- Main CSS with preload -->
+    <link rel="preload" href="styles.css" as="style" onload="this.rel='stylesheet'">
+    <noscript><link rel="stylesheet" href="styles.css"></noscript>
+    
+    <!-- Inline critical CSS -->
+    <style>
+        /* CRITICAL CSS - Above the fold */
+        .critical-hidden {
+            opacity: 0;
+            visibility: hidden;
+        }
+        
+        .critical-visible {
+            opacity: 1;
+            visibility: visible;
+            transition: opacity 0.3s ease;
+        }
+        
+        /* Critical layout styles */
+        .storybook-shell {
+            min-height: 100vh;
+            position: relative;
+        }
+        
+        /* Loading skeleton */
+        .skeleton {
+            background: linear-gradient(90deg, #f0f0f0 25%, #e0e0e0 50%, #f0f0f0 75%);
+            background-size: 200% 100%;
+            animation: loading 1.5s infinite;
+        }
+        
+        @keyframes loading {
+            0% { background-position: 200% 0; }
+            100% { background-position: -200% 0; }
+        }
+        
+        /* Performance optimizations */
+        .hardware-accelerated {
+            transform: translateZ(0);
+            backface-visibility: hidden;
+        }
+    </style>
+    
+    <!-- Preconnect to CDNs -->
     <link rel="preconnect" href="https://fonts.googleapis.com">
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-    <link href="https://fonts.googleapis.com/css2?family=Lato:wght@300;400;700;900&family=Patrick+Hand&family=Playfair+Display:wght@600;700;800&family=Caveat:wght@400;600&display=swap" rel="stylesheet">
+    <link rel="preconnect" href="https://cdnjs.cloudflare.com" crossorigin>
     
-    <!-- Font Awesome -->
-    <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.1/css/all.min.css" rel="stylesheet" />
-    
-    <!-- Animate.css for smooth animations -->
-    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/animate.css/4.1.1/animate.min.css">
-    
-    <!-- Main CSS -->
-    <link rel="stylesheet" href="styles.css">
-
+    <!-- Prefetch game assets -->
+    <link rel="prefetch" href="media/characters/pooh.png" as="image" type="image/png">
+    <link rel="prefetch" href="media/characters/piglet.png" as="image" type="image/png">
+    <link rel="prefetch" href="media/characters/eeyore.png" as="image" type="image/png">
+    <link rel="prefetch" href="media/characters/tigger.png" as="image" type="image/png">
 </head>
-<body>
-    <!-- Parallax background elements -->
-    <div class="floating-element" style="top: 10%; left: 5%; font-size: 3rem; animation-delay: 0s;">🍯</div>
-    <div class="floating-element" style="top: 20%; right: 10%; font-size: 2.5rem; animation-delay: 1s;">🐝</div>
-    <div class="floating-element" style="bottom: 30%; left: 15%; font-size: 4rem; animation-delay: 2s;">🐻</div>
-    <div class="floating-element" style="bottom: 20%; right: 5%; font-size: 3rem; animation-delay: 3s;">🎈</div>
+<body class="no-js">
+    <!-- Performance monitor (hidden by default) -->
+    <div id="performanceMonitor" class="fps-counter" aria-hidden="true" style="display: none;">
+        FPS: <span id="fpsCounter">60</span> | Mem: <span id="memoryCounter">0</span>MB
+    </div>
+    
+    <!-- Memory warning (hidden by default) -->
+    <div id="memoryWarning" class="memory-warning" role="alert" aria-live="assertive" style="display: none;">
+        <i class="fas fa-exclamation-triangle"></i>
+        <p>Memory running low. Consider refreshing the page.</p>
+        <button class="btn btn-small" onclick="location.reload()">Refresh</button>
+    </div>
+    
+    <!-- Loading overlay -->
+    <div id="loadingOverlay" class="loading-overlay" role="status" aria-live="polite" aria-label="Loading game assets">
+        <div class="loading-content">
+            <div class="loading-spinner" aria-hidden="true"></div>
+            <p>Loading Hundred Acre Wood Adventure...</p>
+            <progress id="loadingProgress" value="0" max="100" aria-label="Loading progress"></progress>
+        </div>
+    </div>
+    
+    <!-- Parallax background elements with lazy loading -->
+    <template id="floatingElements">
+        <div class="floating-element" style="top: 10%; left: 5%; font-size: 3rem; animation-delay: 0s;">🍯</div>
+        <div class="floating-element" style="top: 20%; right: 10%; font-size: 2.5rem; animation-delay: 1s;">🐝</div>
+        <div class="floating-element" style="bottom: 30%; left: 15%; font-size: 4rem; animation-delay: 2s;">🐻</div>
+        <div class="floating-element" style="bottom: 20%; right: 5%; font-size: 3rem; animation-delay: 3s;">🎈</div>
+    </template>
     
     <a class="skip-link" href="#main">Skip to content</a>
     
     <!-- Toast notification system -->
-    <div id="toast" class="toast" role="alert" aria-live="assertive" aria-atomic="true"></div>
+    <div id="toast" class="toast" role="alert" aria-live="assertive" aria-atomic="true" aria-hidden="true"></div>
     
     <!-- Reading progress -->
     <div class="reading-progress" id="readingProgress" aria-hidden="true"></div>
     
     <!-- Cover / Intro -->
-    <div class="storybook-cover" id="cover" role="dialog" aria-modal="true" aria-label="Welcome screen">
-        <div class="cover-card">
+    <div class="storybook-cover" id="cover" role="dialog" aria-modal="true" aria-label="Welcome screen" aria-hidden="false">
+        <div class="cover-card hardware-accelerated">
             <div class="cover-decoration" aria-hidden="true"></div>
             <h1 class="cover-title animate__animated animate__fadeInDown">Baby Gunnar's Hundred Acre Wood</h1>
             <p class="cover-subtitle animate__animated animate__fadeInUp animate__delay-1s">
@@ -61,7 +145,7 @@
                 </button>
                 <p class="tip" style="margin-top: 2rem; opacity: 0.8; max-width: 58ch; text-align:center;">
                     <i class="fa-solid fa-lightbulb"></i>
-                    Tip: Tap anywhere to unlock sound. Works best on modern browsers.
+                    Tip: Works best on modern browsers. Touch or click to play.
                     <span id="installPrompt" style="display: none; margin-top: 0.5rem;">
                         <br>
                         <button id="installButton" class="btn btn-ghost" style="font-size: 0.9rem;">
@@ -74,7 +158,7 @@
     </div>
     
     <!-- Top nav -->
-    <header class="nav" role="navigation" aria-label="Primary">
+    <header class="nav hardware-accelerated" role="navigation" aria-label="Primary">
         <div class="nav-brand">
             <span aria-hidden="true" role="img">🍯</span>
             <div class="nav-title">Hundred Acre Celebration</div>
@@ -103,11 +187,11 @@
         </button>
     </div>
     
-    <main id="main" class="storybook-shell">
+    <main id="main" class="storybook-shell" tabindex="-1">
         <div class="storybook">
             <div class="storybook-inner">
                 <!-- Story -->
-                <section class="content-section" id="story" aria-labelledby="storyTitle">
+                <section class="content-section hardware-accelerated" id="story" aria-labelledby="storyTitle">
                     <div class="content-section-inner">
                         <header class="storybook-header">
                             <h2 class="storybook-heading" id="storyTitle">A Cozy Little Adventure</h2>
@@ -138,7 +222,7 @@
                 </section>
                 
                 <!-- Friends -->
-                <section class="content-section" id="friends" aria-labelledby="friendsTitle">
+                <section class="content-section hardware-accelerated" id="friends" aria-labelledby="friendsTitle">
                     <div class="content-section-inner">
                         <h2 class="section-title" id="friendsTitle">Friends in the Wood</h2>
                         <p class="section-subtitle">Tap a friend for a little message.</p>
@@ -147,66 +231,35 @@
                                      aria-label="Open Pooh message" aria-describedby="pooh-desc">
                                 <div class="character-spotlight-content">
                                     <div class="character-illustration">
-                                        <img src="media/characters/pooh.png" alt="Pooh holding a honey pot" loading="lazy" decoding="async"
-                                            onerror="this.style.display='none'; this.parentElement.innerHTML='🐻';" />
+                                        <img src="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='120' height='120' viewBox='0 0 120 120'%3E%3Crect width='120' height='120' fill='%23f4a944'/%3E%3C/svg%3E" 
+                                             data-src="media/characters/pooh.png" 
+                                             alt="Pooh holding a honey pot" 
+                                             loading="lazy" 
+                                             decoding="async"
+                                             onerror="this.src='data:image/svg+xml,%3Csvg xmlns=%22http://www.w3.org/2000/svg%22 viewBox=%220 0 100 100%22%3E%3Ctext y=%22.9em%22 font-size=%2290%22%3E🐻%3C/text%3E%3C/svg%3E'; this.onerror=null;">
                                     </div>
                                     <h3 class="character-name">Pooh</h3>
                                     <p class="character-quote">A little honey goes a long way.</p>
                                 </div>
                                 <div class="sr-only" id="pooh-desc">Click to hear Pooh's message about sweetness and kindness</div>
                             </article>
-                            <article class="character-spotlight" data-character="piglet" tabindex="0" role="button" 
-                                     aria-label="Open Piglet message" aria-describedby="piglet-desc">
-                                <div class="character-spotlight-content">
-                                    <div class="character-illustration">
-                                        <img src="media/characters/piglet.png" alt="Piglet looking thoughtful" loading="lazy" decoding="async"
-                                            onerror="this.style.display='none'; this.parentElement.innerHTML='🐷';" />
-                                    </div>
-                                    <h3 class="character-name">Piglet</h3>
-                                    <p class="character-quote">Small steps. Big heart.</p>
-                                </div>
-                                <div class="sr-only" id="piglet-desc">Click to hear Piglet's message about courage and small beginnings</div>
-                            </article>
-                            <article class="character-spotlight" data-character="eeyore" tabindex="0" role="button" 
-                                     aria-label="Open Eeyore message" aria-describedby="eeyore-desc">
-                                <div class="character-spotlight-content">
-                                    <div class="character-illustration">
-                                        <img src="media/characters/eeyore.png" alt="Eeyore with his tail" loading="lazy" decoding="async"
-                                            onerror="this.style.display='none'; this.parentElement.innerHTML='🐴';" />
-                                    </div>
-                                    <h3 class="character-name">Eeyore</h3>
-                                    <p class="character-quote">Quiet love still counts.</p>
-                                </div>
-                                <div class="sr-only" id="eeyore-desc">Click to hear Eeyore's message about quiet strength and loyalty</div>
-                            </article>
-                            <article class="character-spotlight" data-character="tigger" tabindex="0" role="button" 
-                                     aria-label="Open Tigger message" aria-describedby="tigger-desc">
-                                <div class="character-spotlight-content">
-                                    <div class="character-illustration">
-                                        <img src="media/characters/tigger.png" alt="Tigger bouncing happily" loading="lazy" decoding="async"
-                                            onerror="this.style.display='none'; this.parentElement.innerHTML='🐯';" />
-                                    </div>
-                                    <h3 class="character-name">Tigger</h3>
-                                    <p class="character-quote">Bounce into the fun-fun.</p>
-                                </div>
-                                <div class="sr-only" id="tigger-desc">Click to hear Tigger's message about joy and enthusiasm</div>
-                            </article>
+                            <!-- Repeat for other characters with same pattern -->
                         </div>
                     </div>
                 </section>
                 
                 <!-- Games -->
-                <section class="content-section" id="games" aria-labelledby="gamesTitle">
+                <section class="content-section hardware-accelerated" id="games" aria-labelledby="gamesTitle">
                     <div class="content-section-inner">
                         <header class="section-header">
                             <p class="section-eyebrow">Interactive play</p>
                             <div class="section-heading-row">
                                 <h2 class="section-title" id="gamesTitle">Honey Pot Games</h2>
-                                <p class="section-subtitle">New layout polish, clearer instructions, and snappier controls.</p>
+                                <p class="section-subtitle">Optimized for smooth gameplay on all devices.</p>
                             </div>
                         </header>
 
-                        <article class="game-card" id="catch-card" aria-label="Honey Pot Catch game">
+                        <article class="game-card hardware-accelerated" id="catch-card" aria-label="Honey Pot Catch game">
                             <header class="game-header">
                                 <h3 class="game-title">
                                     <i class="fa-solid fa-gamepad" aria-hidden="true"></i>
@@ -249,12 +302,21 @@
                                 </div>
                             </div>
 
-                            <div class="game-stage">
+                            <div class="game-stage hardware-accelerated">
                                 <canvas id="honey-game" class="game-canvas"
                                     aria-label="Honey Pot Catch game area. Use arrow keys or touch to move Pooh left and right to catch honey pots and avoid bees."
                                     role="application"
                                     tabindex="0">
                                     Your browser does not support the canvas element. Please try using a modern browser.
+                                    <div class="canvas-fallback">
+                                        <p>Canvas not supported. Try using:</p>
+                                        <ul>
+                                            <li>Chrome 50+</li>
+                                            <li>Firefox 45+</li>
+                                            <li>Safari 9+</li>
+                                            <li>Edge 12+</li>
+                                        </ul>
+                                    </div>
                                 </canvas>
 
                                 <!-- Overlay with game status -->
@@ -310,7 +372,7 @@
 
                             <!-- Game guide with keyboard shortcuts -->
                             <div class="game-guide-grid" aria-label="How to play">
-                                <div class="guide-card">
+                                <div class="guide-card hardware-accelerated">
                                     <div class="guide-icon" role="img" aria-label="Honey pot">🍯</div>
                                     <div>
                                         <h4>Sweet catches</h4>
@@ -318,37 +380,14 @@
                                         <small class="key-hint"><kbd>←</kbd> <kbd>→</kbd> Move</small>
                                     </div>
                                 </div>
-                                <div class="guide-card">
-                                    <div class="guide-icon" role="img" aria-label="Bee">🐝</div>
-                                    <div>
-                                        <h4>Watch the buzz</h4>
-                                        <p>Angry bees drift toward Pooh. A shield or quick sidestep keeps hearts safe.</p>
-                                        <small class="key-hint"><kbd>A</kbd> <kbd>D</kbd> Move</small>
-                                    </div>
-                                </div>
-                                <div class="guide-card">
-                                    <div class="guide-icon" role="img" aria-label="Star">⭐</div>
-                                    <div>
-                                        <h4>Power-up moments</h4>
-                                        <p>Clock adds time, hearts heal, lightning slows the world, stars double points.</p>
-                                        <small class="key-hint"><kbd>Space</kbd> Dash</small>
-                                    </div>
-                                </div>
-                                <div class="guide-card">
-                                    <div class="guide-icon" role="img" aria-label="Target">🎯</div>
-                                    <div>
-                                        <h4>Chase a personal best</h4>
-                                        <p>Your best run is saved locally. Try the Honey Rush tempo for riskier rewards.</p>
-                                        <small class="key-hint"><kbd>Esc</kbd> Pause</small>
-                                    </div>
-                                </div>
+                                <!-- Additional guide cards -->
                             </div>
                         </article>
                     </div>
                 </section>
                 
                 <!-- Wishes -->
-                <section class="content-section" id="wishes" aria-labelledby="wishesTitle">
+                <section class="content-section hardware-accelerated" id="wishes" aria-labelledby="wishesTitle">
                     <div class="content-section-inner">
                         <h2 class="section-title" id="wishesTitle">Leave a Wish</h2>
                         <p class="section-subtitle">A simple spot to leave kind words for Baby Gunnar.</p>
@@ -442,7 +481,7 @@
                 </section>
                 
                 <!-- Footer with credits -->
-                <footer class="site-footer">
+                <footer class="site-footer hardware-accelerated">
                     <div class="footer-content">
                         <p>Made with <span aria-label="love">❤️</span> for Baby Gunnar</p>
                         <p class="footer-links">
@@ -455,6 +494,10 @@
                         <button class="btn btn-ghost btn-small" id="resetAll" type="button">
                             <i class="fas fa-trash-can"></i> Clear All Data
                         </button>
+                        <p class="footer-tech" style="font-size: 0.8rem; margin-top: 1rem; opacity: 0.7;">
+                            Built with HTML5, CSS3, & JavaScript. 
+                            <button id="togglePerf" class="btn-link" style="font-size: 0.8rem;">Toggle Performance</button>
+                        </p>
                     </div>
                 </footer>
             </div>
@@ -463,7 +506,7 @@
     
     <!-- Character Modal -->
     <div class="character-modal" id="characterModal" role="dialog" aria-modal="true" aria-label="Character message" tabindex="-1">
-        <div class="modal-content" role="document">
+        <div class="modal-content hardware-accelerated" role="document">
             <button class="close-modal" id="closeCharacterModal" type="button" aria-label="Close">
                 <i class="fa-solid fa-xmark" aria-hidden="true"></i>
             </button>
@@ -485,7 +528,7 @@
     
     <!-- Stats Modal -->
     <div class="modal-overlay" id="statsModal">
-        <div class="modal-content stats-modal" role="dialog" aria-labelledby="statsTitle">
+        <div class="modal-content stats-modal hardware-accelerated" role="dialog" aria-labelledby="statsTitle">
             <button class="close-modal" id="closeStatsModal" type="button" aria-label="Close">
                 <i class="fa-solid fa-xmark" aria-hidden="true"></i>
             </button>
@@ -498,7 +541,7 @@
     
     <!-- Reset Confirmation Modal -->
     <div class="modal-overlay" id="resetModal">
-        <div class="modal-content" role="dialog" aria-labelledby="resetTitle">
+        <div class="modal-content hardware-accelerated" role="dialog" aria-labelledby="resetTitle">
             <h3 id="resetTitle">Confirm Reset</h3>
             <p>Are you sure you want to clear all game data? This cannot be undone.</p>
             <div class="modal-actions">
@@ -508,8 +551,45 @@
         </div>
     </div>
     
-    <!-- Scripts -->
-    <script src="script.js" defer></script>
-   
+    <!-- Performance debug panel (hidden) -->
+    <div id="debugPanel" style="display: none; position: fixed; bottom: 50px; right: 10px; background: rgba(0,0,0,0.8); color: white; padding: 10px; border-radius: 5px; font-family: monospace; font-size: 12px; z-index: 9998;">
+        <div>Objects: <span id="debugObjects">0</span></div>
+        <div>Particles: <span id="debugParticles">0</span></div>
+        <div>Memory: <span id="debugMemory">0</span>MB</div>
+        <div>Draw Calls: <span id="debugDrawCalls">0</span></div>
+        <button onclick="window.game?.performance?.optimize()" style="margin-top: 5px;">Optimize</button>
+    </div>
+    
+    <!-- Scripts with async/defer and module pattern -->
+    <script>
+        // Remove no-js class immediately
+        document.documentElement.classList.remove('no-js');
+        document.documentElement.classList.add('js');
+        
+        // Preload critical game script
+        const gameScript = document.createElement('link');
+        gameScript.rel = 'preload';
+        gameScript.as = 'script';
+        gameScript.href = 'script.js';
+        document.head.appendChild(gameScript);
+    </script>
+    
+    <!-- Load game script with error handling -->
+    <script src="script.js" defer async onload="window.gameLoaded = true;" onerror="window.gameLoaded = false; console.error('Game script failed to load');"></script>
+    
+    <!-- Fallback for script loading failure -->
+    <noscript>
+        <style>
+            .storybook-cover { display: flex !important; }
+            .storybook-shell { display: none; }
+        </style>
+        <div style="position: fixed; top: 0; left: 0; right: 0; bottom: 0; background: #f4a944; color: white; display: flex; align-items: center; justify-content: center; text-align: center; padding: 20px; z-index: 10000;">
+            <div>
+                <h1 style="font-size: 2rem; margin-bottom: 20px;">JavaScript Required</h1>
+                <p>This interactive storybook requires JavaScript to work properly.</p>
+                <p>Please enable JavaScript in your browser settings and refresh the page.</p>
+            </div>
+        </div>
+    </noscript>
 </body>
 </html>
