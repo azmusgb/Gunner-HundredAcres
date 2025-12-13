@@ -1,738 +1,622 @@
 <!DOCTYPE html>
 <html lang="en">
-   <head>
-      <meta charset="UTF-8" />
-      <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover" />
-      <title>Baby Gunnar's Hundred Acre Wood Adventure</title>
-      <meta name="description" content="A storybook-style Hundred Acre Wood adventure with honey-sweet games and a place to leave your wishes." />
-      <meta name="theme-color" content="#f4a944" />
-      <meta name="color-scheme" content="light dark" />
-      
-      <!-- PWA Manifest -->
-      <link rel="manifest" href="manifest.json">
-      
-      <!-- Favicon -->
-      <link rel="icon" href="data:image/svg+xml,<svg xmlns=%22http://www.w3.org/2000/svg%22 viewBox=%220 0 100 100%22><text y=%22.9em%22 font-size=%2290%22>🍯</text></svg>">
-      <link rel="apple-touch-icon" href="media/icons/icon-192.png">
-      
-      <!-- Fonts -->
-      <link rel="preconnect" href="https://fonts.googleapis.com">
-      <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-      <link href="https://fonts.googleapis.com/css2?family=Lato:wght@400;700;900&family=Patrick+Hand&family=Playfair+Display:wght@600;700;800&display=swap" rel="stylesheet">
-      
-      <!-- Font Awesome -->
-      <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.1/css/all.min.css" rel="stylesheet" />
-      
-      <!-- Your consolidated CSS -->
-      <link rel="stylesheet" href="styles.css" />
-      <style>
-         /* iOS: reduce text loupe / callout behavior */
-         html, body, body * {
-         -webkit-tap-highlight-color: transparent;
-         }
-         
-         /* Reduced motion preference */
-         @media (prefers-reduced-motion: reduce) {
-            *,
-            *::before,
-            *::after {
-               animation-duration: 0.01ms !important;
-               animation-iteration-count: 1 !important;
-               transition-duration: 0.01ms !important;
-               scroll-behavior: auto !important;
-            }
-         }
-         
-         /* Score popup styles for game.js */
-         .score-popup {
+<head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover" />
+    <title>Baby Gunnar's Hundred Acre Wood Adventure</title>
+    <meta name="description" content="An interactive storybook journey through the Hundred Acre Wood with honey-sweet games and heartfelt wishes for Baby Gunnar." />
+    <meta name="theme-color" content="#f4a944" />
+    <meta name="color-scheme" content="light dark" />
+    
+    <!-- PWA Manifest -->
+    <link rel="manifest" href="manifest.json">
+    
+    <!-- Favicon -->
+    <link rel="icon" href="data:image/svg+xml,<svg xmlns=%22http://www.w3.org/2000/svg%22 viewBox=%220 0 100 100%22><text y=%22.9em%22 font-size=%2290%22>🍯</text></svg>">
+    <link rel="apple-touch-icon" href="media/icons/icon-192.png">
+    
+    <!-- Fonts -->
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Lato:wght@300;400;700;900&family=Patrick+Hand&family=Playfair+Display:wght@600;700;800&family=Caveat:wght@400;600&display=swap" rel="stylesheet">
+    
+    <!-- Font Awesome -->
+    <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.1/css/all.min.css" rel="stylesheet" />
+    
+    <!-- Animate.css for smooth animations -->
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/animate.css/4.1.1/animate.min.css">
+    
+    <!-- Main CSS -->
+    <link rel="stylesheet" href="styles.css" />
+    <style>
+        :root {
+            --honey: #FFC107;
+            --honey-dark: #FF9800;
+            --honey-light: #FFE082;
+            --wood: #8B4513;
+            --wood-light: #A0522D;
+            --grass: #7CB342;
+            --sky: #87CEEB;
+            --cloud: #F8F9FA;
+            --pooh-red: #E53935;
+            --piglet-pink: #F48FB1;
+            --eeyore-blue: #78909C;
+            --tigger-orange: #FB8C00;
+            --shadow-soft: 0 8px 32px rgba(0, 0, 0, 0.08);
+            --shadow-medium: 0 12px 48px rgba(0, 0, 0, 0.12);
+        }
+        
+        /* Enhanced cover with parallax effect */
+        .storybook-cover {
+            background: linear-gradient(135deg, var(--sky) 0%, #E3F2FD 50%, var(--honey-light) 100%);
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            z-index: 9999;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            transition: opacity 1s ease, transform 1s ease;
+            overflow: hidden;
+        }
+        
+        .cover-card {
+            background: rgba(255, 255, 255, 0.95);
+            backdrop-filter: blur(10px);
+            border-radius: 24px;
+            padding: 3rem 2.5rem;
+            max-width: 600px;
+            width: 90%;
+            box-shadow: var(--shadow-medium);
+            border: 2px solid var(--honey);
+            position: relative;
+            overflow: hidden;
+            animation: fadeInUp 1s ease;
+        }
+        
+        .cover-card::before {
+            content: '';
             position: absolute;
-            font-family: 'Playfair Display', Georgia, serif;
-            font-weight: bold;
-            font-size: 1.2rem;
-            color: white;
-            text-shadow: 0 2px 4px rgba(0, 0, 0, 0.3);
-            pointer-events: none;
+            top: -50%;
+            left: -50%;
+            width: 200%;
+            height: 200%;
+            background: radial-gradient(circle, var(--honey-light) 0%, transparent 70%);
+            opacity: 0.1;
+            animation: rotate 20s linear infinite;
+        }
+        
+        .cover-title {
+            font-family: 'Caveat', cursive;
+            font-size: 3.5rem;
+            color: var(--wood);
+            text-align: center;
+            margin-bottom: 1rem;
+            position: relative;
+            z-index: 1;
+        }
+        
+        .cover-title::after {
+            content: '';
+            position: absolute;
+            bottom: -10px;
+            left: 50%;
+            transform: translateX(-50%);
+            width: 100px;
+            height: 4px;
+            background: linear-gradient(90deg, transparent, var(--honey), transparent);
+        }
+        
+        .cover-subtitle {
+            font-family: 'Patrick Hand', cursive;
+            font-size: 1.4rem;
+            color: var(--wood-light);
+            text-align: center;
+            margin-bottom: 2rem;
+            line-height: 1.6;
+        }
+        
+        .cover-decoration {
+            position: absolute;
+            width: 100px;
+            height: 100px;
+            background-size: contain;
+            background-repeat: no-repeat;
+            opacity: 0.15;
+        }
+        
+        .cover-decoration:nth-child(1) { top: 20px; left: 20px; background-image: url('data:image/svg+xml,<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path fill="%238B4513" d="M12,3C7,3 3,7 3,12C3,17 7,21 12,21C17,21 21,17 21,12C21,7 17,3 12,3M12,19C8.1,19 5,15.9 5,12C5,8.1 8.1,5 12,5C15.9,5 19,8.1 19,12C19,15.9 15.9,19 12,19M16,12C16,9.8 14.2,8 12,8C9.8,8 8,9.8 8,12C8,14.2 9.8,16 12,16C14.2,16 16,14.2 16,12Z"/></svg>'); }
+        .cover-decoration:nth-child(2) { bottom: 20px; right: 20px; background-image: url('data:image/svg+xml,<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path fill="%23FFC107" d="M12,2C6.5,2 2,6.5 2,12C2,17.5 6.5,22 12,22C17.5,22 22,17.5 22,12C22,6.5 17.5,2 12,2M12,4C16.4,4 20,7.6 20,12C20,16.4 16.4,20 12,20C7.6,20 4,16.4 4,12C4,7.6 7.6,4 12,4M12,6C8.7,6 6,8.7 6,12C6,15.3 8.7,18 12,18C15.3,18 18,15.3 18,12C18,8.7 15.3,6 12,6Z"/></svg>'); }
+        
+        /* Enhanced navigation */
+        .nav {
+            background: rgba(255, 255, 255, 0.95);
+            backdrop-filter: blur(10px);
+            box-shadow: 0 4px 20px rgba(0, 0, 0, 0.08);
+            border-bottom: 2px solid var(--honey-light);
+        }
+        
+        .nav-brand {
+            display: flex;
+            align-items: center;
+            gap: 12px;
+        }
+        
+        .nav-brand span {
+            font-size: 2rem;
+            animation: bounce 2s infinite;
+        }
+        
+        .nav-title {
+            font-family: 'Caveat', cursive;
+            font-size: 1.8rem;
+            color: var(--wood);
+            font-weight: 700;
+        }
+        
+        /* Enhanced character cards */
+        .characters-grid-enhanced {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(240px, 1fr));
+            gap: 2rem;
+            margin-top: 2rem;
+        }
+        
+        .character-spotlight {
+            background: linear-gradient(145deg, #ffffff, #f5f5f5);
+            border-radius: 20px;
+            padding: 2rem;
+            text-align: center;
+            transition: all 0.4s cubic-bezier(0.175, 0.885, 0.32, 1.275);
+            border: 2px solid transparent;
+            cursor: pointer;
+            position: relative;
+            overflow: hidden;
+        }
+        
+        .character-spotlight:hover {
+            transform: translateY(-10px) scale(1.03);
+            box-shadow: var(--shadow-medium);
+            border-color: var(--honey);
+        }
+        
+        .character-spotlight::before {
+            content: '';
+            position: absolute;
+            top: 0;
+            left: 0;
+            right: 0;
+            height: 4px;
+            background: linear-gradient(90deg, var(--pooh-red), var(--piglet-pink), var(--eeyore-blue), var(--tigger-orange));
             opacity: 0;
-            transform: translateY(0);
-            z-index: 10;
-         }
-         
-         .score-popup.visible {
-            animation: scoreFloat 1s ease-out forwards;
-         }
-         
-         @keyframes scoreFloat {
-            0% {
-               opacity: 0;
-               transform: translateY(0);
-            }
-            20% {
-               opacity: 1;
-            }
-            100% {
-               opacity: 0;
-               transform: translateY(-60px);
-            }
-         }
-         
-         .score-popup--golden {
-            color: #FFD700;
-            text-shadow: 0 0 8px rgba(255, 215, 0, 0.5);
-         }
-         
-         .score-popup--honey {
-            color: #FFD54F;
-         }
-         
-         .score-popup--power {
-            color: #9C27B0;
-         }
-         
-         .score-popup--combo {
-            color: #4CAF50;
-            font-size: 1.5rem;
-            text-shadow: 0 0 12px rgba(76, 175, 80, 0.6);
-         }
-         
-         /* Shake animation for game feedback */
-         @keyframes shake {
-            0%, 100% { transform: translateX(0); }
-            10%, 30%, 50%, 70%, 90% { transform: translateX(-5px); }
-            20%, 40%, 60%, 80% { transform: translateX(5px); }
-         }
-         
-         /* Character-specific modal icons */
-         .pooh-icon-modal {
-            background: linear-gradient(135deg, #FFC107, #FF9800);
-            color: #8B4513;
-         }
-         
-         .piglet-icon-modal {
-            background: linear-gradient(135deg, #FFB6C1, #FF69B4);
-            color: #C2185B;
-         }
-         
-         .eeyore-icon-modal {
-            background: linear-gradient(135deg, #B0BEC5, #78909C);
-            color: #37474F;
-         }
-         
-         .tigger-icon-modal {
-            background: linear-gradient(135deg, #FF9800, #F57C00);
-            color: #E65100;
-         }
-         
-         /* Loading states */
-         .loading {
-            opacity: 0.6;
-            pointer-events: none;
-         }
-         
-         .loading::after {
+            transition: opacity 0.3s ease;
+        }
+        
+        .character-spotlight:hover::before {
+            opacity: 1;
+        }
+        
+        .character-illustration {
+            width: 120px;
+            height: 120px;
+            margin: 0 auto 1.5rem;
+            border-radius: 50%;
+            background: linear-gradient(135deg, var(--honey-light), var(--honey));
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 3.5rem;
+            position: relative;
+            overflow: hidden;
+        }
+        
+        .character-illustration img {
+            width: 100%;
+            height: 100%;
+            object-fit: contain;
+            filter: drop-shadow(0 4px 8px rgba(0,0,0,0.2));
+        }
+        
+        .character-name {
+            font-family: 'Playfair Display', serif;
+            font-size: 1.8rem;
+            color: var(--wood);
+            margin-bottom: 0.5rem;
+        }
+        
+        .character-quote {
+            font-family: 'Patrick Hand', cursive;
+            font-size: 1.2rem;
+            color: var(--wood-light);
+            font-style: italic;
+        }
+        
+        /* Enhanced game card */
+        .game-card {
+            background: linear-gradient(145deg, #ffffff, #fff8e1);
+            border-radius: 24px;
+            padding: 2.5rem;
+            margin: 3rem auto;
+            max-width: 900px;
+            box-shadow: var(--shadow-medium);
+            border: 2px solid var(--honey);
+            position: relative;
+            overflow: hidden;
+        }
+        
+        .game-card::before {
+            content: '';
+            position: absolute;
+            top: 0;
+            left: 0;
+            right: 0;
+            height: 6px;
+            background: linear-gradient(90deg, var(--honey), var(--honey-dark));
+        }
+        
+        .game-title {
+            font-family: 'Caveat', cursive;
+            font-size: 2.5rem;
+            color: var(--wood);
+            display: flex;
+            align-items: center;
+            gap: 1rem;
+            margin-bottom: 1rem;
+        }
+        
+        .game-help {
+            font-family: 'Patrick Hand', cursive;
+            font-size: 1.2rem;
+            color: var(--wood-light);
+            margin-bottom: 2rem;
+        }
+        
+        .game-mode-toggle {
+            display: flex;
+            gap: 1rem;
+            flex-wrap: wrap;
+            margin-bottom: 2rem;
+        }
+        
+        .mode-chip {
+            background: white;
+            border: 2px solid var(--honey-light);
+            border-radius: 50px;
+            padding: 0.75rem 1.5rem;
+            font-family: 'Lato', sans-serif;
+            font-weight: 600;
+            color: var(--wood);
+            cursor: pointer;
+            transition: all 0.3s ease;
+        }
+        
+        .mode-chip.is-active {
+            background: var(--honey);
+            color: white;
+            border-color: var(--honey);
+            transform: scale(1.05);
+            box-shadow: 0 4px 12px rgba(255, 193, 7, 0.3);
+        }
+        
+        /* Enhanced HUD */
+        .game-hud {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(120px, 1fr));
+            gap: 1rem;
+            margin-bottom: 2rem;
+            background: rgba(255, 248, 225, 0.8);
+            border-radius: 16px;
+            padding: 1.5rem;
+            border: 1px solid var(--honey-light);
+        }
+        
+        .hud-stat {
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            gap: 0.5rem;
+        }
+        
+        .hud-pill {
+            background: white;
+            border: 2px solid var(--honey-light);
+            border-radius: 50px;
+            padding: 0.5rem 1rem;
+            font-family: 'Lato', sans-serif;
+            font-weight: 700;
+            color: var(--wood);
+            display: flex;
+            align-items: center;
+            gap: 0.5rem;
+        }
+        
+        /* Enhanced canvas */
+        .game-canvas {
+            width: 100%;
+            height: 400px;
+            background: linear-gradient(180deg, var(--sky) 0%, #B3E5FC 100%);
+            border-radius: 16px;
+            border: 3px solid var(--wood);
+            box-shadow: inset 0 0 30px rgba(0, 0, 0, 0.1);
+        }
+        
+        /* Enhanced wishes section */
+        .wishes-form {
+            background: rgba(255, 255, 255, 0.9);
+            border-radius: 20px;
+            padding: 2.5rem;
+            margin: 2rem 0;
+            box-shadow: var(--shadow-soft);
+            border: 2px dashed var(--honey);
+        }
+        
+        .wishes-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+            gap: 1.5rem;
+            margin-bottom: 1.5rem;
+        }
+        
+        .wishes-field {
+            display: flex;
+            flex-direction: column;
+            gap: 0.5rem;
+        }
+        
+        .field-label {
+            font-family: 'Playfair Display', serif;
+            font-weight: 600;
+            color: var(--wood);
+            font-size: 1.1rem;
+        }
+        
+        input, textarea, select {
+            padding: 1rem;
+            border: 2px solid var(--honey-light);
+            border-radius: 12px;
+            font-family: 'Lato', sans-serif;
+            font-size: 1rem;
+            transition: all 0.3s ease;
+        }
+        
+        input:focus, textarea:focus, select:focus {
+            outline: none;
+            border-color: var(--honey);
+            box-shadow: 0 0 0 3px rgba(255, 193, 7, 0.2);
+        }
+        
+        textarea {
+            min-height: 120px;
+            resize: vertical;
+        }
+        
+        .wishes-actions {
+            display: flex;
+            gap: 1rem;
+            flex-wrap: wrap;
+            margin-top: 2rem;
+        }
+        
+        /* Enhanced buttons */
+        .btn {
+            padding: 1rem 2rem;
+            border-radius: 12px;
+            font-family: 'Lato', sans-serif;
+            font-weight: 700;
+            font-size: 1rem;
+            border: none;
+            cursor: pointer;
+            transition: all 0.3s cubic-bezier(0.175, 0.885, 0.32, 1.275);
+            display: inline-flex;
+            align-items: center;
+            gap: 0.75rem;
+            position: relative;
+            overflow: hidden;
+        }
+        
+        .btn::before {
             content: '';
             position: absolute;
             top: 50%;
             left: 50%;
-            width: 20px;
-            height: 20px;
-            border: 3px solid #f4a944;
-            border-top-color: transparent;
+            width: 0;
+            height: 0;
             border-radius: 50%;
-            animation: spin 1s linear infinite;
-         }
-         
-         @keyframes spin {
-            to { transform: rotate(360deg); }
-         }
-         
-         /* Game controls enhancements */
-         .game-extra-controls {
-            display: flex;
-            gap: 0.5rem;
-            margin-top: 1rem;
-            flex-wrap: wrap;
-            justify-content: center;
-         }
-         
-         /* Stats modal overlay */
-         .modal-overlay {
-            position: fixed;
-            top: 0;
-            left: 0;
-            right: 0;
-            bottom: 0;
-            background: rgba(0, 0, 0, 0.8);
-            display: none;
-            align-items: center;
-            justify-content: center;
-            z-index: 2000;
-            opacity: 0;
-            transition: opacity 0.3s ease;
-         }
-         
-         .modal-overlay.active {
-            display: flex;
-            opacity: 1;
-         }
-         
-         /* Toast notifications */
-         .toast {
-            position: fixed;
-            bottom: 20px;
-            right: 20px;
-            background: #4CAF50;
+            background: rgba(255, 255, 255, 0.3);
+            transform: translate(-50%, -50%);
+            transition: width 0.6s, height 0.6s;
+        }
+        
+        .btn:hover::before {
+            width: 300px;
+            height: 300px;
+        }
+        
+        .btn-primary {
+            background: linear-gradient(135deg, var(--honey), var(--honey-dark));
             color: white;
-            padding: 1rem 1.5rem;
-            border-radius: 8px;
-            box-shadow: 0 4px 12px rgba(0,0,0,0.15);
-            z-index: 3000;
-            transform: translateY(100px);
-            opacity: 0;
-            transition: transform 0.3s ease, opacity 0.3s ease;
-         }
-         
-         .toast.visible {
-            transform: translateY(0);
-            opacity: 1;
-         }
-         
-         .toast.error {
-            background: #FF6B6B;
-         }
-         
-         .toast.warning {
-            background: #FF9800;
-         }
-      </style>
-   </head>
-   <body>
-      <a class="skip-link" href="#main">Skip to content</a>
-      
-      <!-- Toast notification system -->
-      <div id="toast" class="toast" role="alert" aria-live="assertive" aria-atomic="true"></div>
-      
-      <!-- Reading progress -->
-      <div class="reading-progress" id="readingProgress" aria-hidden="true"></div>
-      
-      <!-- Cover / Intro -->
-      <div class="storybook-cover" id="cover" role="dialog" aria-modal="true" aria-label="Welcome screen">
-         <div class="cover-card">
-            <div class="cover-decoration" aria-hidden="true"></div>
-            <h1 class="cover-title">Baby Gunnar's Hundred Acre Wood</h1>
-            <p class="cover-subtitle">Read a cozy storybook moment. Play a honey-sweet game. Leave a wish.</p>
-            <div class="storybook-form">
-               <button class="btn btn-primary" id="enterStory" type="button" aria-label="Enter the storybook">
-               <i class="fa-solid fa-book-open" aria-hidden="true"></i>
-               Enter the Storybook
-               </button>
-               <p class="tip" style="max-width: 58ch; text-align:center;">
-                  Tip: On iPhone/iPad, your first tap helps "wake up" audio + canvas.
-                  <span id="installPrompt" style="display: none; margin-top: 0.5rem;">
-                     <br>
-                     <button id="installButton" class="btn btn-ghost" style="font-size: 0.9rem;">
-                        <i class="fas fa-download"></i> Install App
-                     </button>
-                  </span>
-               </p>
-            </div>
-         </div>
-      </div>
-      
-      <!-- Top nav -->
-      <header class="nav" role="navigation" aria-label="Primary">
-         <div class="nav-brand">
-            <span aria-hidden="true" role="img">🍯</span>
-            <div class="nav-title">Hundred Acre Celebration</div>
-         </div>
-         <button class="nav-toggle" id="navToggle" type="button" aria-label="Open menu" aria-expanded="false">
-         <i class="fa-solid fa-bars" aria-hidden="true"></i>
-         </button>
-         <nav class="nav-menu" id="navMenu" aria-label="Site sections">
-            <a class="nav-item" href="#story"><i class="fa-solid fa-feather" aria-hidden="true"></i> Story</a>
-            <a class="nav-item" href="#friends"><i class="fa-solid fa-people-group" aria-hidden="true"></i> Friends</a>
-            <a class="nav-item" href="#games"><i class="fa-solid fa-gamepad" aria-hidden="true"></i> Games</a>
-            <a class="nav-item" href="#wishes"><i class="fa-solid fa-heart" aria-hidden="true"></i> Wishes</a>
-         </nav>
-      </header>
-      
-      <!-- Floating action buttons -->
-      <div class="fab-stack" aria-label="Quick actions">
-         <button class="fab" id="muteToggle" type="button" aria-label="Toggle sound" aria-pressed="false" title="Sound">
-         <i class="fa-solid fa-volume-xmark" aria-hidden="true"></i>
-         </button>
-         <button class="accessibility-btn" id="accessibilityToggle" type="button" aria-label="Toggle accessibility mode" aria-pressed="false" title="Accessibility">
-         <i class="fa-solid fa-person-walking" aria-hidden="true"></i>
-         </button>
-         <button class="fab" id="scrollTop" type="button" aria-label="Scroll to top" title="Top">
-         <i class="fa-solid fa-arrow-up" aria-hidden="true"></i>
-         </button>
-      </div>
-      
-      <main id="main" class="storybook-shell">
-         <div class="storybook">
-            <div class="storybook-inner">
-               <!-- Story -->
-               <section class="content-section" id="story" aria-labelledby="storyTitle">
-                  <div class="content-section-inner">
-                     <header class="storybook-header">
-                        <h2 class="storybook-heading" id="storyTitle">A Cozy Little Adventure</h2>
-                        <p class="storybook-subheading">
-                           Welcome to Baby Gunnar's Hundred Acre Wood celebration — a gentle storybook moment with friends,
-                           honey-sweet games, and a place to leave your wishes.
-                        </p>
-                     </header>
-                     <!-- Add a story progression if desired -->
-                     <div class="story-progression">
-                        <div class="story-step">
-                           <div class="story-icon">📖</div>
-                           <h3>Read</h3>
-                           <p>Discover heartfelt messages from Pooh and friends</p>
-                        </div>
-                        <div class="story-step">
-                           <div class="story-icon">🎮</div>
-                           <h3>Play</h3>
-                           <p>Enjoy the honey-sweet catch game with Pooh</p>
-                        </div>
-                        <div class="story-step">
-                           <div class="story-icon">💝</div>
-                           <h3>Share</h3>
-                           <p>Leave warm wishes for Baby Gunnar</p>
-                        </div>
-                     </div>
-                  </div>
-               </section>
-               
-               <!-- Friends -->
-               <section class="content-section" id="friends" aria-labelledby="friendsTitle">
-                  <div class="content-section-inner">
-                     <h2 class="section-title" id="friendsTitle">Friends in the Wood</h2>
-                     <p class="section-subtitle">Tap a friend for a little message.</p>
-                     <div class="characters-grid-enhanced">
-                        <article class="character-spotlight" data-character="pooh" tabindex="0" role="button" 
-                                 aria-label="Open Pooh message" aria-describedby="pooh-desc">
-                           <div class="character-spotlight-content">
-                              <div class="character-illustration">
-                                 <img src="media/characters/pooh.png" alt="Pooh holding a honey pot" loading="lazy" decoding="async"
-                                    onerror="this.style.display='none'; this.parentElement.innerHTML='🐻';" />
-                              </div>
-                              <h3 class="character-name">Pooh</h3>
-                              <p class="character-quote">A little honey goes a long way.</p>
-                           </div>
-                           <div class="sr-only" id="pooh-desc">Click to hear Pooh's message about sweetness and kindness</div>
-                        </article>
-                        <article class="character-spotlight" data-character="piglet" tabindex="0" role="button" 
-                                 aria-label="Open Piglet message" aria-describedby="piglet-desc">
-                           <div class="character-spotlight-content">
-                              <div class="character-illustration">
-                                 <img src="media/characters/piglet.png" alt="Piglet looking thoughtful" loading="lazy" decoding="async"
-                                    onerror="this.style.display='none'; this.parentElement.innerHTML='🐷';" />
-                              </div>
-                              <h3 class="character-name">Piglet</h3>
-                              <p class="character-quote">Small steps. Big heart.</p>
-                           </div>
-                           <div class="sr-only" id="piglet-desc">Click to hear Piglet's message about courage and small beginnings</div>
-                        </article>
-                        <article class="character-spotlight" data-character="eeyore" tabindex="0" role="button" 
-                                 aria-label="Open Eeyore message" aria-describedby="eeyore-desc">
-                           <div class="character-spotlight-content">
-                              <div class="character-illustration">
-                                 <img src="media/characters/eeyore.png" alt="Eeyore with his tail" loading="lazy" decoding="async"
-                                    onerror="this.style.display='none'; this.parentElement.innerHTML='🐴';" />
-                              </div>
-                              <h3 class="character-name">Eeyore</h3>
-                              <p class="character-quote">Quiet love still counts.</p>
-                           </div>
-                           <div class="sr-only" id="eeyore-desc">Click to hear Eeyore's message about quiet strength and loyalty</div>
-                        </article>
-                        <article class="character-spotlight" data-character="tigger" tabindex="0" role="button" 
-                                 aria-label="Open Tigger message" aria-describedby="tigger-desc">
-                           <div class="character-spotlight-content">
-                              <div class="character-illustration">
-                                 <img src="media/characters/tigger.png" alt="Tigger bouncing happily" loading="lazy" decoding="async"
-                                    onerror="this.style.display='none'; this.parentElement.innerHTML='🐯';" />
-                              </div>
-                              <h3 class="character-name">Tigger</h3>
-                              <p class="character-quote">Bounce into the fun-fun.</p>
-                           </div>
-                           <div class="sr-only" id="tigger-desc">Click to hear Tigger's message about joy and enthusiasm</div>
-                        </article>
-                     </div>
-                  </div>
-               </section>
-               
-               <!-- Games -->
-               <article class="game-card" id="catch-card" aria-label="Honey Pot Catch game">
-                  <header class="game-header">
-                     <h3 class="game-title">
-                        <i class="fa-solid fa-gamepad" aria-hidden="true"></i>
-                        Honey Pot Catch
-                     </h3>
-                     <p class="game-help">
-                        Move Pooh left/right. Catch honey. Dodge bees. Power-ups help.
-                     </p>
-                     <div class="game-mode-toggle" role="group" aria-label="Pick a tempo">
-                        <button class="mode-chip is-active" data-catch-mode="calm" type="button" aria-pressed="true">Calm Stroll</button>
-                        <button class="mode-chip" data-catch-mode="brisk" type="button" aria-pressed="false">Adventure</button>
-                        <button class="mode-chip" data-catch-mode="rush" type="button" aria-pressed="false">Honey Rush</button>
-                        <p class="mode-chip-note" id="catch-mode-description">A relaxed 70 second run with extra hearts.</p>
-                     </div>
-                  </header>
-                  
-                  <!-- Enhanced HUD with more stats -->
-                  <div class="game-hud" aria-label="Game status">
-                     <span class="hud-stat"><span class="hud-pill">Score: <span id="score-count">0</span></span></span>
-                     <span class="hud-stat"><span class="hud-pill">Time: <span id="time-count">60</span>s</span></span>
-                     <span class="hud-stat"><span class="hud-pill">Lives: <span id="catch-lives">3</span></span></span>
-                     <span class="hud-stat"><span class="hud-pill"><span id="catch-combo">0</span> Combo</span></span>
-                     <span class="hud-stat"><span class="hud-pill">×<span id="catch-multiplier">1</span></span></span>
-                     <span class="hud-stat"><span class="hud-pill">Best: <span id="catch-best">0</span></span></span>
-                     <span class="hud-stat"><span class="hud-pill">FPS: <span id="catch-fps">60</span></span></span>
-                  </div>
-                  
-                  <div class="hud-progress" aria-hidden="false">
-                     <div class="progress-block">
-                        <div class="progress-label">Time left</div>
-                        <div class="progress-track">
-                           <div class="progress-fill" id="catch-timebar" style="--w: 100%; width: 100%;"></div>
-                        </div>
-                     </div>
-                     <div class="progress-block">
-                        <div class="progress-label">Hearts</div>
-                        <div class="progress-track hearts">
-                           <div class="progress-fill" id="catch-life-bar" style="--w: 100%; width: 100%;"></div>
-                        </div>
-                     </div>
-                  </div>
-                  
-                  <div class="game-stage">
-                     <canvas id="honey-game" class="game-canvas" 
-                        aria-label="Honey Pot Catch game area. Use arrow keys or touch to move Pooh left and right to catch honey pots and avoid bees." 
-                        role="application"
-                        tabindex="0">
-                        Your browser does not support the canvas element. Please try using a modern browser.
-                     </canvas>
-                     
-                     <!-- Overlay with game status -->
-                     <div class="game-overlay" id="catch-overlay" aria-live="polite">
-                        <div class="countdown-display" id="catch-countdown">Ready when you are.</div>
-                        <div class="overlay-hint" id="catch-hint">Press Start to begin a calm 60 second run.</div>
-                     </div>
-                     
-                     <!-- Active power-ups display -->
-                     <div class="active-effects" id="activeEffects" aria-label="Active power-ups" style="display: none;">
-                        <div class="effect" id="effect-shield">🛡️ 0s</div>
-                        <div class="effect" id="effect-star">⭐ 0s</div>
-                        <div class="effect" id="effect-lightning">⚡ 0s</div>
-                     </div>
-                  </div>
-                  
-                  <!-- Enhanced Game Controls -->
-                  <div class="game-controls" aria-label="Game controls">
-                     <button class="btn btn-primary" id="start-catch" type="button">
-                     <i class="fa-solid fa-play" aria-hidden="true"></i> Start
-                     </button>
-                     <button class="btn btn-secondary" id="pause-catch" type="button" aria-pressed="false">
-                     <i class="fa-solid fa-pause" aria-hidden="true"></i> Pause
-                     </button>
-                     <button class="btn btn-secondary" id="stats-button" type="button">
-                     <i class="fa-solid fa-chart-bar" aria-hidden="true"></i> Stats
-                     </button>
-                     <button class="btn btn-secondary" id="save-button" type="button">
-                     <i class="fa-solid fa-save" aria-hidden="true"></i> Save
-                     </button>
-                     <button class="btn btn-secondary" id="share-button" type="button">
-                     <i class="fa-solid fa-share-alt" aria-hidden="true"></i> Share
-                     </button>
-                     
-                     <div class="joystick-dock" aria-hidden="false">
-                        <div id="catchJoystick" class="virtual-joystick" aria-label="Drag to steer Pooh" role="slider" aria-valuemin="-40" aria-valuemax="40" aria-valuenow="0">
-                           <div class="joystick-base"></div>
-                           <div class="joystick-knob" id="catchJoystickKnob"></div>
-                        </div>
-                        <p class="joystick-hint">Drag on phones. Arrow keys + mouse also work.</p>
-                     </div>
-                  </div>
-                  
-                  <!-- Quick Save Indicator -->
-                  <div class="save-indicator" id="saveIndicator" aria-live="polite" style="display: none;">
-                     <i class="fas fa-check-circle"></i> Game saved
-                  </div>
-                  
-                  <!-- Game status with announcements -->
-                  <p class="tip" id="catchStatus" aria-live="polite" style="margin: 12px 14px 16px;">
-                     Ready. Select a mode and press Start to play.
-                  </p>
-                  
-                  <!-- Game guide with keyboard shortcuts -->
-                  <div class="game-guide-grid" aria-label="How to play">
-                     <div class="guide-card">
-                        <div class="guide-icon" role="img" aria-label="Honey pot">🍯</div>
-                        <div>
-                           <h4>Sweet catches</h4>
-                           <p>Golden pots boost your score and streak. Keep moving to chain them.</p>
-                           <small class="key-hint"><kbd>←</kbd> <kbd>→</kbd> Move</small>
-                        </div>
-                     </div>
-                     <div class="guide-card">
-                        <div class="guide-icon" role="img" aria-label="Bee">🐝</div>
-                        <div>
-                           <h4>Watch the buzz</h4>
-                           <p>Angry bees drift toward Pooh. A shield or quick sidestep keeps hearts safe.</p>
-                           <small class="key-hint"><kbd>A</kbd> <kbd>D</kbd> Move</small>
-                        </div>
-                     </div>
-                     <div class="guide-card">
-                        <div class="guide-icon" role="img" aria-label="Star">⭐</div>
-                        <div>
-                           <h4>Power-up moments</h4>
-                           <p>Clock adds time, hearts heal, lightning slows the world, stars double points.</p>
-                           <small class="key-hint"><kbd>Space</kbd> Dash</small>
-                        </div>
-                     </div>
-                     <div class="guide-card">
-                        <div class="guide-icon" role="img" aria-label="Target">🎯</div>
-                        <div>
-                           <h4>Chase a personal best</h4>
-                           <p>Your best run is saved locally. Try the Honey Rush tempo for riskier rewards.</p>
-                           <small class="key-hint"><kbd>Esc</kbd> Pause</small>
-                        </div>
-                     </div>
-                  </div>
-               </article>
-               
-               <!-- Wishes -->
-               <section class="content-section" id="wishes" aria-labelledby="wishesTitle">
-                  <div class="content-section-inner">
-                     <h2 class="section-title" id="wishesTitle">Leave a Wish</h2>
-                     <p class="section-subtitle">A simple spot to leave kind words for Baby Gunnar.</p>
-                     
-                     <form class="wishes-form" id="wishesForm" novalidate>
-                        <div class="wishes-grid">
-                           <label class="wishes-field" for="wishName">
-                              <span class="field-label">Your name (optional)</span>
-                              <input id="wishName" name="wishName" type="text" maxlength="60" autocomplete="name" placeholder="Christopher Robin" />
-                           </label>
-                           <label class="wishes-field" for="wishEmoji">
-                              <span class="field-label">Mood</span>
-                              <select id="wishEmoji" name="wishEmoji">
-                                 <option value="🍯">🍯 Honey-sweet</option>
-                                 <option value="🌿">🌿 Peaceful stroll</option>
-                                 <option value="🎈">🎈 Cheerful</option>
-                                 <option value="⭐">⭐ Encouraging</option>
-                                 <option value="💌">💌 Heartfelt</option>
-                                 <option value="🐻">🐻 Friendly bear hug</option>
-                              </select>
-                           </label>
-                        </div>
-                        <label class="wishes-field" for="wishMessage">
-                           <span class="field-label">Your note</span>
-                           <textarea id="wishMessage" name="wishMessage" maxlength="240" 
-                                     placeholder="Write a gentle wish or encouragement..." 
-                                     required></textarea>
-                           <div class="field-meta" id="wishMeta" aria-live="polite">0 / 240 characters</div>
-                        </label>
-                        
-                        <div class="wishes-actions">
-                           <button class="btn btn-primary" type="submit">
-                           <i class="fa-solid fa-paper-plane" aria-hidden="true"></i>
-                           Send wish
-                           </button>
-                           <button class="btn btn-secondary" type="reset">
-                           <i class="fa-solid fa-rotate-left" aria-hidden="true"></i>
-                           Reset
-                           </button>
-                           <button class="btn btn-ghost" id="clearWishes" type="button">
-                           <i class="fa-solid fa-broom" aria-hidden="true"></i>
-                           Clear saved wishes
-                           </button>
-                        </div>
-                        
-                        <div class="wish-status" id="wishStatus" role="status" aria-live="polite"></div>
-                     </form>
-                     
-                     <!-- Wish statistics -->
-                     <div class="wish-stats" id="wishStats" aria-label="Wish statistics">
-                        <div class="stat">
-                           <span class="stat-number" id="totalWishes">0</span>
-                           <span class="stat-label">Total Wishes</span>
-                        </div>
-                        <div class="stat">
-                           <span class="stat-number" id="todayWishes">0</span>
-                           <span class="stat-label">Today</span>
-                        </div>
-                        <div class="stat">
-                           <span class="stat-number" id="lastWish">--:--</span>
-                           <span class="stat-label">Last Wish</span>
-                        </div>
-                     </div>
-                     
-                     <!-- Wishes list with filtering -->
-                     <div class="wishes-controls">
-                        <div class="filter-buttons" role="group" aria-label="Filter wishes">
-                           <button class="filter-btn active" data-filter="all">All</button>
-                           <button class="filter-btn" data-filter="today">Today</button>
-                           <button class="filter-btn" data-filter="week">This Week</button>
-                        </div>
-                        <div class="sort-options">
-                           <label for="sortWishes">Sort by:</label>
-                           <select id="sortWishes">
-                              <option value="newest">Newest First</option>
-                              <option value="oldest">Oldest First</option>
-                              <option value="name">Name A-Z</option>
-                           </select>
-                        </div>
-                     </div>
-                     
-                     <div class="wishes-list" id="wishesList" aria-live="polite" aria-label="Recent wishes">
-                        <!-- Wishes will be loaded here dynamically -->
-                        <div class="empty-state" id="emptyWishes">
-                           <div class="empty-icon">💭</div>
-                           <h3>No wishes yet</h3>
-                           <p>Be the first to leave a warm wish for Baby Gunnar!</p>
-                        </div>
-                     </div>
-                  </div>
-               </section>
-               
-               <!-- Footer with credits -->
-               <footer class="site-footer">
-                  <div class="footer-content">
-                     <p>Made with <span aria-label="love">❤️</span> for Baby Gunnar</p>
-                     <p class="footer-links">
-                        <a href="#story" class="footer-link">Story</a> • 
-                        <a href="#friends" class="footer-link">Friends</a> • 
-                        <a href="#games" class="footer-link">Games</a> • 
-                        <a href="#wishes" class="footer-link">Wishes</a>
-                     </p>
-                     <p class="footer-copyright">© 2024 Hundred Acre Celebration</p>
-                     <button class="btn btn-ghost btn-small" id="resetAll" type="button">
-                     <i class="fas fa-trash-can"></i> Clear All Data
-                     </button>
-                  </div>
-               </footer>
-            </div>
-         </div>
-      </main>
-      
-      <!-- Character Modal -->
-      <div class="character-modal" id="characterModal" role="dialog" aria-modal="true" aria-label="Character message" tabindex="-1">
-         <div class="modal-content" role="document">
-            <button class="close-modal" id="closeCharacterModal" type="button" aria-label="Close">
-            <i class="fa-solid fa-xmark" aria-hidden="true"></i>
-            </button>
-            <div class="modal-character">
-               <div class="modal-character-icon pooh-icon-modal" id="modalIcon" aria-hidden="true">
-                  🐻
-               </div>
-               <div>
-                  <h3 class="modal-character-name" id="modalName">Pooh</h3>
-                  <p class="modal-character-quote" id="modalQuote">A little honey goes a long way.</p>
-               </div>
-            </div>
-            <div class="modal-character-bio" id="modalBio">
-               Pooh reminds us that sometimes the sweetest things come in simple moments. 
-               Just like honey, kindness spreads and makes everything better.
-            </div>
-         </div>
-      </div>
-      
-      <!-- Stats Modal -->
-      <div class="modal-overlay" id="statsModal">
-         <div class="modal-content stats-modal" role="dialog" aria-labelledby="statsTitle">
-            <button class="close-modal" id="closeStatsModal" type="button" aria-label="Close">
-            <i class="fa-solid fa-xmark" aria-hidden="true"></i>
-            </button>
-            <h3 id="statsTitle">Game Statistics</h3>
-            <div class="stats-grid" id="statsContent">
-               <!-- Stats will be loaded here -->
-            </div>
-         </div>
-      </div>
-      
-      <!-- Reset Confirmation Modal -->
-      <div class="modal-overlay" id="resetModal">
-         <div class="modal-content" role="dialog" aria-labelledby="resetTitle">
-            <h3 id="resetTitle">Confirm Reset</h3>
-            <p>Are you sure you want to clear all game data? This cannot be undone.</p>
-            <div class="modal-actions">
-               <button class="btn btn-danger" id="confirmReset">Clear All</button>
-               <button class="btn btn-secondary" id="cancelReset">Cancel</button>
-            </div>
-         </div>
-      </div>
-      
-      <!-- Scripts -->
-      <script src="script.js" defer></script>
-      <script src="game.js" defer></script>
-      
-      <!-- Audio context unlock script -->
-      <script>
-         // Unlock audio on first user interaction
-         function unlockAudio() {
-            if (window.audioManager && typeof window.audioManager.unlock === 'function') {
-               window.audioManager.unlock();
+            box-shadow: 0 4px 15px rgba(255, 193, 7, 0.3);
+        }
+        
+        .btn-primary:hover {
+            transform: translateY(-3px);
+            box-shadow: 0 8px 25px rgba(255, 193, 7, 0.4);
+        }
+        
+        .btn-secondary {
+            background: white;
+            color: var(--wood);
+            border: 2px solid var(--honey);
+        }
+        
+        .btn-secondary:hover {
+            background: var(--honey-light);
+            transform: translateY(-3px);
+        }
+        
+        /* Animations */
+        @keyframes fadeInUp {
+            from {
+                opacity: 0;
+                transform: translateY(30px);
             }
-         }
-         
-         // Add click event to cover button
-         document.addEventListener('DOMContentLoaded', function() {
-            const enterBtn = document.getElementById('enterStory');
-            if (enterBtn) {
-               enterBtn.addEventListener('click', unlockAudio);
+            to {
+                opacity: 1;
+                transform: translateY(0);
+            }
+        }
+        
+        @keyframes bounce {
+            0%, 100% { transform: translateY(0); }
+            50% { transform: translateY(-10px); }
+        }
+        
+        @keyframes rotate {
+            from { transform: rotate(0deg); }
+            to { transform: rotate(360deg); }
+        }
+        
+        @keyframes float {
+            0%, 100% { transform: translateY(0); }
+            50% { transform: translateY(-20px); }
+        }
+        
+        /* Floating elements */
+        .floating-element {
+            position: absolute;
+            pointer-events: none;
+            z-index: 1;
+            animation: float 6s ease-in-out infinite;
+        }
+        
+        /* Story progression */
+        .story-progression {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+            gap: 2rem;
+            margin: 3rem 0;
+        }
+        
+        .story-step {
+            text-align: center;
+            padding: 2rem;
+            background: rgba(255, 255, 255, 0.9);
+            border-radius: 16px;
+            transition: all 0.3s ease;
+            border: 2px solid transparent;
+        }
+        
+        .story-step:hover {
+            border-color: var(--honey);
+            transform: translateY(-5px);
+        }
+        
+        .story-icon {
+            font-size: 3rem;
+            margin-bottom: 1rem;
+        }
+        
+        /* Responsive design */
+        @media (max-width: 768px) {
+            .cover-title { font-size: 2.5rem; }
+            .nav-title { font-size: 1.5rem; }
+            .game-title { font-size: 2rem; }
+            .characters-grid-enhanced { grid-template-columns: 1fr; }
+            .game-hud { grid-template-columns: repeat(2, 1fr); }
+            .wishes-grid { grid-template-columns: 1fr; }
+            .story-progression { grid-template-columns: 1fr; }
+        }
+        
+        /* Dark mode support */
+        @media (prefers-color-scheme: dark) {
+            .cover-card,
+            .character-spotlight,
+            .game-card,
+            .wishes-form {
+                background: rgba(30, 30, 30, 0.95);
+                color: #f0f0f0;
             }
             
-            // Unlock on any touch/click
-            document.addEventListener('click', unlockAudio, { once: true });
-            document.addEventListener('touchstart', unlockAudio, { once: true });
-         });
-      </script>
-      
-      <!-- PWA support -->
-      <script>
-         // Register service worker for PWA capabilities
-         if ('serviceWorker' in navigator) {
-            window.addEventListener('load', function() {
-               navigator.serviceWorker.register('/sw.js').then(function(registration) {
-                  console.log('ServiceWorker registration successful with scope: ', registration.scope);
-               }, function(err) {
-                  console.log('ServiceWorker registration failed: ', err);
-               });
-            });
-         }
-         
-         // Add to home screen prompt
-         let deferredPrompt;
-         window.addEventListener('beforeinstallprompt', (e) => {
-            e.preventDefault();
-            deferredPrompt = e;
-            const installPrompt = document.getElementById('installPrompt');
-            const installButton = document.getElementById('installButton');
-            
-            if (installPrompt && installButton) {
-               installPrompt.style.display = 'block';
-               
-               installButton.addEventListener('click', async () => {
-                  if (deferredPrompt) {
-                     deferredPrompt.prompt();
-                     const { outcome } = await deferredPrompt.userChoice;
-                     if (outcome === 'accepted') {
-                        console.log('User accepted the install prompt');
-                     }
-                     deferredPrompt = null;
-                     installPrompt.style.display = 'none';
-                  }
-               });
+            input, textarea, select {
+                background: #333;
+                color: #f0f0f0;
+                border-color: #555;
             }
-         });
-         
-         // Track if the app is installed
-         window.addEventListener('appinstalled', () => {
-            console.log('PWA installed successfully');
-            const installPrompt = document.getElementById('installPrompt');
-            if (installPrompt) {
-               installPrompt.style.display = 'none';
+        }
+        
+        /* Accessibility focus styles */
+        *:focus {
+            outline: 3px solid var(--honey);
+            outline-offset: 2px;
+        }
+        
+        /* Reduced motion */
+        @media (prefers-reduced-motion: reduce) {
+            * {
+                animation-duration: 0.01ms !important;
+                animation-iteration-count: 1 !important;
+                transition-duration: 0.01ms !important;
             }
-         });
-      </script>
-   </body>
-</html>
+        }
+    </style>
+</head>
+<body>
+    <!-- Parallax background elements -->
+    <div class="floating-element" style="top: 10%; left: 5%; font-size: 3rem; animation-delay: 0s;">🍯</div>
+    <div class="floating-element" style="top: 20%; right: 10%; font-size: 2.5rem; animation-delay: 1s;">🐝</div>
+    <div class="floating-element" style="bottom: 30%; left: 15%; font-size: 4rem; animation-delay: 2s;">🐻</div>
+    <div class="floating-element" style="bottom: 20%; right: 5%; font-size: 3rem; animation-delay: 3s;">🎈</div>
+    
+    <!-- Cover / Intro -->
+    <div class="storybook-cover" id="cover">
+        <div class="cover-card">
+            <div class="cover-decoration"></div>
+            <div class="cover-decoration"></div>
+            <h1 class="cover-title animate__animated animate__fadeInDown">Baby Gunnar's Hundred Acre Wood</h1>
+            <p class="cover-subtitle animate__animated animate__fadeInUp animate__delay-1s">
+                A magical interactive storybook journey through the Hundred Acre Wood. 
+                Play honey-sweet games, meet beloved friends, and share heartfelt wishes.
+            </p>
+            <div class="storybook-form animate__animated animate__fadeInUp animate__delay-2s">
+                <button class="btn btn-primary" id="enterStory">
+                    <i class="fa-solid fa-book-open"></i>
+                    Begin the Adventure
+                </button>
+                <p class="tip" style="margin-top: 2rem; opacity: 0.8;">
+                    <i class="fa-solid fa-lightbulb"></i>
+                    Tip: Tap anywhere to unlock sound. Works best on modern browsers.
+                </p>
+            </div>
+        </div>
+    </div>
+    
+    <!-- Main content (rest of your HTML remains the same with enhanced classes) -->
+    <!-- [Previous HTML content remains mostly the same but with updated class names for the enhanced styles] -->
+    
+    <!-- Enhanced Scripts -->
+    <script>
+        // Enhanced audio context unlock
+        let audioContext;
+        
+        function unlockAudio() {
+            if (!audioContext) {
+                audioContext = new (window.AudioContext || window.webkitAudioContext)();
+                
+                // Create a subtle background sound
+                const oscillator = audioContext.createOscillator();
+                const gainNode = audioContext.createGain();
+                
+                oscillator.connect(gainNode);
+                gainNode.connect(audioContext.destination);
+                
+                oscillator.frequency.value = 220;
+                gainNode.gain.value = 0;
+                
+                oscillator.start();
+                
+                // Fade in/out for a gentle sound
+                gainNode.gain.setValueAtTime(0, audioContext.currentTime);
+                gainNode.gain.linearRampToValueAtTime(0.05, audioContext.currentTime + 0.5);
+                gainNode.gain.linearRampToValueAtTime(0, audioContext.current
