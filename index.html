@@ -1,457 +1,57 @@
 <!DOCTYPE html>
-<html lang="en" class="no-js">
+<html lang="en">
 <head>
-    <meta charset="UTF-8" />
-    <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover, maximum-scale=5.0" />
-    <meta http-equiv="X-UA-Compatible" content="IE=edge">
-    <title>Baby Gunnar's Hundred Acre Wood Adventure</title>
-    <meta name="description" content="An interactive storybook journey through the Hundred Acre Wood with honey-sweet games and heartfelt wishes for Baby Gunnar." />
-    <meta name="theme-color" content="#f4a944" />
-    <meta name="color-scheme" content="light dark" />
-    <meta name="apple-mobile-web-app-capable" content="yes">
-    <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
-    
-    <!-- Preload critical resources -->
-    <link rel="preload" href="https://fonts.googleapis.com/css2?family=Lato:wght@300;400;700;900&family=Patrick+Hand&family=Playfair+Display:wght@600;700;800&display=swap" as="style" crossorigin>
-    <link rel="preload" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.1/css/all.min.css" as="style" crossorigin>
-    
-    <!-- PWA Manifest -->
-    <link rel="manifest" href="manifest.json">
-    
-    <!-- Favicon with modern formats -->
-    <link rel="icon" href="data:image/svg+xml,<svg xmlns=%22http://www.w3.org/2000/svg%22 viewBox=%220 0 100 100%22><text y=%22.9em%22 font-size=%2290%22>🍯</text></svg>" type="image/svg+xml">
-    <link rel="icon" type="image/png" sizes="32x32" href="media/icons/favicon-32x32.png">
-    <link rel="icon" type="image/png" sizes="16x16" href="media/icons/favicon-16x16.png">
-    <link rel="apple-touch-icon" sizes="180x180" href="media/icons/apple-touch-icon.png">
-    <link rel="mask-icon" href="media/icons/safari-pinned-tab.svg" color="#f4a944">
-    
-    <!-- Fonts with display swap -->
-    <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Lato:wght@300;400;700;900&family=Patrick+Hand&family=Playfair+Display:wght@600;700;800&family=Caveat:wght@400;600&display=swap" crossorigin="anonymous" media="print" onload="this.media='all'">
-    <noscript>
-        <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Lato:wght@300;400;700;900&family=Patrick+Hand&family=Playfair+Display:wght@600;700;800&family=Caveat:wght@400;600&display=swap">
-    </noscript>
-    
-    <!-- Font Awesome with async loading -->
-    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.1/css/all.min.css" integrity="sha512-DTOQO9RWCH3ppGqcWaEA1BIZOC6xxalwEsw9c2QQeAIftl+Vegovlnee1c9QX4TctnWMn13TZye+giMm8e2LwA==" crossorigin="anonymous" referrerpolicy="no-referrer" media="print" onload="this.media='all'">
-    <noscript>
-        <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.1/css/all.min.css">
-    </noscript>
-    
-    <!-- Main CSS (reliable load across iOS Safari/Chrome + desktop) -->
-<link rel="stylesheet" href="styles.css">
-<!-- Optional: still hint to preload for speed (won't break styling if unsupported) -->
-<link rel="preload" href="styles.css" as="style">
-    <!-- Inline critical CSS -->
-    <style>
-        /* CRITICAL CSS - Above the fold */
-        .critical-hidden {
-            opacity: 0;
-            visibility: hidden;
-        }
-        
-        .critical-visible {
-            opacity: 1;
-            visibility: visible;
-            transition: opacity 0.3s ease;
-        }
-        
-        /* Critical layout styles */
-        .storybook-shell {
-            min-height: 100vh;
-            position: relative;
-        }
-        
-        /* Loading skeleton */
-        .skeleton {
-            background: linear-gradient(90deg, #f0f0f0 25%, #e0e0e0 50%, #f0f0f0 75%);
-            background-size: 200% 100%;
-            animation: loading 1.5s infinite;
-        }
-        
-        @keyframes loading {
-            0% { background-position: 200% 0; }
-            100% { background-position: -200% 0; }
-        }
-        
-        /* Performance optimizations */
-        .hardware-accelerated {
-            transform: translateZ(0);
-            backface-visibility: hidden;
-        }
-    </style>
-    
-    <!-- Preconnect to CDNs -->
-    <link rel="preconnect" href="https://fonts.googleapis.com">
-    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-    <link rel="preconnect" href="https://cdnjs.cloudflare.com" crossorigin>
-    
-    <!-- Prefetch game assets -->
-    <link rel="prefetch" href="media/characters/pooh.png" as="image" type="image/png">
-    <link rel="prefetch" href="media/characters/piglet.png" as="image" type="image/png">
-    <link rel="prefetch" href="media/characters/eeyore.png" as="image" type="image/png">
-    <link rel="prefetch" href="media/characters/tigger.png" as="image" type="image/png">
+  <meta charset="UTF-8" />
+  <title>Baby Gunnar’s Hundred Acre Wood</title>
+
+  <meta name="viewport"
+        content="width=device-width, initial-scale=1.0, viewport-fit=cover" />
+  <meta name="theme-color" content="#f4a944" />
+  <meta name="color-scheme" content="light dark" />
+
+  <meta name="description"
+        content="A cozy Hundred Acre Wood adventure celebrating Baby Gunnar — read the story or play the honey-catching game." />
+
+  <link rel="stylesheet" href="styles-index.css" />
 </head>
-<body class="no-js">
-    <!-- Performance monitor (hidden by default) -->
-    <div id="performanceMonitor" class="fps-counter" aria-hidden="true" style="display: none;">
-        FPS: <span id="fpsCounter">60</span> | Mem: <span id="memoryCounter">0</span>MB
-    </div>
-    
-    <!-- Memory warning (hidden by default) -->
-    <div id="memoryWarning" class="memory-warning" role="alert" aria-live="assertive" style="display: none;">
-        <i class="fas fa-exclamation-triangle"></i>
-        <p>Memory running low. Consider refreshing the page.</p>
-        <button class="btn btn-small" onclick="location.reload()">Refresh</button>
-    </div>
-    
-    <!-- Loading overlay -->
-    <div id="loadingOverlay" class="loading-overlay" role="status" aria-live="polite" aria-label="Loading game assets">
-        <div class="loading-content">
-            <div class="loading-spinner" aria-hidden="true"></div>
-            <p>Loading Hundred Acre Wood Adventure...</p>
-            <progress id="loadingProgress" value="0" max="100" aria-label="Loading progress"></progress>
-        </div>
-    </div>
-    
-    <!-- Parallax background elements with lazy loading -->
-    <template id="floatingElements">
-        <div class="floating-element" style="top: 10%; left: 5%; font-size: 3rem; animation-delay: 0s;">🍯</div>
-        <div class="floating-element" style="top: 20%; right: 10%; font-size: 2.5rem; animation-delay: 1s;">🐝</div>
-        <div class="floating-element" style="bottom: 30%; left: 15%; font-size: 4rem; animation-delay: 2s;">🐻</div>
-        <div class="floating-element" style="bottom: 20%; right: 5%; font-size: 3rem; animation-delay: 3s;">🎈</div>
-    </template>
-    
-    <a class="skip-link" href="#main">Skip to content</a>
-    
-    <!-- Toast notification system -->
-    <div id="toast" class="toast" role="alert" aria-live="assertive" aria-atomic="true" aria-hidden="true"></div>
-    
-    <!-- Reading progress -->
-    <div class="reading-progress" id="readingProgress" aria-hidden="true"></div>
-    
-    <!-- Cover / Intro -->
-    <div class="storybook-cover" id="cover" role="dialog" aria-modal="true" aria-label="Welcome screen" aria-hidden="false">
-        <div class="cover-card hardware-accelerated">
-            <div class="cover-decoration" aria-hidden="true"></div>
-            <h1 class="cover-title animate__animated animate__fadeInDown">Baby Gunnar's Hundred Acre Wood</h1>
-            <p class="cover-subtitle animate__animated animate__fadeInUp animate__delay-1s">
-                A magical interactive storybook journey through the Hundred Acre Wood. 
-                Play honey-sweet games, meet beloved friends, and share heartfelt wishes.
-            </p>
-            <div class="storybook-form animate__animated animate__fadeInUp animate__delay-2s">
-                <button class="btn btn-primary" id="enterStory" type="button" aria-label="Enter the storybook">
-                    <i class="fa-solid fa-book-open" aria-hidden="true"></i>
-                    Begin the Adventure
-                </button>
-                <p class="tip" style="margin-top: 2rem; opacity: 0.8; max-width: 58ch; text-align:center;">
-                    <i class="fa-solid fa-lightbulb"></i>
-                    Tip: Works best on modern browsers. Touch or click to play.
-                    <span id="installPrompt" style="display: none; margin-top: 0.5rem;">
-                        <br>
-                        <button id="installButton" class="btn btn-ghost" style="font-size: 0.9rem;">
-                            <i class="fas fa-download"></i> Install App
-                        </button>
-                    </span>
-                </p>
-            </div>
-        </div>
-    </div>
-    
-    <!-- Top nav -->
-    <header class="nav hardware-accelerated" role="navigation" aria-label="Primary">
-        <div class="nav-brand">
-            <span aria-hidden="true" role="img">🍯</span>
-            <div class="nav-title">Hundred Acre Celebration</div>
-        </div>
-        <button class="nav-toggle" id="navToggle" type="button" aria-label="Open menu" aria-expanded="false">
-            <i class="fa-solid fa-bars" aria-hidden="true"></i>
-        </button>
-        <nav class="nav-menu" id="navMenu" aria-label="Site sections">
-            <a class="nav-item" href="#story"><i class="fa-solid fa-feather" aria-hidden="true"></i> Story</a>
-            <a class="nav-item" href="#friends"><i class="fa-solid fa-people-group" aria-hidden="true"></i> Friends</a>
-            <a class="nav-item" href="#games"><i class="fa-solid fa-gamepad" aria-hidden="true"></i> Games</a>
-            <a class="nav-item" href="#wishes"><i class="fa-solid fa-heart" aria-hidden="true"></i> Wishes</a>
-        </nav>
-    </header>
-    
-    <!-- Floating action buttons -->
-    <div class="fab-stack" aria-label="Quick actions">
-        <button class="fab" id="muteToggle" type="button" aria-label="Toggle sound" aria-pressed="false" title="Sound">
-            <i class="fa-solid fa-volume-xmark" aria-hidden="true"></i>
-        </button>
-        <button class="accessibility-btn" id="accessibilityToggle" type="button" aria-label="Toggle accessibility mode" aria-pressed="false" title="Accessibility">
-            <i class="fa-solid fa-person-walking" aria-hidden="true"></i>
-        </button>
-        <button class="fab" id="scrollTop" type="button" aria-label="Scroll to top" title="Top">
-            <i class="fa-solid fa-arrow-up" aria-hidden="true"></i>
-        </button>
-    </div>
-    
-    <main id="main" class="storybook-shell" tabindex="-1">
-        <div class="storybook">
-            <div class="storybook-inner">
-                <!-- Story -->
-                <section class="content-section hardware-accelerated" id="story" aria-labelledby="storyTitle">
-                    <div class="content-section-inner">
-                        <header class="storybook-header">
-                            <h2 class="storybook-heading" id="storyTitle">A Cozy Little Adventure</h2>
-                            <p class="storybook-subheading">
-                                Welcome to Baby Gunnar's Hundred Acre Wood celebration — a gentle storybook moment with friends,
-                                honey-sweet games, and a place to leave your wishes.
-                            </p>
-                        </header>
-                        <!-- Story progression -->
-                        <div class="story-progression">
-                            <div class="story-step">
-                                <div class="story-icon">📖</div>
-                                <h3>Read</h3>
-                                <p>Discover heartfelt messages from Pooh and friends</p>
-                            </div>
-                            <div class="story-step">
-                                <div class="story-icon">🎮</div>
-                                <h3>Play</h3>
-                                <p>Enjoy the honey-sweet catch game with Pooh</p>
-                            </div>
-                            <div class="story-step">
-                                <div class="story-icon">💝</div>
-                                <h3>Share</h3>
-                                <p>Leave warm wishes for Baby Gunnar</p>
-                            </div>
-                        </div>
-                    </div>
-                    <a href="game.html" class="btn btn-primary" style="margin-top: 1.5rem;">
-  🎮 Play the Honey Catch Game
-</a>
-                </section>
-                
-                <!-- Friends -->
-                <section class="content-section hardware-accelerated" id="friends" aria-labelledby="friendsTitle">
-                    <div class="content-section-inner">
-                        <h2 class="section-title" id="friendsTitle">Friends in the Wood</h2>
-                        <p class="section-subtitle">Tap a friend for a little message.</p>
-                        <div class="characters-grid-enhanced">
-                            <article class="character-spotlight" data-character="pooh" tabindex="0" role="button" 
-                                     aria-label="Open Pooh message" aria-describedby="pooh-desc">
-                                <div class="character-spotlight-content">
-                                    <div class="character-illustration">
-                                        <img src="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='120' height='120' viewBox='0 0 120 120'%3E%3Crect width='120' height='120' fill='%23f4a944'/%3E%3C/svg%3E" 
-                                             data-src="media/characters/pooh.png" 
-                                             alt="Pooh holding a honey pot" 
-                                             loading="lazy" 
-                                             decoding="async"
-                                             onerror="this.src='data:image/svg+xml,%3Csvg xmlns=%22http://www.w3.org/2000/svg%22 viewBox=%220 0 100 100%22%3E%3Ctext y=%22.9em%22 font-size=%2290%22%3E🐻%3C/text%3E%3C/svg%3E'; this.onerror=null;">
-                                    </div>
-                                    <h3 class="character-name">Pooh</h3>
-                                    <p class="character-quote">A little honey goes a long way.</p>
-                                </div>
-                                <div class="sr-only" id="pooh-desc">Click to hear Pooh's message about sweetness and kindness</div>
-                            </article>
-                            <!-- Repeat for other characters with same pattern -->
-                        </div>
-                    </div>
-                </section>
-                
-                
-                <!-- Wishes -->
-                <section class="content-section hardware-accelerated" id="wishes" aria-labelledby="wishesTitle">
-                    <div class="content-section-inner">
-                        <h2 class="section-title" id="wishesTitle">Leave a Wish</h2>
-                        <p class="section-subtitle">A simple spot to leave kind words for Baby Gunnar.</p>
-                        
-                        <form class="wishes-form" id="wishesForm" novalidate>
-                            <div class="wishes-grid">
-                                <label class="wishes-field" for="wishName">
-                                    <span class="field-label">Your name (optional)</span>
-                                    <input id="wishName" name="wishName" type="text" maxlength="60" autocomplete="name" placeholder="Christopher Robin" />
-                                </label>
-                                <label class="wishes-field" for="wishEmoji">
-                                    <span class="field-label">Mood</span>
-                                    <select id="wishEmoji" name="wishEmoji">
-                                        <option value="🍯">🍯 Honey-sweet</option>
-                                        <option value="🌿">🌿 Peaceful stroll</option>
-                                        <option value="🎈">🎈 Cheerful</option>
-                                        <option value="⭐">⭐ Encouraging</option>
-                                        <option value="💌">💌 Heartfelt</option>
-                                        <option value="🐻">🐻 Friendly bear hug</option>
-                                    </select>
-                                </label>
-                            </div>
-                            <label class="wishes-field" for="wishMessage">
-                                <span class="field-label">Your note</span>
-                                <textarea id="wishMessage" name="wishMessage" maxlength="240" 
-                                          placeholder="Write a gentle wish or encouragement..." 
-                                          required></textarea>
-                                <div class="field-meta" id="wishMeta" aria-live="polite">0 / 240 characters</div>
-                            </label>
-                            
-                            <div class="wishes-actions">
-                                <button class="btn btn-primary" type="submit">
-                                    <i class="fa-solid fa-paper-plane" aria-hidden="true"></i>
-                                    Send wish
-                                </button>
-                                <button class="btn btn-secondary" type="reset">
-                                    <i class="fa-solid fa-rotate-left" aria-hidden="true"></i>
-                                    Reset
-                                </button>
-                                <button class="btn btn-ghost" id="clearWishes" type="button">
-                                    <i class="fa-solid fa-broom" aria-hidden="true"></i>
-                                    Clear saved wishes
-                                </button>
-                            </div>
-                            
-                            <div class="wish-status" id="wishStatus" role="status" aria-live="polite"></div>
-                        </form>
-                        
-                        <!-- Wish statistics -->
-                        <div class="wish-stats" id="wishStats" aria-label="Wish statistics">
-                            <div class="stat">
-                                <span class="stat-number" id="totalWishes">0</span>
-                                <span class="stat-label">Total Wishes</span>
-                            </div>
-                            <div class="stat">
-                                <span class="stat-number" id="todayWishes">0</span>
-                                <span class="stat-label">Today</span>
-                            </div>
-                            <div class="stat">
-                                <span class="stat-number" id="lastWish">--:--</span>
-                                <span class="stat-label">Last Wish</span>
-                            </div>
-                        </div>
-                        
-                        <!-- Wishes list with filtering -->
-                        <div class="wishes-controls">
-                            <div class="filter-buttons" role="group" aria-label="Filter wishes">
-                                <button class="filter-btn active" data-filter="all">All</button>
-                                <button class="filter-btn" data-filter="today">Today</button>
-                                <button class="filter-btn" data-filter="week">This Week</button>
-                            </div>
-                            <div class="sort-options">
-                                <label for="sortWishes">Sort by:</label>
-                                <select id="sortWishes">
-                                    <option value="newest">Newest First</option>
-                                    <option value="oldest">Oldest First</option>
-                                    <option value="name">Name A-Z</option>
-                                </select>
-                            </div>
-                        </div>
-                        
-                        <div class="wishes-list" id="wishesList" aria-live="polite" aria-label="Recent wishes">
-                            <!-- Wishes will be loaded here dynamically -->
-                            <div class="empty-state" id="emptyWishes">
-                                <div class="empty-icon">💭</div>
-                                <h3>No wishes yet</h3>
-                                <p>Be the first to leave a warm wish for Baby Gunnar!</p>
-                            </div>
-                        </div>
-                    </div>
-                </section>
-                
-                <!-- Footer with credits -->
-                <footer class="site-footer hardware-accelerated">
-                    <div class="footer-content">
-                        <p>Made with <span aria-label="love">❤️</span> for Baby Gunnar</p>
-                        <p class="footer-links">
-                            <a href="#story" class="footer-link">Story</a> • 
-                            <a href="#friends" class="footer-link">Friends</a> • 
-                            <a href="#games" class="footer-link">Games</a> • 
-                            <a href="#wishes" class="footer-link">Wishes</a>
-                        </p>
-                        <p class="footer-copyright">© 2024 Hundred Acre Celebration</p>
-                        <button class="btn btn-ghost btn-small" id="resetAll" type="button">
-                            <i class="fas fa-trash-can"></i> Clear All Data
-                        </button>
-                        <p class="footer-tech" style="font-size: 0.8rem; margin-top: 1rem; opacity: 0.7;">
-                            Built with HTML5, CSS3, & JavaScript. 
-                            <button id="togglePerf" class="btn-link" style="font-size: 0.8rem;">Toggle Performance</button>
-                        </p>
-                    </div>
-                </footer>
-            </div>
-        </div>
-    </main>
-    
-    <!-- Character Modal -->
-    <div class="character-modal" id="characterModal" role="dialog" aria-modal="true" aria-label="Character message" tabindex="-1">
-        <div class="modal-content hardware-accelerated" role="document">
-            <button class="close-modal" id="closeCharacterModal" type="button" aria-label="Close">
-                <i class="fa-solid fa-xmark" aria-hidden="true"></i>
-            </button>
-            <div class="modal-character">
-                <div class="modal-character-icon pooh-icon-modal" id="modalIcon" aria-hidden="true">
-                    🐻
-                </div>
-                <div>
-                    <h3 class="modal-character-name" id="modalName">Pooh</h3>
-                    <p class="modal-character-quote" id="modalQuote">A little honey goes a long way.</p>
-                </div>
-            </div>
-            <div class="modal-character-bio" id="modalBio">
-                Pooh reminds us that sometimes the sweetest things come in simple moments. 
-                Just like honey, kindness spreads and makes everything better.
-            </div>
-        </div>
-    </div>
-    
-    <!-- Stats Modal -->
-    <div class="modal-overlay" id="statsModal">
-        <div class="modal-content stats-modal hardware-accelerated" role="dialog" aria-labelledby="statsTitle">
-            <button class="close-modal" id="closeStatsModal" type="button" aria-label="Close">
-                <i class="fa-solid fa-xmark" aria-hidden="true"></i>
-            </button>
-            <h3 id="statsTitle">Game Statistics</h3>
-            <div class="stats-grid" id="statsContent">
-                <!-- Stats will be loaded here -->
-            </div>
-        </div>
-    </div>
-    
-    <!-- Reset Confirmation Modal -->
-    <div class="modal-overlay" id="resetModal">
-        <div class="modal-content hardware-accelerated" role="dialog" aria-labelledby="resetTitle">
-            <h3 id="resetTitle">Confirm Reset</h3>
-            <p>Are you sure you want to clear all game data? This cannot be undone.</p>
-            <div class="modal-actions">
-                <button class="btn btn-danger" id="confirmReset">Clear All</button>
-                <button class="btn btn-secondary" id="cancelReset">Cancel</button>
-            </div>
-        </div>
-    </div>
-    
-    <!-- Performance debug panel (hidden) -->
-    <div id="debugPanel" style="display: none; position: fixed; bottom: 50px; right: 10px; background: rgba(0,0,0,0.8); color: white; padding: 10px; border-radius: 5px; font-family: monospace; font-size: 12px; z-index: 9998;">
-        <div>Objects: <span id="debugObjects">0</span></div>
-        <div>Particles: <span id="debugParticles">0</span></div>
-        <div>Memory: <span id="debugMemory">0</span>MB</div>
-        <div>Draw Calls: <span id="debugDrawCalls">0</span></div>
-        <button onclick="window.game?.performance?.optimize()" style="margin-top: 5px;">Optimize</button>
-    </div>
-    
-    <!-- Scripts with async/defer and module pattern -->
-  <!-- Scripts (defer preserves order and avoids iOS Safari weirdness) -->
-<script>
-  // Remove no-js class immediately
-  document.documentElement.classList.remove('no-js');
-  document.documentElement.classList.add('js');
-</script>
 
-<!-- UI + page wiring (must load first) -->
-<link rel="stylesheet" href="styles-index.css">
-<script defer src="script.js"></script>
+<body>
+<main id="root">
 
+  <header class="hero">
+    <h1>Baby Gunnar’s Hundred Acre Wood</h1>
+    <p class="subtitle">
+      A small adventure. A little honey. A lot of love.
+    </p>
 
-    <!-- Fallback for script loading failure -->
-    <noscript>
-        <style>
-            .storybook-cover { display: flex !important; }
-            .storybook-shell { display: none; }
-        </style>
-        <div style="position: fixed; top: 0; left: 0; right: 0; bottom: 0; background: #f4a944; color: white; display: flex; align-items: center; justify-content: center; text-align: center; padding: 20px; z-index: 10000;">
-            <div>
-                <h1 style="font-size: 2rem; margin-bottom: 20px;">JavaScript Required</h1>
-                <p>This interactive storybook requires JavaScript to work properly.</p>
-                <p>Please enable JavaScript in your browser settings and refresh the page.</p>
-            </div>
-        </div>
-    </noscript>
+    <div class="cta-row">
+      <a class="cta primary" href="game.html" aria-label="Play the honey catching game">
+        🍯 Play the Game
+      </a>
+      <a class="cta secondary" href="#story">
+        📖 Read the Story
+      </a>
+    </div>
+  </header>
+
+  <section id="story" class="panel">
+    <h2>Welcome</h2>
+    <p>
+      In the Hundred Acre Wood, every friend has a job.
+      Some gather honey. Some offer advice.
+      Some are just happy to be here.
+    </p>
+    <p>
+      We’re so glad you came to celebrate Baby Gunnar.
+    </p>
+  </section>
+
+  <footer class="footer">
+    <p>Made with love, honey, and a little mischief 🐻</p>
+  </footer>
+
+</main>
+
+<script src="script.js"></script>
 </body>
 </html>
