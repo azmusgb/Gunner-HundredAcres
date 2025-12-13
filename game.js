@@ -139,8 +139,9 @@ function EnhancedHoneyCatchGame() {
     const statusEl = document.getElementById('catchStatus');
 
     const joystick = document.getElementById('catchJoystick');
-    const joystickKnob = document.getElementById('catchJoystickKnob');
-
+const joystickKnob =
+  document.getElementById('catchJoystickKnob') ||
+  (joystick ? joystick.querySelector('.joystick-handle, .joystick-knob') : null);
     // Canvas sizing: CSS px coordinates, DPR drawing buffer
     let W = 0;
     let H = 0;
