@@ -211,884 +211,1128 @@
   // Game
   // ---------------------------------------------------------------------------
   function initEnhancedHoneyCatchGame() {
-    console.log('Initializing Honey Pot Catch...');
+  console.log("Initializing enhanced Honey Catch Game...");
 
-    const canvas = document.getElementById('honey-game');
-    if (!canvas) {
-      console.error('Honey catch game canvas not found!');
-      return;
+  const canvas = document.getElementById("honey-game");
+  if (!canvas) {
+    console.error("Honey catch game canvas not found!");
+    return;
+  }
+
+  const ctx = canvas.getContext("2d", { alpha: true, desynchronized: true });
+  const IS_MOBILE = isMobileDevice();
+  const frameLimiter = new FrameRateLimiter(window.GAME_FPS_TARGET);
+
+  // UI elements (IDs required by your HTML)
+  const scoreSpan = document.getElementById("score-count");
+  const timeSpan = document.getElementById("time-count");
+  const livesSpan = document.getElementById("catch-lives");
+  const startBtn = document.getElementById("start-catch");
+  const pauseBtn = document.getElementById("pause-catch");
+  const catchOverlay = document.getElementById("catch-overlay");
+  const catchCountdown = document.getElementById("catch-countdown");
+  const catchHint = document.getElementById("catch-hint");
+  const catchCard = document.getElementById("catch-card");
+  const multiplierDisplay = document.getElementById("catch-multiplier");
+  const comboDisplay = document.getElementById("catch-combo");
+
+  // Use your existing joystick in HTML (do NOT create a second one)
+  const joystickEl = document.getElementById("catchJoystick");
+
+  // Performance / rendering hints
+  canvas.style.imageRendering = IS_MOBILE ? "pixelated" : "auto";
+  ctx.imageSmoothingEnabled = !IS_MOBILE;
+
+  // ---------------------------------------------------------------------------
+  // ✅ DPR-safe canvas sizing (fixes “blank/soft canvas” on iOS)
+  // We run the game in CSS pixels (cw/ch) and scale via setTransform(dpr,...)
+  // ---------------------------------------------------------------------------
+  let dpr = 1;
+  let cw = 0; // CSS px width
+  let ch = 0; // CSS px height
+
+  // Offscreen background (rendered once per resize)
+  let bgCanvas = null;
+  let bgCtx = null;
+
+  function ensureCanvasCSSHeight() {
+    // If CSS doesn’t force a height, iOS may collapse it.
+    // Prefer controlling via CSS; this is just a last-resort guard.
+    const rect = canvas.getBoundingClientRect();
+    if (rect.height < 120) {
+      canvas.style.height = "360px";
+    }
+  }
+
+  function resizeCanvas() {
+    ensureCanvasCSSHeight();
+
+    const rect = canvas.getBoundingClientRect();
+    dpr = window.devicePixelRatio || 1;
+
+    cw = Math.max(1, Math.floor(rect.width));
+    ch = Math.max(1, Math.floor(rect.height));
+
+    canvas.width = Math.floor(cw * dpr);
+    canvas.height = Math.floor(ch * dpr);
+
+    // 1 unit in canvas space == 1 CSS px
+    ctx.setTransform(dpr, 0, 0, dpr, 0, 0);
+
+    // rebuild background buffer at device resolution but draw in CSS px coords
+    bgCanvas = document.createElement("canvas");
+    bgCanvas.width = canvas.width;
+    bgCanvas.height = canvas.height;
+    bgCtx = bgCanvas.getContext("2d", { alpha: true });
+
+    // Normalize bg context to CSS px as well
+    bgCtx.setTransform(dpr, 0, 0, dpr, 0, 0);
+
+    drawCatchBackgroundTo(bgCtx, cw, ch);
+
+    // Keep Pooh near bottom on resize
+    gameState.poohY = ch - 22;
+    gameState.poohX = clamp(gameState.poohX || cw / 2, gameState.poohWidth / 2, cw - gameState.poohWidth / 2);
+
+    // Let particles know the canvas changed
+    if (catchParticles && typeof catchParticles.clear === "function") {
+      // keep it simple—clear prevents artifacts after orientation change
+      catchParticles.clear();
+    }
+  }
+
+  // Run once now and on resize
+  window.addEventListener("resize", () => {
+    resizeCanvas();
+  });
+
+  // ---------------------------------------------------------------------------
+  // Game state
+  // ---------------------------------------------------------------------------
+  const catchParticles = new EnhancedParticleSystem(canvas);
+
+  const gameState = {
+    score: 0,
+    timeLeft: 60,
+    lives: 3,
+    gameRunning: false,
+
+    timerInterval: null,
+    countdownInterval: null,
+    overlayTimeout: null,
+
+    lastFrameTime: performance.now(),
+    startedAt: 0,
+
+    poohX: 0,
+    poohY: 0,
+    poohWidth: 60,
+    poohHeight: 60,
+
+    combos: 0,
+    multiplier: 1,
+    lastCatchTime: 0,
+    streak: 0,
+
+    effects: [],
+
+    isInvincible: false,
+    invincibilityEnd: 0,
+    doublePoints: false,
+    doublePointsEnd: 0,
+    slowMotion: false,
+    slowMotionEnd: 0
+  };
+
+  // Pools (simple, fast)
+  const honeyPotPool = makePool();
+  const beePool = makePool();
+  const powerUpPool = makePool();
+
+  // Power-ups
+  const powerUpTypes = {
+    heart: { color: "#FF6B6B", icon: "❤️", effect: "addLife", duration: 0 },
+    shield: { color: "#4285F4", icon: "🛡️", effect: "invincibility", duration: 5000 },
+    clock: { color: "#4CAF50", icon: "⏱️", effect: "addTime", duration: 0 },
+    star: { color: "#FFD700", icon: "⭐", effect: "doublePoints", duration: 8000 },
+    lightning: { color: "#9C27B0", icon: "⚡", effect: "slowMotion", duration: 6000 }
+  };
+
+  // Sprite cache (uses Sprites.* if available, otherwise draws fallbacks)
+  const spriteCache = {
+    pooh: null,
+    honey: Object.create(null),
+    bee: null,
+    powerUp: Object.create(null),
+
+    getPooh() {
+      if (this.pooh) return this.pooh;
+      const c = document.createElement("canvas");
+      c.width = 80; c.height = 80;
+      const cctx = c.getContext("2d");
+
+      const sprite = window.Sprites?.pooh;
+      if (sprite && sprite.complete && sprite.naturalWidth > 0) {
+        cctx.save();
+        cctx.shadowColor = "rgba(0,0,0,0.35)";
+        cctx.shadowBlur = 10;
+        cctx.drawImage(sprite, 10, 10, 60, 60);
+        cctx.restore();
+      } else {
+        drawEnhancedPoohFallback(cctx);
+      }
+
+      this.pooh = c;
+      return c;
+    },
+
+    getHoney(type = "normal") {
+      if (this.honey[type]) return this.honey[type];
+      const c = document.createElement("canvas");
+      c.width = 32; c.height = 32;
+      const cctx = c.getContext("2d");
+
+      const sprite = window.Sprites?.honey;
+      if (sprite && sprite.complete && sprite.naturalWidth > 0) {
+        cctx.drawImage(sprite, 0, 0, 32, 32);
+      } else {
+        drawEnhancedHoneyPotFallback(cctx, type);
+      }
+
+      this.honey[type] = c;
+      return c;
+    },
+
+    getBee() {
+      if (this.bee) return this.bee;
+      const c = document.createElement("canvas");
+      c.width = 30; c.height = 30;
+      const cctx = c.getContext("2d");
+      drawEnhancedBee(cctx);
+      this.bee = c;
+      return c;
+    },
+
+    getPowerUp(type) {
+      if (this.powerUp[type]) return this.powerUp[type];
+      const c = document.createElement("canvas");
+      c.width = 30; c.height = 30;
+      const cctx = c.getContext("2d");
+      drawPowerUp(cctx, type, powerUpTypes);
+      this.powerUp[type] = c;
+      return c;
+    }
+  };
+
+  // Initial size (must happen before we use cw/ch)
+  resizeCanvas();
+
+  // ---------------------------------------------------------------------------
+  // UI helpers
+  // ---------------------------------------------------------------------------
+  function setEnhancedCatchOverlay(line, sub, persistent = false, duration = 1600) {
+    if (!catchOverlay || !catchCountdown || !catchHint) return;
+    catchCountdown.textContent = line;
+    catchHint.textContent = sub || "";
+    catchOverlay.classList.add("active");
+
+    if (gameState.overlayTimeout) clearTimeout(gameState.overlayTimeout);
+    if (!persistent) {
+      gameState.overlayTimeout = setTimeout(() => {
+        catchOverlay.classList.remove("active");
+      }, duration);
+    }
+  }
+
+  function syncEnhancedCatchStats() {
+    if (scoreSpan) scoreSpan.textContent = String(gameState.score);
+    if (timeSpan) timeSpan.textContent = String(gameState.timeLeft);
+    if (livesSpan) livesSpan.textContent = String(gameState.lives);
+
+    if (multiplierDisplay) {
+      multiplierDisplay.textContent = String(Math.round(gameState.multiplier * 10) / 10);
+    }
+    if (comboDisplay) {
+      comboDisplay.textContent = String(gameState.combos);
+    }
+  }
+
+  syncEnhancedCatchStats();
+  setEnhancedCatchOverlay("Ready when you are.", "Press start to begin a calm 60 second run.", true);
+
+  // ---------------------------------------------------------------------------
+  // Game loop
+  // ---------------------------------------------------------------------------
+  let rafId = null;
+
+  function gameLoop(ts) {
+    if (frameLimiter.shouldRender(ts)) {
+      const delta = Math.min(100, ts - gameState.lastFrameTime);
+      gameState.lastFrameTime = ts;
+
+      if (gameState.gameRunning) updateEnhancedCatchGame(delta);
+      renderEnhancedCatchGame();
+    }
+    rafId = requestAnimationFrame(gameLoop);
+  }
+
+  rafId = requestAnimationFrame(gameLoop);
+
+  // ---------------------------------------------------------------------------
+  // Update
+  // ---------------------------------------------------------------------------
+  function updateEnhancedCatchGame(delta) {
+    const now = Date.now();
+    const deltaTime = delta / 16.6667;
+
+    // timers
+    if (gameState.isInvincible && now > gameState.invincibilityEnd) gameState.isInvincible = false;
+    if (gameState.doublePoints && now > gameState.doublePointsEnd) gameState.doublePoints = false;
+    if (gameState.slowMotion && now > gameState.slowMotionEnd) gameState.slowMotion = false;
+
+    // combo decay
+    if (gameState.combos > 0 && now - gameState.lastCatchTime > 2000) {
+      gameState.combos = 0;
+      gameState.multiplier = 1;
+      gameState.streak = 0;
     }
 
-    const ctx = canvas.getContext('2d', { alpha: true });
-    if (!ctx) {
-      console.error('2D context not available!');
-      return;
+    // effects expire
+    for (let i = gameState.effects.length - 1; i >= 0; i--) {
+      if (now - gameState.effects[i].start > gameState.effects[i].duration) {
+        gameState.effects.splice(i, 1);
+      }
     }
 
-    // Cache canvas (logical space)
-    const catchBackgroundCanvas = document.createElement('canvas');
-    const catchBgCtx = catchBackgroundCanvas.getContext('2d');
+    // difficulty scaling (gentle)
+    const elapsed = (now - gameState.startedAt) / 1000;
+    const potSpawn = 0.035 + Math.min(0.02, elapsed * 0.0006);
+    const beeSpawn = 0.016 + Math.min(0.016, elapsed * 0.00045);
+    const powerSpawn = 0.009;
 
-    // Logical (CSS pixel) game size
-    let W = 0;
-    let H = 0;
+    // honey pots
+    honeyPotPool.update((pot) => {
+      const speed = gameState.slowMotion ? pot.speed * 0.5 : pot.speed;
+      pot.y += speed * deltaTime;
 
-    function resizeCanvas() {
-      const rect = canvas.getBoundingClientRect();
-      const dpr = window.devicePixelRatio || 1;
+      // collision
+      if (
+        pot.y > gameState.poohY - gameState.poohHeight &&
+        pot.x > gameState.poohX - gameState.poohWidth / 2 &&
+        pot.x < gameState.poohX + gameState.poohWidth / 2
+      ) {
+        let points = pot.type === "golden" ? 50 : 10;
+        if (gameState.doublePoints) points *= 2;
+        points = Math.round(points * gameState.multiplier);
 
-      W = Math.max(1, Math.round(rect.width));
-      H = Math.max(1, Math.round(rect.height));
+        gameState.score += points;
 
-      // Backing store (device pixels)
-      canvas.width = Math.floor(W * dpr);
-      canvas.height = Math.floor(H * dpr);
-
-      // Draw in CSS pixels
-      ctx.setTransform(dpr, 0, 0, dpr, 0, 0);
-
-      // Cache canvas in logical pixels
-      catchBackgroundCanvas.width = W;
-      catchBackgroundCanvas.height = H;
-
-      buildCatchBackgroundCache();
-    }
-
-    window.addEventListener('resize', resizeCanvas);
-
-    // Performance optimizations
-    canvas.style.imageRendering = IS_MOBILE ? 'pixelated' : 'auto';
-    ctx.imageSmoothingEnabled = !IS_MOBILE;
-
-    const frameLimiter = new FrameRateLimiter(window.GAME_FPS_TARGET);
-
-    // UI elements
-    const scoreSpan = document.getElementById('score-count');
-    const timeSpan = document.getElementById('time-count');
-    const livesSpan = document.getElementById('catch-lives');
-    const startBtn = document.getElementById('start-catch');
-    const pauseBtn = document.getElementById('pause-catch');
-    const catchOverlay = document.getElementById('catch-overlay');
-    const catchCountdown = document.getElementById('catch-countdown');
-    const catchHint = document.getElementById('catch-hint');
-    const catchCard = document.getElementById('catch-card');
-    const multiplierDisplay = document.getElementById('catch-multiplier');
-    const comboDisplay = document.getElementById('catch-combo');
-
-    // Safety: if critical HUD is missing, still run game but log clearly
-    if (!scoreSpan || !timeSpan || !livesSpan || !startBtn || !pauseBtn) {
-      console.warn('Some HUD elements are missing. Check IDs in index.html.');
-    }
-
-    // Power-ups
-    const powerUpTypes = {
-      heart: { color: '#FF6B6B', icon: '❤️', effect: 'addLife', duration: 0 },
-      shield: { color: '#4285F4', icon: '🛡️', effect: 'invincibility', duration: 5000 },
-      clock: { color: '#4CAF50', icon: '⏱️', effect: 'addTime', duration: 0 },
-      star: { color: '#FFD700', icon: '⭐', effect: 'doublePoints', duration: 8000 },
-      lightning: { color: '#9C27B0', icon: '⚡', effect: 'slowMotion', duration: 6000 }
-    };
-
-    // Optional sprites
-    const Sprites = window.Sprites || {};
-
-    // Particles
-    const catchParticles = new EnhancedParticleSystem(canvas);
-
-    // Game state (ALL in logical pixels)
-    const gameState = {
-      score: 0,
-      timeLeft: 60,
-      lives: 3,
-      gameRunning: false,
-      timerInterval: null,
-      countdownInterval: null,
-      overlayTimeout: null,
-
-      lastFrameTime: performance.now(),
-
-      poohX: 0,
-      poohY: 0,
-      poohWidth: 60,
-      poohHeight: 60,
-
-      honeyPots: [],
-      bees: [],
-      powerUps: [],
-      combos: 0,
-      multiplier: 1,
-      lastCatchTime: 0,
-      streak: 0,
-
-      effects: [],
-
-      isInvincible: false,
-      invincibilityEnd: 0,
-      doublePoints: false,
-      doublePointsEnd: 0,
-      slowMotion: false,
-      slowMotionEnd: 0
-    };
-
-    // Pools (simple & fast)
-    const honeyPotPool = {
-      pool: [],
-      active: 0,
-      get(x, y, speed, type = 'normal') {
-        let pot;
-        if (this.active < this.pool.length) {
-          pot = this.pool[this.active];
-          Object.assign(pot, { x, y, speed, type, active: true });
+        if (now - gameState.lastCatchTime < 2000) {
+          gameState.combos++;
+          gameState.streak++;
+          gameState.multiplier = Math.min(5, 1 + gameState.combos * 0.12);
         } else {
-          pot = { x, y, speed, type, active: true };
-          this.pool.push(pot);
+          gameState.combos = 1;
+          gameState.streak = 1;
+          gameState.multiplier = 1.1;
         }
-        this.active++;
-        return pot;
-      },
-      updateAll(callback) {
-        for (let i = 0; i < this.active; i++) {
-          const pot = this.pool[i];
-          if (pot.active) callback(pot);
-        }
-      },
-      reset() {
-        for (let i = 0; i < this.pool.length; i++) this.pool[i].active = false;
-        this.active = 0;
-      }
-    };
+        gameState.lastCatchTime = now;
 
-    const beePool = {
-      pool: [],
-      active: 0,
-      get(x, y, speed, type = 'normal') {
-        let bee;
-        if (this.active < this.pool.length) {
-          bee = this.pool[this.active];
-          Object.assign(bee, { x, y, speed, type, active: true, vx: 0, vy: 0 });
-        } else {
-          bee = { x, y, speed, type, active: true, vx: 0, vy: 0 };
-          this.pool.push(bee);
-        }
-        this.active++;
-        return bee;
-      },
-      updateAll(callback) {
-        for (let i = 0; i < this.active; i++) {
-          const bee = this.pool[i];
-          if (bee.active) callback(bee);
-        }
-      },
-      reset() {
-        for (let i = 0; i < this.pool.length; i++) this.pool[i].active = false;
-        this.active = 0;
-      }
-    };
+        pot.active = false;
+        createCatchEffect(pot.x, pot.y, points);
 
-    const powerUpPool = {
-      pool: [],
-      active: 0,
-      get(x, y, speed, type) {
-        let p;
-        if (this.active < this.pool.length) {
-          p = this.pool[this.active];
-          Object.assign(p, { x, y, speed, type, active: true });
-        } else {
-          p = { x, y, speed, type, active: true };
-          this.pool.push(p);
-        }
-        this.active++;
-        return p;
-      },
-      updateAll(callback) {
-        for (let i = 0; i < this.active; i++) {
-          const p = this.pool[i];
-          if (p.active) callback(p);
-        }
-      },
-      reset() {
-        for (let i = 0; i < this.pool.length; i++) this.pool[i].active = false;
-        this.active = 0;
-      }
-    };
-
-    // Sprite cache (optional image usage, otherwise fallbacks)
-    const spriteCache = {
-      pooh: null,
-      honey: {},
-      bee: null,
-      power: {},
-
-      renderPooh() {
-        if (this.pooh) return this.pooh;
-
-        const c = document.createElement('canvas');
-        c.width = 80;
-        c.height = 80;
-        const g = c.getContext('2d');
-
-        const img = Sprites.pooh;
-        if (img && img.complete && img.naturalWidth > 0) {
-          g.save();
-          g.shadowColor = 'rgba(0,0,0,0.35)';
-          g.shadowBlur = 10;
-          g.drawImage(img, 10, 10, 60, 60);
-          g.restore();
-        } else {
-          drawPoohFallback(g);
+        if (window.audioManager) {
+          window.audioManager.playGameSound?.("collect");
+          if (gameState.combos > 3) window.audioManager.playTone?.([523, 659, 784], 0.12);
         }
 
-        this.pooh = c;
-        return c;
-      },
+        syncEnhancedCatchStats();
+        return;
+      }
 
-      renderHoney(type = 'normal') {
-        if (this.honey[type]) return this.honey[type];
-
-        const c = document.createElement('canvas');
-        c.width = 32;
-        c.height = 32;
-        const g = c.getContext('2d');
-
-        const img = Sprites.honey;
-        if (img && img.complete && img.naturalWidth > 0) {
-          g.drawImage(img, 0, 0, 32, 32);
-        } else {
-          drawHoneyFallback(g, type);
+      // miss
+      if (pot.y > ch + 30) {
+        pot.active = false;
+        if (gameState.streak > 0) {
+          gameState.streak = 0;
+          createMissEffect(pot.x, ch - 40);
         }
-
-        this.honey[type] = c;
-        return c;
-      },
-
-      renderBee() {
-        if (this.bee) return this.bee;
-
-        const c = document.createElement('canvas');
-        c.width = 30;
-        c.height = 30;
-        const g = c.getContext('2d');
-        drawBeeFallback(g);
-        this.bee = c;
-        return c;
-      },
-
-      renderPower(type) {
-        if (this.power[type]) return this.power[type];
-
-        const c = document.createElement('canvas');
-        c.width = 30;
-        c.height = 30;
-        const g = c.getContext('2d');
-        drawPowerIcon(g, type);
-        this.power[type] = c;
-        return c;
       }
-    };
+    });
 
-    function drawPoohFallback(g) {
-      const grad = g.createLinearGradient(0, 0, 0, 80);
-      grad.addColorStop(0, '#FFC107');
-      grad.addColorStop(1, '#FF9800');
+    // bees
+    beePool.update((bee) => {
+      const speed = gameState.slowMotion ? bee.speed * 0.5 : bee.speed;
+      bee.y += speed * deltaTime;
 
-      g.fillStyle = grad;
-      g.beginPath();
-      g.arc(40, 40, 30, 0, Math.PI * 2);
-      g.fill();
-
-      g.fillStyle = '#FFD8A6';
-      g.beginPath();
-      g.ellipse(40, 48, 18, 12, 0, 0, Math.PI * 2);
-      g.fill();
-
-      g.fillStyle = '#D62E2E';
-      g.fillRect(20, 55, 40, 15);
-
-      g.fillStyle = '#000';
-      g.beginPath();
-      g.arc(32, 32, 3, 0, Math.PI * 2);
-      g.arc(48, 32, 3, 0, Math.PI * 2);
-      g.fill();
-
-      g.fillStyle = '#8B4513';
-      g.beginPath();
-      g.arc(40, 40, 5, 0, Math.PI * 2);
-      g.fill();
-
-      g.strokeStyle = '#000';
-      g.lineWidth = 2;
-      g.beginPath();
-      g.arc(40, 46, 10, 0.2, Math.PI - 0.2, false);
-      g.stroke();
-
-      g.fillStyle = '#FF9800';
-      g.beginPath();
-      g.arc(25, 20, 10, 0, Math.PI * 2);
-      g.arc(55, 20, 10, 0, Math.PI * 2);
-      g.fill();
-    }
-
-    function drawHoneyFallback(g, type = 'normal') {
-      const grad = g.createRadialGradient(16, 16, 0, 16, 16, 16);
-      grad.addColorStop(0, '#FFEB3B');
-      grad.addColorStop(0.7, '#FFD54F');
-      grad.addColorStop(1, '#FFB300');
-
-      g.fillStyle = grad;
-      g.beginPath();
-      g.arc(16, 16, 16, 0, Math.PI * 2);
-      g.fill();
-
-      g.strokeStyle = '#8B4513';
-      g.lineWidth = 3;
-      g.stroke();
-
-      g.fillStyle = '#8B4513';
-      g.fillRect(8, 6, 16, 5);
-      g.fillRect(12, 3, 8, 3);
-
-      g.fillStyle = '#FF9800';
-      g.beginPath();
-      g.ellipse(16, 22, 7, 10, 0, 0, Math.PI * 2);
-      g.fill();
-
-      g.fillStyle = 'rgba(255,255,255,0.8)';
-      g.beginPath();
-      g.arc(10, 10, 4, 0, Math.PI * 2);
-      g.fill();
-
-      if (type === 'golden') {
-        g.strokeStyle = '#FFD700';
-        g.lineWidth = 2;
-        g.setLineDash([2, 2]);
-        g.beginPath();
-        g.arc(16, 16, 18, 0, Math.PI * 2);
-        g.stroke();
-        g.setLineDash([]);
-      }
-    }
-
-    function drawBeeFallback(g) {
-      const grad = g.createRadialGradient(15, 15, 0, 15, 15, 12);
-      grad.addColorStop(0, '#FFEB3B');
-      grad.addColorStop(1, '#FF9800');
-
-      g.fillStyle = grad;
-      g.beginPath();
-      g.arc(15, 15, 12, 0, Math.PI * 2);
-      g.fill();
-
-      g.fillStyle = '#000';
-      g.fillRect(8, 10, 5, 8);
-      g.fillRect(18, 10, 5, 8);
-
-      g.beginPath();
-      g.arc(12, 12, 2, 0, Math.PI * 2);
-      g.arc(18, 12, 2, 0, Math.PI * 2);
-      g.fill();
-
-      g.fillStyle = 'rgba(255,255,255,0.8)';
-      g.beginPath();
-      g.arc(8, 5, 8, 0, Math.PI * 2);
-      g.arc(22, 5, 8, 0, Math.PI * 2);
-      g.fill();
-    }
-
-    function drawPowerIcon(g, type) {
-      const p = powerUpTypes[type];
-      if (!p) return;
-
-      g.fillStyle = p.color + '33';
-      g.beginPath();
-      g.arc(15, 15, 15, 0, Math.PI * 2);
-      g.fill();
-
-      g.strokeStyle = p.color;
-      g.lineWidth = 2;
-      g.beginPath();
-      g.arc(15, 15, 14, 0, Math.PI * 2);
-      g.stroke();
-
-      g.font = '18px Arial';
-      g.textAlign = 'center';
-      g.textBaseline = 'middle';
-      g.fillStyle = '#111';
-      g.fillText(p.icon, 15, 15);
-    }
-
-    // -----------------------------------------------------------------------
-    // Overlay + HUD
-    // -----------------------------------------------------------------------
-    function setOverlay(line, sub, persistent = false, duration = 1600) {
-      if (!catchOverlay || !catchCountdown || !catchHint) return;
-
-      catchCountdown.textContent = line;
-      catchHint.textContent = sub || '';
-      catchOverlay.classList.add('active');
-
-      if (gameState.overlayTimeout) clearTimeout(gameState.overlayTimeout);
-      if (!persistent) {
-        gameState.overlayTimeout = setTimeout(() => {
-          catchOverlay.classList.remove('active');
-        }, duration);
-      }
-    }
-
-    function syncStats() {
-      if (scoreSpan) scoreSpan.textContent = String(gameState.score);
-      if (timeSpan) timeSpan.textContent = String(gameState.timeLeft);
-      if (livesSpan) livesSpan.textContent = String(gameState.lives);
-
-      if (multiplierDisplay) {
-        multiplierDisplay.textContent = `x${(Math.round(gameState.multiplier * 10) / 10).toFixed(1).replace('.0', '')}`;
-        multiplierDisplay.style.display = gameState.multiplier > 1 ? 'inline' : 'none';
-      }
-      if (comboDisplay) {
-        comboDisplay.textContent = `${gameState.combos} Combo`;
-        comboDisplay.style.display = gameState.combos > 1 ? 'inline' : 'none';
-      }
-    }
-
-    // -----------------------------------------------------------------------
-    // Background cache
-    // -----------------------------------------------------------------------
-    function buildCatchBackgroundCache() {
-      if (!catchBgCtx) return;
-
-      // Sky
-      const sky = catchBgCtx.createLinearGradient(0, 0, 0, H);
-      sky.addColorStop(0, '#87CEEB');
-      sky.addColorStop(0.6, '#B3E5FC');
-      sky.addColorStop(1, '#E3F2FD');
-      catchBgCtx.fillStyle = sky;
-      catchBgCtx.fillRect(0, 0, W, H);
-
-      // Sun
-      catchBgCtx.save();
-      catchBgCtx.shadowColor = '#FFD700';
-      catchBgCtx.shadowBlur = 40;
-      catchBgCtx.fillStyle = '#FFEB3B';
-      catchBgCtx.beginPath();
-      catchBgCtx.arc(80, 80, 35, 0, Math.PI * 2);
-      catchBgCtx.fill();
-
-      catchBgCtx.strokeStyle = '#FFD700';
-      catchBgCtx.lineWidth = 3;
-      for (let i = 0; i < 12; i++) {
-        const ang = (i / 12) * Math.PI * 2;
-        const x1 = 80 + Math.cos(ang) * 35;
-        const y1 = 80 + Math.sin(ang) * 35;
-        const x2 = 80 + Math.cos(ang) * 55;
-        const y2 = 80 + Math.sin(ang) * 55;
-        catchBgCtx.beginPath();
-        catchBgCtx.moveTo(x1, y1);
-        catchBgCtx.lineTo(x2, y2);
-        catchBgCtx.stroke();
-      }
-      catchBgCtx.restore();
-
-      // Clouds
-      drawClouds(catchBgCtx);
-
-      // Ground
-      const groundH = 70;
-      const groundY = H - groundH;
-      const ground = catchBgCtx.createLinearGradient(0, groundY, 0, H);
-      ground.addColorStop(0, '#8BC34A');
-      ground.addColorStop(1, '#689F38');
-      catchBgCtx.fillStyle = ground;
-      catchBgCtx.fillRect(0, groundY, W, groundH);
-
-      // Grass detail
-      catchBgCtx.fillStyle = '#7CB342';
-      for (let x = 0; x < W; x += 10) {
-        const hh = 10 + Math.random() * 20;
-        const sway = Math.sin(x * 0.1) * 4;
-        catchBgCtx.fillRect(x + sway, groundY, 3, -hh);
+      // chase for angry bees
+      if (bee.type === "angry") {
+        const dx = gameState.poohX - bee.x;
+        const dy = (gameState.poohY - gameState.poohHeight / 2) - bee.y;
+        const dist = Math.max(1, Math.hypot(dx, dy));
+        const chase = 0.06 * deltaTime;
+        bee.x += (dx / dist) * chase * 60;
+        bee.y += (dy / dist) * chase * 60;
       }
 
-      drawFlowers(catchBgCtx, groundY);
-      drawTrees(catchBgCtx);
-    }
+      // collision
+      if (
+        !gameState.isInvincible &&
+        bee.y > gameState.poohY - gameState.poohHeight &&
+        bee.x > gameState.poohX - gameState.poohWidth / 2 &&
+        bee.x < gameState.poohX + gameState.poohWidth / 2
+      ) {
+        gameState.lives -= bee.type === "angry" ? 2 : 1;
+        bee.active = false;
 
-    function drawClouds(g) {
-      g.save();
-      g.fillStyle = 'rgba(255,255,255,0.9)';
+        createDamageEffect(bee.x, bee.y);
 
-      for (let i = 0; i < 3; i++) {
-        const x = 50 + i * 200;
-        const y = 60 + Math.sin(i) * 20;
-        g.beginPath();
-        g.arc(x, y, 20, 0, Math.PI * 2);
-        g.arc(x + 25, y - 10, 25, 0, Math.PI * 2);
-        g.arc(x + 50, y, 20, 0, Math.PI * 2);
-        g.fill();
+        gameState.combos = 0;
+        gameState.multiplier = 1;
+        gameState.streak = 0;
+
+        syncEnhancedCatchStats();
+        setEnhancedCatchOverlay("Ouch! A bee buzzed Pooh.", `Hearts remaining: ${gameState.lives}.`, false, 1400);
+        shakeElement(catchCard);
+
+        if (window.audioManager) window.audioManager.playGameSound?.("damage");
+        if (gameState.lives <= 0) endEnhancedGame(false);
+        return;
       }
 
-      g.globalAlpha = 0.7;
-      for (let i = 0; i < 2; i++) {
-        const x = 150 + i * 250;
-        const y = 120 + Math.cos(i) * 15;
-        g.beginPath();
-        g.arc(x, y, 25, 0, Math.PI * 2);
-        g.arc(x + 30, y - 15, 30, 0, Math.PI * 2);
-        g.arc(x + 60, y, 25, 0, Math.PI * 2);
-        g.fill();
+      if (bee.y > ch + 30) bee.active = false;
+    });
+
+    // power-ups
+    powerUpPool.update((p) => {
+      const speed = gameState.slowMotion ? p.speed * 0.5 : p.speed;
+      p.y += speed * deltaTime;
+
+      if (
+        p.y > gameState.poohY - gameState.poohHeight &&
+        p.x > gameState.poohX - gameState.poohWidth / 2 &&
+        p.x < gameState.poohX + gameState.poohWidth / 2
+      ) {
+        applyPowerUp(p.type);
+        p.active = false;
+        createPowerUpEffect(p.x, p.y, p.type);
+        if (window.audioManager) window.audioManager.playGameSound?.("powerup");
       }
 
-      g.restore();
-    }
+      if (p.y > ch + 30) p.active = false;
+    });
 
-    function drawFlowers(g, groundY) {
-      const flowers = [
-        { x: 100, color: '#FF5252', size: 6 },
-        { x: 180, color: '#FF4081', size: 5 },
-        { x: 260, color: '#E040FB', size: 7 },
-        { x: 340, color: '#536DFE', size: 6 },
-        { x: 420, color: '#00BCD4', size: 5 },
-        { x: 500, color: '#4CAF50', size: 6 }
-      ];
-
-      flowers.forEach(f => {
-        g.save();
-        g.translate(clamp(f.x, 30, W - 30), groundY - 15);
-
-        g.strokeStyle = '#4CAF50';
-        g.lineWidth = 2;
-        g.beginPath();
-        g.moveTo(0, 0);
-        g.lineTo(0, -25);
-        g.stroke();
-
-        const petals = 5 + Math.floor(Math.random() * 3);
-        for (let p = 0; p < petals; p++) {
-          const ang = (p / petals) * Math.PI * 2;
-          g.fillStyle = f.color;
-          g.beginPath();
-          g.ellipse(
-            Math.cos(ang) * f.size,
-            Math.sin(ang) * f.size,
-            f.size * 0.8,
-            f.size * 0.5,
-            ang,
-            0,
-            Math.PI * 2
-          );
-          g.fill();
-        }
-
-        g.fillStyle = '#FFD54F';
-        g.beginPath();
-        g.arc(0, 0, f.size * 0.6, 0, Math.PI * 2);
-        g.fill();
-
-        g.restore();
+    // spawns (cap actives)
+    if (honeyPotPool.activeCount() < 12 && Math.random() < potSpawn) {
+      const type = Math.random() < 0.22 ? "golden" : "normal";
+      honeyPotPool.get({
+        x: rand(20, cw - 20),
+        y: -20,
+        speed: rand(2.2, 3.8),
+        type,
+        active: true
       });
     }
 
-    function drawTrees(g) {
-      // Tree left
-      g.fillStyle = '#8B4513';
-      g.fillRect(90, 160, 28, 160);
-      g.fillStyle = '#2E7D32';
-      g.beginPath();
-      g.arc(104, 140, 55, 0, Math.PI * 2);
-      g.fill();
-
-      // Tree right
-      g.fillStyle = '#A0522D';
-      g.fillRect(W - 120, 190, 30, 130);
-      g.fillStyle = '#388E3C';
-      g.beginPath();
-      g.arc(W - 105, 165, 50, 0, Math.PI * 2);
-      g.fill();
-    }
-
-    function drawBackground() {
-      ctx.drawImage(catchBackgroundCanvas, 0, 0);
-    }
-
-    // -----------------------------------------------------------------------
-    // Effects
-    // -----------------------------------------------------------------------
-    function createCatchEffect(x, y, points) {
-      gameState.effects.push({ type: 'catch', x, y, start: Date.now(), duration: 500 });
-      gameState.effects.push({ type: 'score', x, y: y - 20, text: `+${points}`, start: Date.now(), duration: 1000 });
-
-      for (let i = 0; i < 8; i++) {
-        catchParticles.createParticle(x, y, 'honey', {
-          x: (Math.random() - 0.5) * 4,
-          y: (Math.random() - 0.5) * 4 - 2
-        });
-      }
-    }
-
-    function createDamageEffect(x, y) {
-      gameState.effects.push({ type: 'damage', x, y, start: Date.now(), duration: 500 });
-      for (let i = 0; i < 6; i++) {
-        catchParticles.createParticle(x, y, 'fire', {
-          x: (Math.random() - 0.5) * 4,
-          y: (Math.random() - 0.5) * 4
-        });
-      }
-    }
-
-    function createMissEffect(x, y) {
-      gameState.effects.push({ type: 'score', x, y: y - 20, text: 'Miss!', start: Date.now(), duration: 800 });
-    }
-
-    function createPowerUpEffect(x, y, type) {
-      const p = powerUpTypes[type];
-      if (!p) return;
-
-      // A little CSS ripple (optional)
-      const parent = canvas.parentElement;
-      if (parent) {
-        const ring = document.createElement('div');
-        ring.style.cssText = `
-          position: absolute;
-          left: ${x - 25}px;
-          top: ${y - 25}px;
-          width: 50px;
-          height: 50px;
-          border: 3px solid ${p.color};
-          border-radius: 50%;
-          animation: rippleEffect 0.6s ease-out;
-          pointer-events: none;
-          z-index: 5;
-        `;
-        parent.appendChild(ring);
-        setTimeout(() => ring.remove(), 650);
-      }
-
-      for (let i = 0; i < 12; i++) {
-        catchParticles.createParticle(x, y, 'sparkle', {
-          x: (Math.random() - 0.5) * 6,
-          y: (Math.random() - 0.5) * 6 - 2
-        });
-      }
-
-      gameState.effects.push({
-        type: 'score',
-        x,
-        y: y - 30,
-        text: `${p.icon} ${type.charAt(0).toUpperCase()}${type.slice(1)}`,
-        start: Date.now(),
-        duration: 1000
+    if (beePool.activeCount() < 7 && Math.random() < beeSpawn) {
+      const angryChance = Math.min(0.22, elapsed * 0.006);
+      const type = Math.random() < angryChance ? "angry" : "normal";
+      beePool.get({
+        x: rand(20, cw - 20),
+        y: -20,
+        speed: rand(3.0, 4.6),
+        type,
+        active: true,
+        vx: 0,
+        vy: 0
       });
     }
 
-    function drawEffects() {
-      const now = Date.now();
-      for (let i = gameState.effects.length - 1; i >= 0; i--) {
-        const e = gameState.effects[i];
-        const t = (now - e.start) / e.duration;
-        if (t >= 1) {
-          gameState.effects.splice(i, 1);
-          continue;
-        }
-
-        if (e.type === 'catch' || e.type === 'damage') {
-          const radius = (e.type === 'catch' ? 20 : 15) * (1 - t);
-          const grad = ctx.createRadialGradient(e.x, e.y, 0, e.x, e.y, radius);
-          if (e.type === 'catch') {
-            grad.addColorStop(0, 'rgba(255, 215, 0, 0.8)');
-            grad.addColorStop(1, 'rgba(255, 215, 0, 0)');
-          } else {
-            grad.addColorStop(0, 'rgba(255, 107, 107, 0.8)');
-            grad.addColorStop(1, 'rgba(255, 107, 107, 0)');
-          }
-          ctx.fillStyle = grad;
-          ctx.beginPath();
-          ctx.arc(e.x, e.y, radius, 0, Math.PI * 2);
-          ctx.fill();
-        }
-
-        if (e.type === 'score') {
-          ctx.save();
-          ctx.font = 'bold 20px Arial';
-          ctx.fillStyle = '#FFD700';
-          ctx.textAlign = 'center';
-          ctx.textBaseline = 'middle';
-          ctx.globalAlpha = 1 - t;
-          ctx.fillText(e.text, e.x, e.y - t * 30);
-          ctx.restore();
-        }
-      }
+    if (powerUpPool.activeCount() < 3 && Math.random() < powerSpawn) {
+      const keys = Object.keys(powerUpTypes);
+      const type = keys[(Math.random() * keys.length) | 0];
+      powerUpPool.get({
+        x: rand(20, cw - 20),
+        y: -20,
+        speed: rand(2.1, 3.0),
+        type,
+        active: true
+      });
     }
 
-    // -----------------------------------------------------------------------
-    // Power-ups
-    // -----------------------------------------------------------------------
-    function applyPowerUp(type) {
-      const now = Date.now();
-      switch (type) {
-        case 'heart':
-          gameState.lives = Math.min(5, gameState.lives + 1);
-          syncStats();
-          break;
-        case 'shield':
-          gameState.isInvincible = true;
-          gameState.invincibilityEnd = now + powerUpTypes.shield.duration;
-          break;
-        case 'clock':
-          gameState.timeLeft += 10;
-          syncStats();
-          break;
-        case 'star':
-          gameState.doublePoints = true;
-          gameState.doublePointsEnd = now + powerUpTypes.star.duration;
-          break;
-        case 'lightning':
-          gameState.slowMotion = true;
-          gameState.slowMotionEnd = now + powerUpTypes.lightning.duration;
-          break;
-      }
+    // particles
+    catchParticles.update(delta);
+  }
+
+  // ---------------------------------------------------------------------------
+  // Render (all in CSS px coordinates)
+  // ---------------------------------------------------------------------------
+  function renderEnhancedCatchGame() {
+    ctx.clearRect(0, 0, cw, ch);
+
+    // background
+    if (bgCanvas) {
+      // bg canvas is DPR-sized; ctx is scaled to CSS px; drawImage fits CSS px
+      ctx.drawImage(bgCanvas, 0, 0, cw, ch);
     }
 
-    // -----------------------------------------------------------------------
-    // Draw entities
-    // -----------------------------------------------------------------------
-    function drawPooh() {
-      const spr = spriteCache.renderPooh();
-      const poohTop = gameState.poohY - gameState.poohHeight;
+    drawEnhancedEffects();
+    drawEnhancedPooh();
+    drawEnhancedHoneyPots();
+    drawEnhancedBees();
+    drawEnhancedPowerUps();
+    catchParticles.render();
+    drawEnhancedCatchUI();
+  }
 
-      ctx.save();
+  function drawEnhancedPooh() {
+    const sprite = spriteCache.getPooh();
+    const yTop = gameState.poohY - gameState.poohHeight;
 
-      if (gameState.isInvincible) {
-        const blink = Math.sin(Date.now() / 100) > 0;
-        if (blink) ctx.globalAlpha = 0.55;
-      }
+    ctx.save();
 
-      // Shadow
-      ctx.save();
-      ctx.shadowColor = 'rgba(0,0,0,0.5)';
-      ctx.shadowBlur = 10;
-      ctx.shadowOffsetY = 5;
-      ctx.globalAlpha = 0.25;
-      ctx.drawImage(spr, gameState.poohX - gameState.poohWidth / 2, poohTop + 6, gameState.poohWidth, gameState.poohHeight);
-      ctx.restore();
-
-      // Sprite
-      ctx.globalAlpha = 1;
-      ctx.drawImage(spr, gameState.poohX - gameState.poohWidth / 2, poohTop, gameState.poohWidth, gameState.poohHeight);
-
-      // Shield ring
-      if (gameState.isInvincible) {
-        ctx.strokeStyle = `rgba(66, 133, 244, ${0.5 + Math.sin(Date.now() / 200) * 0.3})`;
-        ctx.lineWidth = 3;
-        ctx.beginPath();
-        ctx.arc(gameState.poohX, poohTop + gameState.poohHeight / 2, gameState.poohWidth / 2 + 6, 0, Math.PI * 2);
-        ctx.stroke();
-      }
-
-      ctx.restore();
-      drawPowerUpIndicators();
+    if (gameState.isInvincible) {
+      const blink = Math.sin(Date.now() / 100) > 0;
+      if (blink) ctx.globalAlpha = 0.55;
     }
 
-    function drawPowerUpIndicators() {
-      let x = 20;
-      const y = 40;
-      const now = Date.now();
+    // shadow
+    ctx.save();
+    ctx.shadowColor = "rgba(0,0,0,0.5)";
+    ctx.shadowBlur = 10;
+    ctx.shadowOffsetY = 5;
+    ctx.globalAlpha = 0.25;
+    ctx.drawImage(sprite, gameState.poohX - gameState.poohWidth / 2, yTop + 5, gameState.poohWidth, gameState.poohHeight);
+    ctx.restore();
 
-      function drawOne(type, secs) {
-        const p = powerUpTypes[type];
-        if (!p) return;
+    // main
+    ctx.globalAlpha = 1;
+    ctx.drawImage(sprite, gameState.poohX - gameState.poohWidth / 2, yTop, gameState.poohWidth, gameState.poohHeight);
+
+    // shield ring
+    if (gameState.isInvincible) {
+      ctx.strokeStyle = `rgba(66,133,244,${0.45 + Math.sin(Date.now() / 200) * 0.25})`;
+      ctx.lineWidth = 3;
+      ctx.beginPath();
+      ctx.arc(gameState.poohX, yTop + gameState.poohHeight / 2, gameState.poohWidth / 2 + 6, 0, Math.PI * 2);
+      ctx.stroke();
+    }
+
+    ctx.restore();
+  }
+
+  function drawEnhancedHoneyPots() {
+    honeyPotPool.update((pot) => {
+      if (!pot.active) return;
+      const sprite = spriteCache.getHoney(pot.type);
+      ctx.drawImage(sprite, pot.x - 16, pot.y - 16);
+
+      if (pot.type === "golden") {
         ctx.save();
-        ctx.fillStyle = p.color + '33';
+        ctx.globalAlpha = 0.25;
+        ctx.drawImage(sprite, pot.x - 16, pot.y - 13);
+        ctx.restore();
+      }
+    });
+  }
+
+  function drawEnhancedBees() {
+    const sprite = spriteCache.getBee();
+    beePool.update((bee) => {
+      if (!bee.active) return;
+
+      ctx.save();
+      const wobble = Math.sin(Date.now() / 110 + bee.x) * 3;
+      ctx.translate(bee.x, bee.y + wobble);
+      ctx.drawImage(sprite, -15, -15);
+      ctx.restore();
+
+      if (bee.type === "angry") {
+        ctx.save();
+        ctx.font = "12px Arial";
+        ctx.textAlign = "center";
+        ctx.fillText("💢", bee.x, bee.y - 20);
+        ctx.restore();
+      }
+    });
+  }
+
+  function drawEnhancedPowerUps() {
+    powerUpPool.update((p) => {
+      if (!p.active) return;
+
+      const sprite = spriteCache.getPowerUp(p.type);
+      const float = Math.sin(Date.now() / 500 + p.x) * 5;
+
+      ctx.save();
+      ctx.drawImage(sprite, p.x - 15, p.y - 15 + float);
+      ctx.shadowColor = powerUpTypes[p.type].color;
+      ctx.shadowBlur = 15;
+      ctx.drawImage(sprite, p.x - 15, p.y - 15 + float);
+      ctx.restore();
+    });
+  }
+
+  function drawEnhancedEffects() {
+    const now = Date.now();
+    for (const effect of gameState.effects) {
+      const p = (now - effect.start) / effect.duration;
+
+      if (effect.type === "catch") {
+        const radius = 20 * (1 - p);
+        const g = ctx.createRadialGradient(effect.x, effect.y, 0, effect.x, effect.y, radius);
+        g.addColorStop(0, "rgba(255,215,0,0.75)");
+        g.addColorStop(1, "rgba(255,215,0,0)");
+        ctx.fillStyle = g;
         ctx.beginPath();
-        ctx.arc(x + 15, y + 15, 15, 0, Math.PI * 2);
+        ctx.arc(effect.x, effect.y, radius, 0, Math.PI * 2);
         ctx.fill();
+      }
 
-        ctx.strokeStyle = p.color;
-        ctx.lineWidth = 2;
+      if (effect.type === "damage") {
+        const radius = 16 * (1 - p);
+        const g = ctx.createRadialGradient(effect.x, effect.y, 0, effect.x, effect.y, radius);
+        g.addColorStop(0, "rgba(255,107,107,0.75)");
+        g.addColorStop(1, "rgba(255,107,107,0)");
+        ctx.fillStyle = g;
         ctx.beginPath();
-        ctx.arc(x + 15, y + 15, 14, 0, Math.PI * 2);
-        ctx.stroke();
-
-        ctx.font = '14px Arial';
-        ctx.textAlign = 'center';
-        ctx.textBaseline = 'middle';
-        ctx.fillStyle = '#111';
-        ctx.fillText(p.icon, x + 15, y + 15);
-
-        ctx.font = '10px Arial';
-        ctx.fillStyle = '#111';
-        ctx.fillText(`${secs}s`, x + 15, y + 35);
-
-        ctx.restore();
-        x += 40;
+        ctx.arc(effect.x, effect.y, radius, 0, Math.PI * 2);
+        ctx.fill();
       }
 
-      if (gameState.isInvincible) {
-        const s = Math.ceil((gameState.invincibilityEnd - now) / 1000);
-        if (s > 0) drawOne('shield', s);
-      }
-      if (gameState.doublePoints) {
-        const s = Math.ceil((gameState.doublePointsEnd - now) / 1000);
-        if (s > 0) drawOne('star', s);
-      }
-      if (gameState.slowMotion) {
-        const s = Math.ceil((gameState.slowMotionEnd - now) / 1000);
-        if (s > 0) drawOne('lightning', s);
-      }
-    }
-
-    function drawHoneyPots() {
-      honeyPotPool.updateAll((pot) => {
-        const spr = spriteCache.renderHoney(pot.type);
-        ctx.drawImage(spr, pot.x - 16, pot.y - 16);
-        if (pot.type === 'golden') {
-          ctx.save();
-          ctx.globalAlpha = 0.25;
-          ctx.drawImage(spr, pot.x - 16, pot.y - 12);
-          ctx.restore();
-        }
-      });
-    }
-
-    function drawBees() {
-      beePool.updateAll((bee) => {
-        const spr = spriteCache.renderBee();
-
+      if (effect.type === "score") {
+        const y = effect.y - p * 28;
         ctx.save();
-        const wobble = Math.sin(Date.now() / 100 + bee.x) * 3;
-        ctx.translate(bee.x, bee.y + wobble);
-
-        if (bee.vx || bee.vy) {
-          const ang = Math.atan2(bee.vy, bee.vx);
-          ctx.rotate(ang);
-        }
-
-        ctx.drawImage(spr, -15, -15);
+        ctx.globalAlpha = 1 - p;
+        ctx.font = "bold 20px Arial";
+        ctx.fillStyle = effect.color || "#FFD700";
+        ctx.textAlign = "center";
+        ctx.textBaseline = "middle";
+        ctx.fillText(effect.text, effect.x, y);
         ctx.restore();
+      }
+    }
+  }
 
-        if (bee.type === 'angry') {
-          ctx.save();
-          ctx.font = '12px Arial';
-          ctx.textAlign = 'center';
-          ctx.fillText('💢', bee.x, bee.y - 20);
-          ctx.restore();
-        }
+  function drawEnhancedCatchUI() {
+    // Optional—keep this light since your HUD is in DOM already
+    // (You can remove entirely if you don’t want any canvas UI)
+  }
+
+  // ---------------------------------------------------------------------------
+  // Effects + power-ups
+  // ---------------------------------------------------------------------------
+  function createCatchEffect(x, y, points) {
+    gameState.effects.push({ type: "catch", x, y, start: Date.now(), duration: 500 });
+    gameState.effects.push({ type: "score", x, y: y - 18, text: `+${points}`, start: Date.now(), duration: 900, color: "#FFD700" });
+
+    for (let i = 0; i < 8; i++) {
+      catchParticles.createParticle(x, y, "honey", {
+        x: (Math.random() - 0.5) * 4,
+        y: (Math.random() - 0.5) * 4 - 2
+      });
+    }
+  }
+
+  function createDamageEffect(x, y) {
+    gameState.effects.push({ type: "damage", x, y, start: Date.now(), duration: 500 });
+
+    for (let i = 0; i < 7; i++) {
+      catchParticles.createParticle(x, y, "fire", {
+        x: (Math.random() - 0.5) * 4,
+        y: (Math.random() - 0.5) * 4
+      });
+    }
+  }
+
+  function createMissEffect(x, y) {
+    gameState.effects.push({ type: "score", x, y, text: "Miss!", start: Date.now(), duration: 700, color: "#FFFFFF" });
+  }
+
+  function createPowerUpEffect(x, y, type) {
+    const p = powerUpTypes[type];
+    if (!p) return;
+
+    for (let i = 0; i < 12; i++) {
+      catchParticles.createParticle(x, y, "sparkle", {
+        x: (Math.random() - 0.5) * 6,
+        y: (Math.random() - 0.5) * 6 - 2
       });
     }
 
-    function drawPowerUps() {
-      powerUpPool.updateAll((p) => {
-        const spr = spriteCache.renderPower(p.type);
-        ctx.save();
-        const float = Math.sin(Date.now() / 500 + p.x) * 5;
+    gameState.effects.push({
+      type: "score",
+      x,
+      y: y - 28,
+      text: `${p.icon} ${type}`,
+      start: Date.now(),
+      duration: 950,
+      color: p.color
+    });
+  }
 
-        ctx.drawImage(spr, p.x - 15, p.y - 15 + float);
-
-        ctx.shadowColor = powerUpTypes[p.type].color;
-        ctx.shadowBlur = 15;
-        ctx.drawImage(spr, p.x - 15, p.y - 15 + float);
-
-        ctx.restore();
-      });
+  function applyPowerUp(type) {
+    const now = Date.now();
+    switch (type) {
+      case "heart":
+        gameState.lives = Math.min(5, gameState.lives + 1);
+        syncEnhancedCatchStats();
+        break;
+      case "shield":
+        gameState.isInvincible = true;
+        gameState.invincibilityEnd = now + powerUpTypes.shield.duration;
+        break;
+      case "clock":
+        gameState.timeLeft += 10;
+        syncEnhancedCatchStats();
+        break;
+      case "star":
+        gameState.doublePoints = true;
+        gameState.doublePointsEnd = now + powerUpTypes.star.duration;
+        break;
+      case "lightning":
+        gameState.slowMotion = true;
+        gameState.slowMotionEnd = now + powerUpTypes.lightning.duration;
+        break;
     }
+  }
 
+  // ---------------------------------------------------------------------------
+  // Controls
+  // ---------------------------------------------------------------------------
+  function startEnhancedGame() {
+    if (gameState.gameRunning || gameState.countdownInterval) return;
+
+    // reset
+    gameState.score = 0;
+    gameState.lives = 3;
+    gameState.timeLeft = 60;
+    gameState.combos = 0;
+    gameState.multiplier = 1;
+    gameState.streak = 0;
+    gameState.lastCatchTime = 0;
+    gameState.effects = [];
+    gameState.isInvincible = false;
+    gameState.doublePoints = false;
+    gameState.slowMotion = false;
+
+    honeyPotPool.reset();
+    beePool.reset();
+    powerUpPool.reset();
+    catchParticles.clear();
+
+    resizeCanvas();
+
+    syncEnhancedCatchStats();
+
+    // countdown
+    let count = 3;
+    setEnhancedCatchOverlay("Starting in 3...", "Get Pooh ready to move.", true);
+
+    gameState.countdownInterval = setInterval(() => {
+      count--;
+      if (count > 0) {
+        setEnhancedCatchOverlay(`Starting in ${count}...`, "Catch honey, dodge bees.", true);
+        window.audioManager?.playTone?.([440, 440, 440], 0.08);
+      } else {
+        clearInterval(gameState.countdownInterval);
+        gameState.countdownInterval = null;
+
+        setEnhancedCatchOverlay("Go!", "Keep Pooh under the falling honey.", false, 900);
+        gameState.gameRunning = true;
+        gameState.startedAt = Date.now();
+
+        clearInterval(gameState.timerInterval);
+        gameState.timerInterval = setInterval(() => {
+          gameState.timeLeft--;
+          syncEnhancedCatchStats();
+          if (gameState.timeLeft <= 0) endEnhancedGame(true);
+        }, 1000);
+
+        window.audioManager?.playTone?.([523, 659, 784], 0.14);
+      }
+    }, 800);
+  }
+
+  function endEnhancedGame(timeExpired) {
+    if (!gameState.gameRunning) return;
+
+    gameState.gameRunning = false;
+    clearInterval(gameState.timerInterval);
+    gameState.timerInterval = null;
+
+    // bonus
+    let finalScore = gameState.score;
+    let bonus = 0;
+    if (gameState.lives === 3) bonus += 100;
+    if (gameState.combos > 10) bonus += 50;
+    if (gameState.streak > 15) bonus += 75;
+    finalScore += bonus;
+
+    setEnhancedCatchOverlay(
+      timeExpired ? "Time's up!" : "Ouch! The bees won this round.",
+      `Final Score: ${finalScore}${bonus ? ` (+${bonus} bonus)` : ""}`,
+      true
+    );
+
+    shakeElement(catchCard);
+
+    if (window.audioManager) {
+      window.audioManager.playGameSound?.(timeExpired ? "victory" : "defeat");
+    }
+  }
+
+  function toggleEnhancedPause() {
+    if (!gameState.gameRunning && gameState.timeLeft > 0 && gameState.lives > 0) {
+      // resume
+      gameState.gameRunning = true;
+      if (!gameState.timerInterval) {
+        gameState.timerInterval = setInterval(() => {
+          gameState.timeLeft--;
+          syncEnhancedCatchStats();
+          if (gameState.timeLeft <= 0) endEnhancedGame(true);
+        }, 1000);
+      }
+      catchOverlay?.classList.remove("active");
+      pauseBtn?.setAttribute("aria-pressed", "false");
+    } else if (gameState.gameRunning) {
+      // pause
+      gameState.gameRunning = false;
+      clearInterval(gameState.timerInterval);
+      gameState.timerInterval = null;
+      setEnhancedCatchOverlay("Paused", "Tap start or pause to continue when ready.", true);
+      pauseBtn?.setAttribute("aria-pressed", "true");
+    }
+    window.audioManager?.playSound?.("click");
+  }
+
+  // Keyboard
+  document.addEventListener("keydown", (ev) => {
+    if (!gameState.gameRunning) return;
+    const step = 26;
+
+    if (ev.key === "ArrowLeft") {
+      gameState.poohX = clamp(gameState.poohX - step, gameState.poohWidth / 2, cw - gameState.poohWidth / 2);
+    } else if (ev.key === "ArrowRight") {
+      gameState.poohX = clamp(gameState.poohX + step, gameState.poohWidth / 2, cw - gameState.poohWidth / 2);
+    }
+  });
+
+  // Mouse / touch direct control on canvas
+  canvas.addEventListener("mousemove", (ev) => {
+    if (!gameState.gameRunning) return;
+    const rect = canvas.getBoundingClientRect();
+    const x = ev.clientX - rect.left;
+    gameState.poohX = clamp(x, gameState.poohWidth / 2, cw - gameState.poohWidth / 2);
+  });
+
+  canvas.addEventListener("touchstart", (ev) => {
+    if (!gameState.gameRunning) return;
+    ev.preventDefault();
+    const rect = canvas.getBoundingClientRect();
+    const t = ev.touches[0];
+    const x = t.clientX - rect.left;
+    gameState.poohX = clamp(x, gameState.poohWidth / 2, cw - gameState.poohWidth / 2);
+  }, { passive: false });
+
+  canvas.addEventListener("touchmove", (ev) => {
+    if (!gameState.gameRunning) return;
+    ev.preventDefault();
+    const rect = canvas.getBoundingClientRect();
+    const t = ev.touches[0];
+    const x = t.clientX - rect.left;
+    gameState.poohX = clamp(x, gameState.poohWidth / 2, cw - gameState.poohWidth / 2);
+  }, { passive: false });
+
+  // Joystick (uses your existing #catchJoystick DOM)
+  if (IS_MOBILE && joystickEl) {
+    let dragging = false;
+
+    joystickEl.addEventListener("touchstart", (ev) => {
+      ev.preventDefault();
+      dragging = true;
+      joystickEl.classList.add("active");
+    }, { passive: false });
+
+    document.addEventListener("touchmove", (ev) => {
+      if (!dragging || !gameState.gameRunning) return;
+      ev.preventDefault();
+
+      const rect = joystickEl.getBoundingClientRect();
+      const cx = rect.left + rect.width / 2;
+      const cy = rect.top + rect.height / 2;
+      const t = ev.touches[0];
+
+      const dx = t.clientX - cx;
+      const dy = t.clientY - cy;
+
+      const dist = Math.hypot(dx, dy);
+      const maxDist = 40;
+
+      const nx = dist > 0 ? dx / Math.max(dist, 1) : 0;
+      const power = Math.min(1, dist / maxDist);
+
+      const speed = 18; // tune
+      gameState.poohX = clamp(
+        gameState.poohX + nx * power * speed,
+        gameState.poohWidth / 2,
+        cw - gameState.poohWidth / 2
+      );
+    }, { passive: false });
+
+    document.addEventListener("touchend", () => {
+      dragging = false;
+      joystickEl.classList.remove("active");
+    });
+  }
+
+  // Buttons
+  startBtn?.addEventListener("click", startEnhancedGame);
+  pauseBtn?.addEventListener("click", toggleEnhancedPause);
+
+  // ---------------------------------------------------------------------------
+  // Cleanup
+  // ---------------------------------------------------------------------------
+  window.addEventListener("beforeunload", () => {
+    if (rafId) cancelAnimationFrame(rafId);
+    if (gameState.timerInterval) clearInterval(gameState.timerInterval);
+    if (gameState.countdownInterval) clearInterval(gameState.countdownInterval);
+  });
+
+  console.log("Enhanced Honey Catch Game initialized");
+
+  // ---------------------------------------------------------------------------
+  // Small helpers (kept inside to stay “isolated”)
+  // ---------------------------------------------------------------------------
+  function makePool() {
+    return {
+      pool: [],
+      active: 0,
+      get(obj) {
+        let item;
+        if (this.active < this.pool.length) {
+          item = this.pool[this.active];
+          Object.assign(item, obj);
+        } else {
+          item = obj;
+          this.pool.push(item);
+        }
+        this.active++;
+        return item;
+      },
+      update(fn) {
+        for (let i = 0; i < this.active; i++) {
+          const it = this.pool[i];
+          if (it.active) fn(it, i);
+        }
+        // compact from end (cheap)
+        let write = 0;
+        for (let i = 0; i < this.active; i++) {
+          const it = this.pool[i];
+          if (it.active) {
+            if (write !== i) this.pool[write] = it;
+            write++;
+          }
+        }
+        this.active = write;
+      },
+      reset() {
+        for (let i = 0; i < this.pool.length; i++) this.pool[i].active = false;
+        this.active = 0;
+      },
+      activeCount() {
+        return this.active;
+      }
+    };
+  }
+
+  function clamp(v, min, max) {
+    return Math.max(min, Math.min(max, v));
+  }
+
+  function rand(min, max) {
+    return min + Math.random() * (max - min);
+  }
+
+  // Background painter (one-time into bgCtx)
+  function drawCatchBackgroundTo(g, w, h) {
+    // sky
+    const sky = g.createLinearGradient(0, 0, 0, h);
+    sky.addColorStop(0, "#87CEEB");
+    sky.addColorStop(0.6, "#B3E5FC");
+    sky.addColorStop(1, "#E3F2FD");
+    g.fillStyle = sky;
+    g.fillRect(0, 0, w, h);
+
+    // sun
+    g.save();
+    g.shadowColor = "#FFD700";
+    g.shadowBlur = 50;
+    g.fillStyle = "#FFEB3B";
+    g.beginPath();
+    g.arc(80, 80, 35, 0, Math.PI * 2);
+    g.fill();
+    g.restore();
+
+    // clouds (simple)
+    g.save();
+    g.fillStyle = "rgba(255,255,255,0.9)";
+    for (let i = 0; i < 3; i++) {
+      const x = 60 + i * (w * 0.32);
+      const y = 60 + Math.sin(i) * 18;
+      g.beginPath();
+      g.arc(x, y, 18, 0, Math.PI * 2);
+      g.arc(x + 24, y - 10, 24, 0, Math.PI * 2);
+      g.arc(x + 48, y, 18, 0, Math.PI * 2);
+      g.fill();
+    }
+    g.restore();
+
+    // ground
+    const groundH = 70;
+    const groundY = h - groundH;
+
+    const grd = g.createLinearGradient(0, groundY, 0, h);
+    grd.addColorStop(0, "#8BC34A");
+    grd.addColorStop(1, "#689F38");
+    g.fillStyle = grd;
+    g.fillRect(0, groundY, w, groundH);
+
+    // trees (scaled a bit)
+    g.fillStyle = "#8B4513";
+    g.fillRect(w * 0.18, h * 0.45, 28, h * 0.25);
+    g.fillStyle = "#2E7D32";
+    g.beginPath();
+    g.arc(w * 0.18 + 14, h * 0.42, 55, 0, Math.PI * 2);
+    g.fill();
+
+    g.fillStyle = "#A0522D";
+    g.fillRect(w * 0.78, h * 0.50, 30, h * 0.22);
+    g.fillStyle = "#388E3C";
+    g.beginPath();
+    g.arc(w * 0.78 + 15, h * 0.47, 50, 0, Math.PI * 2);
+    g.fill();
+  }
+
+  // Fallback drawings
+  function drawEnhancedPoohFallback(g) {
+    const grad = g.createLinearGradient(0, 0, 0, 80);
+    grad.addColorStop(0, "#FFC107");
+    grad.addColorStop(1, "#FF9800");
+
+    g.fillStyle = grad;
+    g.beginPath();
+    g.arc(40, 40, 30, 0, Math.PI * 2);
+    g.fill();
+
+    g.fillStyle = "#FFD8A6";
+    g.beginPath();
+    g.ellipse(40, 48, 18, 12, 0, 0, Math.PI * 2);
+    g.fill();
+
+    g.fillStyle = "#D62E2E";
+    g.fillRect(20, 55, 40, 15);
+
+    g.fillStyle = "#000";
+    g.beginPath();
+    g.arc(32, 32, 3, 0, Math.PI * 2);
+    g.arc(48, 32, 3, 0, Math.PI * 2);
+    g.fill();
+
+    g.fillStyle = "#8B4513";
+    g.beginPath();
+    g.arc(40, 40, 5, 0, Math.PI * 2);
+    g.fill();
+
+    g.strokeStyle = "#000";
+    g.lineWidth = 2;
+    g.beginPath();
+    g.arc(40, 46, 10, 0.2, Math.PI - 0.2);
+    g.stroke();
+  }
+
+  function drawEnhancedHoneyPotFallback(g, type = "normal") {
+    const grad = g.createRadialGradient(16, 16, 0, 16, 16, 16);
+    grad.addColorStop(0, "#FFEB3B");
+    grad.addColorStop(0.7, "#FFD54F");
+    grad.addColorStop(1, "#FFB300");
+
+    g.fillStyle = grad;
+    g.beginPath();
+    g.arc(16, 16, 16, 0, Math.PI * 2);
+    g.fill();
+
+    g.strokeStyle = "#8B4513";
+    g.lineWidth = 3;
+    g.stroke();
+
+    g.fillStyle = "#8B4513";
+    g.fillRect(8, 6, 16, 5);
+    g.fillRect(12, 3, 8, 3);
+
+    g.fillStyle = "#FF9800";
+    g.beginPath();
+    g.ellipse(16, 22, 7, 10, 0, 0, Math.PI * 2);
+    g.fill();
+
+    if (type === "golden") {
+      g.strokeStyle = "#FFD700";
+      g.lineWidth = 2;
+      g.setLineDash([2, 2]);
+      g.beginPath();
+      g.arc(16, 16, 18, 0, Math.PI * 2);
+      g.stroke();
+      g.setLineDash([]);
+    }
+  }
+
+  function drawEnhancedBee(g) {
+    const grad = g.createRadialGradient(15, 15, 0, 15, 15, 12);
+    grad.addColorStop(0, "#FFEB3B");
+    grad.addColorStop(1, "#FF9800");
+
+    g.fillStyle = grad;
+    g.beginPath();
+    g.arc(15, 15, 12, 0, Math.PI * 2);
+    g.fill();
+
+    g.fillStyle = "#000";
+    g.fillRect(8, 10, 5, 8);
+    g.fillRect(18, 10, 5, 8);
+
+    g.beginPath();
+    g.arc(12, 12, 2, 0, Math.PI * 2);
+    g.arc(18, 12, 2, 0, Math.PI * 2);
+    g.fill();
+
+    g.fillStyle = "rgba(255,255,255,0.8)";
+    g.beginPath();
+    g.arc(8, 5, 8, 0, Math.PI * 2);
+    g.arc(22, 5, 8, 0, Math.PI * 2);
+    g.fill();
+  }
+
+  function drawPowerUp(g, type, types) {
+    const p = types[type];
+    if (!p) return;
+
+    g.fillStyle = p.color + "33";
+    g.beginPath();
+    g.arc(15, 15, 15, 0, Math.PI * 2);
+    g.fill();
+
+    g.strokeStyle = p.color;
+    g.lineWidth = 2;
+    g.beginPath();
+    g.arc(15, 15, 14, 0, Math.PI * 2);
+    g.stroke();
+
+    g.font = "18px Arial";
+    g.textAlign = "center";
+    g.textBaseline = "middle";
+    g.fillText(p.icon, 15, 15);
+  }
+}
     function drawUI() {
       ctx.save();
       ctx.shadowColor = 'rgba(0,0,0,0.5)';
