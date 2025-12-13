@@ -1,391 +1,254 @@
 /* ==========================================================================
-   Baby Gunnar — Hundred Acre Wood Adventure
-   script.js — site-wide UI only (nav, cover, modals, progress, accessibility)
-   NOTE: Honey Pot Catch game logic is owned by game.js (do not duplicate here)
+   script.js — Site UI only (cover, nav, progress, modal, basic toggles)
+   Does NOT own the Honey Catch game (that’s game.js).
    ========================================================================== */
-
-/* eslint-disable no-console */
 'use strict';
 
 (function () {
-  // ------------------------------------------------------------
-  // Tiny utils
-  // ------------------------------------------------------------
   const $ = (sel, root = document) => root.querySelector(sel);
   const $$ = (sel, root = document) => Array.from(root.querySelectorAll(sel));
 
-  const prefersReducedMotion = () =>
-    window.matchMedia && window.matchMedia('(prefers-reduced-motion: reduce)').matches;
-
-  function safeFocus(el) {
-    try {
-      if (el && typeof el.focus === 'function') el.focus();
-    } catch (_) {}
-  }
-
-  // ------------------------------------------------------------
-  // DOM refs (site)
-  // ------------------------------------------------------------
-  const dom = {
-    // Nav
-    navToggle: $('.nav-toggle'),
-    navMenu: $('.nav-menu'),
-
-    // Cover / loading
-    cover: $('.storybook-cover'),
-    coverForm: $('.storybook-form'),
-    coverName: $('#guestName'),
-    coverBtn: $('#enterAdventure'),
-    loading: $('.loading-screen'),
-    loadingFill: $('.loading-progress-fill'),
-    loadingPct: $('.loading-percentage'),
-
-    // Reading progress
-    readingProgress: $('.reading-progress'),
-
-    // Character modal system (single)
-    characterModal: $('#characterModal'),
-    characterModalClose: $('#closeCharacterModal'),
-    characterModalContent: $('#characterModalContent'),
-
-    // Floating buttons (optional)
-    musicBtn: $('#musicToggle'),
-    accessibilityBtn: $('#accessibilityToggle'),
-    scrollTopBtn: $('#scrollTopBtn'),
-    favoriteBtn: $('#favoriteBtn'),
-
-    // Misc
-    page: $('.page') || document.body
+  const state = {
+    muted: false,
+    accessibility: false
   };
 
-  // ------------------------------------------------------------
-  // NAV (hamburger + close-on-outside/esc)
-  // ------------------------------------------------------------
-  function initNav() {
-    if (!dom.navToggle || !dom.navMenu) return;
+  function clamp(n, a, b) { return Math.max(a, Math.min(b, n)); }
 
-    const closeMenu = () => {
-      dom.navToggle.classList.remove('active');
-      dom.navMenu.classList.remove('open');
-      dom.navToggle.setAttribute('aria-expanded', 'false');
+  // ---------------------------------------------------------------------------
+  // Cover
+  // ---------------------------------------------------------------------------
+  function initCover() {
+    const cover = $('#cover');
+    const enter = $('#enterStory');
+
+    if (!cover || !enter) return;
+
+    const closeCover = () => {
+      cover.classList.add('closed');
+      cover.setAttribute('aria-hidden', 'true');
+      document.body.classList.remove('cover-open');
     };
 
-    const openMenu = () => {
-      dom.navToggle.classList.add('active');
-      dom.navMenu.classList.add('open');
-      dom.navToggle.setAttribute('aria-expanded', 'true');
-    };
+    document.body.classList.add('cover-open');
 
-    const toggleMenu = () => {
-      const isOpen = dom.navMenu.classList.contains('open');
-      if (isOpen) closeMenu();
-      else openMenu();
-    };
-
-    // Harden attributes
-    dom.navToggle.setAttribute('aria-controls', dom.navMenu.id || 'navMenu');
-    dom.navToggle.setAttribute('aria-expanded', 'false');
-
-    dom.navToggle.addEventListener('click', (e) => {
-      e.preventDefault();
-      toggleMenu();
+    enter.addEventListener('click', () => {
+      closeCover();
+      // Nudge focus to main content for accessibility
+      const main = $('#main');
+      if (main) main.setAttribute('tabindex', '-1');
+      if (main) main.focus({ preventScroll: true });
+      window.setTimeout(() => main && main.removeAttribute('tabindex'), 300);
     });
 
-    // Close when clicking a nav link (mobile)
-    dom.navMenu.addEventListener('click', (e) => {
-      const a = e.target.closest('a');
-      if (a) closeMenu();
+    // Escape closes cover
+    document.addEventListener('keydown', (e) => {
+      if (e.key === 'Escape' && !cover.classList.contains('closed')) closeCover();
+    });
+  }
+
+  // ---------------------------------------------------------------------------
+  // Nav (mobile dropdown)
+  // ---------------------------------------------------------------------------
+  function initNav() {
+    const toggle = $('#navToggle');
+    const menu = $('#navMenu');
+    if (!toggle || !menu) return;
+
+    const setOpen = (open) => {
+      menu.classList.toggle('open', open);
+      toggle.classList.toggle('active', open);
+      toggle.setAttribute('aria-expanded', String(open));
+      toggle.setAttribute('aria-label', open ? 'Close menu' : 'Open menu');
+    };
+
+    toggle.addEventListener('click', () => {
+      const open = !menu.classList.contains('open');
+      setOpen(open);
+    });
+
+    // Close when clicking a link
+    menu.addEventListener('click', (e) => {
+      const a = e.target.closest('a[href^="#"]');
+      if (!a) return;
+      setOpen(false);
     });
 
     // Close on outside click
     document.addEventListener('click', (e) => {
-      const isClickInside =
-        dom.navMenu.contains(e.target) || dom.navToggle.contains(e.target);
-      if (!isClickInside) closeMenu();
+      if (!menu.classList.contains('open')) return;
+      const inside = e.target.closest('#navMenu') || e.target.closest('#navToggle');
+      if (!inside) setOpen(false);
     });
 
-    // Close on ESC
+    // Close on escape
     document.addEventListener('keydown', (e) => {
-      if (e.key === 'Escape') closeMenu();
+      if (e.key === 'Escape') setOpen(false);
     });
   }
 
-  // ------------------------------------------------------------
-  // COVER + LOADING (lightweight “enter” flow)
-  // ------------------------------------------------------------
-  function setLoadingProgress(pct) {
-    if (!dom.loadingFill || !dom.loadingPct) return;
-    const clamped = Math.max(0, Math.min(100, pct));
-    dom.loadingFill.style.width = `${clamped}%`;
-    dom.loadingPct.textContent = `${Math.round(clamped)}%`;
+  // ---------------------------------------------------------------------------
+  // Reading progress bar
+  // ---------------------------------------------------------------------------
+  function initReadingProgress() {
+    const bar = $('#readingProgress');
+    if (!bar) return;
+
+    const onScroll = () => {
+      const doc = document.documentElement;
+      const scrollTop = doc.scrollTop || document.body.scrollTop;
+      const height = (doc.scrollHeight - doc.clientHeight) || 1;
+      const pct = clamp((scrollTop / height) * 100, 0, 100);
+      bar.style.width = pct.toFixed(2) + '%';
+    };
+
+    window.addEventListener('scroll', onScroll, { passive: true });
+    window.addEventListener('resize', onScroll);
+    onScroll();
   }
 
-  function showLoading() {
-    if (!dom.loading) return;
-    dom.loading.style.opacity = '1';
-    dom.loading.style.transform = 'translateY(0)';
-    dom.loading.classList.remove('hidden');
-  }
+  // ---------------------------------------------------------------------------
+  // Floating buttons
+  // ---------------------------------------------------------------------------
+  function initFABs() {
+    const muteBtn = $('#muteToggle');
+    const accBtn = $('#accessibilityToggle');
+    const topBtn = $('#scrollTop');
 
-  function hideLoading() {
-    if (!dom.loading) return;
-    dom.loading.style.opacity = '0';
-    dom.loading.style.transform = 'translateY(8px)';
-    setTimeout(() => dom.loading.classList.add('hidden'), 240);
-  }
+    if (topBtn) {
+      topBtn.addEventListener('click', () => window.scrollTo({ top: 0, behavior: 'smooth' }));
+    }
 
-  function closeCover() {
-    if (!dom.cover) return;
-    dom.cover.classList.add('closed');
-    // Prevent focus traps behind overlay
-    setTimeout(() => {
-      dom.cover.setAttribute('aria-hidden', 'true');
-    }, 400);
-  }
-
-  function initCover() {
-    if (!dom.cover || !dom.coverBtn) return;
-
-    // Enter button should work even if form markup varies
-    const onEnter = (e) => {
-      e.preventDefault();
-
-      // Start a tiny “loading” progression (purely cosmetic)
-      showLoading();
-      setLoadingProgress(12);
-
-      const steps = prefersReducedMotion()
-        ? [40, 70, 100]
-        : [20, 38, 52, 68, 82, 92, 100];
-
-      let i = 0;
-      const tick = () => {
-        setLoadingProgress(steps[i]);
-        i++;
-        if (i < steps.length) {
-          setTimeout(tick, prefersReducedMotion() ? 80 : 120);
-        } else {
-          setTimeout(() => {
-            hideLoading();
-            closeCover();
-            // Focus first heading for accessibility
-            const h1 = $('.storybook-heading') || $('h1') || $('main');
-            safeFocus(h1);
-          }, 180);
-        }
+    if (muteBtn) {
+      const sync = () => {
+        muteBtn.setAttribute('aria-pressed', String(state.muted));
+        muteBtn.innerHTML = state.muted
+          ? '<i class="fa-solid fa-volume-xmark" aria-hidden="true"></i>'
+          : '<i class="fa-solid fa-volume-high" aria-hidden="true"></i>';
       };
 
-      // Store guest name (optional)
-      const name = dom.coverName ? String(dom.coverName.value || '').trim() : '';
-      if (name) {
-        try {
-          localStorage.setItem('gunnar_guest_name', name);
-        } catch (_) {}
+      muteBtn.addEventListener('click', () => {
+        state.muted = !state.muted;
+        // If you have an audio manager, tell it (optional)
+        if (window.audioManager && typeof window.audioManager.setMuted === 'function') {
+          window.audioManager.setMuted(state.muted);
+        }
+        sync();
+      });
+
+      sync();
+    }
+
+    if (accBtn) {
+      const sync = () => {
+        accBtn.setAttribute('aria-pressed', String(state.accessibility));
+        document.documentElement.classList.toggle('a11y', state.accessibility);
+      };
+
+      accBtn.addEventListener('click', () => {
+        state.accessibility = !state.accessibility;
+        sync();
+      });
+
+      sync();
+    }
+  }
+
+  // ---------------------------------------------------------------------------
+  // Character modal
+  // ---------------------------------------------------------------------------
+  function initCharacterModal() {
+    const modal = $('#characterModal');
+    const closeBtn = $('#closeCharacterModal');
+    if (!modal || !closeBtn) return;
+
+    const icon = $('#modalIcon');
+    const name = $('#modalName');
+    const quote = $('#modalQuote');
+    const bio = $('#modalBio');
+
+    const DATA = {
+      pooh: {
+        name: 'Pooh',
+        quote: 'A little honey goes a long way.',
+        bio: 'Pooh is here for the sweet moments and the quiet joy. He approves of naps.',
+        iconClass: 'pooh-icon-modal'
+      },
+      piglet: {
+        name: 'Piglet',
+        quote: 'Small steps. Big heart.',
+        bio: 'Piglet shows up even when things feel big. That’s courage, plain and simple.',
+        iconClass: 'piglet-icon-modal'
+      },
+      eeyore: {
+        name: 'Eeyore',
+        quote: 'Quiet love still counts.',
+        bio: 'Eeyore won’t make a big speech. He’ll still be there.',
+        iconClass: 'eeyore-icon-modal'
+      },
+      tigger: {
+        name: 'Tigger',
+        quote: 'Bounce into the fun-fun.',
+        bio: 'Tigger brings the energy. Sometimes the best plan is “boing.”',
+        iconClass: 'tigger-icon-modal'
+      }
+    };
+
+    function open(characterKey) {
+      const d = DATA[characterKey] || { name: 'Friend', quote: 'Hello.', bio: 'A gentle note.', iconClass: '' };
+
+      if (name) name.textContent = d.name;
+      if (quote) quote.textContent = d.quote;
+      if (bio) bio.textContent = d.bio;
+
+      if (icon) {
+        icon.className = 'modal-character-icon ' + (d.iconClass || '');
+        icon.innerHTML = ''; // keep simple; your CSS handles background
       }
 
-      tick();
-    };
-
-    dom.coverBtn.addEventListener('click', onEnter);
-
-    // Support submit on Enter
-    if (dom.coverForm) {
-      dom.coverForm.addEventListener('submit', onEnter);
+      modal.classList.add('active');
+      closeBtn.focus({ preventScroll: true });
+      document.body.style.overflow = 'hidden';
     }
 
-    // Pre-fill name if stored
-    if (dom.coverName) {
-      try {
-        const stored = localStorage.getItem('gunnar_guest_name');
-        if (stored) dom.coverName.value = stored;
-      } catch (_) {}
+    function close() {
+      modal.classList.remove('active');
+      document.body.style.overflow = '';
     }
-  }
 
-  // ------------------------------------------------------------
-  // READING PROGRESS BAR
-  // ------------------------------------------------------------
-  function initReadingProgress() {
-    if (!dom.readingProgress) return;
+    closeBtn.addEventListener('click', close);
 
-    const update = () => {
-      const doc = document.documentElement;
-      const scrollTop = window.scrollY || doc.scrollTop || 0;
-      const height = Math.max(1, doc.scrollHeight - window.innerHeight);
-      const pct = Math.max(0, Math.min(1, scrollTop / height));
-      dom.readingProgress.style.width = `${pct * 100}%`;
-    };
-
-    update();
-    window.addEventListener('scroll', update, { passive: true });
-    window.addEventListener('resize', update);
-  }
-
-  // ------------------------------------------------------------
-  // CHARACTER MODAL (single system; cards just need data-attrs)
-  // ------------------------------------------------------------
-  function openCharacterModal(payload) {
-    if (!dom.characterModal || !dom.characterModalContent) return;
-
-    dom.characterModalContent.innerHTML = `
-      <div class="modal-character">
-        <div class="modal-character-icon ${payload.iconClass || ''}">
-          ${payload.img ? `<img src="${payload.img}" alt="${payload.name || 'Character'}">` : ''}
-        </div>
-        <div>
-          <h3 class="modal-character-name">${payload.name || 'Friend'}</h3>
-        </div>
-      </div>
-      ${payload.quote ? `<p class="modal-character-quote">“${payload.quote}”</p>` : ''}
-      ${payload.bio ? `<div class="modal-character-bio">${payload.bio}</div>` : ''}
-    `;
-
-    dom.characterModal.classList.add('active');
-    dom.characterModal.setAttribute('aria-hidden', 'false');
-
-    // focus close button
-    safeFocus(dom.characterModalClose || $('.close-modal', dom.characterModal));
-  }
-
-  function closeCharacterModal() {
-    if (!dom.characterModal) return;
-    dom.characterModal.classList.remove('active');
-    dom.characterModal.setAttribute('aria-hidden', 'true');
-  }
-
-  function initCharacterCards() {
-    // Supports: .clickable-character, .character-card-enhanced, .character-spotlight
-    const cards = $$('.clickable-character, .character-card-enhanced, .character-spotlight');
-    if (!cards.length) return;
-
-    cards.forEach((card) => {
-      card.addEventListener('click', () => {
-        const name =
-          card.getAttribute('data-name') ||
-          card.getAttribute('data-character') ||
-          card.querySelector('.character-name')?.textContent?.trim() ||
-          'Friend';
-
-        const quote =
-          card.getAttribute('data-quote') ||
-          card.querySelector('.character-quote')?.textContent?.trim() ||
-          '';
-
-        const bio = card.getAttribute('data-bio') || card.getAttribute('data-message') || '';
-
-        const img = card.querySelector('img')?.getAttribute('src') || '';
-        const iconClass = card.getAttribute('data-icon-class') || '';
-
-        openCharacterModal({ name, quote, bio, img, iconClass });
-      });
-
-      card.addEventListener('keydown', (e) => {
-        if (e.key === 'Enter' || e.key === ' ') {
-          e.preventDefault();
-          card.click();
-        }
-      });
+    modal.addEventListener('click', (e) => {
+      const inside = e.target.closest('.modal-content');
+      if (!inside) close();
     });
-
-    // Close handlers
-    if (dom.characterModal) {
-      dom.characterModal.addEventListener('click', (e) => {
-        if (e.target === dom.characterModal) closeCharacterModal();
-      });
-    }
-    if (dom.characterModalClose) dom.characterModalClose.addEventListener('click', closeCharacterModal);
 
     document.addEventListener('keydown', (e) => {
-      if (e.key === 'Escape' && dom.characterModal?.classList.contains('active')) {
-        closeCharacterModal();
-      }
+      if (e.key === 'Escape' && modal.classList.contains('active')) close();
+    });
+
+    // Wire up friend cards
+    $$('.character-spotlight,[data-character]').forEach((el) => {
+      const key = el.getAttribute('data-character');
+      if (!key) return;
+      el.addEventListener('click', () => open(key));
+      el.addEventListener('keydown', (e) => {
+        if (e.key === 'Enter' || e.key === ' ') {
+          e.preventDefault();
+          open(key);
+        }
+      });
     });
   }
 
-  // ------------------------------------------------------------
-  // FLOATING BUTTONS (optional wiring)
-  // ------------------------------------------------------------
-  function initFloatingButtons() {
-    // Scroll to top
-    if (dom.scrollTopBtn) {
-      dom.scrollTopBtn.addEventListener('click', () => {
-        window.scrollTo({ top: 0, behavior: prefersReducedMotion() ? 'auto' : 'smooth' });
-      });
-    }
-
-    // Favorites (simple UI-only toggle)
-    if (dom.favoriteBtn) {
-      dom.favoriteBtn.addEventListener('click', () => {
-        dom.favoriteBtn.classList.toggle('active');
-        try {
-          localStorage.setItem(
-            'gunnar_favorite_active',
-            dom.favoriteBtn.classList.contains('active') ? '1' : '0'
-          );
-        } catch (_) {}
-      });
-
-      try {
-        const v = localStorage.getItem('gunnar_favorite_active');
-        if (v === '1') dom.favoriteBtn.classList.add('active');
-      } catch (_) {}
-    }
-
-    // Accessibility quick toggle (example: bigger text)
-    if (dom.accessibilityBtn) {
-      dom.accessibilityBtn.addEventListener('click', () => {
-        document.documentElement.classList.toggle('a11y-bigtext');
-        const on = document.documentElement.classList.contains('a11y-bigtext');
-        dom.accessibilityBtn.setAttribute('aria-pressed', on ? 'true' : 'false');
-        try {
-          localStorage.setItem('gunnar_a11y_bigtext', on ? '1' : '0');
-        } catch (_) {}
-      });
-
-      try {
-        const on = localStorage.getItem('gunnar_a11y_bigtext') === '1';
-        if (on) {
-          document.documentElement.classList.add('a11y-bigtext');
-          dom.accessibilityBtn.setAttribute('aria-pressed', 'true');
-        }
-      } catch (_) {}
-    }
-
-    // Music toggle (delegates to window.audioManager if present)
-    if (dom.musicBtn) {
-      dom.musicBtn.addEventListener('click', async () => {
-        const am = window.audioManager;
-        if (!am) {
-          console.warn('audioManager not found (ok if you removed audio).');
-          return;
-        }
-
-        try {
-          const isMuted = !!am.isMuted;
-          if (typeof am.setMuted === 'function') am.setMuted(!isMuted);
-          else am.isMuted = !isMuted;
-
-          dom.musicBtn.classList.toggle('muted', !(!am.isMuted));
-          dom.musicBtn.setAttribute('aria-pressed', am.isMuted ? 'true' : 'false');
-        } catch (e) {
-          console.error('Music toggle failed:', e);
-        }
-      });
-    }
-  }
-
-  // ------------------------------------------------------------
+  // ---------------------------------------------------------------------------
   // Boot
-  // ------------------------------------------------------------
+  // ---------------------------------------------------------------------------
   document.addEventListener('DOMContentLoaded', () => {
-    try {
-      initNav();
-      initCover();
-      initReadingProgress();
-      initCharacterCards();
-      initFloatingButtons();
-    } catch (err) {
-      console.error('script.js init failed:', err);
-    }
+    initCover();
+    initNav();
+    initReadingProgress();
+    initFABs();
+    initCharacterModal();
   });
 })();
