@@ -139,9 +139,44 @@ function EnhancedHoneyCatchGame() {
     const statusEl = document.getElementById('catchStatus');
 
     const joystick = document.getElementById('catchJoystick');
-const joystickKnob =
-  document.getElementById('catchJoystickKnob') ||
-  (joystick ? joystick.querySelector('.joystick-handle, .joystick-knob') : null);
+    const joystickKnob =
+      document.getElementById('catchJoystickKnob') ||
+      (joystick ? joystick.querySelector('.joystick-handle, .joystick-knob') : null);
+    const timeBar = document.getElementById('catch-timebar');
+    const lifeBar = document.getElementById('catch-life-bar');
+    const modeButtons = Array.from(document.querySelectorAll('[data-catch-mode]'));
+    const modeDescription = document.getElementById('catch-mode-description');
+    const bestScoreEl = document.getElementById('catch-best');
+
+    const MODES = {
+      calm: {
+        label: 'Calm Stroll',
+        time: 70,
+        lives: 4,
+        spawnScale: 0.92,
+        speedScale: 0.92,
+        scoreScale: 0.95,
+        hint: 'A relaxed 70 second run with extra hearts.',
+      },
+      brisk: {
+        label: 'Adventure',
+        time: 60,
+        lives: 3,
+        spawnScale: 1,
+        speedScale: 1,
+        scoreScale: 1,
+        hint: 'Balanced pace. Great for personal bests.',
+      },
+      rush: {
+        label: 'Honey Rush',
+        time: 50,
+        lives: 2,
+        spawnScale: 1.14,
+        speedScale: 1.08,
+        scoreScale: 1.12,
+        hint: 'Short, spicy, and higher scoring.',
+      },
+    };
     // Canvas sizing: CSS px coordinates, DPR drawing buffer
     let W = 0;
     let H = 0;
@@ -340,6 +375,12 @@ const joystickKnob =
       slowMo: false,
       slowMoUntil: 0,
 
+      honeyRushUntil: 0,
+      bestScore: 0,
+
+      mode: 'calm',
+      modeCfg: MODES.calm,
+
       difficulty: 0,
 
       lastTs: nowMs(),
@@ -368,6 +409,19 @@ const joystickKnob =
       if (comboSpan) comboSpan.textContent = String(state.combos || 0);
       if (multiplierSpan) multiplierSpan.textContent = String(Math.round(state.multiplier * 10) / 10);
       if (pauseBtn) pauseBtn.setAttribute('aria-pressed', state.paused ? 'true' : 'false');
+      if (bestScoreEl) bestScoreEl.textContent = String(state.bestScore);
+
+      const timePct = clamp((state.timeLeft / state.modeCfg.time) * 100, 0, 100);
+      if (timeBar) {
+        timeBar.style.setProperty('--w', `${timePct}%`);
+        timeBar.style.width = `${timePct}%`;
+      }
+
+      const lifePct = clamp((state.lives / state.modeCfg.lives) * 100, 0, 100);
+      if (lifeBar) {
+        lifeBar.style.setProperty('--w', `${lifePct}%`);
+        lifeBar.style.width = `${lifePct}%`;
+      }
     }
 
     function setStatus(text) {
@@ -390,18 +444,53 @@ const joystickKnob =
       }
     }
 
+    function setMode(modeKey) {
+      const cfg = MODES[modeKey] || MODES.calm;
+      state.mode = modeKey in MODES ? modeKey : 'calm';
+      state.modeCfg = cfg;
+
+      modeButtons.forEach((btn) => btn.classList.toggle('is-active', btn.dataset.catchMode === state.mode));
+      if (modeDescription) modeDescription.textContent = cfg.hint;
+
+      if (!state.running) {
+        state.timeLeft = cfg.time;
+        state.lives = cfg.lives;
+        syncHUD();
+      }
+    }
+
+    function loadBestScore() {
+      try {
+        const stored = Number(localStorage.getItem('catchBest') || '0');
+        if (!Number.isNaN(stored) && stored > 0) {
+          state.bestScore = stored;
+        }
+      } catch (_) {}
+    }
+
+    function maybeUpdateBest(score) {
+      if (score <= state.bestScore) return false;
+      state.bestScore = score;
+      try {
+        localStorage.setItem('catchBest', String(score));
+      } catch (_) {}
+      syncHUD();
+      return true;
+    }
+
     // -------------------------------------------------------------------------
     // Spawn + collisions
     // -------------------------------------------------------------------------
     function spawnPot() {
-      const goldenChance = 0.16 + state.difficulty * 0.02;
+      const rushActive = state.honeyRushUntil > Date.now();
+      const goldenChance = 0.16 + state.difficulty * 0.02 + (rushActive ? 0.35 : 0);
       const type = Math.random() < goldenChance ? 'golden' : 'normal';
 
       state.pots.push({
         x: 20 + Math.random() * (W - 40),
         y: -18,
         r: 14,
-        vy: 2.2 + Math.random() * (1.6 + state.difficulty * 0.22),
+        vy: (2.2 + Math.random() * (1.6 + state.difficulty * 0.22)) * state.modeCfg.speedScale,
         type,
       });
     }
@@ -414,7 +503,7 @@ const joystickKnob =
         x: 20 + Math.random() * (W - 40),
         y: -18,
         r: 14,
-        vy: 2.9 + Math.random() * (1.8 + state.difficulty * 0.22),
+        vy: (2.9 + Math.random() * (1.8 + state.difficulty * 0.22)) * state.modeCfg.speedScale,
         type,
         vx: 0,
       });
@@ -427,7 +516,7 @@ const joystickKnob =
         x: 24 + Math.random() * (W - 48),
         y: -18,
         r: 14,
-        vy: 2.0 + Math.random() * 1.2,
+        vy: (2.0 + Math.random() * 1.2) * state.modeCfg.speedScale,
         type,
       });
     }
@@ -476,6 +565,14 @@ const joystickKnob =
         state.slowMo = true;
         state.slowMoUntil = now + powerUpTypes.lightning.duration;
         setOverlay('Slow motion!', 'Everything slows down.', false, 900);
+      }
+    }
+
+    function triggerHoneyRush() {
+      state.honeyRushUntil = Date.now() + 5200;
+      setOverlay('Honey rush!', 'Golden pots pouring in. Bees ease up briefly.', false, 1100);
+      if (window.audioManager && typeof window.audioManager.playTone === 'function') {
+        window.audioManager.playTone([523.25, 659.25], 0.12);
       }
     }
 
@@ -706,9 +803,17 @@ const joystickKnob =
       const beeCap = 7;
       const powCap = 3;
 
-      if (state.pots.length < potCap && Math.random() < 0.05 + state.difficulty * 0.01) spawnPot();
-      if (state.bees.length < beeCap && Math.random() < 0.02 + state.difficulty * 0.006) spawnBee();
-      if (state.powerUps.length < powCap && Math.random() < 0.01) spawnPowerUp();
+      const rushActive = state.honeyRushUntil > Date.now();
+      const spawnScale = state.modeCfg.spawnScale || 1;
+
+      const potChance = (0.05 + state.difficulty * 0.01 + (rushActive ? 0.08 : 0)) * spawnScale;
+      if (state.pots.length < potCap && Math.random() < potChance) spawnPot();
+
+      const beeChance = (0.02 + state.difficulty * 0.006) * spawnScale * (rushActive ? 0.75 : 1);
+      if (state.bees.length < beeCap && Math.random() < beeChance) spawnBee();
+
+      const powerChance = 0.01 * spawnScale;
+      if (state.powerUps.length < powCap && Math.random() < powerChance) spawnPowerUp();
 
       // move pots
       for (let i = state.pots.length - 1; i >= 0; i--) {
@@ -731,6 +836,10 @@ const joystickKnob =
             state.multiplier = 1.12;
           }
           state.lastCatchAt = t;
+
+          if (state.streak >= 6 && state.honeyRushUntil < Date.now()) {
+            triggerHoneyRush();
+          }
 
           points = Math.round(points * state.multiplier);
           state.score += points;
@@ -954,8 +1063,8 @@ const joystickKnob =
     // -------------------------------------------------------------------------
     function resetGameState() {
       state.score = 0;
-      state.timeLeft = 60;
-      state.lives = 3;
+      state.timeLeft = state.modeCfg.time;
+      state.lives = state.modeCfg.lives;
       state.combos = 0;
       state.multiplier = 1;
       state.streak = 0;
@@ -964,6 +1073,8 @@ const joystickKnob =
       state.invincible = false;
       state.doublePoints = false;
       state.slowMo = false;
+
+      state.honeyRushUntil = 0;
 
       state.difficulty = 0;
 
@@ -989,7 +1100,8 @@ const joystickKnob =
         state.timeLeft -= 1;
 
         // ramp difficulty every 15 seconds
-        const elapsed = 60 - state.timeLeft;
+        const totalTime = state.modeCfg.time;
+        const elapsed = totalTime - state.timeLeft;
         state.difficulty = Math.floor(elapsed / 15);
 
         syncHUD();
@@ -1081,15 +1193,16 @@ const joystickKnob =
       state.countdownId = null;
 
       const bonus =
-        (state.lives === 3 ? 100 : 0) +
+        (state.lives >= state.modeCfg.lives ? 100 : 0) +
         (state.combos >= 10 ? 50 : 0) +
         (state.streak >= 15 ? 75 : 0);
 
-      const finalScore = state.score + bonus;
+      const finalScore = Math.round((state.score + bonus) * (state.modeCfg.scoreScale || 1));
+      const isBest = maybeUpdateBest(finalScore);
 
       setOverlay(
         timeExpired ? "Time's up!" : 'Bees win this round!',
-        `Final Score: ${finalScore}${bonus ? ` (+${bonus} bonus)` : ''}`,
+        `Final Score: ${finalScore}${bonus ? ` (+${bonus} bonus)` : ''}${isBest ? ' — New best!' : ''}`,
         true
       );
       setStatus('Game over.');
@@ -1146,6 +1259,15 @@ const joystickKnob =
     if (startBtn) startBtn.addEventListener('click', startGame);
     if (pauseBtn) pauseBtn.addEventListener('click', togglePause);
 
+    modeButtons.forEach((btn) => {
+      btn.addEventListener('click', () => {
+        const modeKey = btn.dataset.catchMode;
+        setMode(modeKey);
+        setStatus(`${state.modeCfg.label} mode armed.`);
+        setOverlay(state.modeCfg.label, state.modeCfg.hint, false, 900);
+      });
+    });
+
     // Global unlock hooks (first interaction anywhere)
 // Touch start: move Pooh + unlock audio (and block iOS long-press loupe)
 canvas.addEventListener(
@@ -1163,6 +1285,9 @@ canvas.addEventListener(
 
     setupJoystick();
 
+    loadBestScore();
+    setMode(state.mode);
+
     // Resize once now and again shortly after layout settles (mobile Safari)
     resizeCanvas();
     setTimeout(resizeCanvas, 50);
@@ -1171,7 +1296,7 @@ canvas.addEventListener(
 
     // Initial HUD/overlay
     syncHUD();
-    setOverlay('Ready when you are.', 'Press Start to begin a calm 60 second run.', true);
+    setOverlay('Ready when you are.', `Press Start to begin a ${state.modeCfg.label} run.`, true);
     setStatus('Ready.');
 
     // Render idle frame

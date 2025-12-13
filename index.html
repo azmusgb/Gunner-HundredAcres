@@ -151,6 +151,12 @@
                      <p class="game-help">
                         Move Pooh left/right. Catch honey. Dodge bees. Power-ups help.
                      </p>
+                     <div class="game-mode-toggle" role="group" aria-label="Pick a tempo">
+                        <button class="mode-chip is-active" data-catch-mode="calm" type="button">Calm Stroll</button>
+                        <button class="mode-chip" data-catch-mode="brisk" type="button">Adventure</button>
+                        <button class="mode-chip" data-catch-mode="rush" type="button">Honey Rush</button>
+                        <p class="mode-chip-note" id="catch-mode-description">A relaxed 70 second run with extra hearts.</p>
+                     </div>
                   </header>
                   <!-- Required HUD IDs for game.js -->
                   <div class="game-hud" aria-label="Game status">
@@ -159,6 +165,21 @@
                      <span class="hud-stat"><span class="hud-pill">Lives: <span id="catch-lives">3</span></span></span>
                      <span class="hud-stat"><span class="hud-pill"><span id="catch-combo">0</span> Combo</span></span>
                      <span class="hud-stat"><span class="hud-pill">×<span id="catch-multiplier">1</span></span></span>
+                     <span class="hud-stat"><span class="hud-pill">Best: <span id="catch-best">0</span></span></span>
+                  </div>
+                  <div class="hud-progress" aria-hidden="false">
+                     <div class="progress-block">
+                        <div class="progress-label">Time left</div>
+                        <div class="progress-track">
+                           <div class="progress-fill" id="catch-timebar"></div>
+                        </div>
+                     </div>
+                     <div class="progress-block">
+                        <div class="progress-label">Hearts</div>
+                        <div class="progress-track hearts">
+                           <div class="progress-fill" id="catch-life-bar"></div>
+                        </div>
+                     </div>
                   </div>
                   <div class="game-stage">
                      <canvas id="honey-game" class="game-canvas" aria-label="Honey Pot Catch canvas"></canvas>
@@ -176,11 +197,48 @@
                      <button class="btn btn-secondary" id="pause-catch" type="button" aria-pressed="false">
                      <i class="fa-solid fa-pause" aria-hidden="true"></i> Pause
                      </button>
+                     <div class="joystick-dock" aria-hidden="false">
+                        <div id="catchJoystick" class="virtual-joystick" aria-label="Drag to steer Pooh">
+                           <div class="joystick-base"></div>
+                           <div class="joystick-knob" id="catchJoystickKnob"></div>
+                        </div>
+                        <p class="joystick-hint">Drag on phones. Arrow keys + mouse also work.</p>
+                     </div>
                   </div>
                   <!-- SINGLE status element, not duplicate -->
                   <p class="tip" id="catchStatus" aria-live="polite" style="margin: 12px 14px 16px;">
                      Ready.
                   </p>
+                  <div class="game-guide-grid" aria-label="How to play">
+                     <div class="guide-card">
+                        <div class="guide-icon">🍯</div>
+                        <div>
+                           <h4>Sweet catches</h4>
+                           <p>Golden pots boost your score and streak. Keep moving to chain them.</p>
+                        </div>
+                     </div>
+                     <div class="guide-card">
+                        <div class="guide-icon">🐝</div>
+                        <div>
+                           <h4>Watch the buzz</h4>
+                           <p>Angry bees drift toward Pooh. A shield or quick sidestep keeps hearts safe.</p>
+                        </div>
+                     </div>
+                     <div class="guide-card">
+                        <div class="guide-icon">⭐</div>
+                        <div>
+                           <h4>Power-up moments</h4>
+                           <p>Clock adds time, hearts heal, lightning slows the world, stars double points.</p>
+                        </div>
+                     </div>
+                     <div class="guide-card">
+                        <div class="guide-icon">🎯</div>
+                        <div>
+                           <h4>Chase a personal best</h4>
+                           <p>Your best run is saved locally. Try the Honey Rush tempo for riskier rewards.</p>
+                        </div>
+                     </div>
+                  </div>
                </article>
                <!-- Wishes -->
                <section class="content-section" id="wishes" aria-labelledby="wishesTitle">
