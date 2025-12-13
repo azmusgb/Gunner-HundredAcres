@@ -1,4 +1,4 @@
-// game.js — Honey Pot Catch (Ultimate Enhanced Edition)
+// game.js — Honey Pot Catch (Ultimate Enhanced Edition) - Fixed Version
 'use strict';
 
 (function () {
@@ -7,6 +7,36 @@
   // ---------------------------------------------------------------------------
   const clamp = (v, min, max) => Math.max(min, Math.min(max, v));
   const nowMs = () => (typeof performance !== 'undefined' ? performance.now() : Date.now());
+
+  // Screen Reader Announcement Function
+  function announceToScreenReader(message, priority = 'polite') {
+    // Create aria-live region for screen readers
+    let liveRegion = document.getElementById('sr-announcements');
+    if (!liveRegion) {
+      liveRegion = document.createElement('div');
+      liveRegion.id = 'sr-announcements';
+      liveRegion.setAttribute('aria-live', priority);
+      liveRegion.setAttribute('aria-atomic', 'true');
+      liveRegion.style.position = 'absolute';
+      liveRegion.style.width = '1px';
+      liveRegion.style.height = '1px';
+      liveRegion.style.padding = '0';
+      liveRegion.style.overflow = 'hidden';
+      liveRegion.style.clip = 'rect(0, 0, 0, 0)';
+      liveRegion.style.whiteSpace = 'nowrap';
+      liveRegion.style.border = '0';
+      document.body.appendChild(liveRegion);
+    }
+    
+    // Update content
+    liveRegion.textContent = message;
+    
+    // Clear after a moment for repeated announcements
+    if (liveRegion._clearTimeout) clearTimeout(liveRegion._clearTimeout);
+    liveRegion._clearTimeout = setTimeout(() => {
+      liveRegion.textContent = '';
+    }, 1000);
+  }
 
   // Enhanced Object Pooling System
   class ObjectPool {
@@ -189,36 +219,6 @@
   function smoothLerp(current, target, factor = 0.2) {
     return current + (target - current) * factor;
   }
-
-  // Performance monitoring utility
-  const perfMonitor = {
-    marks: new Map(),
-    
-    mark(name) {
-      if (typeof performance !== 'undefined' && performance.mark) {
-        performance.mark(`start_${name}`);
-        this.marks.set(name, performance.now());
-      }
-    },
-    
-    measure(name) {
-      if (typeof performance !== 'undefined' && performance.measure) {
-        performance.mark(`end_${name}`);
-        performance.measure(name, `start_${name}`, `end_${name}`);
-        const entry = performance.getEntriesByName(name).pop();
-        return entry ? entry.duration : 0;
-      }
-      return 0;
-    },
-    
-    clear() {
-      if (typeof performance !== 'undefined' && performance.clearMarks) {
-        performance.clearMarks();
-        performance.clearMeasures();
-      }
-      this.marks.clear();
-    }
-  };
 
   // Particle System with enhanced effects
   class ParticleSystem {
@@ -664,15 +664,19 @@
         btn.innerHTML = `<i class="fas ${icon}"></i> ${text}`;
         btn.setAttribute('aria-label', text);
         
-        const controls = document.querySelector('.game-extra-controls') || 
-                        (() => {
-                          const div = document.createElement('div');
-                          div.className = 'game-extra-controls';
-                          document.querySelector('.game-controls').appendChild(div);
-                          return div;
-                        })();
+        let controls = document.querySelector('.game-extra-controls');
+        if (!controls) {
+          const gameControls = document.querySelector('.game-controls');
+          if (gameControls) {
+            controls = document.createElement('div');
+            controls.className = 'game-extra-controls';
+            gameControls.appendChild(controls);
+          }
+        }
         
-        controls.appendChild(btn);
+        if (controls) {
+          controls.appendChild(btn);
+        }
       }
       return btn;
     };
@@ -1429,6 +1433,99 @@
     }
 
     // -------------------------------------------------------------------------
+    // Background Drawing
+    // -------------------------------------------------------------------------
+    function drawBackground() {
+      if (!bgCtx) return;
+      
+      // Set background canvas size
+      bgCanvas.width = W;
+      bgCanvas.height = H;
+      
+      // Clear background
+      bgCtx.clearRect(0, 0, W, H);
+      
+      // Create gradient background
+      const gradient = bgCtx.createLinearGradient(0, 0, 0, H);
+      gradient.addColorStop(0, '#87CEEB');
+      gradient.addColorStop(0.7, '#98D8E8');
+      gradient.addColorStop(1, '#B0E0E6');
+      
+      bgCtx.fillStyle = gradient;
+      bgCtx.fillRect(0, 0, W, H);
+      
+      // Draw clouds
+      drawClouds();
+      
+      // Draw ground
+      drawGround();
+      
+      // Draw trees
+      drawTrees();
+    }
+    
+    function drawClouds() {
+      const cloudCount = Math.floor(W / 200);
+      for (let i = 0; i < cloudCount; i++) {
+        const x = (i * W / cloudCount + (Date.now() * 0.01) % W) % (W + 200) - 100;
+        const y = 40 + Math.sin(i * 2.5) * 20;
+        const size = 30 + Math.sin(i * 3) * 10;
+        
+        bgCtx.save();
+        bgCtx.globalAlpha = 0.8;
+        bgCtx.fillStyle = '#FFFFFF';
+        
+        // Draw cloud with multiple circles
+        bgCtx.beginPath();
+        bgCtx.arc(x, y, size, 0, Math.PI * 2);
+        bgCtx.arc(x + size * 0.7, y - size * 0.3, size * 0.8, 0, Math.PI * 2);
+        bgCtx.arc(x + size * 1.4, y, size * 0.9, 0, Math.PI * 2);
+        bgCtx.arc(x + size * 0.7, y + size * 0.3, size * 0.7, 0, Math.PI * 2);
+        bgCtx.fill();
+        bgCtx.restore();
+      }
+    }
+    
+    function drawGround() {
+      const groundY = H - PLAYER_GROUND_OFFSET + 20;
+      
+      // Grass
+      bgCtx.fillStyle = '#7CFC00';
+      bgCtx.fillRect(0, groundY, W, H - groundY);
+      
+      // Grass details
+      bgCtx.strokeStyle = '#32CD32';
+      bgCtx.lineWidth = 1;
+      for (let i = 0; i < W; i += 3) {
+        const height = 3 + Math.sin(i * 0.1 + Date.now() * 0.002) * 2;
+        bgCtx.beginPath();
+        bgCtx.moveTo(i, groundY);
+        bgCtx.lineTo(i, groundY - height);
+        bgCtx.stroke();
+      }
+    }
+    
+    function drawTrees() {
+      const treeCount = Math.floor(W / 150);
+      for (let i = 0; i < treeCount; i++) {
+        const x = (i * W / treeCount) % W;
+        const y = H - PLAYER_GROUND_OFFSET + 10;
+        const height = 40 + Math.sin(i * 5) * 10;
+        const width = 15 + Math.sin(i * 3) * 5;
+        
+        // Tree trunk
+        bgCtx.fillStyle = '#8B4513';
+        bgCtx.fillRect(x - width/2, y - height, width, height);
+        
+        // Tree foliage
+        bgCtx.fillStyle = '#228B22';
+        bgCtx.beginPath();
+        bgCtx.arc(x, y - height - 15, 25, 0, Math.PI * 2);
+        bgCtx.fill();
+      }
+    }
+
+    // -------------------------------------------------------------------------
     // Spawn Functions with Object Pooling
     // -------------------------------------------------------------------------
     function spawnHoneyPot() {
@@ -1827,6 +1924,7 @@
       
       // Update particles
       particles.update(scaledDt);
+      scorePopups.update(scaledDt);
       
       // Update combo timer
       if (state.combos > 0 && now - state.lastCatchTime > 2000) {
@@ -1976,6 +2074,9 @@
       // Update score
       state.score += points;
       
+      // Create score popup
+      scorePopups.create(pot.x, pot.y, points, isGolden ? 'golden' : state.combos >= 5 ? 'combo' : 'normal');
+      
       // Update statistics
       updateStat('potsCaught', 1);
       updateStat('totalScore', points);
@@ -2025,9 +2126,26 @@
       // Update HUD
       updateHUD();
       
-      // Audio feedback
+      // Audio feedback (if available)
       if (window.audioManager && typeof window.audioManager.playGameSound === 'function') {
         window.audioManager.playGameSound(isGolden ? 'golden' : 'collect');
+      } else {
+        // Fallback: play simple tones
+        try {
+          const audioContext = window.audioContext || (window.AudioContext && new AudioContext());
+          if (audioContext) {
+            const oscillator = audioContext.createOscillator();
+            const gainNode = audioContext.createGain();
+            oscillator.connect(gainNode);
+            gainNode.connect(audioContext.destination);
+            oscillator.frequency.value = isGolden ? 800 : 600;
+            gainNode.gain.value = 0.1;
+            oscillator.start();
+            oscillator.stop(audioContext.currentTime + 0.1);
+          }
+        } catch (e) {
+          console.log('Audio fallback failed:', e);
+        }
       }
       
       // Announce to screen reader
@@ -2070,9 +2188,26 @@
         }
       }
       
-      // Audio feedback
+      // Audio feedback (if available)
       if (window.audioManager && typeof window.audioManager.playGameSound === 'function') {
         window.audioManager.playGameSound('damage');
+      } else {
+        // Fallback
+        try {
+          const audioContext = window.audioContext || (window.AudioContext && new AudioContext());
+          if (audioContext) {
+            const oscillator = audioContext.createOscillator();
+            const gainNode = audioContext.createGain();
+            oscillator.connect(gainNode);
+            gainNode.connect(audioContext.destination);
+            oscillator.frequency.value = 300;
+            gainNode.gain.value = 0.1;
+            oscillator.start();
+            oscillator.stop(audioContext.currentTime + 0.1);
+          }
+        } catch (e) {
+          console.log('Audio fallback failed:', e);
+        }
       }
     }
 
@@ -2081,8 +2216,8 @@
       ctx.clearRect(0, 0, W, H);
       
       // Draw background
-      if (bgCanvas) {
-        ctx.drawImage(bgCanvas, 0, 0);
+      if (bgCanvas && bgCanvas.width > 0 && bgCanvas.height > 0) {
+        ctx.drawImage(bgCanvas, 0, 0, W, H);
       }
       
       // Draw game objects
@@ -2091,7 +2226,10 @@
       state.powerUps.forEach(pu => drawPowerUp(pu));
       
       // Draw particles
-      particles.render();
+      particles.render(ctx);
+      
+      // Draw score popups
+      scorePopups.render(ctx);
       
       // Draw Pooh
       drawPooh();
@@ -2234,9 +2372,30 @@
             gameLoop();
           }
           
-          // Audio feedback
+          // Audio feedback (if available)
           if (window.audioManager && typeof window.audioManager.playTone === 'function') {
             window.audioManager.playTone([523.25, 659.25, 783.99], 0.15);
+          } else {
+            // Fallback
+            try {
+              const audioContext = window.audioContext || (window.AudioContext && new AudioContext());
+              if (audioContext) {
+                [523.25, 659.25, 783.99].forEach((freq, i) => {
+                  setTimeout(() => {
+                    const oscillator = audioContext.createOscillator();
+                    const gainNode = audioContext.createGain();
+                    oscillator.connect(gainNode);
+                    gainNode.connect(audioContext.destination);
+                    oscillator.frequency.value = freq;
+                    gainNode.gain.value = 0.1;
+                    oscillator.start();
+                    oscillator.stop(audioContext.currentTime + 0.1);
+                  }, i * 100);
+                });
+              }
+            } catch (e) {
+              console.log('Audio fallback failed:', e);
+            }
           }
         }
       }, 1000);
@@ -2254,6 +2413,7 @@
       state.powerUps.length = 0;
       
       particles.clear();
+      scorePopups.clear();
       
       // Reset game state
       state.score = 0;
@@ -2402,9 +2562,36 @@
         gravity: 0.1
       });
       
-      // Audio feedback
+      // Release all objects back to pools
+      state.pots.forEach(pot => potPool.release(pot));
+      state.pots.length = 0;
+      
+      state.bees.forEach(bee => beePool.release(bee));
+      state.bees.length = 0;
+      
+      state.powerUps.forEach(pu => powerUpPool.release(pu));
+      state.powerUps.length = 0;
+      
+      // Audio feedback (if available)
       if (window.audioManager && typeof window.audioManager.playGameSound === 'function') {
         window.audioManager.playGameSound(timeExpired ? 'victory' : 'defeat');
+      } else {
+        // Fallback
+        try {
+          const audioContext = window.audioContext || (window.AudioContext && new AudioContext());
+          if (audioContext) {
+            const oscillator = audioContext.createOscillator();
+            const gainNode = audioContext.createGain();
+            oscillator.connect(gainNode);
+            gainNode.connect(audioContext.destination);
+            oscillator.frequency.value = timeExpired ? 1000 : 300;
+            gainNode.gain.value = 0.1;
+            oscillator.start();
+            oscillator.stop(audioContext.currentTime + 0.5);
+          }
+        } catch (e) {
+          console.log('Audio fallback failed:', e);
+        }
       }
     }
 
@@ -2661,6 +2848,58 @@
     }
 
     // -------------------------------------------------------------------------
+    // Canvas Resize Function
+    // -------------------------------------------------------------------------
+    function resizeCanvas() {
+      if (!canvas) return;
+      
+      const container = canvas.parentElement;
+      if (!container) return;
+      
+      // Get container dimensions
+      const containerWidth = container.clientWidth;
+      const containerHeight = container.clientHeight;
+      
+      // Calculate target dimensions (maintain aspect ratio)
+      const targetAspect = 4/3;
+      let width = containerWidth;
+      let height = containerHeight;
+      
+      if (width / height > targetAspect) {
+        width = Math.floor(height * targetAspect);
+      } else {
+        height = Math.floor(width / targetAspect);
+      }
+      
+      // Set canvas dimensions
+      canvas.style.width = `${width}px`;
+      canvas.style.height = `${height}px`;
+      
+      // Set actual canvas resolution (retina support)
+      DPR = window.devicePixelRatio || 1;
+      canvas.width = Math.floor(width * DPR);
+      canvas.height = Math.floor(height * DPR);
+      
+      // Update global dimensions
+      W = canvas.width;
+      H = canvas.height;
+      
+      // Scale context for retina displays
+      ctx.setTransform(DPR, 0, 0, DPR, 0, 0);
+      
+      // Update Pooh position
+      state.pooh.x = W / (2 * DPR);
+      state.pooh.y = H / DPR - PLAYER_GROUND_OFFSET;
+      state.pooh.targetX = state.pooh.x;
+      
+      // Redraw background
+      drawBackground();
+      
+      // Re-render game
+      renderGame();
+    }
+
+    // -------------------------------------------------------------------------
     // Game Loop
     // -------------------------------------------------------------------------
     function gameLoop(timestamp) {
@@ -2699,216 +2938,3 @@
       
       // Set initial mode
       setGameMode('calm');
-      
-      // Setup controls
-      setupJoystick();
-      setupGamepad();
-
-      // Add event listeners
-      canvas.addEventListener('pointerdown', handlePointerDown);
-      canvas.addEventListener('pointerup', handlePointerUp);
-      canvas.addEventListener('pointerleave', handlePointerUp);
-      window.addEventListener('pointercancel', handlePointerUp);
-      canvas.addEventListener('mousemove', handleMouseMove);
-      canvas.addEventListener('touchstart', handleTouchStart, { passive: false });
-      canvas.addEventListener('touchmove', handleTouchMove, { passive: false });
-      canvas.addEventListener('touchend', handleTouchEnd);
-      canvas.addEventListener('touchcancel', handleTouchEnd);
-      document.addEventListener('keydown', handleKeyDown);
-      
-      // Prevent accidental zoom on mobile
-      canvas.addEventListener('touchstart', (e) => {
-        if (e.touches.length > 1) {
-          e.preventDefault();
-        }
-      }, { passive: false });
-      
-      // UI buttons
-      if (startBtn) {
-        startBtn.addEventListener('click', startGame);
-        startBtn.setAttribute('aria-label', 'Start game');
-      }
-      
-      if (pauseBtn) {
-        pauseBtn.addEventListener('click', togglePause);
-      }
-      
-      // Mode buttons
-      modeButtons.forEach(btn => {
-        btn.addEventListener('click', () => {
-          const mode = btn.dataset.catchMode;
-          setGameMode(mode);
-          setStatus(`${MODES[mode].label} mode selected`, 'info');
-          showOverlay(MODES[mode].label, MODES[mode].hint, 1200);
-          announceToScreenReader(`${MODES[mode].label} mode selected`);
-        });
-      });
-      
-      // Statistics button
-      if (statsBtn) {
-        statsBtn.addEventListener('click', showStatisticsModal);
-        statsBtn.setAttribute('aria-label', 'Show statistics');
-      }
-      
-      // Save button
-      if (saveBtn) {
-        saveBtn.addEventListener('click', saveGameState);
-        saveBtn.setAttribute('aria-label', 'Save game');
-      }
-      
-      // Share button
-      if (shareBtn) {
-        shareBtn.addEventListener('click', shareScore);
-        shareBtn.setAttribute('aria-label', 'Share score');
-      }
-      
-      // Initial resize and render
-      resizeCanvas();
-      renderGame();
-      
-      // Show ready message
-      if (state.running) {
-        setStatus('Game loaded - Press Start to continue', 'info');
-        showOverlay('Game Loaded', 'Press Start to continue your saved game', 0);
-      } else {
-        setStatus('Ready to play - Select a mode and press Start', 'info');
-        showOverlay('Honey Pot Catch', 'Select a mode and press Start to play', 0);
-      }
-      
-      // Handle window resize
-      window.addEventListener('resize', resizeCanvas);
-      
-      // Handle page visibility change
-      document.addEventListener('visibilitychange', () => {
-        if (document.hidden && state.running && !state.paused && !state.gameOver) {
-          // Auto-pause when tab is hidden
-          state.paused = true;
-          showOverlay('Auto-paused', 'Tab was hidden', 0);
-          setStatus('Game auto-paused', 'warning');
-          updateHUD();
-        }
-      });
-      
-      console.log('[HoneyCatch] Game initialized successfully');
-    }
-
-    // -------------------------------------------------------------------------
-    // Cleanup
-    // -------------------------------------------------------------------------
-    function cleanup() {
-      console.log('[HoneyCatch] Cleaning up...');
-      
-      // Auto-save if game is running
-      if (state.running && !state.gameOver) {
-        saveGameState();
-      }
-      
-      // Stop game loop
-      if (state.frameId) {
-        cancelAnimationFrame(state.frameId);
-        state.frameId = null;
-      }
-      
-      // Clear timers
-      if (state.timerId) {
-        clearInterval(state.timerId);
-        state.timerId = null;
-      }
-      
-      if (state.countdownId) {
-        clearInterval(state.countdownId);
-        state.countdownId = null;
-      }
-      
-      if (state.overlayTimer) {
-        clearTimeout(state.overlayTimer);
-        state.overlayTimer = null;
-      }
-      
-      // Release all pooled objects
-      potPool.releaseAll();
-      beePool.releaseAll();
-      powerUpPool.releaseAll();
-      particles.clear();
-      
-      // Remove event listeners
-      canvas.removeEventListener('pointerdown', handlePointerDown);
-      canvas.removeEventListener('pointerup', handlePointerUp);
-      canvas.removeEventListener('pointerleave', handlePointerUp);
-      window.removeEventListener('pointercancel', handlePointerUp);
-      canvas.removeEventListener('mousemove', handleMouseMove);
-      canvas.removeEventListener('touchstart', handleTouchStart);
-      canvas.removeEventListener('touchmove', handleTouchMove);
-      canvas.removeEventListener('touchend', handleTouchEnd);
-      canvas.removeEventListener('touchcancel', handleTouchEnd);
-      document.removeEventListener('keydown', handleKeyDown);
-      window.removeEventListener('resize', resizeCanvas);
-      document.removeEventListener('visibilitychange', () => {});
-      
-      // Remove UI button listeners
-      if (startBtn) {
-        startBtn.removeEventListener('click', startGame);
-      }
-      
-      if (pauseBtn) {
-        pauseBtn.removeEventListener('click', togglePause);
-      }
-      
-      if (statsBtn) {
-        statsBtn.removeEventListener('click', showStatisticsModal);
-      }
-      
-      if (saveBtn) {
-        saveBtn.removeEventListener('click', saveGameState);
-      }
-      
-      if (shareBtn) {
-        shareBtn.removeEventListener('click', shareScore);
-      }
-      
-      // Remove gamepad listeners
-      window.removeEventListener('gamepadconnected', () => {});
-      window.removeEventListener('gamepaddisconnected', () => {});
-      
-      console.log('[HoneyCatch] Cleanup complete');
-    }
-
-    // Initialize the game
-    initialize();
-
-    // Return public API
-    return {
-      startGame,
-      togglePause,
-      setGameMode,
-      saveGame: saveGameState,
-      loadGame: loadGameState,
-      showStats: showStatisticsModal,
-      shareScore,
-      getState: () => ({ ...state }),
-      getStats: () => ({ ...state.stats }),
-      cleanup
-    };
-  }
-
-  // ---------------------------------------------------------------------------
-  // Bootstrap the game when DOM is ready
-  // ---------------------------------------------------------------------------
-  document.addEventListener('DOMContentLoaded', () => {
-    try {
-      if (document.getElementById('honey-game')) {
-        window.honeyCatchGame = EnhancedHoneyCatchGame();
-        console.log('[HoneyCatch] Ultimate Edition loaded and ready');
-        
-        // Add debug toggle to window
-        window.toggleDebugMode = () => {
-          const debugMode = localStorage.getItem('debugMode') === 'true';
-          localStorage.setItem('debugMode', !debugMode);
-          console.log(`Debug mode ${!debugMode ? 'enabled' : 'disabled'}`);
-        };
-      }
-    } catch (err) {
-      console.error('[HoneyCatch] Failed to initialize:', err);
-    }
-  });
-})();
