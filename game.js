@@ -1,4 +1,4 @@
-// game.js — Honey Pot Catch (Ultimate Edition)
+// game.js — Honey Pot Catch (Ultimate Enhanced Edition)
 'use strict';
 
 (function () {
@@ -8,13 +8,14 @@
   const clamp = (v, min, max) => Math.max(min, Math.min(max, v));
   const nowMs = () => (typeof performance !== 'undefined' ? performance.now() : Date.now());
 
-  // Object Pooling System
+  // Enhanced Object Pooling System
   class ObjectPool {
     constructor(createFn, resetFn, initialSize = 50) {
       this.createFn = createFn;
       this.resetFn = resetFn;
       this.pool = [];
       this.active = [];
+      this.maxSize = initialSize * 2;
       
       for (let i = 0; i < initialSize; i++) {
         this.pool.push(createFn());
@@ -26,10 +27,16 @@
         const obj = this.pool.pop();
         this.active.push(obj);
         return obj;
-      } else {
+      } else if (this.active.length + this.pool.length < this.maxSize) {
         const obj = this.createFn();
         this.active.push(obj);
         return obj;
+      } else {
+        // Recycle oldest active object
+        const recycled = this.active.shift();
+        if (this.resetFn) this.resetFn(recycled);
+        this.active.push(recycled);
+        return recycled;
       }
     }
     
@@ -43,7 +50,9 @@
         this.resetFn(obj);
       }
       
-      this.pool.push(obj);
+      if (this.pool.length < this.maxSize) {
+        this.pool.push(obj);
+      }
     }
     
     releaseAll() {
@@ -51,7 +60,9 @@
         if (this.resetFn) {
           this.resetFn(obj);
         }
-        this.pool.push(obj);
+        if (this.pool.length < this.maxSize) {
+          this.pool.push(obj);
+        }
       }
       this.active.length = 0;
     }
@@ -62,6 +73,14 @@
     
     getPoolSize() {
       return this.pool.length + this.active.length;
+    }
+    
+    optimize() {
+      // Keep only 75% of inactive pool
+      const targetSize = Math.floor(this.maxSize * 0.75);
+      if (this.pool.length > targetSize) {
+        this.pool.length = targetSize;
+      }
     }
   }
 
@@ -74,21 +93,25 @@
             (touch && window.innerWidth <= 900));
   }
 
-  // Enhanced FrameRateLimiter with adaptive FPS
+  // Enhanced FrameRateLimiter with adaptive FPS and performance monitoring
   class FrameRateLimiter {
     constructor(targetFPS = 60) {
       this.setTarget(targetFPS);
       this.lastFrameTime = 0;
       this.frameCount = 0;
       this.lastFpsUpdate = 0;
-      this.currentFPS = 0;
+      this.currentFPS = targetFPS;
       this.frameTimes = [];
       this.maxFrameTime = 0;
+      this.lowFpsCount = 0;
+      this.adaptiveMode = true;
+      this.originalTarget = targetFPS;
     }
     
     setTarget(targetFPS) {
       const fps = Number(targetFPS) || 60;
-      this.targetFPS = clamp(fps, 10, 120);
+      this.originalTarget = clamp(fps, 10, 120);
+      this.targetFPS = this.originalTarget;
       this.frameInterval = 1000 / this.targetFPS;
     }
     
@@ -102,8 +125,18 @@
         this.lastFpsUpdate = ts;
         
         // Adaptive frame rate adjustment
-        if (this.currentFPS < this.targetFPS * 0.8) {
-          console.log(`[Performance] Low FPS: ${this.currentFPS}, adjusting...`);
+        if (this.adaptiveMode && this.currentFPS < this.targetFPS * 0.7) {
+          this.lowFpsCount++;
+          if (this.lowFpsCount >= 3) {
+            const newFPS = Math.max(30, Math.floor(this.targetFPS * 0.8));
+            if (newFPS !== this.targetFPS) {
+              this.targetFPS = newFPS;
+              this.frameInterval = 1000 / this.targetFPS;
+              console.log(`[Performance] Adaptive FPS: ${newFPS}`);
+            }
+          }
+        } else if (this.lowFpsCount > 0) {
+          this.lowFpsCount = Math.max(0, this.lowFpsCount - 1);
         }
       }
       
@@ -130,6 +163,9 @@
       this.lastFpsUpdate = nowMs();
       this.frameTimes = [];
       this.maxFrameTime = 0;
+      this.lowFpsCount = 0;
+      this.targetFPS = this.originalTarget;
+      this.frameInterval = 1000 / this.targetFPS;
     }
     
     getFPS() {
@@ -140,68 +176,422 @@
       if (this.frameTimes.length === 0) return 0;
       return this.frameTimes.reduce((a, b) => a + b, 0) / this.frameTimes.length;
     }
+    
+    getPerformanceGrade() {
+      const avg = this.getAverageFrameTime();
+      if (avg <= 16.67) return 'A'; // 60 FPS
+      if (avg <= 33.33) return 'B'; // 30 FPS
+      if (avg <= 50) return 'C'; // 20 FPS
+      return 'D'; // < 20 FPS
+    }
   }
 
   function smoothLerp(current, target, factor = 0.2) {
     return current + (target - current) * factor;
   }
 
-  // Accessibility: Screen Reader Announcements
-  function announceToScreenReader(message, priority = 'polite') {
-    let announcementEl = document.getElementById('sr-announcement');
+  // Performance monitoring utility
+  const perfMonitor = {
+    marks: new Map(),
     
-    if (!announcementEl) {
-      announcementEl = document.createElement('div');
-      announcementEl.id = 'sr-announcement';
-      announcementEl.className = 'sr-only';
-      announcementEl.setAttribute('aria-live', 'polite');
-      announcementEl.setAttribute('aria-atomic', 'true');
-      announcementEl.style.position = 'absolute';
-      announcementEl.style.width = '1px';
-      announcementEl.style.height = '1px';
-      announcementEl.style.padding = '0';
-      announcementEl.style.margin = '-1px';
-      announcementEl.style.overflow = 'hidden';
-      announcementEl.style.clip = 'rect(0, 0, 0, 0)';
-      announcementEl.style.whiteSpace = 'nowrap';
-      announcementEl.style.border = '0';
-      document.body.appendChild(announcementEl);
+    mark(name) {
+      if (typeof performance !== 'undefined' && performance.mark) {
+        performance.mark(`start_${name}`);
+        this.marks.set(name, performance.now());
+      }
+    },
+    
+    measure(name) {
+      if (typeof performance !== 'undefined' && performance.measure) {
+        performance.mark(`end_${name}`);
+        performance.measure(name, `start_${name}`, `end_${name}`);
+        const entry = performance.getEntriesByName(name).pop();
+        return entry ? entry.duration : 0;
+      }
+      return 0;
+    },
+    
+    clear() {
+      if (typeof performance !== 'undefined' && performance.clearMarks) {
+        performance.clearMarks();
+        performance.clearMeasures();
+      }
+      this.marks.clear();
+    }
+  };
+
+  // Particle System with enhanced effects
+  class ParticleSystem {
+    constructor(maxParticles = 200) {
+      this.particles = [];
+      this.maxParticles = maxParticles;
+      this.emitters = [];
+      this.particlePool = new ObjectPool(
+        () => ({
+          x: 0, y: 0, vx: 0, vy: 0, life: 1, decay: 0.03,
+          size: 4, color: '#FFFFFF', gravity: 0.1, rotation: 0, rotationSpeed: 0,
+          startSize: 4, endSize: 0, trail: []
+        }),
+        (p) => {
+          p.x = 0; p.y = 0; p.vx = 0; p.vy = 0; p.life = 1;
+          p.trail = [];
+        }
+      );
     }
     
-    announcementEl.setAttribute('aria-live', priority);
-    announcementEl.textContent = message;
+    burst(x, y, count, color, options = {}) {
+      const { 
+        size = 4, 
+        speed = 3, 
+        gravity = 0.1, 
+        decay = 0.03,
+        spread = 360,
+        minSpeed = 0.5,
+        rotation = 0,
+        rotationSpeed = 2,
+        endSize = 0
+      } = options;
+      
+      for (let i = 0; i < count && this.particles.length < this.maxParticles; i++) {
+        const particle = this.particlePool.get();
+        
+        const angle = (Math.random() * spread * Math.PI / 180) - (spread * Math.PI / 360);
+        const velocity = minSpeed + Math.random() * (speed - minSpeed);
+        
+        particle.x = x;
+        particle.y = y;
+        particle.vx = Math.cos(angle) * velocity;
+        particle.vy = Math.sin(angle) * velocity;
+        particle.life = 1;
+        particle.decay = decay * (0.8 + Math.random() * 0.4);
+        particle.startSize = size * (0.5 + Math.random());
+        particle.endSize = endSize;
+        particle.size = particle.startSize;
+        particle.color = color;
+        particle.gravity = gravity;
+        particle.rotation = rotation;
+        particle.rotationSpeed = (Math.random() - 0.5) * rotationSpeed * 2;
+        particle.trail = [];
+        
+        this.particles.push(particle);
+      }
+    }
     
-    // Reset priority after announcement
-    setTimeout(() => {
-      announcementEl.setAttribute('aria-live', 'polite');
-    }, 100);
+    emitter(x, y, options = {}) {
+      const emitter = {
+        x, y,
+        rate: options.rate || 10,
+        lastEmit: 0,
+        color: options.color || '#FFFFFF',
+        size: options.size || 3,
+        speed: options.speed || 1,
+        active: true,
+        duration: options.duration || -1,
+        startTime: nowMs()
+      };
+      
+      this.emitters.push(emitter);
+      return emitter;
+    }
+    
+    update(dt) {
+      // Update emitters
+      for (let i = this.emitters.length - 1; i >= 0; i--) {
+        const emitter = this.emitters[i];
+        
+        // Check if emitter should be removed
+        if (emitter.duration > 0 && nowMs() - emitter.startTime > emitter.duration) {
+          emitter.active = false;
+        }
+        
+        if (!emitter.active) {
+          this.emitters.splice(i, 1);
+          continue;
+        }
+        
+        // Emit particles
+        const shouldEmit = nowMs() - emitter.lastEmit > (1000 / emitter.rate);
+        if (shouldEmit && this.particles.length < this.maxParticles) {
+          this.burst(emitter.x, emitter.y, 1, emitter.color, {
+            size: emitter.size,
+            speed: emitter.speed,
+            spread: 360
+          });
+          emitter.lastEmit = nowMs();
+        }
+      }
+      
+      // Update particles
+      for (let i = this.particles.length - 1; i >= 0; i--) {
+        const p = this.particles[i];
+        
+        // Store trail position
+        if (p.trail.length < 5) {
+          p.trail.push({ x: p.x, y: p.y, life: p.life });
+        } else {
+          p.trail.shift();
+          p.trail.push({ x: p.x, y: p.y, life: p.life });
+        }
+        
+        // Update position
+        p.x += p.vx * dt;
+        p.y += p.vy * dt;
+        p.vy += p.gravity * dt;
+        
+        // Update rotation
+        p.rotation += p.rotationSpeed * dt;
+        
+        // Apply air resistance
+        p.vx *= 0.98;
+        p.vy *= 0.98;
+        
+        // Update size
+        p.size = p.startSize + (p.endSize - p.startSize) * (1 - p.life);
+        
+        p.life -= p.decay * dt;
+        
+        if (p.life <= 0 || p.y > window.innerHeight + 50 || p.x < -50 || p.x > window.innerWidth + 50) {
+          this.particlePool.release(p);
+          this.particles.splice(i, 1);
+        }
+      }
+    }
+    
+    render(ctx) {
+      ctx.save();
+      
+      // Render particle trails
+      for (const p of this.particles) {
+        if (p.trail.length > 1) {
+          ctx.beginPath();
+          ctx.moveTo(p.trail[0].x, p.trail[0].y);
+          
+          for (let i = 1; i < p.trail.length; i++) {
+            const trailPoint = p.trail[i];
+            ctx.lineTo(trailPoint.x, trailPoint.y);
+          }
+          
+          ctx.strokeStyle = p.color + '40';
+          ctx.lineWidth = p.size * 0.5;
+          ctx.stroke();
+        }
+      }
+      
+      // Render particles
+      for (const p of this.particles) {
+        ctx.globalAlpha = Math.max(0, p.life);
+        ctx.fillStyle = p.color;
+        ctx.translate(p.x, p.y);
+        ctx.rotate(p.rotation);
+        
+        // Draw different shapes based on particle type
+        if (p.color.includes('FFD700')) { // Golden particles
+          ctx.beginPath();
+          ctx.arc(0, 0, p.size, 0, Math.PI * 2);
+          ctx.fill();
+          
+          // Inner glow
+          ctx.globalAlpha = p.life * 0.5;
+          ctx.fillStyle = '#FFF9C4';
+          ctx.beginPath();
+          ctx.arc(0, 0, p.size * 0.6, 0, Math.PI * 2);
+          ctx.fill();
+        } else if (p.color.includes('FF6B6B')) { // Heart particles
+          ctx.beginPath();
+          ctx.moveTo(0, -p.size);
+          ctx.bezierCurveTo(p.size, -p.size, p.size, p.size * 0.3, 0, p.size);
+          ctx.bezierCurveTo(-p.size, p.size * 0.3, -p.size, -p.size, 0, -p.size);
+          ctx.fill();
+        } else if (p.color.includes('4285F4')) { // Shield particles
+          ctx.beginPath();
+          ctx.arc(0, 0, p.size, 0, Math.PI * 2);
+          ctx.fill();
+          
+          ctx.globalAlpha = p.life * 0.7;
+          ctx.strokeStyle = '#FFFFFF';
+          ctx.lineWidth = 1;
+          ctx.beginPath();
+          ctx.arc(0, 0, p.size * 0.7, 0, Math.PI * 2);
+          ctx.stroke();
+        } else {
+          // Default circular particle
+          ctx.beginPath();
+          ctx.arc(0, 0, p.size, 0, Math.PI * 2);
+          ctx.fill();
+        }
+        
+        ctx.setTransform(1, 0, 0, 1, 0, 0);
+      }
+      
+      ctx.restore();
+    }
+    
+    clear() {
+      for (const p of this.particles) {
+        this.particlePool.release(p);
+      }
+      this.particles.length = 0;
+      this.emitters.length = 0;
+    }
+    
+    getCount() {
+      return this.particles.length;
+    }
   }
 
-  // Polyfill for roundRect if needed
-  if (!CanvasRenderingContext2D.prototype.roundRect) {
-    CanvasRenderingContext2D.prototype.roundRect = function(x, y, width, height, radius) {
-      if (width < 2 * radius) radius = width / 2;
-      if (height < 2 * radius) radius = height / 2;
-      this.beginPath();
-      this.moveTo(x + radius, y);
-      this.arcTo(x + width, y, x + width, y + height, radius);
-      this.arcTo(x + width, y + height, x, y + height, radius);
-      this.arcTo(x, y + height, x, y, radius);
-      this.arcTo(x, y, x + width, y, radius);
-      this.closePath();
-      return this;
-    };
+  // Score Popup System
+  class ScorePopupSystem {
+    constructor() {
+      this.popups = [];
+      this.popupPool = new ObjectPool(
+        () => ({
+          x: 0, y: 0, value: 0, type: 'normal', life: 1,
+          velocity: { x: 0, y: -2 }, scale: 1, rotation: 0
+        }),
+        (p) => {
+          p.x = 0; p.y = 0; p.value = 0; p.type = 'normal';
+          p.life = 1; p.velocity = { x: 0, y: -2 }; p.scale = 1; p.rotation = 0;
+        }
+      );
+    }
+    
+    create(x, y, value, type = 'normal') {
+      const popup = this.popupPool.get();
+      popup.x = x;
+      popup.y = y;
+      popup.value = value;
+      popup.type = type;
+      popup.life = 1;
+      popup.velocity = {
+        x: (Math.random() - 0.5) * 1.5,
+        y: -2 - Math.random() * 1.5
+      };
+      popup.scale = 1;
+      popup.rotation = (Math.random() - 0.5) * 0.2;
+      
+      // Different initial values based on type
+      switch (type) {
+        case 'golden':
+          popup.scale = 1.3;
+          popup.velocity.y *= 1.2;
+          break;
+        case 'combo':
+          popup.scale = 1.5;
+          popup.velocity.y *= 1.5;
+          break;
+        case 'power':
+          popup.scale = 1.2;
+          break;
+      }
+      
+      this.popups.push(popup);
+      
+      // Create visual DOM element for screen readers
+      if (window.siteManager && window.siteManager.toast) {
+        const message = `+${value} points${type === 'golden' ? ' (Golden Pot!)' : type === 'combo' ? ' (Combo!)' : ''}`;
+        window.siteManager.toast.show(message, 'info', 1000);
+      }
+      
+      return popup;
+    }
+    
+    update(dt) {
+      for (let i = this.popups.length - 1; i >= 0; i--) {
+        const popup = this.popups[i];
+        
+        // Update position
+        popup.x += popup.velocity.x * dt;
+        popup.y += popup.velocity.y * dt;
+        
+        // Add some horizontal drift
+        popup.velocity.x *= 0.99;
+        
+        // Update scale and rotation
+        popup.scale = Math.max(0.5, popup.scale - 0.01 * dt);
+        popup.rotation *= 0.95;
+        
+        // Fade out
+        popup.life -= 0.02 * dt;
+        
+        if (popup.life <= 0) {
+          this.popupPool.release(popup);
+          this.popups.splice(i, 1);
+        }
+      }
+    }
+    
+    render(ctx) {
+      ctx.save();
+      
+      for (const popup of this.popups) {
+        ctx.globalAlpha = Math.max(0, popup.life);
+        ctx.translate(popup.x, popup.y);
+        ctx.scale(popup.scale, popup.scale);
+        ctx.rotate(popup.rotation);
+        
+        // Choose color and style based on type
+        let color, shadow;
+        switch (popup.type) {
+          case 'golden':
+            color = '#FFD700';
+            shadow = 'rgba(255, 215, 0, 0.7)';
+            break;
+          case 'combo':
+            color = '#4CAF50';
+            shadow = 'rgba(76, 175, 80, 0.7)';
+            break;
+          case 'power':
+            color = '#9C27B0';
+            shadow = 'rgba(156, 39, 176, 0.7)';
+            break;
+          default:
+            color = '#FFD54F';
+            shadow = 'rgba(255, 213, 79, 0.7)';
+        }
+        
+        // Draw shadow
+        ctx.shadowColor = shadow;
+        ctx.shadowBlur = 15;
+        ctx.shadowOffsetY = 2;
+        
+        // Draw text
+        ctx.font = `bold ${18 + (popup.type === 'combo' ? 6 : 0)}px 'Playfair Display', serif`;
+        ctx.fillStyle = color;
+        ctx.textAlign = 'center';
+        ctx.textBaseline = 'middle';
+        ctx.fillText(`+${popup.value}`, 0, 0);
+        
+        // Add extra effect for combos
+        if (popup.type === 'combo') {
+          ctx.globalAlpha = popup.life * 0.5;
+          ctx.font = 'bold 14px Arial';
+          ctx.fillText('COMBO!', 0, 20);
+        }
+        
+        ctx.setTransform(1, 0, 0, 1, 0, 0);
+      }
+      
+      ctx.restore();
+    }
+    
+    clear() {
+      for (const popup of this.popups) {
+        this.popupPool.release(popup);
+      }
+      this.popups.length = 0;
+    }
   }
 
   // ---------------------------------------------------------------------------
   // Enhanced Honey Catch Game
   // ---------------------------------------------------------------------------
   function EnhancedHoneyCatchGame() {
-    console.log('[HoneyCatch] Ultimate Edition Initializing…');
+    console.log('[HoneyCatch] Ultimate Enhanced Edition Initializing…');
 
     const PLAYER_GROUND_OFFSET = 70;
-    const MAX_TRAIL_LENGTH = 10;
+    const MAX_TRAIL_LENGTH = 8;
     const SAVE_TIMEOUT = 5 * 60 * 1000; // 5 minutes
+    const PERFORMANCE_MONITORING = true;
 
     // DOM Elements with null checks
     const canvas = document.getElementById('honey-game');
@@ -214,7 +604,7 @@
     const ctx = canvas.getContext('2d', { 
       alpha: true, 
       desynchronized: true,
-      powerPreference: 'low-power'
+      powerPreference: 'high-performance'
     });
     
     if (!ctx) {
@@ -229,6 +619,7 @@
       return el;
     };
 
+    // Core game elements
     const scoreSpan = getElement('score-count');
     const timeSpan = getElement('time-count');
     const livesSpan = getElement('catch-lives');
@@ -248,32 +639,50 @@
     const modeButtons = Array.from(document.querySelectorAll('[data-catch-mode]'));
     const modeDescription = getElement('catch-mode-description');
     const bestScoreEl = getElement('catch-best');
-    const statsBtn = getElement('stats-button') || (() => {
-      const btn = document.createElement('button');
-      btn.id = 'stats-button';
-      btn.className = 'btn-secondary';
-      btn.innerHTML = '<i class="fas fa-chart-bar"></i> Stats';
-      if (card) card.appendChild(btn);
-      return btn;
-    })();
-    const saveBtn = getElement('save-button') || (() => {
-      const btn = document.createElement('button');
-      btn.id = 'save-button';
-      btn.className = 'btn-secondary';
-      btn.innerHTML = '<i class="fas fa-save"></i> Save';
-      if (card) card.appendChild(btn);
-      return btn;
-    })();
-    const shareBtn = getElement('share-button') || (() => {
-      const btn = document.createElement('button');
-      btn.id = 'share-button';
-      btn.className = 'btn-secondary';
-      btn.innerHTML = '<i class="fas fa-share-alt"></i> Share';
-      if (card) card.appendChild(btn);
-      return btn;
-    })();
+    
+    // Enhanced UI elements
+    const fpsSpan = document.createElement('span');
+    fpsSpan.id = 'catch-fps';
+    fpsSpan.textContent = '60';
+    
+    // Add FPS to HUD if it exists
+    const hudStats = document.querySelector('.game-hud');
+    if (hudStats) {
+      const fpsStat = document.createElement('span');
+      fpsStat.className = 'hud-stat';
+      fpsStat.innerHTML = '<span class="hud-pill">FPS: <span id="catch-fps">60</span></span>';
+      hudStats.appendChild(fpsStat);
+    }
 
-    // Game Modes
+    // Create additional UI elements if they don't exist
+    const createButton = (id, icon, text, className = 'btn-secondary') => {
+      let btn = getElement(id);
+      if (!btn && card) {
+        btn = document.createElement('button');
+        btn.id = id;
+        btn.className = `${className} btn-small`;
+        btn.innerHTML = `<i class="fas ${icon}"></i> ${text}`;
+        btn.setAttribute('aria-label', text);
+        
+        const controls = document.querySelector('.game-extra-controls') || 
+                        (() => {
+                          const div = document.createElement('div');
+                          div.className = 'game-extra-controls';
+                          document.querySelector('.game-controls').appendChild(div);
+                          return div;
+                        })();
+        
+        controls.appendChild(btn);
+      }
+      return btn;
+    };
+
+    const statsBtn = createButton('stats-button', 'fa-chart-bar', 'Stats');
+    const saveBtn = createButton('save-button', 'fa-save', 'Save');
+    const shareBtn = createButton('share-button', 'fa-share-alt', 'Share');
+    const restartBtn = createButton('restart-button', 'fa-rotate-right', 'Restart');
+
+    // Game Modes with enhanced properties
     const MODES = {
       calm: {
         label: 'Calm Stroll',
@@ -285,7 +694,9 @@
         honeyValue: 10,
         goldenValue: 50,
         hint: 'A relaxed 70 second run with extra hearts.',
-        color: '#4CAF50'
+        color: '#4CAF50',
+        difficultyCurve: 0.8,
+        beeAggression: 0.3
       },
       brisk: {
         label: 'Adventure',
@@ -297,7 +708,9 @@
         honeyValue: 15,
         goldenValue: 75,
         hint: 'Balanced pace. Great for personal bests.',
-        color: '#2196F3'
+        color: '#2196F3',
+        difficultyCurve: 1.0,
+        beeAggression: 0.5
       },
       rush: {
         label: 'Honey Rush',
@@ -309,7 +722,9 @@
         honeyValue: 20,
         goldenValue: 100,
         hint: 'Short, spicy, and higher scoring.',
-        color: '#FF5722'
+        color: '#FF5722',
+        difficultyCurve: 1.3,
+        beeAggression: 0.7
       },
     };
 
@@ -324,160 +739,55 @@
     const bgCanvas = document.createElement('canvas');
     const bgCtx = bgCanvas.getContext('2d');
 
-    // Object Pools
+    // Object Pools with optimized sizes
     const potPool = new ObjectPool(
-      () => ({ x: 0, y: 0, radius: 14, speed: 0, type: 'normal', wobble: 0, baseSpeed: 0 }),
-      (obj) => { obj.x = 0; obj.y = 0; obj.type = 'normal'; }
+      () => ({ 
+        x: 0, y: 0, radius: 14, speed: 0, type: 'normal', 
+        wobble: 0, baseSpeed: 0, wobbleSpeed: 0.02, rotation: 0,
+        glow: 0, collected: false, trail: []
+      }),
+      (obj) => { 
+        obj.x = 0; obj.y = 0; obj.type = 'normal'; 
+        obj.glow = 0; obj.collected = false; obj.trail = [];
+      },
+      40
     );
 
     const beePool = new ObjectPool(
-      () => ({ x: 0, y: 0, radius: 12, speed: 0, type: 'normal', wobble: 0, vx: 0, baseSpeed: 0 }),
-      (obj) => { obj.x = 0; obj.y = 0; obj.type = 'normal'; obj.vx = 0; }
+      () => ({ 
+        x: 0, y: 0, radius: 12, speed: 0, type: 'normal', 
+        wobble: 0, vx: 0, baseSpeed: 0, wobbleSpeed: 0.03, 
+        rotation: 0, aggression: 0, targetX: 0, trail: []
+      }),
+      (obj) => { 
+        obj.x = 0; obj.y = 0; obj.type = 'normal'; obj.vx = 0; 
+        obj.aggression = 0; obj.targetX = 0; obj.trail = [];
+      },
+      30
     );
 
     const powerUpPool = new ObjectPool(
-      () => ({ x: 0, y: 0, radius: 14, speed: 0, type: 'heart', wobble: 0 }),
-      (obj) => { obj.x = 0; obj.y = 0; obj.type = 'heart'; }
+      () => ({ 
+        x: 0, y: 0, radius: 14, speed: 0, type: 'heart', 
+        wobble: 0, rotation: 0, glow: 0, pulse: 0, trail: []
+      }),
+      (obj) => { 
+        obj.x = 0; obj.y = 0; obj.type = 'heart'; 
+        obj.glow = 0; obj.pulse = 0; obj.trail = [];
+      },
+      20
     );
 
-    // Improved resize function with performance monitoring
-    function resizeCanvas() {
-      if (resizeCanvas.debounceTimer) {
-        clearTimeout(resizeCanvas.debounceTimer);
-      }
-      
-      resizeCanvas.debounceTimer = setTimeout(() => {
-        const container = canvas.parentElement;
-        if (!container) return;
-        
-        const rect = container.getBoundingClientRect();
-        const cssW = Math.max(300, Math.floor(rect.width));
-        const cssH = Math.max(200, Math.floor(rect.height || cssW * 0.66));
-        
-        // Avoid unnecessary resizes
-        if (cssW === W && cssH === H) return;
-        
-        DPR = window.devicePixelRatio || 1;
-        W = cssW;
-        H = cssH;
-        
-        // Set canvas display size (CSS)
-        canvas.style.width = `${cssW}px`;
-        canvas.style.height = `${cssH}px`;
-        
-        // Set canvas drawing buffer size
-        const bufferWidth = Math.floor(cssW * DPR);
-        const bufferHeight = Math.floor(cssH * DPR);
-        
-        if (canvas.width !== bufferWidth || canvas.height !== bufferHeight) {
-          canvas.width = bufferWidth;
-          canvas.height = bufferHeight;
-          ctx.setTransform(DPR, 0, 0, DPR, 0, 0);
-        }
-        
-        // Resize background canvas (CSS pixels for drawing)
-        if (bgCanvas.width !== cssW || bgCanvas.height !== cssH) {
-          bgCanvas.width = cssW;
-          bgCanvas.height = cssH;
-          drawBackground();
-        }
-        
-        // Update game state for new dimensions
-        if (state.pooh) {
-          state.pooh.x = clamp(state.pooh.x || cssW / 2, state.pooh.width / 2, cssW - state.pooh.width / 2);
-          state.pooh.y = cssH - PLAYER_GROUND_OFFSET;
-          state.pooh.targetX = state.pooh.x;
-        }
-        
-        // Update joystick position
-        if (joystick) {
-          joystick.style.bottom = '20px';
-          joystick.style.left = '20px';
-        }
-        
-        console.log(`[HoneyCatch] Resized to ${cssW}x${cssH} (DPR: ${DPR})`);
-      }, 150);
-    }
-
-    // Draw optimized background
-    function drawBackground() {
-      if (!bgCtx) return;
-      
-      // Clear
-      bgCtx.clearRect(0, 0, W, H);
-      
-      // Sky gradient based on mode
-      const modeColor = state.modeCfg.color || '#87CEEB';
-      const skyGradient = bgCtx.createLinearGradient(0, 0, 0, H);
-      skyGradient.addColorStop(0, lightenColor(modeColor, 60));
-      skyGradient.addColorStop(0.6, lightenColor(modeColor, 70));
-      skyGradient.addColorStop(1, lightenColor(modeColor, 80));
-      bgCtx.fillStyle = skyGradient;
-      bgCtx.fillRect(0, 0, W, H);
-      
-      // Sun with glow
-      bgCtx.save();
-      bgCtx.shadowColor = 'rgba(255, 215, 0, 0.4)';
-      bgCtx.shadowBlur = 25;
-      bgCtx.fillStyle = '#FFEB3B';
-      bgCtx.beginPath();
-      bgCtx.arc(W * 0.15, H * 0.15, Math.min(W, H) * 0.07, 0, Math.PI * 2);
-      bgCtx.fill();
-      bgCtx.restore();
-      
-      // Ground
-      const groundHeight = Math.max(60, H * 0.15);
-      const groundY = H - groundHeight;
-      const groundGradient = bgCtx.createLinearGradient(0, groundY, 0, H);
-      groundGradient.addColorStop(0, '#8BC34A');
-      groundGradient.addColorStop(1, '#689F38');
-      bgCtx.fillStyle = groundGradient;
-      bgCtx.fillRect(0, groundY, W, groundHeight);
-      
-      // Simple clouds (3 max for performance)
-      bgCtx.fillStyle = 'rgba(255, 255, 255, 0.85)';
-      const clouds = [
-        { x: W * 0.3, y: H * 0.2, size: 0.8 },
-        { x: W * 0.6, y: H * 0.3, size: 1.0 },
-        { x: W * 0.8, y: H * 0.15, size: 0.7 }
-      ];
-      
-      clouds.forEach(cloud => {
-        const size = Math.min(W, H) * 0.05 * cloud.size;
-        bgCtx.save();
-        bgCtx.translate(cloud.x, cloud.y);
-        bgCtx.beginPath();
-        bgCtx.arc(0, 0, size, 0, Math.PI * 2);
-        bgCtx.arc(size * 1.2, -size * 0.5, size * 1.1, 0, Math.PI * 2);
-        bgCtx.arc(size * 2.4, 0, size, 0, Math.PI * 2);
-        bgCtx.fill();
-        bgCtx.restore();
-      });
-    }
-
-    function lightenColor(color, percent) {
-      const num = parseInt(color.replace('#', ''), 16);
-      const amt = Math.round(2.55 * percent);
-      const R = (num >> 16) + amt;
-      const G = (num >> 8 & 0x00FF) + amt;
-      const B = (num & 0x0000FF) + amt;
-      
-      return '#' + (
-        0x1000000 +
-        (R < 255 ? R < 1 ? 0 : R : 255) * 0x10000 +
-        (G < 255 ? G < 1 ? 0 : G : 255) * 0x100 +
-        (B < 255 ? B < 1 ? 0 : B : 255)
-      ).toString(16).slice(1);
-    }
-
     // -------------------------------------------------------------------------
-    // Game State Object
+    // Game State Object with enhanced properties
     // -------------------------------------------------------------------------
     const state = {
       // Game status
       running: false,
       paused: false,
       gameOver: false,
+      countdown: false,
+      initialized: false,
       
       // Player stats
       score: 0,
@@ -488,8 +798,11 @@
       streak: 0,
       lastCatchTime: 0,
       totalBonuses: 0,
+      perfectCatches: 0,
+      missedPots: 0,
+      highestMultiplier: 1,
       
-      // Player object
+      // Player object with enhanced properties
       pooh: {
         x: 0,
         y: 0,
@@ -497,10 +810,15 @@
         height: 58,
         targetX: 0,
         speed: 12,
-        trail: []
+        trail: [],
+        dashCooldown: 0,
+        dashPower: 0,
+        invincibleFlash: 0,
+        celebration: false,
+        celebrationTime: 0
       },
       
-      // Power-ups
+      // Power-ups with enhanced tracking
       invincible: false,
       invincibleUntil: 0,
       doublePoints: false,
@@ -508,20 +826,25 @@
       slowMo: false,
       slowMoUntil: 0,
       honeyRushUntil: 0,
+      magnet: false,
+      magnetUntil: 0,
+      activePowerUps: new Set(),
       
       // Game objects (using pools)
       pots: [],
       bees: [],
       powerUps: [],
       particles: [],
+      scorePopups: [],
       
       // Game settings
       mode: 'calm',
       modeCfg: MODES.calm,
       difficulty: 0,
       bestScore: 0,
+      totalGamesPlayed: 0,
       
-      // Statistics
+      // Enhanced statistics
       stats: {
         potsCaught: 0,
         goldenPotsCaught: 0,
@@ -531,7 +854,13 @@
         totalScore: 0,
         totalTimePlayed: 0,
         highestCombo: 0,
-        highestStreak: 0
+        highestStreak: 0,
+        perfectGames: 0,
+        totalBeesEncountered: 0,
+        totalPowerUpsSpawned: 0,
+        averageScore: 0,
+        fastestGame: Infinity,
+        longestGame: 0
       },
       
       // Timing
@@ -541,6 +870,8 @@
       countdownId: null,
       overlayTimer: null,
       gameStartTime: 0,
+      gameElapsedTime: 0,
+      performanceSampleTime: 0,
       
       // Controls
       joyActive: false,
@@ -552,111 +883,60 @@
       keys: {},
       isPointerDown: false,
       lastInputWasTouch: false,
+      inputSmoothing: 0.22,
       
       // Gamepad
       gamepadIndex: null,
+      gamepadPolling: false,
       
       // Performance
       performanceStats: {
         objectCount: 0,
-        frameRate: 0,
-        averageFrameTime: 0
-      }
+        frameRate: 60,
+        averageFrameTime: 16.67,
+        performanceGrade: 'A',
+        lastOptimization: 0,
+        memoryUsage: 0
+      },
+      
+      // Visual effects
+      screenShake: 0,
+      screenShakeIntensity: 0,
+      colorShift: 0,
+      postProcessing: {
+        bloom: false,
+        bloomIntensity: 0,
+        vignette: true,
+        chromaticAberration: false
+      },
+      
+      // Achievement tracking
+      achievements: {
+        firstGame: false,
+        highScore: false,
+        perfectGame: false,
+        comboMaster: false,
+        speedRunner: false,
+        collector: false
+      },
+      
+      // Session data
+      sessionId: Date.now().toString(36) + Math.random().toString(36).substr(2),
+      sessionStartTime: Date.now(),
+      sessionScore: 0
     };
 
+    // Enhanced particle system
+    const particles = new ParticleSystem(isMobileDevice() ? 150 : 300);
+    
+    // Score popup system
+    const scorePopups = new ScorePopupSystem();
+    
     // Frame limiter with adaptive FPS
     const frameLimiter = new FrameRateLimiter(isMobileDevice() ? 30 : 60);
 
     // -------------------------------------------------------------------------
-    // Particles System with pooling
-    // -------------------------------------------------------------------------
-    class ParticleSystem {
-      constructor(maxParticles = 200) {
-        this.particles = [];
-        this.maxParticles = maxParticles;
-        this.particlePool = new ObjectPool(
-          () => ({
-            x: 0, y: 0, vx: 0, vy: 0, life: 1, decay: 0.03,
-            size: 4, color: '#FFFFFF', gravity: 0.1
-          }),
-          (p) => {
-            p.x = 0; p.y = 0; p.vx = 0; p.vy = 0; p.life = 1;
-          }
-        );
-      }
-      
-      burst(x, y, count, color, options = {}) {
-        const { size = 4, speed = 3, gravity = 0.1, decay = 0.03 } = options;
-        
-        for (let i = 0; i < count && this.particles.length < this.maxParticles; i++) {
-          const particle = this.particlePool.get();
-          
-          const angle = Math.random() * Math.PI * 2;
-          const velocity = speed * (0.5 + Math.random() * 0.5);
-          
-          particle.x = x;
-          particle.y = y;
-          particle.vx = Math.cos(angle) * velocity;
-          particle.vy = Math.sin(angle) * velocity;
-          particle.life = 1;
-          particle.decay = decay * (0.8 + Math.random() * 0.4);
-          particle.size = size * (0.5 + Math.random());
-          particle.color = color;
-          particle.gravity = gravity;
-          
-          this.particles.push(particle);
-        }
-      }
-      
-      update(dt) {
-        for (let i = this.particles.length - 1; i >= 0; i--) {
-          const p = this.particles[i];
-          
-          p.x += p.vx * dt;
-          p.y += p.vy * dt;
-          p.vy += p.gravity * dt;
-          
-          // Apply friction
-          p.vx *= 0.98;
-          p.vy *= 0.98;
-          
-          p.life -= p.decay * dt;
-          
-          if (p.life <= 0 || p.y > H + 50 || p.x < -50 || p.x > W + 50) {
-            this.particlePool.release(p);
-            this.particles.splice(i, 1);
-          }
-        }
-      }
-      
-      render() {
-        ctx.save();
-        for (const p of this.particles) {
-          ctx.globalAlpha = Math.max(0, p.life);
-          ctx.fillStyle = p.color;
-          ctx.beginPath();
-          ctx.arc(p.x, p.y, p.size, 0, Math.PI * 2);
-          ctx.fill();
-        }
-        ctx.restore();
-      }
-      
-      clear() {
-        for (const p of this.particles) {
-          this.particlePool.release(p);
-        }
-        this.particles.length = 0;
-      }
-      
-      getCount() {
-        return this.particles.length;
-      }
-    }
-
-    const particles = new ParticleSystem(isMobileDevice() ? 150 : 300);
-
-    // -------------------------------------------------------------------------
-    // Power-ups Configuration
+    // Enhanced Power-ups Configuration
     // -------------------------------------------------------------------------
     const POWER_UPS = {
       heart: { 
@@ -664,41 +944,67 @@
         icon: '❤️', 
         duration: 0,
         value: 1,
-        name: 'Extra Heart'
+        name: 'Extra Heart',
+        rarity: 0.2,
+        effect: 'heal'
       },
       shield: { 
         color: '#4285F4', 
         icon: '🛡️', 
         duration: 5000,
-        name: 'Shield'
+        name: 'Shield',
+        rarity: 0.15,
+        effect: 'invincibility'
       },
       clock: { 
         color: '#4CAF50', 
         icon: '⏱️', 
         duration: 0,
         value: 10,
-        name: 'Bonus Time'
+        name: 'Bonus Time',
+        rarity: 0.25,
+        effect: 'time'
       },
       star: { 
         color: '#FFD700', 
         icon: '⭐', 
         duration: 8000,
-        name: 'Double Points'
+        name: 'Double Points',
+        rarity: 0.15,
+        effect: 'multiplier'
       },
       lightning: { 
         color: '#9C27B0', 
         icon: '⚡', 
         duration: 6000,
-        name: 'Slow Motion'
+        name: 'Slow Motion',
+        rarity: 0.1,
+        effect: 'slowmo'
+      },
+      magnet: { 
+        color: '#FF9800', 
+        icon: '🧲', 
+        duration: 7000,
+        name: 'Honey Magnet',
+        rarity: 0.1,
+        effect: 'magnet'
+      },
+      bomb: { 
+        color: '#F44336', 
+        icon: '💣', 
+        duration: 0,
+        name: 'Bee Bomb',
+        rarity: 0.05,
+        effect: 'clearBees'
       }
     };
 
     // -------------------------------------------------------------------------
-    // Statistics Management
+    // Enhanced Statistics Management
     // -------------------------------------------------------------------------
     function loadStatistics() {
       try {
-        const saved = localStorage.getItem('honeyCatch_stats');
+        const saved = localStorage.getItem('honeyCatch_stats_v2');
         if (saved) {
           const statsData = JSON.parse(saved);
           Object.assign(state.stats, statsData);
@@ -710,9 +1016,16 @@
 
     function saveStatistics() {
       try {
-        localStorage.setItem('honeyCatch_stats', JSON.stringify(state.stats));
+        // Calculate averages
+        if (state.stats.gamesPlayed > 0) {
+          state.stats.averageScore = Math.round(state.stats.totalScore / state.stats.gamesPlayed);
+        }
+        
+        localStorage.setItem('honeyCatch_stats_v2', JSON.stringify(state.stats));
+        return true;
       } catch (e) {
         console.warn('[HoneyCatch] Could not save statistics:', e);
+        return false;
       }
     }
 
