@@ -13,6 +13,8 @@
     accessibility: false
   };
 
+  const WISHES_KEY = 'hundred-wishes-v1';
+
   function clamp(n, a, b) { return Math.max(a, Math.min(b, n)); }
 
   // ---------------------------------------------------------------------------
@@ -333,6 +335,130 @@
   }
 
   // ---------------------------------------------------------------------------
+  // Wishes (local + lightweight validation)
+  // ---------------------------------------------------------------------------
+  function initWishes() {
+    const form = $('#wishesForm');
+    const list = $('#wishesList');
+    const status = $('#wishStatus');
+    const meta = $('#wishMeta');
+    const nameInput = $('#wishName');
+    const emojiInput = $('#wishEmoji');
+    const messageInput = $('#wishMessage');
+    const clearBtn = $('#clearWishes');
+
+    if (!form || !list || !status || !messageInput) return;
+
+    const setStatus = (text = '', tone = 'muted') => {
+      status.textContent = text;
+      status.dataset.tone = tone;
+    };
+
+    const load = () => {
+      try {
+        const parsed = JSON.parse(localStorage.getItem(WISHES_KEY) || '[]');
+        return Array.isArray(parsed) ? parsed : [];
+      } catch (err) {
+        console.warn('Could not read wishes', err);
+        return [];
+      }
+    };
+
+    const save = (items) => {
+      try {
+        localStorage.setItem(WISHES_KEY, JSON.stringify(items.slice(0, 15)));
+      } catch (err) {
+        console.warn('Could not save wishes', err);
+      }
+    };
+
+    let wishes = load();
+
+    const formatTime = (iso) => {
+      const date = new Date(iso);
+      if (Number.isNaN(date.getTime())) return 'Just now';
+      return date.toLocaleString(undefined, { month: 'short', day: 'numeric', hour: 'numeric', minute: '2-digit' });
+    };
+
+    const render = () => {
+      list.innerHTML = '';
+      if (!wishes.length) {
+        const empty = document.createElement('div');
+        empty.className = 'tip';
+        empty.textContent = 'No wishes yet — be the first to leave a cozy note!';
+        list.appendChild(empty);
+        return;
+      }
+
+      wishes.forEach((wish) => {
+        const card = document.createElement('article');
+        card.className = 'wish-card';
+        card.innerHTML = `
+          <header>
+            <span class="wish-emoji" aria-hidden="true">${wish.emoji || '💌'}</span>
+            <span class="wish-name">${wish.name || 'A friend'}</span>
+            <span class="wish-time">${formatTime(wish.created)}</span>
+          </header>
+          <p class="wish-message"></p>
+        `;
+        card.querySelector('.wish-message').textContent = wish.message;
+        list.appendChild(card);
+      });
+    };
+
+    const syncMeta = () => {
+      if (!meta) return;
+      const count = messageInput.value.trim().length;
+      meta.textContent = `${count} / ${messageInput.maxLength} characters`;
+    };
+
+    form.addEventListener('submit', (e) => {
+      e.preventDefault();
+      const message = (messageInput.value || '').trim();
+      const name = (nameInput && nameInput.value.trim()) || 'A friend';
+      const emoji = (emojiInput && emojiInput.value) || '💌';
+
+      if (message.length < 4) {
+        setStatus('Please share a short wish before sending.', 'error');
+        audio.play(330, 0.12);
+        return;
+      }
+
+      const entry = { name: name.slice(0, 60), message: message.slice(0, 240), emoji, created: new Date().toISOString() };
+      wishes = [entry, ...wishes].slice(0, 15);
+      save(wishes);
+      render();
+      form.reset();
+      syncMeta();
+      setStatus('Wish saved locally. Thank you for the kindness!', 'success');
+      audio.play(587, 0.14, 'sine');
+    });
+
+    form.addEventListener('reset', () => {
+      window.setTimeout(() => {
+        syncMeta();
+        setStatus('');
+      }, 0);
+    });
+
+    if (clearBtn) {
+      clearBtn.addEventListener('click', () => {
+        if (!wishes.length) return;
+        if (!window.confirm('Clear all saved wishes from this device?')) return;
+        wishes = [];
+        save(wishes);
+        render();
+        setStatus('Cleared locally saved wishes.', 'muted');
+      });
+    }
+
+    messageInput.addEventListener('input', syncMeta);
+    wishes = wishes.slice(0, 15);
+    render();
+    syncMeta();
+  }
+
+  // ---------------------------------------------------------------------------
   // Fun particle burst for CTA buttons
   // ---------------------------------------------------------------------------
   function initParticles() {
@@ -382,6 +508,7 @@
     initCharacterModal();
     initSmoothScroll();
     initEntranceAnimations();
+    initWishes();
     initParticles();
   });
 })();
