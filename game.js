@@ -1133,7 +1133,17 @@ function EnhancedHoneyCatchGame() {
     if (pauseBtn) pauseBtn.addEventListener('click', togglePause);
 
     // Global unlock hooks (first interaction anywhere)
-    window.addEventListener('touchstart', unlockAudioOnce, { passive: true, once: true });
+// Touch start: move Pooh + unlock audio (and block iOS long-press loupe)
+canvas.addEventListener(
+  'touchstart',
+  (ev) => {
+    unlockAudioOnce();
+    ev.preventDefault(); // <-- critical (requires passive:false)
+    if (!ev.touches || ev.touches.length === 0) return;
+    setPoohFromClientX(ev.touches[0].clientX);
+  },
+  { passive: false }
+);
     window.addEventListener('pointerdown', unlockAudioOnce, { passive: true, once: true });
     window.addEventListener('click', unlockAudioOnce, { passive: true, once: true });
 
