@@ -44,6 +44,7 @@
             --tigger-orange: #FB8C00;
             --shadow-soft: 0 8px 32px rgba(0, 0, 0, 0.08);
             --shadow-medium: 0 12px 48px rgba(0, 0, 0, 0.12);
+            --shadow-large: 0 20px 60px rgba(0, 0, 0, 0.15);
         }
         
         /* Enhanced cover with parallax effect */
@@ -69,7 +70,7 @@
             padding: 3rem 2.5rem;
             max-width: 600px;
             width: 90%;
-            box-shadow: var(--shadow-medium);
+            box-shadow: var(--shadow-large);
             border: 2px solid var(--honey);
             position: relative;
             overflow: hidden;
@@ -479,16 +480,17 @@
         }
         
         @keyframes float {
-            0%, 100% { transform: translateY(0); }
-            50% { transform: translateY(-20px); }
+            0%, 100% { transform: translateY(0) rotate(0deg); }
+            50% { transform: translateY(-20px) rotate(5deg); }
         }
         
         /* Floating elements */
         .floating-element {
-            position: absolute;
+            position: fixed;
             pointer-events: none;
             z-index: 1;
             animation: float 6s ease-in-out infinite;
+            filter: drop-shadow(0 4px 8px rgba(0,0,0,0.1));
         }
         
         /* Story progression */
@@ -518,6 +520,75 @@
             margin-bottom: 1rem;
         }
         
+        /* Enhanced toast notifications */
+        .toast {
+            position: fixed;
+            bottom: 20px;
+            right: 20px;
+            background: linear-gradient(135deg, var(--honey), var(--honey-dark));
+            color: white;
+            padding: 1rem 1.5rem;
+            border-radius: 12px;
+            box-shadow: var(--shadow-medium);
+            z-index: 3000;
+            transform: translateY(100px);
+            opacity: 0;
+            transition: transform 0.5s cubic-bezier(0.175, 0.885, 0.32, 1.275), opacity 0.5s ease;
+            display: flex;
+            align-items: center;
+            gap: 1rem;
+            max-width: 300px;
+        }
+        
+        .toast.visible {
+            transform: translateY(0);
+            opacity: 1;
+        }
+        
+        .toast.error {
+            background: linear-gradient(135deg, #ff6b6b, #ff5252);
+        }
+        
+        .toast.success {
+            background: linear-gradient(135deg, #4CAF50, #2E7D32);
+        }
+        
+        /* Enhanced modals */
+        .modal-overlay {
+            position: fixed;
+            top: 0;
+            left: 0;
+            right: 0;
+            bottom: 0;
+            background: rgba(0, 0, 0, 0.7);
+            backdrop-filter: blur(8px);
+            display: none;
+            align-items: center;
+            justify-content: center;
+            z-index: 2000;
+            opacity: 0;
+            transition: opacity 0.3s ease;
+        }
+        
+        .modal-overlay.active {
+            display: flex;
+            opacity: 1;
+        }
+        
+        .modal-content {
+            background: white;
+            border-radius: 20px;
+            padding: 2.5rem;
+            max-width: 500px;
+            width: 90%;
+            max-height: 90vh;
+            overflow-y: auto;
+            box-shadow: var(--shadow-large);
+            border: 3px solid var(--honey);
+            position: relative;
+            animation: fadeInUp 0.4s ease;
+        }
+        
         /* Responsive design */
         @media (max-width: 768px) {
             .cover-title { font-size: 2.5rem; }
@@ -527,6 +598,7 @@
             .game-hud { grid-template-columns: repeat(2, 1fr); }
             .wishes-grid { grid-template-columns: 1fr; }
             .story-progression { grid-template-columns: 1fr; }
+            .floating-element { display: none; }
         }
         
         /* Dark mode support */
@@ -534,15 +606,22 @@
             .cover-card,
             .character-spotlight,
             .game-card,
-            .wishes-form {
+            .wishes-form,
+            .modal-content {
                 background: rgba(30, 30, 30, 0.95);
                 color: #f0f0f0;
+                border-color: var(--wood-light);
             }
             
             input, textarea, select {
                 background: #333;
                 color: #f0f0f0;
                 border-color: #555;
+            }
+            
+            .btn-secondary {
+                background: #333;
+                color: #f0f0f0;
             }
         }
         
@@ -560,6 +639,63 @@
                 transition-duration: 0.01ms !important;
             }
         }
+        
+        /* Loading states */
+        .loading {
+            opacity: 0.6;
+            pointer-events: none;
+            position: relative;
+        }
+        
+        .loading::after {
+            content: '';
+            position: absolute;
+            top: 50%;
+            left: 50%;
+            width: 30px;
+            height: 30px;
+            border: 3px solid var(--honey);
+            border-top-color: transparent;
+            border-radius: 50%;
+            animation: spin 1s linear infinite;
+            transform: translate(-50%, -50%);
+        }
+        
+        @keyframes spin {
+            to { transform: translate(-50%, -50%) rotate(360deg); }
+        }
+        
+        /* Improved game controls */
+        .game-controls {
+            display: flex;
+            gap: 1rem;
+            flex-wrap: wrap;
+            margin-top: 2rem;
+            justify-content: center;
+        }
+        
+        /* Virtual joystick styling */
+        .virtual-joystick {
+            width: 120px;
+            height: 120px;
+            background: rgba(255, 255, 255, 0.9);
+            border-radius: 50%;
+            border: 2px solid var(--honey);
+            position: relative;
+            box-shadow: var(--shadow-soft);
+        }
+        
+        .joystick-knob {
+            width: 50px;
+            height: 50px;
+            background: var(--honey);
+            border-radius: 50%;
+            position: absolute;
+            top: 50%;
+            left: 50%;
+            transform: translate(-50%, -50%);
+            box-shadow: 0 4px 8px rgba(0,0,0,0.2);
+        }
     </style>
 </head>
 <body>
@@ -569,54 +705,718 @@
     <div class="floating-element" style="bottom: 30%; left: 15%; font-size: 4rem; animation-delay: 2s;">🐻</div>
     <div class="floating-element" style="bottom: 20%; right: 5%; font-size: 3rem; animation-delay: 3s;">🎈</div>
     
+    <a class="skip-link" href="#main">Skip to content</a>
+    
+    <!-- Toast notification system -->
+    <div id="toast" class="toast" role="alert" aria-live="assertive" aria-atomic="true"></div>
+    
+    <!-- Reading progress -->
+    <div class="reading-progress" id="readingProgress" aria-hidden="true"></div>
+    
     <!-- Cover / Intro -->
-    <div class="storybook-cover" id="cover">
+    <div class="storybook-cover" id="cover" role="dialog" aria-modal="true" aria-label="Welcome screen">
         <div class="cover-card">
-            <div class="cover-decoration"></div>
-            <div class="cover-decoration"></div>
+            <div class="cover-decoration" aria-hidden="true"></div>
             <h1 class="cover-title animate__animated animate__fadeInDown">Baby Gunnar's Hundred Acre Wood</h1>
             <p class="cover-subtitle animate__animated animate__fadeInUp animate__delay-1s">
                 A magical interactive storybook journey through the Hundred Acre Wood. 
                 Play honey-sweet games, meet beloved friends, and share heartfelt wishes.
             </p>
             <div class="storybook-form animate__animated animate__fadeInUp animate__delay-2s">
-                <button class="btn btn-primary" id="enterStory">
-                    <i class="fa-solid fa-book-open"></i>
+                <button class="btn btn-primary" id="enterStory" type="button" aria-label="Enter the storybook">
+                    <i class="fa-solid fa-book-open" aria-hidden="true"></i>
                     Begin the Adventure
                 </button>
-                <p class="tip" style="margin-top: 2rem; opacity: 0.8;">
+                <p class="tip" style="margin-top: 2rem; opacity: 0.8; max-width: 58ch; text-align:center;">
                     <i class="fa-solid fa-lightbulb"></i>
                     Tip: Tap anywhere to unlock sound. Works best on modern browsers.
+                    <span id="installPrompt" style="display: none; margin-top: 0.5rem;">
+                        <br>
+                        <button id="installButton" class="btn btn-ghost" style="font-size: 0.9rem;">
+                            <i class="fas fa-download"></i> Install App
+                        </button>
+                    </span>
                 </p>
             </div>
         </div>
     </div>
     
-    <!-- Main content (rest of your HTML remains the same with enhanced classes) -->
-    <!-- [Previous HTML content remains mostly the same but with updated class names for the enhanced styles] -->
+    <!-- Top nav -->
+    <header class="nav" role="navigation" aria-label="Primary">
+        <div class="nav-brand">
+            <span aria-hidden="true" role="img">🍯</span>
+            <div class="nav-title">Hundred Acre Celebration</div>
+        </div>
+        <button class="nav-toggle" id="navToggle" type="button" aria-label="Open menu" aria-expanded="false">
+            <i class="fa-solid fa-bars" aria-hidden="true"></i>
+        </button>
+        <nav class="nav-menu" id="navMenu" aria-label="Site sections">
+            <a class="nav-item" href="#story"><i class="fa-solid fa-feather" aria-hidden="true"></i> Story</a>
+            <a class="nav-item" href="#friends"><i class="fa-solid fa-people-group" aria-hidden="true"></i> Friends</a>
+            <a class="nav-item" href="#games"><i class="fa-solid fa-gamepad" aria-hidden="true"></i> Games</a>
+            <a class="nav-item" href="#wishes"><i class="fa-solid fa-heart" aria-hidden="true"></i> Wishes</a>
+        </nav>
+    </header>
     
-    <!-- Enhanced Scripts -->
+    <!-- Floating action buttons -->
+    <div class="fab-stack" aria-label="Quick actions">
+        <button class="fab" id="muteToggle" type="button" aria-label="Toggle sound" aria-pressed="false" title="Sound">
+            <i class="fa-solid fa-volume-xmark" aria-hidden="true"></i>
+        </button>
+        <button class="accessibility-btn" id="accessibilityToggle" type="button" aria-label="Toggle accessibility mode" aria-pressed="false" title="Accessibility">
+            <i class="fa-solid fa-person-walking" aria-hidden="true"></i>
+        </button>
+        <button class="fab" id="scrollTop" type="button" aria-label="Scroll to top" title="Top">
+            <i class="fa-solid fa-arrow-up" aria-hidden="true"></i>
+        </button>
+    </div>
+    
+    <main id="main" class="storybook-shell">
+        <div class="storybook">
+            <div class="storybook-inner">
+                <!-- Story -->
+                <section class="content-section" id="story" aria-labelledby="storyTitle">
+                    <div class="content-section-inner">
+                        <header class="storybook-header">
+                            <h2 class="storybook-heading" id="storyTitle">A Cozy Little Adventure</h2>
+                            <p class="storybook-subheading">
+                                Welcome to Baby Gunnar's Hundred Acre Wood celebration — a gentle storybook moment with friends,
+                                honey-sweet games, and a place to leave your wishes.
+                            </p>
+                        </header>
+                        <!-- Story progression -->
+                        <div class="story-progression">
+                            <div class="story-step">
+                                <div class="story-icon">📖</div>
+                                <h3>Read</h3>
+                                <p>Discover heartfelt messages from Pooh and friends</p>
+                            </div>
+                            <div class="story-step">
+                                <div class="story-icon">🎮</div>
+                                <h3>Play</h3>
+                                <p>Enjoy the honey-sweet catch game with Pooh</p>
+                            </div>
+                            <div class="story-step">
+                                <div class="story-icon">💝</div>
+                                <h3>Share</h3>
+                                <p>Leave warm wishes for Baby Gunnar</p>
+                            </div>
+                        </div>
+                    </div>
+                </section>
+                
+                <!-- Friends -->
+                <section class="content-section" id="friends" aria-labelledby="friendsTitle">
+                    <div class="content-section-inner">
+                        <h2 class="section-title" id="friendsTitle">Friends in the Wood</h2>
+                        <p class="section-subtitle">Tap a friend for a little message.</p>
+                        <div class="characters-grid-enhanced">
+                            <article class="character-spotlight" data-character="pooh" tabindex="0" role="button" 
+                                     aria-label="Open Pooh message" aria-describedby="pooh-desc">
+                                <div class="character-spotlight-content">
+                                    <div class="character-illustration">
+                                        <img src="media/characters/pooh.png" alt="Pooh holding a honey pot" loading="lazy" decoding="async"
+                                            onerror="this.style.display='none'; this.parentElement.innerHTML='🐻';" />
+                                    </div>
+                                    <h3 class="character-name">Pooh</h3>
+                                    <p class="character-quote">A little honey goes a long way.</p>
+                                </div>
+                                <div class="sr-only" id="pooh-desc">Click to hear Pooh's message about sweetness and kindness</div>
+                            </article>
+                            <article class="character-spotlight" data-character="piglet" tabindex="0" role="button" 
+                                     aria-label="Open Piglet message" aria-describedby="piglet-desc">
+                                <div class="character-spotlight-content">
+                                    <div class="character-illustration">
+                                        <img src="media/characters/piglet.png" alt="Piglet looking thoughtful" loading="lazy" decoding="async"
+                                            onerror="this.style.display='none'; this.parentElement.innerHTML='🐷';" />
+                                    </div>
+                                    <h3 class="character-name">Piglet</h3>
+                                    <p class="character-quote">Small steps. Big heart.</p>
+                                </div>
+                                <div class="sr-only" id="piglet-desc">Click to hear Piglet's message about courage and small beginnings</div>
+                            </article>
+                            <article class="character-spotlight" data-character="eeyore" tabindex="0" role="button" 
+                                     aria-label="Open Eeyore message" aria-describedby="eeyore-desc">
+                                <div class="character-spotlight-content">
+                                    <div class="character-illustration">
+                                        <img src="media/characters/eeyore.png" alt="Eeyore with his tail" loading="lazy" decoding="async"
+                                            onerror="this.style.display='none'; this.parentElement.innerHTML='🐴';" />
+                                    </div>
+                                    <h3 class="character-name">Eeyore</h3>
+                                    <p class="character-quote">Quiet love still counts.</p>
+                                </div>
+                                <div class="sr-only" id="eeyore-desc">Click to hear Eeyore's message about quiet strength and loyalty</div>
+                            </article>
+                            <article class="character-spotlight" data-character="tigger" tabindex="0" role="button" 
+                                     aria-label="Open Tigger message" aria-describedby="tigger-desc">
+                                <div class="character-spotlight-content">
+                                    <div class="character-illustration">
+                                        <img src="media/characters/tigger.png" alt="Tigger bouncing happily" loading="lazy" decoding="async"
+                                            onerror="this.style.display='none'; this.parentElement.innerHTML='🐯';" />
+                                    </div>
+                                    <h3 class="character-name">Tigger</h3>
+                                    <p class="character-quote">Bounce into the fun-fun.</p>
+                                </div>
+                                <div class="sr-only" id="tigger-desc">Click to hear Tigger's message about joy and enthusiasm</div>
+                            </article>
+                        </div>
+                    </div>
+                </section>
+                
+                <!-- Games -->
+                <article class="game-card" id="catch-card" aria-label="Honey Pot Catch game">
+                    <header class="game-header">
+                        <h3 class="game-title">
+                            <i class="fa-solid fa-gamepad" aria-hidden="true"></i>
+                            Honey Pot Catch
+                        </h3>
+                        <p class="game-help">
+                            Move Pooh left/right. Catch honey. Dodge bees. Power-ups help.
+                        </p>
+                        <div class="game-mode-toggle" role="group" aria-label="Pick a tempo">
+                            <button class="mode-chip is-active" data-catch-mode="calm" type="button" aria-pressed="true">Calm Stroll</button>
+                            <button class="mode-chip" data-catch-mode="brisk" type="button" aria-pressed="false">Adventure</button>
+                            <button class="mode-chip" data-catch-mode="rush" type="button" aria-pressed="false">Honey Rush</button>
+                            <p class="mode-chip-note" id="catch-mode-description">A relaxed 70 second run with extra hearts.</p>
+                        </div>
+                    </header>
+                    
+                    <!-- Enhanced HUD with more stats -->
+                    <div class="game-hud" aria-label="Game status">
+                        <span class="hud-stat"><span class="hud-pill">Score: <span id="score-count">0</span></span></span>
+                        <span class="hud-stat"><span class="hud-pill">Time: <span id="time-count">60</span>s</span></span>
+                        <span class="hud-stat"><span class="hud-pill">Lives: <span id="catch-lives">3</span></span></span>
+                        <span class="hud-stat"><span class="hud-pill"><span id="catch-combo">0</span> Combo</span></span>
+                        <span class="hud-stat"><span class="hud-pill">×<span id="catch-multiplier">1</span></span></span>
+                        <span class="hud-stat"><span class="hud-pill">Best: <span id="catch-best">0</span></span></span>
+                        <span class="hud-stat"><span class="hud-pill">FPS: <span id="catch-fps">60</span></span></span>
+                    </div>
+                    
+                    <div class="hud-progress" aria-hidden="false">
+                        <div class="progress-block">
+                            <div class="progress-label">Time left</div>
+                            <div class="progress-track">
+                                <div class="progress-fill" id="catch-timebar" style="--w: 100%; width: 100%;"></div>
+                            </div>
+                        </div>
+                        <div class="progress-block">
+                            <div class="progress-label">Hearts</div>
+                            <div class="progress-track hearts">
+                                <div class="progress-fill" id="catch-life-bar" style="--w: 100%; width: 100%;"></div>
+                            </div>
+                        </div>
+                    </div>
+                    
+                    <div class="game-stage">
+                        <canvas id="honey-game" class="game-canvas" 
+                            aria-label="Honey Pot Catch game area. Use arrow keys or touch to move Pooh left and right to catch honey pots and avoid bees." 
+                            role="application"
+                            tabindex="0">
+                            Your browser does not support the canvas element. Please try using a modern browser.
+                        </canvas>
+                        
+                        <!-- Overlay with game status -->
+                        <div class="game-overlay" id="catch-overlay" aria-live="polite">
+                            <div class="countdown-display" id="catch-countdown">Ready when you are.</div>
+                            <div class="overlay-hint" id="catch-hint">Press Start to begin a calm 60 second run.</div>
+                        </div>
+                        
+                        <!-- Active power-ups display -->
+                        <div class="active-effects" id="activeEffects" aria-label="Active power-ups" style="display: none;">
+                            <div class="effect" id="effect-shield">🛡️ 0s</div>
+                            <div class="effect" id="effect-star">⭐ 0s</div>
+                            <div class="effect" id="effect-lightning">⚡ 0s</div>
+                        </div>
+                    </div>
+                    
+                    <!-- Enhanced Game Controls -->
+                    <div class="game-controls" aria-label="Game controls">
+                        <button class="btn btn-primary" id="start-catch" type="button">
+                            <i class="fa-solid fa-play" aria-hidden="true"></i> Start
+                        </button>
+                        <button class="btn btn-secondary" id="pause-catch" type="button" aria-pressed="false">
+                            <i class="fa-solid fa-pause" aria-hidden="true"></i> Pause
+                        </button>
+                        <button class="btn btn-secondary" id="stats-button" type="button">
+                            <i class="fa-solid fa-chart-bar" aria-hidden="true"></i> Stats
+                        </button>
+                        <button class="btn btn-secondary" id="save-button" type="button">
+                            <i class="fa-solid fa-save" aria-hidden="true"></i> Save
+                        </button>
+                        <button class="btn btn-secondary" id="share-button" type="button">
+                            <i class="fa-solid fa-share-alt" aria-hidden="true"></i> Share
+                        </button>
+                        
+                        <div class="joystick-dock" aria-hidden="false">
+                            <div id="catchJoystick" class="virtual-joystick" aria-label="Drag to steer Pooh" role="slider" aria-valuemin="-40" aria-valuemax="40" aria-valuenow="0">
+                                <div class="joystick-base"></div>
+                                <div class="joystick-knob" id="catchJoystickKnob"></div>
+                            </div>
+                            <p class="joystick-hint">Drag on phones. Arrow keys + mouse also work.</p>
+                        </div>
+                    </div>
+                    
+                    <!-- Quick Save Indicator -->
+                    <div class="save-indicator" id="saveIndicator" aria-live="polite" style="display: none;">
+                        <i class="fas fa-check-circle"></i> Game saved
+                    </div>
+                    
+                    <!-- Game status with announcements -->
+                    <p class="tip" id="catchStatus" aria-live="polite" style="margin: 12px 14px 16px;">
+                        Ready. Select a mode and press Start to play.
+                    </p>
+                    
+                    <!-- Game guide with keyboard shortcuts -->
+                    <div class="game-guide-grid" aria-label="How to play">
+                        <div class="guide-card">
+                            <div class="guide-icon" role="img" aria-label="Honey pot">🍯</div>
+                            <div>
+                                <h4>Sweet catches</h4>
+                                <p>Golden pots boost your score and streak. Keep moving to chain them.</p>
+                                <small class="key-hint"><kbd>←</kbd> <kbd>→</kbd> Move</small>
+                            </div>
+                        </div>
+                        <div class="guide-card">
+                            <div class="guide-icon" role="img" aria-label="Bee">🐝</div>
+                            <div>
+                                <h4>Watch the buzz</h4>
+                                <p>Angry bees drift toward Pooh. A shield or quick sidestep keeps hearts safe.</p>
+                                <small class="key-hint"><kbd>A</kbd> <kbd>D</kbd> Move</small>
+                            </div>
+                        </div>
+                        <div class="guide-card">
+                            <div class="guide-icon" role="img" aria-label="Star">⭐</div>
+                            <div>
+                                <h4>Power-up moments</h4>
+                                <p>Clock adds time, hearts heal, lightning slows the world, stars double points.</p>
+                                <small class="key-hint"><kbd>Space</kbd> Dash</small>
+                            </div>
+                        </div>
+                        <div class="guide-card">
+                            <div class="guide-icon" role="img" aria-label="Target">🎯</div>
+                            <div>
+                                <h4>Chase a personal best</h4>
+                                <p>Your best run is saved locally. Try the Honey Rush tempo for riskier rewards.</p>
+                                <small class="key-hint"><kbd>Esc</kbd> Pause</small>
+                            </div>
+                        </div>
+                    </div>
+                </article>
+                
+                <!-- Wishes -->
+                <section class="content-section" id="wishes" aria-labelledby="wishesTitle">
+                    <div class="content-section-inner">
+                        <h2 class="section-title" id="wishesTitle">Leave a Wish</h2>
+                        <p class="section-subtitle">A simple spot to leave kind words for Baby Gunnar.</p>
+                        
+                        <form class="wishes-form" id="wishesForm" novalidate>
+                            <div class="wishes-grid">
+                                <label class="wishes-field" for="wishName">
+                                    <span class="field-label">Your name (optional)</span>
+                                    <input id="wishName" name="wishName" type="text" maxlength="60" autocomplete="name" placeholder="Christopher Robin" />
+                                </label>
+                                <label class="wishes-field" for="wishEmoji">
+                                    <span class="field-label">Mood</span>
+                                    <select id="wishEmoji" name="wishEmoji">
+                                        <option value="🍯">🍯 Honey-sweet</option>
+                                        <option value="🌿">🌿 Peaceful stroll</option>
+                                        <option value="🎈">🎈 Cheerful</option>
+                                        <option value="⭐">⭐ Encouraging</option>
+                                        <option value="💌">💌 Heartfelt</option>
+                                        <option value="🐻">🐻 Friendly bear hug</option>
+                                    </select>
+                                </label>
+                            </div>
+                            <label class="wishes-field" for="wishMessage">
+                                <span class="field-label">Your note</span>
+                                <textarea id="wishMessage" name="wishMessage" maxlength="240" 
+                                          placeholder="Write a gentle wish or encouragement..." 
+                                          required></textarea>
+                                <div class="field-meta" id="wishMeta" aria-live="polite">0 / 240 characters</div>
+                            </label>
+                            
+                            <div class="wishes-actions">
+                                <button class="btn btn-primary" type="submit">
+                                    <i class="fa-solid fa-paper-plane" aria-hidden="true"></i>
+                                    Send wish
+                                </button>
+                                <button class="btn btn-secondary" type="reset">
+                                    <i class="fa-solid fa-rotate-left" aria-hidden="true"></i>
+                                    Reset
+                                </button>
+                                <button class="btn btn-ghost" id="clearWishes" type="button">
+                                    <i class="fa-solid fa-broom" aria-hidden="true"></i>
+                                    Clear saved wishes
+                                </button>
+                            </div>
+                            
+                            <div class="wish-status" id="wishStatus" role="status" aria-live="polite"></div>
+                        </form>
+                        
+                        <!-- Wish statistics -->
+                        <div class="wish-stats" id="wishStats" aria-label="Wish statistics">
+                            <div class="stat">
+                                <span class="stat-number" id="totalWishes">0</span>
+                                <span class="stat-label">Total Wishes</span>
+                            </div>
+                            <div class="stat">
+                                <span class="stat-number" id="todayWishes">0</span>
+                                <span class="stat-label">Today</span>
+                            </div>
+                            <div class="stat">
+                                <span class="stat-number" id="lastWish">--:--</span>
+                                <span class="stat-label">Last Wish</span>
+                            </div>
+                        </div>
+                        
+                        <!-- Wishes list with filtering -->
+                        <div class="wishes-controls">
+                            <div class="filter-buttons" role="group" aria-label="Filter wishes">
+                                <button class="filter-btn active" data-filter="all">All</button>
+                                <button class="filter-btn" data-filter="today">Today</button>
+                                <button class="filter-btn" data-filter="week">This Week</button>
+                            </div>
+                            <div class="sort-options">
+                                <label for="sortWishes">Sort by:</label>
+                                <select id="sortWishes">
+                                    <option value="newest">Newest First</option>
+                                    <option value="oldest">Oldest First</option>
+                                    <option value="name">Name A-Z</option>
+                                </select>
+                            </div>
+                        </div>
+                        
+                        <div class="wishes-list" id="wishesList" aria-live="polite" aria-label="Recent wishes">
+                            <!-- Wishes will be loaded here dynamically -->
+                            <div class="empty-state" id="emptyWishes">
+                                <div class="empty-icon">💭</div>
+                                <h3>No wishes yet</h3>
+                                <p>Be the first to leave a warm wish for Baby Gunnar!</p>
+                            </div>
+                        </div>
+                    </div>
+                </section>
+                
+                <!-- Footer with credits -->
+                <footer class="site-footer">
+                    <div class="footer-content">
+                        <p>Made with <span aria-label="love">❤️</span> for Baby Gunnar</p>
+                        <p class="footer-links">
+                            <a href="#story" class="footer-link">Story</a> • 
+                            <a href="#friends" class="footer-link">Friends</a> • 
+                            <a href="#games" class="footer-link">Games</a> • 
+                            <a href="#wishes" class="footer-link">Wishes</a>
+                        </p>
+                        <p class="footer-copyright">© 2024 Hundred Acre Celebration</p>
+                        <button class="btn btn-ghost btn-small" id="resetAll" type="button">
+                            <i class="fas fa-trash-can"></i> Clear All Data
+                        </button>
+                    </div>
+                </footer>
+            </div>
+        </div>
+    </main>
+    
+    <!-- Character Modal -->
+    <div class="character-modal" id="characterModal" role="dialog" aria-modal="true" aria-label="Character message" tabindex="-1">
+        <div class="modal-content" role="document">
+            <button class="close-modal" id="closeCharacterModal" type="button" aria-label="Close">
+                <i class="fa-solid fa-xmark" aria-hidden="true"></i>
+            </button>
+            <div class="modal-character">
+                <div class="modal-character-icon pooh-icon-modal" id="modalIcon" aria-hidden="true">
+                    🐻
+                </div>
+                <div>
+                    <h3 class="modal-character-name" id="modalName">Pooh</h3>
+                    <p class="modal-character-quote" id="modalQuote">A little honey goes a long way.</p>
+                </div>
+            </div>
+            <div class="modal-character-bio" id="modalBio">
+                Pooh reminds us that sometimes the sweetest things come in simple moments. 
+                Just like honey, kindness spreads and makes everything better.
+            </div>
+        </div>
+    </div>
+    
+    <!-- Stats Modal -->
+    <div class="modal-overlay" id="statsModal">
+        <div class="modal-content stats-modal" role="dialog" aria-labelledby="statsTitle">
+            <button class="close-modal" id="closeStatsModal" type="button" aria-label="Close">
+                <i class="fa-solid fa-xmark" aria-hidden="true"></i>
+            </button>
+            <h3 id="statsTitle">Game Statistics</h3>
+            <div class="stats-grid" id="statsContent">
+                <!-- Stats will be loaded here -->
+            </div>
+        </div>
+    </div>
+    
+    <!-- Reset Confirmation Modal -->
+    <div class="modal-overlay" id="resetModal">
+        <div class="modal-content" role="dialog" aria-labelledby="resetTitle">
+            <h3 id="resetTitle">Confirm Reset</h3>
+            <p>Are you sure you want to clear all game data? This cannot be undone.</p>
+            <div class="modal-actions">
+                <button class="btn btn-danger" id="confirmReset">Clear All</button>
+                <button class="btn btn-secondary" id="cancelReset">Cancel</button>
+            </div>
+        </div>
+    </div>
+    
+    <!-- Scripts -->
+    <script src="script.js" defer></script>
+    <script src="game.js" defer></script>
+    
+    <!-- Enhanced Audio and Interaction Script -->
     <script>
-        // Enhanced audio context unlock
+        // Enhanced audio context unlock with better user experience
         let audioContext;
+        let unlockAttempts = 0;
         
         function unlockAudio() {
+            if (unlockAttempts >= 3) return; // Prevent too many attempts
+            
             if (!audioContext) {
-                audioContext = new (window.AudioContext || window.webkitAudioContext)();
+                try {
+                    audioContext = new (window.AudioContext || window.webkitAudioContext)();
+                    unlockAttempts++;
+                    
+                    // Create and play a very brief silent sound to unlock audio
+                    const oscillator = audioContext.createOscillator();
+                    const gainNode = audioContext.createGain();
+                    
+                    oscillator.connect(gainNode);
+                    gainNode.connect(audioContext.destination);
+                    
+                    oscillator.frequency.value = 0.1; // Almost inaudible
+                    gainNode.gain.value = 0.001; // Very quiet
+                    
+                    oscillator.start(audioContext.currentTime);
+                    oscillator.stop(audioContext.currentTime + 0.01);
+                    
+                    // Show success feedback
+                    showToast('Audio unlocked!', 'success');
+                    
+                    console.log('Audio context successfully unlocked');
+                } catch (error) {
+                    console.warn('Could not unlock audio:', error);
+                    showToast('Audio may be limited on this device', 'warning');
+                }
+            }
+        }
+        
+        // Enhanced toast notification system
+        function showToast(message, type = 'info') {
+            const toast = document.getElementById('toast');
+            if (!toast) return;
+            
+            toast.textContent = message;
+            toast.className = 'toast';
+            
+            switch(type) {
+                case 'success':
+                    toast.classList.add('success');
+                    break;
+                case 'error':
+                    toast.classList.add('error');
+                    break;
+                case 'warning':
+                    toast.classList.add('warning');
+                    break;
+            }
+            
+            toast.classList.add('visible');
+            
+            setTimeout(() => {
+                toast.classList.remove('visible');
+            }, 3000);
+        }
+        
+        // Enhanced cover reveal animation
+        function revealContent() {
+            const cover = document.getElementById('cover');
+            if (!cover) return;
+            
+            cover.style.opacity = '0';
+            cover.style.transform = 'scale(0.9)';
+            
+            setTimeout(() => {
+                cover.style.display = 'none';
+                document.body.style.overflow = 'auto';
                 
-                // Create a subtle background sound
-                const oscillator = audioContext.createOscillator();
-                const gainNode = audioContext.createGain();
+                // Scroll to top smoothly
+                window.scrollTo({
+                    top: 0,
+                    behavior: 'smooth'
+                });
                 
-                oscillator.connect(gainNode);
-                gainNode.connect(audioContext.destination);
+                // Trigger entrance animations for main content
+                document.querySelectorAll('.content-section').forEach((section, index) => {
+                    setTimeout(() => {
+                        section.style.opacity = '0';
+                        section.style.transform = 'translateY(20px)';
+                        section.style.transition = 'opacity 0.6s ease, transform 0.6s ease';
+                        
+                        setTimeout(() => {
+                            section.style.opacity = '1';
+                            section.style.transform = 'translateY(0)';
+                        }, 50);
+                    }, index * 200);
+                });
+            }, 300);
+        }
+        
+        // Floating elements interaction
+        function initializeFloatingElements() {
+            const elements = document.querySelectorAll('.floating-element');
+            elements.forEach(el => {
+                el.addEventListener('mouseenter', () => {
+                    el.style.transform = 'scale(1.2)';
+                    el.style.transition = 'transform 0.3s ease';
+                });
                 
-                oscillator.frequency.value = 220;
-                gainNode.gain.value = 0;
+                el.addEventListener('mouseleave', () => {
+                    el.style.transform = '';
+                });
+            });
+        }
+        
+        // Character spotlight enhancement
+        function initializeCharacterInteractions() {
+            const characters = document.querySelectorAll('.character-spotlight');
+            characters.forEach(char => {
+                char.addEventListener('click', function() {
+                    const character = this.dataset.character;
+                    
+                    // Ripple effect
+                    const ripple = document.createElement('div');
+                    ripple.style.position = 'absolute';
+                    ripple.style.borderRadius = '50%';
+                    ripple.style.background = 'rgba(255, 193, 7, 0.3)';
+                    ripple.style.transform = 'scale(0)';
+                    ripple.style.animation = 'ripple 0.6s linear';
+                    ripple.style.width = '100px';
+                    ripple.style.height = '100px';
+                    ripple.style.top = '50%';
+                    ripple.style.left = '50%';
+                    ripple.style.marginLeft = '-50px';
+                    ripple.style.marginTop = '-50px';
+                    ripple.style.pointerEvents = 'none';
+                    
+                    this.appendChild(ripple);
+                    
+                    setTimeout(() => {
+                        ripple.remove();
+                    }, 600);
+                });
+            });
+        }
+        
+        // Add CSS for ripple animation
+        const style = document.createElement('style');
+        style.textContent = `
+            @keyframes ripple {
+                to {
+                    transform: scale(4);
+                    opacity: 0;
+                }
+            }
+        `;
+        document.head.appendChild(style);
+        
+        // Initialize everything when DOM is loaded
+        document.addEventListener('DOMContentLoaded', function() {
+            // Set up enter button
+            const enterBtn = document.getElementById('enterStory');
+            if (enterBtn) {
+                enterBtn.addEventListener('click', function(e) {
+                    e.preventDefault();
+                    unlockAudio();
+                    revealContent();
+                });
+            }
+            
+            // Unlock audio on any interaction
+            document.addEventListener('click', unlockAudio, { once: true });
+            document.addEventListener('touchstart', unlockAudio, { once: true });
+            document.addEventListener('keydown', unlockAudio, { once: true });
+            
+            // Initialize enhanced features
+            initializeFloatingElements();
+            initializeCharacterInteractions();
+            
+            // Add hover effects to buttons
+            document.querySelectorAll('.btn').forEach(btn => {
+                btn.addEventListener('mouseenter', function() {
+                    this.style.transform = 'translateY(-3px)';
+                });
                 
-                oscillator.start();
+                btn.addEventListener('mouseleave', function() {
+                    this.style.transform = '';
+                });
+            });
+            
+            // PWA Installation Prompt
+            let deferredPrompt;
+            window.addEventListener('beforeinstallprompt', (e) => {
+                e.preventDefault();
+                deferredPrompt = e;
+                const installPrompt = document.getElementById('installPrompt');
+                const installButton = document.getElementById('installButton');
                 
-                // Fade in/out for a gentle sound
-                gainNode.gain.setValueAtTime(0, audioContext.currentTime);
-                gainNode.gain.linearRampToValueAtTime(0.05, audioContext.currentTime + 0.5);
-                gainNode.gain.linearRampToValueAtTime(0, audioContext.current
+                if (installPrompt && installButton) {
+                    installPrompt.style.display = 'block';
+                    
+                    installButton.addEventListener('click', async () => {
+                        if (deferredPrompt) {
+                            deferredPrompt.prompt();
+                            const { outcome } = await deferredPrompt.userChoice;
+                            if (outcome === 'accepted') {
+                                showToast('App installed successfully!', 'success');
+                            }
+                            deferredPrompt = null;
+                            installPrompt.style.display = 'none';
+                        }
+                    });
+                }
+            });
+            
+            window.addEventListener('appinstalled', () => {
+                const installPrompt = document.getElementById('installPrompt');
+                if (installPrompt) {
+                    installPrompt.style.display = 'none';
+                }
+            });
+            
+            // Reading progress bar
+            const readingProgress = document.getElementById('readingProgress');
+            if (readingProgress) {
+                window.addEventListener('scroll', () => {
+                    const scrollTop = window.pageYOffset;
+                    const docHeight = document.body.scrollHeight - window.innerHeight;
+                    const scrollPercent = scrollTop / docHeight;
+                    readingProgress.style.width = `${scrollPercent * 100}%`;
+                });
+            }
+        });
+        
+        // Add smooth scrolling for anchor links
+        document.querySelectorAll('a[href^="#"]').forEach(anchor => {
+            anchor.addEventListener('click', function(e) {
+                const href = this.getAttribute('href');
+                if (href === '#') return;
+                
+                e.preventDefault();
+                const target = document.querySelector(href);
+                if (target) {
+                    target.scrollIntoView({
+                        behavior: 'smooth',
+                        block: 'start'
+                    });
+                }
+            });
+        });
+    </script>
+</body>
+</html>
