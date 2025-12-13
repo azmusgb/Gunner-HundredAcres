@@ -147,6 +147,7 @@ function EnhancedHoneyCatchGame() {
     const modeButtons = Array.from(document.querySelectorAll('[data-catch-mode]'));
     const modeDescription = document.getElementById('catch-mode-description');
     const bestScoreEl = document.getElementById('catch-best');
+    const stageEl = canvas.closest('.game-stage');
 
     const MODES = {
       calm: {
@@ -444,6 +445,30 @@ function EnhancedHoneyCatchGame() {
       }
     }
 
+    function showScorePopup(label, x, y, variant = 'default') {
+      if (!stageEl) return;
+
+      const stageRect = stageEl.getBoundingClientRect();
+      const canvasRect = canvas.getBoundingClientRect();
+
+      const popup = document.createElement('div');
+      popup.className = `score-popup score-popup--${variant}`;
+      popup.textContent = label;
+
+      const relX = canvasRect.left - stageRect.left + x;
+      const relY = canvasRect.top - stageRect.top + y;
+      popup.style.left = `${relX}px`;
+      popup.style.top = `${relY}px`;
+
+      stageEl.appendChild(popup);
+
+      requestAnimationFrame(() => {
+        popup.classList.add('visible');
+      });
+
+      setTimeout(() => popup.remove(), 1050);
+    }
+
     function setMode(modeKey) {
       const cfg = MODES[modeKey] || MODES.calm;
       state.mode = modeKey in MODES ? modeKey : 'calm';
@@ -630,8 +655,10 @@ function EnhancedHoneyCatchGame() {
       if (state.invincible) {
         ctx.save();
         const a = 0.45 + Math.sin(Date.now() / 180) * 0.25;
-        ctx.strokeStyle = `rgba(66,133,244,${a})`;
-        ctx.lineWidth = 3;
+        ctx.strokeStyle = `rgba(76,175,80,${a})`;
+        ctx.lineWidth = 3.5;
+        ctx.shadowColor = 'rgba(76,175,80,0.55)';
+        ctx.shadowBlur = 18;
         ctx.beginPath();
         ctx.arc(x, y - h * 0.55, w * 0.55, 0, Math.PI * 2);
         ctx.stroke();
@@ -764,6 +791,34 @@ function EnhancedHoneyCatchGame() {
         ctx.fillText(`🔥 ${state.streak} streak`, W / 2, H - 18);
         ctx.restore();
       }
+
+      const activeBuffs = [];
+      const now = Date.now();
+      if (state.doublePoints) {
+        const seconds = Math.max(0, Math.ceil((state.doublePointsUntil - now) / 1000));
+        activeBuffs.push(`⭐ Double Points (${seconds}s)`);
+      }
+      if (state.invincible) {
+        const seconds = Math.max(0, Math.ceil((state.invincibleUntil - now) / 1000));
+        activeBuffs.push(`🛡️ Shield (${seconds}s)`);
+      }
+      if (state.slowMo) {
+        const seconds = Math.max(0, Math.ceil((state.slowMoUntil - now) / 1000));
+        activeBuffs.push(`⏱️ Slow Time (${seconds}s)`);
+      }
+
+      if (activeBuffs.length) {
+        ctx.save();
+        ctx.font = '13px Arial';
+        ctx.textAlign = 'left';
+        ctx.fillStyle = '#0b2d17';
+        ctx.shadowColor = 'rgba(255,255,255,0.4)';
+        ctx.shadowBlur = 8;
+        activeBuffs.forEach((buff, i) => {
+          ctx.fillText(buff, 14, 24 + i * 18);
+        });
+        ctx.restore();
+      }
     }
 
     // -------------------------------------------------------------------------
@@ -845,6 +900,7 @@ function EnhancedHoneyCatchGame() {
           state.score += points;
 
           burst(p.x, p.y, p.type === 'golden' ? 18 : 10, p.type === 'golden' ? '#FFD700' : '#FFD54F');
+          showScorePopup(`+${points}`, p.x, p.y, p.type === 'golden' ? 'golden' : 'honey');
           state.pots.splice(i, 1);
 
           if (window.audioManager && typeof window.audioManager.playGameSound === 'function') {
@@ -913,6 +969,7 @@ function EnhancedHoneyCatchGame() {
         if (hitPooh(pu.x, pu.y, pu.r)) {
           applyPowerUp(pu.type);
           burst(pu.x, pu.y, 14, powerUpTypes[pu.type]?.color || '#FFFFFF');
+          showScorePopup(powerUpTypes[pu.type]?.icon || '⭐', pu.x, pu.y, 'power');
           state.powerUps.splice(i, 1);
 
           if (window.audioManager && typeof window.audioManager.playGameSound === 'function') {
