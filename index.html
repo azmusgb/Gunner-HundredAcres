@@ -1,2939 +1,1212 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Gunner's Woodland Adventure - A Winnie the Pooh Storybook Shower</title>
-    <link href="https://fonts.googleapis.com/css2?family=Nunito:wght@400;700;800&family=Patrick+Hand&family=Playfair+Display:wght@700&family=Schoolbell&display=swap" rel="stylesheet">
-    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
-    <style>
-        /* ===============================
-           THEME VARIABLES
-        ================================ */
-        :root {
-            --storybook-brown: #8B4513;
-            --storybook-light: #F5E9D9;
-            --storybook-cream: #FFF8E8;
-            --storybook-red: #A52A2A;
-            --storybook-green: #556B2F;
-            --storybook-gold: #D4A017;
-            --storybook-shadow: 0 10px 30px rgba(139, 69, 19, 0.15);
-            --storybook-border: 2px solid var(--storybook-brown);
-            --storybook-page-bg: linear-gradient(135deg, #F5E9D9 0%, #FFF8E8 100%);
-            --page-turn: cubic-bezier(0.25, 0.46, 0.45, 0.94);
-        }
-
-        /* ===============================
-           LOADER ANIMATIONS
-        ================================ */
-        @keyframes pageTurn {
-            0% { transform: perspective(1000px) rotateY(0deg); }
-            50% { transform: perspective(1000px) rotateY(-90deg); }
-            100% { transform: perspective(1000px) rotateY(-180deg); }
-        }
-
-        @keyframes honeyFill {
-            0% { height: 0%; }
-            100% { height: 100%; }
-        }
-
-        @keyframes beeFly {
-            0% { transform: translate(0, 0) rotate(0deg); }
-            25% { transform: translate(20px, -15px) rotate(10deg); }
-            50% { transform: translate(40px, 0) rotate(0deg); }
-            75% { transform: translate(20px, 15px) rotate(-10deg); }
-            100% { transform: translate(0, 0) rotate(0deg); }
-        }
-
-        @keyframes leafFall {
-            0% { transform: translateY(-100px) rotate(0deg); opacity: 0; }
-            10% { opacity: 1; }
-            90% { opacity: 1; }
-            100% { transform: translateY(100vh) rotate(360deg); opacity: 0; }
-        }
-
-        @keyframes glow {
-            0%, 100% { filter: drop-shadow(0 0 5px rgba(212, 160, 23, 0.5)); }
-            50% { filter: drop-shadow(0 0 15px rgba(212, 160, 23, 0.8)); }
-        }
-
-        @keyframes typewriter {
-            from { width: 0; }
-            to { width: 100%; }
-        }
-
-        /* ===============================
-           BASE STYLES
-        ================================ */
-        * {
-            margin: 0;
-            padding: 0;
-            box-sizing: border-box;
-        }
-
-        body {
-            font-family: 'Patrick Hand', cursive;
-            background: linear-gradient(135deg, #E8D8B6 0%, #D4C19C 100%);
-            color: var(--storybook-brown);
-            min-height: 100vh;
-            overflow-x: hidden;
-        }
-
-        .storybook-loader {
-            position: fixed;
-            top: 0;
-            left: 0;
-            width: 100%;
-            height: 100%;
-            background: var(--storybook-page-bg);
-            display: flex;
-            flex-direction: column;
-            justify-content: center;
-            align-items: center;
-            z-index: 9999;
-            gap: 40px;
-        }
-
-        .loader__pooh {
-            position: relative;
-            width: 120px;
-            height: 120px;
-        }
-
-        .loader__ears {
-            position: absolute;
-            width: 30px;
-            height: 30px;
-            background: #D4A574;
-            border-radius: 50%;
-            top: 0;
-            z-index: 2;
-        }
-
-        .loader__ears--left {
-            left: 20px;
-            transform: rotate(-15deg);
-        }
-
-        .loader__ears--right {
-            right: 20px;
-            transform: rotate(15deg);
-        }
-
-        .loader__face {
-            position: absolute;
-            width: 100px;
-            height: 100px;
-            background: #E8C9A3;
-            border-radius: 50%;
-            top: 15px;
-            left: 10px;
-            overflow: hidden;
-        }
-
-        .loader__honey-fill {
-            position: absolute;
-            bottom: 0;
-            width: 100%;
-            background: #FFA500;
-            animation: honeyFill 3s ease-in-out infinite alternate;
-        }
-
-        .loader__spoon {
-            position: absolute;
-            width: 60px;
-            height: 10px;
-            background: #FFD700;
-            bottom: -15px;
-            left: 30px;
-            transform: rotate(15deg);
-            border-radius: 5px;
-        }
-
-        .loader__drip {
-            position: absolute;
-            width: 8px;
-            height: 20px;
-            background: #FFA500;
-            bottom: -20px;
-            left: 26px;
-            border-radius: 0 0 4px 4px;
-            animation: honeyDrip 2s ease-in-out infinite;
-        }
-
-        @keyframes honeyDrip {
-            0%, 100% { transform: translateY(0) scaleY(1); }
-            50% { transform: translateY(10px) scaleY(1.2); }
-        }
-
-        .storybook-loader__text-container {
-            text-align: center;
-            position: relative;
-        }
-
-        .storybook-loader__text {
-            font-family: 'Schoolbell', cursive;
-            font-size: 1.5rem;
-            color: var(--storybook-brown);
-            margin-bottom: 20px;
-            position: relative;
-            display: inline-block;
-        }
-
-        .storybook-loader__text::after {
-            content: '';
-            position: absolute;
-            right: -10px;
-            bottom: 0;
-            width: 8px;
-            height: 1em;
-            background: currentColor;
-            animation: blink 1s infinite;
-        }
-
-        @keyframes blink {
-            0%, 100% { opacity: 1; }
-            50% { opacity: 0; }
-        }
-
-        .storybook-loader__book {
-            position: relative;
-            width: 80px;
-            height: 60px;
-            margin: 0 auto;
-            transform-style: preserve-3d;
-        }
-
-        .book-page {
-            position: absolute;
-            width: 100%;
-            height: 100%;
-            background: var(--storybook-cream);
-            border: 2px solid var(--storybook-brown);
-            border-radius: 4px;
-            transform-origin: left center;
-        }
-
-        .book-page:nth-child(1) {
-            animation: pageTurn 2s ease-in-out infinite;
-        }
-
-        .book-page:nth-child(2) {
-            animation: pageTurn 2s ease-in-out infinite 0.4s;
-        }
-
-        .book-page:nth-child(3) {
-            animation: pageTurn 2s ease-in-out infinite 0.8s;
-        }
-
-        /* ===============================
-           STORYBOOK NAVIGATION
-        ================================ */
-        .storybook-nav {
-            position: fixed;
-            top: 20px;
-            left: 50%;
-            transform: translateX(-50%);
-            width: 90%;
-            max-width: 800px;
-            background: var(--storybook-page-bg);
-            border: var(--storybook-border);
-            border-radius: 12px;
-            padding: 15px 25px;
-            display: flex;
-            justify-content: space-between;
-            align-items: center;
-            z-index: 1000;
-            box-shadow: var(--storybook-shadow);
-            animation: slideDown 0.5s ease-out;
-        }
-
-        @keyframes slideDown {
-            from { transform: translate(-50%, -100%); }
-            to { transform: translate(-50%, 0); }
-        }
-
-        .storybook-nav__book {
-            display: flex;
-            align-items: center;
-            gap: 15px;
-        }
-
-        .storybook-nav__book-spine {
-            width: 8px;
-            height: 60px;
-            background: var(--storybook-red);
-            border-radius: 4px;
-            position: relative;
-        }
-
-        .storybook-nav__book-spine::after {
-            content: '';
-            position: absolute;
-            top: 10px;
-            left: 2px;
-            width: 4px;
-            height: 40px;
-            background: var(--storybook-gold);
-            border-radius: 2px;
-        }
-
-        .storybook-nav__title {
-            font-family: 'Nunito', sans-serif;
-            font-size: 0.8rem;
-            color: var(--storybook-brown);
-            opacity: 0.7;
-            letter-spacing: 1px;
-        }
-
-        .storybook-nav__main-title {
-            font-family: 'Playfair Display', serif;
-            font-size: 1.3rem;
-            color: var(--storybook-brown);
-            font-weight: 700;
-            line-height: 1;
-        }
-
-        .storybook-nav__subtitle {
-            font-family: 'Schoolbell', cursive;
-            font-size: 0.8rem;
-            color: var(--storybook-gold);
-        }
-
-        .storybook-nav__links {
-            display: flex;
-            gap: 10px;
-        }
-
-        .storybook-nav__link {
-            padding: 8px 15px;
-            background: var(--storybook-cream);
-            border: 1px solid var(--storybook-brown);
-            border-radius: 20px;
-            text-decoration: none;
-            color: var(--storybook-brown);
-            font-family: 'Nunito', sans-serif;
-            font-size: 0.8rem;
-            display: flex;
-            align-items: center;
-            gap: 6px;
-            transition: all 0.3s ease;
-            position: relative;
-            overflow: hidden;
-        }
-
-        .storybook-nav__link::before {
-            content: '';
-            position: absolute;
-            top: 0;
-            left: -100%;
-            width: 100%;
-            height: 100%;
-            background: linear-gradient(90deg, transparent, rgba(255, 255, 255, 0.3), transparent);
-            transition: left 0.5s;
-        }
-
-        .storybook-nav__link:hover::before {
-            left: 100%;
-        }
-
-        .storybook-nav__link:hover {
-            background: var(--storybook-brown);
-            color: var(--storybook-cream);
-            transform: translateY(-2px);
-        }
-
-        /* ===============================
-           HERO SECTION - STORYBOOK COVER
-        ================================ */
-        .storybook-cover {
-            min-height: 100vh;
-            background: var(--storybook-page-bg);
-            position: relative;
-            padding: 100px 20px;
-            display: flex;
-            flex-direction: column;
-            justify-content: center;
-            align-items: center;
-            border-bottom: 10px solid var(--storybook-brown);
-        }
-
-        .storybook-cover__decoration {
-            position: absolute;
-            top: 0;
-            width: 200px;
-            height: 100%;
-        }
-
-        .storybook-cover__decoration--left {
-            left: 0;
-        }
-
-        .storybook-cover__decoration--right {
-            right: 0;
-        }
-
-        .storybook-vine {
-            position: absolute;
-            width: 40px;
-            height: 80%;
-            border-left: 3px solid var(--storybook-green);
-            border-bottom: 3px solid var(--storybook-green);
-            border-radius: 0 0 0 100px;
-            left: 20px;
-        }
-
-        .storybook-vine:nth-child(2) {
-            left: 60px;
-            height: 60%;
-            border-color: #7CB342;
-        }
-
-        .storybook-cover__content {
-            max-width: 800px;
-            text-align: center;
-            position: relative;
-            z-index: 2;
-        }
-
-        .storybook-cover__eyebrow {
-            font-family: 'Schoolbell', cursive;
-            font-size: 1.2rem;
-            color: var(--storybook-gold);
-            margin-bottom: 10px;
-            letter-spacing: 2px;
-        }
-
-        .storybook-cover__title {
-            font-family: 'Playfair Display', serif;
-            font-size: 3.5rem;
-            color: var(--storybook-brown);
-            margin-bottom: 10px;
-            line-height: 1.1;
-            position: relative;
-            display: inline-block;
-        }
-
-        .storybook-cover__title::after {
-            content: '';
-            position: absolute;
-            bottom: -5px;
-            left: 10%;
-            width: 80%;
-            height: 3px;
-            background: var(--storybook-gold);
-            border-radius: 2px;
-        }
-
-        .storybook-cover__subtitle {
-            font-family: 'Nunito', sans-serif;
-            font-size: 1.3rem;
-            color: var(--storybook-green);
-            margin-bottom: 40px;
-        }
-
-        .storybook-cover__quote {
-            max-width: 600px;
-            margin: 40px auto;
-            padding: 30px;
-            background: rgba(255, 255, 255, 0.9);
-            border: 2px dashed var(--storybook-brown);
-            border-radius: 15px;
-            position: relative;
-        }
-
-        .storybook-quote-mark {
-            position: absolute;
-            font-family: 'Playfair Display', serif;
-            font-size: 4rem;
-            color: var(--storybook-gold);
-            opacity: 0.3;
-        }
-
-        .storybook-quote-mark--left {
-            top: -20px;
-            left: 20px;
-        }
-
-        .storybook-quote-mark--right {
-            bottom: -20px;
-            right: 20px;
-        }
-
-        .storybook-cover__quote-text {
-            font-family: 'Patrick Hand', cursive;
-            font-size: 1.5rem;
-            line-height: 1.4;
-            color: var(--storybook-brown);
-            margin-bottom: 15px;
-        }
-
-        .storybook-cover__quote-author {
-            font-family: 'Nunito', sans-serif;
-            font-size: 1rem;
-            color: var(--storybook-green);
-            font-style: italic;
-        }
-
-        .storybook-btn {
-            padding: 15px 30px;
-            background: var(--storybook-brown);
-            color: var(--storybook-cream);
-            border: none;
-            border-radius: 30px;
-            font-family: 'Nunito', sans-serif;
-            font-size: 1.1rem;
-            font-weight: 700;
-            cursor: pointer;
-            display: inline-flex;
-            align-items: center;
-            gap: 10px;
-            transition: all 0.3s ease;
-            margin: 10px;
-            position: relative;
-            overflow: hidden;
-        }
-
-        .storybook-btn::after {
-            content: '';
-            position: absolute;
-            top: -50%;
-            left: -60%;
-            width: 20%;
-            height: 200%;
-            background: rgba(255, 255, 255, 0.3);
-            transform: rotate(30deg);
-            transition: all 0.5s;
-        }
-
-        .storybook-btn:hover::after {
-            left: 140%;
-        }
-
-        .storybook-btn:hover {
-            background: var(--storybook-red);
-            transform: translateY(-3px);
-            box-shadow: 0 10px 20px rgba(139, 69, 19, 0.2);
-        }
-
-        .storybook-btn--secondary {
-            background: transparent;
-            border: 2px solid var(--storybook-brown);
-            color: var(--storybook-brown);
-        }
-
-        .storybook-btn--secondary:hover {
-            background: var(--storybook-brown);
-            color: var(--storybook-cream);
-        }
-
-        .storybook-cover__stats {
-            display: flex;
-            justify-content: center;
-            gap: 40px;
-            margin-top: 40px;
-            flex-wrap: wrap;
-        }
-
-        .storybook-stat {
-            display: flex;
-            align-items: center;
-            gap: 15px;
-            padding: 15px 25px;
-            background: rgba(255, 255, 255, 0.8);
-            border-radius: 15px;
-            border: 1px solid var(--storybook-brown);
-            animation: float 3s ease-in-out infinite;
-        }
-
-        @keyframes float {
-            0%, 100% { transform: translateY(0); }
-            50% { transform: translateY(-10px); }
-        }
-
-        .storybook-stat:nth-child(2) {
-            animation-delay: 0.3s;
-        }
-
-        .storybook-stat:nth-child(3) {
-            animation-delay: 0.6s;
-        }
-
-        .storybook-stat__icon {
-            font-size: 2rem;
-        }
-
-        .storybook-stat__content {
-            text-align: left;
-        }
-
-        .storybook-stat__content strong {
-            display: block;
-            font-family: 'Nunito', sans-serif;
-            font-size: 1rem;
-            color: var(--storybook-brown);
-        }
-
-        .storybook-stat__content span {
-            font-family: 'Patrick Hand', cursive;
-            font-size: 0.9rem;
-            color: var(--storybook-green);
-        }
-
-        /* ===============================
-           POOH CHARACTER ANIMATION
-        ================================ */
-        .storybook-pooh-character {
-            position: absolute;
-            bottom: 50px;
-            right: 50px;
-            z-index: 3;
-            animation: bounce 2s ease-in-out infinite;
-        }
-
-        @keyframes bounce {
-            0%, 100% { transform: translateY(0); }
-            50% { transform: translateY(-20px); }
-        }
-
-        .pooh-character {
-            position: relative;
-            width: 200px;
-            height: 250px;
-        }
-
-        .pooh-head {
-            position: absolute;
-            width: 120px;
-            height: 120px;
-            background: #E8C9A3;
-            border-radius: 50%;
-            top: 0;
-            left: 40px;
-            z-index: 2;
-        }
-
-        .pooh-ear {
-            position: absolute;
-            width: 40px;
-            height: 40px;
-            background: #D4A574;
-            border-radius: 50%;
-            top: -10px;
-        }
-
-        .pooh-ear--left {
-            left: 15px;
-            transform: rotate(-15deg);
-        }
-
-        .pooh-ear--right {
-            right: 15px;
-            transform: rotate(15deg);
-        }
-
-        .pooh-face {
-            position: absolute;
-            top: 30px;
-            left: 20px;
-            width: 80px;
-            height: 60px;
-        }
-
-        .pooh-eyes {
-            position: absolute;
-            top: 10px;
-            left: 10px;
-            width: 60px;
-            display: flex;
-            justify-content: space-between;
-        }
-
-        .pooh-eye {
-            width: 20px;
-            height: 20px;
-            background: #1a1a1a;
-            border-radius: 50%;
-            position: relative;
-        }
-
-        .pooh-eye::after {
-            content: '';
-            position: absolute;
-            top: 5px;
-            left: 5px;
-            width: 6px;
-            height: 6px;
-            background: white;
-            border-radius: 50%;
-        }
-
-        .pooh-snout {
-            position: absolute;
-            top: 35px;
-            left: 25px;
-            width: 30px;
-            height: 25px;
-            background: #F0D8B8;
-            border-radius: 50%;
-        }
-
-        .pooh-mouth {
-            position: absolute;
-            top: 40px;
-            left: 35px;
-            width: 20px;
-            height: 10px;
-            border-bottom: 3px solid #1a1a1a;
-            border-radius: 0 0 10px 10px;
-        }
-
-        .pooh-body {
-            position: absolute;
-            width: 140px;
-            height: 120px;
-            background: #E8C9A3;
-            border-radius: 60px 60px 40px 40px;
-            top: 100px;
-            left: 30px;
-        }
-
-        .pooh-arm {
-            position: absolute;
-            width: 40px;
-            height: 60px;
-            background: #D4A574;
-            border-radius: 20px;
-            top: 110px;
-        }
-
-        .pooh-arm--left {
-            left: 10px;
-            transform: rotate(20deg);
-            animation: armWave 3s ease-in-out infinite;
-        }
-
-        .pooh-arm--right {
-            right: 10px;
-            transform: rotate(-20deg);
-            animation: armWave 3s ease-in-out infinite reverse;
-        }
-
-        @keyframes armWave {
-            0%, 100% { transform: rotate(20deg); }
-            50% { transform: rotate(10deg); }
-        }
-
-        .honey-pot {
-            position: absolute;
-            width: 60px;
-            height: 70px;
-            top: 60px;
-            left: 70px;
-            animation: glow 2s ease-in-out infinite;
-        }
-
-        .honey-pot__body {
-            position: absolute;
-            width: 100%;
-            height: 80%;
-            background: var(--storybook-brown);
-            border-radius: 10px 10px 20px 20px;
-            bottom: 0;
-            overflow: hidden;
-        }
-
-        .honey-pot__body::after {
-            content: '';
-            position: absolute;
-            top: 0;
-            left: 0;
-            width: 100%;
-            height: 30px;
-            background: #FFA500;
-            animation: honeyFill 4s ease-in-out infinite alternate;
-        }
-
-        .honey-pot__handle {
-            position: absolute;
-            width: 20px;
-            height: 30px;
-            background: var(--storybook-brown);
-            border-radius: 10px;
-            left: -10px;
-            top: 20px;
-        }
-
-        .honey-pot__lid {
-            position: absolute;
-            width: 70px;
-            height: 10px;
-            background: var(--storybook-brown);
-            border-radius: 5px;
-            top: -5px;
-            left: -5px;
-        }
-
-        .honey-drips {
-            position: absolute;
-            top: 100%;
-            left: 50%;
-            transform: translateX(-50%);
-        }
-
-        .honey-drip {
-            position: absolute;
-            width: 8px;
-            height: 15px;
-            background: #FFA500;
-            border-radius: 0 0 4px 4px;
-            animation: honeyDrip 2s ease-in-out infinite;
-        }
-
-        .honey-drip:nth-child(2) {
-            left: -15px;
-            animation-delay: 0.3s;
-        }
-
-        .honey-drip:nth-child(3) {
-            left: 15px;
-            animation-delay: 0.6s;
-        }
-
-        /* ===============================
-           FLOATING NOTES
-        ================================ */
-        .floating-notes {
-            position: absolute;
-            width: 100%;
-            height: 100%;
-            pointer-events: none;
-        }
-
-        .storybook-note {
-            position: absolute;
-            background: #FFF;
-            padding: 15px;
-            border-radius: 10px;
-            font-family: 'Schoolbell', cursive;
-            font-size: 1rem;
-            box-shadow: 2px 2px 10px rgba(0,0,0,0.1);
-            width: 160px;
-            animation: floatNote 10s ease-in-out infinite;
-        }
-
-        @keyframes floatNote {
-            0%, 100% { transform: translateY(0) rotate(-2deg); }
-            50% { transform: translateY(-20px) rotate(2deg); }
-        }
-
-        .storybook-note__pin {
-            position: absolute;
-            top: -8px;
-            left: 50%;
-            transform: translateX(-50%);
-            width: 15px;
-            height: 15px;
-            background: var(--storybook-red);
-            border-radius: 50%;
-        }
-
-        .storybook-note--1 {
-            top: 20%;
-            left: 10%;
-            animation-delay: 0s;
-        }
-
-        .storybook-note--2 {
-            top: 40%;
-            right: 15%;
-            animation-delay: 2s;
-        }
-
-        .storybook-note--3 {
-            top: 70%;
-            left: 20%;
-            animation-delay: 4s;
-        }
-
-        /* ===============================
-           ANIMATED BEE
-        ================================ */
-        .storybook-bee {
-            position: absolute;
-            top: 30%;
-            left: 20%;
-            animation: beeFly 8s ease-in-out infinite;
-        }
-
-        .bee-body {
-            width: 30px;
-            height: 20px;
-            background: #FFD700;
-            border-radius: 50%;
-            position: relative;
-        }
-
-        .bee-wing {
-            position: absolute;
-            width: 20px;
-            height: 30px;
-            background: rgba(255, 255, 255, 0.8);
-            border-radius: 50%;
-            top: -10px;
-            animation: wingFlap 0.2s infinite alternate;
-        }
-
-        @keyframes wingFlap {
-            from { transform: scaleY(1); }
-            to { transform: scaleY(0.8); }
-        }
-
-        .bee-wing--left {
-            left: -5px;
-            transform: rotate(45deg);
-        }
-
-        .bee-wing--right {
-            right: -5px;
-            transform: rotate(-45deg);
-        }
-
-        .bee-stripe {
-            position: absolute;
-            width: 30px;
-            height: 4px;
-            background: #1a1a1a;
-            left: 0;
-        }
-
-        .bee-stripe:nth-child(2) { top: 6px; }
-        .bee-stripe:nth-child(3) { top: 12px; }
-
-        /* ===============================
-           PAGE TURNS
-        ================================ */
-        .storybook-page-turn {
-            background: var(--storybook-brown);
-            color: var(--storybook-cream);
-            padding: 20px;
-            text-align: center;
-            position: relative;
-            overflow: hidden;
-        }
-
-        .storybook-page-turn::before {
-            content: '';
-            position: absolute;
-            top: 0;
-            left: 0;
-            right: 0;
-            height: 3px;
-            background: linear-gradient(90deg, transparent, var(--storybook-gold), transparent);
-        }
-
-        .storybook-page-turn__content {
-            display: flex;
-            align-items: center;
-            justify-content: center;
-            gap: 15px;
-            font-family: 'Nunito', sans-serif;
-            font-size: 1.2rem;
-        }
-
-        .storybook-page-turn__icon {
-            font-size: 2rem;
-            animation: bounce 2s infinite;
-        }
-
-        /* ===============================
-           TABLE OF CONTENTS
-        ================================ */
-        .storybook-toc {
-            max-width: 800px;
-            margin: 50px auto;
-            padding: 40px;
-            background: var(--storybook-page-bg);
-            border: var(--storybook-border);
-            border-radius: 15px;
-            box-shadow: var(--storybook-shadow);
-        }
-
-        .storybook-toc__header {
-            text-align: center;
-            margin-bottom: 40px;
-        }
-
-        .storybook-toc__title {
-            font-family: 'Playfair Display', serif;
-            font-size: 2.5rem;
-            color: var(--storybook-brown);
-            margin-bottom: 10px;
-        }
-
-        .storybook-toc__subtitle {
-            font-family: 'Patrick Hand', cursive;
-            font-size: 1.2rem;
-            color: var(--storybook-green);
-        }
-
-        .storybook-toc__chapters {
-            display: grid;
-            gap: 15px;
-        }
-
-        .storybook-toc__chapter {
-            display: flex;
-            align-items: center;
-            gap: 20px;
-            padding: 20px;
-            background: rgba(255, 255, 255, 0.7);
-            border: 1px solid var(--storybook-brown);
-            border-radius: 10px;
-            text-decoration: none;
-            color: var(--storybook-brown);
-            transition: all 0.3s ease;
-            position: relative;
-            overflow: hidden;
-        }
-
-        .storybook-toc__chapter:hover {
-            background: var(--storybook-brown);
-            color: var(--storybook-cream);
-            transform: translateX(10px);
-        }
-
-        .storybook-toc__chapter:hover .storybook-toc__number {
-            background: var(--storybook-cream);
-            color: var(--storybook-brown);
-        }
-
-        .storybook-toc__number {
-            font-family: 'Nunito', sans-serif;
-            font-weight: 800;
-            font-size: 1.5rem;
-            width: 50px;
-            height: 50px;
-            display: flex;
-            align-items: center;
-            justify-content: center;
-            background: var(--storybook-brown);
-            color: var(--storybook-cream);
-            border-radius: 50%;
-            transition: all 0.3s ease;
-        }
-
-        .storybook-toc__content {
-            flex: 1;
-        }
-
-        .storybook-toc__content h3 {
-            font-family: 'Nunito', sans-serif;
-            font-size: 1.2rem;
-            margin-bottom: 5px;
-        }
-
-        .storybook-toc__content p {
-            font-family: 'Patrick Hand', cursive;
-            font-size: 0.9rem;
-            opacity: 0.8;
-        }
-
-        .storybook-toc__arrow {
-            font-size: 1.5rem;
-            opacity: 0.5;
-            transition: all 0.3s ease;
-        }
-
-        .storybook-toc__chapter:hover .storybook-toc__arrow {
-            opacity: 1;
-            transform: translateX(5px);
-        }
-
-        /* ===============================
-           STORYBOOK CHAPTERS
-        ================================ */
-        .storybook-panel {
-            max-width: 800px;
-            margin: 80px auto;
-            padding: 60px 40px;
-            background: var(--storybook-page-bg);
-            border: var(--storybook-border);
-            border-radius: 15px;
-            position: relative;
-            box-shadow: var(--storybook-shadow);
-        }
-
-        .storybook-panel::before {
-            content: '';
-            position: absolute;
-            top: -20px;
-            left: 50%;
-            transform: translateX(-50%);
-            width: 100px;
-            height: 40px;
-            background: var(--storybook-brown);
-            border-radius: 50% 50% 0 0;
-            z-index: -1;
-        }
-
-        .storybook-panel::after {
-            content: '';
-            position: absolute;
-            top: 20px;
-            left: 20px;
-            right: 20px;
-            bottom: -20px;
-            background: rgba(139, 69, 19, 0.1);
-            border-radius: 15px;
-            z-index: -2;
-        }
-
-        .storybook-chapter__header {
-            text-align: center;
-            margin-bottom: 40px;
-            position: relative;
-        }
-
-        .storybook-chapter__number {
-            font-family: 'Playfair Display', serif;
-            font-size: 5rem;
-            color: rgba(139, 69, 19, 0.1);
-            position: absolute;
-            top: -60px;
-            left: 50%;
-            transform: translateX(-50%);
-            z-index: 0;
-        }
-
-        .storybook-chapter__title {
-            font-family: 'Playfair Display', serif;
-            font-size: 2.5rem;
-            color: var(--storybook-brown);
-            margin-bottom: 20px;
-            position: relative;
-            z-index: 1;
-        }
-
-        .storybook-chapter__illustration {
-            height: 100px;
-            position: relative;
-            margin: 20px 0;
-        }
-
-        .storybook-tree {
-            position: absolute;
-            width: 30px;
-            height: 60px;
-            background: var(--storybook-brown);
-            left: 50%;
-            top: 20px;
-            transform: translateX(-50%);
-        }
-
-        .storybook-tree::after {
-            content: '';
-            position: absolute;
-            bottom: 100%;
-            left: -30px;
-            width: 90px;
-            height: 60px;
-            background: var(--storybook-green);
-            border-radius: 50%;
-        }
-
-        .storybook-tree--small {
-            width: 20px;
-            height: 40px;
-            left: 40%;
-        }
-
-        .storybook-bird {
-            position: absolute;
-            width: 20px;
-            height: 10px;
-            background: #FF6B6B;
-            border-radius: 50%;
-            top: 30px;
-            right: 30%;
-            animation: birdFly 3s ease-in-out infinite;
-        }
-
-        @keyframes birdFly {
-            0%, 100% { transform: translateX(0); }
-            50% { transform: translateX(50px); }
-        }
-
-        .storybook-sun {
-            position: absolute;
-            width: 60px;
-            height: 60px;
-            background: #FFD700;
-            border-radius: 50%;
-            left: 50%;
-            top: 20px;
-            transform: translateX(-50%);
-            animation: spin 20s linear infinite;
-        }
-
-        @keyframes spin {
-            from { transform: translateX(-50%) rotate(0deg); }
-            to { transform: translateX(-50%) rotate(360deg); }
-        }
-
-        .storybook-cloud {
-            position: absolute;
-            width: 80px;
-            height: 40px;
-            background: white;
-            border-radius: 40px;
-            right: 30%;
-            top: 40px;
-            animation: cloudMove 10s linear infinite;
-        }
-
-        @keyframes cloudMove {
-            0% { transform: translateX(0); }
-            100% { transform: translateX(-100px); }
-        }
-
-        .storybook-quill {
-            position: absolute;
-            width: 40px;
-            height: 60px;
-            background: var(--storybook-brown);
-            left: 50%;
-            top: 20px;
-            transform: translateX(-50%);
-            border-radius: 0 0 5px 5px;
-        }
-
-        .storybook-quill::after {
-            content: '';
-            position: absolute;
-            top: -10px;
-            left: 5px;
-            width: 30px;
-            height: 20px;
-            background: var(--storybook-gold);
-            border-radius: 5px 5px 0 0;
-            transform: rotate(45deg);
-        }
-
-        .storybook-ink-spot {
-            position: absolute;
-            width: 30px;
-            height: 30px;
-            background: #1a1a1a;
-            border-radius: 50%;
-            right: 30%;
-            top: 50px;
-            animation: inkSpread 4s ease-in-out infinite;
-        }
-
-        @keyframes inkSpread {
-            0%, 100% { transform: scale(1); opacity: 0.8; }
-            50% { transform: scale(1.5); opacity: 0.4; }
-        }
-
-        /* ===============================
-           STORYBOOK TEXT STYLES
-        ================================ */
-        .storybook-text {
-            font-family: 'Patrick Hand', cursive;
-            font-size: 1.3rem;
-            line-height: 1.6;
-            color: var(--storybook-brown);
-            margin-bottom: 40px;
-        }
-
-        .storybook-dropcap {
-            font-size: 1.8rem;
-            line-height: 1;
-        }
-
-        .storybook-dropcap::first-letter {
-            font-family: 'Playfair Display', serif;
-            font-size: 4rem;
-            float: left;
-            line-height: 0.8;
-            margin-right: 10px;
-            color: var(--storybook-red);
-        }
-
-        .storybook-quote--inline {
-            background: rgba(212, 160, 23, 0.1);
-            border-left: 4px solid var(--storybook-gold);
-            padding: 20px;
-            margin: 30px 0;
-            border-radius: 0 10px 10px 0;
-            font-style: italic;
-        }
-
-        /* ===============================
-           CARDS & DETAILS
-        ================================ */
-        .storybook-cards {
-            display: grid;
-            grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
-            gap: 20px;
-            margin-top: 40px;
-        }
-
-        .storybook-card {
-            background: rgba(255, 255, 255, 0.9);
-            padding: 30px;
-            border-radius: 10px;
-            border: 2px solid var(--storybook-brown);
-            text-align: center;
-            transition: all 0.3s ease;
-        }
-
-        .storybook-card:hover {
-            transform: translateY(-10px);
-            box-shadow: 0 15px 30px rgba(139, 69, 19, 0.2);
-        }
-
-        .storybook-card__icon {
-            font-size: 3rem;
-            margin-bottom: 15px;
-        }
-
-        .storybook-card h3 {
-            font-family: 'Nunito', sans-serif;
-            font-size: 1.3rem;
-            color: var(--storybook-brown);
-            margin-bottom: 10px;
-        }
-
-        .storybook-card p {
-            font-family: 'Patrick Hand', cursive;
-            color: var(--storybook-green);
-        }
-
-        .storybook-details {
-            display: grid;
-            grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
-            gap: 20px;
-        }
-
-        .storybook-detail {
-            background: rgba(255, 255, 255, 0.9);
-            padding: 25px;
-            border-radius: 10px;
-            text-align: center;
-            border: 1px solid var(--storybook-brown);
-        }
-
-        .storybook-detail__icon {
-            font-size: 2.5rem;
-            margin-bottom: 15px;
-        }
-
-        /* ===============================
-           INTERACTIVE ELEMENTS
-        ================================ */
-        .storybook-prompt {
-            margin: 20px 0;
-        }
-
-        .storybook-prompt-btn {
-            background: var(--storybook-gold);
-            color: white;
-            border: none;
-            padding: 12px 25px;
-            border-radius: 25px;
-            font-family: 'Nunito', sans-serif;
-            font-weight: 700;
-            cursor: pointer;
-            display: inline-flex;
-            align-items: center;
-            gap: 10px;
-            transition: all 0.3s ease;
-        }
-
-        .storybook-prompt-btn:hover {
-            background: var(--storybook-brown);
-            transform: scale(1.05);
-        }
-
-        .storybook-prompt-text {
-            font-family: 'Patrick Hand', cursive;
-            font-size: 1.2rem;
-            background: rgba(212, 160, 23, 0.1);
-            padding: 20px;
-            border-radius: 10px;
-            margin-top: 15px;
-            border-left: 4px solid var(--storybook-gold);
-            animation: typewriter 2s steps(40) 1s 1 normal both;
-            white-space: nowrap;
-            overflow: hidden;
-        }
-
-        .storybook-sound-toggle {
-            margin-top: 20px;
-        }
-
-        .storybook-sound-toggle__label {
-            display: flex;
-            align-items: center;
-            gap: 15px;
-            cursor: pointer;
-        }
-
-        .storybook-sound-toggle__slider {
-            width: 50px;
-            height: 25px;
-            background: #ccc;
-            border-radius: 25px;
-            position: relative;
-            transition: all 0.3s ease;
-        }
-
-        .storybook-sound-toggle__slider::before {
-            content: '';
-            position: absolute;
-            width: 21px;
-            height: 21px;
-            background: white;
-            border-radius: 50%;
-            top: 2px;
-            left: 2px;
-            transition: all 0.3s ease;
-        }
-
-        input[type="checkbox"]:checked + .storybook-sound-toggle__slider {
-            background: var(--storybook-gold);
-        }
-
-        input[type="checkbox"]:checked + .storybook-sound-toggle__slider::before {
-            transform: translateX(25px);
-        }
-
-        /* ===============================
-           CHARACTER CARDS
-        ================================ */
-        .storybook-characters {
-            display: grid;
-            grid-template-columns: repeat(auto-fit, minmax(180px, 1fr));
-            gap: 15px;
-        }
-
-        .storybook-character-card {
-            background: rgba(255, 255, 255, 0.9);
-            padding: 20px;
-            border-radius: 10px;
-            border: 2px solid var(--storybook-brown);
-            text-align: center;
-            transition: all 0.3s ease;
-            cursor: pointer;
-            position: relative;
-            overflow: hidden;
-        }
-
-        .storybook-character-card:hover {
-            transform: translateY(-5px);
-            box-shadow: 0 10px 20px rgba(139, 69, 19, 0.2);
-        }
-
-        .storybook-character-card::after {
-            content: '';
-            position: absolute;
-            top: 0;
-            left: 0;
-            right: 0;
-            height: 5px;
-            background: var(--storybook-gold);
-            transform: translateX(-100%);
-            transition: transform 0.3s ease;
-        }
-
-        .storybook-character-card:hover::after {
-            transform: translateX(0);
-        }
-
-        .storybook-character-avatar {
-            width: 80px;
-            height: 80px;
-            background: #F5E9D9;
-            border-radius: 50%;
-            margin: 0 auto 15px;
-            display: flex;
-            align-items: center;
-            justify-content: center;
-            font-size: 2.5rem;
-            border: 3px solid var(--storybook-brown);
-            position: relative;
-            overflow: hidden;
-        }
-
-        .storybook-character-avatar__img {
-            width: 100%;
-            height: 100%;
-            object-fit: cover;
-            border-radius: 50%;
-        }
-
-        .has-image {
-            background: transparent;
-            border: none;
-        }
-
-        .storybook-character-info {
-            margin-bottom: 15px;
-        }
-
-        .storybook-character-card__name {
-            font-family: 'Nunito', sans-serif;
-            font-size: 1.1rem;
-            color: var(--storybook-brown);
-            margin-bottom: 5px;
-        }
-
-        .storybook-character-card__hint {
-            font-family: 'Patrick Hand', cursive;
-            font-size: 0.9rem;
-            color: var(--storybook-green);
-        }
-
-        .storybook-character-quote {
-            font-family: 'Schoolbell', cursive;
-            font-size: 0.9rem;
-            color: var(--storybook-red);
-            margin-top: 10px;
-            font-style: italic;
-        }
-
-        .storybook-character-btn {
-            background: transparent;
-            border: 2px solid var(--storybook-brown);
-            color: var(--storybook-brown);
-            width: 40px;
-            height: 40px;
-            border-radius: 50%;
-            display: flex;
-            align-items: center;
-            justify-content: center;
-            margin: 10px auto 0;
-            cursor: pointer;
-            transition: all 0.3s ease;
-        }
-
-        .storybook-character-btn:hover {
-            background: var(--storybook-brown);
-            color: var(--storybook-cream);
-        }
-
-        /* ===============================
-           STORYBOOK FORM
-        ================================ */
-        .storybook-form {
-            max-width: 600px;
-            margin: 0 auto;
-        }
-
-        .storybook-form-group {
-            margin-bottom: 30px;
-            position: relative;
-        }
-
-        .storybook-form-label {
-            display: block;
-            position: relative;
-        }
-
-        .storybook-form-label-text {
-            display: block;
-            font-family: 'Nunito', sans-serif;
-            font-size: 1rem;
-            color: var(--storybook-brown);
-            margin-bottom: 10px;
-            font-weight: 700;
-        }
-
-        .storybook-form-input,
-        .storybook-form-select,
-        .storybook-form-textarea {
-            width: 100%;
-            padding: 15px;
-            background: transparent;
-            border: none;
-            border-bottom: 2px solid var(--storybook-brown);
-            font-family: 'Patrick Hand', cursive;
-            font-size: 1.1rem;
-            color: var(--storybook-brown);
-            transition: all 0.3s ease;
-        }
-
-        .storybook-form-input:focus,
-        .storybook-form-select:focus,
-        .storybook-form-textarea:focus {
-            outline: none;
-            border-bottom-color: var(--storybook-gold);
-        }
-
-        .storybook-form-underline {
-            position: absolute;
-            bottom: 0;
-            left: 0;
-            width: 0;
-            height: 2px;
-            background: var(--storybook-gold);
-            transition: width 0.3s ease;
-        }
-
-        .storybook-form-input:focus + .storybook-form-underline,
-        .storybook-form-select:focus + .storybook-form-underline,
-        .storybook-form-textarea:focus + .storybook-form-underline {
-            width: 100%;
-        }
-
-        .storybook-form-textarea {
-            min-height: 150px;
-            resize: vertical;
-        }
-
-        .storybook-form-submit {
-            width: 100%;
-            margin-top: 20px;
-            justify-content: center;
-        }
-
-        /* ===============================
-           STORYBOOK FOOTER
-        ================================ */
-        .storybook-footer {
-            background: var(--storybook-brown);
-            color: var(--storybook-cream);
-            padding: 40px 20px;
-            text-align: center;
-            margin-top: 80px;
-            position: relative;
-        }
-
-        .storybook-footer__content {
-            max-width: 800px;
-            margin: 0 auto;
-        }
-
-        .storybook-footer__book {
-            display: flex;
-            align-items: center;
-            justify-content: center;
-            gap: 20px;
-            margin-bottom: 30px;
-        }
-
-        .storybook-footer__book-spine {
-            width: 15px;
-            height: 100px;
-            background: var(--storybook-red);
-            border-radius: 8px;
-            position: relative;
-        }
-
-        .storybook-footer__book-spine::after {
-            content: '';
-            position: absolute;
-            top: 20px;
-            left: 3px;
-            width: 9px;
-            height: 60px;
-            background: var(--storybook-gold);
-            border-radius: 5px;
-        }
-
-        .storybook-footer__pages {
-            display: flex;
-            gap: 5px;
-        }
-
-        .storybook-footer__page {
-            width: 60px;
-            height: 80px;
-            background: var(--storybook-cream);
-            border: 1px solid var(--storybook-brown);
-            border-radius: 4px;
-            animation: pageTurn 5s ease-in-out infinite;
-        }
-
-        .storybook-footer__page:nth-child(2) {
-            animation-delay: 1s;
-        }
-
-        .storybook-footer__page:nth-child(3) {
-            animation-delay: 2s;
-        }
-
-        .storybook-footer__text {
-            margin-bottom: 20px;
-        }
-
-        .storybook-heart {
-            color: #FF6B6B;
-            animation: heartbeat 1s infinite;
-        }
-
-        @keyframes heartbeat {
-            0%, 100% { transform: scale(1); }
-            50% { transform: scale(1.1); }
-        }
-
-        .storybook-honey {
-            animation: bounce 2s infinite;
-        }
-
-        .storybook-footer__copyright {
-            font-family: 'Nunito', sans-serif;
-            font-size: 0.9rem;
-            opacity: 0.8;
-            margin-top: 10px;
-        }
-
-        .storybook-footer__signature {
-            margin-top: 30px;
-        }
-
-        .storybook-paw-signature {
-            width: 60px;
-            height: 60px;
-            background: #FFF8E8;
-            border-radius: 50%;
-            margin: 0 auto 15px;
-            position: relative;
-        }
-
-        .storybook-paw-signature::before,
-        .storybook-paw-signature::after {
-            content: '';
-            position: absolute;
-            width: 20px;
-            height: 30px;
-            background: #FFF8E8;
-            border-radius: 50%;
-            top: 10px;
-        }
-
-        .storybook-paw-signature::before {
-            left: -10px;
-            transform: rotate(45deg);
-        }
-
-        .storybook-paw-signature::after {
-            right: -10px;
-            transform: rotate(-45deg);
-        }
-
-        /* ===============================
-           MODAL STYLES
-        ================================ */
-        .storybook-modal {
-            position: fixed;
-            top: 0;
-            left: 0;
-            width: 100%;
-            height: 100%;
-            display: flex;
-            align-items: center;
-            justify-content: center;
-            z-index: 2000;
-            opacity: 0;
-            visibility: hidden;
-            transition: all 0.3s ease;
-        }
-
-        .storybook-modal.show {
-            opacity: 1;
-            visibility: visible;
-        }
-
-        .storybook-modal-backdrop {
-            position: absolute;
-            top: 0;
-            left: 0;
-            width: 100%;
-            height: 100%;
-            background: rgba(0, 0, 0, 0.7);
-            backdrop-filter: blur(5px);
-        }
-
-        .storybook-modal-card {
-            position: relative;
-            background: var(--storybook-page-bg);
-            max-width: 500px;
-            width: 90%;
-            border-radius: 20px;
-            border: var(--storybook-border);
-            padding: 40px;
-            box-shadow: 0 20px 60px rgba(0, 0, 0, 0.3);
-            transform: scale(0.9);
-            transition: transform 0.3s ease;
-        }
-
-        .storybook-modal.show .storybook-modal-card {
-            transform: scale(1);
-        }
-
-        .storybook-modal-close {
-            position: absolute;
-            top: 20px;
-            right: 20px;
-            background: transparent;
-            border: none;
-            font-size: 1.5rem;
-            color: var(--storybook-brown);
-            cursor: pointer;
-            transition: all 0.3s ease;
-        }
-
-        .storybook-modal-close:hover {
-            color: var(--storybook-red);
-            transform: rotate(90deg);
-        }
-
-        /* ===============================
-           RESPONSIVE DESIGN
-        ================================ */
-        @media (max-width: 768px) {
-            .storybook-nav {
-                flex-direction: column;
-                gap: 15px;
-                padding: 15px;
-            }
-
-            .storybook-nav__links {
-                width: 100%;
-                justify-content: center;
-                flex-wrap: wrap;
-            }
-
-            .storybook-cover__title {
-                font-size: 2.5rem;
-            }
-
-            .storybook-cover__subtitle {
-                font-size: 1.1rem;
-            }
-
-            .storybook-cover__stats {
-                flex-direction: column;
-                align-items: center;
-            }
-
-            .storybook-stat {
-                width: 100%;
-                max-width: 300px;
-            }
-
-            .storybook-pooh-character {
-                position: relative;
-                bottom: 0;
-                right: 0;
-                margin: 40px auto;
-            }
-
-            .storybook-page-turn__content {
-                flex-direction: column;
-                text-align: center;
-            }
-
-            .storybook-toc__chapter {
-                flex-direction: column;
-                text-align: center;
-                padding: 15px;
-            }
-
-            .storybook-toc__number {
-                margin-bottom: 10px;
-            }
-
-            .storybook-chapter__title {
-                font-size: 2rem;
-            }
-
-            .storybook-chapter__number {
-                font-size: 4rem;
-                top: -40px;
-            }
-        }
-
-        @media (max-width: 480px) {
-            .storybook-cover__title {
-                font-size: 2rem;
-            }
-
-            .storybook-cover__quote-text {
-                font-size: 1.2rem;
-            }
-
-            .storybook-btn {
-                padding: 12px 20px;
-                font-size: 1rem;
-            }
-
-            .storybook-panel {
-                padding: 40px 20px;
-                margin: 40px auto;
-            }
-
-            .storybook-chapter__title {
-                font-size: 1.8rem;
-            }
-
-            .storybook-text {
-                font-size: 1.1rem;
-            }
-        }
-
-        /* ===============================
-           REVEAL ANIMATIONS
-        ================================ */
-        .reveal {
-            opacity: 0;
-            transform: translateY(30px);
-            transition: all 0.8s ease;
-        }
-
-        .reveal.active {
-            opacity: 1;
-            transform: translateY(0);
-        }
-
-        /* ===============================
-           CUSTOM SCROLLBAR
-        ================================ */
-        ::-webkit-scrollbar {
-            width: 12px;
-        }
-
-        ::-webkit-scrollbar-track {
-            background: var(--storybook-light);
-        }
-
-        ::-webkit-scrollbar-thumb {
-            background: var(--storybook-brown);
-            border-radius: 6px;
-            border: 3px solid var(--storybook-light);
-        }
-
-        ::-webkit-scrollbar-thumb:hover {
-            background: var(--storybook-red);
-        }
-    </style>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover" />
+  <title>For Baby Gunnar — A Hundred Acre Wood Baby Shower Story</title>
+  <meta name="description" content="A calm, storybook baby shower invitation for Baby Gunnar — with Hundred Acre Wood warmth, friends, and a keepsake guestbook page." />
+  <meta name="theme-color" content="#FFB020" />
+  <link href="https://fonts.googleapis.com/css2?family=Patrick+Hand&family=Playfair+Display:wght@600;700&display=swap" rel="stylesheet" />
+
+  <style>
+    /* =========================================================
+       CORE TOKENS — QUIET, WARM, STORYBOOK
+    ========================================================= */
+    :root {
+      --paper: #FFF8E8;
+      --paper-shadow: #F1E4CF;
+      --ink: #3A2618;
+
+      --pooh-red: #C62828;
+      --honey: #FFB020;
+      --honey-soft: #FFD87A;
+
+      --leaf: #5A7A3B;
+      --sky: #E9F1F8;
+
+      --shadow: 0 18px 50px rgba(58, 38, 24, 0.18);
+      --shadow-soft: 0 10px 28px rgba(58, 38, 24, 0.14);
+      --slow: cubic-bezier(.22,.61,.36,1);
+
+      --font-story: 'Patrick Hand', cursive;
+      --font-title: 'Playfair Display', serif;
+
+      --radius: 18px;
+      --radius-sm: 12px;
+    }
+
+    /* =========================================================
+       BASE RESET + ACCESSIBILITY
+    ========================================================= */
+    * { box-sizing: border-box; margin: 0; padding: 0; }
+
+    html { scroll-behavior: smooth; }
+
+    body {
+      font-family: var(--font-story);
+      background: var(--paper);
+      color: var(--ink);
+      line-height: 1.7;
+      overflow-x: hidden;
+      -webkit-text-size-adjust: 100%;
+      text-rendering: optimizeLegibility;
+    }
+
+    a, button, input, textarea, select {
+      font-family: inherit;
+    }
+
+    :focus-visible {
+      outline: 3px solid rgba(255, 176, 32, 0.65);
+      outline-offset: 3px;
+      border-radius: 10px;
+    }
+
+    .skip-link {
+      position: absolute;
+      left: 14px;
+      top: 14px;
+      padding: 10px 14px;
+      background: rgba(255,255,255,0.95);
+      border: 1px solid rgba(58,38,24,0.25);
+      border-radius: 12px;
+      box-shadow: var(--shadow-soft);
+      transform: translateY(-160%);
+      transition: transform .25s var(--slow);
+      z-index: 999;
+      color: var(--ink);
+      text-decoration: none;
+      font-size: 1rem;
+    }
+
+    .skip-link:focus {
+      transform: translateY(0);
+    }
+
+    /* Subtle paper grain */
+    body::before {
+      content: "";
+      position: fixed;
+      inset: 0;
+      pointer-events: none;
+      background:
+        repeating-linear-gradient(
+          0deg,
+          rgba(58,38,24,0.05) 0px,
+          rgba(58,38,24,0.05) 1px,
+          transparent 2px,
+          transparent 6px
+        );
+      opacity: .32;
+      z-index: 0;
+    }
+
+    /* Gentle vignette to “hold” the page */
+    body::after {
+      content: "";
+      position: fixed;
+      inset: -10%;
+      pointer-events: none;
+      background: radial-gradient(circle at 50% 20%, transparent 35%, rgba(58,38,24,0.08) 75%, rgba(58,38,24,0.12) 100%);
+      opacity: .55;
+      z-index: 0;
+    }
+
+    /* =========================================================
+       OPENING COVER (THE BOOK OPENS ONCE)
+    ========================================================= */
+    .cover {
+      min-height: 100vh;
+      display: grid;
+      place-items: center;
+      background: linear-gradient(var(--paper), var(--paper-shadow));
+      position: relative;
+      z-index: 2;
+      padding: 28px;
+    }
+
+    .cover__paper {
+      background: rgba(255, 248, 232, 0.96);
+      padding: clamp(44px, 7vw, 88px) clamp(26px, 6vw, 62px);
+      border-radius: var(--radius);
+      box-shadow: var(--shadow);
+      text-align: center;
+      max-width: 820px;
+      width: 100%;
+      position: relative;
+      overflow: hidden;
+      border: 1px solid rgba(58, 38, 24, 0.20);
+    }
+
+    .cover__paper::before{
+      content:"";
+      position:absolute;
+      inset:-40%;
+      background:
+        radial-gradient(circle at 30% 25%, rgba(255, 216, 122, 0.45), transparent 52%),
+        radial-gradient(circle at 80% 30%, rgba(90, 122, 59, 0.10), transparent 55%),
+        repeating-linear-gradient(0deg, rgba(58,38,24,0.04) 0, rgba(58,38,24,0.04) 1px, transparent 2px, transparent 8px);
+      opacity: .55;
+      transform: rotate(-6deg);
+      pointer-events: none;
+      z-index: 0;
+    }
+
+    .cover__eyebrow {
+      letter-spacing: 2.4px;
+      text-transform: uppercase;
+      font-size: .92rem;
+      opacity: .78;
+      margin-bottom: 12px;
+      position: relative;
+      z-index: 1;
+    }
+
+    .cover h1 {
+      font-family: var(--font-title);
+      font-size: clamp(2.2rem, 4.8vw, 3.6rem);
+      margin-bottom: 12px;
+      position: relative;
+      z-index: 1;
+    }
+
+    .cover__sub {
+      font-size: clamp(1.15rem, 2.4vw, 1.5rem);
+      margin-bottom: 40px;
+      opacity: .92;
+      position: relative;
+      z-index: 1;
+    }
+
+    .cover__openRow {
+      display: flex;
+      gap: 12px;
+      align-items: center;
+      justify-content: center;
+      flex-wrap: wrap;
+      position: relative;
+      z-index: 1;
+    }
+
+    .btn {
+      border: none;
+      cursor: pointer;
+      border-radius: 999px;
+      padding: 14px 26px;
+      font-size: 1.1rem;
+      transition: transform .25s var(--slow), box-shadow .25s var(--slow), background .25s var(--slow);
+      user-select: none;
+      -webkit-tap-highlight-color: transparent;
+    }
+
+    .btn--primary {
+      background: var(--pooh-red);
+      color: white;
+      box-shadow: 0 12px 28px rgba(198, 40, 40, 0.22);
+    }
+
+    .btn--primary:hover {
+      transform: translateY(-3px);
+      box-shadow: 0 18px 42px rgba(198, 40, 40, 0.26);
+    }
+
+    .btn--ghost {
+      background: transparent;
+      color: var(--ink);
+      border: 1px solid rgba(58,38,24,0.28);
+      box-shadow: var(--shadow-soft);
+    }
+
+    .btn--ghost:hover {
+      transform: translateY(-2px);
+      box-shadow: 0 16px 40px rgba(58,38,24,0.16);
+    }
+
+    .cover__hint {
+      margin-top: 22px;
+      font-size: 1.06rem;
+      opacity: .78;
+      position: relative;
+      z-index: 1;
+    }
+
+    /* =========================================================
+       MAIN SECTIONS — BREATHING, KEEPSAKE SPACING
+    ========================================================= */
+    main { position: relative; z-index: 2; }
+
+    .section {
+      max-width: 860px;
+      margin: 110px auto;
+      padding: 0 24px;
+    }
+
+    .section h2 {
+      font-family: var(--font-title);
+      font-size: clamp(1.9rem, 3.4vw, 2.6rem);
+      margin-bottom: 18px;
+    }
+
+    .section p {
+      font-size: clamp(1.14rem, 2.2vw, 1.3rem);
+      margin-bottom: 18px;
+      opacity: .98;
+    }
+
+    .section .soft {
+      opacity: .86;
+    }
+
+    .divider {
+      max-width: 860px;
+      margin: 0 auto;
+      padding: 0 24px;
+      opacity: .55;
+    }
+
+    .divider hr {
+      border: none;
+      height: 1px;
+      background: linear-gradient(90deg, transparent, rgba(58,38,24,0.32), transparent);
+    }
+
+    /* =========================================================
+       GATHERING DETAILS — INVITATION, NOT BROCHURE
+    ========================================================= */
+    .gathering {
+      background: rgba(255,255,255,0.55);
+      padding: 44px 38px;
+      border-radius: var(--radius);
+      box-shadow: var(--shadow);
+      border: 1px solid rgba(58,38,24,0.20);
+      position: relative;
+      overflow: hidden;
+    }
+
+    .gathering::before{
+      content:"";
+      position:absolute;
+      inset:-40%;
+      background:
+        radial-gradient(circle at 25% 30%, rgba(255,176,32,0.12), transparent 55%),
+        radial-gradient(circle at 80% 25%, rgba(90,122,59,0.10), transparent 55%);
+      opacity: .9;
+      transform: rotate(10deg);
+      pointer-events:none;
+    }
+
+    .gathering__details {
+      display: grid;
+      gap: 12px;
+      margin-top: 18px;
+      position: relative;
+      z-index: 1;
+    }
+
+    .gathering__row {
+      display: flex;
+      justify-content: space-between;
+      gap: 18px;
+      font-size: 1.15rem;
+      padding: 10px 12px;
+      border-radius: 12px;
+      background: rgba(255,255,255,0.45);
+      border: 1px solid rgba(58,38,24,0.12);
+    }
+
+    .gathering__row strong {
+      font-family: var(--font-title);
+      letter-spacing: .2px;
+    }
+
+    .gathering__note {
+      margin-top: 14px;
+      font-size: 1.08rem;
+      opacity: .84;
+      position: relative;
+      z-index: 1;
+    }
+
+    /* =========================================================
+       “A LITTLE TRADITION” CALLOUT
+    ========================================================= */
+    .tradition {
+      background: rgba(255, 176, 32, 0.10);
+      border-left: 5px solid rgba(255, 176, 32, 0.85);
+      border-radius: 14px;
+      padding: 18px 18px;
+      margin-top: 14px;
+    }
+
+    /* =========================================================
+       FRIENDS — ILLUSTRATED CHARACTER GALLERY (YOUR IMAGES)
+    ========================================================= */
+    .friends {
+      background: rgba(255,255,255,0.55);
+      border-radius: var(--radius);
+      box-shadow: var(--shadow);
+      padding: 44px 38px;
+      border: 1px solid rgba(58,38,24,0.20);
+      position: relative;
+      overflow: hidden;
+    }
+
+    .friends::before{
+      content:"";
+      position:absolute;
+      inset:-40%;
+      background:
+        radial-gradient(circle at 30% 20%, rgba(255,176,32,0.12), transparent 52%),
+        radial-gradient(circle at 78% 28%, rgba(90,122,59,0.10), transparent 55%),
+        repeating-linear-gradient(0deg, rgba(58,38,24,0.03) 0, rgba(58,38,24,0.03) 1px, transparent 2px, transparent 9px);
+      opacity: .7;
+      transform: rotate(-7deg);
+      pointer-events:none;
+    }
+
+    .friends__grid {
+      display: grid;
+      grid-template-columns: repeat(auto-fit, minmax(190px, 1fr));
+      gap: 16px;
+      margin-top: 20px;
+      position: relative;
+      z-index: 1;
+    }
+
+    .friend-card {
+      appearance: none;
+      -webkit-appearance: none;
+      border: 1px solid rgba(58,38,24,0.22);
+      border-radius: 16px;
+      background: rgba(255,255,255,0.62);
+      padding: 18px 16px 16px;
+      cursor: pointer;
+      transition: transform .25s var(--slow), box-shadow .25s var(--slow);
+      position: relative;
+      overflow: hidden;
+      text-align: left;
+    }
+
+    .friend-card:hover {
+      transform: translateY(-4px);
+      box-shadow: 0 16px 40px rgba(58,38,24,0.18);
+    }
+
+    .friend-portrait {
+      width: 92px;
+      height: 92px;
+      border-radius: 999px;
+      margin: 0 auto 12px;
+      position: relative;
+      background: radial-gradient(circle at 40% 35%, var(--paper), var(--paper-shadow));
+      border: 2px solid rgba(58,38,24,0.42);
+      box-shadow: 0 10px 22px rgba(58,38,24,0.18);
+      overflow: hidden;
+    }
+
+    .friend-portrait img {
+      width: 100%;
+      height: 100%;
+      object-fit: cover;
+      transform: scale(1.05);
+      filter: saturate(1.05) contrast(1.02);
+      display: block;
+    }
+
+    .friend-name {
+      font-family: var(--font-title);
+      text-align: center;
+      font-size: 1.22rem;
+      margin-bottom: 6px;
+    }
+
+    .friend-trait {
+      text-align: center;
+      font-size: 1.03rem;
+      opacity: .84;
+      margin-bottom: 8px;
+    }
+
+    .friend-quote {
+      text-align: center;
+      font-style: italic;
+      opacity: .78;
+      font-size: 1.02rem;
+    }
+
+    /* Modal (calm, booklike) */
+    .friend-modal {
+      position: fixed;
+      inset: 0;
+      display: grid;
+      place-items: center;
+      background: rgba(0,0,0,0.55);
+      opacity: 0;
+      pointer-events: none;
+      transition: opacity .25s var(--slow);
+      z-index: 50;
+      padding: 18px;
+    }
+
+    .friend-modal.is-open {
+      opacity: 1;
+      pointer-events: auto;
+    }
+
+    .friend-modal__card {
+      width: min(720px, calc(100vw - 28px));
+      background: linear-gradient(var(--paper), var(--paper-shadow));
+      border-radius: var(--radius);
+      box-shadow: 0 30px 90px rgba(0,0,0,0.35);
+      padding: 26px 22px;
+      border: 1px solid rgba(58,38,24,0.28);
+      position: relative;
+    }
+
+    .friend-modal__close {
+      position: absolute;
+      top: 10px;
+      right: 12px;
+      border: 0;
+      background: transparent;
+      font-size: 24px;
+      cursor: pointer;
+      color: rgba(58,38,24,0.75);
+      padding: 6px 10px;
+      border-radius: 12px;
+    }
+
+    .friend-modal__close:hover {
+      background: rgba(255,255,255,0.55);
+    }
+
+    .friend-modal__top {
+      display: grid;
+      grid-template-columns: 112px 1fr;
+      gap: 18px;
+      align-items: center;
+      margin-bottom: 10px;
+    }
+
+    .friend-modal__portrait {
+      width: 112px;
+      height: 112px;
+      border-radius: 999px;
+      border: 2px solid rgba(58,38,24,0.42);
+      overflow: hidden;
+      background: radial-gradient(circle at 40% 35%, var(--paper), var(--paper-shadow));
+      box-shadow: 0 12px 28px rgba(58,38,24,0.22);
+    }
+
+    .friend-modal__portrait img {
+      width: 100%;
+      height: 100%;
+      object-fit: cover;
+      transform: scale(1.05);
+      display: block;
+    }
+
+    .friend-modal__title {
+      font-family: var(--font-title);
+      font-size: 2rem;
+      margin: 0;
+      line-height: 1.2;
+    }
+
+    .friend-modal__subtitle {
+      opacity: .82;
+      font-size: 1.15rem;
+      margin-top: 4px;
+    }
+
+    .friend-modal__body {
+      margin-top: 12px;
+      font-size: 1.2rem;
+      opacity: .95;
+    }
+
+    .friend-modal__quote {
+      margin-top: 14px;
+      padding: 14px 14px;
+      border-left: 4px solid var(--honey);
+      background: rgba(255,176,32,0.10);
+      border-radius: 10px;
+      font-style: italic;
+      opacity: .92;
+    }
+
+    /* =========================================================
+       GUESTBOOK — “KEPT” FEELING
+    ========================================================= */
+    .guestbookCard {
+      background: rgba(255,255,255,0.55);
+      border-radius: var(--radius);
+      box-shadow: var(--shadow);
+      padding: 44px 38px;
+      border: 1px solid rgba(58,38,24,0.20);
+      position: relative;
+      overflow: hidden;
+    }
+
+    .guestbookCard::before{
+      content:"";
+      position:absolute;
+      inset:-40%;
+      background:
+        radial-gradient(circle at 22% 30%, rgba(255,216,122,0.22), transparent 55%),
+        radial-gradient(circle at 75% 22%, rgba(90,122,59,0.08), transparent 55%);
+      opacity: .9;
+      transform: rotate(6deg);
+      pointer-events:none;
+    }
+
+    .guestbookForm {
+      margin-top: 14px;
+      position: relative;
+      z-index: 1;
+      display: grid;
+      gap: 14px;
+    }
+
+    .fieldRow {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 14px;
+    }
+
+    .field {
+      display: grid;
+      gap: 6px;
+    }
+
+    .label {
+      font-family: var(--font-title);
+      font-size: 1.02rem;
+      opacity: .9;
+    }
+
+    .input, .textarea {
+      width: 100%;
+      background: rgba(255,255,255,0.40);
+      border: 1px solid rgba(58,38,24,0.18);
+      border-bottom: 2px solid rgba(58,38,24,0.42);
+      border-radius: 14px;
+      padding: 12px 12px;
+      font-size: 1.12rem;
+      color: var(--ink);
+    }
+
+    .textarea {
+      min-height: 150px;
+      resize: vertical;
+      padding: 14px 12px;
+      line-height: 1.6;
+    }
+
+    .guestbookActions {
+      display: flex;
+      gap: 12px;
+      flex-wrap: wrap;
+      align-items: center;
+      margin-top: 6px;
+    }
+
+    .btn--honey {
+      background: var(--honey);
+      color: #2b1a10;
+      box-shadow: 0 14px 34px rgba(255,176,32,0.20);
+    }
+
+    .btn--honey:hover {
+      transform: translateY(-2px);
+      box-shadow: 0 18px 44px rgba(255,176,32,0.24);
+    }
+
+    .guestbook__note {
+      margin-top: 8px;
+      font-style: italic;
+      opacity: .78;
+    }
+
+    .mini {
+      font-size: 1.02rem;
+      opacity: .80;
+    }
+
+    /* =========================================================
+       CORNER COMPANION — POOH IMAGE FLOAT (GENTLE, NOT LOUD)
+    ========================================================= */
+    .companion {
+      position: fixed;
+      right: 22px;
+      bottom: 22px;
+      width: 86px;
+      height: 86px;
+      border-radius: 999px;
+      background: radial-gradient(circle at 40% 35%, rgba(255,255,255,0.75), rgba(241,228,207,0.72));
+      border: 1px solid rgba(58,38,24,0.22);
+      box-shadow: 0 18px 44px rgba(58,38,24,0.20);
+      overflow: hidden;
+      opacity: .90;
+      z-index: 3;
+      transform: translateY(0);
+      transition: transform .15s linear, opacity .3s var(--slow);
+      pointer-events: none; /* purely decorative */
+    }
+
+    .companion img {
+      width: 100%;
+      height: 100%;
+      object-fit: cover;
+      transform: scale(1.06);
+      display: block;
+      filter: saturate(1.03) contrast(1.02);
+    }
+
+    @media (max-width: 520px) {
+      .companion { width: 74px; height: 74px; right: 14px; bottom: 14px; }
+      .fieldRow { grid-template-columns: 1fr; }
+      .gathering, .friends, .guestbookCard { padding: 34px 22px; }
+      .section { margin: 86px auto; }
+    }
+
+    /* =========================================================
+       GUNNAR — AUTO-HIGHLIGHT “HONEYLIGHT PROMISE”
+    ========================================================= */
+    .gunnar{
+      position: relative;
+      display: inline-block;
+      padding: 0 .10em;
+      color: var(--ink);
+      text-shadow:
+        0 1px 0 rgba(255,255,255,0.55),
+        0 12px 30px rgba(255,176,32,0.14);
+    }
+
+    .gunnar::before{
+      content:"";
+      position:absolute;
+      left:-0.10em; right:-0.10em;
+      bottom: .10em;
+      height: .58em;
+      border-radius: 999px;
+      background: linear-gradient(90deg,
+        rgba(255,176,32,0.14),
+        rgba(255,216,122,0.62),
+        rgba(255,176,32,0.14)
+      );
+      transform: rotate(-1deg);
+      z-index: -1;
+    }
+
+    .gunnar::after{
+      content:"";
+      position:absolute;
+      inset: -0.22em -0.35em -0.12em -0.35em;
+      border-radius: 999px;
+      background: radial-gradient(circle at 35% 40%,
+        rgba(255,216,122,0.40),
+        rgba(255,176,32,0.06) 58%,
+        transparent 72%
+      );
+      opacity: .85;
+      z-index: -2;
+      animation: gunnarPromise 4.8s var(--slow) infinite;
+    }
+
+    @keyframes gunnarPromise{
+      0%,100% { transform: scale(1); opacity: .68; }
+      50%     { transform: scale(1.03); opacity: .95; }
+    }
+
+    /* =========================================================
+       FOOTER
+    ========================================================= */
+    footer {
+      text-align: center;
+      padding: 90px 24px 70px;
+      opacity: .88;
+      position: relative;
+      z-index: 2;
+    }
+
+    footer p {
+      font-size: 1.18rem;
+      margin-bottom: 10px;
+    }
+
+    /* =========================================================
+       PRINT / KEEPSAKE MODE
+    ========================================================= */
+    @media print {
+      body::before, body::after, .companion, .btn, .friend-modal { display: none !important; }
+      body { background: white; color: black; }
+      .cover { display: none !important; }
+      .section { margin: 52px auto; }
+      .gathering, .friends, .guestbookCard { box-shadow: none; border: 1px solid #ddd; }
+    }
+
+    /* Reduce motion for folks who prefer it */
+    @media (prefers-reduced-motion: reduce) {
+      html { scroll-behavior: auto; }
+      .btn, .friend-card, .companion, .gunnar::after, .friend-modal { transition: none !important; animation: none !important; }
+    }
+  </style>
 </head>
+
 <body>
-    <!-- Storybook Loader -->
-    <div id="loader" class="loader storybook-loader">
-        <div class="loader__pooh storybook-loader__pooh">
-            <div class="loader__ears loader__ears--left"></div>
-            <div class="loader__ears loader__ears--right"></div>
-            <div class="loader__face">
-                <div class="loader__honey-fill"></div>
-                <div class="loader__eyes"></div>
-                <div class="loader__snout"></div>
-            </div>
-            <div class="loader__spoon">
-                <div class="loader__drip"></div>
-            </div>
+  <a class="skip-link" href="#story">Skip to the story</a>
+
+  <!-- Ambient forest sound: starts only after user opens the book -->
+  <audio id="forestSound" preload="auto" loop>
+    <source src="https://assets.mixkit.co/sfx/preview/mixkit-light-wind-in-leaves-118.mp3" type="audio/mpeg">
+  </audio>
+
+  <!-- COVER -->
+  <section class="cover" id="cover" aria-label="Cover page">
+    <div class="cover__paper">
+      <p class="cover__eyebrow">A Baby Shower Story</p>
+      <h1>For Baby Gunnar</h1>
+      <p class="cover__sub">On the way, and already so loved.</p>
+
+      <div class="cover__openRow">
+        <button class="btn btn--primary" id="openBook" type="button">Open the Book</button>
+        <button class="btn btn--ghost" id="printStory" type="button">Print Keepsake</button>
+      </div>
+
+      <p class="cover__hint">A quiet little scroll. A warm little world.</p>
+    </div>
+  </section>
+
+  <main id="story">
+    <section class="section">
+      <h2>The News</h2>
+      <p>
+        In a calm corner of the Hundred Acre Wood, a wonderful thing became known.
+        A new little friend is on the way.
+      </p>
+      <p class="soft">
+        The trees seem to lean closer. The bees hum softer. Even the sunlight feels like it’s waiting.
+      </p>
+      <p>
+        Everyone agrees on one thing: when Baby Gunnar arrives, there should already be love waiting.
+      </p>
+    </section>
+
+    <div class="divider"><hr></div>
+
+    <section class="section gathering" aria-label="Gathering details">
+      <h2>A Gathering in the Wood</h2>
+      <p>
+        To celebrate Baby Gunnar—who’s on the way—we’re gathering for honey, stories,
+        and the kind of happiness that doesn’t hurry.
+      </p>
+
+      <div class="gathering__details">
+        <div class="gathering__row">
+          <strong>Date</strong>
+          <span>April 15</span>
         </div>
-        <div class="storybook-loader__text-container">
-            <p class="storybook-loader__text">Turning the pages...</p>
-            <div class="storybook-loader__book">
-                <div class="book-page"></div>
-                <div class="book-page"></div>
-                <div class="book-page"></div>
-            </div>
+        <div class="gathering__row">
+          <strong>Time</strong>
+          <span>2–5 PM</span>
         </div>
+        <div class="gathering__row">
+          <strong>Place</strong>
+          <span>The Hundred Acre Wood</span>
+        </div>
+      </div>
+
+      <p class="gathering__note">
+        Come as you are. Stay as long as you like. If you arrive early, that’s just more time for quiet joy.
+      </p>
+    </section>
+
+    <section class="section">
+      <h2>A Little Tradition</h2>
+      <p>
+        If you’d like to bring something, Pooh thought a book might be nice.
+      </p>
+      <div class="tradition">
+        <p style="margin-bottom:0;">
+          Write your name inside. Baby Gunnar will read it one day and know you were here from the beginning.
+        </p>
+      </div>
+    </section>
+
+    <div class="divider"><hr></div>
+
+    <!-- FRIENDS -->
+    <section class="section friends" id="friends" aria-label="Meet the friends">
+      <h2>Meet the Friends</h2>
+      <p class="soft">
+        In the Wood, everyone has a way of making you feel like you belong.
+        These friends are saving a place for Baby Gunnar.
+      </p>
+
+      <div class="friends__grid" id="friendsGrid">
+        <button class="friend-card" type="button" data-friend="pooh">
+          <div class="friend-portrait">
+            <img src="Images/Characters/honey-bear.png" alt="Winnie the Pooh holding honey" loading="lazy" decoding="async">
+          </div>
+          <div class="friend-name">Winnie the Pooh</div>
+          <div class="friend-trait">Gentle. Loyal. Slightly honey-motivated.</div>
+          <div class="friend-quote">“Sometimes the smallest things…”</div>
+        </button>
+
+        <button class="friend-card" type="button" data-friend="piglet">
+          <div class="friend-portrait">
+            <img src="Images/Characters/piglet.png" alt="Piglet" loading="lazy" decoding="async">
+          </div>
+          <div class="friend-name">Piglet</div>
+          <div class="friend-trait">Small, but brave when it matters.</div>
+          <div class="friend-quote">“Oh d-d-dear…”</div>
+        </button>
+
+        <button class="friend-card" type="button" data-friend="tigger">
+          <div class="friend-portrait">
+            <img src="Images/Characters/tigger.png" alt="Tigger" loading="lazy" decoding="async">
+          </div>
+          <div class="friend-name">Tigger</div>
+          <div class="friend-trait">Joy on springs. Energy for days.</div>
+          <div class="friend-quote">“TTFN!”</div>
+        </button>
+
+        <button class="friend-card" type="button" data-friend="eeyore">
+          <div class="friend-portrait">
+            <img src="Images/Characters/eeyore.png" alt="Eeyore" loading="lazy" decoding="async">
+          </div>
+          <div class="friend-name">Eeyore</div>
+          <div class="friend-trait">Quiet. Steady. Always shows up.</div>
+          <div class="friend-quote">“Thanks for noticing me.”</div>
+        </button>
+
+        <button class="friend-card" type="button" data-friend="roo">
+          <div class="friend-portrait">
+            <img src="Images/Characters/roo.png" alt="Roo" loading="lazy" decoding="async">
+          </div>
+          <div class="friend-name">Roo</div>
+          <div class="friend-trait">Curious heart. Big jumps ahead.</div>
+          <div class="friend-quote">“Can I come too?”</div>
+        </button>
+
+        <button class="friend-card" type="button" data-friend="owl">
+          <div class="friend-portrait">
+            <img src="Images/Characters/owl.png" alt="Owl" loading="lazy" decoding="async">
+          </div>
+          <div class="friend-name">Owl</div>
+          <div class="friend-trait">Stories, advice, and helpful opinions.</div>
+          <div class="friend-quote">“Ahem…”</div>
+        </button>
+      </div>
+    </section>
+
+    <!-- Friend Modal -->
+    <div class="friend-modal" id="friendModal" aria-hidden="true">
+      <div class="friend-modal__card" role="dialog" aria-modal="true" aria-labelledby="friendModalTitle">
+        <button class="friend-modal__close" type="button" id="friendModalClose" aria-label="Close">×</button>
+
+        <div class="friend-modal__top">
+          <div class="friend-modal__portrait">
+            <img id="friendModalImg" src="" alt="" decoding="async">
+          </div>
+          <div>
+            <h3 class="friend-modal__title" id="friendModalTitle"></h3>
+            <div class="friend-modal__subtitle" id="friendModalSubtitle"></div>
+          </div>
+        </div>
+
+        <div class="friend-modal__body" id="friendModalBody"></div>
+        <div class="friend-modal__quote" id="friendModalQuote"></div>
+      </div>
     </div>
 
-    <!-- Storybook Navigation -->
-    <nav class="nav storybook-nav">
-        <div class="storybook-nav__book">
-            <div class="storybook-nav__book-spine"></div>
-            <div class="storybook-nav__book-cover">
-                <div class="storybook-nav__title">The Adventures of</div>
-                <div class="storybook-nav__main-title">Gunner & Friends</div>
-                <div class="storybook-nav__subtitle">A Woodland Storybook</div>
-            </div>
-        </div>
-        <div class="nav__links storybook-nav__links">
-            <a href="#hero" class="storybook-nav__link">
-                <i class="fas fa-book-open"></i>
-                <span>Begin Story</span>
-            </a>
-            <a href="#story" class="storybook-nav__link">
-                <i class="fas fa-feather-alt"></i>
-                <span>The Tale</span>
-            </a>
-            <a href="#characters" class="storybook-nav__link">
-                <i class="fas fa-paw"></i>
-                <span>Meet Friends</span>
-            </a>
-            <a href="#rsvp" class="storybook-nav__link">
-                <i class="fas fa-pencil-alt"></i>
-                <span>Join Story</span>
-            </a>
-        </div>
-    </nav>
+    <div class="divider"><hr></div>
 
-    <!-- Main Storybook Content -->
-    <main class="storybook-main">
-        <!-- Hero Section - Storybook Cover -->
-        <section id="hero" class="hero storybook-cover reveal">
-            <div class="storybook-cover__decoration storybook-cover__decoration--left">
-                <div class="storybook-vine"></div>
-                <div class="storybook-vine"></div>
-            </div>
-            <div class="storybook-cover__decoration storybook-cover__decoration--right">
-                <div class="storybook-vine"></div>
-                <div class="storybook-vine"></div>
-            </div>
-            
-            <div class="hero__content storybook-cover__content">
-                <div class="storybook-cover__title-container">
-                    <div class="storybook-cover__eyebrow">A Storybook Celebration</div>
-                    <h1 class="storybook-cover__title">Gunner's Woodland Welcome</h1>
-                    <div class="storybook-cover__subtitle">Featuring Winnie the Pooh & Friends</div>
-                </div>
-                
-                <div class="storybook-cover__quote">
-                    <div class="storybook-quote-mark storybook-quote-mark--left">"</div>
-                    <p class="storybook-cover__quote-text">Sometimes the smallest things take up the most room in your heart.</p>
-                    <div class="storybook-quote-mark storybook-quote-mark--right">"</div>
-                    <div class="storybook-cover__quote-author">— Winnie the Pooh</div>
-                </div>
-                
-                <div class="hero__cta storybook-cover__cta">
-                    <button class="btn storybook-btn" id="openInstructions">
-                        <i class="fas fa-book"></i>
-                        <span>Begin Adventure</span>
-                    </button>
-                    <button class="btn storybook-btn storybook-btn--secondary" id="promptButton">
-                        <i class="fas fa-magic"></i>
-                        <span>Story Prompt</span>
-                    </button>
-                </div>
-                
-                <div class="hero__stats storybook-cover__stats">
-                    <div class="storybook-stat">
-                        <div class="storybook-stat__icon">📖</div>
-                        <div class="storybook-stat__content">
-                            <strong>Chapter One</strong>
-                            <span>The Arrival</span>
-                        </div>
-                    </div>
-                    <div class="storybook-stat">
-                        <div class="storybook-stat__icon">🍯</div>
-                        <div class="storybook-stat__content">
-                            <strong>Sweet Treats</strong>
-                            <span>Honey & Cakes</span>
-                        </div>
-                    </div>
-                    <div class="storybook-stat">
-                        <div class="storybook-stat__icon">🐻</div>
-                        <div class="storybook-stat__content">
-                            <strong>Special Guest</strong>
-                            <span>Winnie the Pooh</span>
-                        </div>
-                    </div>
-                </div>
-            </div>
-            
-            <div class="hero__art storybook-cover__art">
-                <div class="storybook-pooh-character">
-                    <div class="pooh-character">
-                        <div class="pooh-head">
-                            <div class="pooh-ear pooh-ear--left"></div>
-                            <div class="pooh-ear pooh-ear--right"></div>
-                            <div class="pooh-face">
-                                <div class="pooh-eyes">
-                                    <div class="pooh-eye"></div>
-                                    <div class="pooh-eye"></div>
-                                </div>
-                                <div class="pooh-snout"></div>
-                                <div class="pooh-mouth"></div>
-                            </div>
-                        </div>
-                        <div class="pooh-body">
-                            <div class="pooh-arm pooh-arm--left"></div>
-                            <div class="pooh-arm pooh-arm--right"></div>
-                            <div class="pooh-honey-pot">
-                                <div class="honey-pot">
-                                    <div class="honey-pot__body"></div>
-                                    <div class="honey-pot__handle"></div>
-                                    <div class="honey-pot__lid"></div>
-                                    <div class="honey-drips">
-                                        <div class="honey-drip"></div>
-                                        <div class="honey-drip"></div>
-                                        <div class="honey-drip"></div>
-                                    </div>
-                                </div>
-                            </div>
-                        </div>
-                    </div>
-                </div>
-                
-                <div class="floating-notes storybook-notes">
-                    <div class="storybook-note storybook-note--1">
-                        <div class="storybook-note__pin"></div>
-                        <div class="storybook-note__content">Oh, bother! Someone's coming!</div>
-                    </div>
-                    <div class="storybook-note storybook-note--2">
-                        <div class="storybook-note__pin"></div>
-                        <div class="storybook-note__content">Time for a little smackerel</div>
-                    </div>
-                    <div class="storybook-note storybook-note--3">
-                        <div class="storybook-note__pin"></div>
-                        <div class="storybook-note__content">Welcome to our Wood</div>
-                    </div>
-                </div>
-                
-                <div class="bee storybook-bee">
-                    <div class="bee-body">
-                        <div class="bee-wing bee-wing--left"></div>
-                        <div class="bee-wing bee-wing--right"></div>
-                        <div class="bee-stripe"></div>
-                        <div class="bee-stripe"></div>
-                        <div class="bee-stripe"></div>
-                    </div>
-                </div>
-            </div>
-        </section>
+    <!-- GUESTBOOK -->
+    <section class="section guestbookCard" id="guestbook" aria-label="Guestbook">
+      <h2>Your Page</h2>
+      <p>
+        If you’d like, leave a few words for Baby Gunnar.
+        They’ll be kept, the way a real book keeps things.
+      </p>
 
-        <!-- Storybook Page Turns -->
-        <div class="storybook-page-turn">
-            <div class="storybook-page-turn__content">
-                <div class="storybook-page-turn__icon">📖</div>
-                <p>Turn the page to continue the story...</p>
-            </div>
+      <form class="guestbookForm" id="guestbookForm" autocomplete="on">
+        <div class="fieldRow">
+          <div class="field">
+            <label class="label" for="guestName">Your name</label>
+            <input class="input" id="guestName" name="guestName" type="text" placeholder="Christopher Robin" required />
+          </div>
+
+          <div class="field">
+            <label class="label" for="guestRelation">How you know the family (optional)</label>
+            <input class="input" id="guestRelation" name="guestRelation" type="text" placeholder="Friend / Family / Coworker" />
+          </div>
         </div>
 
-        <!-- Table of Contents -->
-        <div class="storybook-toc">
-            <div class="storybook-toc__header">
-                <h2 class="storybook-toc__title">Table of Contents</h2>
-                <p class="storybook-toc__subtitle">Choose a chapter to begin your adventure</p>
-            </div>
-            <div class="storybook-toc__chapters">
-                <a href="#story" class="storybook-toc__chapter">
-                    <div class="storybook-toc__number">01</div>
-                    <div class="storybook-toc__content">
-                        <h3>The Beginning of the Tale</h3>
-                        <p>How Gunner's story starts in the Hundred Acre Wood</p>
-                    </div>
-                    <div class="storybook-toc__arrow">→</div>
-                </a>
-                <a href="#details" class="storybook-toc__chapter">
-                    <div class="storybook-toc__number">02</div>
-                    <div class="storybook-toc__content">
-                        <h3>Celebration Details</h3>
-                        <p>When and where the woodland gathering happens</p>
-                    </div>
-                    <div class="storybook-toc__arrow">→</div>
-                </a>
-                <a href="#experiences" class="storybook-toc__chapter">
-                    <div class="storybook-toc__number">03</div>
-                    <div class="storybook-toc__content">
-                        <h3>Storybook Activities</h3>
-                        <p>Interactive pages for you to write upon</p>
-                    </div>
-                    <div class="storybook-toc__arrow">→</div>
-                </a>
-                <a href="#characters" class="storybook-toc__chapter">
-                    <div class="storybook-toc__number">04</div>
-                    <div class="storybook-toc__content">
-                        <h3>Meet the Characters</h3>
-                        <p>All your friends from the Hundred Acre Wood</p>
-                    </div>
-                    <div class="storybook-toc__arrow">→</div>
-                </a>
-                <a href="#rsvp" class="storybook-toc__chapter">
-                    <div class="storybook-toc__number">05</div>
-                    <div class="storybook-toc__content">
-                        <h3>Join the Story</h3>
-                        <p>Add your name to our woodland guestbook</p>
-                    </div>
-                    <div class="storybook-toc__arrow">→</div>
-                </a>
-            </div>
+        <div class="field">
+          <label class="label" for="guestMessage">Your words</label>
+          <textarea class="textarea" id="guestMessage" name="guestMessage" placeholder="Write something gentle…" required></textarea>
         </div>
 
-        <!-- Chapter 1: The Beginning -->
-        <section id="story" class="panel storybook-panel storybook-chapter reveal">
-            <div class="storybook-chapter__header">
-                <div class="storybook-chapter__number">Chapter 1</div>
-                <h2 class="storybook-chapter__title">The Beginning of Gunner's Tale</h2>
-                <div class="storybook-chapter__illustration">
-                    <div class="storybook-tree"></div>
-                    <div class="storybook-tree storybook-tree--small"></div>
-                    <div class="storybook-bird"></div>
-                </div>
-            </div>
-            
-            <div class="storybook-chapter__content">
-                <div class="storybook-text">
-                    <p class="storybook-dropcap">In the heart of the Hundred Acre Wood, where the sunlight dances through the leaves and the river sings a gentle song, a wonderful rumor began to spread...</p>
-                    
-                    <p>A new little friend was coming to join their adventures. The bees buzzed it from flower to flower, the wind whispered it through the trees, and soon everyone in the Wood knew: Gunner was on his way.</p>
-                    
-                    <div class="storybook-quote storybook-quote--inline">
-                        <div class="storybook-quote__content">
-                            "Oh, how exciting!" said Pooh, nearly dropping his honey pot. "We must prepare the coziest welcome!"
-                        </div>
-                    </div>
-                    
-                    <p>And so began the preparations. Pooh organized extra honey pots (just in case), Piglet practiced being extra brave (for both of them), and Tigger perfected his most wonderful welcoming bounce.</p>
-                </div>
-                
-                <div class="cards storybook-cards">
-                    <div class="card storybook-card">
-                        <div class="card__icon storybook-card__icon">📝</div>
-                        <h3>The First Page</h3>
-                        <p>Every great story begins with a first page, and this one starts with hope, honey, and wonderful friends.</p>
-                    </div>
-                    <div class="card storybook-card">
-                        <div class="card__icon storybook-card__icon">✨</div>
-                        <h3>Magical Preparations</h3>
-                        <p>Owl began writing stories, Rabbit planned the perfect garden party, and Eeyore found the sunniest spot for naps.</p>
-                    </div>
-                    <div class="card storybook-card">
-                        <div class="card__icon storybook-card__icon">❤️</div>
-                        <h3>Your Chapter</h3>
-                        <p>Now we invite you to add your words to Gunner's storybook, sharing wishes, wisdom, and woodland wonders.</p>
-                    </div>
-                </div>
-            </div>
-        </section>
-
-        <!-- Chapter 2: Celebration Details -->
-        <section id="details" class="panel storybook-panel storybook-chapter storybook-chapter--alt reveal">
-            <div class="storybook-chapter__header">
-                <div class="storybook-chapter__number">Chapter 2</div>
-                <h2 class="storybook-chapter__title">The Celebration Details</h2>
-                <div class="storybook-chapter__illustration">
-                    <div class="storybook-sun"></div>
-                    <div class="storybook-cloud"></div>
-                </div>
-            </div>
-            
-            <div class="storybook-chapter__content">
-                <div class="detail-grid storybook-details">
-                    <div class="detail storybook-detail">
-                        <div class="storybook-detail__icon">📅</div>
-                        <h3>When We Gather</h3>
-                        <p><strong>April 15, 2024</strong><br>2:00 PM - 5:00 PM</p>
-                        <small>Arrive early for a smackerel of something!</small>
-                    </div>
-                    <div class="detail storybook-detail">
-                        <div class="storybook-detail__icon">📍</div>
-                        <h3>Where We Meet</h3>
-                        <p><strong>The Hundred Acre Wood</strong><br>Under the great oak tree</p>
-                        <small>Follow the red balloons and honey scent</small>
-                    </div>
-                    <div class="detail storybook-detail">
-                        <div class="storybook-detail__icon">🍽️</div>
-                        <h3>Woodland Feast</h3>
-                        <p>Honey cakes, garden treats, and all of Pooh's favorite snacks</p>
-                        <small>Let us know about any dietary needs</small>
-                    </div>
-                    <div class="detail storybook-detail">
-                        <div class="storybook-detail__icon">🎁</div>
-                        <h3>Storybook Gifts</h3>
-                        <p>Your presence is the best gift! Books for Gunner's library or contributions to his adventure fund are cherished.</p>
-                    </div>
-                </div>
-            </div>
-        </section>
-
-        <!-- Chapter 3: Interactive Pages -->
-        <section id="experiences" class="panel storybook-panel storybook-chapter reveal">
-            <div class="storybook-chapter__header">
-                <div class="storybook-chapter__number">Chapter 3</div>
-                <h2 class="storybook-chapter__title">Interactive Story Pages</h2>
-                <div class="storybook-chapter__illustration">
-                    <div class="storybook-quill"></div>
-                    <div class="storybook-ink-spot"></div>
-                </div>
-            </div>
-            
-            <div class="storybook-chapter__content">
-                <div class="experience-grid storybook-experiences">
-                    <div class="experience storybook-experience">
-                        <div class="experience__top">
-                            <span class="badge badge--gold storybook-badge">Write Your Page</span>
-                            <h3>Wishes for Gunner</h3>
-                        </div>
-                        <p>Add your words to Gunner's storybook. Share a hope, a lullaby, or woodland wisdom for his adventures ahead.</p>
-                        <div class="storybook-prompt">
-                            <button class="prompt-btn storybook-prompt-btn" id="promptButton2">
-                                <i class="fas fa-feather"></i>
-                                Get a Writing Prompt
-                            </button>
-                            <p class="prompt storybook-prompt-text" id="promptText">
-                                "Share the coziest lullaby you know for Pooh to hum to Gunner."
-                            </p>
-                        </div>
-                    </div>
-                    
-                    <div class="experience storybook-experience">
-                        <div class="experience__top">
-                            <span class="badge badge--leaf storybook-badge">Memory Book</span>
-                            <h3>Adventure Pages</h3>
-                        </div>
-                        <p>Contribute to Gunner's growing storybook with your favorite woodland memory or piece of advice.</p>
-                        <ul class="list storybook-list">
-                            <li><i class="fas fa-book"></i> Write a short bedtime story</li>
-                            <li><i class="fas fa-palette"></i> Draw a woodland creature</li>
-                            <li><i class="fas fa-heart"></i> Share a special wish</li>
-                            <li><i class="fas fa-star"></i> Suggest an adventure</li>
-                        </ul>
-                    </div>
-                    
-                    <div class="experience storybook-experience">
-                        <div class="experience__top">
-                            <span class="badge storybook-badge">Story Sounds</span>
-                            <h3>Woodland Atmosphere</h3>
-                        </div>
-                        <p>Immerse yourself in the sounds of the Hundred Acre Wood as you explore our storybook celebration.</p>
-                        <div class="chip-row storybook-chip-row">
-                            <span class="chip storybook-chip"><i class="fas fa-bug"></i> Buzzing bees</span>
-                            <span class="chip storybook-chip"><i class="fas fa-leaf"></i> Rustling leaves</span>
-                            <span class="chip storybook-chip"><i class="fas fa-water"></i> Babbling brook</span>
-                        </div>
-                        <div class="storybook-sound-toggle">
-                            <label class="storybook-sound-toggle__label">
-                                <input type="checkbox" id="playChime" checked>
-                                <span class="storybook-sound-toggle__slider"></span>
-                                <span class="storybook-sound-toggle__text">Enable storybook sounds</span>
-                            </label>
-                        </div>
-                    </div>
-                </div>
-            </div>
-        </section>
-
-        <!-- Chapter 4: Meet the Characters -->
-        <section id="characters" class="panel storybook-panel storybook-chapter storybook-chapter--characters reveal">
-            <div class="storybook-chapter__header">
-                <div class="storybook-chapter__number">Chapter 4</div>
-                <h2 class="storybook-chapter__title">Meet the Woodland Friends</h2>
-                <div class="storybook-chapter__illustration">
-                    <div class="storybook-paw-print"></div>
-                    <div class="storybook-paw-print"></div>
-                    <div class="storybook-paw-print"></div>
-                </div>
-            </div>
-            
-            <div class="storybook-chapter__content">
-                <div class="character-grid storybook-characters">
-                    <!-- Winnie the Pooh -->
-                    <div class="character-card storybook-character-card" data-character="pooh">
-                        <div class="character-card__avatar storybook-character-avatar storybook-character-avatar--pooh">
-                            🐻
-                        </div>
-                        <div class="storybook-character-info">
-                            <h4 class="character-card__name">Winnie the Pooh</h4>
-                            <p class="character-card__hint">Gentle bear with a heart full of honey</p>
-                            <div class="storybook-character-quote">"Oh, bother!"</div>
-                        </div>
-                        <button class="btn btn--ghost character-card__btn storybook-character-btn">
-                            <i class="fas fa-book-open"></i>
-                        </button>
-                    </div>
-                    
-                    <!-- Piglet -->
-                    <div class="character-card storybook-character-card" data-character="piglet">
-                        <div class="character-card__avatar storybook-character-avatar storybook-character-avatar--piglet">
-                            🐷
-                        </div>
-                        <div class="storybook-character-info">
-                            <h4 class="character-card__name">Piglet</h4>
-                            <p class="character-card__hint">Small but incredibly brave friend</p>
-                            <div class="storybook-character-quote">"Oh, d-d-dear!"</div>
-                        </div>
-                        <button class="btn btn--ghost character-card__btn storybook-character-btn">
-                            <i class="fas fa-book-open"></i>
-                        </button>
-                    </div>
-                    
-                    <!-- Tigger -->
-                    <div class="character-card storybook-character-card" data-character="tigger">
-                        <div class="character-card__avatar storybook-character-avatar storybook-character-avatar--tigger">
-                            🐯
-                        </div>
-                        <div class="storybook-character-info">
-                            <h4 class="character-card__name">Tigger</h4>
-                            <p class="character-card__hint">Bounciest friend in the Wood</p>
-                            <div class="storybook-character-quote">"TTFN! Ta-ta for now!"</div>
-                        </div>
-                        <button class="btn btn--ghost character-card__btn storybook-character-btn">
-                            <i class="fas fa-book-open"></i>
-                        </button>
-                    </div>
-                    
-                    <!-- Eeyore -->
-                    <div class="character-card storybook-character-card" data-character="eeyore">
-                        <div class="character-card__avatar storybook-character-avatar storybook-character-avatar--eeyore">
-                            🐴
-                        </div>
-                        <div class="storybook-character-info">
-                            <h4 class="character-card__name">Eeyore</h4>
-                            <p class="character-card__hint">Thoughtful donkey with a steady heart</p>
-                            <div class="storybook-character-quote">"Thanks for noticing me."</div>
-                        </div>
-                        <button class="btn btn--ghost character-card__btn storybook-character-btn">
-                            <i class="fas fa-book-open"></i>
-                        </button>
-                    </div>
-                    
-                    <!-- Rabbit -->
-                    <div class="character-card storybook-character-card" data-character="rabbit">
-                        <div class="character-card__avatar storybook-character-avatar storybook-character-avatar--rabbit">
-                            🐰
-                        </div>
-                        <div class="storybook-character-info">
-                            <h4 class="character-card__name">Rabbit</h4>
-                            <p class="character-card__hint">Organized gardener and planner</p>
-                            <div class="storybook-character-quote">"Now let's be sensible."</div>
-                        </div>
-                        <button class="btn btn--ghost character-card__btn storybook-character-btn">
-                            <i class="fas fa-book-open"></i>
-                        </button>
-                    </div>
-                    
-                    <!-- Owl -->
-                    <div class="character-card storybook-character-card" data-character="owl">
-                        <div class="character-card__avatar storybook-character-avatar storybook-character-avatar--owl">
-                            🦉
-                        </div>
-                        <div class="storybook-character-info">
-                            <h4 class="character-card__name">Owl</h4>
-                            <p class="character-card__hint">Wise storyteller of the Wood</p>
-                            <div class="storybook-character-quote">"Ahem, as I was saying..."</div>
-                        </div>
-                        <button class="btn btn--ghost character-card__btn storybook-character-btn">
-                            <i class="fas fa-book-open"></i>
-                        </button>
-                    </div>
-                </div>
-            </div>
-        </section>
-
-        <!-- Chapter 5: Join the Story -->
-        <section id="rsvp" class="panel storybook-panel storybook-chapter storybook-chapter--rsvp reveal">
-            <div class="storybook-chapter__header">
-                <div class="storybook-chapter__number">Chapter 5</div>
-                <h2 class="storybook-chapter__title">Join Our Storybook</h2>
-                <div class="storybook-chapter__illustration">
-                    <div class="storybook-envelope"></div>
-                    <div class="storybook-pen"></div>
-                </div>
-            </div>
-            
-            <div class="storybook-chapter__content">
-                <div class="storybook-rsvp-intro">
-                    <p>Add your name to our woodland guestbook! Let us know you're joining Gunner's story, and we'll send you a honey-sweet confirmation with more details about the celebration.</p>
-                </div>
-                
-                <form id="rsvpForm" class="form storybook-form">
-                    <div class="storybook-form-group">
-                        <label class="storybook-form-label">
-                            <span class="storybook-form-label-text">Your Storybook Name</span>
-                            <input type="text" placeholder="Christopher Robin" required class="storybook-form-input">
-                            <div class="storybook-form-underline"></div>
-                        </label>
-                    </div>
-                    
-                    <div class="storybook-form-group">
-                        <label class="storybook-form-label">
-                            <span class="storybook-form-label-text">Owl's Post (Email)</span>
-                            <input type="email" placeholder="christopher@hundredacrewood.com" required class="storybook-form-input">
-                            <div class="storybook-form-underline"></div>
-                        </label>
-                    </div>
-                    
-                    <div class="storybook-form-group">
-                        <label class="storybook-form-label">
-                            <span class="storybook-form-label-text">Number of Adventurers</span>
-                            <select id="guests" class="storybook-form-select">
-                                <option value="1">Just me</option>
-                                <option value="2">2 friends</option>
-                                <option value="3">3 friends</option>
-                                <option value="4">4 friends</option>
-                                <option value="5">5 or more</option>
-                            </select>
-                            <div class="storybook-form-underline"></div>
-                        </label>
-                    </div>
-                    
-                    <div class="storybook-form-group">
-                        <label class="storybook-form-label">
-                            <span class="storybook-form-label-text">Your Page in Gunner's Book (Optional)</span>
-                            <textarea placeholder="Write a message for Gunner, share a story, or offer some woodland wisdom..." class="storybook-form-textarea"></textarea>
-                            <div class="storybook-form-underline"></div>
-                        </label>
-                    </div>
-                    
-                    <button type="submit" class="btn storybook-form-submit">
-                        <i class="fas fa-feather-alt"></i>
-                        <span>Add My Name to the Story</span>
-                    </button>
-                    
-                    <p class="form__status storybook-form-status" id="formStatus"></p>
-                </form>
-                
-                <div class="storybook-guest-count">
-                    <div class="storybook-guest-count__icon">📖</div>
-                    <div class="storybook-guest-count__content">
-                        <p><strong><span id="guestCount">0</span> friends</strong> have joined our woodland story!</p>
-                        <small>We can't wait to welcome you to the Wood</small>
-                    </div>
-                </div>
-            </div>
-        </section>
-    </main>
-
-    <!-- Storybook Footer -->
-    <footer class="footer storybook-footer">
-        <div class="storybook-footer__content">
-            <div class="storybook-footer__book">
-                <div class="storybook-footer__book-spine"></div>
-                <div class="storybook-footer__book-pages">
-                    <div class="storybook-footer__page"></div>
-                    <div class="storybook-footer__page"></div>
-                    <div class="storybook-footer__page"></div>
-                </div>
-            </div>
-            <div class="storybook-footer__text">
-                <p>Made with <span class="storybook-heart">❤️</span> and <span class="storybook-honey">🍯</span> for Gunner's woodland welcome</p>
-                <p class="storybook-footer__copyright">© 2024 The Hundred Acre Wood Storybook Society</p>
-            </div>
-            <div class="storybook-footer__signature">
-                <div class="storybook-paw-signature"></div>
-                <p>With love from all your friends in the Wood</p>
-            </div>
+        <div class="guestbookActions">
+          <button class="btn btn--honey" type="submit">Add Your Words</button>
+          <button class="btn btn--ghost" type="button" id="printPage">Print This Story</button>
+          <span class="mini">Tip: keep it simple. A line is enough.</span>
         </div>
+
+        <p class="guestbook__note" id="guestNote" hidden>Your words have found their page.</p>
+      </form>
+    </section>
+
+    <footer aria-label="Closing">
+      <p>With love, honey, and quiet joy.</p>
+      <p class="soft">Baby Gunnar is on the way. The story is already beginning.</p>
     </footer>
+  </main>
 
-    <!-- Character Modal -->
-    <div id="characterModal" class="modal storybook-modal">
-        <div class="modal__backdrop storybook-modal-backdrop"></div>
-        <div class="modal__card storybook-modal-card">
-            <button id="closeModal" class="modal__close storybook-modal-close">
-                <i class="fas fa-times"></i>
-            </button>
-            <div class="storybook-modal-header">
-                <h3 id="modalName" class="storybook-modal-title">Winnie the Pooh</h3>
-                <p id="modalTrait" class="storybook-modal-subtitle">Gentle bear with a heart full of honey</p>
-            </div>
-            <div class="storybook-modal-character">
-                <div class="storybook-modal-avatar storybook-modal-avatar--pooh">
-                    🐻
-                </div>
-            </div>
-            <div class="storybook-modal-quote">
-                <div class="storybook-modal-quote-mark">"</div>
-                <p id="modalQuote" class="modal__quote storybook-modal-quote-text">"Sometimes the smallest things take up the most room in your heart."</p>
-                <div class="storybook-modal-quote-mark">"</div>
-            </div>
-            <div class="storybook-modal-gift">
-                <div class="storybook-modal-gift-icon">🎁</div>
-                <div class="storybook-modal-gift-content">
-                    <h4>Pooh's Gift for Gunner</h4>
-                    <p id="modalGift" class="modal__gift">A forever supply of calm, cozy mornings and a jar of courage for every new adventure.</p>
-                </div>
-            </div>
-        </div>
-    </div>
+  <!-- Corner companion (your Pooh image), gently “present” -->
+  <div class="companion" id="companion" aria-hidden="true">
+    <img src="Images/Characters/honey-bear.png" alt="" decoding="async" loading="eager">
+  </div>
 
-    <!-- RSVP Banner -->
-    <div id="rsvpBanner" class="rsvp-banner storybook-rsvp-banner">
-        <div class="rsvp-banner__content storybook-rsvp-banner-content">
-            <span class="rsvp-banner__icon storybook-rsvp-banner-icon">🎉</span>
-            <div class="storybook-rsvp-banner-text">
-                <p class="rsvp-banner__text storybook-rsvp-banner-main">Thank you for joining our story!</p>
-                <p class="storybook-rsvp-banner-sub">Check your inbox for a special woodland confirmation.</p>
-            </div>
-        </div>
-        <button id="bannerClose" class="rsvp-banner__close storybook-rsvp-banner-close">
-            <i class="fas fa-times"></i>
-        </button>
-    </div>
+  <script>
+    /* =========================================================
+       AUTO-HIGHLIGHT “Gunnar” EVERYWHERE (safe DOM text-node wrap)
+       - wraps whole-word matches only
+       - skips scripts/styles/inputs/code/pre/textarea
+       - skips nodes already inside .gunnar
+    ========================================================= */
+    function highlightNameEverywhere(root = document.body, name = "Gunnar") {
+      const SKIP_TAGS = new Set(["SCRIPT", "STYLE", "NOSCRIPT", "TEXTAREA", "CODE", "PRE", "INPUT", "SELECT", "OPTION"]);
+      const re = new RegExp(`\\b(${name})\\b`, "g");
 
-    <!-- Page Navigation -->
-    <div id="pageTurns" class="page-turns storybook-page-turns">
-        <button id="prevPage" class="page-turns__btn storybook-page-turn-btn" disabled>
-            <i class="fas fa-chevron-left"></i>
-            <span>Previous Page</span>
-        </button>
-        <div class="page-turns__status storybook-page-turn-status">
-            <span class="storybook-page-turn-icon">📄</span>
-            <span id="pageIndicator" class="storybook-page-turn-text">Cover Page</span>
-        </div>
-        <button id="nextPage" class="page-turns__btn storybook-page-turn-btn">
-            <span>Next Page</span>
-            <i class="fas fa-chevron-right"></i>
-        </button>
-    </div>
+      const walker = document.createTreeWalker(root, NodeFilter.SHOW_TEXT, {
+        acceptNode(node) {
+          const parent = node.parentElement;
+          if (!parent) return NodeFilter.FILTER_REJECT;
 
-    <!-- Audio Elements -->
-    <audio id="pageTurnSound" src="https://assets.mixkit.co/sfx/preview/mixkit-book-page-flip-449.mp3"></audio>
-    <audio id="honeySound" src="https://assets.mixkit.co/sfx/preview/mixkit-magic-sparkles-300.mp3"></audio>
+          if (SKIP_TAGS.has(parent.tagName)) return NodeFilter.FILTER_REJECT;
+          if (parent.closest && parent.closest(".gunnar")) return NodeFilter.FILTER_REJECT;
+          if (!node.nodeValue || !node.nodeValue.trim()) return NodeFilter.FILTER_REJECT;
 
-    <script>
-        // Storybook Interactive JavaScript
-        document.addEventListener('DOMContentLoaded', function() {
-            // Hide loader after 2 seconds
-            setTimeout(() => {
-                document.getElementById('loader').style.display = 'none';
-                document.body.style.overflow = 'auto';
-            }, 2000);
+          re.lastIndex = 0;
+          return re.test(node.nodeValue) ? NodeFilter.FILTER_ACCEPT : NodeFilter.FILTER_REJECT;
+        }
+      });
 
-            // Animated reveal elements on scroll
-            const revealElements = document.querySelectorAll('.reveal');
-            const revealOnScroll = () => {
-                revealElements.forEach(element => {
-                    const elementTop = element.getBoundingClientRect().top;
-                    const windowHeight = window.innerHeight;
-                    if (elementTop < windowHeight - 100) {
-                        element.classList.add('active');
-                    }
-                });
-            };
-            window.addEventListener('scroll', revealOnScroll);
-            revealOnScroll(); // Initial check
+      const nodes = [];
+      while (walker.nextNode()) nodes.push(walker.currentNode);
 
-            // Page navigation
-            const sections = ['hero', 'story', 'details', 'experiences', 'characters', 'rsvp'];
-            let currentSectionIndex = 0;
-            const pageIndicator = document.getElementById('pageIndicator');
-            const pageTitles = [
-                'Cover Page',
-                'Chapter 1: The Beginning',
-                'Chapter 2: Celebration Details',
-                'Chapter 3: Interactive Pages',
-                'Chapter 4: Meet the Friends',
-                'Chapter 5: Join the Story'
-            ];
+      for (const textNode of nodes) {
+        const text = textNode.nodeValue;
+        re.lastIndex = 0;
+        if (!re.test(text)) continue;
 
-            // Smooth scrolling for navigation links
-            document.querySelectorAll('.storybook-nav__link').forEach(link => {
-                link.addEventListener('click', function(e) {
-                    e.preventDefault();
-                    const targetId = this.getAttribute('href').substring(1);
-                    const targetSection = document.getElementById(targetId);
-                    const targetIndex = sections.indexOf(targetId);
-                    
-                    if (targetSection) {
-                        // Play page turn sound
-                        document.getElementById('pageTurnSound').play();
-                        
-                        // Update current section index
-                        currentSectionIndex = targetIndex;
-                        updatePageIndicator();
-                        
-                        // Scroll to section
-                        targetSection.scrollIntoView({ 
-                            behavior: 'smooth',
-                            block: 'start'
-                        });
-                    }
-                });
-            });
+        const frag = document.createDocumentFragment();
+        let last = 0;
+        re.lastIndex = 0;
 
-            // Update page indicator
-            function updatePageIndicator() {
-                pageIndicator.textContent = pageTitles[currentSectionIndex];
-                document.getElementById('prevPage').disabled = currentSectionIndex === 0;
-                document.getElementById('nextPage').disabled = currentSectionIndex === sections.length - 1;
-            }
+        let m;
+        while ((m = re.exec(text)) !== null) {
+          const start = m.index;
+          const end = start + m[0].length;
 
-            // Next page button
-            document.getElementById('nextPage').addEventListener('click', function() {
-                if (currentSectionIndex < sections.length - 1) {
-                    currentSectionIndex++;
-                    const nextSection = document.getElementById(sections[currentSectionIndex]);
-                    document.getElementById('pageTurnSound').play();
-                    nextSection.scrollIntoView({ behavior: 'smooth' });
-                    updatePageIndicator();
-                }
-            });
+          if (start > last) frag.appendChild(document.createTextNode(text.slice(last, start)));
 
-            // Previous page button
-            document.getElementById('prevPage').addEventListener('click', function() {
-                if (currentSectionIndex > 0) {
-                    currentSectionIndex--;
-                    const prevSection = document.getElementById(sections[currentSectionIndex]);
-                    document.getElementById('pageTurnSound').play();
-                    prevSection.scrollIntoView({ behavior: 'smooth' });
-                    updatePageIndicator();
-                }
-            });
+          const span = document.createElement("span");
+          span.className = "gunnar";
+          span.textContent = m[0];
+          frag.appendChild(span);
 
-            // Character modal functionality
-            const characterData = {
-                pooh: {
-                    name: "Winnie the Pooh",
-                    trait: "Gentle bear with a heart full of honey",
-                    quote: "\"Sometimes the smallest things take up the most room in your heart.\"",
-                    gift: "A forever supply of calm, cozy mornings and a jar of courage for every new adventure."
-                },
-                piglet: {
-                    name: "Piglet",
-                    trait: "Small but incredibly brave friend",
-                    quote: "\"It's hard to be brave when you're such a small animal.\"",
-                    gift: "A pocketful of bravery for every new day and a reminder that even the smallest can make the biggest difference."
-                },
-                tigger: {
-                    name: "Tigger",
-                    trait: "Bounciest friend in the Wood",
-                    quote: "\"The wonderful thing about Tiggers is I'm the only one!\"",
-                    gift: "Endless energy for playtime and a special bounce that makes every day an adventure."
-                },
-                eeyore: {
-                    name: "Eeyore",
-                    trait: "Thoughtful donkey with a steady heart",
-                    quote: "\"Thanks for noticing me.\"",
-                    gift: "The gift of being truly seen, and a tail that always finds its way back home."
-                },
-                rabbit: {
-                    name: "Rabbit",
-                    trait: "Organized gardener and planner",
-                    quote: "\"Now let's be sensible about this.\"",
-                    gift: "A well-organized garden of memories and the wisdom to know when to let things grow wild."
-                },
-                owl: {
-                    name: "Owl",
-                    trait: "Wise storyteller of the Wood",
-                    quote: "\"Ahem, as I was saying...\"",
-                    gift: "A library of bedtime stories and the wisdom to find adventure in every page."
-                }
-            };
+          last = end;
+        }
 
-            // Character card click handlers
-            document.querySelectorAll('.storybook-character-card').forEach(card => {
-                card.addEventListener('click', function() {
-                    const character = this.dataset.character;
-                    const data = characterData[character];
-                    
-                    if (data) {
-                        document.getElementById('modalName').textContent = data.name;
-                        document.getElementById('modalTrait').textContent = data.trait;
-                        document.getElementById('modalQuote').textContent = data.quote;
-                        document.getElementById('modalGift').textContent = data.gift;
-                        
-                        // Play honey sound
-                        document.getElementById('honeySound').play();
-                        
-                        // Show modal with animation
-                        const modal = document.getElementById('characterModal');
-                        modal.classList.add('show');
-                        document.body.style.overflow = 'hidden';
-                    }
-                });
-            });
+        if (last < text.length) frag.appendChild(document.createTextNode(text.slice(last)));
+        textNode.parentNode.replaceChild(frag, textNode);
+      }
+    }
 
-            // Close modal
-            document.getElementById('closeModal').addEventListener('click', function() {
-                document.getElementById('characterModal').classList.remove('show');
-                document.body.style.overflow = 'auto';
-            });
+    /* =========================================================
+       FRIENDS — MODAL DATA + WIRING (uses your local images)
+    ========================================================= */
+    const FRIENDS = {
+      pooh: {
+        name: "Winnie the Pooh",
+        subtitle: "Gentle bear with a heart full of honey",
+        img: "Images/Characters/honey-bear.png",
+        body: "Pooh doesn’t hurry. He notices. He stays. He makes room for people—especially small new people like Gunnar.",
+        quote: "“Sometimes the smallest things take up the most room in your heart.”"
+      },
+      piglet: {
+        name: "Piglet",
+        subtitle: "Small, but brave when it matters",
+        img: "Images/Characters/piglet.png",
+        body: "Piglet will teach Gunnar that courage isn’t loud. It’s showing up—even when you’re nervous.",
+        quote: "“It’s hard to be brave when you’re such a small animal.”"
+      },
+      tigger: {
+        name: "Tigger",
+        subtitle: "Joy on springs. Energy for days.",
+        img: "Images/Characters/tigger.png",
+        body: "Tigger will remind Gunnar that joy is allowed. That laughter can be a plan.",
+        quote: "“TTFN! Ta-ta for now!”"
+      },
+      eeyore: {
+        name: "Eeyore",
+        subtitle: "Quiet loyalty. A steady heart.",
+        img: "Images/Characters/eeyore.png",
+        body: "Eeyore will teach Gunnar the underrated superpower of being dependable. Not flashy. Just there.",
+        quote: "“Thanks for noticing me.”"
+      },
+      roo: {
+        name: "Roo",
+        subtitle: "Curious, kind, always ready",
+        img: "Images/Characters/roo.png",
+        body: "Roo understands being little. He’ll show Gunnar how to be brave in new places—with good friends nearby.",
+        quote: "“Can I come too?”"
+      },
+      owl: {
+        name: "Owl",
+        subtitle: "Storyteller of the Wood",
+        img: "Images/Characters/owl.png",
+        body: "Owl will fill Gunnar’s world with stories—some accurate, some improved. All told with love.",
+        quote: "“Ahem… as I was saying…”"
+      }
+    };
 
-            // Close modal when clicking backdrop
-            document.querySelector('.storybook-modal-backdrop').addEventListener('click', function() {
-                document.getElementById('characterModal').classList.remove('show');
-                document.body.style.overflow = 'auto';
-            });
+    const modal = document.getElementById('friendModal');
+    const modalClose = document.getElementById('friendModalClose');
+    const modalTitle = document.getElementById('friendModalTitle');
+    const modalSubtitle = document.getElementById('friendModalSubtitle');
+    const modalBody = document.getElementById('friendModalBody');
+    const modalQuote = document.getElementById('friendModalQuote');
+    const modalImg = document.getElementById('friendModalImg');
 
-            // Story prompt buttons
-            const prompts = [
-                "Share the coziest lullaby you know for Pooh to hum to Gunner.",
-                "What adventure should Gunner and Piglet go on first?",
-                "Write a short story about Gunner's first meeting with Tigger.",
-                "What woodland wisdom would Eeyore share with Gunner?",
-                "Describe the perfect Hundred Acre Wood picnic for Gunner.",
-                "What special talent should Gunner discover in the Wood?"
-            ];
+    function openFriendModal(key){
+      const f = FRIENDS[key];
+      if (!f) return;
 
-            document.getElementById('promptButton').addEventListener('click', function() {
-                const randomPrompt = prompts[Math.floor(Math.random() * prompts.length)];
-                document.getElementById('promptText').textContent = randomPrompt;
-                
-                // Animate the text appearance
-                const promptElement = document.getElementById('promptText');
-                promptElement.style.animation = 'none';
-                setTimeout(() => {
-                    promptElement.style.animation = 'typewriter 2s steps(40) 1s 1 normal both';
-                }, 10);
-            });
+      modalTitle.textContent = f.name;
+      modalSubtitle.textContent = f.subtitle;
+      modalBody.textContent = f.body;
+      modalQuote.textContent = f.quote;
 
-            document.getElementById('promptButton2').addEventListener('click', function() {
-                const randomPrompt = prompts[Math.floor(Math.random() * prompts.length)];
-                document.getElementById('promptText').textContent = randomPrompt;
-                
-                const promptElement = document.getElementById('promptText');
-                promptElement.style.animation = 'none';
-                setTimeout(() => {
-                    promptElement.style.animation = 'typewriter 2s steps(40) 1s 1 normal both';
-                }, 10);
-            });
+      modalImg.src = f.img;
+      modalImg.alt = f.name;
 
-            // RSVP form submission
-            const rsvpForm = document.getElementById('rsvpForm');
-            const guestCountElement = document.getElementById('guestCount');
-            let guestCount = 0;
+      modal.classList.add('is-open');
+      modal.setAttribute('aria-hidden', 'false');
+      document.body.style.overflow = 'hidden';
+      modalClose.focus();
+    }
 
-            rsvpForm.addEventListener('submit', function(e) {
-                e.preventDefault();
-                
-                // In a real application, you would send this data to a server
-                // For now, we'll simulate a successful submission
-                guestCount++;
-                guestCountElement.textContent = guestCount;
-                
-                // Show success banner
-                const banner = document.getElementById('rsvpBanner');
-                banner.style.display = 'flex';
-                banner.style.animation = 'slideUp 0.5s ease-out';
-                
-                // Reset form
-                rsvpForm.reset();
-                
-                // Play success sound
-                document.getElementById('honeySound').play();
-            });
+    function closeFriendModal(){
+      modal.classList.remove('is-open');
+      modal.setAttribute('aria-hidden', 'true');
+      document.body.style.overflow = '';
+    }
 
-            // Close RSVP banner
-            document.getElementById('bannerClose').addEventListener('click', function() {
-                const banner = document.getElementById('rsvpBanner');
-                banner.style.animation = 'slideDown 0.5s ease-out';
-                setTimeout(() => {
-                    banner.style.display = 'none';
-                }, 500);
-            });
+    /* =========================================================
+       COVER OPEN + AMBIENT SOUND + PRINT
+    ========================================================= */
+    const forest = document.getElementById('forestSound');
+    const openBookBtn = document.getElementById('openBook');
+    const printStoryBtn = document.getElementById('printStory');
+    const printPageBtn = document.getElementById('printPage');
 
-            // Sound toggle
-            const soundToggle = document.getElementById('playChime');
-            const sounds = [document.getElementById('pageTurnSound'), document.getElementById('honeySound')];
-            
-            soundToggle.addEventListener('change', function() {
-                sounds.forEach(sound => {
-                    sound.muted = !this.checked;
-                });
-            });
+    function openBook(){
+      const cover = document.getElementById('cover');
+      if (cover) cover.style.display = 'none';
 
-            // Initialize sounds as unmuted
-            sounds.forEach(sound => {
-                sound.muted = !soundToggle.checked;
-            });
+      // Start ambience only after user intent
+      if (forest) {
+        forest.volume = 0.22;
+        forest.play().catch(() => {});
+      }
 
-            // Add keyboard navigation
-            document.addEventListener('keydown', function(e) {
-                if (e.key === 'ArrowRight') {
-                    document.getElementById('nextPage').click();
-                } else if (e.key === 'ArrowLeft') {
-                    document.getElementById('prevPage').click();
-                } else if (e.key === 'Escape') {
-                    document.getElementById('closeModal').click();
-                }
-            });
+      // Ensure first section is visible at top
+      window.scrollTo({ top: 0, behavior: 'smooth' });
+    }
 
-            // Add CSS for banner animations
-            const style = document.createElement('style');
-            style.textContent = `
-                @keyframes slideUp {
-                    from { transform: translateY(100%); }
-                    to { transform: translateY(0); }
-                }
-                
-                @keyframes slideDown {
-                    from { transform: translateY(0); }
-                    to { transform: translateY(100%); }
-                }
-                
-                .storybook-rsvp-banner {
-                    display: none;
-                    position: fixed;
-                    bottom: 20px;
-                    left: 50%;
-                    transform: translateX(-50%);
-                    background: var(--storybook-green);
-                    color: white;
-                    padding: 20px;
-                    border-radius: 15px;
-                    border: 3px solid var(--storybook-gold);
-                    max-width: 400px;
-                    width: 90%;
-                    z-index: 1000;
-                    align-items: center;
-                    justify-content: space-between;
-                    box-shadow: 0 10px 30px rgba(0,0,0,0.3);
-                }
-                
-                .storybook-rsvp-banner-content {
-                    display: flex;
-                    align-items: center;
-                    gap: 15px;
-                }
-                
-                .storybook-rsvp-banner-icon {
-                    font-size: 2rem;
-                    animation: bounce 1s infinite;
-                }
-                
-                .storybook-rsvp-banner-close {
-                    background: transparent;
-                    border: none;
-                    color: white;
-                    font-size: 1.2rem;
-                    cursor: pointer;
-                    padding: 5px;
-                }
-            `;
-            document.head.appendChild(style);
+    function printKeepsake(){
+      window.print();
+    }
 
-            // Create leaf fall animation
-            function createLeaves() {
-                const leafCount = 15;
-                for (let i = 0; i < leafCount; i++) {
-                    setTimeout(() => {
-                        const leaf = document.createElement('div');
-                        leaf.style.position = 'fixed';
-                        leaf.style.width = '20px';
-                        leaf.style.height = '20px';
-                        leaf.style.background = `hsl(${Math.random() * 30 + 100}, 70%, 60%)`;
-                        leaf.style.borderRadius = '0 50% 50% 50%';
-                        leaf.style.top = '-30px';
-                        leaf.style.left = `${Math.random() * 100}vw`;
-                        leaf.style.opacity = '0.7';
-                        leaf.style.zIndex = '-1';
-                        leaf.style.animation = `leafFall ${10 + Math.random() * 10}s linear infinite`;
-                        leaf.style.animationDelay = `${Math.random() * 5}s`;
-                        document.body.appendChild(leaf);
-                    }, i * 200);
-                }
-            }
+    /* =========================================================
+       COMPANION FLOAT — gentle follow (quiet presence)
+    ========================================================= */
+    function updateCompanion(){
+      const y = window.scrollY || 0;
+      const c = document.getElementById('companion');
+      if (!c) return;
 
-            // Start leaf animation
-            createLeaves();
+      const wobble = Math.sin(y * 0.002) * 2;
+      const drift = y * 0.06;
+      c.style.transform = `translateY(${drift}px) rotate(${wobble}deg)`;
+    }
 
-            // Update page indicator on scroll
-            window.addEventListener('scroll', function() {
-                sections.forEach((sectionId, index) => {
-                    const section = document.getElementById(sectionId);
-                    if (section) {
-                        const rect = section.getBoundingClientRect();
-                        if (rect.top <= 100 && rect.bottom >= 100) {
-                            currentSectionIndex = index;
-                            updatePageIndicator();
-                        }
-                    }
-                });
-            });
+    /* =========================================================
+       GUESTBOOK — “kept” acknowledgement
+       (local-only; wire to backend later if you want)
+    ========================================================= */
+    const guestForm = document.getElementById('guestbookForm');
+    const guestNote = document.getElementById('guestNote');
 
-            // Initialize page indicator
-            updatePageIndicator();
-        });
-    </script>
+    function setNote(on){
+      if (!guestNote) return;
+      guestNote.hidden = !on;
+    }
+
+    /* =========================================================
+       INIT
+    ========================================================= */
+    document.addEventListener('DOMContentLoaded', () => {
+      // Auto-highlight Gunnar everywhere
+      highlightNameEverywhere(document.body, "Gunnar");
+
+      // Cover buttons
+      openBookBtn?.addEventListener('click', openBook);
+      printStoryBtn?.addEventListener('click', printKeepsake);
+      printPageBtn?.addEventListener('click', printKeepsake);
+
+      // Friends grid
+      document.getElementById('friendsGrid')?.addEventListener('click', (e) => {
+        const card = e.target.closest('.friend-card');
+        if (!card) return;
+        openFriendModal(card.dataset.friend);
+      });
+
+      // Modal close
+      modalClose?.addEventListener('click', closeFriendModal);
+      modal?.addEventListener('click', (e) => {
+        if (e.target === modal) closeFriendModal();
+      });
+
+      document.addEventListener('keydown', (e) => {
+        if (e.key === 'Escape' && modal.classList.contains('is-open')) closeFriendModal();
+      });
+
+      // Guestbook submit (keepsake acknowledgement)
+      guestForm?.addEventListener('submit', (e) => {
+        e.preventDefault();
+        setNote(true);
+
+        // Keep the message visible in case they want to copy it,
+        // but reset name fields to feel “submitted”
+        const name = document.getElementById('guestName');
+        const rel = document.getElementById('guestRelation');
+        if (name) name.value = "";
+        if (rel) rel.value = "";
+
+        // Gentle auto-scroll to the note
+        guestNote?.scrollIntoView({ behavior: 'smooth', block: 'nearest' });
+      });
+
+      // Companion follow
+      updateCompanion();
+      window.addEventListener('scroll', updateCompanion, { passive: true });
+    });
+  </script>
 </body>
 </html>
