@@ -181,89 +181,73 @@
     </section>
 
   <!-- Games -->
-<section class="page-section" id="games" aria-labelledby="gamesTitle">
-  <div class="container">
+<!-- Games -->
+<section class="content-section" id="games" aria-labelledby="gamesTitle">
+  <div class="content-section-inner">
     <h2 class="section-title" id="gamesTitle">Games</h2>
+    <p class="section-subtitle">A little honey goes a long way.</p>
 
-    <div class="games-container">
-      <!-- Honey Pot Catch -->
-      <article class="game-card" id="catch-card" aria-label="Honey Pot Catch game">
-        <header class="game-header">
-          <h3 class="game-title">
-            <i class="fa-solid fa-basketball" aria-hidden="true"></i>
-            Honey Pot Catch
-          </h3>
-          <p class="game-description">
-            Help Pooh catch falling honey pots while avoiding angry bees! Use arrow keys, touch, or the joystick.
-          </p>
-        </header>
-
-        <!-- Quick stats / meta (IDs required by game.js) -->
-        <div class="game-meta" aria-label="Game status">
-          <span class="meta-pill"><strong>Score:</strong> <span id="score-count">0</span></span>
-          <span class="meta-pill"><strong>Time:</strong> <span id="time-count">60</span>s</span>
-          <span class="meta-pill"><strong>Lives:</strong> <span id="catch-lives">3</span></span>
-
-          <!-- These exist in the DOM for game.js, but can be visually hidden when inactive -->
-          <span class="meta-pill" id="catch-combo-wrap">
-            <strong>Combo:</strong> <span id="catch-combo">0</span>
-          </span>
-          <span class="meta-pill" id="catch-multiplier-wrap">
-            <strong>×</strong><span id="catch-multiplier">1</span>
-          </span>
-        </div>
-
-        <div class="game-canvas-container" role="group" aria-label="Honey Pot Catch play area">
-          <!-- Canvas MUST have a stable CSS size; game.js will set the drawing buffer via DPR -->
-          <canvas
-            id="honey-game"
-            class="game-canvas"
-            width="900"
-            height="520"
-            aria-label="Honey Pot Catch canvas"
-          ></canvas>
-
-          <!-- Overlay (IDs required by game.js) -->
-          <div class="game-overlay" id="catch-overlay" aria-live="polite" aria-atomic="true">
-            <div class="countdown-display" id="catch-countdown">Press Start</div>
-            <div class="overlay-hint" id="catch-hint">Keep Pooh under the falling honey.</div>
-          </div>
-
-          <!-- IMPORTANT: Provide the joystick in HTML so game.js DOES NOT create a duplicate -->
-          <div
-            class="virtual-joystick"
-            id="catchJoystick"
-            aria-label="Virtual joystick"
-            role="application"
-          >
-            <div class="joystick-base" aria-hidden="true"></div>
-            <div class="joystick-handle" aria-hidden="true"></div>
-          </div>
-        </div>
-
-        <div class="game-controls" aria-label="Game controls">
-          <!-- Keep the IDs exactly; classes are optional (use your CSS system) -->
-          <button class="btn btn-primary primary-btn" id="start-catch" type="button">
-            <i class="fa-solid fa-play" aria-hidden="true"></i>
-            <span>Start</span>
-          </button>
-
-          <button
-            class="btn btn-secondary secondary-btn"
-            id="pause-catch"
-            type="button"
-            aria-pressed="false"
-          >
-            <i class="fa-solid fa-pause" aria-hidden="true"></i>
-            <span>Pause</span>
-          </button>
-        </div>
-
-        <p class="game-status-badge" id="catchStatus" aria-live="polite">
-          Tip: iOS Safari may need a first tap before audio + canvas feel “alive”.
+    <article class="game-card" id="catch-card" aria-label="Honey Pot Catch game">
+      <header class="game-header">
+        <h3 class="game-title">
+          <i class="fa-solid fa-basketball" aria-hidden="true"></i>
+          Honey Pot Catch
+        </h3>
+        <p class="game-help">
+          Catch honey pots. Avoid bees. Arrow keys / touch / joystick.
         </p>
-      </article>
-    </div>
+      </header>
+
+      <!-- HUD (IDs required by game.js) -->
+      <div class="game-hud" aria-label="Game status">
+        <div class="hud-stat">
+          <span class="hud-pill"><strong>Score:</strong> <span id="score-count">0</span></span>
+        </div>
+        <div class="hud-stat">
+          <span class="hud-pill"><strong>Time:</strong> <span id="time-count">60</span>s</span>
+        </div>
+        <div class="hud-stat">
+          <span class="hud-pill"><strong>Lives:</strong> <span id="catch-lives">3</span></span>
+        </div>
+        <div class="hud-stat">
+          <span class="hud-pill"><strong>Combo:</strong> <span id="catch-combo">0</span></span>
+        </div>
+        <div class="hud-stat">
+          <span class="hud-pill"><strong>×</strong><span id="catch-multiplier">1</span></span>
+        </div>
+      </div>
+
+      <div class="game-stage">
+        <canvas id="honey-game" class="game-canvas" aria-label="Honey Pot Catch canvas"></canvas>
+
+        <!-- Overlay (IDs required by game.js) -->
+        <div class="game-overlay" id="catch-overlay" aria-live="polite">
+          <div class="countdown-display" id="catch-countdown">Press Start</div>
+          <div class="overlay-hint" id="catch-hint">Keep Pooh under the falling honey.</div>
+        </div>
+
+        <!-- Joystick (use your CSS .joystick / .joystick-knob) -->
+        <div class="joystick" id="catchJoystick" aria-label="Virtual joystick" role="application">
+          <div class="joystick-knob" id="catchJoystickKnob" aria-hidden="true"></div>
+        </div>
+      </div>
+
+      <div class="game-hud" aria-label="Game controls">
+        <button class="btn btn-primary" id="start-catch" type="button">
+          <i class="fa-solid fa-play" aria-hidden="true"></i>
+          Start
+        </button>
+
+        <button class="btn btn-secondary" id="pause-catch" type="button" aria-pressed="false">
+          <i class="fa-solid fa-pause" aria-hidden="true"></i>
+          Pause
+        </button>
+
+        <span class="hud-pill" id="catchStatus" aria-live="polite">
+          Tip: iOS Safari needs a first tap to “wake up” canvas/audio.
+        </span>
+      </div>
+    </article>
   </div>
 </section>
     <!-- Wishes -->
