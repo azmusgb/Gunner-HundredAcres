@@ -1,10 +1,13 @@
 /* ==========================================================================
-   script.js — Site UI only (cover, nav, progress, modal, basic toggles)
-   Enhanced Version with better accessibility, animations, and features
+   script.js — Complete UI and Site Functionality (Non-Game)
+   Hundred Acre Wood Adventure - Enhanced UI Edition
    ========================================================================== */
 'use strict';
 
 (function () {
+  // ---------------------------------------------------------------------------
+  // INITIALIZATION AND UTILITIES
+  // ---------------------------------------------------------------------------
   const $ = (sel, root = document) => root.querySelector(sel);
   const $$ = (sel, root = document) => Array.from(root.querySelectorAll(sel));
 
@@ -13,46 +16,19 @@
     accessibility: localStorage.getItem('accessibilityMode') === 'true',
     reducedMotion: window.matchMedia('(prefers-reduced-motion: reduce)').matches,
     navOpen: false,
-    coverClosed: false,
+    coverClosed: localStorage.getItem('coverClosed') === 'true',
     activeSection: 'story',
     gamepadConnected: false
   };
 
-  // Reflect motion preferences immediately for animation and scroll behavior
-  document.body.classList.toggle('reduced-motion', state.reducedMotion);
-
-  const reducedMotionMedia = window.matchMedia('(prefers-reduced-motion: reduce)');
-  if (typeof reducedMotionMedia.addEventListener === 'function') {
-    reducedMotionMedia.addEventListener('change', (event) => {
-      state.reducedMotion = event.matches;
-      document.body.classList.toggle('reduced-motion', state.reducedMotion);
-    });
-  }
-
-  document.addEventListener('visibilitychange', () => {
-    document.body.classList.toggle('paused-animations', document.hidden);
-  });
-
-  const WISHES_KEY = 'hundred-wishes-v2';
-  const MAX_WISHES = 50;
-  const ANIMATION_DELAY = 300;
-
-  function clamp(n, a, b) { return Math.max(a, Math.min(b, n)); }
-  function throttle(func, limit = 100) {
-    let inThrottle;
-    return function() {
-      const args = arguments;
-      const context = this;
-      if (!inThrottle) {
-        func.apply(context, args);
-        inThrottle = true;
-        setTimeout(() => inThrottle = false, limit);
-      }
-    };
-  }
+  // Performance tracking
+  let lastFrameTime = 0;
+  let frameCount = 0;
+  let lastFpsUpdate = 0;
+  let currentFPS = 60;
 
   // ---------------------------------------------------------------------------
-  // Enhanced Audio Helper with Web Audio API
+  // AUDIO MANAGER
   // ---------------------------------------------------------------------------
   const audio = (() => {
     let ctx = null;
@@ -169,7 +145,36 @@
   })();
 
   // ---------------------------------------------------------------------------
-  // Toast Notification System
+  // UTILITY FUNCTIONS
+  // ---------------------------------------------------------------------------
+  function clamp(n, a, b) { return Math.max(a, Math.min(b, n)); }
+  function throttle(func, limit = 100) {
+    let inThrottle;
+    return function() {
+      const args = arguments;
+      const context = this;
+      if (!inThrottle) {
+        func.apply(context, args);
+        inThrottle = true;
+        setTimeout(() => inThrottle = false, limit);
+      }
+    };
+  }
+
+  function debounce(func, wait) {
+    let timeout;
+    return function executedFunction(...args) {
+      const later = () => {
+        clearTimeout(timeout);
+        func(...args);
+      };
+      clearTimeout(timeout);
+      timeout = setTimeout(later, wait);
+    };
+  }
+
+  // ---------------------------------------------------------------------------
+  // TOAST NOTIFICATION SYSTEM
   // ---------------------------------------------------------------------------
   const toast = (() => {
     const container = $('#toast') || (() => {
@@ -217,7 +222,7 @@
   })();
 
   // ---------------------------------------------------------------------------
-  // Cover
+  // COVER/INTRO SYSTEM
   // ---------------------------------------------------------------------------
   function initCover() {
     const cover = $('#cover');
@@ -249,7 +254,7 @@
     document.body.classList.add('cover-open');
 
     // Check if cover should be closed
-    if (localStorage.getItem('coverClosed') === 'true') {
+    if (state.coverClosed) {
       closeCover();
     }
 
@@ -305,7 +310,7 @@
   }
 
   // ---------------------------------------------------------------------------
-  // Navigation with active section tracking
+  // NAVIGATION SYSTEM
   // ---------------------------------------------------------------------------
   function initNav() {
     const toggle = $('#navToggle');
@@ -406,7 +411,7 @@
   }
 
   // ---------------------------------------------------------------------------
-  // Enhanced Reading Progress Bar
+  // READING PROGRESS BAR
   // ---------------------------------------------------------------------------
   function initReadingProgress() {
     const bar = $('#readingProgress');
@@ -434,7 +439,7 @@
   }
 
   // ---------------------------------------------------------------------------
-  // Enhanced Floating Action Buttons
+  // FLOATING ACTION BUTTONS
   // ---------------------------------------------------------------------------
   function initFABs() {
     const muteBtn = $('#muteToggle');
@@ -529,7 +534,7 @@
   }
 
   // ---------------------------------------------------------------------------
-  // Enhanced Character Modal
+  // CHARACTER MODAL SYSTEM
   // ---------------------------------------------------------------------------
   function initCharacterModal() {
     const modal = $('#characterModal');
@@ -696,7 +701,7 @@
   }
 
   // ---------------------------------------------------------------------------
-  // Enhanced Smooth Scroll with offset and progress
+  // SMOOTH SCROLL SYSTEM
   // ---------------------------------------------------------------------------
   function initSmoothScroll() {
     const headerHeight = 80;
@@ -755,7 +760,7 @@
   }
 
   // ---------------------------------------------------------------------------
-  // Enhanced Entrance Animations with Intersection Observer
+  // ENTRANCE ANIMATIONS
   // ---------------------------------------------------------------------------
   function initEntranceAnimations() {
     if (state.reducedMotion) return;
@@ -797,7 +802,7 @@
   }
 
   // ---------------------------------------------------------------------------
-  // Enhanced Wishes System with Statistics and Filtering
+  // WISHES SYSTEM
   // ---------------------------------------------------------------------------
   function initWishes() {
     const form = $('#wishesForm');
@@ -817,6 +822,8 @@
 
     if (!form || !list || !messageInput) return;
 
+    const WISHES_KEY = 'hundred-wishes-v2';
+    const MAX_WISHES = 50;
     let wishes = loadWishes();
     let currentFilter = 'all';
     let currentSort = 'newest';
@@ -1100,7 +1107,7 @@
   }
 
   // ---------------------------------------------------------------------------
-  // Particle System for Visual Effects
+  // PARTICLE SYSTEM FOR VISUAL EFFECTS
   // ---------------------------------------------------------------------------
   function initParticles() {
     window.createParticle = (x, y, options = {}) => {
@@ -1205,111 +1212,271 @@
   }
 
   // ---------------------------------------------------------------------------
-  // Performance Monitoring and Analytics
+  // MODAL SYSTEM (STATS & RESET)
+  // ---------------------------------------------------------------------------
+  function initModals() {
+    // Stats Modal
+    const statsModal = $('#statsModal');
+    const closeStatsBtn = $('#closeStatsModal');
+    const statsContent = $('#statsContent');
+    
+    if (statsModal && closeStatsBtn) {
+      closeStatsBtn.addEventListener('click', () => {
+        statsModal.classList.remove('active');
+        document.body.style.overflow = '';
+        audio.playSound('click');
+      });
+      
+      statsModal.addEventListener('click', (e) => {
+        if (e.target === statsModal) {
+          statsModal.classList.remove('active');
+          document.body.style.overflow = '';
+        }
+      });
+      
+      // Stats button
+      const statsBtn = $('#stats-button');
+      if (statsBtn) {
+        statsBtn.addEventListener('click', () => {
+          // Load stats from localStorage
+          const gameStats = JSON.parse(localStorage.getItem('honeyGameStats') || '{}');
+          const highScore = localStorage.getItem('honeyGameHighScore') || 0;
+          
+          statsContent.innerHTML = `
+            <div class="stat-card">
+              <h4>High Score</h4>
+              <p class="stat-number">${highScore}</p>
+            </div>
+            <div class="stat-card">
+              <h4>Honey Collected</h4>
+              <p class="stat-number">${gameStats.honeyCollected || 0}</p>
+            </div>
+            <div class="stat-card">
+              <h4>Bees Dodged</h4>
+              <p class="stat-number">${gameStats.beesDodged || 0}</p>
+            </div>
+            <div class="stat-card">
+              <h4>Games Played</h4>
+              <p class="stat-number">${gameStats.gamesPlayed || 0}</p>
+            </div>
+          `;
+          
+          statsModal.classList.add('active');
+          document.body.style.overflow = 'hidden';
+          audio.playSound('confirm');
+        });
+      }
+    }
+    
+    // Reset Modal
+    const resetModal = $('#resetModal');
+    const confirmResetBtn = $('#confirmReset');
+    const cancelResetBtn = $('#cancelReset');
+    const resetAllBtn = $('#resetAll');
+    
+    if (resetModal && confirmResetBtn && cancelResetBtn) {
+      // Show reset modal
+      if (resetAllBtn) {
+        resetAllBtn.addEventListener('click', () => {
+          resetModal.classList.add('active');
+          document.body.style.overflow = 'hidden';
+          audio.playSound('warning');
+        });
+      }
+      
+      // Confirm reset
+      confirmResetBtn.addEventListener('click', () => {
+        // Clear all game data
+        localStorage.removeItem('honeyGameStats');
+        localStorage.removeItem('honeyGameHighScore');
+        localStorage.removeItem('hundred-wishes-v2');
+        localStorage.removeItem('coverClosed');
+        
+        // Reload page
+        location.reload();
+      });
+      
+      // Cancel reset
+      cancelResetBtn.addEventListener('click', () => {
+        resetModal.classList.remove('active');
+        document.body.style.overflow = '';
+        audio.playSound('click');
+      });
+      
+      // Close on backdrop click
+      resetModal.addEventListener('click', (e) => {
+        if (e.target === resetModal) {
+          resetModal.classList.remove('active');
+          document.body.style.overflow = '';
+        }
+      });
+      
+      // Close on Escape
+      document.addEventListener('keydown', (e) => {
+        if (e.key === 'Escape' && resetModal.classList.contains('active')) {
+          resetModal.classList.remove('active');
+          document.body.style.overflow = '';
+        }
+      });
+    }
+  }
+
+  // ---------------------------------------------------------------------------
+  // GAME MODE SELECTION
+  // ---------------------------------------------------------------------------
+  function initGameMode() {
+    const modeChips = $$('.mode-chip');
+    const modeDescription = $('#catch-mode-description');
+    
+    if (modeChips.length === 0 || !modeDescription) return;
+    
+    const MODE_DESCRIPTIONS = {
+      calm: 'A relaxed 70 second run with extra hearts. Perfect for beginners.',
+      brisk: 'A moderate 60 second challenge with faster honey drops.',
+      rush: 'An intense 50 second rush with aggressive bees!'
+    };
+    
+    modeChips.forEach(chip => {
+      chip.addEventListener('click', () => {
+        // Remove active class from all chips
+        modeChips.forEach(c => {
+          c.classList.remove('is-active');
+          c.setAttribute('aria-pressed', 'false');
+        });
+        
+        // Add active class to clicked chip
+        chip.classList.add('is-active');
+        chip.setAttribute('aria-pressed', 'true');
+        
+        // Update description
+        const mode = chip.dataset.catchMode;
+        modeDescription.textContent = MODE_DESCRIPTIONS[mode] || MODE_DESCRIPTIONS.calm;
+        
+        // Update game state
+        if (window.gameManager) {
+          window.gameManager.setGameMode(mode);
+        }
+        
+        audio.playSound('click');
+      });
+    });
+  }
+
+  // ---------------------------------------------------------------------------
+  // PERFORMANCE MONITORING
   // ---------------------------------------------------------------------------
   function initPerformance() {
-    // Log page load performance
-    window.addEventListener('load', () => {
-      const timing = performance.timing;
-      const loadTime = timing.loadEventEnd - timing.navigationStart;
-      console.log(`[Performance] Page loaded in ${loadTime}ms`);
+    // FPS Counter
+    function updateFPS(timestamp) {
+      frameCount++;
       
-      // Report slow loads
-      if (loadTime > 3000) {
-        console.warn('[Performance] Page load was slow');
+      if (timestamp >= lastFpsUpdate + 1000) {
+        currentFPS = Math.round((frameCount * 1000) / (timestamp - lastFpsUpdate));
+        lastFpsUpdate = timestamp;
+        frameCount = 0;
+        
+        // Update FPS display
+        const fpsCounter = $('#fpsCounter');
+        const catchFps = $('#catch-fps');
+        if (fpsCounter) fpsCounter.textContent = currentFPS;
+        if (catchFps) catchFps.textContent = currentFPS;
       }
-    });
-
-    // Monitor memory usage
+      
+      requestAnimationFrame(updateFPS);
+    }
+    
+    // Start FPS monitoring
+    if (typeof requestAnimationFrame === 'function') {
+      lastFpsUpdate = performance.now();
+      requestAnimationFrame(updateFPS);
+    }
+    
+    // Memory monitoring
     if ('memory' in performance) {
       setInterval(() => {
-        const { usedJSHeapSize, totalJSHeapSize } = performance.memory;
-        const usage = (usedJSHeapSize / totalJSHeapSize * 100).toFixed(1);
-        if (parseFloat(usage) > 80) {
-          console.warn(`[Performance] High memory usage: ${usage}%`);
+        const { usedJSHeapSize } = performance.memory;
+        const memoryMB = Math.round(usedJSHeapSize / (1024 * 1024));
+        
+        const memoryCounter = $('#memoryCounter');
+        const debugMemory = $('#debugMemory');
+        if (memoryCounter) memoryCounter.textContent = memoryMB;
+        if (debugMemory) debugMemory.textContent = memoryMB;
+        
+        // Show warning if memory is too high
+        if (memoryMB > 100) {
+          const warning = $('#memoryWarning');
+          if (warning) warning.style.display = 'block';
         }
-      }, 30000);
+      }, 5000);
+    }
+    
+    // Performance monitor toggle
+    const togglePerfBtn = $('#togglePerf');
+    const perfMonitor = $('#performanceMonitor');
+    const debugPanel = $('#debugPanel');
+    
+    if (togglePerfBtn && perfMonitor && debugPanel) {
+      togglePerfBtn.addEventListener('click', () => {
+        const isVisible = perfMonitor.style.display !== 'none';
+        perfMonitor.style.display = isVisible ? 'none' : 'block';
+        debugPanel.style.display = isVisible ? 'none' : 'block';
+        audio.playSound('click');
+      });
     }
   }
 
   // ---------------------------------------------------------------------------
-  // Gamepad Support for Navigation
+  // LOADING SYSTEM
   // ---------------------------------------------------------------------------
-  function initGamepad() {
-    let gamepadIndex = null;
+  function initLoading() {
+    const loadingOverlay = $('#loadingOverlay');
+    const loadingProgress = $('#loadingProgress');
     
-    window.addEventListener('gamepadconnected', (e) => {
-      gamepadIndex = e.gamepad.index;
-      state.gamepadConnected = true;
-      toast.show('Gamepad connected', 'success');
-      console.log('[Gamepad] Connected:', e.gamepad.id);
-    });
+    if (!loadingOverlay) return;
     
-    window.addEventListener('gamepaddisconnected', () => {
-      gamepadIndex = null;
-      state.gamepadConnected = false;
-      toast.show('Gamepad disconnected', 'warning');
-    });
-    
-    // Gamepad navigation polling
-    function pollGamepad() {
-      if (gamepadIndex === null) return;
-      
-      const gamepad = navigator.getGamepads()[gamepadIndex];
-      if (!gamepad) return;
-      
-      // Example: Use D-pad for navigation
-      if (gamepad.buttons[12].pressed) { // Up
-        window.scrollBy({ top: -50, behavior: 'smooth' });
+    // Simulate loading progress
+    let progress = 0;
+    const interval = setInterval(() => {
+      progress += Math.random() * 10;
+      if (progress > 100) {
+        progress = 100;
+        clearInterval(interval);
+        setTimeout(() => {
+          loadingOverlay.style.opacity = '0';
+          setTimeout(() => {
+            loadingOverlay.style.display = 'none';
+          }, 500);
+        }, 300);
       }
-      if (gamepad.buttons[13].pressed) { // Down
-        window.scrollBy({ top: 50, behavior: 'smooth' });
-      }
       
-      requestAnimationFrame(pollGamepad);
-    }
+      if (loadingProgress) {
+        loadingProgress.value = progress;
+      }
+    }, 100);
     
-    if (gamepadIndex !== null) {
-      pollGamepad();
-    }
-  }
-
-  // ---------------------------------------------------------------------------
-  // Error Handling and Recovery
-  // ---------------------------------------------------------------------------
-  function initErrorHandling() {
-    // Global error handler
-    window.addEventListener('error', (e) => {
-      console.error('[Global Error]', e.error);
-      toast.show('Something went wrong. Please refresh the page.', 'error', 5000);
-    });
-
-    // Unhandled promise rejection
-    window.addEventListener('unhandledrejection', (e) => {
-      console.error('[Unhandled Promise]', e.reason);
-      toast.show('An unexpected error occurred.', 'error', 5000);
-    });
-
-    // Offline/online detection
-    window.addEventListener('offline', () => {
-      toast.show('You are offline. Some features may not work.', 'warning', 3000);
-    });
-
-    window.addEventListener('online', () => {
-      toast.show('You are back online!', 'success', 2000);
+    // Add floating elements after load
+    window.addEventListener('load', () => {
+      const template = $('#floatingElements');
+      if (template) {
+        const floatingContainer = document.createElement('div');
+        floatingContainer.className = 'floating-elements';
+        floatingContainer.innerHTML = template.innerHTML;
+        document.body.appendChild(floatingContainer);
+      }
     });
   }
 
   // ---------------------------------------------------------------------------
-  // Initialize everything
+  // INITIALIZE EVERYTHING
   // ---------------------------------------------------------------------------
-  document.addEventListener('DOMContentLoaded', () => {
-    console.log('[Site] Initializing...');
+  function init() {
+    console.log('[UI] Initializing Hundred Acre Wood Adventure...');
     
     // Start with audio context
     audio.ensure();
     
-    // Initialize core modules
+    // Initialize all systems
+    initLoading();
     initCover();
     initNav();
     initReadingProgress();
@@ -1319,15 +1486,15 @@
     initEntranceAnimations();
     initWishes();
     initParticles();
-    
-    // Initialize optional modules
+    initModals();
+    initGameMode();
     initPerformance();
-    initGamepad();
-    initErrorHandling();
     
-    // Prevent iOS text selection
-    document.addEventListener('contextmenu', (e) => e.preventDefault(), { passive: false });
-    document.addEventListener('selectstart', (e) => e.preventDefault(), { passive: false });
+    // Initialize game-related UI elements if game is loaded
+    if (window.gameManager) {
+      console.log('[UI] Game manager detected, connecting UI...');
+      // Connect game UI events here
+    }
     
     // Show welcome message
     setTimeout(() => {
@@ -1336,13 +1503,13 @@
       }
     }, 1000);
     
-    console.log('[Site] Initialization complete');
-  });
+    console.log('[UI] Initialization complete');
+  }
 
   // ---------------------------------------------------------------------------
-  // Public API
+  // PUBLIC API
   // ---------------------------------------------------------------------------
-  window.siteManager = {
+  window.uiManager = {
     audio,
     toast,
     state,
@@ -1351,4 +1518,11 @@
     createParticle: window.createParticle,
     wishesManager: window.wishesManager
   };
+
+  // Start when DOM is ready
+  if (document.readyState === 'loading') {
+    document.addEventListener('DOMContentLoaded', init);
+  } else {
+    init();
+  }
 })();
