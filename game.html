@@ -6,6 +6,10 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover, user-scalable=no" />
     <meta name="theme-color" content="#d4a574" />
     <meta name="description" content="Help Pooh catch honey pots in the Hundred Acre Wood! Now with achievements, character selection, weather effects, and more!" />
+    <!-- PWA Meta Tags -->
+    <link rel="manifest" href="data:application/json,{&quot;name&quot;:&quot;Pooh's Honey Hunt&quot;,&quot;short_name&quot;:&quot;Honey Hunt&quot;,&quot;description&quot;:&quot;Catch honey pots with Winnie the Pooh&quot;,&quot;theme_color&quot;:&quot;#d4a574&quot;,&quot;background_color&quot;:&quot;#0a3d62&quot;,&quot;display&quot;:&quot;standalone&quot;,&quot;orientation&quot;:&quot;portrait&quot;}" />
+    <link rel="icon" href="data:image/svg+xml,<svg xmlns=%22http://www.w3.org/2000/svg%22 viewBox=%220 0 100 100%22><text y=%22.9em%22 font-size=%2290%22>🐻</text></svg>" />
+    
     <link rel="preconnect" href="https://fonts.googleapis.com" />
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
     <link href="https://fonts.googleapis.com/css2?family=Patrick+Hand&family=Fredoka+One&family=Bubblegum+Sans&display=swap" rel="stylesheet" />
@@ -38,6 +42,8 @@
             --danger-red: #e63946;
             --success-green: #06d6a0;
             --warning-orange: #ff9e00;
+            --disabled-gray: #cccccc;
+            --focus-outline: rgba(255, 165, 0, 0.9);
 
             /* Shadows */
             --shadow-soft: 0 8px 32px rgba(0, 0, 0, 0.15);
@@ -62,6 +68,10 @@
             --player-base-radius: 32px;
             --transition-speed: 0.3s;
             --border-radius-base: 20px;
+            
+            /* Touch targets */
+            --touch-min-size: 48px;
+            --touch-target-padding: 8px;
         }
 
         /* ===============================
@@ -145,26 +155,24 @@
             from { opacity: 1; transform: translateX(-50%) translateY(0); }
             to { opacity: 0; transform: translateX(-50%) translateY(-20px); }
         }
+        @keyframes loadingPulse {
+            0%, 100% { opacity: 0.5; transform: scale(0.95); }
+            50% { opacity: 1; transform: scale(1.05); }
+        }
+        @keyframes buttonPress {
+            0% { transform: scale(1); }
+            50% { transform: scale(0.95); }
+            100% { transform: scale(1); }
+        }
+        @keyframes tutorialPulse {
+            0%, 100% { box-shadow: 0 0 0 0 rgba(255, 165, 0, 0.7); }
+            70% { box-shadow: 0 0 0 15px rgba(255, 165, 0, 0); }
+        }
+        @keyframes spin {
+            to { transform: rotate(360deg); }
+        }
 
-        /* Weather animations - FIXED */
-        @keyframes rainFall {
-            0% { transform: translateY(-50px) translateX(0) rotate(15deg); }
-            100% { transform: translateY(100vh) translateX(20px) rotate(15deg); }
-        }
-        @keyframes snowFall {
-            0% { transform: translateY(-50px) translateX(0) rotate(0); }
-            100% { transform: translateY(100vh) translateX(100px) rotate(360deg); }
-        }
-        @keyframes leafFall {
-            0% { transform: translateY(-50px) translateX(0) rotate(0) scale(1); }
-            50% { transform: translateY(50vh) translateX(50px) rotate(180deg) scale(0.8); }
-            100% { transform: translateY(100vh) translateX(100px) rotate(360deg) scale(1); }
-        }
-        @keyframes petalFall {
-            0% { transform: translateY(-50px) translateX(0) rotate(0); }
-            100% { transform: translateY(100vh) translateX(80px) rotate(720deg); }
-        }
-/* GUARANTEED WORKING WEATHER ANIMATIONS */
+        /* Weather animations */
         @keyframes rainFall {
             0% { transform: translateY(0); opacity: 0.8; }
             70% { opacity: 0.7; }
@@ -186,6 +194,7 @@
             0% { transform: translateY(0) translateX(0) rotate(0deg); opacity: 0.8; }
             100% { transform: translateY(100vh) translateX(80px) rotate(720deg); opacity: 0; }
         }
+
         /* ===============================
            RESET & BASE STYLES
         ================================ */
@@ -202,10 +211,11 @@
             font-family: "Patrick Hand", "Comic Sans MS", cursive, system-ui;
             color: var(--wood-brown);
             overflow: hidden;
-            touch-action: none;
+            touch-action: manipulation;
             -webkit-user-select: none;
             user-select: none;
             -webkit-touch-callout: none;
+            overscroll-behavior: none;
         }
 
         main#game-root {
@@ -220,6 +230,43 @@
             padding-right: var(--safe-right);
             padding-bottom: var(--safe-bottom);
             position: relative;
+        }
+
+        /* ===============================
+           LOADING STATES
+        ================================ */
+        .loading-overlay {
+            position: fixed;
+            inset: 0;
+            background: linear-gradient(135deg, #0a3d62 0%, #1e6fa8 100%);
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            z-index: 9999;
+            transition: opacity 0.5s ease;
+        }
+
+        .loading-overlay.hidden {
+            opacity: 0;
+            pointer-events: none;
+        }
+
+        .loading-spinner {
+            width: 60px;
+            height: 60px;
+            border: 6px solid rgba(255, 255, 255, 0.2);
+            border-radius: 50%;
+            border-top-color: var(--honey-gold);
+            animation: spin 1s linear infinite;
+            margin-bottom: 20px;
+        }
+
+        .loading-text {
+            color: white;
+            font-size: 1.2rem;
+            font-family: "Patrick Hand", cursive;
+            animation: loadingPulse 2s infinite;
         }
 
         /* ===============================
@@ -394,6 +441,7 @@
             font-family: "Fredoka One", cursive;
             transition: transform var(--transition-speed) ease;
             cursor: default;
+            min-height: 80px;
         }
 
         .stat-card:hover {
@@ -465,6 +513,9 @@
             filter: drop-shadow(0 25px 50px rgba(0, 0, 0, 0.3)) drop-shadow(0 0 20px rgba(255, 215, 0, 0.2));
             transition: filter var(--transition-speed) ease;
             z-index: 10;
+            overflow: hidden !important;
+            border-radius: 28px !important;
+            contain: paint;
         }
 
         .game-container:hover {
@@ -605,7 +656,7 @@
             justify-content: center;
             gap: 20px;
             text-align: center;
-            z-index: 5000;
+            z-index: 1000;
             animation: slideIn 0.6s ease-out;
             border: 12px solid var(--wood-brown);
             box-shadow: inset 0 0 80px rgba(212, 165, 116, 0.4), 0 0 60px rgba(0, 0, 0, 0.2);
@@ -641,6 +692,8 @@
             flex-direction: column;
             align-items: center;
             gap: 15px;
+            min-height: 200px;
+            touch-action: manipulation;
         }
 
         .character-card:hover {
@@ -690,7 +743,7 @@
             flex-direction: column;
             align-items: center;
             justify-content: center;
-            z-index: 5000;
+            z-index: 1000;
             padding: calc(30px + var(--safe-top)) 30px calc(30px + var(--safe-bottom)) 30px;
             animation: slideIn 0.4s ease-out;
         }
@@ -789,8 +842,10 @@
             position: fixed;
             top: var(--hud-top);
             right: var(--hud-side-r);
-            width: 50px;
-            height: 50px;
+            width: 56px;
+            height: 56px;
+            min-width: 56px;
+            min-height: 56px;
             border-radius: 50%;
             background: linear-gradient(135deg, #4d96ff 0%, #2a6eff 100%);
             border: 3px solid white;
@@ -803,6 +858,7 @@
             box-shadow: 0 5px 15px rgba(0, 0, 0, 0.3);
             z-index: 1300;
             transition: all var(--transition-speed) ease;
+            touch-action: manipulation;
         }
 
         .share-btn:hover {
@@ -810,9 +866,15 @@
             box-shadow: 0 8px 20px rgba(0, 0, 0, 0.4);
         }
 
+        .share-btn:active {
+            animation: buttonPress 0.2s ease;
+        }
+
         .sound-btn {
-            width: 50px;
-            height: 50px;
+            width: 56px;
+            height: 56px;
+            min-width: 56px;
+            min-height: 56px;
             border-radius: 50%;
             background: linear-gradient(135deg, #06d6a0 0%, #04a777 100%);
             border: 3px solid white;
@@ -824,10 +886,15 @@
             justify-content: center;
             box-shadow: 0 5px 15px rgba(0, 0, 0, 0.3);
             transition: all var(--transition-speed) ease;
+            touch-action: manipulation;
         }
 
         .sound-btn:hover {
             transform: scale(1.1);
+        }
+
+        .sound-btn:active {
+            animation: buttonPress 0.2s ease;
         }
 
         .weather-controls {
@@ -846,8 +913,10 @@
         }
 
         .weather-btn {
-            width: 50px;
-            height: 50px;
+            width: 56px;
+            height: 56px;
+            min-width: 56px;
+            min-height: 56px;
             border-radius: 50%;
             border: 3px solid var(--wood-brown);
             background: white;
@@ -857,11 +926,16 @@
             align-items: center;
             justify-content: center;
             transition: all var(--transition-speed) ease;
+            touch-action: manipulation;
         }
 
         .weather-btn:hover {
             transform: scale(1.1);
             box-shadow: 0 5px 15px rgba(0, 0, 0, 0.2);
+        }
+
+        .weather-btn:active {
+            animation: buttonPress 0.2s ease;
         }
 
         .weather-btn.active {
@@ -881,8 +955,10 @@
         }
 
         .control-btn {
-            width: 60px;
-            height: 60px;
+            width: 64px;
+            height: 64px;
+            min-width: 64px;
+            min-height: 64px;
             border-radius: 50%;
             background: linear-gradient(135deg, var(--pooh-bear) 0%, #c28f4d 100%);
             border: 4px solid var(--wood-brown);
@@ -894,6 +970,7 @@
             cursor: pointer;
             box-shadow: 0 6px 0 #8b7355, 0 10px 20px rgba(0, 0, 0, 0.3);
             transition: all 0.2s ease;
+            touch-action: manipulation;
         }
 
         .control-btn:hover {
@@ -928,11 +1005,13 @@
             justify-content: center;
             gap: 32px;
             text-align: center;
-            z-index: 5000;
+            z-index: 1000;
             animation: slideIn 0.6s ease-out;
             border: 12px solid var(--wood-brown);
             box-shadow: inset 0 0 80px rgba(212, 165, 116, 0.4), 0 0 60px rgba(0, 0, 0, 0.2);
             padding: calc(40px + var(--safe-top)) 40px calc(40px + var(--safe-bottom)) 40px;
+            overflow-y: auto;
+            -webkit-overflow-scrolling: touch;
         }
 
         .overlay h1 {
@@ -967,7 +1046,7 @@
         .btn {
             background: linear-gradient(135deg, var(--pooh-red) 0%, #c62828 100%);
             border: 6px solid var(--wood-brown);
-            padding: 22px 56px;
+            padding: 24px 60px;
             font-size: 1.5rem;
             font-weight: 900;
             border-radius: 60px;
@@ -981,6 +1060,11 @@
             font-family: "Fredoka One", cursive;
             text-shadow: 3px 3px 0 rgba(0, 0, 0, 0.3);
             overflow: hidden;
+            min-height: 72px;
+            touch-action: manipulation;
+            display: flex;
+            align-items: center;
+            justify-content: center;
         }
 
         .btn:hover {
@@ -988,11 +1072,24 @@
             box-shadow: 0 12px 0 #8b2020, 0 24px 48px rgba(0, 0, 0, 0.5), inset 0 4px 0 rgba(255, 255, 255, 0.4);
         }
 
+        .btn:active {
+            animation: buttonPress 0.2s ease;
+        }
+
+        .btn:disabled {
+            background: linear-gradient(135deg, var(--disabled-gray) 0%, #999999 100%);
+            border-color: var(--disabled-gray);
+            box-shadow: 0 4px 0 #666666, 0 8px 16px rgba(0, 0, 0, 0.2);
+            cursor: not-allowed;
+            transform: none !important;
+        }
+
         .btn-secondary {
             background: linear-gradient(135deg, var(--wood-light) 0%, var(--wood-brown) 100%);
             box-shadow: 0 8px 0 #4a3a24, 0 16px 32px rgba(0, 0, 0, 0.3);
-            padding: 16px 32px;
+            padding: 20px 40px;
             font-size: 1.2rem;
+            min-height: 64px;
         }
 
         .btn-secondary:hover {
@@ -1070,235 +1167,17 @@
         /* ===============================
            WEATHER EFFECTS CONTAINER - FIXED
         ================================ */
-      /* WEATHER: clipped to gameplay window */
-
-/* make sure the container can clip children */
-.game-container{
-  overflow: hidden;
-  border-radius: 28px;
-}
-
-        /* Specific weather particle styles */
-        .rain-particle {
-            background: #4d96ff;
-            opacity: 0.7;
-            border-radius: 1px;
-        }
-
-        .snow-particle {
-            background: white;
-            border-radius: 50%;
-            opacity: 0.9;
-            filter: blur(1px);
-        }
-
-        .leaf-particle {
-            background: #ff6b6b;
-            opacity: 0.8;
-            clip-path: polygon(50% 0%, 100% 50%, 50% 100%, 0% 50%);
-        }
-
-        .petal-particle {
-            background: #ffb7c5;
-            opacity: 0.8;
-            border-radius: 50% 50% 0 50%;
-        }
-
-        /* ===============================
-           ACCESSIBILITY
-        ================================ */
-        :focus-visible {
-            outline: 3px solid rgba(255, 165, 0, 0.9);
-            outline-offset: 3px;
-            border-radius: 12px;
-        }
-
-        button:focus-visible {
-            box-shadow: 0 0 0 4px rgba(255, 165, 0, 0.35), 0 10px 30px rgba(0, 0, 0, 0.25);
-        }
-
-        /* ===============================
-           SCROLLBARS
-        ================================ */
-        .achievements-content::-webkit-scrollbar {
-            width: 10px;
-        }
-
-        .achievements-content::-webkit-scrollbar-track {
-            background: rgba(139, 69, 19, 0.15);
-            border-radius: 999px;
-        }
-
-        .achievements-content::-webkit-scrollbar-thumb {
-            background: linear-gradient(180deg, rgba(255, 165, 0, 0.8), rgba(230, 57, 70, 0.75));
-            border-radius: 999px;
-            border: 2px solid rgba(255, 255, 255, 0.35);
-        }
-
-        /* ===============================
-           OVERLAY STACKING
-        ================================ */
-        .overlay, .character-select-overlay, .achievements-overlay {
-            z-index: 5000;
-        }
-
-        body.overlay-open .top-bar,
-        body.overlay-open .sound-controls,
-        body.overlay-open .share-btn,
-        body.overlay-open .weather-controls,
-        body.overlay-open .game-controls,
-        body.overlay-open .honey-cursor {
-            opacity: 0 !important;
-            pointer-events: none !important;
-            transform: translateY(-6px);
-        }
-
-        body.overlay-open #honey-game {
-            pointer-events: none;
-        }
-
-        /* ===============================
-           RESPONSIVE DESIGN
-        ================================ */
-        @media (max-width: 768px) {
-            :root {
-                --hud-reserve: 120px;
-            }
-
-            .stat-card {
-                min-width: 92px;
-                padding: 10px 14px;
-                border-radius: 18px;
-            }
-
-            .stat-value {
-                font-size: 1.6rem;
-            }
-
-            .stat-label {
-                font-size: 0.7rem;
-            }
-
-            .overlay h1 {
-                font-size: 3rem;
-            }
-
-            .overlay h2 {
-                font-size: 2rem;
-            }
-
-            .subtitle {
-                font-size: 1.2rem;
-            }
-
-            .btn {
-                padding: 20px 40px;
-                font-size: 1.2rem;
-            }
-
-            .final-score {
-                font-size: 4rem;
-            }
-
-            .character-grid {
-                grid-template-columns: 1fr;
-                max-width: 320px;
-            }
-
-            .achievements-content {
-                padding: 20px;
-            }
-
-            .weather-controls {
-                padding: 10px;
-                gap: 10px;
-                bottom: calc(var(--safe-bottom) + 78px);
-            }
-
-            .weather-btn, .sound-btn, .share-btn {
-                width: 45px;
-                height: 45px;
-                font-size: 1.2rem;
-            }
-
-            .game-controls {
-                gap: 15px;
-                bottom: calc(var(--safe-bottom) + 12px);
-            }
-
-            .control-btn {
-                width: 50px;
-                height: 50px;
-                font-size: 1.2rem;
-            }
-        }
-
-        @media (max-height: 700px) {
-            :root {
-                --hud-reserve: 96px;
-            }
-
-            .game-container {
-                max-height: calc(100dvh - (var(--hud-reserve) + 150px + var(--safe-top) + var(--safe-bottom)));
-            }
-
-            .overlay {
-                gap: 20px;
-            }
-
-            .overlay h1 {
-                font-size: 2.5rem;
-                margin-bottom: 4px;
-            }
-
-            .character-grid {
-                max-height: 300px;
-                overflow-y: auto;
-            }
-        }
-
-   /* ===============================
-   REDUCED MOTION (FIXED: don't kill weather)
-=============================== */
-@media (prefers-reduced-motion: reduce) {
-  /* Calm the big UI motion */
-  .game-container,
-  .cloud, .blossom, .butterfly,
-  .score-popup, .honey-word, .level-up-popup,
-  .achievement-popup,
-  .stat-card::before {
-    animation: none !important;
-    transition: none !important;
-  }
-
-  /* Keep weather visible and gently animated */
-  #weather-effects .weather-particle {
-    /* preserve the animation-name you set inline, just slow it down */
-    animation-duration: 7s !important;
-    animation-iteration-count: infinite !important;
-  }
-}
-
-            .game-container {
-                animation: none !important;
-            }
-
-            .cloud, .blossom, .butterfly {
-                animation: none !important;
-            }
-        }
-        /* ===============================
-           WEATHER EFFECTS CONTAINER - FIXED
-        ================================ */
         #weather-effects {
-            position: fixed;
+            position: absolute;
             top: 0;
             left: 0;
             width: 100%;
             height: 100%;
             pointer-events: none;
-            z-index: 2000; /* Changed from 3000 to 2000 */
+            z-index: 5;
             overflow: hidden;
+            border-radius: inherit;
+            display: none;
         }
 
         .weather-particle {
@@ -1332,10 +1211,348 @@
             opacity: 0.8;
             border-radius: 50% 50% 0 50%;
         }
-        
+
+        /* ===============================
+           TUTORIAL & INSTRUCTIONS
+        ================================ */
+        .tutorial-overlay {
+            position: absolute;
+            inset: 0;
+            background: rgba(0, 0, 0, 0.85);
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            z-index: 2000;
+            padding: calc(30px + var(--safe-top)) 30px calc(30px + var(--safe-bottom)) 30px;
+            animation: slideIn 0.4s ease-out;
+        }
+
+        .tutorial-content {
+            background: linear-gradient(135deg, rgba(255, 248, 225, 0.98) 0%, rgba(255, 232, 184, 0.98) 100%);
+            border-radius: 24px;
+            padding: 30px;
+            max-width: 500px;
+            width: 90%;
+            max-height: 80vh;
+            overflow-y: auto;
+            border: 8px solid var(--wood-brown);
+            box-shadow: 0 20px 60px rgba(0, 0, 0, 0.5);
+            position: relative;
+        }
+
+        .tutorial-step {
+            margin-bottom: 30px;
+            padding: 20px;
+            background: rgba(255, 255, 255, 0.7);
+            border-radius: 15px;
+            border-left: 5px solid var(--honey-gold);
+        }
+
+        .tutorial-step h3 {
+            color: var(--pooh-red);
+            font-family: "Fredoka One", cursive;
+            margin-bottom: 10px;
+            display: flex;
+            align-items: center;
+            gap: 10px;
+        }
+
+        .tutorial-step p {
+            color: var(--wood-brown);
+            font-family: "Patrick Hand", cursive;
+            line-height: 1.5;
+        }
+
+        .tutorial-highlight {
+            background: rgba(255, 215, 0, 0.2);
+            padding: 5px 10px;
+            border-radius: 5px;
+            font-weight: bold;
+            animation: tutorialPulse 2s infinite;
+        }
+
+        /* ===============================
+           ACCESSIBILITY IMPROVEMENTS
+        ================================ */
+        :focus-visible {
+            outline: 3px solid var(--focus-outline);
+            outline-offset: 4px;
+            border-radius: 12px;
+        }
+
+        button:focus-visible {
+            box-shadow: 0 0 0 4px var(--focus-outline), 0 10px 30px rgba(0, 0, 0, 0.25) !important;
+        }
+
+        .skip-to-content {
+            position: absolute;
+            top: -40px;
+            left: 10px;
+            background: var(--pooh-red);
+            color: white;
+            padding: 10px;
+            border-radius: 5px;
+            z-index: 9999;
+            text-decoration: none;
+            font-family: "Patrick Hand", cursive;
+        }
+
+        .skip-to-content:focus {
+            top: 10px;
+        }
+
+        /* High contrast mode support */
+        @media (prefers-contrast: high) {
+            .stat-card {
+                border: 3px solid black;
+            }
+            
+            .btn {
+                border: 4px solid black;
+            }
+            
+            :focus-visible {
+                outline: 3px solid black;
+            }
+        }
+
+        /* ===============================
+           SCROLLBARS
+        ================================ */
+        .achievements-content::-webkit-scrollbar,
+        .tutorial-content::-webkit-scrollbar {
+            width: 10px;
+        }
+
+        .achievements-content::-webkit-scrollbar-track,
+        .tutorial-content::-webkit-scrollbar-track {
+            background: rgba(139, 69, 19, 0.15);
+            border-radius: 999px;
+        }
+
+        .achievements-content::-webkit-scrollbar-thumb,
+        .tutorial-content::-webkit-scrollbar-thumb {
+            background: linear-gradient(180deg, rgba(255, 165, 0, 0.8), rgba(230, 57, 70, 0.75));
+            border-radius: 999px;
+            border: 2px solid rgba(255, 255, 255, 0.35);
+        }
+
+        /* ===============================
+           OVERLAY STACKING
+        ================================ */
+        .overlay, .character-select-overlay, 
+        .achievements-overlay, .pause-overlay,
+        .tutorial-overlay {
+            z-index: 1000;
+        }
+
+        body.overlay-open .top-bar,
+        body.overlay-open .sound-controls,
+        body.overlay-open .share-btn,
+        body.overlay-open .weather-controls,
+        body.overlay-open .game-controls,
+        body.overlay-open .honey-cursor {
+            opacity: 0 !important;
+            pointer-events: none !important;
+            transform: translateY(-6px);
+        }
+
+        body.overlay-open #weather-effects {
+            display: none !important;
+        }
+
+        body.overlay-open #honey-game {
+            pointer-events: none;
+        }
+
+        /* ===============================
+           RESPONSIVE DESIGN - IMPROVED TOUCH TARGETS
+        ================================ */
+        @media (max-width: 768px) {
+            :root {
+                --hud-reserve: 120px;
+                --touch-min-size: 52px;
+            }
+
+            .stat-card {
+                min-width: 100px;
+                padding: 12px 18px;
+                border-radius: 18px;
+                min-height: 85px;
+            }
+
+            .stat-value {
+                font-size: 1.8rem;
+            }
+
+            .stat-label {
+                font-size: 0.75rem;
+            }
+
+            .overlay h1 {
+                font-size: 3rem;
+            }
+
+            .overlay h2 {
+                font-size: 2rem;
+            }
+
+            .subtitle {
+                font-size: 1.2rem;
+            }
+
+            .btn {
+                padding: 22px 44px;
+                font-size: 1.2rem;
+                min-height: 68px;
+            }
+
+            .final-score {
+                font-size: 4rem;
+            }
+
+            .character-grid {
+                grid-template-columns: 1fr;
+                max-width: 320px;
+            }
+
+            .character-card {
+                padding: 24px;
+                min-height: 180px;
+            }
+
+            .achievements-content {
+                padding: 20px;
+            }
+
+            .weather-controls {
+                padding: 12px;
+                gap: 12px;
+                bottom: calc(var(--safe-bottom) + 80px);
+            }
+
+            .weather-btn, .sound-btn, .share-btn {
+                width: 52px !important;
+                height: 52px !important;
+                min-width: 52px !important;
+                min-height: 52px !important;
+                font-size: 1.3rem;
+            }
+
+            .game-controls {
+                gap: 16px;
+                bottom: calc(var(--safe-bottom) + 12px);
+            }
+
+            .control-btn {
+                width: 56px !important;
+                height: 56px !important;
+                min-width: 56px !important;
+                min-height: 56px !important;
+                font-size: 1.3rem;
+            }
+
+            .btn-secondary {
+                padding: 18px 36px;
+                min-height: 60px;
+            }
+        }
+
+        @media (max-height: 700px) {
+            :root {
+                --hud-reserve: 96px;
+            }
+
+            .game-container {
+                max-height: calc(100dvh - (var(--hud-reserve) + 150px + var(--safe-top) + var(--safe-bottom)));
+            }
+
+            .overlay {
+                gap: 20px;
+            }
+
+            .overlay h1 {
+                font-size: 2.5rem;
+                margin-bottom: 4px;
+            }
+
+            .character-grid {
+                max-height: 300px;
+                overflow-y: auto;
+            }
+        }
+
+        /* ===============================
+           REDUCED MOTION
+        ================================ */
+        @media (prefers-reduced-motion: reduce) {
+            .game-container,
+            .cloud, .blossom, .butterfly,
+            .score-popup, .honey-word, .level-up-popup,
+            .achievement-popup,
+            .stat-card::before {
+                animation: none !important;
+                transition: none !important;
+            }
+
+            .game-container {
+                animation: none !important;
+            }
+
+            .cloud, .blossom, .butterfly {
+                animation: none !important;
+            }
+            
+            #weather-effects .weather-particle {
+                animation-duration: 7s !important;
+            }
+        }
+
+        /* ===============================
+           LANDSCAPE ORIENTATION
+        ================================ */
+        @media (orientation: landscape) and (max-height: 600px) {
+            .game-container {
+                max-height: 70vh;
+                aspect-ratio: 4/3;
+            }
+            
+            .top-bar {
+                flex-wrap: nowrap;
+                gap: 8px;
+            }
+            
+            .stat-card {
+                min-width: 90px;
+                padding: 8px 12px;
+            }
+            
+            .overlay {
+                padding: 20px;
+            }
+            
+            .overlay h1 {
+                font-size: 2rem;
+            }
+            
+            .btn {
+                padding: 16px 32px;
+                font-size: 1rem;
+            }
+        }
     </style>
 </head>
 <body>
+    <!-- Accessibility Skip Link -->
+    <a href="#main-content" class="skip-to-content">Skip to game content</a>
+    
+    <!-- Loading Screen -->
+    <div class="loading-overlay" id="loading-overlay">
+        <div class="loading-spinner"></div>
+        <div class="loading-text">Loading Honey Hunt...</div>
+    </div>
+
     <!-- Background elements -->
     <div class="background-layer" id="background-layer" aria-hidden="true">
         <div class="cloud cloud-1"></div>
@@ -1349,11 +1566,12 @@
     </div>
 
     <!-- Main game container -->
-    <main id="game-root" role="main">
+    <main id="game-root" role="main" id="main-content">
         <!-- Sound controls -->
         <div class="sound-controls">
-            <button class="sound-btn" id="sound-toggle-btn" aria-label="Toggle sound">
+            <button class="sound-btn" id="sound-toggle-btn" aria-label="Toggle sound" aria-pressed="true">
                 <i class="fas fa-volume-up"></i>
+                <span class="sr-only">Sound is on</span>
             </button>
         </div>
 
@@ -1364,19 +1582,19 @@
 
         <!-- Weather controls -->
         <div class="weather-controls" id="weather-controls">
-            <button class="weather-btn active" data-weather="none" title="Clear weather">
+            <button class="weather-btn active" data-weather="none" title="Clear weather" aria-label="Clear weather">
                 <i class="fas fa-sun"></i>
             </button>
-            <button class="weather-btn" data-weather="rain" title="Rainy weather">
+            <button class="weather-btn" data-weather="rain" title="Rainy weather" aria-label="Rainy weather">
                 <i class="fas fa-cloud-rain"></i>
             </button>
-            <button class="weather-btn" data-weather="snow" title="Snowy weather">
+            <button class="weather-btn" data-weather="snow" title="Snowy weather" aria-label="Snowy weather">
                 <i class="fas fa-snowflake"></i>
             </button>
-            <button class="weather-btn" data-weather="leaves" title="Autumn leaves">
+            <button class="weather-btn" data-weather="leaves" title="Autumn leaves" aria-label="Autumn leaves">
                 <i class="fas fa-leaf"></i>
             </button>
-            <button class="weather-btn" data-weather="petals" title="Cherry blossoms">
+            <button class="weather-btn" data-weather="petals" title="Cherry blossoms" aria-label="Cherry blossoms">
                 <i class="fas fa-spa"></i>
             </button>
         </div>
@@ -1386,7 +1604,7 @@
             <button class="control-btn pause" id="pause-btn" aria-label="Pause game">
                 <i class="fas fa-pause"></i>
             </button>
-            <button class="control-btn help" id="help-btn" aria-label="Show help">
+            <button class="control-btn help" id="help-btn" aria-label="Show help and tutorial">
                 <i class="fas fa-question"></i>
             </button>
         </div>
@@ -1397,7 +1615,7 @@
             <p class="subtitle">Select who you want to play as!</p>
 
             <div class="character-grid">
-                <div class="character-card" data-character="pooh">
+                <div class="character-card" data-character="pooh" role="button" aria-label="Select Winnie the Pooh" tabindex="0">
                     <div class="character-avatar" style="background: #d4a574; border-color: #b8863c">
                         🐻
                     </div>
@@ -1407,7 +1625,7 @@
                     </div>
                 </div>
 
-                <div class="character-card" data-character="piglet">
+                <div class="character-card" data-character="piglet" role="button" aria-label="Select Piglet" tabindex="0">
                     <div class="character-avatar" style="background: #ffb7c5; border-color: #ff8fa3">
                         🐷
                     </div>
@@ -1417,7 +1635,7 @@
                     </div>
                 </div>
 
-                <div class="character-card" data-character="tigger">
+                <div class="character-card" data-character="tigger" role="button" aria-label="Select Tigger" tabindex="0">
                     <div class="character-avatar" style="background: #ff8c00; border-color: #cc7000">
                         🐯
                     </div>
@@ -1427,7 +1645,7 @@
                     </div>
                 </div>
 
-                <div class="character-card" data-character="rabbit">
+                <div class="character-card" data-character="rabbit" role="button" aria-label="Select Rabbit" tabindex="0">
                     <div class="character-avatar" style="background: #8bc34a; border-color: #689f38">
                         🐰
                     </div>
@@ -1438,26 +1656,26 @@
                 </div>
             </div>
 
-            <button class="btn" id="start-with-character-btn">
+            <button class="btn" id="start-with-character-btn" aria-label="Start adventure with selected character">
                 <span>Start Adventure!</span>
             </button>
         </div>
 
         <!-- HUD -->
         <header class="top-bar">
-            <div class="stat-card">
+            <div class="stat-card" role="status" aria-label="Score" aria-live="polite">
                 <div class="stat-label">Honey Pots</div>
                 <div class="stat-value" id="score">0</div>
             </div>
-            <div class="stat-card">
+            <div class="stat-card" role="status" aria-label="Current streak" aria-live="polite">
                 <div class="stat-label">Streak</div>
                 <div class="stat-value" id="streak">0</div>
             </div>
-            <div class="stat-card">
+            <div class="stat-card" role="status" aria-label="Remaining lives" aria-live="polite">
                 <div class="stat-label">Lives</div>
                 <div class="stat-value" id="lives">3</div>
             </div>
-            <div class="stat-card" id="achievements-btn" style="cursor: pointer">
+            <div class="stat-card" id="achievements-btn" role="button" tabindex="0" aria-label="View achievements">
                 <div class="stat-label">Achievements</div>
                 <div class="stat-value" id="achievements-count">0/10</div>
             </div>
@@ -1467,11 +1685,51 @@
         <div class="game-container">
             <canvas id="honey-game" width="420" height="700" role="img" aria-label="Pooh's Magical Honey Hunt game in the Hundred Acre Wood" aria-describedby="game-status"></canvas>
             <!-- Weather effects container -->
-    <div id="weather-effects"></div>
+            <div id="weather-effects"></div>
         </div>
 
         <!-- Screen reader status -->
-        <div id="game-status" class="sr-only" aria-live="polite">Game ready</div>
+        <div id="game-status" class="sr-only" aria-live="assertive" aria-atomic="true">Game ready</div>
+
+        <!-- Tutorial overlay -->
+        <div class="tutorial-overlay hidden" id="tutorial-overlay">
+            <div class="tutorial-content">
+                <h2 class="character-select-title">How to Play</h2>
+                
+                <div class="tutorial-step">
+                    <h3><i class="fas fa-mouse-pointer"></i> Controls</h3>
+                    <p>Move <span class="tutorial-highlight">Winnie the Pooh</span> left and right using:</p>
+                    <ul style="list-style: none; padding-left: 20px; margin-top: 10px;">
+                        <li>• Mouse or touch on the game screen</li>
+                        <li>• Left/Right arrow keys on keyboard</li>
+                        <li>• Space or Escape to pause</li>
+                    </ul>
+                </div>
+
+                <div class="tutorial-step">
+                    <h3><i class="fas fa-star"></i> Objectives</h3>
+                    <p>Catch <span class="tutorial-highlight">honey pots</span> for points!</p>
+                    <p>Avoid <span class="tutorial-highlight">bees</span> - they cost you lives.</p>
+                    <p>Build <span class="tutorial-highlight">streaks</span> for bonus points.</p>
+                    <p>Catch <span class="tutorial-highlight">golden pots</span> for 3x points!</p>
+                </div>
+
+                <div class="tutorial-step">
+                    <h3><i class="fas fa-users"></i> Characters</h3>
+                    <p>Each character has special abilities:</p>
+                    <ul style="list-style: none; padding-left: 20px; margin-top: 10px;">
+                        <li>• <strong>Pooh:</strong> Bigger catch area</li>
+                        <li>• <strong>Piglet:</strong> Moves faster</li>
+                        <li>• <strong>Tigger:</strong> Can bounce bees</li>
+                        <li>• <strong>Rabbit:</strong> Double combo points</li>
+                    </ul>
+                </div>
+
+                <button class="btn" id="close-tutorial-btn">
+                    <span>Start Playing!</span>
+                </button>
+            </div>
+        </div>
 
         <!-- Achievements overlay -->
         <div class="achievements-overlay hidden" id="achievements-overlay">
@@ -1494,16 +1752,20 @@
                 Now with character selection, achievements, weather effects, and more!
             </p>
 
-            <button class="btn" id="start-btn">
+            <button class="btn" id="start-btn" aria-label="Start new game">
                 <span>✨ Start Game ✨</span>
             </button>
 
-            <button class="btn btn-secondary" id="view-achievements-btn">
+            <button class="btn btn-secondary" id="view-achievements-btn" aria-label="View achievements">
                 <span>View Achievements</span>
             </button>
 
-            <button class="btn btn-secondary" id="select-character-btn">
+            <button class="btn btn-secondary" id="select-character-btn" aria-label="Select character">
                 <span>Select Character</span>
+            </button>
+            
+            <button class="btn btn-secondary" id="show-tutorial-btn" aria-label="Show tutorial">
+                <span>How to Play</span>
             </button>
         </div>
 
@@ -1513,8 +1775,8 @@
             <p class="pooh-quote">
                 "Don't underestimate the value of Doing Nothing, of just going along, listening to all the things you can't hear, and not bothering."
             </p>
-            <button class="btn" id="resume-btn">Continue Adventure</button>
-            <button class="btn btn-secondary" id="quit-btn">Return to Menu</button>
+            <button class="btn" id="resume-btn" aria-label="Resume game">Continue Adventure</button>
+            <button class="btn btn-secondary" id="quit-btn" aria-label="Quit to main menu">Return to Menu</button>
         </div>
 
         <!-- Game over overlay -->
@@ -1522,26 +1784,26 @@
             <h2>Oh Bother!</h2>
             <div class="final-score" id="final-score">0</div>
             <div class="stats-grid">
-                <div class="stat-box">
+                <div class="stat-box" aria-label="Best streak">
                     <div class="stat-box-label">Best Streak</div>
                     <div class="stat-box-value" id="best-streak">0</div>
                 </div>
-                <div class="stat-box">
+                <div class="stat-box" aria-label="Pots caught">
                     <div class="stat-box-label">Pots Caught</div>
                     <div class="stat-box-value" id="honey-caught">0</div>
                 </div>
 
-                <div class="stat-box">
+                <div class="stat-box" aria-label="Time played">
                     <div class="stat-box-label">Time Played</div>
                     <div class="stat-box-value" id="time-played">0s</div>
                 </div>
 
-                <div class="stat-box">
+                <div class="stat-box" aria-label="High score">
                     <div class="stat-box-label">High Score</div>
                     <div class="stat-box-value" id="high-score">0</div>
                 </div>
 
-                <div class="stat-box">
+                <div class="stat-box" aria-label="Achievements earned">
                     <div class="stat-box-label">Achievements</div>
                     <div class="stat-box-value" id="achievements-earned">0</div>
                 </div>
@@ -1549,28 +1811,20 @@
             <p class="pooh-quote">
                 "A little Consideration, a little Thought for Others, makes all the difference."
             </p>
-            <button class="btn" id="restart-btn">Play Again 🍯</button>
-            <!-- DEBUG BUTTON - Remove after testing -->
-<button id="debug-weather" style="position: fixed; bottom: 200px; left: 10px; z-index: 9999; padding: 10px; background: red; color: white;">
-    Debug Weather
-</button>
-            <button class="btn btn-secondary" id="share-score-btn">
+            <button class="btn" id="restart-btn" aria-label="Play again">Play Again 🍯</button>
+            <button class="btn btn-secondary" id="share-score-btn" aria-label="Share your score">
                 <span>Share Score</span>
             </button>
         </div>
     </main>
-
-
-
-    <script>
+<script>
     // ============================================
-    // COMPLETE FIXED GAME CODE
-    // All systems working: Weather, Buttons, Achievements, etc.
+    // ENHANCED GAME CODE WITH ALL FIXES
     // ============================================
 
-    console.log("Pooh's Enhanced Honey Hunt - Loading...");
+    console.log("Pooh's Enhanced Honey Hunt - Loading with all fixes...");
 
-    // GAME CONSTANTS
+    // GAME CONSTANTS - UPDATED FOR DIFFICULTY PROGRESSION
     const GAME_CONSTANTS = {
       PLAYER: {
         BASE_RADIUS: 32,
@@ -1616,28 +1870,87 @@
         SHAKE_DURATION: 0.5,
         POPUP_DURATION: 1.5,
         WORD_DURATION: 2.5,
-        PERFECT_GAME_THRESHOLD: 0
+        PERFECT_GAME_THRESHOLD: 0,
+        DIFFICULTY_INTERVALS: [100, 300, 600, 1000], // Score thresholds for difficulty increases
+        MAX_DIFFICULTY: 4
       }
     };
 
     // ============================================
-    // PARTICLE SYSTEM
+    // DIFFICULTY SYSTEM
+    // ============================================
+    class DifficultySystem {
+      constructor() {
+        this.currentLevel = 0;
+        this.speedMultiplier = 1.0;
+        this.spawnMultiplier = 1.0;
+        this.beeMultiplier = 1.0;
+      }
+
+      update(score) {
+        const oldLevel = this.currentLevel;
+        
+        // Calculate new level based on score
+        for (let i = GAME_CONSTANTS.GAME.DIFFICULTY_INTERVALS.length - 1; i >= 0; i--) {
+          if (score >= GAME_CONSTANTS.GAME.DIFFICULTY_INTERVALS[i]) {
+            this.currentLevel = Math.min(i + 1, GAME_CONSTANTS.GAME.MAX_DIFFICULTY);
+            break;
+          }
+        }
+
+        // Update multipliers if level changed
+        if (oldLevel !== this.currentLevel) {
+          this.speedMultiplier = 1.0 + (this.currentLevel * 0.15);
+          this.spawnMultiplier = 1.0 + (this.currentLevel * 0.2);
+          this.beeMultiplier = 1.0 + (this.currentLevel * 0.25);
+          return true;
+        }
+        return false;
+      }
+
+      getHoneySpeed() {
+        return this.speedMultiplier;
+      }
+
+      getSpawnRate() {
+        return this.spawnMultiplier;
+      }
+
+      getBeeSpeed() {
+        return this.beeMultiplier;
+      }
+
+      getLevel() {
+        return this.currentLevel;
+      }
+    }
+
+    // ============================================
+    // PARTICLE SYSTEM WITH LIMITS
     // ============================================
     class ParticleSystem {
       constructor(ctx) {
         this.ctx = ctx;
         this.particles = [];
         this.particlePool = [];
+        this.maxParticles = 200; // Limit total particles
+        this.activeParticles = 0;
       }
 
       createParticles(x, y, color, count = 20, type = 'star') {
-        if (!this.ctx) return; // Safety check
+        if (!this.ctx) return;
         
-        for (let i = 0; i < count; i++) {
+        // Limit particle count based on available capacity
+        const available = this.maxParticles - this.activeParticles;
+        const actualCount = Math.min(count, Math.max(5, available));
+        
+        if (actualCount <= 0) return;
+        
+        for (let i = 0; i < actualCount; i++) {
           const particle = this.getParticle();
           const types = ['circle', 'star', 'heart', 'honey'];
           const particleType = type === 'mixed' ? types[Math.floor(Math.random() * types.length)] : type;
-          const angle = (Math.PI * 2 * i) / count + (Math.random() - 0.5);
+          const angle = (Math.PI * 2 * i) / actualCount + (Math.random() - 0.5);
           const speed = 60 + Math.random() * 100;
           
           particle.x = x;
@@ -1655,6 +1968,7 @@
           particle.drag = 0.96 + Math.random() * 0.03;
           
           this.particles.push(particle);
+          this.activeParticles++;
         }
       }
 
@@ -1664,6 +1978,7 @@
 
       recycleParticle(p) {
         this.particlePool.push(p);
+        this.activeParticles--;
       }
 
       update(dt) {
@@ -1686,70 +2001,93 @@
       draw(ctx) {
         if (!ctx) return;
         
-        for (const p of this.particles) {
+        // Draw in batches for performance
+        const batchSize = 50;
+        for (let i = 0; i < this.particles.length; i += batchSize) {
+          const batch = this.particles.slice(i, i + batchSize);
+          this.drawParticleBatch(ctx, batch);
+        }
+        ctx.globalAlpha = 1;
+      }
+
+      drawParticleBatch(ctx, batch) {
+        for (const p of batch) {
           ctx.save();
           ctx.globalAlpha = p.life;
           ctx.translate(p.x, p.y);
           ctx.rotate(p.rotation);
           ctx.fillStyle = p.color;
           
-          switch (p.type) {
-            case 'star':
-              ctx.beginPath();
-              for (let i = 0; i < 5; i++) {
-                const a = (i * 4 * Math.PI) / 5;
-                const r = i % 2 === 0 ? p.size : p.size / 2;
-                const px = Math.cos(a) * r;
-                const py = Math.sin(a) * r;
-                if (i === 0) ctx.moveTo(px, py);
-                else ctx.lineTo(px, py);
-              }
-              ctx.closePath();
-              ctx.fill();
-              break;
-            case 'heart':
-              ctx.beginPath();
-              const s = p.size;
-              ctx.moveTo(0, s / 4);
-              ctx.bezierCurveTo(-s, -s / 2, -s / 2, -s, 0, 0);
-              ctx.bezierCurveTo(s / 2, -s, s, -s / 2, 0, s / 4);
-              ctx.fill();
-              break;
-            case 'honey':
-              ctx.beginPath();
-              ctx.ellipse(0, 0, p.size, p.size * 0.7, 0, 0, Math.PI * 2);
-              ctx.fill();
-              break;
-            default:
-              ctx.beginPath();
-              ctx.arc(0, 0, p.size * p.life, 0, Math.PI * 2);
-              ctx.fill();
+          // Simplified drawing for performance
+          if (p.type === 'star') {
+            this.drawStar(ctx, p.size);
+          } else if (p.type === 'heart') {
+            this.drawHeart(ctx, p.size);
+          } else if (p.type === 'honey') {
+            this.drawHoney(ctx, p.size);
+          } else {
+            ctx.beginPath();
+            ctx.arc(0, 0, p.size * p.life, 0, Math.PI * 2);
+            ctx.fill();
           }
           ctx.restore();
         }
-        ctx.globalAlpha = 1;
+      }
+
+      drawStar(ctx, size) {
+        ctx.beginPath();
+        for (let i = 0; i < 5; i++) {
+          const a = (i * 4 * Math.PI) / 5;
+          const r = i % 2 === 0 ? size : size / 2;
+          const px = Math.cos(a) * r;
+          const py = Math.sin(a) * r;
+          if (i === 0) ctx.moveTo(px, py);
+          else ctx.lineTo(px, py);
+        }
+        ctx.closePath();
+        ctx.fill();
+      }
+
+      drawHeart(ctx, size) {
+        const s = size;
+        ctx.beginPath();
+        ctx.moveTo(0, s / 4);
+        ctx.bezierCurveTo(-s, -s / 2, -s / 2, -s, 0, 0);
+        ctx.bezierCurveTo(s / 2, -s, s, -s / 2, 0, s / 4);
+        ctx.fill();
+      }
+
+      drawHoney(ctx, size) {
+        ctx.beginPath();
+        ctx.ellipse(0, 0, size, size * 0.7, 0, 0, Math.PI * 2);
+        ctx.fill();
       }
 
       clear() {
         this.particles.length = 0;
         this.particlePool.length = 0;
+        this.activeParticles = 0;
+      }
+
+      getParticleCount() {
+        return this.activeParticles;
       }
     }
 
     // ============================================
-    // SOUND SYSTEM (FIXED for compatibility)
+    // ENHANCED SOUND SYSTEM WITH HAPTICS
     // ============================================
     class SoundSystem {
       constructor() {
         this.enabled = true;
         this.sounds = {};
+        this.hapticsEnabled = this.checkHapticSupport();
         this.init();
         this.loadPreference();
       }
 
       init() {
         try {
-          // Create simple sound effects using Web Audio API
           this.createSounds();
         } catch (e) {
           console.log("Audio context not supported, using silent mode");
@@ -1759,13 +2097,14 @@
       }
 
       createSounds() {
-        // Create click sound
+        // Create simple sound effects using Web Audio API
         this.sounds.click = this.createSound(400, 0.1);
         this.sounds.collect = this.createSound(800, 0.1);
         this.sounds.collectGolden = this.createSound(1200, 0.15);
         this.sounds.sting = this.createSound(200, 0.2);
         this.sounds.achievement = this.createSound(1500, 0.3);
         this.sounds.gameover = this.createSound(300, 0.4);
+        this.sounds.levelup = this.createSound(1000, 0.2);
       }
 
       createSound(frequency, duration) {
@@ -1774,7 +2113,6 @@
             if (!this.enabled) return;
             
             try {
-              // Try Web Audio API first
               if (window.AudioContext || window.webkitAudioContext) {
                 const AudioContext = window.AudioContext || window.webkitAudioContext;
                 const audioCtx = new AudioContext();
@@ -1794,8 +2132,11 @@
                 oscillator.start(now);
                 oscillator.stop(now + duration);
                 
-                // Close context after playing to avoid memory leaks
-                setTimeout(() => audioCtx.close(), duration * 1000 + 100);
+                setTimeout(() => {
+                  if (audioCtx.state !== 'closed') {
+                    audioCtx.close();
+                  }
+                }, duration * 1000 + 100);
               }
             } catch (e) {
               console.log("Audio playback failed:", e);
@@ -1807,13 +2148,52 @@
       play(name) {
         if (this.enabled && this.sounds[name]) {
           this.sounds[name].play();
+          this.vibrate(name);
         }
+      }
+
+      vibrate(type) {
+        if (!this.hapticsEnabled) return;
+        
+        try {
+          let pattern;
+          switch(type) {
+            case 'click':
+              pattern = [30];
+              break;
+            case 'collect':
+              pattern = [50, 30, 50];
+              break;
+            case 'sting':
+              pattern = [100, 50, 100];
+              break;
+            case 'achievement':
+              pattern = [100, 30, 100, 30, 100];
+              break;
+            default:
+              pattern = [50];
+          }
+          
+          if (navigator.vibrate) {
+            navigator.vibrate(pattern);
+          }
+        } catch (e) {
+          this.hapticsEnabled = false;
+        }
+      }
+
+      checkHapticSupport() {
+        return typeof navigator !== 'undefined' && 
+               navigator.vibrate && 
+               'ontouchstart' in window;
       }
 
       updateUI() {
         const btn = document.getElementById('sound-toggle-btn');
         if (btn) {
-          btn.innerHTML = `<i class="fas ${this.enabled ? 'fa-volume-up' : 'fa-volume-mute'}"></i>`;
+          const icon = this.enabled ? 'fa-volume-up' : 'fa-volume-mute';
+          btn.innerHTML = `<i class="fas ${icon}"></i>`;
+          btn.setAttribute('aria-pressed', this.enabled.toString());
         }
       }
 
@@ -1821,6 +2201,10 @@
         this.enabled = !this.enabled;
         this.updateUI();
         this.play('click');
+        this.savePreference();
+      }
+
+      savePreference() {
         try {
           localStorage.setItem('poohSoundEnabled', this.enabled.toString());
         } catch (e) {}
@@ -1838,7 +2222,109 @@
     }
 
     // ============================================
-    // ACHIEVEMENTS SYSTEM (FIXED)
+    // SAVE/LOAD SYSTEM
+    // ============================================
+    class SaveSystem {
+      constructor() {
+        this.saveKey = 'poohHoneyHuntSave';
+        this.autoSaveInterval = 30000; // 30 seconds
+        this.lastSaveTime = 0;
+      }
+
+      saveGame(gameState) {
+        try {
+          const saveData = {
+            version: '1.0',
+            timestamp: Date.now(),
+            score: gameState.score,
+            highScore: gameState.highScore,
+            character: gameState.character,
+            settings: {
+              sound: gameState.soundEnabled,
+              weather: gameState.currentWeather
+            },
+            achievements: gameState.achievements,
+            gameStats: {
+              totalGames: gameState.totalGames || 0,
+              totalHoney: gameState.totalHoneyCaught || 0,
+              totalTime: gameState.totalTimePlayed || 0
+            }
+          };
+          
+          localStorage.setItem(this.saveKey, JSON.stringify(saveData));
+          this.lastSaveTime = Date.now();
+          
+          console.log('Game saved successfully');
+          return true;
+        } catch (error) {
+          console.error('Failed to save game:', error);
+          return false;
+        }
+      }
+
+      loadGame() {
+        try {
+          const saved = localStorage.getItem(this.saveKey);
+          if (!saved) return null;
+          
+          const saveData = JSON.parse(saved);
+          
+          // Version check for backwards compatibility
+          if (!saveData.version || saveData.version !== '1.0') {
+            console.log('Save version mismatch, starting fresh');
+            return null;
+          }
+          
+          // Check if save is too old (more than 7 days)
+          const weekAgo = Date.now() - (7 * 24 * 60 * 60 * 1000);
+          if (saveData.timestamp < weekAgo) {
+            console.log('Save file too old, starting fresh');
+            return null;
+          }
+          
+          console.log('Game loaded successfully');
+          return saveData;
+        } catch (error) {
+          console.error('Failed to load game:', error);
+          return null;
+        }
+      }
+
+      deleteSave() {
+        try {
+          localStorage.removeItem(this.saveKey);
+          console.log('Save deleted');
+          return true;
+        } catch (error) {
+          console.error('Failed to delete save:', error);
+          return false;
+        }
+      }
+
+      shouldAutoSave(currentTime) {
+        return currentTime - this.lastSaveTime > this.autoSaveInterval;
+      }
+
+      getSaveInfo() {
+        try {
+          const saved = localStorage.getItem(this.saveKey);
+          if (!saved) return null;
+          
+          const saveData = JSON.parse(saved);
+          return {
+            exists: true,
+            timestamp: new Date(saveData.timestamp).toLocaleDateString(),
+            score: saveData.score || 0,
+            highScore: saveData.highScore || 0
+          };
+        } catch (error) {
+          return null;
+        }
+      }
+    }
+
+    // ============================================
+    // ENHANCED ACHIEVEMENTS SYSTEM
     // ============================================
     class AchievementSystem {
       constructor() {
@@ -1852,7 +2338,9 @@
           { id: 'perfect_game', name: 'Perfect Game', icon: '👑', description: 'Complete a game without losing any lives', condition: (gs) => gs.perfectGames > 0, unlocked: false },
           { id: 'weather_master', name: 'Weather Master', icon: '🌈', description: 'Play with all 5 weather effects', condition: (gs) => gs.weathersUsed >= 5, unlocked: false },
           { id: 'character_collector', name: 'Character Collector', icon: '🎭', description: 'Play as all 4 characters', condition: (gs) => gs.charactersUsed >= 4, unlocked: false },
-          { id: 'hundred_acre_champ', name: 'Hundred Acre Champ', icon: '🏆', description: 'Reach a score of 1000 points', condition: (gs) => gs.highScore >= 1000, unlocked: false }
+          { id: 'hundred_acre_champ', name: 'Hundred Acre Champ', icon: '🏆', description: 'Reach a score of 1000 points', condition: (gs) => gs.highScore >= 1000, unlocked: false },
+          { id: 'difficulty_master', name: 'Difficulty Master', icon: '💪', description: 'Reach maximum difficulty level', condition: (gs) => gs.maxDifficultyReached >= GAME_CONSTANTS.GAME.MAX_DIFFICULTY, unlocked: false },
+          { id: 'persistent_player', name: 'Persistent Player', icon: '⏱️', description: 'Play for over 10 minutes total', condition: (gs) => gs.totalTimePlayed >= 600, unlocked: false }
         ];
         
         this.gameState = {
@@ -1862,11 +2350,14 @@
           bestStreak: 0,
           longestNoStingTime: 0,
           timePlayed: 0,
+          totalTimePlayed: 0,
           perfectGames: 0,
           weathersUsed: 0,
           charactersUsed: 0,
           highScore: 0,
-          lastStingTime: 0
+          maxDifficultyReached: 0,
+          lastStingTime: 0,
+          totalGames: 0
         };
         
         this.init();
@@ -1899,7 +2390,12 @@
 
       saveAchievements() {
         try {
-          const saveData = this.achievements.map(a => ({ id: a.id, unlocked: a.unlocked }));
+          const saveData = this.achievements.map(a => ({ 
+            id: a.id, 
+            unlocked: a.unlocked,
+            name: a.name,
+            description: a.description 
+          }));
           localStorage.setItem('poohAchievements', JSON.stringify(saveData));
           localStorage.setItem('poohGameState', JSON.stringify(this.gameState));
         } catch (e) {
@@ -1927,15 +2423,19 @@
       showAchievementPopup(achievement) {
         const popup = document.createElement('div');
         popup.className = 'achievement-popup';
+        popup.setAttribute('role', 'alert');
+        popup.setAttribute('aria-live', 'assertive');
         popup.innerHTML = `
           <div class="achievement-popup-title">Achievement Unlocked!</div>
-          <div style="font-size: 2rem; margin: 10px 0;">${achievement.icon}</div>
+          <div style="font-size: 2rem; margin: 10px 0;" aria-hidden="true">${achievement.icon}</div>
           <div style="font-weight: bold; color: var(--wood-brown);">${achievement.name}</div>
           <div style="font-size: 0.9rem; color: var(--wood-light);">${achievement.description}</div>
         `;
         
         document.body.appendChild(popup);
-        if (window.gameEngine) window.gameEngine.soundSystem.play('achievement');
+        if (window.gameEngine) {
+          window.gameEngine.soundSystem.play('achievement');
+        }
         
         setTimeout(() => {
           if (popup && popup.parentNode) {
@@ -1949,6 +2449,7 @@
         const counter = document.getElementById('achievements-count');
         if (counter) {
           counter.textContent = `${unlockedCount}/${this.achievements.length}`;
+          counter.setAttribute('aria-label', `${unlockedCount} of ${this.achievements.length} achievements unlocked`);
         }
         
         const list = document.getElementById('achievements-list');
@@ -1958,12 +2459,15 @@
         this.achievements.forEach((ach) => {
           const item = document.createElement('div');
           item.className = `achievement-item ${ach.unlocked ? 'unlocked' : ''}`;
+          item.setAttribute('role', 'listitem');
           item.innerHTML = `
-            <div class="achievement-icon">${ach.icon}</div>
+            <div class="achievement-icon" aria-hidden="true">${ach.icon}</div>
             <div class="achievement-details">
               <div class="achievement-name">${ach.name}</div>
               <div class="achievement-desc">${ach.description}</div>
-              <div style="font-size: 0.8rem; color: ${ach.unlocked ? '#7cb342' : '#e63946'};">${ach.unlocked ? '✓ Unlocked' : 'Locked'}</div>
+              <div style="font-size: 0.8rem; color: ${ach.unlocked ? '#7cb342' : '#e63946'};">
+                ${ach.unlocked ? '✓ Unlocked' : 'Locked'}
+              </div>
             </div>
           `;
           list.appendChild(item);
@@ -1973,49 +2477,59 @@
       incrementGameState(key, amount = 1) {
         this.gameState[key] = (this.gameState[key] || 0) + amount;
       }
+
+      updateMaxDifficulty(difficultyLevel) {
+        if (difficultyLevel > this.gameState.maxDifficultyReached) {
+          this.gameState.maxDifficultyReached = difficultyLevel;
+        }
+      }
     }
 
     // ============================================
-    // CHARACTER SYSTEM (FIXED)
+    // ENHANCED CHARACTER SYSTEM
     // ============================================
     class CharacterSystem {
       constructor() {
-      this.characters = {
-    pooh: {
-        name: 'Winnie the Pooh',
-        radius: 38,
-        speed: 1.0,
-        color: '#F4C542',  // More golden yellow like classic Pooh
-        ability: 'Honey Expert',
-        description: '+30% bigger catch radius'
-    },
-    piglet: {
-        name: 'Piglet',
-        radius: 32,
-        speed: 1.25,
-        color: '#FFB7C5',  // Pink
-        ability: 'Quick Feet',
-        description: 'Moves 25% faster'
-    },
-    tigger: {
-        name: 'Tigger',
-        radius: 32,
-        speed: 1.0,
-        color: '#FF8C00',  // Orange
-        ability: 'Bouncy',
-        description: 'Can bounce off bees',
-        canBounce: true
-    },
-    rabbit: {
-        name: 'Rabbit',
-        radius: 32,
-        speed: 1.0,
-        color: '#8BC34A',  // Green
-        ability: 'Organized',
-        description: 'Double points for combos',
-        comboMultiplier: 2.0
-    }
-};
+        this.characters = {
+          pooh: {
+            name: 'Winnie the Pooh',
+            radius: 38,
+            speed: 1.0,
+            color: '#F4C542',
+            ability: 'Honey Expert',
+            description: '+30% bigger catch radius',
+            icon: '🐻'
+          },
+          piglet: {
+            name: 'Piglet',
+            radius: 32,
+            speed: 1.25,
+            color: '#FFB7C5',
+            ability: 'Quick Feet',
+            description: 'Moves 25% faster',
+            icon: '🐷'
+          },
+          tigger: {
+            name: 'Tigger',
+            radius: 32,
+            speed: 1.0,
+            color: '#FF8C00',
+            ability: 'Bouncy',
+            description: 'Can bounce off bees',
+            canBounce: true,
+            icon: '🐯'
+          },
+          rabbit: {
+            name: 'Rabbit',
+            radius: 32,
+            speed: 1.0,
+            color: '#8BC34A',
+            ability: 'Organized',
+            description: 'Double points for combos',
+            comboMultiplier: 2.0,
+            icon: '🐰'
+          }
+        };
         this.currentCharacter = 'pooh';
         this.usedCharacters = new Set(['pooh']);
         this.init();
@@ -2057,7 +2571,9 @@
 
       updateCharacterUI() {
         document.querySelectorAll('.character-card').forEach(card => {
-          card.classList.toggle('selected', card.dataset.character === this.currentCharacter);
+          const isSelected = card.dataset.character === this.currentCharacter;
+          card.classList.toggle('selected', isSelected);
+          card.setAttribute('aria-checked', isSelected.toString());
         });
       }
 
@@ -2065,211 +2581,238 @@
         return this.characters[this.currentCharacter];
       }
     }
-class WeatherSystem {
-  constructor() {
-    this.currentWeather = 'none';
-    this.usedWeathers = new Set(['none']);
-    this.weatherContainer = null;
-    this.particles = [];
 
-    this.weatherTypes = {
-      none:   { label: 'Clear',  particles: 0,  class: '',               animation: '',         speed: 0   },
-      rain:   { label: 'Rain',   particles: 90, class: 'rain-particle',  animation: 'rainFall',  speed: 1.6 },
-      snow:   { label: 'Snow',   particles: 70, class: 'snow-particle',  animation: 'snowFall',  speed: 5.5 },
-      leaves: { label: 'Autumn', particles: 35, class: 'leaf-particle',  animation: 'leafFall',  speed: 8.0 },
-      petals: { label: 'Spring', particles: 45, class: 'petal-particle', animation: 'petalFall', speed: 6.5 },
-    };
-
-    this.init();
-  }
-
-  init() {
-    this.ensureContainer();
-    this.loadWeather();
-    this.updateWeatherUI();
-    this.applyWeatherEffects();
-  }
-
-  ensureContainer() {
-    // Prefer existing DOM node
-    const existing = document.getElementById('weather-effects');
-    if (existing) {
-      this.weatherContainer = existing;
-      // Force correct mounting + style
-      this.mountInsideGameplayWindow();
-      return;
-    }
-
-    // Otherwise create
-    this.createWeatherContainer();
-  }
-
-  mountInsideGameplayWindow() {
-    const host = document.querySelector('.game-container');
-    if (!host) {
-      // Fallback (shouldn’t happen in your layout)
-      if (!this.weatherContainer.parentNode) document.body.appendChild(this.weatherContainer);
-      Object.assign(this.weatherContainer.style, {
-        position: 'fixed',
-        inset: '0',
-        pointerEvents: 'none',
-        zIndex: '2000',
-        overflow: 'hidden',
-        display: 'none'
-      });
-      return;
-    }
-
-    // Ensure clipping
-    host.style.position = host.style.position || 'relative';
-    host.style.overflow = 'hidden';
-    host.style.borderRadius = host.style.borderRadius || '28px';
-
-    if (this.weatherContainer.parentNode !== host) {
-      host.appendChild(this.weatherContainer);
-    }
-
-    Object.assign(this.weatherContainer.style, {
-      position: 'absolute',
-      inset: '0',
-      width: '100%',
-      height: '100%',
-      pointerEvents: 'none',
-      zIndex: '20',
-      overflow: 'hidden',
-      display: 'none',
-      borderRadius: '28px'
-    });
-  }
-
-  createWeatherContainer() {
-    // Remove any stray duplicates
-    const existing = document.getElementById('weather-effects');
-    if (existing) existing.remove();
-
-    this.weatherContainer = document.createElement('div');
-    this.weatherContainer.id = 'weather-effects';
-
-    this.mountInsideGameplayWindow();
-  }
-
-  loadWeather() {
-    try {
-      const saved = localStorage.getItem('poohCurrentWeather');
-      if (saved && this.weatherTypes[saved]) this.currentWeather = saved;
-    } catch {}
-  }
-
-  saveWeather() {
-    try {
-      localStorage.setItem('poohCurrentWeather', this.currentWeather);
-    } catch {}
-  }
-
-  setWeather(weatherType) {
-    if (!this.weatherTypes[weatherType]) return;
-
-    this.currentWeather = weatherType;
-    this.usedWeathers.add(weatherType);
-    this.saveWeather();
-
-    this.updateWeatherUI();
-    this.applyWeatherEffects();
-
-    if (window.gameEngine) {
-      window.gameEngine.achievementSystem.gameState.weathersUsed = this.usedWeathers.size;
-      window.gameEngine.soundSystem.play('click');
-    }
-  }
-
-  updateWeatherUI() {
-    document.querySelectorAll('.weather-btn').forEach(btn => {
-      btn.classList.toggle('active', btn.dataset.weather === this.currentWeather);
-    });
-  }
-
-  clearParticles() {
-    for (const el of this.particles) el.remove();
-    this.particles.length = 0;
-  }
-
-  applyWeatherEffects() {
-    this.ensureContainer();
-    this.clearParticles();
-
-    if (this.currentWeather === 'none') {
-      this.weatherContainer.style.display = 'none';
-      return;
-    }
-
-    const def = this.weatherTypes[this.currentWeather];
-    this.weatherContainer.style.display = 'block';
-
-    for (let i = 0; i < def.particles; i++) {
-      this.createWeatherParticle(this.currentWeather, def);
-    }
-  }
-
-  createWeatherParticle(typeKey, def) {
-    const el = document.createElement('div');
-    el.className = `weather-particle ${def.class}`;
-
-    const { width, height } = this.getParticleSize(typeKey);
-
-    // start slightly above top, random x
-    const x = Math.random() * 100;
-    const delay = Math.random() * 2.5;
-    const dur = def.speed + Math.random() * def.speed;
-
-    Object.assign(el.style, {
-      left: `${x}%`,
-      top: `-${Math.max(40, height)}px`,
-      width: `${width}px`,
-      height: `${height}px`,
-      opacity: `${0.35 + Math.random() * 0.55}`,
-      animationName: def.animation,
-      animationDuration: `${dur}s`,
-      animationTimingFunction: 'linear',
-      animationIterationCount: 'infinite',
-      animationDelay: `${delay}s`,
-      willChange: 'transform'
-    });
-
-    // A little variety per type
-    if (typeKey === 'leaves' || typeKey === 'petals') {
-      el.style.filter = 'drop-shadow(0 2px 2px rgba(0,0,0,.15))';
-    }
-    if (typeKey === 'rain') {
-      el.style.transform = `rotate(15deg)`;
-    }
-
-    this.weatherContainer.appendChild(el);
-    this.particles.push(el);
-  }
-
-  getParticleSize(typeKey) {
-    switch (typeKey) {
-      case 'rain':
-        return { width: 2, height: 18 + Math.random() * 18 };
-      case 'snow': {
-        const s = 4 + Math.random() * 7;
-        return { width: s, height: s };
-      }
-      case 'leaves': {
-        const s = 10 + Math.random() * 14;
-        return { width: s, height: s };
-      }
-      case 'petals': {
-        const s = 8 + Math.random() * 12;
-        return { width: s, height: s };
-      }
-      default:
-        return { width: 6, height: 6 };
-    }
-  }
-}
     // ============================================
-    // SHARE SYSTEM (FIXED for fallback)
+    // ENHANCED WEATHER SYSTEM
+    // ============================================
+    class WeatherSystem {
+      constructor() {
+        this.currentWeather = 'none';
+        this.usedWeathers = new Set(['none']);
+        this.weatherContainer = null;
+        this.particles = [];
+        this.isActive = false;
+
+        this.weatherTypes = {
+          none:   { label: 'Clear',  particles: 0,  class: '',               animation: '',         speed: 0   },
+          rain:   { label: 'Rain',   particles: 90, class: 'rain-particle',  animation: 'rainFall',  speed: 1.6 },
+          snow:   { label: 'Snow',   particles: 70, class: 'snow-particle',  animation: 'snowFall',  speed: 5.5 },
+          leaves: { label: 'Autumn', particles: 35, class: 'leaf-particle',  animation: 'leafFall',  speed: 8.0 },
+          petals: { label: 'Spring', particles: 45, class: 'petal-particle', animation: 'petalFall', speed: 6.5 },
+        };
+
+        this.init();
+      }
+
+      init() {
+        this.ensureContainer();
+        this.loadWeather();
+        this.updateWeatherUI();
+        this.applyWeatherEffects();
+      }
+
+      ensureContainer() {
+        const existing = document.getElementById('weather-effects');
+        if (existing) {
+          this.weatherContainer = existing;
+          this.mountInsideGameplayWindow();
+          return;
+        }
+
+        this.createWeatherContainer();
+      }
+
+      mountInsideGameplayWindow() {
+        const host = document.querySelector('.game-container');
+        if (!host) {
+          if (!this.weatherContainer.parentNode) {
+            document.body.appendChild(this.weatherContainer);
+          }
+          Object.assign(this.weatherContainer.style, {
+            position: 'fixed',
+            inset: '0',
+            pointerEvents: 'none',
+            zIndex: '5',
+            overflow: 'hidden',
+            display: 'none'
+          });
+          return;
+        }
+
+        host.style.position = 'relative';
+        host.style.overflow = 'hidden';
+        host.style.borderRadius = '28px';
+
+        if (this.weatherContainer.parentNode !== host) {
+          host.appendChild(this.weatherContainer);
+        }
+
+        Object.assign(this.weatherContainer.style, {
+          position: 'absolute',
+          inset: '0',
+          width: '100%',
+          height: '100%',
+          pointerEvents: 'none',
+          zIndex: '5',
+          overflow: 'hidden',
+          display: 'none',
+          borderRadius: '28px'
+        });
+      }
+
+      createWeatherContainer() {
+        const existing = document.getElementById('weather-effects');
+        if (existing) existing.remove();
+
+        this.weatherContainer = document.createElement('div');
+        this.weatherContainer.id = 'weather-effects';
+        this.weatherContainer.setAttribute('aria-hidden', 'true');
+
+        this.mountInsideGameplayWindow();
+      }
+
+      loadWeather() {
+        try {
+          const saved = localStorage.getItem('poohCurrentWeather');
+          if (saved && this.weatherTypes[saved]) {
+            this.currentWeather = saved;
+          }
+        } catch {}
+      }
+
+      saveWeather() {
+        try {
+          localStorage.setItem('poohCurrentWeather', this.currentWeather);
+        } catch {}
+      }
+
+      setWeather(weatherType) {
+        if (!this.weatherTypes[weatherType]) return;
+
+        this.currentWeather = weatherType;
+        this.usedWeathers.add(weatherType);
+        this.saveWeather();
+
+        this.updateWeatherUI();
+        this.applyWeatherEffects();
+
+        if (window.gameEngine) {
+          window.gameEngine.achievementSystem.gameState.weathersUsed = this.usedWeathers.size;
+          window.gameEngine.soundSystem.play('click');
+        }
+      }
+
+      updateWeatherUI() {
+        document.querySelectorAll('.weather-btn').forEach(btn => {
+          const isActive = btn.dataset.weather === this.currentWeather;
+          btn.classList.toggle('active', isActive);
+          btn.setAttribute('aria-pressed', isActive.toString());
+        });
+      }
+
+      clearParticles() {
+        for (const el of this.particles) {
+          if (el.parentNode) {
+            el.parentNode.removeChild(el);
+          }
+        }
+        this.particles.length = 0;
+      }
+
+      applyWeatherEffects() {
+        this.ensureContainer();
+        this.clearParticles();
+
+        if (this.currentWeather === 'none') {
+          this.weatherContainer.style.display = 'none';
+          this.isActive = false;
+          return;
+        }
+
+        const def = this.weatherTypes[this.currentWeather];
+        this.weatherContainer.style.display = 'block';
+        this.isActive = true;
+
+        for (let i = 0; i < def.particles; i++) {
+          this.createWeatherParticle(this.currentWeather, def);
+        }
+      }
+
+      createWeatherParticle(typeKey, def) {
+        const el = document.createElement('div');
+        el.className = `weather-particle ${def.class}`;
+        el.setAttribute('aria-hidden', 'true');
+
+        const { width, height } = this.getParticleSize(typeKey);
+        const x = Math.random() * 100;
+        const delay = Math.random() * 2.5;
+        const dur = def.speed + Math.random() * def.speed;
+
+        Object.assign(el.style, {
+          left: `${x}%`,
+          top: `-${Math.max(40, height)}px`,
+          width: `${width}px`,
+          height: `${height}px`,
+          opacity: `${0.35 + Math.random() * 0.55}`,
+          animationName: def.animation,
+          animationDuration: `${dur}s`,
+          animationTimingFunction: 'linear',
+          animationIterationCount: 'infinite',
+          animationDelay: `${delay}s`,
+          willChange: 'transform'
+        });
+
+        if (typeKey === 'leaves' || typeKey === 'petals') {
+          el.style.filter = 'drop-shadow(0 2px 2px rgba(0,0,0,.15))';
+        }
+        if (typeKey === 'rain') {
+          el.style.transform = `rotate(15deg)`;
+        }
+
+        this.weatherContainer.appendChild(el);
+        this.particles.push(el);
+      }
+
+      getParticleSize(typeKey) {
+        switch (typeKey) {
+          case 'rain':
+            return { width: 2, height: 18 + Math.random() * 18 };
+          case 'snow': {
+            const s = 4 + Math.random() * 7;
+            return { width: s, height: s };
+          }
+          case 'leaves': {
+            const s = 10 + Math.random() * 14;
+            return { width: s, height: s };
+          }
+          case 'petals': {
+            const s = 8 + Math.random() * 12;
+            return { width: s, height: s };
+          }
+          default:
+            return { width: 6, height: 6 };
+        }
+      }
+
+      pause() {
+        if (this.isActive && this.weatherContainer) {
+          this.particles.forEach(particle => {
+            particle.style.animationPlayState = 'paused';
+          });
+        }
+      }
+
+      resume() {
+        if (this.isActive && this.weatherContainer) {
+          this.particles.forEach(particle => {
+            particle.style.animationPlayState = 'running';
+          });
+        }
+      }
+    }
+
+    // ============================================
+    // ENHANCED SHARE SYSTEM
     // ============================================
     class ShareSystem {
       shareGame() {
@@ -2287,12 +2830,10 @@ class WeatherSystem {
       }
 
       shareContent(text, url, title) {
-        // Play sound
         if (window.gameEngine) {
           window.gameEngine.soundSystem.play('click');
         }
         
-        // Try Web Share API first
         if (navigator.share) {
           navigator.share({
             title: title,
@@ -2309,59 +2850,51 @@ class WeatherSystem {
       fallbackShare(text, url) {
         const shareText = `${text}\n\nPlay here: ${url}`;
         
-        // Try clipboard API
         if (navigator.clipboard && window.isSecureContext) {
           navigator.clipboard.writeText(shareText)
             .then(() => {
-              alert('Game link copied to clipboard! Share it with your friends.');
+              this.showToast('Game link copied to clipboard! Share it with your friends.');
             })
             .catch(() => {
-              this.legacyCopy(shareText);
+              this.showToast(`Share this link:\n\n${shareText}`);
             });
         } else {
-          this.legacyCopy(shareText);
+          this.showToast(`Share this link:\n\n${shareText}`);
         }
       }
 
-      legacyCopy(text) {
-        const textarea = document.createElement('textarea');
-        textarea.value = text;
-        textarea.style.position = 'fixed';
-        textarea.style.top = '0';
-        textarea.style.left = '0';
-        textarea.style.width = '2em';
-        textarea.style.height = '2em';
-        textarea.style.padding = '0';
-        textarea.style.border = 'none';
-        textarea.style.outline = 'none';
-        textarea.style.boxShadow = 'none';
-        textarea.style.background = 'transparent';
-        textarea.style.opacity = '0';
+      showToast(message) {
+        const toast = document.createElement('div');
+        toast.style.cssText = `
+          position: fixed;
+          top: 50%;
+          left: 50%;
+          transform: translate(-50%, -50%);
+          background: rgba(0, 0, 0, 0.8);
+          color: white;
+          padding: 20px;
+          border-radius: 10px;
+          z-index: 10000;
+          max-width: 80%;
+          text-align: center;
+          animation: slideIn 0.3s ease-out;
+        `;
+        toast.textContent = message;
+        document.body.appendChild(toast);
         
-        document.body.appendChild(textarea);
-        textarea.select();
-        
-        try {
-          const successful = document.execCommand('copy');
-          if (successful) {
-            alert('Game link copied to clipboard! Share it with your friends.');
-          } else {
-            alert(`Share this link with friends:\n\n${text}`);
+        setTimeout(() => {
+          if (toast.parentNode) {
+            toast.parentNode.removeChild(toast);
           }
-        } catch (err) {
-          alert(`Share this link with friends:\n\n${text}`);
-        }
-        
-        document.body.removeChild(textarea);
+        }, 3000);
       }
     }
-
-    // ============================================
-    // MAIN GAME ENGINE (FIXED)
+// ============================================
+    // ENHANCED MAIN GAME ENGINE
     // ============================================
     class PoohHoneyHunt {
       constructor() {
-        console.log("Initializing Pooh Honey Hunt...");
+        console.log("Initializing Pooh Honey Hunt with all fixes...");
         
         // Canvas setup
         this.canvas = document.getElementById('honey-game');
@@ -2386,7 +2919,12 @@ class WeatherSystem {
         this.lastStingTime = 0;
         this.perfectGame = true;
         this.highScore = 0;
-        this._achCheckTimer = 0; // FIXED: Initialize timer
+        this.totalGames = 0;
+        this.totalTimePlayed = 0;
+        this._achCheckTimer = 0;
+        
+        // Difficulty
+        this.difficultySystem = new DifficultySystem();
         
         // Entities
         this.player = this.createPlayer();
@@ -2401,6 +2939,7 @@ class WeatherSystem {
         this.characterSystem = new CharacterSystem();
         this.weatherSystem = new WeatherSystem();
         this.shareSystem = new ShareSystem();
+        this.saveSystem = new SaveSystem();
         
         // Spawn timers
         this.honeySpawnTimer = 0;
@@ -2410,6 +2949,8 @@ class WeatherSystem {
         this.targetX = this.player.x;
         this.isDragging = false;
         this.keys = {};
+        this.lastClickTime = 0;
+        this.clickDebounce = 200; // 200ms debounce
         
         // Initialize
         this.initializeUIElements();
@@ -2418,6 +2959,11 @@ class WeatherSystem {
         this.initializeBackground();
         this.updateHUD();
         this.updateCanvasRect();
+        
+        // Hide loading screen
+        setTimeout(() => {
+          this.hideLoadingScreen();
+        }, 1000);
         
         window.gameEngine = this;
         console.log("Game initialized successfully!");
@@ -2435,6 +2981,16 @@ class WeatherSystem {
         };
       }
 
+      hideLoadingScreen() {
+        const loadingOverlay = document.getElementById('loading-overlay');
+        if (loadingOverlay) {
+          loadingOverlay.classList.add('hidden');
+          setTimeout(() => {
+            loadingOverlay.style.display = 'none';
+          }, 500);
+        }
+      }
+
       initializeUIElements() {
         // Get all UI elements
         this.scoreEl = document.getElementById('score');
@@ -2447,6 +3003,7 @@ class WeatherSystem {
         this.gameoverOverlay = document.getElementById('gameover-overlay');
         this.characterSelectOverlay = document.getElementById('character-select-overlay');
         this.achievementsOverlay = document.getElementById('achievements-overlay');
+        this.tutorialOverlay = document.getElementById('tutorial-overlay');
         
         // Buttons
         this.startBtn = document.getElementById('start-btn');
@@ -2464,6 +3021,8 @@ class WeatherSystem {
         this.quitBtn = document.getElementById('quit-btn');
         this.helpBtn = document.getElementById('help-btn');
         this.achievementsBtn = document.getElementById('achievements-btn');
+        this.closeTutorialBtn = document.getElementById('close-tutorial-btn');
+        this.showTutorialBtn = document.getElementById('show-tutorial-btn');
         
         // Other elements
         this.gameContainer = document.querySelector('.game-container');
@@ -2477,12 +3036,33 @@ class WeatherSystem {
         this.timePlayedEl = document.getElementById('time-played');
         this.highScoreEl = document.getElementById('high-score');
         this.achievementsEarnedEl = document.getElementById('achievements-earned');
+        
+        // Status elements
+        this.gameStatus = document.getElementById('game-status');
       }
 
       initializeEventListeners() {
-        console.log("Setting up event listeners...");
+        console.log("Setting up enhanced event listeners...");
         
-        // Canvas input
+        // Debounced click handler
+        const debouncedClick = (handler) => {
+          return (e) => {
+            const now = Date.now();
+            if (now - this.lastClickTime > this.clickDebounce) {
+              this.lastClickTime = now;
+              handler.call(this, e);
+              // Visual feedback
+              if (e.target && e.target.classList.contains('btn')) {
+                e.target.style.animation = 'buttonPress 0.2s ease';
+                setTimeout(() => {
+                  e.target.style.animation = '';
+                }, 200);
+              }
+            }
+          };
+        };
+        
+        // Canvas input with improved touch handling
         this.canvas.addEventListener('touchstart', (e) => {
           e.preventDefault();
           this.isDragging = true;
@@ -2490,14 +3070,15 @@ class WeatherSystem {
           this.targetX = this.clientToCanvasX(touch.clientX);
           this.updateCursor(touch.clientX, touch.clientY);
           this.showCursor(true);
-        });
+          this.soundSystem.vibrate('click');
+        }, { passive: false });
         
         this.canvas.addEventListener('touchmove', (e) => {
           e.preventDefault();
           const touch = e.touches[0];
           this.targetX = this.clientToCanvasX(touch.clientX);
           this.updateCursor(touch.clientX, touch.clientY);
-        });
+        }, { passive: false });
         
         this.canvas.addEventListener('touchend', () => {
           this.isDragging = false;
@@ -2514,113 +3095,75 @@ class WeatherSystem {
           this.showCursor(false);
         });
         
-        // Game control buttons
-        this.startBtn.addEventListener('click', () => {
-          console.log("Start button clicked");
-          this.startGame();
-        });
-        
-        this.restartBtn.addEventListener('click', () => {
-          console.log("Restart button clicked");
-          this.startGame();
-        });
-        
-        this.selectCharacterBtn.addEventListener('click', () => {
-          console.log("Select character button clicked");
-          this.showCharacterSelect();
-        });
-        
-        this.startWithCharacterBtn.addEventListener('click', () => {
-          console.log("Start with character button clicked");
-          this.startGame();
-        });
-        
-        this.viewAchievementsBtn.addEventListener('click', () => {
-          console.log("View achievements button clicked");
-          this.showAchievements();
-        });
-        
-        this.closeAchievementsBtn.addEventListener('click', () => {
-          console.log("Close achievements button clicked");
-          this.hideAchievements();
-        });
-        
-        this.soundToggleBtn.addEventListener('click', () => {
-          console.log("Sound toggle button clicked");
-          this.soundSystem.toggle();
-        });
-        
-        this.shareBtn.addEventListener('click', () => {
-          console.log("Share button clicked");
-          this.shareSystem.shareGame();
-        });
-        
-        this.shareScoreBtn.addEventListener('click', () => {
-          console.log("Share score button clicked");
+        // Game control buttons with debouncing
+        this.startBtn.addEventListener('click', debouncedClick(this.startGame));
+        this.restartBtn.addEventListener('click', debouncedClick(this.startGame));
+        this.selectCharacterBtn.addEventListener('click', debouncedClick(this.showCharacterSelect));
+        this.startWithCharacterBtn.addEventListener('click', debouncedClick(this.startGame));
+        this.viewAchievementsBtn.addEventListener('click', debouncedClick(this.showAchievements));
+        this.closeAchievementsBtn.addEventListener('click', debouncedClick(this.hideAchievements));
+        this.soundToggleBtn.addEventListener('click', debouncedClick(() => this.soundSystem.toggle()));
+        this.shareBtn.addEventListener('click', debouncedClick(() => this.shareSystem.shareGame()));
+        this.shareScoreBtn.addEventListener('click', debouncedClick(() => {
           const character = this.characterSystem.getCurrentCharacter();
           this.shareSystem.shareScore(this.score, character.name);
-        });
+        }));
+        this.pauseBtn.addEventListener('click', debouncedClick(this.togglePause));
+        this.resumeBtn.addEventListener('click', debouncedClick(this.togglePause));
+        this.quitBtn.addEventListener('click', debouncedClick(this.quitToMenu));
+        this.helpBtn.addEventListener('click', debouncedClick(this.showTutorial));
+        this.achievementsBtn.addEventListener('click', debouncedClick(this.showAchievements));
+        this.closeTutorialBtn.addEventListener('click', debouncedClick(this.hideTutorial));
+        this.showTutorialBtn.addEventListener('click', debouncedClick(this.showTutorial));
         
-        this.pauseBtn.addEventListener('click', () => {
-          console.log("Pause button clicked");
-          this.togglePause();
-        });
-        
-        this.resumeBtn.addEventListener('click', () => {
-          console.log("Resume button clicked");
-          this.togglePause();
-        });
-        
-        this.quitBtn.addEventListener('click', () => {
-          console.log("Quit button clicked");
-          this.quitToMenu();
-        });
-        
-        this.helpBtn.addEventListener('click', () => {
-          console.log("Help button clicked");
-          this.showHelp();
-        });
-        
-        this.achievementsBtn.addEventListener('click', () => {
-          console.log("Achievements button clicked");
-          this.showAchievements();
-        });
-        
-        // Character cards
+        // Character cards with keyboard support
         document.querySelectorAll('.character-card').forEach(card => {
-          card.addEventListener('click', () => {
-            const character = card.dataset.character;
-            console.log("Character selected:", character);
+          card.addEventListener('click', debouncedClick((e) => {
+            const character = e.currentTarget.dataset.character;
             this.characterSystem.selectCharacter(character);
             this.soundSystem.play('click');
+          }));
+          
+          card.addEventListener('keydown', (e) => {
+            if (e.key === 'Enter' || e.key === ' ') {
+              e.preventDefault();
+              const character = e.currentTarget.dataset.character;
+              this.characterSystem.selectCharacter(character);
+              this.soundSystem.play('click');
+            }
           });
         });
         
         // Weather buttons
         this.weatherBtns.forEach(btn => {
-          btn.addEventListener('click', () => {
-            const weather = btn.dataset.weather;
-            console.log("Weather selected:", weather);
+          btn.addEventListener('click', debouncedClick((e) => {
+            const weather = e.currentTarget.dataset.weather;
             this.weatherSystem.setWeather(weather);
-          });
+          }));
         });
         
-        // Keyboard controls
+        // Keyboard controls with visual feedback
         window.addEventListener('keydown', (e) => {
-          this.keys[e.key] = true;
-          switch (e.key) {
-            case 'ArrowLeft':
-              this.targetX = Math.max(this.player.radius, this.targetX - 80);
-              break;
-            case 'ArrowRight':
-              this.targetX = Math.min(this.canvas.width - this.player.radius, this.targetX + 80);
-              break;
-            case ' ':
-            case 'Escape':
-              if (this.running) {
-                this.togglePause();
-              }
-              break;
+          if (['ArrowLeft', 'ArrowRight', ' ', 'Escape'].includes(e.key)) {
+            this.keys[e.key] = true;
+            this.soundSystem.play('click');
+            
+            switch (e.key) {
+              case 'ArrowLeft':
+                this.targetX = Math.max(this.player.radius, this.targetX - 80);
+                this.showKeyPressFeedback('left');
+                break;
+              case 'ArrowRight':
+                this.targetX = Math.min(this.canvas.width - this.player.radius, this.targetX + 80);
+                this.showKeyPressFeedback('right');
+                break;
+              case ' ':
+              case 'Escape':
+                if (this.running) {
+                  this.togglePause();
+                }
+                break;
+            }
           }
         });
         
@@ -2634,10 +3177,49 @@ class WeatherSystem {
           this.weatherSystem.applyWeatherEffects();
         });
         
+        // Page visibility for auto-pause
+        document.addEventListener('visibilitychange', () => {
+          if (document.hidden && this.running && !this.paused) {
+            this.togglePause();
+          }
+        });
+        
         // Prevent context menu on canvas
         this.canvas.addEventListener('contextmenu', (e) => e.preventDefault());
         
+        // Prevent pull-to-refresh
+        document.body.addEventListener('touchmove', (e) => {
+          if (this.running && !this.paused) {
+            e.preventDefault();
+          }
+        }, { passive: false });
+        
         console.log("Event listeners setup complete!");
+      }
+
+      showKeyPressFeedback(direction) {
+        const feedback = document.createElement('div');
+        feedback.style.cssText = `
+          position: fixed;
+          top: 50%;
+          ${direction === 'left' ? 'left: 20px' : 'right: 20px'};
+          transform: translateY(-50%);
+          width: 60px;
+          height: 60px;
+          background: rgba(255, 215, 0, 0.3);
+          border-radius: 50%;
+          border: 3px solid var(--honey-gold);
+          z-index: 1000;
+          animation: buttonPress 0.3s ease;
+          pointer-events: none;
+        `;
+        document.body.appendChild(feedback);
+        
+        setTimeout(() => {
+          if (feedback.parentNode) {
+            feedback.parentNode.removeChild(feedback);
+          }
+        }, 300);
       }
 
       updateCanvasRect() {
@@ -2683,15 +3265,18 @@ class WeatherSystem {
       }
 
       // ============================================
-      // GAME FLOW
+      // ENHANCED GAME FLOW
       // ============================================
       startGame() {
-        console.log("Starting game...");
+        console.log("Starting game with enhanced features...");
         this.soundSystem.play('click');
         this.hideAllOverlays();
         this.resetGameState();
         this.updateHUD();
         this.updateOverlayState();
+        
+        // Announce start for screen readers
+        this.announceGameStatus("Game started! Catch honey pots and avoid bees.");
         
         this.startTime = performance.now();
         this.lastTime = this.startTime;
@@ -2704,6 +3289,7 @@ class WeatherSystem {
         this.gameoverOverlay.classList.add('hidden');
         this.achievementsOverlay.classList.add('hidden');
         this.pauseOverlay.classList.add('hidden');
+        this.tutorialOverlay.classList.add('hidden');
       }
 
       resetGameState() {
@@ -2720,6 +3306,8 @@ class WeatherSystem {
         this.lastStingTime = 0;
         this._achCheckTimer = 0;
         
+        this.difficultySystem = new DifficultySystem();
+        
         this.honeys = [];
         this.bees = [];
         this.particleSystem.clear();
@@ -2733,6 +3321,9 @@ class WeatherSystem {
         
         const character = this.characterSystem.getCurrentCharacter();
         this.player.radius = character.radius;
+        
+        // Apply weather
+        this.weatherSystem.applyWeatherEffects();
       }
 
       togglePause() {
@@ -2743,6 +3334,15 @@ class WeatherSystem {
         this.pauseOverlay.classList.toggle('hidden', !this.paused);
         this.showCursor(!this.paused && this.running);
         this.updateOverlayState();
+        
+        // Pause/resume weather
+        if (this.paused) {
+          this.weatherSystem.pause();
+          this.announceGameStatus("Game paused");
+        } else {
+          this.weatherSystem.resume();
+          this.announceGameStatus("Game resumed");
+        }
       }
 
       quitToMenu() {
@@ -2752,6 +3352,7 @@ class WeatherSystem {
         this.running = false;
         this.paused = false;
         this.updateOverlayState();
+        this.announceGameStatus("Returned to main menu");
       }
 
       showCharacterSelect() {
@@ -2766,6 +3367,7 @@ class WeatherSystem {
         if (this.running) {
           this.paused = true;
           this.showCursor(false);
+          this.weatherSystem.pause();
         }
         this.achievementsOverlay.classList.remove('hidden');
         this.updateOverlayState();
@@ -2777,32 +3379,45 @@ class WeatherSystem {
         if (this.running) {
           this.paused = false;
           this.showCursor(true);
+          this.weatherSystem.resume();
         } else {
           this.startOverlay.classList.remove('hidden');
         }
         this.updateOverlayState();
       }
 
-      showHelp() {
+      showTutorial() {
         this.soundSystem.play('click');
-        alert(
-          "🎮 POOH'S HONEY HUNT - HELP 🎮\n\n" +
-          "CONTROLS:\n" +
-          "• Mouse/Touch: Move Pooh left/right\n" +
-          "• Arrow Keys: Keyboard controls\n" +
-          "• Space/Escape: Pause game\n\n" +
-          "GAMEPLAY:\n" +
-          "• Catch honey pots for points\n" +
-          "• Avoid bees - they cost lives\n" +
-          "• Build streaks for bonus points!\n" +
-          "• Golden pots are worth 3x!\n\n" +
-          "CHARACTERS:\n" +
-          "• Pooh: Bigger catch radius\n" +
-          "• Piglet: Moves faster\n" +
-          "• Tigger: Can bounce bees\n" +
-          "• Rabbit: Double combo points\n\n" +
-          "Have fun collecting honey! 🍯"
-        );
+        if (this.running) {
+          this.paused = true;
+          this.showCursor(false);
+          this.weatherSystem.pause();
+        }
+        this.tutorialOverlay.classList.remove('hidden');
+        this.updateOverlayState();
+      }
+
+      hideTutorial() {
+        this.soundSystem.play('click');
+        this.tutorialOverlay.classList.add('hidden');
+        if (this.running) {
+          this.paused = false;
+          this.showCursor(true);
+          this.weatherSystem.resume();
+        } else {
+          this.startOverlay.classList.remove('hidden');
+        }
+        this.updateOverlayState();
+      }
+
+      announceGameStatus(message) {
+        if (this.gameStatus) {
+          this.gameStatus.textContent = message;
+          // Force screen reader to read it
+          setTimeout(() => {
+            this.gameStatus.textContent = '';
+          }, 100);
+        }
       }
 
       updateOverlayState() {
@@ -2811,14 +3426,22 @@ class WeatherSystem {
           this.pauseOverlay,
           this.gameoverOverlay,
           this.characterSelectOverlay,
-          this.achievementsOverlay
+          this.achievementsOverlay,
+          this.tutorialOverlay
         ].some(overlay => overlay && !overlay.classList.contains('hidden'));
         
         document.body.classList.toggle('overlay-open', anyOverlayOpen);
+        
+        // Update weather visibility
+        if (anyOverlayOpen) {
+          document.getElementById('weather-effects').style.display = 'none';
+        } else if (this.running && !this.paused) {
+          this.weatherSystem.applyWeatherEffects();
+        }
       }
 
       // ============================================
-      // GAME LOOP
+      // ENHANCED GAME LOOP WITH DIFFICULTY
       // ============================================
       gameLoop(currentTime = performance.now()) {
         if (!this.running) {
@@ -2837,6 +3460,11 @@ class WeatherSystem {
           this.update(deltaTime);
           this.particleSystem.update(deltaTime);
           this.updateAchievementState();
+          
+          // Auto-save check
+          if (this.saveSystem.shouldAutoSave(currentTime)) {
+            this.saveGameState();
+          }
         }
         
         this.render();
@@ -2848,27 +3476,29 @@ class WeatherSystem {
         this.updateSpawnTimers(deltaTime);
         this.updateHoneys(deltaTime);
         this.updateBees(deltaTime);
+        
+        // Update difficulty
+        if (this.difficultySystem.update(this.score)) {
+          this.soundSystem.play('levelup');
+          this.showHoneyWord(this.canvas.width / 2, this.canvas.height / 2, `Difficulty ${this.difficultySystem.getLevel() + 1}!`);
+        }
       }
 
       updatePlayer(deltaTime) {
         const character = this.characterSystem.getCurrentCharacter();
         const speedMultiplier = character.speed;
         
-        // Move toward target
         const dx = (this.targetX - this.player.x) * speedMultiplier;
         this.player.vx += dx * GAME_CONSTANTS.PLAYER.ACCELERATION;
         this.player.vx *= GAME_CONSTANTS.PLAYER.DECELERATION;
         this.player.x += this.player.vx * deltaTime * GAME_CONSTANTS.PLAYER.MAX_SPEED;
         
-        // Keep within bounds
         this.player.x = Math.max(this.player.radius, Math.min(this.canvas.width - this.player.radius, this.player.x));
         
-        // Wobble animation
         this.player.wobble += deltaTime * GAME_CONSTANTS.PLAYER.WOBBLE_SPEED;
         this.player.armAngle = Math.sin(this.player.wobble * GAME_CONSTANTS.PLAYER.ARM_WOBBLE_SPEED) * 
                                GAME_CONSTANTS.PLAYER.ARM_ANGLE_MULTIPLIER;
         
-        // Trail effect
         this.player.trail.unshift({ x: this.player.x, y: this.player.y });
         if (this.player.trail.length > GAME_CONSTANTS.PLAYER.TRAIL_LENGTH) {
           this.player.trail.pop();
@@ -2876,12 +3506,16 @@ class WeatherSystem {
       }
 
       updateSpawnTimers(deltaTime) {
+        // Apply difficulty multipliers
+        const difficulty = this.difficultySystem;
+        
         // Spawn honey
         this.honeySpawnTimer += deltaTime;
-        const honeySpawnRate = Math.max(
+        let honeySpawnRate = Math.max(
           GAME_CONSTANTS.HONEY.SPAWN_MIN_RATE,
           GAME_CONSTANTS.HONEY.SPAWN_BASE_RATE - this.score / GAME_CONSTANTS.HONEY.SCORE_RATE_REDUCTION
         );
+        honeySpawnRate /= difficulty.getSpawnRate();
         
         if (this.honeySpawnTimer > honeySpawnRate) {
           this.honeys.push(this.spawnHoney());
@@ -2890,10 +3524,11 @@ class WeatherSystem {
         
         // Spawn bees
         this.beeSpawnTimer += deltaTime;
-        const beeSpawnRate = Math.max(
+        let beeSpawnRate = Math.max(
           GAME_CONSTANTS.BEE.SPAWN_MIN_RATE,
           GAME_CONSTANTS.BEE.SPAWN_BASE_RATE - this.score / GAME_CONSTANTS.BEE.SCORE_RATE_REDUCTION
         );
+        beeSpawnRate /= difficulty.getSpawnRate();
         
         if (this.beeSpawnTimer > beeSpawnRate) {
           this.bees.push(this.spawnBee());
@@ -2903,11 +3538,13 @@ class WeatherSystem {
 
       spawnHoney() {
         const isGolden = Math.random() < GAME_CONSTANTS.HONEY.GOLDEN_CHANCE;
+        const speedMultiplier = this.difficultySystem.getHoneySpeed();
+        
         return {
           x: 40 + Math.random() * (this.canvas.width - 80),
           y: -40,
-          vy: GAME_CONSTANTS.HONEY.BASE_SPEED + Math.random() * GAME_CONSTANTS.HONEY.SPEED_VARIANCE +
-              (this.score * GAME_CONSTANTS.HONEY.SCORE_SPEED_MODIFIER),
+          vy: (GAME_CONSTANTS.HONEY.BASE_SPEED + Math.random() * GAME_CONSTANTS.HONEY.SPEED_VARIANCE +
+              (this.score * GAME_CONSTANTS.HONEY.SCORE_SPEED_MODIFIER)) * speedMultiplier,
           wobble: Math.random() * Math.PI * 2,
           rotation: Math.random() * Math.PI * 2,
           rotationSpeed: (Math.random() - 0.5) * 0.08,
@@ -2919,14 +3556,15 @@ class WeatherSystem {
       spawnBee() {
         const side = Math.random() < 0.5 ? 'left' : 'right';
         const isAngry = Math.random() < GAME_CONSTANTS.BEE.ANGRY_CHANCE;
+        const speedMultiplier = this.difficultySystem.getBeeSpeed();
         
         return {
           x: side === 'left' ? -40 : this.canvas.width + 40,
           y: 50 + Math.random() * 300,
           vx: side === 'left' ? 
-              GAME_CONSTANTS.BEE.BASE_SPEED + Math.random() * GAME_CONSTANTS.BEE.SPEED_VARIANCE :
-              -(GAME_CONSTANTS.BEE.BASE_SPEED + Math.random() * GAME_CONSTANTS.BEE.SPEED_VARIANCE),
-          vy: (Math.random() - 0.5) * GAME_CONSTANTS.BEE.VERTICAL_VARIANCE,
+              (GAME_CONSTANTS.BEE.BASE_SPEED + Math.random() * GAME_CONSTANTS.BEE.SPEED_VARIANCE) * speedMultiplier :
+              -(GAME_CONSTANTS.BEE.BASE_SPEED + Math.random() * GAME_CONSTANTS.BEE.SPEED_VARIANCE) * speedMultiplier,
+          vy: (Math.random() - 0.5) * GAME_CONSTANTS.BEE.VERTICAL_VARIANCE * speedMultiplier,
           wobble: Math.random() * Math.PI * 2,
           wingFlap: 0,
           angry: isAngry,
@@ -2938,19 +3576,16 @@ class WeatherSystem {
         for (let i = this.honeys.length - 1; i >= 0; i--) {
           const honey = this.honeys[i];
           
-          // Move honey down
           honey.y += honey.vy * deltaTime;
           honey.wobble += deltaTime * 6;
           honey.rotation += honey.rotationSpeed;
           
-          // Check collision with player
           const distance = Math.hypot(honey.x - this.player.x, honey.y - this.player.y);
           if (distance < this.player.radius + 22) {
             this.collectHoney(honey, i);
             continue;
           }
           
-          // Remove if off screen
           if (honey.y > this.canvas.height + 60) {
             if (this.streak > 0) {
               this.streak = Math.max(0, this.streak - 2);
@@ -2962,7 +3597,6 @@ class WeatherSystem {
       }
 
       collectHoney(honey, index) {
-        // Calculate points
         let multiplier = honey.type === 'golden' ? GAME_CONSTANTS.HONEY.GOLDEN_MULTIPLIER : 1;
         const character = this.characterSystem.getCurrentCharacter();
         
@@ -2970,7 +3604,6 @@ class WeatherSystem {
           multiplier *= character.comboMultiplier;
         }
         
-        // FIXED: Correct calculation syntax
         const points = Math.round(
           (GAME_CONSTANTS.HONEY.BASE_POINTS + this.streak * GAME_CONSTANTS.HONEY.STREAK_MULTIPLIER) * multiplier
         );
@@ -2985,18 +3618,25 @@ class WeatherSystem {
           this.goldenPotsCaught++;
           gs.goldenPotsCaught = (gs.goldenPotsCaught || 0) + 1;
           this.soundSystem.play('collectGolden');
+          this.announceGameStatus(`Golden honey pot! +${points} points`);
         } else {
           this.soundSystem.play('collect');
+          this.announceGameStatus(`Honey pot! +${points} points`);
         }
         
         if (this.streak > this.bestStreak) this.bestStreak = this.streak;
         
-        this.particleSystem.createParticles(
-          honey.x, honey.y,
-          honey.type === 'golden' ? '#ffd700' : '#ffa500',
-          honey.type === 'golden' ? GAME_CONSTANTS.HONEY.PARTICLE_COUNT_GOLDEN : GAME_CONSTANTS.HONEY.PARTICLE_COUNT_NORMAL,
-          'mixed'
-        );
+        // Check particle count before creating
+        if (this.particleSystem.getParticleCount() < 150) {
+          this.particleSystem.createParticles(
+            honey.x, honey.y,
+            honey.type === 'golden' ? '#ffd700' : '#ffa500',
+            honey.type === 'golden' ? 
+              Math.min(30, GAME_CONSTANTS.HONEY.PARTICLE_COUNT_GOLDEN) : 
+              Math.min(20, GAME_CONSTANTS.HONEY.PARTICLE_COUNT_NORMAL),
+            'mixed'
+          );
+        }
         
         this.showScorePopup(honey.x, honey.y, `+${points}`);
         this.updateHUD();
@@ -3029,10 +3669,14 @@ class WeatherSystem {
       handleBeeCollision(bee, index) {
         const character = this.characterSystem.getCurrentCharacter();
         if (character.canBounce && Math.random() < GAME_CONSTANTS.BEE.BOUNCE_CHANCE) {
-          this.particleSystem.createParticles(bee.x, bee.y, character.color, 25, 'star');
+          if (this.particleSystem.getParticleCount() < 150) {
+            this.particleSystem.createParticles(bee.x, bee.y, character.color, 15, 'star');
+          }
           this.showHoneyWord(this.player.x, this.player.y, 'BOUNCE!');
           bee.vx *= -1.5;
           bee.vy *= -1.5;
+          this.soundSystem.play('collect');
+          this.announceGameStatus("Bee bounced!");
           return;
         }
         
@@ -3041,13 +3685,22 @@ class WeatherSystem {
         this.perfectGame = false;
         this.lastStingTime = performance.now();
         this.soundSystem.play('sting');
-        this.particleSystem.createParticles(bee.x, bee.y, '#000', 25, 'circle');
-        this.particleSystem.createParticles(this.player.x, this.player.y, '#d4a574', 18, 'star');
+        
+        if (this.particleSystem.getParticleCount() < 150) {
+          this.particleSystem.createParticles(bee.x, bee.y, '#000', 15, 'circle');
+          this.particleSystem.createParticles(this.player.x, this.player.y, '#d4a574', 10, 'star');
+        }
+        
         this.shakeScreen();
         this.showHoneyWord(this.player.x, this.player.y, 'OH BOTHER!');
+        this.announceGameStatus(`Bee sting! ${this.lives} lives remaining`);
         
-        if (this.lives <= 0) this.endGame();
-        this.updateHUD();
+        if (this.lives <= 0) {
+          this.endGame();
+        } else {
+          this.updateHUD();
+        }
+        
         this.bees.splice(index, 1);
       }
 
@@ -3060,8 +3713,12 @@ class WeatherSystem {
         gs.score = this.score;
         gs.bestStreak = Math.max(gs.bestStreak || 0, this.bestStreak);
         gs.timePlayed = this.gameTime;
+        gs.totalTimePlayed = (gs.totalTimePlayed || 0) + (now - this.lastTime) / 1000;
         gs.highScore = Math.max(gs.highScore || 0, this.score);
         gs.longestNoStingTime = Math.max(gs.longestNoStingTime || 0, sinceLastSting);
+        
+        // Update difficulty achievement
+        this.achievementSystem.updateMaxDifficulty(this.difficultySystem.getLevel());
         
         if (forceCheck) {
           this.achievementSystem.checkAchievements(gs);
@@ -3079,6 +3736,7 @@ class WeatherSystem {
         const popup = document.createElement('div');
         popup.className = 'score-popup';
         popup.textContent = text;
+        popup.setAttribute('aria-hidden', 'true');
         const cssX = this.canvasToCssX(x);
         const cssY = this.canvasToCssY(y);
         popup.style.left = `${cssX}px`;
@@ -3089,7 +3747,9 @@ class WeatherSystem {
         setTimeout(() => {
           const idx = this.activePopups.indexOf(popup);
           if (idx > -1) this.activePopups.splice(idx, 1);
-          popup.remove();
+          if (popup.parentNode) {
+            popup.parentNode.removeChild(popup);
+          }
         }, 1500);
       }
 
@@ -3097,6 +3757,7 @@ class WeatherSystem {
         const word = document.createElement('div');
         word.className = 'honey-word';
         word.textContent = text;
+        word.setAttribute('aria-hidden', 'true');
         const cssX = this.canvasToCssX(x);
         const cssY = this.canvasToCssY(y);
         word.style.left = `${cssX}px`;
@@ -3107,7 +3768,9 @@ class WeatherSystem {
         setTimeout(() => {
           const idx = this.activePopups.indexOf(word);
           if (idx > -1) this.activePopups.splice(idx, 1);
-          word.remove();
+          if (word.parentNode) {
+            word.parentNode.removeChild(word);
+          }
         }, 2500);
       }
 
@@ -3122,11 +3785,88 @@ class WeatherSystem {
         this.scoreEl.textContent = this.score;
         this.streakEl.textContent = this.streak;
         this.livesEl.textContent = this.lives;
-        this.achievementsCountEl.textContent = `${this.achievementSystem.achievements.filter(a => a.unlocked).length}/10`;
+        const unlockedCount = this.achievementSystem.achievements.filter(a => a.unlocked).length;
+        this.achievementsCountEl.textContent = `${unlockedCount}/${this.achievementSystem.achievements.length}`;
+        
+        // Update screen reader information
+        const status = `Score: ${this.score}, Streak: ${this.streak}, Lives: ${this.lives}`;
+        this.announceGameStatus(status);
+      }
+
+      // ============================================
+      // SAVE/LOAD SYSTEM INTEGRATION
+      // ============================================
+      saveGameState() {
+        const saveData = {
+          score: this.score,
+          highScore: this.highScore,
+          character: this.characterSystem.currentCharacter,
+          settings: {
+            sound: this.soundSystem.enabled,
+            weather: this.weatherSystem.currentWeather
+          },
+          achievements: this.achievementSystem.achievements.map(a => ({
+            id: a.id,
+            unlocked: a.unlocked
+          })),
+          gameStats: {
+            totalGames: this.totalGames,
+            totalHoney: this.achievementSystem.gameState.totalHoneyCaught,
+            totalTime: this.achievementSystem.gameState.totalTimePlayed
+          }
+        };
+        
+        return this.saveSystem.saveGame(saveData);
+      }
+
+      loadGameState() {
+        const saved = this.saveSystem.loadGame();
+        if (saved) {
+          this.highScore = saved.highScore || 0;
+          this.totalGames = saved.gameStats?.totalGames || 0;
+          
+          // Load character
+          if (saved.character && this.characterSystem.characters[saved.character]) {
+            this.characterSystem.selectCharacter(saved.character);
+          }
+          
+          // Load settings
+          if (saved.settings) {
+            if (saved.settings.sound !== undefined) {
+              this.soundSystem.enabled = saved.settings.sound;
+              this.soundSystem.updateUI();
+            }
+            if (saved.settings.weather) {
+              this.weatherSystem.setWeather(saved.settings.weather);
+            }
+          }
+          
+          // Load achievements
+          if (saved.achievements) {
+            saved.achievements.forEach(savedAch => {
+              const ach = this.achievementSystem.achievements.find(a => a.id === savedAch.id);
+              if (ach) {
+                ach.unlocked = savedAch.unlocked;
+              }
+            });
+            this.achievementSystem.updateDisplay();
+          }
+          
+          console.log('Game state loaded from save');
+        } else {
+          console.log('No save file found, starting fresh');
+        }
+        
+        // Always load high score from localStorage for compatibility
+        try {
+          const hs = localStorage.getItem('poohHighScore');
+          if (hs) this.highScore = Math.max(this.highScore, parseInt(hs) || 0);
+        } catch (e) {}
       }
 
       endGame() {
         this.running = false;
+        this.totalGames++;
         
         if (this.perfectGame) {
           this.achievementSystem.incrementGameState('perfectGames', 1);
@@ -3139,9 +3879,16 @@ class WeatherSystem {
           } catch (e) {}
         }
         
+        // Update achievement system
+        this.achievementSystem.gameState.totalGames = this.totalGames;
+        this.achievementSystem.gameState.totalTimePlayed += this.gameTime;
         this.updateAchievementState(true);
         this.achievementSystem.saveAchievements();
         
+        // Save game state
+        this.saveGameState();
+        
+        // Update game over screen
         this.finalScoreEl.textContent = this.score;
         this.bestStreakEl.textContent = this.bestStreak;
         this.honeyCaughtEl.textContent = this.honeyCaught;
@@ -3152,36 +3899,14 @@ class WeatherSystem {
         this.soundSystem.play('gameover');
         this.gameoverOverlay.classList.remove('hidden');
         this.updateOverlayState();
-      }
-
-      loadGameState() {
-        try {
-          const hs = localStorage.getItem('poohHighScore');
-          if (hs) this.highScore = parseInt(hs) || 0;
-        } catch (e) {}
-      }
-
-      initializeBackground() {
-        // Make sure we have the correct reference
-        if (!this.backgroundLayer) {
-          this.backgroundLayer = document.getElementById('background-layer');
-        }
         
-        // Add blossoms
-        for (let i = 0; i < 15; i++) {
-          const blossom = document.createElement('div');
-          blossom.className = 'blossom';
-          blossom.style.left = `${Math.random() * 100}vw`;
-          blossom.style.animationDelay = `${Math.random() * 5}s`;
-          blossom.style.animationDuration = `${20 + Math.random() * 30}s`;
-          blossom.style.opacity = `${0.3 + Math.random() * 0.4}`;
-          blossom.style.width = `${8 + Math.random() * 8}px`;
-          blossom.style.height = blossom.style.width;
-          this.backgroundLayer.appendChild(blossom);
-        }
+        // Announce game over for screen readers
+        this.announceGameStatus(`Game over! Final score: ${this.score}. High score: ${this.highScore}`);
       }
 
+      // ============================================
       // RENDERING FUNCTIONS
+      // ============================================
       render() {
         this.ctx.clearRect(0, 0, this.canvas.width, this.canvas.height);
         this.drawBackground();
@@ -3227,103 +3952,94 @@ class WeatherSystem {
         this.ctx.fillRect(0, this.canvas.height - 40, this.canvas.width, 40);
       }
 
-drawPooh() {
-    this.ctx.save();
-    this.ctx.translate(this.player.x, this.player.y);
-    const wobble = Math.sin(this.player.wobble) * 3;
-    const character = this.characterSystem.getCurrentCharacter();
-    
-    // Use character-specific color
-    const bodyColor = character.color || '#d4a574';
-    
-    // Body (pot belly shape - more Pooh-like)
-    this.ctx.fillStyle = bodyColor;
-    this.ctx.beginPath();
-    
-    // Draw a more Pooh-like body (rounder, pot-bellied)
-    this.ctx.ellipse(0, wobble + 5, this.player.radius, this.player.radius * 1.1, 0, 0, Math.PI * 2);
-    this.ctx.fill();
-    
-    // Red shirt (classic Pooh style with neckline)
-    this.ctx.fillStyle = '#e63946';
-    this.ctx.beginPath();
-    
-    // Shirt top (rounded neckline)
-    this.ctx.arc(0, wobble + 5, this.player.radius - 8, Math.PI * 0.8, Math.PI * 1.2);
-    this.ctx.lineTo(this.player.radius - 8, wobble + this.player.radius);
-    this.ctx.arc(0, wobble + this.player.radius, this.player.radius - 8, 0, Math.PI, true);
-    this.ctx.lineTo(-(this.player.radius - 8), wobble + 5);
-    this.ctx.closePath();
-    this.ctx.fill();
-    
-    // Ears (classic round Pooh ears)
-    this.ctx.fillStyle = bodyColor;
-    
-    // Left ear
-    this.ctx.beginPath();
-    this.ctx.arc(-12, wobble - this.player.radius + 5, 8, 0, Math.PI * 2);
-    this.ctx.fill();
-    
-    // Right ear
-    this.ctx.beginPath();
-    this.ctx.arc(12, wobble - this.player.radius + 5, 8, 0, Math.PI * 2);
-    this.ctx.fill();
-    
-    // Face (lighter circle for the face area)
-    this.ctx.fillStyle = this.adjustColor(bodyColor, 20); // Slightly lighter
-    this.ctx.beginPath();
-    this.ctx.arc(0, wobble, this.player.radius - 10, 0, Math.PI * 2);
-    this.ctx.fill();
-    
-    // Eyes (simple black dots - Pooh has small, kind eyes)
-    this.ctx.fillStyle = '#1a1a1a';
-    this.ctx.beginPath();
-    this.ctx.arc(-8, wobble - 5, 3, 0, Math.PI * 2);
-    this.ctx.arc(8, wobble - 5, 3, 0, Math.PI * 2);
-    this.ctx.fill();
-    
-    // Nose (classic black oval nose)
-    this.ctx.fillStyle = '#1a1a1a';
-    this.ctx.beginPath();
-    this.ctx.ellipse(0, wobble + 3, 6, 4, 0, 0, Math.PI * 2);
-    this.ctx.fill();
-    
-    // Mouth (simple smile - Pooh's gentle smile)
-    this.ctx.strokeStyle = '#1a1a1a';
-    this.ctx.lineWidth = 2;
-    this.ctx.beginPath();
-    this.ctx.arc(0, wobble + 8, 6, 0.2, Math.PI - 0.2);
-    this.ctx.stroke();
-    
-    // Add a little highlight to the nose
-    this.ctx.fillStyle = 'rgba(255, 255, 255, 0.3)';
-    this.ctx.beginPath();
-    this.ctx.arc(-1, wobble + 2, 1, 0, Math.PI * 2);
-    this.ctx.fill();
-    
-    this.ctx.restore();
-}
+      drawPooh() {
+        this.ctx.save();
+        this.ctx.translate(this.player.x, this.player.y);
+        const wobble = Math.sin(this.player.wobble) * 3;
+        const character = this.characterSystem.getCurrentCharacter();
+        
+        const bodyColor = character.color || '#d4a574';
+        
+        // Body
+        this.ctx.fillStyle = bodyColor;
+        this.ctx.beginPath();
+        this.ctx.ellipse(0, wobble + 5, this.player.radius, this.player.radius * 1.1, 0, 0, Math.PI * 2);
+        this.ctx.fill();
+        
+        // Red shirt
+        this.ctx.fillStyle = '#e63946';
+        this.ctx.beginPath();
+        this.ctx.arc(0, wobble + 5, this.player.radius - 8, Math.PI * 0.8, Math.PI * 1.2);
+        this.ctx.lineTo(this.player.radius - 8, wobble + this.player.radius);
+        this.ctx.arc(0, wobble + this.player.radius, this.player.radius - 8, 0, Math.PI, true);
+        this.ctx.lineTo(-(this.player.radius - 8), wobble + 5);
+        this.ctx.closePath();
+        this.ctx.fill();
+        
+        // Ears
+        this.ctx.fillStyle = bodyColor;
+        this.ctx.beginPath();
+        this.ctx.arc(-12, wobble - this.player.radius + 5, 8, 0, Math.PI * 2);
+        this.ctx.fill();
+        
+        this.ctx.beginPath();
+        this.ctx.arc(12, wobble - this.player.radius + 5, 8, 0, Math.PI * 2);
+        this.ctx.fill();
+        
+        // Face
+        this.ctx.fillStyle = this.adjustColor(bodyColor, 20);
+        this.ctx.beginPath();
+        this.ctx.arc(0, wobble, this.player.radius - 10, 0, Math.PI * 2);
+        this.ctx.fill();
+        
+        // Eyes
+        this.ctx.fillStyle = '#1a1a1a';
+        this.ctx.beginPath();
+        this.ctx.arc(-8, wobble - 5, 3, 0, Math.PI * 2);
+        this.ctx.arc(8, wobble - 5, 3, 0, Math.PI * 2);
+        this.ctx.fill();
+        
+        // Nose
+        this.ctx.fillStyle = '#1a1a1a';
+        this.ctx.beginPath();
+        this.ctx.ellipse(0, wobble + 3, 6, 4, 0, 0, Math.PI * 2);
+        this.ctx.fill();
+        
+        // Mouth
+        this.ctx.strokeStyle = '#1a1a1a';
+        this.ctx.lineWidth = 2;
+        this.ctx.beginPath();
+        this.ctx.arc(0, wobble + 8, 6, 0.2, Math.PI - 0.2);
+        this.ctx.stroke();
+        
+        // Nose highlight
+        this.ctx.fillStyle = 'rgba(255, 255, 255, 0.3)';
+        this.ctx.beginPath();
+        this.ctx.arc(-1, wobble + 2, 1, 0, Math.PI * 2);
+        this.ctx.fill();
+        
+        this.ctx.restore();
+      }
 
-// Helper function to lighten colors
-adjustColor(color, amount) {
-    let usePound = false;
-    
-    if (color[0] === "#") {
-        color = color.slice(1);
-        usePound = true;
-    }
-    
-    const num = parseInt(color, 16);
-    let r = (num >> 16) + amount;
-    let g = ((num >> 8) & 0x00FF) + amount;
-    let b = (num & 0x0000FF) + amount;
-    
-    r = Math.min(Math.max(0, r), 255);
-    g = Math.min(Math.max(0, g), 255);
-    b = Math.min(Math.max(0, b), 255);
-    
-    return (usePound ? "#" : "") + (b | (g << 8) | (r << 16)).toString(16).padStart(6, '0');
-}
+      adjustColor(color, amount) {
+        let usePound = false;
+        
+        if (color[0] === "#") {
+          color = color.slice(1);
+          usePound = true;
+        }
+        
+        const num = parseInt(color, 16);
+        let r = (num >> 16) + amount;
+        let g = ((num >> 8) & 0x00FF) + amount;
+        let b = (num & 0x0000FF) + amount;
+        
+        r = Math.min(Math.max(0, r), 255);
+        g = Math.min(Math.max(0, g), 255);
+        b = Math.min(Math.max(0, b), 255);
+        
+        return (usePound ? "#" : "") + (b | (g << 8) | (r << 16)).toString(16).padStart(6, '0');
+      }
 
       drawBees() {
         for (const bee of this.bees) {
@@ -3362,28 +4078,48 @@ adjustColor(color, amount) {
           this.ctx.fill();
           this.ctx.restore();
         }
+        
+        // Draw difficulty indicator
+        const difficulty = this.difficultySystem.getLevel();
+        if (difficulty > 0) {
+          this.ctx.fillStyle = difficulty === GAME_CONSTANTS.GAME.MAX_DIFFICULTY ? '#ff4444' : '#ffa500';
+          this.ctx.font = 'bold 16px "Fredoka One"';
+          this.ctx.fillText(`Difficulty: ${difficulty + 1}`, this.canvas.width - 120, 30);
+        }
       }
 
       cleanup() {
         if (this.animationFrameId) cancelAnimationFrame(this.animationFrameId);
         this.particleSystem.clear();
-        this.activePopups.forEach(p => p.remove());
+        this.activePopups.forEach(p => {
+          if (p.parentNode) {
+            p.parentNode.removeChild(p);
+          }
+        });
+        
+        // Save final state
+        this.saveGameState();
       }
     }
 
-    // INITIALIZE GAME
+    // ============================================
+    // INITIALIZE ENHANCED GAME
+    // ============================================
     document.addEventListener('DOMContentLoaded', () => {
-      console.log("DOM loaded, creating game...");
+      console.log("DOM loaded, creating enhanced game...");
       
-      // Prevent multiple initializations
       if (window.gameEngine) {
         console.log("Game already initialized!");
         return;
       }
       
       try {
+        // Check for save data
+        const saveSystem = new SaveSystem();
+        const saveInfo = saveSystem.getSaveInfo();
+        
         const game = new PoohHoneyHunt();
-        console.log("Game created successfully!");
+        console.log("Enhanced game created successfully!");
         
         // Add debug helpers
         window.debugGame = () => {
@@ -3395,11 +4131,9 @@ adjustColor(color, amount) {
           console.log("Current Character:", game.characterSystem.getCurrentCharacter().name);
           console.log("Current Weather:", game.weatherSystem.currentWeather);
           console.log("Weather Container:", game.weatherSystem.weatherContainer);
-        };
-        
-        window.testWeather = (type = 'rain') => {
-          console.log("Testing weather:", type);
-          game.weatherSystem.setWeather(type);
+          console.log("Difficulty Level:", game.difficultySystem.getLevel());
+          console.log("Particle Count:", game.particleSystem.getParticleCount());
+          console.log("Save Exists:", saveInfo ? "Yes" : "No");
         };
         
         // Handle page visibility
@@ -3409,67 +4143,62 @@ adjustColor(color, amount) {
           }
         });
         
-        window.addEventListener('beforeunload', () => game.cleanup());
+        // Auto-save on unload
+        window.addEventListener('beforeunload', (e) => {
+          if (game.running && !game.paused) {
+            game.saveGameState();
+            e.preventDefault();
+            e.returnValue = 'Game in progress. Are you sure you want to leave?';
+          }
+        });
         
-        console.log("Game ready! Click 'Start Game' to begin!");
+        // Show welcome message if first time
+        if (!saveInfo) {
+          setTimeout(() => {
+            game.announceGameStatus("Welcome to Pooh's Enhanced Honey Hunt! Press Start Game to begin.");
+          }, 1500);
+        }
+        
+        console.log("Enhanced game ready! Click 'Start Game' to begin!");
         
       } catch (error) {
         console.error("Error creating game:", error);
         alert("Error loading game: " + error.message);
       }
     });
-    // Diagnostic test - run this in console after page loads
-window.testWeatherVisibility = function() {
-    console.log("=== WEATHER VISIBILITY DIAGNOSTIC ===");
-    
-    // 1. Check if container exists
-    const container = document.getElementById('weather-effects');
-    console.log("1. Container exists:", !!container);
-    if (container) {
-        console.log("   Container position:", container.style.position);
-        console.log("   Container z-index:", container.style.zIndex);
-        console.log("   Container display:", container.style.display);
-        console.log("   Container children:", container.children.length);
-        
-        // Check computed styles
-        const computed = window.getComputedStyle(container);
-        console.log("   Computed z-index:", computed.zIndex);
-        console.log("   Computed opacity:", computed.opacity);
-        console.log("   Computed visibility:", computed.visibility);
-    }
-    
-    // 2. Create a test particle that's guaranteed visible
-    const testParticle = document.createElement('div');
-    testParticle.style.cssText = `
-        position: fixed !important;
-        top: 100px !important;
-        left: 100px !important;
-        width: 50px !important;
-        height: 50px !important;
-        background: red !important;
-        z-index: 99999 !important;
-        border: 3px solid yellow !important;
-        animation: rainFall 2s linear infinite !important;
-    `;
-    document.body.appendChild(testParticle);
-    console.log("2. Added bright red test particle at (100px, 100px)");
-    
-    // 3. Check animation support
-    console.log("3. Animation test - you should see a red square falling");
-    
-    setTimeout(() => {
-        console.log("4. Removing test particle");
-        testParticle.remove();
-    }, 3000);
-};
 
-// Run diagnostic after 2 seconds
-setTimeout(() => {
-    if (window.gameEngine) {
-        console.log("=== RUNNING DIAGNOSTIC ===");
-        window.testWeatherVisibility();
+    // ============================================
+    // ACCESSIBILITY ENHANCEMENTS
+    // ============================================
+    // Add keyboard shortcut help
+    document.addEventListener('keydown', (e) => {
+      if (e.key === 'F1') {
+        e.preventDefault();
+        if (window.gameEngine) {
+          window.gameEngine.showTutorial();
+        }
+      }
+      
+      if (e.key === 'F2' && window.gameEngine) {
+        e.preventDefault();
+        window.gameEngine.showAchievements();
+      }
+      
+      if (e.key === 'F3' && window.gameEngine) {
+        e.preventDefault();
+        window.gameEngine.togglePause();
+      }
+    });
+
+    // Initialize reduced motion support
+    if (window.matchMedia('(prefers-reduced-motion: reduce)').matches) {
+      document.documentElement.style.setProperty('--transition-speed', '0.1s');
     }
-}, 2000);
+
+    // High contrast mode support
+    if (window.matchMedia('(prefers-contrast: high)').matches) {
+      document.body.classList.add('high-contrast');
+    }
     </script>
 </body>
 </html>
