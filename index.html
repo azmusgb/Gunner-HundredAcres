@@ -12,1180 +12,1547 @@
   <meta property="og:type" content="website" />
 
   <link rel="preload" as="image" href="Images/Characters/Gunnar-header.png" />
-  <link rel="prefetch" href="game.html" /> <link rel="preconnect" href="https://fonts.googleapis.com" />
+  <link rel="prefetch" href="game.html" />
+  <link rel="preconnect" href="https://fonts.googleapis.com" />
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
   <link href="https://fonts.googleapis.com/css2?family=Playfair+Display:wght@600;700;800&family=Patrick+Hand&family=Nunito:wght@400;600;700;800&display=swap" rel="stylesheet">
 
   <style>
     /* -------------------------------------------------- */
-    /* 1. Deepened Color Palette using HSL for Better Theming */
+    /* 1. Enhanced Color System with Better Contrast */
     /* -------------------------------------------------- */
-    :root{
-      /* Base HSL Definitions for Honey/Gold (H=38) */
-      --hue-honey: 38;
-      --sat-high: 86%;
-      --light-base: 72%;
-      --light-dark: 8%;
-
-      /* Base Palette */
-      --bg: hsl(var(--hue-honey), 80%, 98%);
-      --bg-soft: hsl(var(--hue-honey), 70%, 95%);
-      --ink: hsl(var(--hue-honey), 30%, 15%);
-      --ink-soft: hsla(var(--hue-honey), 30%, 15%, .72);
-
-      --accent: hsl(var(--hue-honey), var(--sat-high), 60%); /* Adjusted base lightness */
-      --accent-soft: hsl(var(--hue-honey), 90%, 90%);
-      --accent-strong: hsl(var(--hue-honey), 90%, 50%); /* Deeper gold */
-
-      --sage: #7aa06e;
-      --sage-soft: #e9f4e6;
-
-      --card-bg: #ffffff;
-      --card-radius: 26px;
-
-      --border-soft: rgba(0,0,0,.06);
-      --border-mid: rgba(0,0,0,.12);
-
-      --shadow-soft:0 26px 70px rgba(0,0,0,.14);
-      --shadow-subtle:0 12px 34px rgba(0,0,0,.10);
-      --shadow-tiny:0 3px 10px rgba(0,0,0,.10);
-
-      --transition-fast:.16s ease-out;
-      --transition-med:.26s cubic-bezier(.2,.8,.2,1);
-
-      --page-max-width:1120px;
-      --page-padding-inline:1.5rem; /* Using logical properties */
-      --page-padding-block:1.6rem;
-
-      --touch-min:44px;
-      --touch-padding:.75rem;
-
-      /* Fonts */
-      --font-body:"Nunito",system-ui,-apple-system,BlinkMacSystemFont,"Segoe UI",sans-serif;
-      --font-title:"Playfair Display","Georgia",serif;
-      --font-hand:"Patrick Hand",cursive;
-
-      /* Hero image treatment */
-      --hero-img-url: url("Images/Characters/Gunnar.png");
-      --hero-vignette: radial-gradient(circle at 50% 35%, rgba(255,255,255,.10) 0, rgba(0,0,0,.22) 68%, rgba(0,0,0,.44) 100%);
-      --hero-warmwash: linear-gradient(135deg, rgba(255,221,170,.24), rgba(255,150,70,.08));
-
-      /* Paper texture */
-      --paper:
-        radial-gradient(circle at 10% 10%, rgba(255,255,255,.55), transparent 45%),
-        radial-gradient(circle at 90% 15%, rgba(255,255,255,.45), transparent 40%),
-        linear-gradient(180deg, rgba(255,255,255,.55), rgba(255,255,255,0));
-
-      --grain-opacity:.08;
-      --reading-progress-height: 4px;
+    :root {
+      /* Primary Colors */
+      --primary-honey: #f4a944;
+      --primary-honey-light: #f8c47c;
+      --primary-honey-dark: #d68c1a;
+      --primary-sage: #7aa06e;
+      --primary-cream: #fff9f0;
+      
+      /* Background & Text */
+      --bg-primary: var(--primary-cream);
+      --bg-secondary: #fff5e6;
+      --text-primary: #2c1810;
+      --text-secondary: #5a4a3a;
+      --text-light: #8a7a6a;
+      
+      /* UI Elements */
+      --border-color: rgba(212, 167, 104, 0.3);
+      --shadow-soft: 0 8px 32px rgba(244, 169, 68, 0.12);
+      --shadow-medium: 0 12px 40px rgba(244, 169, 68, 0.2);
+      --shadow-heavy: 0 20px 60px rgba(0, 0, 0, 0.15);
+      
+      /* Interactive States */
+      --hover-brightness: 1.1;
+      --active-scale: 0.98;
+      
+      /* Transitions */
+      --transition-fast: 120ms cubic-bezier(0.4, 0, 0.2, 1);
+      --transition-medium: 250ms cubic-bezier(0.4, 0, 0.2, 1);
+      --transition-slow: 400ms cubic-bezier(0.4, 0, 0.2, 1);
+      
+      /* Layout */
+      --container-max: 1200px;
+      --container-padding: 2rem;
+      --section-spacing: 4rem;
+      --card-radius: 24px;
+      --button-radius: 12px;
+      
+      /* Typography */
+      --font-heading: 'Playfair Display', serif;
+      --font-body: 'Nunito', sans-serif;
+      --font-hand: 'Patrick Hand', cursive;
     }
 
-    :root[data-theme="dark"]{
-      --bg: hsl(var(--hue-honey), 30%, var(--light-dark));
-      --bg-soft: hsl(var(--hue-honey), 40%, calc(var(--light-dark) + 5%));
-      --ink: hsl(var(--hue-honey), 70%, 90%);
-      --ink-soft: hsla(var(--hue-honey), 70%, 90%, .72);
+    @media (max-width: 768px) {
+      :root {
+        --container-padding: 1.25rem;
+        --section-spacing: 2.5rem;
+      }
+    }
 
-      --card-bg: hsla(var(--hue-honey), 20%, 12%, .92);
-      --border-soft: rgba(255,255,255,.08);
-      --border-mid: rgba(255,255,255,.14);
-
-      --shadow-soft:0 26px 70px rgba(0,0,0,.52);
-      --shadow-subtle:0 12px 34px rgba(0,0,0,.44);
-      --shadow-tiny:0 3px 10px rgba(0,0,0,.38);
-
-      --paper:
-        radial-gradient(circle at 10% 10%, rgba(255,255,255,.10), transparent 45%),
-        radial-gradient(circle at 90% 15%, rgba(255,255,255,.09), transparent 40%),
-        linear-gradient(180deg, rgba(255,255,255,.06), rgba(255,255,255,0));
-
-      --grain-opacity:.10;
+    /* Dark Theme */
+    [data-theme="dark"] {
+      --bg-primary: #1a1208;
+      --bg-secondary: #241a0e;
+      --text-primary: #f5e9d8;
+      --text-secondary: #d4c7b4;
+      --text-light: #a89984;
+      --border-color: rgba(212, 167, 104, 0.2);
+      --shadow-soft: 0 8px 32px rgba(0, 0, 0, 0.3);
+      --shadow-medium: 0 12px 40px rgba(0, 0, 0, 0.4);
     }
 
     /* -------------------------------------------------- */
-    /* 2. Base & Utility Improvements */
+    /* 2. Base & Reset */
     /* -------------------------------------------------- */
-    *,*::before,*::after{box-sizing:border-box}
-    html,body{margin:0;padding:0;scroll-behavior: smooth;} /* Added smooth scroll */
-    body{
-      min-height:100vh;
-      font-family:var(--font-body);
-      color:var(--ink);
-      background:
-        radial-gradient(circle at top, hsl(38, 70%, 80%, .72) 0, hsl(38, 80%, 90%, .55) 35%, var(--bg) 72%),
-        linear-gradient(180deg, var(--bg-soft), var(--bg));
-      -webkit-font-smoothing:antialiased;
-      padding-inline: env(safe-area-inset-left, 1rem) env(safe-area-inset-right, 1rem); /* Using logical properties */
-      padding-block-start:env(safe-area-inset-top, 0);
-      padding-block-end:env(safe-area-inset-bottom, 0);
-      overflow-x:hidden;
+    *, *::before, *::after {
+      box-sizing: border-box;
+      margin: 0;
+      padding: 0;
     }
 
-    /* Input Focus: Use :has() for a better focus state */
-    .form-field:has(:focus-visible), .clickable-character:focus-visible{
-      outline:3px solid color-mix(in srgb, var(--accent-strong) 70%, white 30%);
-      outline-offset:3px;
-      border-radius:14px;
+    html {
+      scroll-behavior: smooth;
+      scroll-padding-top: 80px;
+    }
+
+    body {
+      font-family: var(--font-body);
+      color: var(--text-primary);
+      background: var(--bg-primary);
+      line-height: 1.6;
+      min-height: 100vh;
+      overflow-x: hidden;
+      transition: background-color var(--transition-medium);
     }
 
     /* -------------------------------------------------- */
-    /* 3. Hero Parallax Preparation */
+    /* 3. Enhanced Typography */
     /* -------------------------------------------------- */
-    .hero-image-container{
-      position:relative;width:100%;
-      height:min(60vh, 540px);
-      overflow:hidden;
-      background:#000;
-      /* Custom property for JS parallax */
-      --scroll-translate: 0px;
+    h1, h2, h3, h4 {
+      font-family: var(--font-heading);
+      font-weight: 700;
+      line-height: 1.2;
+      margin-bottom: 1rem;
     }
 
-    .hero-image-container::before{
-      content:"";
-      position:absolute;inset:-36px;
-      background-image:var(--hero-img-url);
-      background-size:cover;
-      background-position:center 30%;
-      filter: blur(18px) saturate(1.06) contrast(1.06);
-      transform: scale(1.10) translateY(var(--scroll-translate)); /* Linked to JS scroll */
-      opacity:.62;
-      z-index:0;
-      transition: transform 0.1s linear; /* Smooth micro-movements */
-    }
-    .cloud-layer{
-      /* ... existing styles ... */
-      transform: translateY(var(--cloud-translate, 0)); /* Linked to JS scroll */
-      transition: transform 0.1s linear;
+    h1 {
+      font-size: clamp(2.5rem, 5vw, 4rem);
+      background: linear-gradient(135deg, var(--primary-honey), var(--primary-honey-dark));
+      -webkit-background-clip: text;
+      -webkit-text-fill-color: transparent;
+      background-clip: text;
     }
 
-    /* -------------------------------------------------- */
-    /* 4. Reading Progress Bar */
-    /* -------------------------------------------------- */
-    #readingProgressBar {
-      position: fixed;
-      top: 0; left: 0;
-      height: var(--reading-progress-height);
-      width: 0%;
-      background: linear-gradient(90deg, #f4b944, #f97316);
-      z-index: 100;
-      transition: width 0.1s linear;
-      box-shadow: 0 0 8px rgba(244,185,68,.7);
+    h2 {
+      font-size: clamp(2rem, 4vw, 3rem);
+    }
+
+    h3 {
+      font-size: clamp(1.5rem, 3vw, 2rem);
+    }
+
+    p {
+      margin-bottom: 1.5rem;
+      color: var(--text-secondary);
     }
 
     /* -------------------------------------------------- */
-    /* 5. Character Dialogue Panel */
+    /* 4. Enhanced Interactive Components */
     /* -------------------------------------------------- */
-    #dialogueBox {
-      position: fixed;
-      bottom: 0; left: 0; right: 0;
-      max-width: 480px;
-      margin: 0 auto 1.5rem;
-      padding: 1rem 1.25rem;
-      background: linear-gradient(135deg, #fff7dd, #ffe4b2);
-      color: var(--ink);
-      border-radius: 18px;
-      box-shadow: 0 10px 30px rgba(0,0,0,.2);
-      border: 2px solid var(--accent-strong);
-      font-family: var(--font-hand);
-      font-size: 1.05rem;
-      line-height: 1.4;
-      z-index: 50;
-      transform: translateY(150%);
+    .btn {
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+      gap: 0.75rem;
+      padding: 1rem 2rem;
+      font-family: var(--font-body);
+      font-weight: 600;
+      font-size: 1.1rem;
+      border: none;
+      border-radius: var(--button-radius);
+      cursor: pointer;
+      transition: all var(--transition-medium);
+      text-decoration: none;
+      position: relative;
+      overflow: hidden;
+    }
+
+    .btn::after {
+      content: '';
+      position: absolute;
+      top: 50%;
+      left: 50%;
+      width: 5px;
+      height: 5px;
+      background: rgba(255, 255, 255, 0.5);
       opacity: 0;
-      transition: transform var(--transition-med), opacity var(--transition-med);
+      border-radius: 100%;
+      transform: scale(1, 1) translate(-50%);
+      transform-origin: 50% 50%;
+    }
+
+    .btn:focus:not(:active)::after {
+      animation: ripple 1s ease-out;
+    }
+
+    @keyframes ripple {
+      0% {
+        transform: scale(0, 0);
+        opacity: 0.5;
+      }
+      100% {
+        transform: scale(40, 40);
+        opacity: 0;
+      }
+    }
+
+    .btn-primary {
+      background: linear-gradient(135deg, var(--primary-honey), var(--primary-honey-dark));
+      color: white;
+      box-shadow: var(--shadow-medium);
+    }
+
+    .btn-primary:hover {
+      transform: translateY(-2px);
+      box-shadow: var(--shadow-heavy);
+      filter: brightness(var(--hover-brightness));
+    }
+
+    .btn-primary:active {
+      transform: translateY(0) scale(var(--active-scale));
+    }
+
+    .btn-secondary {
+      background: transparent;
+      color: var(--primary-honey);
+      border: 2px solid var(--primary-honey);
+    }
+
+    .btn-secondary:hover {
+      background: var(--primary-honey);
+      color: white;
+      transform: translateY(-2px);
+    }
+
+    /* -------------------------------------------------- */
+    /* 5. Enhanced Navigation */
+    /* -------------------------------------------------- */
+    .topbar {
+      position: sticky;
+      top: 0;
+      z-index: 1000;
+      background: rgba(255, 249, 240, 0.95);
+      backdrop-filter: blur(10px);
+      border-bottom: 1px solid var(--border-color);
+      padding: 1rem 0;
+      transition: all var(--transition-medium);
+    }
+
+    [data-theme="dark"] .topbar {
+      background: rgba(26, 18, 8, 0.95);
+    }
+
+    .topbar-inner {
+      max-width: var(--container-max);
+      margin: 0 auto;
+      padding: 0 var(--container-padding);
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+    }
+
+    .brandmark {
+      display: flex;
+      align-items: center;
+      gap: 1rem;
+      text-decoration: none;
+    }
+
+    .brand-badge {
+      width: 40px;
+      height: 40px;
+      background: var(--primary-honey);
+      border-radius: 50%;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-size: 1.5rem;
+      animation: float 6s ease-in-out infinite;
+    }
+
+    @keyframes float {
+      0%, 100% { transform: translateY(0); }
+      50% { transform: translateY(-10px); }
+    }
+
+    .topbar-actions {
+      display: flex;
+      gap: 1rem;
+    }
+
+    .chip {
+      display: flex;
+      align-items: center;
+      gap: 0.5rem;
+      padding: 0.75rem 1.25rem;
+      background: rgba(244, 169, 68, 0.1);
+      border: 1px solid var(--border-color);
+      border-radius: 50px;
+      font-family: var(--font-body);
+      font-weight: 600;
+      color: var(--text-primary);
+      cursor: pointer;
+      transition: all var(--transition-fast);
+      text-decoration: none;
+    }
+
+    .chip:hover {
+      background: rgba(244, 169, 68, 0.2);
+      transform: translateY(-2px);
+    }
+
+    /* -------------------------------------------------- */
+    /* 6. Enhanced Hero Section */
+    /* -------------------------------------------------- */
+    .hero {
+      position: relative;
+      padding: 4rem 0;
+      overflow: hidden;
+    }
+
+    .hero::before {
+      content: '';
+      position: absolute;
+      top: 0;
+      left: 0;
+      right: 0;
+      bottom: 0;
+      background: radial-gradient(circle at 20% 80%, rgba(244, 169, 68, 0.15) 0%, transparent 50%),
+                  radial-gradient(circle at 80% 20%, rgba(122, 160, 110, 0.1) 0%, transparent 50%);
       pointer-events: none;
     }
 
-    #dialogueBox.active {
-      transform: translateY(0);
-      opacity: 1;
-      pointer-events: auto;
+    .hero-content {
+      max-width: var(--container-max);
+      margin: 0 auto;
+      padding: 0 var(--container-padding);
+      text-align: center;
+      position: relative;
+      z-index: 1;
     }
 
-    #dialogueBox .speaker-name {
+    .hero-subtitle {
+      font-size: 1.25rem;
+      color: var(--text-light);
+      margin-bottom: 2rem;
+      max-width: 600px;
+      margin-left: auto;
+      margin-right: auto;
+    }
+
+    /* -------------------------------------------------- */
+    /* 7. Enhanced Chapter Navigation */
+    /* -------------------------------------------------- */
+    .chapter-tracker {
+      position: sticky;
+      top: 80px;
+      z-index: 100;
+      background: var(--bg-primary);
+      padding: 1.5rem 0;
+      border-bottom: 1px solid var(--border-color);
+      margin-bottom: 2rem;
+    }
+
+    .chapter-pill-row {
+      display: flex;
+      gap: 1rem;
+      overflow-x: auto;
+      padding: 1rem 0;
+      scrollbar-width: none;
+      -ms-overflow-style: none;
+    }
+
+    .chapter-pill-row::-webkit-scrollbar {
+      display: none;
+    }
+
+    .chapter-pill {
+      flex: 0 0 auto;
+      display: flex;
+      align-items: center;
+      gap: 1rem;
+      padding: 1.25rem 1.5rem;
+      background: var(--bg-secondary);
+      border: 2px solid transparent;
+      border-radius: var(--card-radius);
+      cursor: pointer;
+      transition: all var(--transition-medium);
+      min-width: 250px;
+    }
+
+    .chapter-pill:hover {
+      transform: translateY(-4px);
+      box-shadow: var(--shadow-medium);
+      border-color: var(--primary-honey);
+    }
+
+    .chapter-pill.active {
+      background: linear-gradient(135deg, var(--primary-honey-light), var(--primary-honey));
+      border-color: var(--primary-honey);
+      color: white;
+    }
+
+    .chapter-pill.active .pill-number {
+      background: white;
+      color: var(--primary-honey);
+    }
+
+    .pill-number {
+      width: 36px;
+      height: 36px;
+      background: var(--primary-honey);
+      border-radius: 50%;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-weight: 700;
+      color: white;
+      transition: all var(--transition-medium);
+    }
+
+    /* -------------------------------------------------- */
+    /* 8. Enhanced Story Pages */
+    /* -------------------------------------------------- */
+    .book-container {
+      max-width: var(--container-max);
+      margin: 0 auto;
+      padding: 0 var(--container-padding);
+    }
+
+    .page {
+      display: none;
+      animation: fadeIn var(--transition-medium);
+    }
+
+    .page.active {
       display: block;
-      font-weight: 800;
-      margin-top: .4rem;
-      font-size: .85rem;
-      opacity: .85;
-      color: #b45309;
+    }
+
+    @keyframes fadeIn {
+      from { opacity: 0; transform: translateY(20px); }
+      to { opacity: 1; transform: translateY(0); }
+    }
+
+    .chapter-header {
+      text-align: center;
+      margin-bottom: 3rem;
+      padding-bottom: 2rem;
+      border-bottom: 2px solid var(--border-color);
+      position: relative;
+    }
+
+    .chapter-header::after {
+      content: '';
+      position: absolute;
+      bottom: -2px;
+      left: 50%;
+      transform: translateX(-50%);
+      width: 100px;
+      height: 4px;
+      background: var(--primary-honey);
+      border-radius: 2px;
+    }
+
+    .page-content {
+      background: var(--bg-secondary);
+      border-radius: var(--card-radius);
+      padding: 3rem;
+      box-shadow: var(--shadow-soft);
+      margin-bottom: 2rem;
     }
 
     /* -------------------------------------------------- */
-    /* 6. Navigation Enhancements */
+    /* 9. Enhanced Character Interactions */
     /* -------------------------------------------------- */
-    .chapter-nav-btn[disabled]{
-      opacity:.5;
-      cursor:not-allowed;
-      transform:translateY(0) !important;
-      box-shadow:none !important;
+    .clickable-character {
+      cursor: pointer;
+      transition: all var(--transition-medium);
+      background: var(--bg-primary);
+      border-radius: var(--card-radius);
+      padding: 1.5rem;
+      border: 2px solid transparent;
     }
-    .chapter-pill-row{
-      /* Enable smooth scrolling inside the pill row when active pill changes */
-      scroll-behavior: smooth;
+
+    .clickable-character:hover {
+      transform: translateY(-8px) scale(1.02);
+      box-shadow: var(--shadow-heavy);
+      border-color: var(--primary-honey);
+    }
+
+    .clickable-character:active {
+      transform: translateY(-4px) scale(0.98);
+    }
+
+    .character-image {
+      width: 120px;
+      height: 120px;
+      border-radius: 50%;
+      object-fit: cover;
+      margin-bottom: 1rem;
+      border: 4px solid var(--primary-honey);
     }
 
     /* -------------------------------------------------- */
-    /* Existing Styles Retained & Minimal Adjustments */
+    /* 10. Enhanced Forms */
     /* -------------------------------------------------- */
-    .pages-wrapper{position:relative;padding-block:var(--page-padding-block);padding-inline:var(--page-padding-inline);}
-    .topbar-inner{padding-inline: max(var(--page-padding-inline), env(safe-area-inset-left, 1rem)) max(var(--page-padding-inline), env(safe-area-inset-right, 1rem));}
-    .masthead-hero-inner{padding-inline: max(var(--page-padding-inline), env(safe-area-inset-left, 1rem)) max(var(--page-padding-inline), env(safe-area-inset-right, 1rem));}
-    .book-container{padding-inline: max(var(--page-padding-inline), env(safe-area-inset-left, 1rem)) max(var(--page-padding-inline), env(safe-area-inset-right, 1rem));}
-
-    @media (max-width:768px){
-      .book-container{padding-inline:1rem}
-      .pages-wrapper{padding-inline:1rem}
-      .topbar-inner{padding-inline:1rem}
+    .form-field {
+      margin-bottom: 2rem;
     }
+
+    .form-field label {
+      display: block;
+      margin-bottom: 0.5rem;
+      font-weight: 600;
+      color: var(--text-primary);
+    }
+
+    .form-field input,
+    .form-field select,
+    .form-field textarea {
+      width: 100%;
+      padding: 1rem;
+      font-family: var(--font-body);
+      font-size: 1rem;
+      border: 2px solid var(--border-color);
+      border-radius: var(--button-radius);
+      background: var(--bg-primary);
+      color: var(--text-primary);
+      transition: all var(--transition-fast);
+    }
+
+    .form-field input:focus,
+    .form-field select:focus,
+    .form-field textarea:focus {
+      outline: none;
+      border-color: var(--primary-honey);
+      box-shadow: 0 0 0 3px rgba(244, 169, 68, 0.1);
+    }
+
+    .form-field input:hover,
+    .form-field select:hover,
+    .form-field textarea:hover {
+      border-color: var(--primary-honey-light);
+    }
+
+    .submit-btn {
+      width: 100%;
+      margin-top: 1rem;
+    }
+
+    .submit-btn:disabled {
+      opacity: 0.6;
+      cursor: not-allowed;
+      transform: none !important;
+    }
+
+    /* -------------------------------------------------- */
+    /* 11. Enhanced Notifications & Feedback */
+    /* -------------------------------------------------- */
+    .toast {
+      position: fixed;
+      bottom: 2rem;
+      left: 50%;
+      transform: translateX(-50%) translateY(100px);
+      background: var(--text-primary);
+      color: var(--bg-primary);
+      padding: 1rem 2rem;
+      border-radius: var(--button-radius);
+      box-shadow: var(--shadow-heavy);
+      z-index: 9999;
+      opacity: 0;
+      transition: all var(--transition-medium);
+    }
+
+    .toast.show {
+      transform: translateX(-50%) translateY(0);
+      opacity: 1;
+    }
+
+    .dialogue-box {
+      position: fixed;
+      bottom: 2rem;
+      left: 50%;
+      transform: translateX(-50%) translateY(100px);
+      background: var(--bg-primary);
+      border: 2px solid var(--primary-honey);
+      border-radius: var(--card-radius);
+      padding: 1.5rem;
+      max-width: 400px;
+      width: 90%;
+      box-shadow: var(--shadow-heavy);
+      z-index: 999;
+      opacity: 0;
+      transition: all var(--transition-medium);
+    }
+
+    .dialogue-box.show {
+      transform: translateX(-50%) translateY(0);
+      opacity: 1;
+    }
+
+    .dialogue-box .speaker {
+      display: block;
+      font-family: var(--font-hand);
+      color: var(--primary-honey);
+      font-weight: 600;
+      margin-top: 0.5rem;
+      text-align: right;
+    }
+
+    /* -------------------------------------------------- */
+    /* 12. Enhanced Progress Indicators */
+    /* -------------------------------------------------- */
+    .reading-progress {
+      position: fixed;
+      top: 0;
+      left: 0;
+      width: 100%;
+      height: 4px;
+      background: linear-gradient(90deg, var(--primary-honey), var(--primary-sage));
+      transform-origin: 0%;
+      z-index: 9999;
+      transition: transform var(--transition-fast);
+    }
+
+    .page-progress {
+      position: sticky;
+      top: 140px;
+      margin-bottom: 2rem;
+      z-index: 50;
+    }
+
+    .progress-bar {
+      height: 6px;
+      background: var(--border-color);
+      border-radius: 3px;
+      overflow: hidden;
+    }
+
+    .progress-fill {
+      height: 100%;
+      background: linear-gradient(90deg, var(--primary-honey), var(--primary-sage));
+      width: 25%;
+      transition: width var(--transition-medium) cubic-bezier(0.4, 0, 0.2, 1);
+    }
+
+    /* -------------------------------------------------- */
+    /* 13. Enhanced Footer */
+    /* -------------------------------------------------- */
+    .site-footer {
+      background: var(--bg-secondary);
+      padding: 3rem var(--container-padding);
+      margin-top: var(--section-spacing);
+      border-top: 1px solid var(--border-color);
+    }
+
+    .footer-content {
+      max-width: var(--container-max);
+      margin: 0 auto;
+      text-align: center;
+    }
+
+    .footer-links {
+      display: flex;
+      justify-content: center;
+      gap: 2rem;
+      margin-top: 2rem;
+      flex-wrap: wrap;
+    }
+
+    .footer-link {
+      display: inline-flex;
+      align-items: center;
+      gap: 0.5rem;
+      padding: 0.75rem 1.5rem;
+      background: rgba(244, 169, 68, 0.1);
+      border: 1px solid var(--border-color);
+      border-radius: 50px;
+      color: var(--text-primary);
+      text-decoration: none;
+      transition: all var(--transition-fast);
+      cursor: pointer;
+    }
+
+    .footer-link:hover {
+      background: rgba(244, 169, 68, 0.2);
+      transform: translateY(-2px);
+    }
+
+    /* -------------------------------------------------- */
+    /* 14. Responsive Design */
+    /* -------------------------------------------------- */
+    @media (max-width: 768px) {
+      .topbar-actions {
+        gap: 0.5rem;
+      }
+      
+      .chip {
+        padding: 0.5rem 1rem;
+        font-size: 0.9rem;
+      }
+      
+      .chapter-pill {
+        min-width: 200px;
+      }
+      
+      .page-content {
+        padding: 1.5rem;
+      }
+      
+      .footer-links {
+        flex-direction: column;
+        align-items: center;
+        gap: 1rem;
+      }
+    }
+
+    @media (max-width: 480px) {
+      .topbar-inner {
+        flex-direction: column;
+        gap: 1rem;
+      }
+      
+      .chapter-pill {
+        min-width: 150px;
+        padding: 1rem;
+      }
+      
+      .pill-text {
+        font-size: 0.9rem;
+      }
+    }
+
+    /* -------------------------------------------------- */
+    /* 15. Loading States */
+    /* -------------------------------------------------- */
+    .loading {
+      position: relative;
+      pointer-events: none;
+      opacity: 0.7;
+    }
+
+    .loading::after {
+      content: '';
+      position: absolute;
+      top: 50%;
+      left: 50%;
+      width: 24px;
+      height: 24px;
+      margin: -12px 0 0 -12px;
+      border: 3px solid var(--border-color);
+      border-top-color: var(--primary-honey);
+      border-radius: 50%;
+      animation: spin 1s linear infinite;
+    }
+
+    @keyframes spin {
+      to { transform: rotate(360deg); }
+    }
+
+    /* -------------------------------------------------- */
+    /* 16. Focus States (Accessibility) */
+    /* -------------------------------------------------- */
+    :focus-visible {
+      outline: 3px solid var(--primary-honey);
+      outline-offset: 2px;
+      border-radius: 4px;
+    }
+
+    /* -------------------------------------------------- */
+    /* 17. Utility Classes */
+    /* -------------------------------------------------- */
+    .sr-only {
+      position: absolute;
+      width: 1px;
+      height: 1px;
+      padding: 0;
+      margin: -1px;
+      overflow: hidden;
+      clip: rect(0, 0, 0, 0);
+      white-space: nowrap;
+      border: 0;
+    }
+
+    .text-center {
+      text-align: center;
+    }
+
+    .mt-1 { margin-top: 0.5rem; }
+    .mt-2 { margin-top: 1rem; }
+    .mt-3 { margin-top: 2rem; }
+    .mt-4 { margin-top: 3rem; }
+
+    .mb-1 { margin-bottom: 0.5rem; }
+    .mb-2 { margin-bottom: 1rem; }
+    .mb-3 { margin-bottom: 2rem; }
+    .mb-4 { margin-bottom: 3rem; }
+
+    /* -------------------------------------------------- */
+    /* 18. Animation Delays */
+    /* -------------------------------------------------- */
+    .delay-1 { animation-delay: 100ms; }
+    .delay-2 { animation-delay: 200ms; }
+    .delay-3 { animation-delay: 300ms; }
+    .delay-4 { animation-delay: 400ms; }
   </style>
 </head>
 
 <body>
-  <div id="readingProgressBar"></div> <div aria-hidden="true" class="enhanced-scene" id="enhancedScene"></div>
-  <div aria-hidden="true" class="cloud-layer">
-    <div class="cloud">☁️</div>
-    <div class="cloud">☁️</div>
-    <div class="cloud">☁️</div>
-  </div>
+  <!-- Reading Progress Bar -->
+  <div class="reading-progress" id="readingProgress"></div>
 
-  <div class="topbar" role="banner">
+  <!-- Top Navigation -->
+  <nav class="topbar">
     <div class="topbar-inner">
-      <div class="brandmark" aria-label="Baby Gunnar's Hundred Acre Wood">
-        <div class="brand-badge" aria-hidden="true">🍯</div>
-        <div class="brand-title">
-          <strong>Baby <span class="gunnar-shine">Gunnar</span></strong>
-          <span>Hundred Acre Wood Shower</span>
+      <a href="#" class="brandmark">
+        <div class="brand-badge">🍯</div>
+        <div>
+          <strong>Baby Gunnar</strong>
+          <div style="font-size: 0.9rem; color: var(--text-light);">Hundred Acre Wood</div>
         </div>
-      </div>
+      </a>
       <div class="topbar-actions">
-        <button class="chip" id="themeBtn" type="button" aria-label="Toggle theme">
-          <span class="mini" aria-hidden="true">🌓</span> Theme
+        <button class="chip" id="themeToggle" aria-label="Toggle theme">
+          <span>🌓</span> Theme
         </button>
-        <button class="chip" id="jumpStoryBtn" type="button">
-          <span class="mini" aria-hidden="true">📖</span> Story
+        <button class="chip" id="scrollToStory">
+          <span>📖</span> Story
         </button>
-        <a class="chip" href="game.html" rel="noopener">
-          <span class="mini" aria-hidden="true">🎮</span> Game
+        <a class="chip" href="game.html">
+          <span>🎮</span> Game
         </a>
       </div>
     </div>
+  </nav>
+
+  <!-- Hero Section -->
+  <section class="hero">
+    <div class="hero-content">
+      <h1>Welcome to Baby Gunnar's Adventure</h1>
+      <p class="hero-subtitle">
+        A storybook celebration with Pooh & friends in the Hundred Acre Wood
+      </p>
+      <div style="display: flex; gap: 1rem; justify-content: center; margin-top: 2rem;">
+        <a href="game.html" class="btn btn-primary">
+          <span>🎮</span> Start Adventure
+        </a>
+        <button class="btn btn-secondary" onclick="scrollToChapter(1)">
+          <span>📖</span> Read Story
+        </button>
+      </div>
+    </div>
+  </section>
+
+  <!-- Chapter Tracker -->
+  <div class="chapter-tracker">
+    <div class="page-progress">
+      <div class="progress-bar">
+        <div class="progress-fill" id="chapterProgress"></div>
+      </div>
+    </div>
+    <div class="chapter-pill-row">
+      <button class="chapter-pill active" data-chapter="1">
+        <span class="pill-number">1</span>
+        <div class="pill-text">
+          <strong>Welcome</strong>
+          <div>Start the journey</div>
+        </div>
+      </button>
+      <button class="chapter-pill" data-chapter="2">
+        <span class="pill-number">2</span>
+        <div class="pill-text">
+          <strong>Adventure</strong>
+          <div>Play the game</div>
+        </div>
+      </button>
+      <button class="chapter-pill" data-chapter="3">
+        <span class="pill-number">3</span>
+        <div class="pill-text">
+          <strong>Wishes</strong>
+          <div>Share your love</div>
+        </div>
+      </button>
+      <button class="chapter-pill" data-chapter="4">
+        <span class="pill-number">4</span>
+        <div class="pill-text">
+          <strong>Finale</strong>
+          <div>Celebrate together</div>
+        </div>
+      </button>
+    </div>
   </div>
 
-  <header class="masthead-hero hero-enhancements">
-    <div class="hero-banner">
-      <div class="hero-image-container">
-        <picture>
-          <source sizes="100vw" srcset="Images/Characters/Gunnar.png 800w, Images/Characters/Gunnar.png 1200w, Images/Characters/Gunnar.png 1600w">
-          <img
-            class="hero-banner__img"
-            src="Images/Characters/Gunnar.png"
-            alt="Baby Gunnar with Hundred Acre Wood friends in the Hundred Acre Wood"
-            width="1600"
-            height="900"
-            loading="eager"
-            decoding="async"
-          />
-        </picture>
-        <div class="hero-frame" aria-hidden="true"></div>
-        <div aria-hidden="true" class="hero-corner-decoration top-left">🌿</div>
-        <div aria-hidden="true" class="hero-corner-decoration top-right">🍯</div>
-        <div aria-hidden="true" class="hero-corner-decoration bottom-left">💛</div>
-        <div aria-hidden="true" class="hero-corner-decoration bottom-right">🐝</div>
-
-        <div class="hero-title-container">
-          <div class="title-background">
-            <h1 class="masthead-title">
-              <span class="title-line title-line--primary">Baby <span class="gunnar-shine">Gunnar</span>'s</span>
-              <span class="title-line title-line--secondary">Hundred Acre Wood Shower</span>
-            </h1>
-            <div aria-hidden="true" class="title-underline">
-              <span class="underline-dot">•</span><span class="underline-dot">•</span><span class="underline-dot">•</span>
-            </div>
-            <p class="hero-subtitle">A storybook celebration with Pooh &amp; friends</p>
+  <!-- Main Content -->
+  <main class="book-container">
+    <!-- Chapter 1 -->
+    <article class="page active" data-chapter="1" id="chapter1">
+      <header class="chapter-header">
+        <h2>A Special Day in the Wood</h2>
+        <p>Welcome to Baby Gunnar's Hundred Acre Wood celebration</p>
+      </header>
+      <div class="page-content">
+        <p>One fine day, in a corner of the Hundred Acre Wood where the sun shines warmly through the trees and the flowers bloom in cheerful colors, something wonderful was happening.</p>
+        <p>It was the very best sort of celebration—the kind that welcomes a new little friend to the world.</p>
+        
+        <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(200px, 1fr)); gap: 2rem; margin: 3rem 0;">
+          <div class="clickable-character" data-character="pooh">
+            <img src="Images/Characters/honey-bear.png" alt="Pooh" class="character-image">
+            <h4>Pooh Bear</h4>
+            <p>"A baby celebration needs extra honey," he whispered.</p>
           </div>
-        </div>
-      </div>
-
-      <div aria-hidden="true" class="hero-sparkles" id="heroSparkles"></div>
-      <div aria-hidden="true" class="hero-sheen"></div>
-    </div>
-
-    <div aria-hidden="true" class="hero-bunting">
-      <span>✨</span><span>🎈</span><span>🍯</span><span>💝</span><span>🧸</span><span>📖</span><span>✨</span>
-    </div>
-
-    <div class="masthead-hero-inner">
-      <section class="hero-panel">
-        <div class="hero-badge">
-          <div aria-hidden="true" class="badge-icon">
-            <div class="badge-icon-inner">🎉</div>
-          </div>
-          <div class="badge-copy">
-            <p class="badge-eyebrow">A Very Special</p>
-            <p class="badge-label">Hundred Acre Gathering</p>
-            <p class="badge-title">Virtual Baby Shower Celebration</p>
-          </div>
-          <div class="badge-meta">
-            <div class="badge-pill date" aria-label="Event date">
-              <span aria-hidden="true" class="pill-icon">📅</span>
-              <span class="pill-text">Date: TBD</span>
-            </div>
-            <div class="badge-pill location">
-              <span aria-hidden="true" class="pill-icon">📍</span>
-              <span class="pill-text">Online Celebration</span>
-            </div>
+          <div class="clickable-character" data-character="piglet">
+            <img src="Images/Characters/piglet.png" alt="Piglet" class="character-image">
+            <h4>Piglet</h4>
+            <p>Making sure every friend feels warmly invited.</p>
           </div>
         </div>
 
-        <div class="hero-details-grid" aria-label="How this works">
-          <button class="hero-detail" type="button" onclick="scrollToChapter(1)">
-            <div aria-hidden="true" class="detail-icon">①</div>
-            <div class="detail-content">
-              <h4 class="detail-title">Read the Short Story</h4>
-              <p class="detail-text">A quick, cozy intro in this page</p>
-            </div>
-          </button>
-
-          <a class="hero-detail" href="game.html" rel="noopener">
-            <div aria-hidden="true" class="detail-icon">②</div>
-            <div class="detail-content">
-              <h4 class="detail-title">Play the Full Adventure</h4>
-              <p class="detail-text">The complete experience is in <strong>game.html</strong></p>
-            </div>
+        <div style="text-align: center; margin-top: 3rem;">
+          <a href="game.html" class="btn btn-primary" style="padding: 1.25rem 3rem;">
+            <span>🎮</span> Launch Full Adventure
           </a>
+          <p style="margin-top: 1rem; color: var(--text-light); font-size: 0.9rem;">
+            Tip: Play the game first, then return to leave your wish
+          </p>
+        </div>
+      </div>
+    </article>
 
-          <button class="hero-detail" type="button" onclick="location.hash='#registry'; scrollToChapter(3)">
-            <div aria-hidden="true" class="detail-icon">③</div>
-            <div class="detail-content">
-              <h4 class="detail-title">Leave a Wish</h4>
-              <p class="detail-text">Add a note for <span class="gunnar-shine">Gunnar</span>’s storybook</p>
+    <!-- Chapter 2 -->
+    <article class="page" data-chapter="2" id="chapter2">
+      <header class="chapter-header">
+        <h2>The Full Adventure</h2>
+        <p>Experience the complete interactive story</p>
+      </header>
+      <div class="page-content">
+        <p>This page is the cozy storybook + guestbook for Baby Gunnar's shower. The full interactive Hundred Acre adventure (the whole experience) is in game.html.</p>
+        
+        <div style="background: var(--bg-primary); padding: 2rem; border-radius: var(--card-radius); margin: 2rem 0; border: 2px dashed var(--primary-honey);">
+          <h3 style="text-align: center; margin-bottom: 1.5rem;">🎮 Ready to Play?</h3>
+          <div style="display: flex; gap: 1rem; justify-content: center; flex-wrap: wrap;">
+            <a href="game.html" class="btn btn-primary">
+              <span>🚀</span> Launch Game
+            </a>
+            <button class="btn btn-secondary" id="copyGameLink">
+              <span>📋</span> Copy Link
+            </button>
+            <button class="btn btn-secondary" onclick="scrollToChapter(3)">
+              <span>💝</span> Skip to Wishes
+            </button>
+          </div>
+        </div>
+      </div>
+    </article>
+
+    <!-- Chapter 3 -->
+    <article class="page" data-chapter="3" id="chapter3">
+      <header class="chapter-header">
+        <h2>Share Your Wishes</h2>
+        <p>Leave a message for Baby Gunnar's storybook</p>
+      </header>
+      <div class="page-content">
+        <form id="wishForm" class="wish-form">
+          <div class="form-field">
+            <label for="name">Your Name</label>
+            <input type="text" id="name" placeholder="How should we call you?" required>
+          </div>
+          
+          <div class="form-field">
+            <label for="relation">Your Relation</label>
+            <select id="relation" required>
+              <option value="">Choose...</option>
+              <option value="family">Family</option>
+              <option value="friend">Friend</option>
+              <option value="colleague">Colleague</option>
+              <option value="woodland">Woodland Friend</option>
+            </select>
+          </div>
+          
+          <div class="form-field">
+            <label for="message">Your Message</label>
+            <textarea id="message" rows="4" placeholder="Share your wisdom, wishes, or favorite memories..." maxlength="500" required></textarea>
+            <div style="text-align: right; margin-top: 0.5rem; color: var(--text-light); font-size: 0.9rem;">
+              <span id="charCount">0</span>/500 characters
             </div>
+          </div>
+          
+          <button type="submit" class="btn btn-primary submit-btn">
+            <span>📝</span> Add to Gunnar's Storybook
           </button>
-        </div>
+        </form>
 
-        <div class="hero-actions" role="navigation" aria-label="Primary actions">
-          <a class="hero-action-btn primary" href="game.html" rel="noopener">
-            <span aria-hidden="true" class="btn-icon">🎮</span>
-            <span class="btn-text">Open the Full Adventure (game.html)</span>
-          </a>
-
-          <button class="hero-action-btn secondary" type="button" onclick="location.hash='#registry'; scrollToChapter(3)">
-            <span aria-hidden="true" class="btn-icon">💝</span>
-            <span class="btn-text">Leave a Wish for Gunnar</span>
-          </button>
-        </div>
-
-        <div class="orientation-hint">
-          <div aria-hidden="true" class="hint-icon">🧭</div>
-          <p class="hint-text"><strong>Suggested path:</strong> Play <strong>game.html</strong> first, then return here to read the story and leave your wish.</p>
-        </div>
-      </section>
-    </div>
-  </header>
-
-  <main class="book-container" id="storybook">
-    <nav aria-label="Story path" class="chapter-tracker">
-      <h2 class="sr-only">Story navigation</h2>
-      <div class="tracker-row">
-        <div class="tracker-label">Your path</div>
-        <div class="book-progress" role="progressbar" aria-valuemin="0" aria-valuemax="100" aria-valuenow="0">
-          <div class="progress-fill" id="progressFill" style="width: 25%;"></div>
+        <div id="wishesDisplay" style="margin-top: 3rem;">
+          <h3>Wishes from Friends</h3>
+          <!-- Wishes will appear here -->
         </div>
       </div>
-      <div class="chapter-pill-row">
-        <button class="chapter-pill sparkle active" data-chapter-target="1" type="button" aria-current="page">
-          <span class="pill-number">1</span>
-          <span class="pill-text">
-            <span class="pill-title">Start Here</span>
-            <span class="pill-detail">Welcome + quick steps</span>
-          </span>
-        </button>
-        <button class="chapter-pill sparkle" data-chapter-target="2" type="button">
-          <span class="pill-number">2</span>
-          <span class="pill-text">
-            <span class="pill-title">Full Adventure</span>
-            <span class="pill-detail">Open game.html</span>
-          </span>
-        </button>
-        <button class="chapter-pill sparkle" data-chapter-target="3" type="button">
-          <span class="pill-number">3</span>
-          <span class="pill-text">
-            <span class="pill-title">Registry &amp; Wishes</span>
-            <span class="pill-detail">Gift link + guestbook</span>
-          </span>
-        </button>
-        <button class="chapter-pill sparkle" data-chapter-target="4" type="button">
-          <span class="pill-number">4</span>
-          <span class="pill-text">
-            <span class="pill-title">Final Page</span>
-            <span class="pill-detail">Countdown + honey hopes</span>
-          </span>
-        </button>
-      </div>
-    </nav>
+    </article>
 
-    <div class="book">
-      <div class="pages-wrapper">
-        <article class="page active" data-chapter="1" id="chapter-1">
-          <header class="chapter-header">
-            <p class="chapter-number">Start Here</p>
-            <h2 class="chapter-title">A Special Day in the Hundred Acre Wood</h2>
-            <p class="chapter-subtitle">A cozy welcome for Baby <span class="gunnar-shine">Gunnar</span></p>
-            <span aria-hidden="true" class="honey-drip"></span>
-          </header>
-          <div class="page-content">
-            <p class="story-text">
-              One fine day, in a corner of the Hundred Acre Wood where the sun shines warmly through the trees and the flowers bloom in cheerful colors, something wonderful was happening.
-            </p>
-            <p class="story-text">
-              It was the very best sort of celebration—the kind that welcomes a new little friend to the world. A baby boy named <span class="gunnar-shine">Gunnar</span> James was soon to arrive, and everyone wanted to share in the joy.
-            </p>
-            <div class="chapter-illustrations">
-              <figure class="storybook-figure figure-theme-honey clickable-character" data-character="pooh" tabindex="0" role="button" aria-label="Pooh brings the first pot">
-                <img alt="Winnie the Pooh holding a honey pot" width="96" height="96" loading="eager" decoding="async" src="Images/Characters/honey-bear.png" />
-                <figcaption class="figure-copy">
-                  <div class="figure-name">Pooh brings the first pot</div>
-                  <p class="figure-note">"A baby celebration needs extra honey," he whispered as he dusted off the lid.</p>
-                </figcaption>
-              </figure>
-              <figure class="storybook-figure figure-theme-sky clickable-character" data-character="piglet" tabindex="0" role="button" aria-label="Piglet pins up the banner">
-                <img alt="Piglet carrying a welcome banner" width="96" height="96" loading="eager" decoding="async" src="Images/Characters/piglet.png" />
-                <figcaption class="figure-copy">
-                  <div class="figure-name">Piglet pins up the banner</div>
-                  <p class="figure-note">He fluttered through the clearing making sure every friend felt warmly invited.</p>
-                </figcaption>
-              </figure>
+    <!-- Chapter 4 -->
+    <article class="page" data-chapter="4" id="chapter4">
+      <header class="chapter-header">
+        <h2>The Gathering</h2>
+        <p>Celebrating what's to come</p>
+      </header>
+      <div class="page-content">
+        <p>As the sun began to set over the Hundred Acre Wood, casting long golden shadows through the trees, Pooh and his friends gathered to celebrate.</p>
+        
+        <div style="text-align: center; margin: 3rem 0;">
+          <div class="countdown">
+            <h3>Until We Meet 🐻</h3>
+            <div style="display: flex; justify-content: center; gap: 2rem; margin: 2rem 0;">
+              <div class="countdown-item">
+                <div style="font-size: 3rem; font-weight: 800; color: var(--primary-honey);" id="countdownDays">0</div>
+                <div style="color: var(--text-light);">Days</div>
+              </div>
+              <div class="countdown-item">
+                <div style="font-size: 3rem; font-weight: 800; color: var(--primary-honey);" id="countdownHours">0</div>
+                <div style="color: var(--text-light);">Hours</div>
+              </div>
             </div>
-            <p class="story-text">
-              Pooh, being a Bear of Very Little Brain but a Very Big Heart, knew the most important thing for any celebration was sweetness, laughter, and a little bit of honey.
-            </p>
-            <section class="adventure-callout" aria-label="Quick steps">
-              <div class="adventure-callout-header">
-                <div class="adventure-icon" aria-hidden="true">🧭</div>
-                <div>
-                  <h3>Quick Steps</h3>
-                  <p>Play the full adventure, then come back to leave your wish.</p>
-                </div>
-              </div>
-              <div class="adventure-actions">
-                <a class="btn primary" href="game.html" rel="noopener">
-                  <span aria-hidden="true">🎮</span> Open game.html
-                </a>
-                <button class="btn secondary" type="button" onclick="location.hash='#registry'; scrollToChapter(3)">
-                  <span aria-hidden="true">💝</span> Jump to Wishes
-                </button>
-              </div>
-              <div class="callout-note">
-                Hosting tip: keep <strong>index.html</strong> and <strong>game.html</strong> in the same folder.
-              </div>
-            </section>
-            <div aria-hidden="true" class="divider">🌳 ✿ 🐝 ✿ 🌳</div>
+            <p style="color: var(--text-light);">Expected arrival: <strong id="arrivalDate">Late August</strong></p>
           </div>
-        </article>
-        <article class="page" data-chapter="2" id="adventure">
-          <header class="chapter-header">
-            <p class="chapter-number">Full Adventure</p>
-            <h2 class="chapter-title">The Full Interactive Experience</h2>
-            <p class="chapter-subtitle">Launch <strong>game.html</strong>, then come back for the guestbook</p>
-            <span aria-hidden="true" class="honey-drip"></span>
-          </header>
-          <div class="page-content">
-            <p class="story-text">
-              This page is the cozy storybook + guestbook for Baby <span class="gunnar-shine">Gunnar</span>’s shower.
-              The <strong>full interactive Hundred Acre adventure</strong> (the whole experience) is in <strong>game.html</strong>.
-            </p>
-            <p class="story-text">
-              Tap below to launch it, then come back here to add your wish.
-            </p>
-            <div class="chapter-illustrations">
-              <figure class="storybook-figure figure-theme-forest clickable-character" data-character="tigger" tabindex="0" role="button" aria-label="Tigger stakes out the course">
-                <img alt="Tigger bouncing" width="96" height="96" loading="lazy" decoding="async" src="Images/Characters/tigger.png" />
-                <figcaption class="figure-copy">
-                  <div class="figure-name">Tigger stakes out the course</div>
-                  <p class="figure-note">He marked the path with springy footprints so every moment feels like an adventure.</p>
-                </figcaption>
-              </figure>
-              <figure class="storybook-figure figure-theme-honey clickable-character" data-character="roo" tabindex="0" role="button" aria-label="Roo cheers from the sidelines">
-                <img alt="Roo cheering" width="96" height="96" loading="lazy" decoding="async" src="Images/Characters/roo.png" />
-                <figcaption class="figure-copy">
-                  <div class="figure-name">Roo cheers from the sidelines</div>
-                  <p class="figure-note">"Mind the bees!" he giggled, handing out cozy scarves.</p>
-                </figcaption>
-              </figure>
-            </div>
-            <section class="adventure-callout" aria-label="Open the full adventure in game.html">
-              <div class="adventure-callout-header">
-                <div class="adventure-icon" aria-hidden="true">🍯</div>
-                <div>
-                  <h3>Open the Full Adventure</h3>
-                  <p>Tap below to launch <strong>game.html</strong> (the whole experience).</p>
-                </div>
-              </div>
-              <div class="adventure-actions">
-                <a class="btn primary" href="game.html" rel="noopener">
-                  <span aria-hidden="true">🎮</span> Launch game.html
-                </a>
-                <button class="btn secondary" type="button"
-                  onclick="navigator.clipboard?.writeText(new URL('game.html', location.href).href).then(()=>toast('Game link copied.')).catch(()=>toast('Copy not available.'))">
-                  <span aria-hidden="true">📋</span> Copy game link
-                </button>
-                <button class="btn secondary" type="button" onclick="location.hash='#registry'; scrollToChapter(3)">
-                  <span aria-hidden="true">💝</span> Go to Wishes
-                </button>
-              </div>
-              <div class="callout-note">
-                Tip: Keep <strong>index.html</strong> and <strong>game.html</strong> in the same folder so this works everywhere.
-              </div>
-            </section>
-          </div>
-        </article>
-        <article class="page" data-chapter="3" id="registry">
-          <header class="chapter-header">
-            <p class="chapter-number">Registry &amp; Wishes</p>
-            <h2 class="chapter-title">Gifts from the Heart</h2>
-            <p class="chapter-subtitle">Preparing for Baby <span class="gunnar-shine">Gunnar</span>'s Arrival</p>
-            <span aria-hidden="true" class="honey-drip"></span>
-          </header>
-          <div class="page-content">
-            <section class="story-section">
-              <p class="story-text">
-                Pooh sat thoughtfully by his honey pots. "Honey is wonderful," he mused, "but I wonder what else a growing bear—oh, I mean baby—might need?"
-              </p>
-              <p class="story-text">
-                Piglet came scurrying up, holding something soft. "Perhaps something cozy for chilly evenings?"
-              </p>
-              <div class="dialogue-bubble dialogue-piglet">
-                <div class="bubble-arrow"></div>
-                <p>"Something soft and warm, for when the wind howls!"</p>
-                <span class="speaker">— Piglet</span>
-              </div>
-            </section>
-            <div class="chapter-illustrations">
-              <figure class="storybook-figure figure-theme-forest clickable-character" data-character="piglet" tabindex="0" role="button" aria-label="Piglet's cozy corner">
-                <img alt="Piglet with blanket" width="96" height="96" loading="lazy" decoding="async" src="Images/Characters/piglet.png" />
-                <figcaption class="figure-copy">
-                  <div class="figure-name">Piglet's Cozy Corner</div>
-                  <p class="figure-note">Found the snuggliest blanket in all the Wood.</p>
-                </figcaption>
-              </figure>
-              <figure class="storybook-figure figure-theme-honey clickable-character" data-character="pooh" tabindex="0" role="button" aria-label="Pooh's pondering">
-                <img alt="Pooh thinking" width="96" height="96" loading="lazy" decoding="async" src="Images/Characters/honey-bear.png" />
-                <figcaption class="figure-copy">
-                  <div class="figure-name">Pooh's Pondering</div>
-                  <p class="figure-note">Thinking of practical things (between honey snacks).</p>
-                </figcaption>
-              </figure>
-              <figure class="storybook-figure figure-theme-sky clickable-character" data-character="tigger" tabindex="0" role="button" aria-label="Tigger's toys">
-                <img alt="Tigger bouncing" width="96" height="96" loading="lazy" decoding="async" src="Images/Characters/tigger.png" />
-                <figcaption class="figure-copy">
-                  <div class="figure-name">Tigger's Toys</div>
-                  <p class="figure-note">Bounced in with the bounciest ideas!</p>
-                </figcaption>
-              </figure>
-            </div>
-            <section class="story-section">
-              <p class="story-text">
-                Soon, all the friends gathered with their ideas. Tigger bounced about toys, Eeyore suggested something useful, and Rabbit began making a very organized list.
-              </p>
-              <div class="dialogue-bubble dialogue-pooh">
-                <div class="bubble-arrow"></div>
-                <p>
-                  "The most important thing," said Pooh wisely, "is that Baby <span class="gunnar-shine">Gunnar</span> knows he is surrounded by love."
-                </p>
-                <span class="speaker">— Pooh Bear</span>
-              </div>
-            </section>
-            <div class="registry-container">
-              <aside class="registry-section">
-                <div class="registry-header">
-                  <div aria-hidden="true" class="registry-icon">🎁</div>
-                  <div>
-                    <h3>Baby Gunnar's Registry</h3>
-                    <p class="registry-subtitle">Your presence is the greatest present, but if you'd like to contribute:</p>
-                  </div>
-                </div>
-                <div class="registry-grid">
-                  <a class="registry-card" href="https://my.babylist.com/lea-hardesty" rel="noopener" target="_blank">
-                    <div class="card-icon">🎯</div>
-                    <div class="card-content">
-                      <h4>Babylist Registry</h4>
-                      <p>Everyday essentials and nursery items</p>
-                      <span class="card-link">Browse registry →</span>
-                    </div>
-                  </a>
-                  <div class="registry-card gift-idea-card">
-                    <div class="card-icon">💝</div>
-                    <div class="card-content">
-                      <h4>Gift Ideas</h4>
-                      <ul class="gift-ideas">
-                        <li>Board books &amp; stories</li>
-                        <li>Woodland-themed clothing</li>
-                        <li>Soft blankets &amp; swaddles</li>
-                        <li>Diapers &amp; essentials</li>
-                      </ul>
-                    </div>
-                  </div>
-                </div>
-              </aside>
-            </div>
-            <section class="nursery-details">
-              <h3><span aria-hidden="true">🧸</span> Nursery Details</h3>
-              <div class="details-grid">
-                <div class="detail-card">
-                  <div class="detail-icon">🎨</div>
-                  <div class="detail-content">
-                    <h4>Theme</h4>
-                    <p>Hundred Acre Wood Adventures</p>
-                    <small>Featuring Winnie the Pooh &amp; friends</small>
-                  </div>
-                </div>
-                <div class="detail-card">
-                  <div class="detail-icon">🌈</div>
-                  <div class="detail-content">
-                    <h4>Colors</h4>
-                    <p>Honey gold, Pooh red, sage green, cream</p>
-                    <small>Soft woodland palette</small>
-                  </div>
-                </div>
-                <div class="detail-card">
-                  <div class="detail-icon">📚</div>
-                  <div class="detail-content">
-                    <h4>Favorite Items</h4>
-                    <p>Swaddles, sleepers, board books, cozy blankets</p>
-                  </div>
-                </div>
-                <div class="detail-card">
-                  <div class="detail-icon">📍</div>
-                  <div class="detail-content">
-                    <h4>Location</h4>
-                    <p>Arizona</p>
-                    <small>Where adventures begin</small>
-                  </div>
-                </div>
-              </div>
-            </section>
-            <section class="wishes-section">
-              <div class="wishes-header">
-                <h3>Share Your Wishes <span aria-hidden="true">✨</span></h3>
-                <p>Leave wisdom, well-wishes, or favorite childhood memories for Gunnar's storybook</p>
-              </div>
-              <div class="wishes-form-container">
-                <form class="enhanced-form" id="wishesForm">
-                  <div class="form-grid">
-                    <div class="form-field">
-                      <label for="guestName">Your Name</label>
-                      <input id="guestName" placeholder="How should we call you?" required type="text" maxlength="80" />
-                    </div>
-                    <div class="form-field">
-                      <label for="guestRelation">Your Relation</label>
-                      <select id="guestRelation">
-                        <option value="">Choose one...</option>
-                        <option value="family">Family</option>
-                        <option value="friend">Friend</option>
-                        <option value="colleague">Colleague</option>
-                        <option value="woodland-friend">Woodland Friend</option>
-                      </select>
-                    </div>
-                  </div>
-                  <div class="form-field">
-                    <label for="wishMessage">Your Message</label>
-                    <textarea id="wishMessage" placeholder="What wisdom or wishes would you like to share with Baby Gunnar?..." required rows="4" maxlength="500"></textarea>
-                    <div class="character-count" id="wishCharCount">0/500 characters</div>
-                  </div>
-                  <div class="form-actions">
-                    <button class="submit-btn" type="submit" id="submitWishBtn">
-                      <span aria-hidden="true">📝</span> Add to Gunnar's Storybook
-                    </button>
-                    <div class="form-feedback" id="wishFeedback" role="status" aria-live="polite"></div>
-                  </div>
-                </form>
-              </div>
-              <div class="sample-wishes">
-                <h4>Wishes from the Wood:</h4>
-                <div class="wish-examples">
-                  <blockquote class="wish-example">
-                    <p>"May your days be filled with wonder and your nights with sweet dreams."</p>
-                    <cite>— Owl</cite>
-                  </blockquote>
-                  <blockquote class="wish-example">
-                    <p>"Remember: even the smallest creatures can have the biggest hearts."</p>
-                    <cite>— Piglet</cite>
-                  </blockquote>
-                </div>
-              </div>
-              <div class="wishes-display" id="wishesDisplay"></div>
-            </section>
-          </div>
-        </article>
-        <article class="page" data-chapter="4" id="chapter-4">
-          <header class="chapter-header">
-            <p class="chapter-number">Final Page</p>
-            <h2 class="chapter-title">The Gathering</h2>
-            <p class="chapter-subtitle">Celebrating what's to come</p>
-            <span aria-hidden="true" class="honey-drip"></span>
-          </header>
-          <div class="page-content">
-            <p class="story-text">
-              As the sun began to set over the Hundred Acre Wood, casting long golden shadows through the trees, Pooh and his friends gathered to celebrate the coming arrival of Baby <span class="gunnar-shine">Gunnar</span>.
-            </p>
-            <div class="chapter-illustrations">
-              <figure class="storybook-figure figure-theme-honey clickable-character" data-character="pooh" tabindex="0" role="button" aria-label="Pooh's special pot">
-                <img alt="Pooh with honey pot" width="96" height="96" loading="lazy" decoding="async" src="Images/Characters/honey-bear.png" />
-                <figcaption class="figure-copy">
-                  <div class="figure-name">Pooh's special pot</div>
-                  <p class="figure-note">He saved one golden pot for Gunnar's first visit.</p>
-                </figcaption>
-              </figure>
-              <figure class="storybook-figure figure-theme-sky clickable-character" data-character="gunnar" tabindex="0" role="button" aria-label="Coming soon, Baby Gunnar">
-                <img alt="Baby Gunnar" width="96" height="96" loading="lazy" decoding="async" src="Images/Characters/Gunnar.png" />
-                <figcaption class="figure-copy">
-                  <div class="figure-name">Coming Soon</div>
-                  <p class="figure-note">The Hundred Acre Wood awaits its newest friend.</p>
-                </figcaption>
-              </figure>
-            </div>
-            <p class="story-text">
-              With gifts prepared and wishes shared, everyone looked forward to the day they would finally meet him.
-            </p>
-            <div class="welcome-panel">
-              <div aria-hidden="true" class="welcome-icon">🌟</div>
-              <div>
-                <h3 class="welcome-heading">We Can't Wait to Meet You!</h3>
-                <p class="welcome-subtitle">Baby <span class="gunnar-shine">Gunnar</span>, your adventure is about to begin.</p>
-              </div>
-            </div>
-            <section class="countdown-section">
-              <h3>Until We Meet 🐻</h3>
-              <div class="countdown-display">
-                <div class="countdown-item">
-                  <span class="countdown-number" id="days">0</span>
-                  <span class="countdown-label">Days</span>
-                </div>
-                <div class="countdown-item">
-                  <span class="countdown-number" id="hours">0</span>
-                  <span class="countdown-label">Hours</span>
-                </div>
-              </div>
-              <p class="countdown-note">
-                Expected arrival: <time id="expectedArrival" datetime="">Late August</time>
-              </p>
-            </section>
-            <div class="honey-jar-interactive">
-              <div aria-hidden="true">🍯</div>
-              <h3>Gunnar's Honey Jar of Hopes</h3>
-              <p>Share your hopes and dreams for Baby Gunnar's future adventures.</p>
-              <button class="btn primary" id="addHopeBtn" type="button">➕ Add Your Hope</button>
-              <ul class="hopes-list" id="hopesList"></ul>
-            </div>
-            <aside class="final-thought">
-              <blockquote>
-                <p>"Sometimes the smallest things take up the most room in your heart."<br /><cite>— Winnie the Pooh</cite></p>
-              </blockquote>
-              <p class="signature">With love from all your friends in the Hundred Acre Wood</p>
-            </aside>
-          </div>
-        </article>
-      </div>
+        </div>
 
-      <nav aria-label="Page navigation" class="chapter-nav">
-        <button class="chapter-nav-btn" id="prevBtn" type="button" disabled>← Previous</button>
-        <div class="chapter-indicator" id="pageIndicator">Step 1 of 4</div>
-        <button class="chapter-nav-btn next" id="nextBtn" type="button">Next →</button>
-      </nav>
+        <blockquote style="text-align: center; margin: 3rem 0; padding: 2rem; background: var(--bg-primary); border-radius: var(--card-radius); border-left: 4px solid var(--primary-honey);">
+          <p style="font-size: 1.25rem; font-style: italic;">"Sometimes the smallest things take up the most room in your heart."</p>
+          <cite style="display: block; margin-top: 1rem; color: var(--primary-honey); font-weight: 600;">— Winnie the Pooh</cite>
+        </blockquote>
+      </div>
+    </article>
+
+    <!-- Navigation Buttons -->
+    <div style="display: flex; justify-content: space-between; margin: 4rem 0; padding: 0 1rem;">
+      <button class="btn btn-secondary" id="prevChapter" disabled>
+        <span>←</span> Previous
+      </button>
+      <div style="display: flex; align-items: center; color: var(--text-light); font-weight: 600;">
+        Chapter <span id="currentChapter">1</span> of 4
+      </div>
+      <button class="btn btn-primary" id="nextChapter">
+        Next <span>→</span>
+      </button>
     </div>
   </main>
 
-  <div id="dialogueBox" role="alert" aria-live="polite"></div> <footer class="site-footer">
-    <p>Made with 💙 and 🍯 for Baby <span class="gunnar-shine">Gunnar</span>'s special day</p>
-    <div class="footer-links">
-      <button class="footer-link" id="printPageBtn" type="button">🖨 Print</button>
-      <button class="footer-link" id="sharePageBtn" type="button">📤 Share</button>
-      <button class="footer-link" id="toggleAnimationsBtn" type="button">🎭 Animations: On</button>
-      <a class="footer-link" href="game.html" rel="noopener">🎮 Open game.html</a>
+  <!-- Footer -->
+  <footer class="site-footer">
+    <div class="footer-content">
+      <p>Made with 💙 and 🍯 for Baby Gunnar's special day</p>
+      <div class="footer-links">
+        <button class="footer-link" id="printBtn">
+          <span>🖨</span> Print
+        </button>
+        <button class="footer-link" id="shareBtn">
+          <span>📤</span> Share
+        </button>
+        <button class="footer-link" id="musicToggle">
+          <span>🎵</span> Music: On
+        </button>
+        <a class="footer-link" href="game.html">
+          <span>🎮</span> Play Game
+        </a>
+      </div>
     </div>
   </footer>
 
-  <audio id="bgMusic" loop preload="auto" src="media/hundred-acre-lullaby.mp3"></audio>
-  <audio id="honeySound" preload="auto">
-    <source src="https://assets.mixkit.co/sfx/preview/mixkit-winning-chimes-2015.mp3" />
-  </audio>
-  <audio id="pageSound" preload="auto">
-    <source src="https://assets.mixkit.co/sfx/preview/mixkit-page-turn-single-1100.mp3" />
-  </audio>
-  <audio id="ambientForest" loop preload="auto">
-    <source src="https://assets.mixkit.co/sfx/preview/mixkit-forest-birds-ambience-121.mp3" />
-  </audio>
+  <!-- Dialogue Box -->
+  <div class="dialogue-box" id="dialogueBox"></div>
+
+  <!-- Toast Notification -->
+  <div class="toast" id="toast"></div>
 
   <script>
-    document.addEventListener("DOMContentLoaded", () => {
-      const pages = Array.from(document.querySelectorAll(".page"));
-      const nextBtn = document.getElementById("nextBtn");
-      const prevBtn = document.getElementById("prevBtn");
-      const indicator = document.getElementById("pageIndicator");
-      const progress = document.getElementById("progressFill");
-      const chapterPills = Array.from(document.querySelectorAll("[data-chapter-target]"));
-      const dialogueBox = document.getElementById("dialogueBox");
-      const readingProgressBar = document.getElementById("readingProgressBar");
-      const total = pages.length;
-      let current = 0;
-
-      const pageSound = document.getElementById("pageSound");
-      const honeySound = document.getElementById("honeySound");
-
-      /* ---- Theme (auto + toggle) ---- */
-      const themeBtn = document.getElementById("themeBtn");
-      const root = document.documentElement;
-
-      const savedTheme = localStorage.getItem("gunnar_theme");
-      if (savedTheme === "dark" || savedTheme === "light") {
-        root.dataset.theme = savedTheme;
-      } else {
-        const prefersDark = window.matchMedia && window.matchMedia("(prefers-color-scheme: dark)").matches;
-        root.dataset.theme = prefersDark ? "dark" : "light";
-      }
-
-      function toggleTheme(){
-        const next = (root.dataset.theme === "dark") ? "light" : "dark";
-        root.dataset.theme = next;
-        localStorage.setItem("gunnar_theme", next);
-        toast(`Theme: ${next}`);
-      }
-      themeBtn?.addEventListener("click", toggleTheme);
-
-      document.getElementById("jumpStoryBtn")?.addEventListener("click", () => {
-        document.getElementById("storybook")?.scrollIntoView({ behavior: "smooth", block: "start" });
-      });
-
-      /* ---- Deepened Chapter Navigation Logic ---- */
-      const hash = (location.hash || "").toLowerCase();
-      const hashMap = {
-        "#chapter-1": 0, "#chapter-2": 1, "#adventure": 1,
-        "#chapter-3": 2, "#registry": 2, "#chapter-4": 3
+    document.addEventListener('DOMContentLoaded', () => {
+      // State management
+      const state = {
+        currentChapter: 1,
+        totalChapters: 4,
+        wishes: [],
+        musicEnabled: true,
+        theme: localStorage.getItem('theme') || 'light'
       };
-      if (hashMap[hash] !== undefined) current = hashMap[hash];
 
-      function updateUI(scroll = true) {
-        pages.forEach((page, i) => page.classList.toggle("active", i === current));
-        indicator.textContent = `Step ${current + 1} of ${total}`;
-        if (progress) progress.style.width = `${((current + 1) / total) * 100}%`;
+      // DOM Elements
+      const elements = {
+        pages: document.querySelectorAll('.page'),
+        chapterPills: document.querySelectorAll('.chapter-pill'),
+        prevBtn: document.getElementById('prevChapter'),
+        nextBtn: document.getElementById('nextChapter'),
+        currentChapterEl: document.getElementById('currentChapter'),
+        chapterProgress: document.getElementById('chapterProgress'),
+        readingProgress: document.getElementById('readingProgress'),
+        themeToggle: document.getElementById('themeToggle'),
+        wishForm: document.getElementById('wishForm'),
+        messageInput: document.getElementById('message'),
+        charCount: document.getElementById('charCount'),
+        wishesDisplay: document.getElementById('wishesDisplay'),
+        dialogueBox: document.getElementById('dialogueBox'),
+        toast: document.getElementById('toast'),
+        countdownDays: document.getElementById('countdownDays'),
+        countdownHours: document.getElementById('countdownHours'),
+        arrivalDate: document.getElementById('arrivalDate'),
+        copyGameLink: document.getElementById('copyGameLink'),
+        scrollToStory: document.getElementById('scrollToStory'),
+        printBtn: document.getElementById('printBtn'),
+        shareBtn: document.getElementById('shareBtn'),
+        musicToggle: document.getElementById('musicToggle')
+      };
 
-        // Navigation Button State
-        prevBtn.disabled = current <= 0;
-        nextBtn.disabled = current >= total - 1;
-        if (nextBtn.disabled) nextBtn.textContent = "Finished! 🎉";
-        else nextBtn.textContent = "Next →";
+      // Initialize theme
+      function initTheme() {
+        document.documentElement.setAttribute('data-theme', state.theme);
+        updateThemeButton();
+      }
 
-        chapterPills.forEach(btn => {
-          const isActive = parseInt(btn.dataset.chapterTarget, 10) === current + 1;
-          btn.classList.toggle("active", isActive);
-          if (isActive) btn.setAttribute("aria-current", "page");
-          else btn.removeAttribute("aria-current");
-        });
-
-        // Scroll active pill into view
-        const activePill = chapterPills.find(b => parseInt(b.dataset.chapterTarget, 10) === current + 1);
-        activePill?.scrollIntoView({ behavior: "smooth", block: "nearest", inline: "center" });
-
-        if (pageSound) {
-          try { pageSound.currentTime = 0; pageSound.play().catch(() => {}); } catch (_) {}
-        }
-
-        if (scroll && pages[current]) {
-          pages[current].scrollIntoView({ behavior: "smooth", block: "start" });
+      function updateThemeButton() {
+        if (elements.themeToggle) {
+          elements.themeToggle.innerHTML = state.theme === 'dark' 
+            ? '<span>☀️</span> Light'
+            : '<span>🌙</span> Dark';
         }
       }
 
-      nextBtn?.addEventListener("click", () => {
-        if (current < total - 1) { current++; updateUI(); }
-      });
+      function toggleTheme() {
+        state.theme = state.theme === 'light' ? 'dark' : 'light';
+        document.documentElement.setAttribute('data-theme', state.theme);
+        localStorage.setItem('theme', state.theme);
+        updateThemeButton();
+        showToast(`Switched to ${state.theme} theme`);
+      }
 
-      prevBtn?.addEventListener("click", () => {
-        if (current > 0) { current--; updateUI(); }
-      });
-
-      chapterPills.forEach(btn => {
-        btn.addEventListener("click", () => {
-          const target = parseInt(btn.dataset.chapterTarget, 10) - 1;
-          if (!Number.isNaN(target) && target >= 0 && target < total) {
-            current = target;
-            updateUI();
-          }
+      // Chapter navigation
+      function updateNavigation() {
+        // Update active page
+        elements.pages.forEach(page => {
+          page.classList.toggle('active', 
+            parseInt(page.dataset.chapter) === state.currentChapter);
         });
-      });
 
-      document.addEventListener("keydown", (e) => {
-        if (e.key === "ArrowRight") nextBtn?.click();
-        if (e.key === "ArrowLeft") prevBtn?.click();
-        if (e.key.toLowerCase() === "t") toggleTheme();
-      });
+        // Update chapter pills
+        elements.chapterPills.forEach(pill => {
+          pill.classList.toggle('active',
+            parseInt(pill.dataset.chapter) === state.currentChapter);
+        });
 
-      window.scrollToChapter = (chapterNumber) => {
-        const index = chapterNumber - 1;
-        if (index >= 0 && index < total) {
-          current = index;
-          updateUI();
+        // Update buttons
+        elements.prevBtn.disabled = state.currentChapter === 1;
+        elements.nextBtn.disabled = state.currentChapter === state.totalChapters;
+        elements.nextBtn.innerHTML = state.currentChapter === state.totalChapters
+          ? 'Finish <span>🎉</span>'
+          : 'Next <span>→</span>';
+
+        // Update progress
+        const progress = (state.currentChapter / state.totalChapters) * 100;
+        elements.chapterProgress.style.width = `${progress}%`;
+        elements.currentChapterEl.textContent = state.currentChapter;
+
+        // Scroll to chapter
+        const chapterEl = document.getElementById(`chapter${state.currentChapter}`);
+        if (chapterEl) {
+          chapterEl.scrollIntoView({ behavior: 'smooth', block: 'start' });
         }
-      };
 
-      /* ---- Global Toast Utility ---- */
-      const toastEl = document.createElement("div");
-      toastEl.id = "customToast";
-      toastEl.style.cssText = `position:fixed;left:50%;bottom:18px;transform:translateX(-50%) translateY(100%);background:rgba(0,0,0,.78);color:white;padding:10px 14px;border-radius:999px;font-size:14px;opacity:0;pointer-events:none;transition:transform .3s cubic-bezier(.2,.8,.2,1), opacity .3s ease;z-index:9999;`;
-      document.body.appendChild(toastEl);
+        // Update URL hash
+        window.history.replaceState(null, '', `#chapter${state.currentChapter}`);
+      }
 
-      let toastTimer = null;
-      window.toast = (msg) => {
-        toastEl.textContent = msg;
-        toastEl.style.opacity = "1";
-        toastEl.style.transform = "translateX(-50%) translateY(0)";
-        clearTimeout(toastTimer);
-        toastTimer = setTimeout(() => {
-          toastEl.style.opacity = "0";
-          toastEl.style.transform = "translateX(-50%) translateY(100%)";
-        }, 1800);
-      };
-
-      /* ---- Character Dialogue Panel (Deep UX) ---- */
-      const characterLines = {
-        pooh: { name: "Pooh Bear", lines: ["A baby celebration needs extra honey, or perhaps just a very warm hug.", "Pooh thinks welcoming Gunnar is the sweetest kind of important."] },
-        piglet: { name: "Piglet", lines: ["Oh dear! I'm so excited! Even the smallest of us can have the biggest hearts.", "Piglet straightens the banner one more time, just to be sure."] },
-        tigger: { name: "Tigger", lines: ["Hoo-hoo-hoo! Baby celebrations are what Tiggers do best! T-I-double-G-E-R!", "Tigger promises to teach Gunnar the very bounciest bounces."] },
-        roo: { name: "Roo", lines: ["I can't wait to show him my favorite puddles and bouncy games!", "Roo practices tiny jumps, imagining the fun they'll have someday."] },
-        gunnar: { name: "The Narrator", lines: ["Everyone is already saving their warmest hugs for Baby Gunnar.", "Your story is just beginning, and the whole Wood is cheering."] }
-      };
-
-      document.querySelectorAll(".clickable-character").forEach(fig => {
-        const character = fig.dataset.character;
-        fig.addEventListener("click", () => {
-          const charData = characterLines[character];
-          if (charData) {
-            const line = charData.lines[Math.floor(Math.random() * charData.lines.length)];
-            dialogueBox.innerHTML = `${line} <span class="speaker-name">— ${charData.name}</span>`;
-            dialogueBox.classList.add("active");
-          } else {
-            dialogueBox.classList.remove("active");
-          }
-
-          if (honeySound) {
-            try { honeySound.currentTime = 0; honeySound.play().catch(() => {}); } catch (_) {}
-          }
-        });
-        fig.addEventListener("keydown", (e) => {
-          if (e.key === "Enter" || e.key === " ") { e.preventDefault(); fig.click(); }
-        });
-      });
-      // Close dialogue on scroll or next interaction
-      document.addEventListener("scroll", () => dialogueBox.classList.remove("active"));
-      document.addEventListener("click", (e) => {
-        if (!e.target.closest(".clickable-character") && !e.target.closest("#dialogueBox")) {
-          dialogueBox.classList.remove("active");
+      function goToChapter(chapter) {
+        if (chapter >= 1 && chapter <= state.totalChapters) {
+          state.currentChapter = chapter;
+          updateNavigation();
+          showToast(`Chapter ${chapter}`, 1500);
         }
-      });
-
-      /* ---- Wishes form (Enhanced Feedback) ---- */
-      const wishesForm = document.getElementById("wishesForm");
-      const wishCharCount = document.getElementById("wishCharCount");
-      const wishMessage = document.getElementById("wishMessage");
-      const wishesDisplay = document.getElementById("wishesDisplay");
-      const wishFeedback = document.getElementById("wishFeedback");
-      const submitWishBtn = document.getElementById("submitWishBtn");
-
-      if (wishMessage && wishCharCount) {
-        const updateCount = () => {
-          const len = wishMessage.value.length;
-          wishCharCount.textContent = `${len}/500 characters`;
-        };
-        wishMessage.addEventListener("input", updateCount);
-        updateCount();
       }
 
-      if (wishesForm && wishesDisplay) {
-        wishesForm.addEventListener("submit", (e) => {
-          e.preventDefault();
-          const name = document.getElementById("guestName").value.trim();
-          const relation = document.getElementById("guestRelation").value;
-          const message = wishMessage.value.trim();
+      function nextChapter() {
+        if (state.currentChapter < state.totalChapters) {
+          goToChapter(state.currentChapter + 1);
+        }
+      }
 
-          if (!name || !message) {
-            if (wishFeedback) wishFeedback.textContent = "Please add your name and a message.";
-            return;
-          }
+      function prevChapter() {
+        if (state.currentChapter > 1) {
+          goToChapter(state.currentChapter - 1);
+        }
+      }
 
-          // Successful Submission UX
-          submitWishBtn.disabled = true;
-          const originalText = submitWishBtn.textContent;
-          submitWishBtn.textContent = "Wish Added! 🎉";
-          if (wishFeedback) wishFeedback.textContent = "Thank you! Your wish has been added.";
+      // Character interactions
+      function setupCharacterInteractions() {
+        document.querySelectorAll('.clickable-character').forEach(character => {
+          character.addEventListener('click', () => {
+            const characterName = character.dataset.character;
+            const messages = {
+              pooh: [
+                "Oh bother! I was just thinking about honey... and babies!",
+                "A very important thing about babies is they need lots of hugs. Like honey pots need lids.",
+                "I shall save my very best honey pot for Baby Gunnar's first visit."
+              ],
+              piglet: [
+                "Oh dear, oh dear! I do hope Baby Gunnar likes my cozy blanket.",
+                "I've been practicing my welcome speech. It goes: 'Hello, little friend!'",
+                "Even the smallest of us can have the biggest hearts for new babies."
+              ],
+              tigger: [
+                "Hoo-hoo-hoo! Tigger's the name, bouncing's the game!",
+                "I shall teach Baby Gunnar the bounciest bounces in the Wood!",
+                "Tiggers love celebrations almost as much as they love bouncing!"
+              ]
+            };
 
-          const card = document.createElement("article");
-          card.className = "wish-card";
-          // ... (card creation logic retained)
-          const meta = document.createElement("div");
-          meta.className = "wish-meta";
-          meta.textContent = relation ? `${name} • ${relation.replace("-", " ")}` : name;
-          const body = document.createElement("p");
-          body.textContent = message;
-          card.appendChild(meta);
-          card.appendChild(body);
-          wishesDisplay.prepend(card);
+            const characterMessages = messages[characterName] || [
+              "Welcome to the Hundred Acre Wood!"
+            ];
 
-          setTimeout(() => {
-            wishesForm.reset();
-            if (wishCharCount) wishCharCount.textContent = "0/500 characters";
-            submitWishBtn.textContent = originalText;
-            submitWishBtn.disabled = false;
-          }, 1500);
+            const randomMessage = characterMessages[
+              Math.floor(Math.random() * characterMessages.length)
+            ];
+
+            showDialogue(randomMessage, characterName.charAt(0).toUpperCase() + characterName.slice(1));
+          });
+
+          // Add keyboard support
+          character.addEventListener('keydown', (e) => {
+            if (e.key === 'Enter' || e.key === ' ') {
+              e.preventDefault();
+              character.click();
+            }
+          });
         });
       }
 
-      /* ---- Countdown (Enhanced Time Logic) ---- */
-      const now = new Date();
-      let year = now.getFullYear();
-      let targetDate = new Date(`${year}-08-31T00:00:00`);
-      // If the target date has passed, assume next year's date
-      if (targetDate.getTime() < now.getTime() && now.getMonth() >= 8) {
-        year += 1;
-        targetDate = new Date(`${year}-08-31T00:00:00`);
-      } else if (targetDate.getTime() < now.getTime()) {
-        // If it's early in the current year, keep the current year's date
-        targetDate = new Date(`${year}-08-31T00:00:00`);
+      // Wish form
+      function setupWishForm() {
+        if (elements.messageInput && elements.charCount) {
+          elements.messageInput.addEventListener('input', () => {
+            elements.charCount.textContent = elements.messageInput.value.length;
+          });
+        }
+
+        if (elements.wishForm) {
+          elements.wishForm.addEventListener('submit', async (e) => {
+            e.preventDefault();
+            
+            const name = document.getElementById('name').value.trim();
+            const relation = document.getElementById('relation').value;
+            const message = document.getElementById('message').value.trim();
+
+            if (!name || !message) {
+              showToast('Please fill in all fields');
+              return;
+            }
+
+            const submitBtn = elements.wishForm.querySelector('.submit-btn');
+            const originalText = submitBtn.innerHTML;
+            
+            // Show loading state
+            submitBtn.disabled = true;
+            submitBtn.innerHTML = '<span class="loading"></span> Adding...';
+            submitBtn.classList.add('loading');
+
+            // Simulate API call
+            await new Promise(resolve => setTimeout(resolve, 1000));
+
+            // Create wish object
+            const wish = {
+              id: Date.now(),
+              name,
+              relation,
+              message,
+              timestamp: new Date().toISOString()
+            };
+
+            state.wishes.unshift(wish);
+            saveWishes();
+            renderWishes();
+
+            // Reset form
+            elements.wishForm.reset();
+            elements.charCount.textContent = '0';
+
+            // Show success state
+            submitBtn.innerHTML = '<span>✓</span> Added!';
+            showToast('Your wish has been added to Gunnar\'s storybook!');
+
+            // Reset button after delay
+            setTimeout(() => {
+              submitBtn.disabled = false;
+              submitBtn.innerHTML = originalText;
+              submitBtn.classList.remove('loading');
+            }, 2000);
+          });
+        }
       }
 
-      const expectedArrival = document.getElementById("expectedArrival");
-      if (expectedArrival) {
-        expectedArrival.textContent = `Late August ${year}`;
-        expectedArrival.setAttribute("datetime", `${year}-08`);
+      function saveWishes() {
+        localStorage.setItem('gunnar_wishes', JSON.stringify(state.wishes));
       }
 
-      const daysEl = document.getElementById("days");
-      const hoursEl = document.getElementById("hours");
+      function loadWishes() {
+        const saved = localStorage.getItem('gunnar_wishes');
+        if (saved) {
+          state.wishes = JSON.parse(saved);
+          renderWishes();
+        }
+      }
 
-      function updateCountdown() {
-        const n = new Date();
-        const diff = targetDate.getTime() - n.getTime();
+      function renderWishes() {
+        if (!elements.wishesDisplay) return;
 
-        if (diff <= 0) {
-          if (daysEl) daysEl.textContent = "0";
-          if (hoursEl) hoursEl.textContent = "0";
+        if (state.wishes.length === 0) {
+          elements.wishesDisplay.innerHTML = `
+            <div style="text-align: center; padding: 3rem; color: var(--text-light);">
+              <p>No wishes yet. Be the first to share your love!</p>
+            </div>
+          `;
           return;
         }
 
-        const days = Math.floor(diff / (1000 * 60 * 60 * 24));
-        const hours = Math.floor((diff / (1000 * 60 * 60)) % 24);
+        const wishesHtml = state.wishes.map(wish => `
+          <div class="wish-card" style="background: var(--bg-primary); padding: 1.5rem; border-radius: var(--card-radius); margin-bottom: 1rem; border-left: 4px solid var(--primary-honey);">
+            <div style="display: flex; justify-content: space-between; align-items: start; margin-bottom: 0.5rem;">
+              <strong style="color: var(--primary-honey);">${wish.name}</strong>
+              <span style="font-size: 0.9rem; color: var(--text-light);">${formatDate(wish.timestamp)}</span>
+            </div>
+            <p style="margin-bottom: 0.5rem;">${escapeHtml(wish.message)}</p>
+            ${wish.relation ? `<div style="font-size: 0.9rem; color: var(--text-light);">${formatRelation(wish.relation)}</div>` : ''}
+          </div>
+        `).join('');
 
-        // Simple transition check (can be expanded with a CSS flip animation)
-        if (daysEl && daysEl.textContent !== String(days)) daysEl.textContent = String(days);
-        if (hoursEl && hoursEl.textContent !== String(hours)) hoursEl.textContent = String(hours);
-      }
-      updateCountdown();
-      setInterval(updateCountdown, 60 * 1000); // Check every minute
+        elements.wishesDisplay.innerHTML = `
+          <div style="margin-bottom: 1.5rem; display: flex; justify-content: space-between; align-items: center;">
+            <h3 style="margin: 0;">Wishes from Friends (${state.wishes.length})</h3>
+            ${state.wishes.length > 0 ? `
+              <button class="chip" id="clearWishes" style="font-size: 0.9rem;">
+                <span>🗑️</span> Clear All
+              </button>
+            ` : ''}
+          </div>
+          ${wishesHtml}
+        `;
 
-      /* ---- Parallax & Reading Progress (Deep UX) ---- */
-      const heroContainer = document.querySelector('.hero-image-container');
-      const cloudLayer = document.querySelector('.cloud-layer');
-      const bookContainer = document.getElementById('storybook');
-
-      function updateParallaxAndReadingProgress() {
-        const scrollY = window.scrollY;
-
-        // 1. Hero Parallax (Slow scroll for background)
-        if (heroContainer) {
-          // Move background image (::before) at 20% of scroll speed
-          heroContainer.style.setProperty('--scroll-translate', `${scrollY * 0.2}px`);
-        }
-        // Move clouds layer at 5% of scroll speed
-        if (cloudLayer) {
-            cloudLayer.style.setProperty('--cloud-translate', `${scrollY * 0.05}px`);
-        }
-
-        // 2. Reading Progress Bar
-        if (readingProgressBar && bookContainer) {
-          const bookTop = bookContainer.offsetTop;
-          const bookHeight = bookContainer.scrollHeight;
-          const viewportHeight = window.innerHeight;
-          const contentStart = bookTop - viewportHeight;
-          const contentEnd = bookTop + bookHeight;
-
-          // Only show bar when scrolling through the book content
-          if (scrollY > contentStart && scrollY < contentEnd) {
-            const scrollDistance = scrollY - bookTop;
-            const contentReadHeight = bookHeight - viewportHeight * 0.5; // Estimate visible content height
-            let progressRatio = Math.min(1, Math.max(0, scrollDistance / contentReadHeight));
-
-            // Adjust for very short pages if needed
-            if (progressRatio > 0.01 && progressRatio < 0.99) {
-                readingProgressBar.style.width = `${progressRatio * 100}%`;
-                readingProgressBar.style.opacity = 1;
-            } else if (progressRatio >= 0.99) {
-                readingProgressBar.style.width = `100%`;
-                readingProgressBar.style.opacity = 1;
-            } else {
-                readingProgressBar.style.opacity = 0;
+        // Add clear button handler
+        const clearBtn = document.getElementById('clearWishes');
+        if (clearBtn) {
+          clearBtn.addEventListener('click', () => {
+            if (confirm('Clear all wishes?')) {
+              state.wishes = [];
+              saveWishes();
+              renderWishes();
+              showToast('All wishes cleared');
             }
-
-          } else {
-            readingProgressBar.style.opacity = 0;
-          }
+          });
         }
       }
-      window.addEventListener('scroll', updateParallaxAndReadingProgress);
-      updateParallaxAndReadingProgress(); // Initial run
 
-      /* ---- Honey jar hopes (retained) ---- */
-      const addHopeBtn = document.getElementById("addHopeBtn");
-      const hopesList = document.getElementById("hopesList");
-      if (addHopeBtn && hopesList) {
-        addHopeBtn.addEventListener("click", () => {
-          const hope = window.prompt("What hope or dream would you like to share for Baby Gunnar?");
-          if (hope && hope.trim()) {
-            const li = document.createElement("li");
-            li.textContent = hope.trim();
-            hopesList.appendChild(li);
-            toast("Hope added to the jar!");
+      function formatDate(isoString) {
+        const date = new Date(isoString);
+        return date.toLocaleDateString('en-US', {
+          month: 'short',
+          day: 'numeric',
+          hour: '2-digit',
+          minute: '2-digit'
+        });
+      }
+
+      function formatRelation(relation) {
+        const relations = {
+          family: 'Family',
+          friend: 'Friend',
+          colleague: 'Colleague',
+          woodland: 'Woodland Friend'
+        };
+        return relations[relation] || relation;
+      }
+
+      function escapeHtml(text) {
+        const div = document.createElement('div');
+        div.textContent = text;
+        return div.innerHTML;
+      }
+
+      // Countdown timer
+      function setupCountdown() {
+        function updateCountdown() {
+          const now = new Date();
+          const target = new Date(now.getFullYear(), 7, 31); // August 31
+          
+          if (now.getMonth() >= 7 && now.getDate() > 31) {
+            target.setFullYear(target.getFullYear() + 1);
+          }
+
+          const diff = target - now;
+          
+          const days = Math.floor(diff / (1000 * 60 * 60 * 24));
+          const hours = Math.floor((diff % (1000 * 60 * 60 * 24)) / (1000 * 60 * 60));
+
+          if (elements.countdownDays) {
+            elements.countdownDays.textContent = days;
+          }
+          if (elements.countdownHours) {
+            elements.countdownHours.textContent = hours;
+          }
+        }
+
+        updateCountdown();
+        setInterval(updateCountdown, 60000); // Update every minute
+      }
+
+      // Reading progress
+      function setupReadingProgress() {
+        function updateReadingProgress() {
+          const scrollTop = window.scrollY;
+          const docHeight = document.body.scrollHeight - window.innerHeight;
+          const scrollPercent = docHeight > 0 ? (scrollTop / docHeight) : 0;
+          
+          if (elements.readingProgress) {
+            elements.readingProgress.style.transform = `scaleX(${scrollPercent})`;
+          }
+        }
+
+        window.addEventListener('scroll', updateReadingProgress);
+        updateReadingProgress();
+      }
+
+      // Dialogue and toast utilities
+      function showDialogue(message, speaker) {
+        if (!elements.dialogueBox) return;
+
+        elements.dialogueBox.innerHTML = `
+          <p>${escapeHtml(message)}</p>
+          ${speaker ? `<span class="speaker">— ${speaker}</span>` : ''}
+        `;
+        elements.dialogueBox.classList.add('show');
+
+        // Auto-dismiss after 5 seconds
+        setTimeout(() => {
+          elements.dialogueBox.classList.remove('show');
+        }, 5000);
+      }
+
+      function showToast(message, duration = 3000) {
+        if (!elements.toast) return;
+
+        elements.toast.textContent = message;
+        elements.toast.classList.add('show');
+
+        setTimeout(() => {
+          elements.toast.classList.remove('show');
+        }, duration);
+      }
+
+      // URL hash handling
+      function handleHashChange() {
+        const hash = window.location.hash;
+        const match = hash.match(/chapter(\d)/);
+        if (match) {
+          const chapter = parseInt(match[1]);
+          goToChapter(chapter);
+        }
+      }
+
+      // Initialize everything
+      function init() {
+        initTheme();
+        loadWishes();
+        setupCountdown();
+        setupReadingProgress();
+        setupCharacterInteractions();
+        setupWishForm();
+        updateNavigation();
+
+        // Event listeners
+        if (elements.themeToggle) {
+          elements.themeToggle.addEventListener('click', toggleTheme);
+        }
+
+        if (elements.prevBtn) {
+          elements.prevBtn.addEventListener('click', prevChapter);
+        }
+
+        if (elements.nextBtn) {
+          elements.nextBtn.addEventListener('click', nextChapter);
+        }
+
+        elements.chapterPills.forEach(pill => {
+          pill.addEventListener('click', () => {
+            goToChapter(parseInt(pill.dataset.chapter));
+          });
+        });
+
+        if (elements.copyGameLink) {
+          elements.copyGameLink.addEventListener('click', () => {
+            const gameUrl = new URL('game.html', window.location.href).href;
+            navigator.clipboard.writeText(gameUrl)
+              .then(() => showToast('Game link copied to clipboard!'))
+              .catch(() => showToast('Failed to copy link'));
+          });
+        }
+
+        if (elements.scrollToStory) {
+          elements.scrollToStory.addEventListener('click', () => {
+            goToChapter(1);
+          });
+        }
+
+        if (elements.printBtn) {
+          elements.printBtn.addEventListener('click', () => {
+            window.print();
+          });
+        }
+
+        if (elements.shareBtn) {
+          elements.shareBtn.addEventListener('click', async () => {
+            const shareData = {
+              title: document.title,
+              text: 'Join Baby Gunnar\'s Hundred Acre Wood Adventure!',
+              url: window.location.href
+            };
+
+            if (navigator.share) {
+              try {
+                await navigator.share(shareData);
+              } catch (err) {
+                console.log('Share cancelled:', err);
+              }
+            } else {
+              navigator.clipboard.writeText(window.location.href)
+                .then(() => showToast('Link copied to clipboard!'))
+                .catch(() => showToast('Failed to copy link'));
+            }
+          });
+        }
+
+        if (elements.musicToggle) {
+          elements.musicToggle.addEventListener('click', () => {
+            state.musicEnabled = !state.musicEnabled;
+            elements.musicToggle.innerHTML = state.musicEnabled
+              ? '<span>🎵</span> Music: On'
+              : '<span>🔇</span> Music: Off';
+            showToast(`Music ${state.musicEnabled ? 'enabled' : 'disabled'}`);
+          });
+        }
+
+        // Keyboard shortcuts
+        document.addEventListener('keydown', (e) => {
+          if (e.key === 'ArrowRight') nextChapter();
+          if (e.key === 'ArrowLeft') prevChapter();
+          if (e.key === 't' && e.ctrlKey) {
+            e.preventDefault();
+            toggleTheme();
+          }
+          if (e.key === 'Escape') {
+            elements.dialogueBox?.classList.remove('show');
           }
         });
+
+        // Handle initial hash
+        handleHashChange();
+        window.addEventListener('hashchange', handleHashChange);
+
+        // Initial toast
+        setTimeout(() => {
+          showToast('🎉 Welcome to Baby Gunnar\'s adventure!');
+        }, 1000);
       }
 
-      /* ---- Footer actions (retained) ---- */
-      document.getElementById("printPageBtn")?.addEventListener("click", () => window.print());
+      // Global functions
+      window.scrollToChapter = goToChapter;
 
-      document.getElementById("sharePageBtn")?.addEventListener("click", async () => {
-        const shareData = { title: document.title, text: "Join Baby Gunnar's Hundred Acre Wood Adventure!", url: window.location.href };
-        if (navigator.share) {
-          try { await navigator.share(shareData); } catch (_) {}
-        } else {
-          navigator.clipboard?.writeText(window.location.href).catch(() => {});
-          toast("Link copied.");
-        }
-      });
-
-      const toggleAnimationsBtn = document.getElementById("toggleAnimationsBtn");
-      if (toggleAnimationsBtn) {
-        toggleAnimationsBtn.addEventListener("click", () => {
-          const isOff = document.body.classList.toggle("animations-off");
-          toggleAnimationsBtn.textContent = isOff ? "🎭 Animations: Off" : "🎭 Animations: On";
-          toast(isOff ? "Animations turned off." : "Animations turned on.");
-        });
-      }
-
-      /* ---- Audio init on first interaction (retained) ---- */
-      const bgMusic = document.getElementById("bgMusic");
-      const ambientForest = document.getElementById("ambientForest");
-      let audioInitialized = false;
-      function initAudio() {
-        if (audioInitialized) return;
-        audioInitialized = true;
-        [bgMusic, ambientForest].forEach(el => {
-          if (!el) return;
-          try { el.play().catch(() => {}); } catch (_) {}
-        });
-      }
-      document.addEventListener("click", initAudio, { once: true });
-      document.addEventListener("keydown", initAudio, { once: true });
-
-      /* ---- Initialize ---- */
-      updateUI(false);
+      // Start the app
+      init();
     });
   </script>
 </body>
