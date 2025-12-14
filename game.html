@@ -2063,320 +2063,169 @@
         return this.characters[this.currentCharacter];
       }
     }
-
 // ============================================
-    // WEATHER SYSTEM - DEBUGGED AND WORKING
-    // ============================================
-    class WeatherSystem {
-      constructor() {
-        console.log("WeatherSystem: Initializing...");
-        this.currentWeather = 'none';
-        this.usedWeathers = new Set(['none']);
-        this.weatherContainer = null;
-        this.particles = [];
-        
-        this.weatherTypes = {
-          none: { name: 'Clear', particles: 0, color: '#ffffff' },
-          rain: { 
-            name: 'Rain', 
-            particles: 80, // Reduced for performance
-            color: '#4d96ff', 
-            animation: 'rainFall', 
-            class: 'rain-particle',
-            speed: '1.5s' // Faster animation
-          },
-          snow: { 
-            name: 'Snow', 
-            particles: 60, 
-            color: '#ffffff', 
-            animation: 'snowFall', 
-            class: 'snow-particle',
-            speed: '5s' // Slower, floaty animation
-          },
-          leaves: { 
-            name: 'Autumn', 
-            particles: 30, 
-            color: '#ff6b6b', 
-            animation: 'leafFall', 
-            class: 'leaf-particle',
-            speed: '8s' // Slow, drifting animation
-          },
-          petals: { 
-            name: 'Spring', 
-            particles: 40, 
-            color: '#ffb7c5', 
-            animation: 'petalFall', 
-            class: 'petal-particle',
-            speed: '6s' // Medium speed
-          }
-        };
-        
-        this.init();
-      }
+// WEATHER SYSTEM - FIXED (uses weather key, not display name)
+// Replace your entire WeatherSystem class with this.
+// ============================================
+class WeatherSystem {
+  constructor() {
+    this.currentWeather = 'none';
+    this.usedWeathers = new Set(['none']);
+    this.weatherContainer = null;
+    this.particles = [];
 
-      init() {
-        console.log("WeatherSystem: init() called");
-        this.loadWeather();
-        this.updateWeatherUI();
-        this.createWeatherContainer();
-        this.applyWeatherEffects();
-        
-        // Add debug button listener
-        document.getElementById('debug-weather')?.addEventListener('click', () => {
-          console.log("DEBUG: Testing all weather types...");
-          const weathers = ['rain', 'snow', 'leaves', 'petals', 'none'];
-          let i = 0;
-          const testInterval = setInterval(() => {
-            console.log(`DEBUG: Setting weather to ${weathers[i]}`);
-            this.setWeather(weathers[i]);
-            i = (i + 1) % weathers.length;
-          }, 2000);
-          
-          setTimeout(() => clearInterval(testInterval), 10000);
-        });
-      }
+    // Use KEYS for logic; "label" only for display
+    this.weatherTypes = {
+      none:   { label: 'Clear',  particles: 0,  class: '',            animation: '',        speed: 0 },
+      rain:   { label: 'Rain',   particles: 90, class: 'rain-particle',  animation: 'rainFall',  speed: 1.6 },
+      snow:   { label: 'Snow',   particles: 70, class: 'snow-particle',  animation: 'snowFall',  speed: 5.5 },
+      leaves: { label: 'Autumn', particles: 35, class: 'leaf-particle',  animation: 'leafFall',  speed: 8.0 },
+      petals: { label: 'Spring', particles: 45, class: 'petal-particle', animation: 'petalFall', speed: 6.5 },
+    };
 
-      createWeatherContainer() {
-        console.log("WeatherSystem: Creating container...");
-        
-        // Remove existing container
-        const existing = document.getElementById('weather-effects');
-        if (existing) {
-          existing.remove();
-          console.log("WeatherSystem: Removed existing container");
-        }
-        
-        // Create new container
-        this.weatherContainer = document.createElement('div');
-        this.weatherContainer.id = 'weather-effects';
-        this.weatherContainer.innerHTML = '<div style="position:absolute; top:10px; left:10px; color:white; background:rgba(0,0,0,0.5); padding:5px; z-index:9999;">Weather Active</div>';
-        
-        // Append to body
-        document.body.appendChild(this.weatherContainer);
-        console.log("WeatherSystem: Container added to body");
-        
-        // Apply CSS styles directly
-        Object.assign(this.weatherContainer.style, {
-          position: 'fixed',
-          top: '0',
-          left: '0',
-          width: '100vw',
-          height: '100vh',
-          pointerEvents: 'none',
-          zIndex: '2000',
-          overflow: 'hidden',
-          display: 'block'
-        });
-      }
+    this.init();
+  }
 
-      loadWeather() {
-        try {
-          const saved = localStorage.getItem('poohCurrentWeather');
-          if (saved && this.weatherTypes[saved]) {
-            this.currentWeather = saved;
-            console.log(`WeatherSystem: Loaded saved weather: ${saved}`);
-          }
-        } catch (e) {
-          console.log("WeatherSystem: Could not load saved weather");
-        }
-      }
+  init() {
+    this.ensureContainer();
+    this.loadWeather();
+    this.updateWeatherUI();
+    this.applyWeatherEffects();
+  }
 
-      saveWeather() {
-        try {
-          localStorage.setItem('poohCurrentWeather', this.currentWeather);
-          console.log(`WeatherSystem: Saved weather: ${this.currentWeather}`);
-        } catch (e) {
-          console.log("WeatherSystem: Could not save weather");
-        }
-      }
+  ensureContainer() {
+    // Prefer the existing DOM node you already have in HTML
+    this.weatherContainer = document.getElementById('weather-effects');
 
-      setWeather(weatherType) {
-        console.log(`WeatherSystem: setWeather('${weatherType}') called`);
-        
-        if (!this.weatherTypes[weatherType]) {
-          console.log(`WeatherSystem: Invalid weather type: ${weatherType}`);
-          return;
-        }
-        
-        this.currentWeather = weatherType;
-        this.usedWeathers.add(weatherType);
-        this.saveWeather();
-        this.updateWeatherUI();
-        this.applyWeatherEffects();
-        
-        // Update achievements
-        if (window.gameEngine) {
-          window.gameEngine.achievementSystem.gameState.weathersUsed = this.usedWeathers.size;
-        }
-        
-        // Play click sound
-        if (window.gameEngine) {
-          window.gameEngine.soundSystem.play('click');
-        }
-        
-        console.log(`WeatherSystem: Weather set to ${weatherType}`);
-      }
-
-      updateWeatherUI() {
-        const buttons = document.querySelectorAll('.weather-btn');
-        console.log(`WeatherSystem: Updating ${buttons.length} UI buttons`);
-        
-        buttons.forEach(btn => {
-          const isActive = btn.dataset.weather === this.currentWeather;
-          btn.classList.toggle('active', isActive);
-          if (isActive) {
-            console.log(`WeatherSystem: Button ${btn.dataset.weather} is active`);
-          }
-        });
-      }
-
-      applyWeatherEffects() {
-        console.log(`WeatherSystem: applyWeatherEffects() for ${this.currentWeather}`);
-        
-        // Clear existing particles
-        this.clearParticles();
-        
-        if (this.currentWeather === 'none') {
-          if (this.weatherContainer) {
-            this.weatherContainer.style.display = 'none';
-            this.weatherContainer.innerHTML = '<div style="position:absolute; top:10px; left:10px; color:white; background:rgba(0,0,0,0.5); padding:5px; z-index:9999;">Weather: None</div>';
-          }
-          console.log("WeatherSystem: No weather effects (clear)");
-          return;
-        }
-        
-        // Ensure container exists
-        if (!this.weatherContainer) {
-          this.createWeatherContainer();
-        }
-        
-        // Show container
-        this.weatherContainer.style.display = 'block';
-        this.weatherContainer.innerHTML = `<div style="position:absolute; top:10px; left:10px; color:white; background:rgba(0,0,0,0.5); padding:5px; z-index:9999;">Weather: ${this.currentWeather}</div>`;
-        
-        const weather = this.weatherTypes[this.currentWeather];
-        console.log(`WeatherSystem: Creating ${weather.particles} particles`);
-        
-        // Create particles
-        for (let i = 0; i < weather.particles; i++) {
-          this.createWeatherParticle(weather, i);
-        }
-        
-        console.log(`WeatherSystem: Created ${this.particles.length} particles`);
-      }
-
-      createWeatherParticle(weather, index) {
-        const particle = document.createElement('div');
-        particle.className = `weather-particle ${weather.class}`;
-        particle.id = `weather-particle-${index}`;
-        
-        // Random starting position
-        const startX = Math.random() * 100;
-        const startY = -10 - Math.random() * 20;
-        const duration = parseFloat(weather.speed) * (0.7 + Math.random() * 0.6); // Some variation
-        const delay = Math.random() * 5;
-        
-        // Get size
-        const size = this.getParticleSize(weather.name);
-        
-        // Apply base styles
-        Object.assign(particle.style, {
-          position: 'absolute',
-          left: `${startX}vw`,
-          top: `${startY}vh`,
-          width: `${size.width}px`,
-          height: `${size.height}px`,
-          pointerEvents: 'none',
-          zIndex: '2000'
-        });
-        
-        // Weather-specific styles
-        switch (weather.name) {
-          case 'rain':
-            particle.style.backgroundColor = weather.color;
-            particle.style.opacity = '0.7';
-            particle.style.borderRadius = '1px';
-            particle.style.transform = 'rotate(15deg)';
-            
-            // Rain animation - straight down
-            particle.style.animation = `rainFall ${duration}s linear ${delay}s infinite`;
-            particle.style.animationTimingFunction = 'linear';
-            break;
-            
-          case 'snow':
-            particle.style.backgroundColor = weather.color;
-            particle.style.opacity = '0.9';
-            particle.style.borderRadius = '50%';
-            particle.style.filter = 'blur(1px)';
-            particle.style.boxShadow = '0 0 4px rgba(255,255,255,0.5)';
-            
-            // Snow animation - drifting side to side
-            particle.style.animation = `snowFall ${duration}s ease-in-out ${delay}s infinite`;
-            break;
-            
-          case 'leaves':
-            particle.style.backgroundColor = weather.color;
-            particle.style.opacity = '0.8';
-            particle.style.clipPath = 'polygon(50% 0%, 100% 50%, 50% 100%, 0% 50%)';
-            
-            // Leaf animation - spinning and drifting
-            particle.style.animation = `leafFall ${duration}s ease-in-out ${delay}s infinite`;
-            break;
-            
-          case 'petals':
-            particle.style.backgroundColor = weather.color;
-            particle.style.opacity = '0.8';
-            particle.style.borderRadius = '50% 50% 0 50%';
-            particle.style.transform = 'rotate(45deg)';
-            
-            // Petal animation - gentle floating
-            particle.style.animation = `petalFall ${duration}s ease-in-out ${delay}s infinite`;
-            break;
-        }
-        
-        // Add to container
-        this.weatherContainer.appendChild(particle);
-        this.particles.push(particle);
-        
-        // Log first few particles for debugging
-        if (index < 3) {
-          console.log(`WeatherSystem: Created particle ${index} at ${startX}vw, ${startY}vh`);
-          console.log(`WeatherSystem: Animation: ${particle.style.animation}`);
-        }
-      }
-
-      getParticleSize(weatherName) {
-        switch (weatherName) {
-          case 'rain': 
-            return { width: 2, height: 20 + Math.random() * 15 };
-          case 'snow': 
-            const size = 4 + Math.random() * 8;
-            return { width: size, height: size };
-          case 'leaves': 
-            const leafSize = 10 + Math.random() * 15;
-            return { width: leafSize, height: leafSize };
-          case 'petals': 
-            const petalSize = 8 + Math.random() * 12;
-            return { width: petalSize, height: petalSize };
-          default: 
-            return { width: 5, height: 5 };
-        }
-      }
-
-      clearParticles() {
-        console.log(`WeatherSystem: Clearing ${this.particles.length} particles`);
-        
-        if (this.weatherContainer) {
-          // Keep the debug div, remove only particles
-          const debugDiv = this.weatherContainer.querySelector('div');
-          this.weatherContainer.innerHTML = '';
-          if (debugDiv) {
-            this.weatherContainer.appendChild(debugDiv);
-          }
-        }
-        this.particles = [];
-      }
+    // If something removed it, recreate it
+    if (!this.weatherContainer) {
+      this.weatherContainer = document.createElement('div');
+      this.weatherContainer.id = 'weather-effects';
+      document.body.appendChild(this.weatherContainer);
     }
+
+    // Force the correct “overlay” behavior, regardless of CSS duplication
+    Object.assign(this.weatherContainer.style, {
+      position: 'fixed',
+      inset: '0',
+      width: '100vw',
+      height: '100vh',
+      pointerEvents: 'none',
+      zIndex: '2000',
+      overflow: 'hidden',
+      display: 'none'
+    });
+  }
+
+  loadWeather() {
+    try {
+      const saved = localStorage.getItem('poohCurrentWeather');
+      if (saved && this.weatherTypes[saved]) this.currentWeather = saved;
+    } catch (e) {}
+  }
+
+  saveWeather() {
+    try {
+      localStorage.setItem('poohCurrentWeather', this.currentWeather);
+    } catch (e) {}
+  }
+
+  setWeather(weatherType) {
+    if (!this.weatherTypes[weatherType]) return;
+
+    this.currentWeather = weatherType;
+    this.usedWeathers.add(weatherType);
+    this.saveWeather();
+
+    this.updateWeatherUI();
+    this.applyWeatherEffects();
+
+    if (window.gameEngine) {
+      window.gameEngine.achievementSystem.gameState.weathersUsed = this.usedWeathers.size;
+      window.gameEngine.soundSystem.play('click');
+    }
+  }
+
+  updateWeatherUI() {
+    document.querySelectorAll('.weather-btn').forEach(btn => {
+      btn.classList.toggle('active', btn.dataset.weather === this.currentWeather);
+    });
+  }
+
+  applyWeatherEffects() {
+    this.ensureContainer();
+    this.clearParticles();
+
+    if (this.currentWeather === 'none') {
+      this.weatherContainer.style.display = 'none';
+      return;
+    }
+
+    const w = this.weatherTypes[this.currentWeather];
+    this.weatherContainer.style.display = 'block';
+
+    for (let i = 0; i < w.particles; i++) {
+      this.createWeatherParticle(this.currentWeather, w, i);
+    }
+  }
+
+  createWeatherParticle(typeKey, w, index) {
+    const particle = document.createElement('div');
+    particle.className = `weather-particle ${w.class}`;
+
+    const startX = Math.random() * 100;
+    const startY = -10 - Math.random() * 30;
+    const duration = (w.speed * (0.7 + Math.random() * 0.7)).toFixed(2);
+    const delay = (Math.random() * 3.5).toFixed(2);
+    const size = this.getParticleSize(typeKey);
+
+    Object.assign(particle.style, {
+      position: 'absolute',
+      left: `${startX}vw`,
+      top: `${startY}vh`,
+      width: `${size.width}px`,
+      height: `${size.height}px`,
+      pointerEvents: 'none',
+      willChange: 'transform',
+      // IMPORTANT: animation is assigned using the configured keyframes name
+      animation: `${w.animation} ${duration}s linear ${delay}s infinite`
+    });
+
+    // Small per-type tweaks (optional, but helps visibility)
+    if (typeKey === 'rain') particle.style.transform = 'rotate(12deg)';
+    if (typeKey === 'petals') particle.style.transform = 'rotate(35deg)';
+
+    this.weatherContainer.appendChild(particle);
+    this.particles.push(particle);
+  }
+
+  getParticleSize(typeKey) {
+    switch (typeKey) {
+      case 'rain':   return { width: 2, height: 18 + Math.random() * 18 };
+      case 'snow': {
+        const s = 4 + Math.random() * 7;
+        return { width: s, height: s };
+      }
+      case 'leaves': {
+        const s = 10 + Math.random() * 14;
+        return { width: s, height: s };
+      }
+      case 'petals': {
+        const s = 8 + Math.random() * 12;
+        return { width: s, height: s };
+      }
+      default: return { width: 6, height: 6 };
+    }
+  }
+
+  clearParticles() {
+    if (!this.weatherContainer) return;
+    for (const p of this.particles) p.remove();
+    this.particles = [];
+  }
+}
+    
+
     // ============================================
     // SHARE SYSTEM (FIXED for fallback)
     // ============================================
