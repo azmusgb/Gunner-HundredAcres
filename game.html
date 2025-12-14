@@ -1461,2206 +1461,1932 @@
             </button>
         </div>
     </main>
-   <script>
-        // ============================================
-        // GAME CONSTANTS
-        // ============================================
-        const GAME_CONSTANTS = {
-            PLAYER: {
-                BASE_RADIUS: 32,
-                MAX_SPEED: 700,
-                ACCELERATION: 0.25,
-                DECELERATION: 0.75,
-                WOBBLE_SPEED: 4,
-                ARM_WOBBLE_SPEED: 2.5,
-                ARM_ANGLE_MULTIPLIER: 0.4,
-                TRAIL_LENGTH: 8,
-                UI_SAFE_BOTTOM: 190
-            },
-            HONEY: {
-                BASE_SPEED: 120,
-                SPEED_VARIANCE: 80,
-                SCORE_SPEED_MODIFIER: 0.01,
-                GOLDEN_CHANCE: 0.05,
-                BASE_POINTS: 10,
-                STREAK_MULTIPLIER: 4,
-                GOLDEN_MULTIPLIER: 3,
-                SPAWN_BASE_RATE: 1.0,
-                SPAWN_MIN_RATE: 0.4,
-                SCORE_RATE_REDUCTION: 4000,
-                PARTICLE_COUNT_NORMAL: 20,
-                PARTICLE_COUNT_GOLDEN: 30
-            },
-            BEE: {
-                BASE_SPEED: 140,
-                SPEED_VARIANCE: 80,
-                VERTICAL_VARIANCE: 60,
-                ANGRY_CHANCE: 0.3,
-                SPAWN_BASE_RATE: 3.5,
-                SPAWN_MIN_RATE: 1.5,
-                SCORE_RATE_REDUCTION: 3000,
-                WOBBLE_SPEED: 10,
-                WING_FLAP_SPEED: 25,
-                TRAIL_LENGTH: 5,
-                BOUNCE_CHANCE: 0.3
-            },
-            GAME: {
-                INITIAL_LIVES: 3,
-                MAX_FRAME_TIME: 0.033,
-                SHAKE_DURATION: 0.5,
-                POPUP_DURATION: 1.5,
-                WORD_DURATION: 2.5,
-                PERFECT_GAME_THRESHOLD: 0
-            },
-            ACHIEVEMENTS: {
-                FIRST_TASTE: 100,
-                HONEY_HOARDER: 50,
-                BEE_WHISPERER: 60,
-                TIGGERRIFIC_STREAK: 15,
-                GOLDEN_TOUCH: 10,
-                SPEED_DEMON_SCORE: 500,
-                SPEED_DEMON_TIME: 120,
-                HUNDRED_ACRE_CHAMP: 1000
-            }
-        };
 
-        // ============================================
-        // PARTICLE SYSTEM
-        // ============================================
-        class ParticleSystem {
-            constructor() {
-                this.particles = [];
-                this.particlePool = [];
-            }
+<script>
+/* ============================================
+   Pooh's Enhanced Honey Hunt — Full Script Block (fixed)
+   Key fixes:
+   - Achievements totals no longer inflate per-frame
+   - Unified timebase (performance.now) for sting timing
+   - Event-driven achievement increments (totalHoneyCaught)
+   - Safer achievements checking cadence
+============================================ */
 
-            createParticles(x, y, color, count = 20, type = 'star') {
-                const types = ['circle', 'star', 'heart', 'honey'];
-                
-                for (let i = 0; i < count; i++) {
-                    const particle = this.getParticle();
-                    const particleType = type === 'mixed' ? 
-                        types[Math.floor(Math.random() * types.length)] : type;
-                    const angle = (Math.PI * 2 * i) / count + (Math.random() - 0.5);
-                    const speed = 60 + Math.random() * 100;
+/* ============================================
+   GAME CONSTANTS
+============================================ */
+const GAME_CONSTANTS = {
+  PLAYER: {
+    BASE_RADIUS: 32,
+    MAX_SPEED: 700,
+    ACCELERATION: 0.25,
+    DECELERATION: 0.75,
+    WOBBLE_SPEED: 4,
+    ARM_WOBBLE_SPEED: 2.5,
+    ARM_ANGLE_MULTIPLIER: 0.4,
+    TRAIL_LENGTH: 8,
+    UI_SAFE_BOTTOM: 190
+  },
+  HONEY: {
+    BASE_SPEED: 120,
+    SPEED_VARIANCE: 80,
+    SCORE_SPEED_MODIFIER: 0.01,
+    GOLDEN_CHANCE: 0.05,
+    BASE_POINTS: 10,
+    STREAK_MULTIPLIER: 4,
+    GOLDEN_MULTIPLIER: 3,
+    SPAWN_BASE_RATE: 1.0,
+    SPAWN_MIN_RATE: 0.4,
+    SCORE_RATE_REDUCTION: 4000,
+    PARTICLE_COUNT_NORMAL: 20,
+    PARTICLE_COUNT_GOLDEN: 30
+  },
+  BEE: {
+    BASE_SPEED: 140,
+    SPEED_VARIANCE: 80,
+    VERTICAL_VARIANCE: 60,
+    ANGRY_CHANCE: 0.3,
+    SPAWN_BASE_RATE: 3.5,
+    SPAWN_MIN_RATE: 1.5,
+    SCORE_RATE_REDUCTION: 3000,
+    WOBBLE_SPEED: 10,
+    WING_FLAP_SPEED: 25,
+    TRAIL_LENGTH: 5,
+    BOUNCE_CHANCE: 0.3
+  },
+  GAME: {
+    INITIAL_LIVES: 3,
+    MAX_FRAME_TIME: 0.033,
+    SHAKE_DURATION: 0.5,
+    POPUP_DURATION: 1.5,
+    WORD_DURATION: 2.5,
+    PERFECT_GAME_THRESHOLD: 0
+  },
+  ACHIEVEMENTS: {
+    FIRST_TASTE: 100,
+    HONEY_HOARDER: 50,
+    BEE_WHISPERER: 60,
+    TIGGERRIFIC_STREAK: 15,
+    GOLDEN_TOUCH: 10,
+    SPEED_DEMON_SCORE: 500,
+    SPEED_DEMON_TIME: 120,
+    HUNDRED_ACRE_CHAMP: 1000
+  }
+};
 
-                    // Initialize particle
-                    particle.x = x;
-                    particle.y = y;
-                    particle.vx = Math.cos(angle) * speed;
-                    particle.vy = Math.sin(angle) * speed - 40;
-                    particle.life = 1;
-                    particle.decay = 0.01 + Math.random() * 0.02;
-                    particle.size = 4 + Math.random() * 8;
-                    particle.color = color;
-                    particle.type = particleType;
-                    particle.rotation = Math.random() * Math.PI * 2;
-                    particle.rotationSpeed = (Math.random() - 0.5) * 0.3;
-                    particle.gravity = type === 'honey' ? 400 : 300;
-                    particle.drag = 0.96 + Math.random() * 0.03;
+/* ============================================
+   PARTICLE SYSTEM
+============================================ */
+class ParticleSystem {
+  constructor() {
+    this.particles = [];
+    this.particlePool = [];
+  }
 
-                    this.particles.push(particle);
-                }
-            }
+  createParticles(x, y, color, count = 20, type = 'star') {
+    const types = ['circle', 'star', 'heart', 'honey'];
 
-            getParticle() {
-                if (this.particlePool.length > 0) {
-                    const particle = this.particlePool.pop();
-                    // Reset particle properties
-                    Object.keys(particle).forEach(key => {
-                        if (key !== 'id') delete particle[key];
-                    });
-                    return particle;
-                }
-                return {};
-            }
+    for (let i = 0; i < count; i++) {
+      const particle = this.getParticle();
+      const particleType = type === 'mixed'
+        ? types[Math.floor(Math.random() * types.length)]
+        : type;
 
-            recycleParticle(particle) {
-                this.particlePool.push(particle);
-            }
+      const angle = (Math.PI * 2 * i) / count + (Math.random() - 0.5);
+      const speed = 60 + Math.random() * 100;
 
-            update(deltaTime) {
-                for (let i = this.particles.length - 1; i >= 0; i--) {
-                    const particle = this.particles[i];
-                    
-                    particle.x += particle.vx * deltaTime;
-                    particle.y += particle.vy * deltaTime;
-                    particle.vy += particle.gravity * deltaTime;
-                    particle.vx *= particle.drag;
-                    particle.rotation += particle.rotationSpeed;
-                    particle.life -= particle.decay;
+      particle.x = x;
+      particle.y = y;
+      particle.vx = Math.cos(angle) * speed;
+      particle.vy = Math.sin(angle) * speed - 40;
+      particle.life = 1;
+      particle.decay = 0.01 + Math.random() * 0.02;
+      particle.size = 4 + Math.random() * 8;
+      particle.color = color;
+      particle.type = particleType;
+      particle.rotation = Math.random() * Math.PI * 2;
+      particle.rotationSpeed = (Math.random() - 0.5) * 0.3;
+      particle.gravity = type === 'honey' ? 400 : 300;
+      particle.drag = 0.96 + Math.random() * 0.03;
 
-                    if (particle.life <= 0) {
-                        this.recycleParticle(this.particles[i]);
-                        this.particles.splice(i, 1);
-                    }
-                }
-            }
+      this.particles.push(particle);
+    }
+  }
 
-            draw(ctx) {
-                for (const particle of this.particles) {
-                    ctx.save();
-                    ctx.globalAlpha = particle.life;
-                    ctx.translate(particle.x, particle.y);
-                    ctx.rotate(particle.rotation);
-                    ctx.fillStyle = particle.color;
+  getParticle() {
+    if (this.particlePool.length > 0) {
+      const p = this.particlePool.pop();
+      for (const k of Object.keys(p)) {
+        if (k !== 'id') delete p[k];
+      }
+      return p;
+    }
+    return {};
+  }
 
-                    switch (particle.type) {
-                        case 'star':
-                            ctx.beginPath();
-                            for (let i = 0; i < 5; i++) {
-                                const angle = (i * 4 * Math.PI) / 5;
-                                const r = i % 2 === 0 ? particle.size : particle.size / 2;
-                                const px = Math.cos(angle) * r;
-                                const py = Math.sin(angle) * r;
-                                if (i === 0) ctx.moveTo(px, py);
-                                else ctx.lineTo(px, py);
-                            }
-                            ctx.closePath();
-                            ctx.fill();
-                            break;
+  recycleParticle(particle) {
+    this.particlePool.push(particle);
+  }
 
-                        case 'heart':
-                            ctx.beginPath();
-                            const s = particle.size;
-                            ctx.moveTo(0, s / 4);
-                            ctx.bezierCurveTo(-s, -s / 2, -s / 2, -s, 0, 0);
-                            ctx.bezierCurveTo(s / 2, -s, s, -s / 2, 0, s / 4);
-                            ctx.fill();
-                            break;
+  update(deltaTime) {
+    for (let i = this.particles.length - 1; i >= 0; i--) {
+      const p = this.particles[i];
 
-                        case 'honey':
-                            ctx.beginPath();
-                            ctx.ellipse(0, 0, particle.size, particle.size * 0.7, 0, 0, Math.PI * 2);
-                            ctx.fill();
-                            break;
+      p.x += p.vx * deltaTime;
+      p.y += p.vy * deltaTime;
+      p.vy += p.gravity * deltaTime;
+      p.vx *= p.drag;
+      p.rotation += p.rotationSpeed;
+      p.life -= p.decay;
 
-                        default:
-                            ctx.beginPath();
-                            ctx.arc(0, 0, particle.size * particle.life, 0, Math.PI * 2);
-                            ctx.fill();
-                    }
+      if (p.life <= 0) {
+        this.recycleParticle(this.particles[i]);
+        this.particles.splice(i, 1);
+      }
+    }
+  }
 
-                    ctx.restore();
-                }
-                ctx.globalAlpha = 1;
-            }
+  draw(ctx) {
+    for (const p of this.particles) {
+      ctx.save();
+      ctx.globalAlpha = p.life;
+      ctx.translate(p.x, p.y);
+      ctx.rotate(p.rotation);
+      ctx.fillStyle = p.color;
 
-            clear() {
-                this.particles.length = 0;
-                this.particlePool.length = 0;
-            }
+      switch (p.type) {
+        case 'star': {
+          ctx.beginPath();
+          for (let i = 0; i < 5; i++) {
+            const a = (i * 4 * Math.PI) / 5;
+            const r = i % 2 === 0 ? p.size : p.size / 2;
+            const px = Math.cos(a) * r;
+            const py = Math.sin(a) * r;
+            if (i === 0) ctx.moveTo(px, py);
+            else ctx.lineTo(px, py);
+          }
+          ctx.closePath();
+          ctx.fill();
+          break;
         }
-
-        // ============================================
-        // SOUND SYSTEM
-        // ============================================
-        class SoundSystem {
-            constructor() {
-                this.enabled = true;
-                this.sounds = {};
-                this.audioContext = null;
-                this.init();
-            }
-
-            init() {
-                try {
-                    this.audioContext = new (window.AudioContext || window.webkitAudioContext)();
-                } catch (e) {
-                    console.log('Audio not supported, disabling sound');
-                    this.enabled = false;
-                    return;
-                }
-
-                // Load sounds
-                this.sounds = {
-                    collect: this.createSound(800, 0.1, 'sine'),
-                    collectGolden: this.createSound(1200, 0.15, 'sine'),
-                    sting: this.createSound(200, 0.2, 'square'),
-                    achievement: this.createSound(1500, 0.3, 'sine'),
-                    levelup: this.createSound(600, 0.25, 'sine'),
-                    gameover: this.createSound(300, 0.4, 'sawtooth'),
-                    click: this.createSound(400, 0.1, 'sine')
-                };
-
-                this.updateUI();
-            }
-
-            createSound(frequency, duration, type) {
-                return {
-                    play: () => {
-                        if (!this.enabled || !this.audioContext) return;
-                        
-                        try {
-                            if (this.audioContext.state === 'suspended') {
-                                this.audioContext.resume();
-                            }
-
-                            const oscillator = this.audioContext.createOscillator();
-                            const gainNode = this.audioContext.createGain();
-
-                            oscillator.connect(gainNode);
-                            gainNode.connect(this.audioContext.destination);
-
-                            oscillator.frequency.value = frequency;
-                            oscillator.type = type;
-
-                            const now = this.audioContext.currentTime;
-                            gainNode.gain.setValueAtTime(0.3, now);
-                            gainNode.gain.exponentialRampToValueAtTime(0.01, now + duration);
-
-                            oscillator.start(now);
-                            oscillator.stop(now + duration);
-                        } catch (e) {
-                            console.log('Audio error:', e);
-                        }
-                    }
-                };
-            }
-
-            play(soundName) {
-                if (!this.enabled || !this.sounds[soundName]) return;
-                this.sounds[soundName].play();
-            }
-
-            updateUI() {
-                const iconClass = this.enabled ? 'fa-volume-up' : 'fa-volume-mute';
-                document.getElementById('sound-toggle-btn').innerHTML = `<i class="fas ${iconClass}"></i>`;
-            }
-
-            toggle() {
-                this.enabled = !this.enabled;
-                this.updateUI();
-                this.play('click');
-                
-                // Save preference
-                try {
-                    localStorage.setItem('poohSoundEnabled', this.enabled.toString());
-                } catch (e) {
-                    console.log('Could not save sound preference');
-                }
-            }
-
-            loadPreference() {
-                try {
-                    const saved = localStorage.getItem('poohSoundEnabled');
-                    if (saved !== null) {
-                        this.enabled = saved === 'true';
-                        this.updateUI();
-                    }
-                } catch (e) {
-                    console.log('Could not load sound preference');
-                }
-            }
+        case 'heart': {
+          ctx.beginPath();
+          const s = p.size;
+          ctx.moveTo(0, s / 4);
+          ctx.bezierCurveTo(-s, -s / 2, -s / 2, -s, 0, 0);
+          ctx.bezierCurveTo(s / 2, -s, s, -s / 2, 0, s / 4);
+          ctx.fill();
+          break;
         }
-
-        // ============================================
-        // ACHIEVEMENTS SYSTEM
-        // ============================================
-        class AchievementSystem {
-            constructor() {
-                this.achievements = [
-                    {
-                        id: 'first_taste',
-                        name: 'First Taste',
-                        icon: '🥄',
-                        description: 'Score your first 100 points',
-                        condition: (gameState) => gameState.score >= 100,
-                        unlocked: false
-                    },
-                    {
-                        id: 'honey_hoarder',
-                        name: 'Honey Hoarder',
-                        icon: '🍯',
-                        description: 'Catch 50 honey pots in total',
-                        condition: (gameState) => gameState.totalHoneyCaught >= 50,
-                        unlocked: false
-                    },
-                    {
-                        id: 'bee_whisperer',
-                        name: 'Bee Whisperer',
-                        icon: '🐝',
-                        description: 'Survive for 60 seconds without getting stung',
-                        condition: (gameState) => gameState.longestNoStingTime >= 60,
-                        unlocked: false
-                    },
-                    {
-                        id: 'tiggerific',
-                        name: 'Tiggerific!',
-                        icon: '🐯',
-                        description: 'Reach a streak of 15',
-                        condition: (gameState) => gameState.bestStreak >= 15,
-                        unlocked: false
-                    },
-                    {
-                        id: 'golden_touch',
-                        name: 'Golden Touch',
-                        icon: '🌟',
-                        description: 'Catch 10 golden honey pots',
-                        condition: (gameState) => gameState.goldenPotsCaught >= 10,
-                        unlocked: false
-                    },
-                    {
-                        id: 'speed_demon',
-                        name: 'Speed Demon',
-                        icon: '⚡',
-                        description: 'Score 500 points in under 2 minutes',
-                        condition: (gameState) => gameState.score >= 500 && gameState.timePlayed <= 120,
-                        unlocked: false
-                    },
-                    {
-                        id: 'perfect_game',
-                        name: 'Perfect Game',
-                        icon: '👑',
-                        description: 'Complete a game without losing any lives',
-                        condition: (gameState) => gameState.perfectGames > 0,
-                        unlocked: false
-                    },
-                    {
-                        id: 'weather_master',
-                        name: 'Weather Master',
-                        icon: '🌈',
-                        description: 'Play with all 5 weather effects',
-                        condition: (gameState) => gameState.weathersUsed >= 5,
-                        unlocked: false
-                    },
-                    {
-                        id: 'character_collector',
-                        name: 'Character Collector',
-                        icon: '🎭',
-                        description: 'Play as all 4 characters',
-                        condition: (gameState) => gameState.charactersUsed >= 4,
-                        unlocked: false
-                    },
-                    {
-                        id: 'hundred_acre_champ',
-                        name: 'Hundred Acre Champ',
-                        icon: '🏆',
-                        description: 'Reach a score of 1000 points',
-                        condition: (gameState) => gameState.highScore >= 1000,
-                        unlocked: false
-                    }
-                ];
-
-                this.gameState = {
-                    score: 0,
-                    totalHoneyCaught: 0,
-                    goldenPotsCaught: 0,
-                    bestStreak: 0,
-                    longestNoStingTime: 0,
-                    timePlayed: 0,
-                    perfectGames: 0,
-                    weathersUsed: 0,
-                    charactersUsed: 0,
-                    highScore: 0,
-                    lastStingTime: 0
-                };
-
-                this.init();
-            }
-
-            init() {
-                this.loadAchievements();
-                this.updateDisplay();
-            }
-
-            loadAchievements() {
-                try {
-                    const saved = localStorage.getItem('poohAchievements');
-                    if (saved) {
-                        const data = JSON.parse(saved);
-                        this.achievements.forEach((ach, index) => {
-                            if (data[index]) {
-                                ach.unlocked = data[index].unlocked;
-                            }
-                        });
-                    }
-
-                    const savedState = localStorage.getItem('poohGameState');
-                    if (savedState) {
-                        const parsed = JSON.parse(savedState);
-                        this.gameState = { ...this.gameState, ...parsed };
-                    }
-                } catch (e) {
-                    console.log('Could not load achievements:', e);
-                }
-            }
-
-            saveAchievements() {
-                try {
-                    const saveData = this.achievements.map((ach) => ({
-                        id: ach.id,
-                        unlocked: ach.unlocked
-                    }));
-                    localStorage.setItem('poohAchievements', JSON.stringify(saveData));
-                    localStorage.setItem('poohGameState', JSON.stringify(this.gameState));
-                } catch (e) {
-                    console.log('Could not save achievements:', e);
-                }
-            }
-
-            checkAchievements(gameState) {
-                let newUnlocks = 0;
-
-                this.achievements.forEach((achievement) => {
-                    if (!achievement.unlocked && achievement.condition(gameState)) {
-                        achievement.unlocked = true;
-                        newUnlocks++;
-                        this.showAchievementPopup(achievement);
-                    }
-                });
-
-                if (newUnlocks > 0) {
-                    this.saveAchievements();
-                    this.updateDisplay();
-                }
-            }
-
-            showAchievementPopup(achievement) {
-                const popup = document.createElement('div');
-                popup.className = 'achievement-popup';
-                popup.innerHTML = `
-                    <div class="achievement-popup-title">Achievement Unlocked!</div>
-                    <div style="font-size: 2rem; margin: 10px 0;">${achievement.icon}</div>
-                    <div style="font-weight: bold; color: var(--wood-brown);">${achievement.name}</div>
-                    <div style="font-size: 0.9rem; color: var(--wood-light);">${achievement.description}</div>
-                `;
-
-                document.body.appendChild(popup);
-
-                // Play sound
-                if (window.gameEngine) {
-                    window.gameEngine.soundSystem.play('achievement');
-                }
-
-                setTimeout(() => {
-                    popup.remove();
-                }, 3000);
-            }
-
-            updateDisplay() {
-                const unlockedCount = this.achievements.filter(a => a.unlocked).length;
-                document.getElementById('achievements-count').textContent = 
-                    `${unlockedCount}/${this.achievements.length}`;
-
-                const achievementsList = document.getElementById('achievements-list');
-                if (!achievementsList) return;
-
-                achievementsList.innerHTML = '';
-                this.achievements.forEach((achievement) => {
-                    const item = document.createElement('div');
-                    item.className = `achievement-item ${achievement.unlocked ? 'unlocked' : ''}`;
-                    item.innerHTML = `
-                        <div class="achievement-icon">${achievement.icon}</div>
-                        <div class="achievement-details">
-                            <div class="achievement-name">${achievement.name}</div>
-                            <div class="achievement-desc">${achievement.description}</div>
-                            <div style="font-size: 0.8rem; color: ${achievement.unlocked ? '#7cb342' : '#e63946'};">
-                                ${achievement.unlocked ? '✓ Unlocked' : 'Locked'}
-                            </div>
-                        </div>
-                    `;
-                    achievementsList.appendChild(item);
-                });
-            }
-
-            updateGameState(key, value) {
-                this.gameState[key] = value;
-            }
-
-            incrementGameState(key, amount = 1) {
-                this.gameState[key] = (this.gameState[key] || 0) + amount;
-            }
+        case 'honey': {
+          ctx.beginPath();
+          ctx.ellipse(0, 0, p.size, p.size * 0.7, 0, 0, Math.PI * 2);
+          ctx.fill();
+          break;
         }
-
-        // ============================================
-        // CHARACTER SYSTEM
-        // ============================================
-        class CharacterSystem {
-            constructor() {
-                this.characters = {
-                    pooh: {
-                        name: 'Winnie the Pooh',
-                        radius: 38,
-                        speed: 1.0,
-                        color: '#d4a574',
-                        ability: 'Honey Expert',
-                        description: '+30% bigger catch radius'
-                    },
-                    piglet: {
-                        name: 'Piglet',
-                        radius: 32,
-                        speed: 1.25,
-                        color: '#ffb7c5',
-                        ability: 'Quick Feet',
-                        description: 'Moves 25% faster'
-                    },
-                    tigger: {
-                        name: 'Tigger',
-                        radius: 32,
-                        speed: 1.0,
-                        color: '#ff8c00',
-                        ability: 'Bouncy',
-                        description: 'Can bounce off bees',
-                        canBounce: true
-                    },
-                    rabbit: {
-                        name: 'Rabbit',
-                        radius: 32,
-                        speed: 1.0,
-                        color: '#8bc34a',
-                        ability: 'Organized',
-                        description: 'Double points for combos',
-                        comboMultiplier: 2.0
-                    }
-                };
-
-                this.currentCharacter = 'pooh';
-                this.usedCharacters = new Set();
-                this.init();
-            }
-
-            init() {
-                this.loadCharacter();
-                this.usedCharacters.add(this.currentCharacter);
-                this.updateCharacterUI();
-            }
-
-            loadCharacter() {
-                try {
-                    const saved = localStorage.getItem('poohSelectedCharacter');
-                    if (saved && this.characters[saved]) {
-                        this.currentCharacter = saved;
-                    }
-                } catch (e) {
-                    console.log('Could not load character:', e);
-                }
-            }
-
-            saveCharacter() {
-                try {
-                    localStorage.setItem('poohSelectedCharacter', this.currentCharacter);
-                } catch (e) {
-                    console.log('Could not save character:', e);
-                }
-            }
-
-            selectCharacter(characterId) {
-                if (this.characters[characterId]) {
-                    this.currentCharacter = characterId;
-                    this.saveCharacter();
-                    this.updateCharacterUI();
-                    
-                    this.usedCharacters.add(characterId);
-                    
-                    // Update achievements
-                    if (window.gameEngine) {
-                        window.gameEngine.achievementSystem.incrementGameState('charactersUsed', 0);
-window.gameEngine.achievementSystem.gameState.charactersUsed = this.usedCharacters.size;
-                        window.gameEngine.achievementSystem.checkAchievements(window.gameEngine.achievementSystem.gameState);
-                    }
-                }
-            }
-
-            updateCharacterUI() {
-                document.querySelectorAll('.character-card').forEach((card) => {
-                    card.classList.remove('selected');
-                    if (card.dataset.character === this.currentCharacter) {
-                        card.classList.add('selected');
-                    }
-                });
-            }
-
-            getCurrentCharacter() {
-                return this.characters[this.currentCharacter];
-            }
+        default: {
+          ctx.beginPath();
+          ctx.arc(0, 0, p.size * p.life, 0, Math.PI * 2);
+          ctx.fill();
         }
+      }
 
-        // ============================================
-        // WEATHER SYSTEM
-        // ============================================
-        class WeatherSystem {
-            constructor() {
-                this.currentWeather = 'none';
-                this.usedWeathers = new Set();
-                this.weatherContainer = null;
-                this.weatherTypes = {
-                    none: {
-                        name: 'Clear',
-                        icon: 'fas fa-sun',
-                        particles: 0,
-                        color: '#ffffff'
-                    },
-                    rain: {
-                        name: 'Rain',
-                        icon: 'fas fa-cloud-rain',
-                        particles: 160,
-                        color: '#4d96ff',
-                        animation: 'rainFall'
-                    },
-                    snow: {
-                        name: 'Snow',
-                        icon: 'fas fa-snowflake',
-                        particles: 120,
-                        color: '#ffffff',
-                        animation: 'snowFall'
-                    },
-                    leaves: {
-                        name: 'Autumn',
-                        icon: 'fas fa-leaf',
-                        particles: 90,
-                        color: '#ff6b6b',
-                        animation: 'leafFall'
-                    },
-                    petals: {
-                        name: 'Spring',
-                        icon: 'fas fa-spa',
-                        particles: 70,
-                        color: '#ffb7c5',
-                        animation: 'petalFall'
-                    }
-                };
+      ctx.restore();
+    }
+    ctx.globalAlpha = 1;
+  }
 
-                this.init();
-            }
+  clear() {
+    this.particles.length = 0;
+    this.particlePool.length = 0;
+  }
+}
 
-            init() {
-                this.loadWeather();
-                this.usedWeathers.add(this.currentWeather);
-                this.updateWeatherUI();
-            }
+/* ============================================
+   SOUND SYSTEM
+============================================ */
+class SoundSystem {
+  constructor() {
+    this.enabled = true;
+    this.sounds = {};
+    this.audioContext = null;
+    this.init();
+    this.loadPreference(); // load after init so UI updates safely
+  }
 
-            loadWeather() {
-                try {
-                    const saved = localStorage.getItem('poohCurrentWeather');
-                    if (saved && this.weatherTypes[saved]) {
-                        this.currentWeather = saved;
-                    }
-                } catch (e) {
-                    console.log('Could not load weather:', e);
-                }
-            }
+  init() {
+    try {
+      this.audioContext = new (window.AudioContext || window.webkitAudioContext)();
+    } catch (e) {
+      console.log('Audio not supported, disabling sound');
+      this.enabled = false;
+      return;
+    }
 
-            saveWeather() {
-                try {
-                    localStorage.setItem('poohCurrentWeather', this.currentWeather);
-                } catch (e) {
-                    console.log('Could not save weather:', e);
-                }
-            }
+    this.sounds = {
+      collect: this.createSound(800, 0.1, 'sine'),
+      collectGolden: this.createSound(1200, 0.15, 'sine'),
+      sting: this.createSound(200, 0.2, 'square'),
+      achievement: this.createSound(1500, 0.3, 'sine'),
+      levelup: this.createSound(600, 0.25, 'sine'),
+      gameover: this.createSound(300, 0.4, 'sawtooth'),
+      click: this.createSound(400, 0.1, 'sine')
+    };
 
-            setWeather(weatherType) {
-                if (!this.weatherTypes[weatherType]) return;
+    this.updateUI();
+  }
 
-                this.currentWeather = weatherType;
-                this.saveWeather();
-                this.updateWeatherUI();
-                this.applyWeatherEffects();
+  createSound(frequency, duration, type) {
+    return {
+      play: () => {
+        if (!this.enabled || !this.audioContext) return;
+        try {
+          if (this.audioContext.state === 'suspended') this.audioContext.resume();
 
-                this.usedWeathers.add(weatherType);
-                
-                // Update achievements
-                if (window.gameEngine) {
-                    window.gameEngine.achievementSystem.incrementGameState('weathersUsed', 0);
-                    window.gameEngine.achievementSystem.gameState.weathersUsed = this.usedWeathers.size;
-                    window.gameEngine.achievementSystem.checkAchievements(window.gameEngine.achievementSystem.gameState);
-                }
-            }
+          const osc = this.audioContext.createOscillator();
+          const gain = this.audioContext.createGain();
 
-            updateWeatherUI() {
-                document.querySelectorAll('.weather-btn').forEach((btn) => {
-                    btn.classList.toggle('active', btn.dataset.weather === this.currentWeather);
-                });
-            }
+          osc.connect(gain);
+          gain.connect(this.audioContext.destination);
 
-            applyWeatherEffects() {
-                // Remove existing weather effects
-                if (this.weatherContainer) {
-                    this.weatherContainer.remove();
-                }
+          osc.frequency.value = frequency;
+          osc.type = type;
 
-                // If no weather, return
-                if (this.currentWeather === 'none') return;
+          const now = this.audioContext.currentTime;
+          gain.gain.setValueAtTime(0.3, now);
+          gain.gain.exponentialRampToValueAtTime(0.01, now + duration);
 
-                const weather = this.weatherTypes[this.currentWeather];
-                
-                // Create weather container
-                this.weatherContainer = document.createElement('div');
-                this.weatherContainer.id = 'weather-effects';
-                document.body.appendChild(this.weatherContainer);
-
-                // Create particles
-                for (let i = 0; i < weather.particles; i++) {
-                    const particle = document.createElement('div');
-                    
-                    // Set random properties
-                    const duration = 8 + Math.random() * 18;
-                    const delay = Math.random() * 10;
-                    const left = Math.random() * 100;
-                    const startY = -60 - Math.random() * 240;
-                    const size = this.getParticleSize(this.currentWeather);
-
-                    // Apply styles based on weather type
-                    Object.assign(particle.style, {
-                        position: 'absolute',
-                        left: `${left}vw`,
-                        top: `${startY}px`,
-                        animationName: weather.animation,
-                        animationDuration: `${duration}s`,
-                        animationDelay: `${delay}s`,
-                        animationTimingFunction: 'linear',
-                        animationIterationCount: 'infinite',
-                        willChange: 'transform'
-                    });
-
-                    this.applyParticleStyle(particle, this.currentWeather, size, weather.color);
-                    this.weatherContainer.appendChild(particle);
-                }
-            }
-
-            getParticleSize(weatherType) {
-                switch (weatherType) {
-                    case 'rain': return { width: 2, height: 14 + Math.random() * 18 };
-                    case 'snow': return { width: 3 + Math.random() * 5, height: 3 + Math.random() * 5 };
-                    case 'leaves': return { width: 8 + Math.random() * 10, height: 8 + Math.random() * 10 };
-                    case 'petals': return { width: 6 + Math.random() * 8, height: 6 + Math.random() * 8 };
-                    default: return { width: 5, height: 5 };
-                }
-            }
-
-            applyParticleStyle(particle, weatherType, size, color) {
-                switch (weatherType) {
-                    case 'rain':
-                        particle.style.cssText += `
-                            width: ${size.width}px;
-                            height: ${size.height}px;
-                            background: ${color};
-                            border-radius: 0%;
-                            opacity: 0.65;
-                            transform: rotate(15deg);
-                        `;
-                        break;
-                        
-                    case 'snow':
-                        particle.style.cssText += `
-                            width: ${size.width}px;
-                            height: ${size.height}px;
-                            background: ${color};
-                            border-radius: 50%;
-                            opacity: 0.85;
-                            filter: drop-shadow(0 2px 2px rgba(0,0,0,0.15));
-                        `;
-                        break;
-                        
-                    case 'leaves':
-                        particle.style.cssText += `
-                            width: ${size.width}px;
-                            height: ${size.height}px;
-                            background: ${color};
-                            border-radius: 0%;
-                            opacity: 0.75;
-                            clip-path: polygon(50% 0%, 100% 50%, 50% 100%, 0% 50%);
-                            transform: rotate(${Math.random() * 360}deg);
-                        `;
-                        break;
-                        
-                    case 'petals':
-                        particle.style.cssText += `
-                            width: ${size.width}px;
-                            height: ${size.height}px;
-                            background: ${color};
-                            border-radius: 50% 50% 0 50%;
-                            opacity: 0.75;
-                            transform: rotate(45deg);
-                        `;
-                        break;
-                }
-            }
-
-            clear() {
-                if (this.weatherContainer) {
-                    this.weatherContainer.remove();
-                    this.weatherContainer = null;
-                }
-            }
+          osc.start(now);
+          osc.stop(now + duration);
+        } catch (e) {
+          console.log('Audio error:', e);
         }
-
-        // ============================================
-        // SHARE SYSTEM
-        // ============================================
-        class ShareSystem {
-            constructor() {
-                this.gameTitle = "Pooh's Enhanced Honey Hunt";
-                this.gameDescription = "Play Pooh's Enhanced Honey Hunt - a fun browser game where you help Winnie the Pooh catch honey pots! 🍯🐻";
-                this.gameUrl = window.location.href;
-            }
-
-            shareGame() {
-                this.shareContent(this.gameDescription, this.gameUrl, this.gameTitle);
-            }
-
-            shareScore(score, character) {
-                const text = `I scored ${score} points as ${character} in ${this.gameTitle}! Can you beat my score? 🍯🐻 #PoohHoneyHunt`;
-                this.shareContent(text, this.gameUrl, `My ${this.gameTitle} Score`);
-            }
-
-            shareContent(text, url, title) {
-                // Play click sound
-                if (window.gameEngine) {
-                    window.gameEngine.soundSystem.play('click');
-                }
-
-                if (navigator.share) {
-                    navigator.share({
-                        title: title,
-                        text: text,
-                        url: url
-                    }).catch((err) => {
-                        this.fallbackShare(text, url);
-                    });
-                } else {
-                    this.fallbackShare(text, url);
-                }
-            }
-
-            fallbackShare(text, url) {
-                const shareText = `${text}\n\n${url}`;
-                
-                // Try to copy to clipboard
-                if (navigator.clipboard && window.isSecureContext) {
-                    navigator.clipboard.writeText(shareText)
-                        .then(() => {
-                            this.showMessage('Link copied to clipboard! Share it with your friends.');
-                        })
-                        .catch(() => {
-                            this.showMessage(`Share this link:\n\n${shareText}`);
-                        });
-                } else {
-                    // Fallback for older browsers
-                    const textArea = document.createElement('textarea');
-                    textArea.value = shareText;
-                    textArea.style.position = 'fixed';
-                    textArea.style.top = '0';
-                    textArea.style.left = '0';
-                    textArea.style.width = '2em';
-                    textArea.style.height = '2em';
-                    textArea.style.padding = '0';
-                    textArea.style.border = 'none';
-                    textArea.style.outline = 'none';
-                    textArea.style.boxShadow = 'none';
-                    textArea.style.background = 'transparent';
-
-                    document.body.appendChild(textArea);
-                    textArea.select();
-
-                    try {
-                        document.execCommand('copy');
-                        this.showMessage('Link copied to clipboard! Share it with your friends.');
-                    } catch (err) {
-                        this.showMessage(`Share this link:\n\n${shareText}`);
-                    }
-
-                    document.body.removeChild(textArea);
-                }
-            }
-
-            showMessage(message) {
-                alert(message);
-            }
-        }
-
-        // ============================================
-        // GAME ENGINE - MAIN CLASS
-        // ============================================
-        class PoohHoneyHunt {
-            constructor() {
-                // Canvas and context
-                this.canvas = document.getElementById('honey-game');
-                this.ctx = this.canvas.getContext('2d', {
-                    alpha: false,
-                    desynchronized: true,
-                    powerPreference: 'high-performance'
-                });
-
-                // Game state
-                this.running = false;
-                this.paused = false;
-                this.gameTime = 0;
-                this.lastTime = 0;
-                this.startTime = 0;
-                this.animationFrameId = null;
-                this.canvasRect = null;
-
-                // Game variables
-                this.score = 0;
-                this.streak = 0;
-                this.bestStreak = 0;
-                this.honeyCaught = 0;
-                this.goldenPotsCaught = 0;
-                this.lives = GAME_CONSTANTS.GAME.INITIAL_LIVES;
-                this.lastStingTime = 0;
-                this.perfectGame = true;
-                this.highScore = 0;
-                this.totalPlayTime = 0;
-
-                // Objects
-                this.player = this.createPlayer();
-                this.honeys = [];
-                this.bees = [];
-                this.activePopups = [];
-
-                // Systems
-                this.soundSystem = new SoundSystem();
-                this.particleSystem = new ParticleSystem();
-                this.achievementSystem = new AchievementSystem();
-                this.characterSystem = new CharacterSystem();
-                this.weatherSystem = new WeatherSystem();
-                this.shareSystem = new ShareSystem();
-
-                // Spawn timers
-                this.honeySpawnTimer = 0;
-                this.beeSpawnTimer = 0;
-
-                // Input
-                this.targetX = this.player.x;
-                this.isDragging = false;
-                this.keys = {};
-
-                // UI Elements
-                this.initializeUIElements();
-                this.initializeEventListeners();
-
-                // Initialize
-                this.loadGameState();
-                this.initializeBackground();
-                this.updateHUD();
-                this.updateCanvasRect();
-
-                // Store instance globally for access from other systems
-                window.gameEngine = this;
-            }
-
-            // ============================================
-            // INITIALIZATION METHODS
-            // ============================================
-            createPlayer() {
-                return {
-                    x: this.canvas.width / 2,
-                    y: this.canvas.height - GAME_CONSTANTS.PLAYER.UI_SAFE_BOTTOM,
-                    vx: 0,
-                    radius: GAME_CONSTANTS.PLAYER.BASE_RADIUS,
-                    wobble: 0,
-                    armAngle: 0,
-                    trail: []
-                };
-            }
-
-            initializeUIElements() {
-                // Score elements
-                this.scoreEl = document.getElementById('score');
-                this.streakEl = document.getElementById('streak');
-                this.livesEl = document.getElementById('lives');
-                this.achievementsCountEl = document.getElementById('achievements-count');
-
-                // Overlays
-                this.startOverlay = document.getElementById('start-overlay');
-                this.pauseOverlay = document.getElementById('pause-overlay');
-                this.gameoverOverlay = document.getElementById('gameover-overlay');
-                this.characterSelectOverlay = document.getElementById('character-select-overlay');
-                this.achievementsOverlay = document.getElementById('achievements-overlay');
-
-                // Buttons
-                this.startBtn = document.getElementById('start-btn');
-                this.restartBtn = document.getElementById('restart-btn');
-                this.selectCharacterBtn = document.getElementById('select-character-btn');
-                this.startWithCharacterBtn = document.getElementById('start-with-character-btn');
-                this.viewAchievementsBtn = document.getElementById('view-achievements-btn');
-                this.closeAchievementsBtn = document.getElementById('close-achievements-btn');
-                this.soundToggleBtn = document.getElementById('sound-toggle-btn');
-                this.shareBtn = document.getElementById('share-btn');
-                this.shareScoreBtn = document.getElementById('share-score-btn');
-                this.weatherBtns = document.querySelectorAll('.weather-btn');
-                this.pauseBtn = document.getElementById('pause-btn');
-                this.resumeBtn = document.getElementById('resume-btn');
-                this.quitBtn = document.getElementById('quit-btn');
-                this.helpBtn = document.getElementById('help-btn');
-                this.achievementsBtn = document.getElementById('achievements-btn');
-
-                // Game container
-                this.gameContainer = document.querySelector('.game-container');
-                this.backgroundLayer = document.getElementById('background-layer');
-                this.achievementsList = document.getElementById('achievements-list');
-
-                // Cursor
-                this.honeyCursor = document.getElementById('honey-cursor');
-
-                // Game over stats
-                this.finalScoreEl = document.getElementById('final-score');
-                this.bestStreakEl = document.getElementById('best-streak');
-                this.honeyCaughtEl = document.getElementById('honey-caught');
-                this.timePlayedEl = document.getElementById('time-played');
-                this.highScoreEl = document.getElementById('high-score');
-                this.achievementsEarnedEl = document.getElementById('achievements-earned');
-            }
-
-            initializeEventListeners() {
-                // Canvas input
-                this.canvas.addEventListener('touchstart', this.handleTouchStart.bind(this), { passive: false });
-                this.canvas.addEventListener('touchmove', this.handleTouchMove.bind(this), { passive: false });
-                this.canvas.addEventListener('touchend', this.handleTouchEnd.bind(this));
-                this.canvas.addEventListener('mousemove', this.handleMouseMove.bind(this));
-                this.canvas.addEventListener('mouseleave', this.handleMouseLeave.bind(this));
-
-                // Keyboard input
-                window.addEventListener('keydown', this.handleKeyDown.bind(this));
-                window.addEventListener('keyup', this.handleKeyUp.bind(this));
-
-                // Game control buttons
-                this.startBtn.addEventListener('click', () => this.startGame());
-                this.restartBtn.addEventListener('click', () => this.startGame());
-                this.selectCharacterBtn.addEventListener('click', () => this.showCharacterSelect());
-                this.startWithCharacterBtn.addEventListener('click', () => this.startGame());
-                this.viewAchievementsBtn.addEventListener('click', () => this.showAchievements());
-                this.closeAchievementsBtn.addEventListener('click', () => this.hideAchievements());
-                this.soundToggleBtn.addEventListener('click', () => this.soundSystem.toggle());
-                this.shareBtn.addEventListener('click', () => this.shareSystem.shareGame());
-                this.shareScoreBtn.addEventListener('click', () => this.shareSystem.shareScore(this.score, this.characterSystem.getCurrentCharacter().name));
-                this.pauseBtn.addEventListener('click', () => this.togglePause());
-                this.resumeBtn.addEventListener('click', () => this.togglePause());
-                this.quitBtn.addEventListener('click', () => this.quitToMenu());
-                this.helpBtn.addEventListener('click', () => this.showHelp());
-                this.achievementsBtn.addEventListener('click', () => this.showAchievements());
-
-                // Character selection
-                document.querySelectorAll('.character-card').forEach(card => {
-                    card.addEventListener('click', () => {
-                        this.characterSystem.selectCharacter(card.dataset.character);
-                        this.soundSystem.play('click');
-                    });
-                });
-
-                // Weather selection
-                this.weatherBtns.forEach(btn => {
-                    btn.addEventListener('click', () => {
-                        this.weatherSystem.setWeather(btn.dataset.weather);
-                    });
-                });
-
-                // Window resize
-                window.addEventListener('resize', () => {
-                    this.updateCanvasRect();
-                    this.weatherSystem.applyWeatherEffects();
-                });
-                
-                window.addEventListener('orientationchange', () => {
-                    setTimeout(() => {
-                        this.updateCanvasRect();
-                        this.weatherSystem.applyWeatherEffects();
-                    }, 100);
-                });
-
-                // Prevent context menu on canvas
-                this.canvas.addEventListener('contextmenu', (e) => e.preventDefault());
-            }
-
-            updateCanvasRect() {
-                this.canvasRect = this.canvas.getBoundingClientRect();
-            }
-
-            clientToCanvasX(clientX) {
-                if (!this.canvasRect) this.updateCanvasRect();
-                const scaleX = this.canvas.width / this.canvasRect.width;
-                return (clientX - this.canvasRect.left) * scaleX;
-            }
-
-            clientToCanvasY(clientY) {
-                if (!this.canvasRect) this.updateCanvasRect();
-                const scaleY = this.canvas.height / this.canvasRect.height;
-                return (clientY - this.canvasRect.top) * scaleY;
-            }
-
-            canvasToCssX(x) {
-                if (!this.canvasRect) this.updateCanvasRect();
-                return (x / this.canvas.width) * this.canvasRect.width;
-            }
-
-            canvasToCssY(y) {
-                if (!this.canvasRect) this.updateCanvasRect();
-                return (y / this.canvas.height) * this.canvasRect.height;
-            }
-
-            handleTouchStart(e) {
-                e.preventDefault();
-                this.isDragging = true;
-                const touch = e.touches[0];
-                this.targetX = this.clientToCanvasX(touch.clientX);
-                this.updateCursor(touch.clientX, touch.clientY);
-                this.showCursor(true);
-            }
-
-            handleTouchMove(e) {
-                e.preventDefault();
-                const touch = e.touches[0];
-                this.targetX = this.clientToCanvasX(touch.clientX);
-                this.updateCursor(touch.clientX, touch.clientY);
-            }
-
-            handleTouchEnd() {
-                this.isDragging = false;
-                this.showCursor(false);
-            }
-
-            handleMouseMove(e) {
-                this.targetX = this.clientToCanvasX(e.clientX);
-                this.updateCursor(e.clientX, e.clientY);
-                this.showCursor(true);
-            }
-
-            handleMouseLeave() {
-                this.showCursor(false);
-            }
-
-            handleKeyDown(e) {
-                this.keys[e.key] = true;
-
-                switch(e.key) {
-                    case 'ArrowLeft':
-                        this.targetX = Math.max(this.player.radius, this.targetX - 80);
-                        break;
-                    case 'ArrowRight':
-                        this.targetX = Math.min(this.canvas.width - this.player.radius, this.targetX + 80);
-                        break;
-                    case ' ':
-                    case 'Escape':
-                        this.togglePause();
-                        break;
-                }
-            }
-
-            handleKeyUp(e) {
-                this.keys[e.key] = false;
-            }
-
-            updateCursor(x, y) {
-                this.honeyCursor.style.left = `${x}px`;
-                this.honeyCursor.style.top = `${y}px`;
-            }
-
-            showCursor(show) {
-                if (show && this.running && !this.paused) {
-                    this.honeyCursor.classList.add('active');
-                } else {
-                    this.honeyCursor.classList.remove('active');
-                }
-            }
-
-            // ============================================
-            // GAME MANAGEMENT
-            // ============================================
-            startGame() {
-                this.soundSystem.play('click');
-                
-                // Hide all overlays
-                this.hideAllOverlays();
-                
-                // Reset game state
-                this.resetGameState();
-                
-                // Update UI
-                this.updateHUD();
-                this.updateOverlayState();
-
-                // Start game loop
-                this.startTime = performance.now();
-                this.lastTime = this.startTime;
-                this.gameLoop();
-            }
-
-            hideAllOverlays() {
-                this.startOverlay.classList.add('hidden');
-                this.characterSelectOverlay.classList.add('hidden');
-                this.gameoverOverlay.classList.add('hidden');
-                this.achievementsOverlay.classList.add('hidden');
-                this.pauseOverlay.classList.add('hidden');
-            }
-
-            resetGameState() {
-                this.running = true;
-                this.paused = false;
-                this.score = 0;
-                this.streak = 0;
-                this.bestStreak = 0;
-                this.honeyCaught = 0;
-                this.goldenPotsCaught = 0;
-                this.lives = GAME_CONSTANTS.GAME.INITIAL_LIVES;
-                this.gameTime = 0;
-                this.perfectGame = true;
-                this.lastStingTime = 0;
-
-                // Clear objects
-                this.honeys.length = 0;
-                this.bees.length = 0;
-                this.particleSystem.clear();
-                this.activePopups.length = 0;
-
-                // Reset timers
-                this.honeySpawnTimer = 0;
-                this.beeSpawnTimer = 0;
-
-                // Reset player
-                this.player = this.createPlayer();
-                this.targetX = this.player.x;
-
-                // Set character radius
-                const character = this.characterSystem.getCurrentCharacter();
-                this.player.radius = character.radius;
-            }
-
-            togglePause() {
-                if (!this.running) return;
-                
-                this.soundSystem.play('click');
-                this.paused = !this.paused;
-                this.pauseOverlay.classList.toggle('hidden', !this.paused);
-                this.showCursor(!this.paused && this.running);
-                this.updateOverlayState();
-            }
-
-            quitToMenu() {
-                this.soundSystem.play('click');
-                this.pauseOverlay.classList.add('hidden');
-                this.startOverlay.classList.remove('hidden');
-                this.running = false;
-                this.paused = false;
-                this.updateOverlayState();
-            }
-
-            showCharacterSelect() {
-                this.soundSystem.play('click');
-                this.startOverlay.classList.add('hidden');
-                this.characterSelectOverlay.classList.remove('hidden');
-                this.updateOverlayState();
-            }
-
-            showAchievements() {
-                this.soundSystem.play('click');
-                if (this.running) {
-                    this.paused = true;
-                    this.showCursor(false);
-                }
-                this.achievementsOverlay.classList.remove('hidden');
-                this.updateOverlayState();
-            }
-
-            hideAchievements() {
-                this.soundSystem.play('click');
-                this.achievementsOverlay.classList.add('hidden');
-                if (this.running) {
-                    this.paused = false;
-                    this.showCursor(true);
-                } else {
-                    this.startOverlay.classList.remove('hidden');
-                }
-                this.updateOverlayState();
-            }
-
-            showHelp() {
-                this.soundSystem.play('click');
-                alert(
-                    "Help Guide:\n\n" +
-                    "• Move Pooh with mouse/touch or arrow keys\n" +
-                    "• Catch honey pots for points\n" +
-                    "• Avoid bees - they take lives\n" +
-                    "• Build streaks for bonus points\n" +
-                    "• Golden honey pots are worth 3x points\n" +
-                    "• Try different characters and weather effects!\n" +
-                    "• Unlock achievements as you play!\n\n" +
-                    "Character Abilities:\n" +
-                    "• Pooh: Larger catch radius\n" +
-                    "• Piglet: Moves faster\n" +
-                    "• Tigger: Can bounce bees away\n" +
-                    "• Rabbit: Double combo points"
-                );
-            }
-
-            updateOverlayState() {
-                const anyOpen = [
-                    this.startOverlay,
-                    this.pauseOverlay,
-                    this.gameoverOverlay,
-                    this.characterSelectOverlay,
-                    this.achievementsOverlay
-                ].some(el => el && !el.classList.contains('hidden'));
-
-                document.body.classList.toggle('overlay-open', anyOpen);
-            }
-
-            // ============================================
-            // GAME LOOP
-            // ============================================
-            gameLoop(currentTime = performance.now()) {
-                if (!this.running) {
-                    if (this.animationFrameId) {
-                        cancelAnimationFrame(this.animationFrameId);
-                        this.animationFrameId = null;
-                    }
-                    return;
-                }
-
-                const deltaTime = Math.min((currentTime - this.lastTime) / 1000, GAME_CONSTANTS.GAME.MAX_FRAME_TIME);
-                this.lastTime = currentTime;
-
-                if (!this.paused) {
-                    this.gameTime += deltaTime;
-                    this.update(deltaTime);
-                    this.particleSystem.update(deltaTime);
-                    this.updateAchievementState();
-                }
-
-                this.render();
-                this.animationFrameId = requestAnimationFrame((time) => this.gameLoop(time));
-            }
-
-            update(deltaTime) {
-                this.updatePlayer(deltaTime);
-                this.updateSpawnTimers(deltaTime);
-                this.updateHoneys(deltaTime);
-                this.updateBees(deltaTime);
-            }
-
-            updatePlayer(deltaTime) {
-                const character = this.characterSystem.getCurrentCharacter();
-                const speedMultiplier = character.speed;
-                
-                // Calculate movement
-                const dx = (this.targetX - this.player.x) * speedMultiplier;
-                this.player.vx += dx * GAME_CONSTANTS.PLAYER.ACCELERATION;
-                this.player.vx *= GAME_CONSTANTS.PLAYER.DECELERATION;
-                this.player.x += this.player.vx * deltaTime * GAME_CONSTANTS.PLAYER.MAX_SPEED;
-                
-                // Constrain to canvas
-                this.player.x = Math.max(
-                    this.player.radius,
-                    Math.min(this.canvas.width - this.player.radius, this.player.x)
-                );
-
-                // Update animations
-                this.player.wobble += deltaTime * GAME_CONSTANTS.PLAYER.WOBBLE_SPEED;
-                this.player.armAngle = Math.sin(this.player.wobble * GAME_CONSTANTS.PLAYER.ARM_WOBBLE_SPEED) * 
-                    GAME_CONSTANTS.PLAYER.ARM_ANGLE_MULTIPLIER;
-
-                // Update trail
-                this.player.trail.unshift({ x: this.player.x, y: this.player.y });
-                if (this.player.trail.length > GAME_CONSTANTS.PLAYER.TRAIL_LENGTH) {
-                    this.player.trail.pop();
-                }
-            }
-
-            updateSpawnTimers(deltaTime) {
-                // Honey spawning
-                this.honeySpawnTimer += deltaTime;
-                const honeySpawnRate = Math.max(
-                    GAME_CONSTANTS.HONEY.SPAWN_MIN_RATE,
-                    GAME_CONSTANTS.HONEY.SPAWN_BASE_RATE - this.score / GAME_CONSTANTS.HONEY.SCORE_RATE_REDUCTION
-                );
-                
-                if (this.honeySpawnTimer > honeySpawnRate) {
-                    this.honeys.push(this.spawnHoney());
-                    this.honeySpawnTimer = 0;
-                }
-
-                // Bee spawning
-                this.beeSpawnTimer += deltaTime;
-                const beeSpawnRate = Math.max(
-                    GAME_CONSTANTS.BEE.SPAWN_MIN_RATE,
-                    GAME_CONSTANTS.BEE.SPAWN_BASE_RATE - this.score / GAME_CONSTANTS.BEE.SCORE_RATE_REDUCTION
-                );
-                
-                if (this.beeSpawnTimer > beeSpawnRate) {
-                    this.bees.push(this.spawnBee());
-                    this.beeSpawnTimer = 0;
-                }
-            }
-
-            spawnHoney() {
-                const isGolden = Math.random() < GAME_CONSTANTS.HONEY.GOLDEN_CHANCE;
-                
-                return {
-                    x: 40 + Math.random() * (this.canvas.width - 80),
-                    y: -40,
-                    vy: GAME_CONSTANTS.HONEY.BASE_SPEED + Math.random() * GAME_CONSTANTS.HONEY.SPEED_VARIANCE + 
-                        (this.score * GAME_CONSTANTS.HONEY.SCORE_SPEED_MODIFIER),
-                    active: true,
-                    wobble: Math.random() * Math.PI * 2,
-                    rotation: Math.random() * Math.PI * 2,
-                    rotationSpeed: (Math.random() - 0.5) * 0.08,
-                    scale: 0.8 + Math.random() * 0.4,
-                    type: isGolden ? 'golden' : 'normal'
-                };
-            }
-
-            spawnBee() {
-                const side = Math.random() < 0.5 ? 'left' : 'right';
-                const isAngry = Math.random() < GAME_CONSTANTS.BEE.ANGRY_CHANCE;
-                
-                return {
-                    x: side === 'left' ? -40 : this.canvas.width + 40,
-                    y: 50 + Math.random() * 300,
-                    vx: side === 'left' ? 
-                        GAME_CONSTANTS.BEE.BASE_SPEED + Math.random() * GAME_CONSTANTS.BEE.SPEED_VARIANCE :
-                        -(GAME_CONSTANTS.BEE.BASE_SPEED + Math.random() * GAME_CONSTANTS.BEE.SPEED_VARIANCE),
-                    vy: (Math.random() - 0.5) * GAME_CONSTANTS.BEE.VERTICAL_VARIANCE,
-                    active: true,
-                    wobble: Math.random() * Math.PI * 2,
-                    wingFlap: 0,
-                    angry: isAngry,
-                    trail: []
-                };
-            }
-
-            updateHoneys(deltaTime) {
-                for (let i = this.honeys.length - 1; i >= 0; i--) {
-                    const honey = this.honeys[i];
-                    
-                    // Update position
-                    honey.y += honey.vy * deltaTime;
-                    honey.wobble += deltaTime * 6;
-                    honey.rotation += honey.rotationSpeed;
-
-                    // Check collision with player
-                    const dist = Math.hypot(honey.x - this.player.x, honey.y - this.player.y);
-                    if (dist < this.player.radius + 22) {
-                        this.collectHoney(honey, i);
-                        continue;
-                    }
-
-                    // Check if honey fell off screen
-                    if (honey.y > this.canvas.height + 60) {
-                        if (this.streak > 0) {
-                            this.streak = Math.max(0, this.streak - 2);
-                            this.updateHUD();
-                        }
-                        this.honeys.splice(i, 1);
-                    }
-                }
-            }
-
-            collectHoney(honey, index) {
-                // Calculate points
-                let multiplier = honey.type === 'golden' ? GAME_CONSTANTS.HONEY.GOLDEN_MULTIPLIER : 1;
-                const character = this.characterSystem.getCurrentCharacter();
-                
-                if (character.comboMultiplier && this.streak >= 5) {
-                    multiplier *= character.comboMultiplier;
-                }
-
-                const points = Math.round((GAME_CONSTANTS.HONEY.BASE_POINTS + this.streak * 
-                    GAME_CONSTANTS.HONEY.STREAK_MULTIPLIER) * multiplier);
-                
-                // Update game state
-                this.score += points;
-                this.streak++;
-                this.honeyCaught++;
-                
-                if (honey.type === 'golden') {
-                    this.goldenPotsCaught++;
-                    this.soundSystem.play('collectGolden');
-                } else {
-                    this.soundSystem.play('collect');
-                }
-
-                if (this.streak > this.bestStreak) {
-                    this.bestStreak = this.streak;
-                }
-
-                // Create particles
-                this.particleSystem.createParticles(
-                    honey.x,
-                    honey.y,
-                    honey.type === 'golden' ? '#ffd700' : '#ffa500',
-                    honey.type === 'golden' ? GAME_CONSTANTS.HONEY.PARTICLE_COUNT_GOLDEN : GAME_CONSTANTS.HONEY.PARTICLE_COUNT_NORMAL,
-                    'mixed'
-                );
-
-                // Show score popup
-                this.showScorePopup(honey.x, honey.y, `+${points}`);
-
-                // Update UI
-                this.updateHUD();
-
-                // Remove honey
-                this.honeys.splice(index, 1);
-            }
-
-            updateBees(deltaTime) {
-                for (let i = this.bees.length - 1; i >= 0; i--) {
-                    const bee = this.bees[i];
-                    
-                    // Update position
-                    bee.x += bee.vx * deltaTime;
-                    bee.y += bee.vy * deltaTime;
-                    bee.wobble += deltaTime * GAME_CONSTANTS.BEE.WOBBLE_SPEED;
-                    bee.wingFlap += deltaTime * GAME_CONSTANTS.BEE.WING_FLAP_SPEED;
-
-                    // Update trail
-                    bee.trail.unshift({ x: bee.x, y: bee.y });
-                    if (bee.trail.length > GAME_CONSTANTS.BEE.TRAIL_LENGTH) {
-                        bee.trail.pop();
-                    }
-
-                    // Check collision with player
-                    const dist = Math.hypot(bee.x - this.player.x, bee.y - this.player.y);
-                    if (dist < this.player.radius + 20) {
-                        this.handleBeeCollision(bee, i);
-                        continue;
-                    }
-
-                    // Check if bee flew off screen
-                    if ((bee.x < -100 && bee.vx < 0) || (bee.x > this.canvas.width + 100 && bee.vx > 0)) {
-                        this.bees.splice(i, 1);
-                    }
-                }
-            }
-
-            handleBeeCollision(bee, index) {
-                const character = this.characterSystem.getCurrentCharacter();
-                
-                // Check for Tigger's bounce ability
-                if (character.canBounce && Math.random() < GAME_CONSTANTS.BEE.BOUNCE_CHANCE) {
-                    // Bounce the bee away
-                    this.particleSystem.createParticles(bee.x, bee.y, character.color, 25, 'star');
-                    this.showHoneyWord(this.player.x, this.player.y, 'BOUNCE!');
-                    bee.vx *= -1.5;
-                    bee.vy *= -1.5;
-                    return;
-                }
-
-                // Sting!
-                this.lives--;
-                this.streak = 0;
-                this.perfectGame = false;
-                this.lastStingTime = Date.now();
-
-                this.soundSystem.play('sting');
-                this.particleSystem.createParticles(bee.x, bee.y, '#000', 25, 'circle');
-                this.particleSystem.createParticles(this.player.x, this.player.y, '#d4a574', 18, 'star');
-                this.shakeScreen();
-                this.showHoneyWord(this.player.x, this.player.y, 'OH BOTHER!');
-
-                if (this.lives <= 0) {
-                    this.endGame();
-                }
-
-                this.updateHUD();
-                this.bees.splice(index, 1);
-            }
-
-            // ============================================
-            // RENDERING
-            // ============================================
-            render() {
-                // Clear canvas
-                this.ctx.clearRect(0, 0, this.canvas.width, this.canvas.height);
-                
-                // Draw background
-                this.drawBackground();
-                
-                // Draw objects
-                this.drawPooh();
-                this.drawBees();
-                this.drawHoneys();
-                this.particleSystem.draw(this.ctx);
-                this.drawUI();
-            }
-
-            drawBackground() {
-                const time = Date.now() / 1000;
-                const pulse = Math.sin(time * 0.5) * 0.1 + 0.9;
-
-                // Sky gradient
-                const skyGradient = this.ctx.createLinearGradient(0, 0, 0, this.canvas.height);
-                skyGradient.addColorStop(0, `rgb(${10 + pulse * 5}, ${61 + pulse * 10}, ${98 + pulse * 10})`);
-                skyGradient.addColorStop(0.2, `rgb(${30 + pulse * 10}, ${111 + pulse * 20}, ${168 + pulse * 20})`);
-                skyGradient.addColorStop(0.4, `rgb(${135}, ${206}, ${235})`);
-                skyGradient.addColorStop(0.6, `rgb(${176}, ${224}, ${230})`);
-                skyGradient.addColorStop(0.8, `rgb(${168}, ${213}, ${163})`);
-                skyGradient.addColorStop(1, `rgb(${124}, ${179}, ${66})`);
-
-                this.ctx.fillStyle = skyGradient;
-                this.ctx.fillRect(0, 0, this.canvas.width, this.canvas.height);
-
-                // Sun
-                const sunGradient = this.ctx.createRadialGradient(340, 90, 0, 340, 90, 60);
-                sunGradient.addColorStop(0, '#fff9e6');
-                sunGradient.addColorStop(0.3, '#ffe066');
-                sunGradient.addColorStop(1, 'rgba(255, 204, 0, 0.2)');
-                this.ctx.fillStyle = sunGradient;
-                this.ctx.beginPath();
-                this.ctx.arc(340, 90, 60, 0, Math.PI * 2);
-                this.ctx.fill();
-
-                // Ground
-                this.ctx.fillStyle = '#558b2f';
-                this.ctx.beginPath();
-                this.ctx.moveTo(0, this.canvas.height - 150);
-                this.ctx.bezierCurveTo(100, this.canvas.height - 200, 200, this.canvas.height - 180, 300, this.canvas.height - 150);
-                this.ctx.bezierCurveTo(400, this.canvas.height - 200, this.canvas.width, this.canvas.height - 180, this.canvas.width, this.canvas.height - 150);
-                this.ctx.lineTo(this.canvas.width, this.canvas.height);
-                this.ctx.lineTo(0, this.canvas.height);
-                this.ctx.closePath();
-                this.ctx.fill();
-
-                // Grass
-                const grassGradient = this.ctx.createLinearGradient(0, this.canvas.height - 40, 0, this.canvas.height);
-                grassGradient.addColorStop(0, '#7cb342');
-                grassGradient.addColorStop(1, '#558b2f');
-                this.ctx.fillStyle = grassGradient;
-                this.ctx.fillRect(0, this.canvas.height - 40, this.canvas.width, 40);
-
-                // Grass blades
-                this.ctx.strokeStyle = '#8bc34a';
-                this.ctx.lineWidth = 1.5;
-                for (let i = 0; i < this.canvas.width; i += 6) {
-                    this.ctx.beginPath();
-                    this.ctx.moveTo(i, this.canvas.height - 40);
-                    const curve = Math.sin(i * 0.1 + time) * 8;
-                    this.ctx.quadraticCurveTo(i + curve, this.canvas.height - 60, i, this.canvas.height - 80);
-                    this.ctx.stroke();
-                }
-
-                // Draw trees
-                this.drawTree(80, this.canvas.height - 40, 80, 0.8, time);
-                this.drawTree(200, this.canvas.height - 40, 100, 1, time);
-                this.drawTree(320, this.canvas.height - 40, 90, 0.9, time);
-            }
-
-            drawTree(x, y, height, scale, time) {
-                this.ctx.save();
-                this.ctx.translate(x, y);
-                const sway = Math.sin(time * 0.5 + x * 0.01) * 5;
-                this.ctx.rotate(sway * 0.01);
-
-                // Trunk
-                const trunkGradient = this.ctx.createLinearGradient(-12, 0, 12, -height);
-                trunkGradient.addColorStop(0, '#8b4513');
-                trunkGradient.addColorStop(1, '#5d4e37');
-                this.ctx.fillStyle = trunkGradient;
-                this.ctx.fillRect(-12 * scale, -height, 24 * scale, height);
-
-                // Leaves
-                const leafGradient = this.ctx.createRadialGradient(0, -height, 0, 0, -height, 50 * scale);
-                leafGradient.addColorStop(0, '#81c784');
-                leafGradient.addColorStop(1, '#388e3c');
-                this.ctx.fillStyle = leafGradient;
-
-                // Left leaves
-                this.ctx.beginPath();
-                this.ctx.arc(-20 * scale, -height, 35 * scale, 0, Math.PI * 2);
-                this.ctx.fill();
-
-                // Right leaves
-                this.ctx.beginPath();
-                this.ctx.arc(20 * scale, -height, 35 * scale, 0, Math.PI * 2);
-                this.ctx.fill();
-
-                // Top leaves
-                this.ctx.beginPath();
-                this.ctx.arc(0, -height - 25 * scale, 40 * scale, 0, Math.PI * 2);
-                this.ctx.fill();
-
-                this.ctx.restore();
-            }
-
-            drawPooh() {
-                this.ctx.save();
-                this.ctx.translate(this.player.x, this.player.y);
-
-                const wobble = Math.sin(this.player.wobble) * 3;
-
-                // Draw trail
-                for (let i = 0; i < this.player.trail.length; i++) {
-                    const point = this.player.trail[i];
-                    const alpha = ((this.player.trail.length - i) / this.player.trail.length) * 0.3;
-                    this.ctx.fillStyle = `rgba(212, 165, 116, ${alpha})`;
-                    this.ctx.beginPath();
-                    this.ctx.arc(
-                        point.x - this.player.x,
-                        point.y - this.player.y,
-                        this.player.radius * (i / this.player.trail.length),
-                        0,
-                        Math.PI * 2
-                    );
-                    this.ctx.fill();
-                }
-
-                // Shadow
-                this.ctx.globalAlpha = 0.3;
-                this.ctx.fillStyle = '#000';
-                this.ctx.beginPath();
-                this.ctx.ellipse(0, this.player.radius + 12, this.player.radius * 0.7, 10, 0, 0, Math.PI * 2);
-                this.ctx.fill();
-                this.ctx.globalAlpha = 1;
-
-                // Body
-                const bodyGradient = this.ctx.createRadialGradient(-8, -8, 0, 0, 0, this.player.radius);
-                bodyGradient.addColorStop(0, '#f0d8b8');
-                bodyGradient.addColorStop(0.7, '#d4a574');
-                bodyGradient.addColorStop(1, '#b8863c');
-                this.ctx.fillStyle = bodyGradient;
-                this.ctx.beginPath();
-                this.ctx.arc(0, wobble, this.player.radius, 0, Math.PI * 2);
-                this.ctx.fill();
-
-                // Shirt
-                this.ctx.fillStyle = '#e63946';
-                this.ctx.beginPath();
-                this.ctx.arc(0, wobble + 10, this.player.radius - 6, 0, Math.PI);
-                this.ctx.fill();
-
-                // Left arm
-                this.ctx.save();
-                this.ctx.rotate(this.player.armAngle);
-                this.ctx.fillStyle = '#d4a574';
-                this.ctx.beginPath();
-                this.ctx.ellipse(-this.player.radius + 8, wobble, 10, 16, -0.4, 0, Math.PI * 2);
-                this.ctx.fill();
-                this.ctx.restore();
-
-                // Right arm
-                this.ctx.save();
-                this.ctx.rotate(-this.player.armAngle);
-                this.ctx.fillStyle = '#d4a574';
-                this.ctx.beginPath();
-                this.ctx.ellipse(this.player.radius - 8, wobble, 10, 16, 0.4, 0, Math.PI * 2);
-                this.ctx.fill();
-                this.ctx.restore();
-
-                // Ears
-                this.ctx.fillStyle = '#d4a574';
-                this.ctx.beginPath();
-                this.ctx.arc(-this.player.radius + 10, wobble - this.player.radius + 10, 12, 0, Math.PI * 2);
-                this.ctx.arc(this.player.radius - 10, wobble - this.player.radius + 10, 12, 0, Math.PI * 2);
-                this.ctx.fill();
-
-                // Eyes
-                this.ctx.fillStyle = '#1a1a1a';
-                this.ctx.beginPath();
-                this.ctx.arc(-10, wobble - 8, 3.5, 0, Math.PI * 2);
-                this.ctx.arc(10, wobble - 8, 3.5, 0, Math.PI * 2);
-                this.ctx.fill();
-
-                // Eye highlights
-                this.ctx.fillStyle = '#fff';
-                this.ctx.beginPath();
-                this.ctx.arc(-9, wobble - 9, 1.8, 0, Math.PI * 2);
-                this.ctx.arc(11, wobble - 9, 1.8, 0, Math.PI * 2);
-                this.ctx.fill();
-
-                // Nose
-                this.ctx.fillStyle = '#1a1a1a';
-                this.ctx.beginPath();
-                this.ctx.arc(0, wobble + 3, 5, 0, Math.PI * 2);
-                this.ctx.fill();
-
-                // Mouth
-                this.ctx.strokeStyle = '#1a1a1a';
-                this.ctx.lineWidth = 2;
-                this.ctx.beginPath();
-                this.ctx.arc(0, wobble + 8, 8, 0.2, Math.PI - 0.2);
-                this.ctx.stroke();
-
-                this.ctx.restore();
-            }
-
-            drawHoneys() {
-                for (const honey of this.honeys) {
-                    this.ctx.save();
-                    this.ctx.translate(honey.x, honey.y);
-                    this.ctx.rotate(honey.rotation);
-                    this.ctx.scale(honey.scale, honey.scale);
-
-                    // Pot gradient
-                    const potGradient = this.ctx.createLinearGradient(-15, -12, 15, 15);
-                    potGradient.addColorStop(0, honey.type === 'golden' ? '#ffd700' : '#a0633b');
-                    potGradient.addColorStop(0.5, honey.type === 'golden' ? '#ffa500' : '#8b4513');
-                    potGradient.addColorStop(1, honey.type === 'golden' ? '#da9100' : '#6b3410');
-                    this.ctx.fillStyle = potGradient;
-
-                    // Pot shape
-                    this.ctx.beginPath();
-                    this.ctx.moveTo(-12, -10);
-                    this.ctx.quadraticCurveTo(-15, 0, -12, 15);
-                    this.ctx.lineTo(12, 15);
-                    this.ctx.quadraticCurveTo(15, 0, 12, -10);
-                    this.ctx.closePath();
-                    this.ctx.fill();
-
-                    // Honey inside
-                    const honeyGradient = this.ctx.createLinearGradient(-8, -8, 8, 8);
-                    honeyGradient.addColorStop(0, '#ffd700');
-                    honeyGradient.addColorStop(0.5, '#ffa500');
-                    honeyGradient.addColorStop(1, '#da9100');
-                    this.ctx.fillStyle = honeyGradient;
-
-                    this.ctx.beginPath();
-                    this.ctx.ellipse(0, 2, 8, 6, 0, 0, Math.PI * 2);
-                    this.ctx.fill();
-
-                    // Honey drip
-                    this.ctx.fillStyle = '#ffa500';
-                    this.ctx.beginPath();
-                    this.ctx.moveTo(-2, 8);
-                    this.ctx.quadraticCurveTo(0, 15, 2, 8);
-                    this.ctx.fill();
-
-                    // Label
-                    this.ctx.fillStyle = honey.type === 'golden' ? '#fff' : '#fff8e1';
-                    this.ctx.font = 'bold 10px "Patrick Hand"';
-                    this.ctx.textAlign = 'center';
-                    this.ctx.fillText(honey.type === 'golden' ? 'GOLDEN' : 'HUNNY', 0, 4);
-
-                    this.ctx.restore();
-                }
-            }
-
-            drawBees() {
-                for (const bee of this.bees) {
-                    this.ctx.save();
-                    this.ctx.translate(bee.x, bee.y);
-
-                    const wobbleY = Math.sin(bee.wobble) * 6;
-                    const wingFlap = Math.sin(bee.wingFlap) * 0.5;
-
-                    // Trail
-                    for (let i = 0; i < bee.trail.length; i++) {
-                        const point = bee.trail[i];
-                        const alpha = ((bee.trail.length - i) / bee.trail.length) * 0.2;
-                        this.ctx.fillStyle = `rgba(255, 215, 0, ${alpha})`;
-                        this.ctx.beginPath();
-                        this.ctx.arc(
-                            point.x - bee.x,
-                            point.y - bee.y,
-                            4 * (i / bee.trail.length),
-                            0,
-                            Math.PI * 2
-                        );
-                        this.ctx.fill();
-                    }
-
-                    // Wings
-                    this.ctx.globalAlpha = 0.6;
-                    this.ctx.fillStyle = bee.angry ? '#ff9999' : '#e8f4f8';
-                    
-                    // Left wing
-                    this.ctx.save();
-                    this.ctx.rotate(wingFlap);
-                    this.ctx.beginPath();
-                    this.ctx.ellipse(-12, -10, 12, 20, -0.5, 0, Math.PI * 2);
-                    this.ctx.fill();
-                    this.ctx.restore();
-
-                    // Right wing
-                    this.ctx.save();
-                    this.ctx.rotate(-wingFlap);
-                    this.ctx.beginPath();
-                    this.ctx.ellipse(12, -10, 12, 20, 0.5, 0, Math.PI * 2);
-                    this.ctx.fill();
-                    this.ctx.restore();
-                    
-                    this.ctx.globalAlpha = 1;
-
-                    // Body
-                    const beeGradient = this.ctx.createLinearGradient(0, -15, 0, 15);
-                    beeGradient.addColorStop(0, '#ffd700');
-                    beeGradient.addColorStop(1, bee.angry ? '#ff4444' : '#daa520');
-                    this.ctx.fillStyle = beeGradient;
-                    this.ctx.beginPath();
-                    this.ctx.ellipse(0, wobbleY, 15, 20, 0, 0, Math.PI * 2);
-                    this.ctx.fill();
-
-                    // Stripes
-                    this.ctx.fillStyle = bee.angry ? '#8b0000' : '#1a1a1a';
-                    for (let i = 0; i < 3; i++) {
-                        this.ctx.fillRect(-15, -12 + i * 10 + wobbleY, 30, 5);
-                    }
-
-                    // Angry eyebrows
-                    if (bee.angry) {
-                        this.ctx.strokeStyle = '#8b0000';
-                        this.ctx.lineWidth = 3;
-                        this.ctx.lineCap = 'round';
-                        this.ctx.beginPath();
-                        this.ctx.moveTo(-8, -18 + wobbleY);
-                        this.ctx.lineTo(-2, -15 + wobbleY);
-                        this.ctx.moveTo(8, -18 + wobbleY);
-                        this.ctx.lineTo(2, -15 + wobbleY);
-                        this.ctx.stroke();
-                    }
-
-                    this.ctx.restore();
-                }
-            }
-
-            drawUI() {
-                // Draw lives
-                for (let i = 0; i < this.lives; i++) {
-                    const x = 30 + i * 40;
-                    const y = this.canvas.height - 30;
-
-                    this.ctx.save();
-                    this.ctx.translate(x, y);
-
-                    // Heart glow
-                    const heartGradient = this.ctx.createRadialGradient(0, 0, 0, 0, 0, 15);
-                    heartGradient.addColorStop(0, '#ff6b6b');
-                    heartGradient.addColorStop(1, 'rgba(255, 107, 107, 0)');
-                    this.ctx.fillStyle = heartGradient;
-                    this.ctx.beginPath();
-                    this.ctx.arc(0, 0, 15, 0, Math.PI * 2);
-                    this.ctx.fill();
-
-                    // Heart shape
-                    this.ctx.fillStyle = '#e63946';
-                    this.ctx.beginPath();
-                    this.ctx.moveTo(0, 6);
-                    this.ctx.bezierCurveTo(-10, -8, -5, -12, 0, -4);
-                    this.ctx.bezierCurveTo(5, -12, 10, -8, 0, 6);
-                    this.ctx.fill();
-
-                    this.ctx.restore();
-                }
-            }
-
-            // ============================================
-            // UI & EFFECTS
-            // ============================================
-            showScorePopup(x, y, text) {
-                const popup = document.createElement('div');
-                popup.className = 'score-popup';
-                popup.textContent = text;
-
-                const cssX = this.canvasToCssX(x);
-                const cssY = this.canvasToCssY(y);
-
-                popup.style.left = `${cssX}px`;
-                popup.style.top = `${cssY}px`;
-                popup.style.transform = 'translate(-50%, -50%)';
-
-                this.gameContainer.appendChild(popup);
-                this.activePopups.push(popup);
-
-                setTimeout(() => {
-                    const index = this.activePopups.indexOf(popup);
-                    if (index > -1) {
-                        this.activePopups.splice(index, 1);
-                    }
-                    popup.remove();
-                }, 1500);
-            }
-
-            showHoneyWord(x, y, text) {
-                const word = document.createElement('div');
-                word.className = 'honey-word';
-                word.textContent = text;
-
-                const cssX = this.canvasToCssX(x);
-                const cssY = this.canvasToCssY(y);
-
-                word.style.left = `${cssX}px`;
-                word.style.top = `${cssY}px`;
-                word.style.transform = 'translate(-50%, -50%)';
-
-                this.gameContainer.appendChild(word);
-                this.activePopups.push(word);
-
-                setTimeout(() => {
-                    const index = this.activePopups.indexOf(word);
-                    if (index > -1) {
-                        this.activePopups.splice(index, 1);
-                    }
-                    word.remove();
-                }, 2500);
-            }
-
-            shakeScreen() {
-                this.gameContainer.style.animation = 'none';
-                setTimeout(() => {
-                    this.gameContainer.style.animation = 'shake 0.5s ease-in-out, float 6s ease-in-out infinite';
-                }, 10);
-            }
-
-            updateHUD() {
-                this.scoreEl.textContent = this.score;
-                this.streakEl.textContent = this.streak;
-                this.livesEl.textContent = this.lives;
-                this.achievementsCountEl.textContent = 
-                    `${this.achievementSystem.achievements.filter(a => a.unlocked).length}/10`;
-            }
-
-            // ============================================
-            // ACHIEVEMENTS & GAME STATE
-            // ============================================
-            updateAchievementState() {
-                const sinceLastSting = this.lastStingTime ? 
-                    (Date.now() - this.lastStingTime) / 1000 : 
-                    (Date.now() - this.startTime) / 1000;
-
-                // Update achievement system state
-                this.achievementSystem.gameState.score = this.score;
-                this.achievementSystem.gameState.totalHoneyCaught += this.honeyCaught;
-                this.achievementSystem.gameState.goldenPotsCaught = this.goldenPotsCaught;
-                this.achievementSystem.gameState.bestStreak = Math.max(
-                    this.achievementSystem.gameState.bestStreak,
-                    this.bestStreak
-                );
-                this.achievementSystem.gameState.timePlayed = this.gameTime;
-                this.achievementSystem.gameState.highScore = Math.max(
-                    this.achievementSystem.gameState.highScore,
-                    this.score
-                );
-                this.achievementSystem.gameState.longestNoStingTime = Math.max(
-                    this.achievementSystem.gameState.longestNoStingTime,
-                    sinceLastSting
-                );
-
-                // Check for new achievements
-                this.achievementSystem.checkAchievements(this.achievementSystem.gameState);
-            }
-
-            endGame() {
-                this.running = false;
-                
-                // Update perfect game achievement
-                if (this.perfectGame && this.lives > 0) {
-                    this.achievementSystem.incrementGameState('perfectGames');
-                }
-
-                // Update high score
-                if (this.score > this.highScore) {
-                    this.highScore = this.score;
-                    try {
-                        localStorage.setItem('poohHighScore', this.highScore.toString());
-                    } catch (e) {
-                        console.log('Could not save high score');
-                    }
-                }
-
-                // Save total game state
-                this.saveGameState();
-
-                // Populate game over stats
-                this.finalScoreEl.textContent = this.score;
-                this.bestStreakEl.textContent = this.bestStreak;
-                this.honeyCaughtEl.textContent = this.honeyCaught;
-                this.timePlayedEl.textContent = `${Math.round(this.gameTime)}s`;
-                this.highScoreEl.textContent = this.highScore;
-                this.achievementsEarnedEl.textContent = 
-                    this.achievementSystem.achievements.filter(a => a.unlocked).length;
-
-                // Play game over sound
-                this.soundSystem.play('gameover');
-
-                // Show game over screen
-                this.gameoverOverlay.classList.remove('hidden');
-                this.updateOverlayState();
-            }
-
-            // ============================================
-            // DATA PERSISTENCE
-            // ============================================
-            loadGameState() {
-                try {
-                    const savedHighScore = localStorage.getItem('poohHighScore');
-                    if (savedHighScore) {
-                        this.highScore = parseInt(savedHighScore) || 0;
-                    }
-
-                    const savedTotalTime = localStorage.getItem('poohTotalPlayTime');
-                    if (savedTotalTime) {
-                        this.totalPlayTime = parseFloat(savedTotalTime) || 0;
-                    }
-
-                    // Load sound preference
-                    this.soundSystem.loadPreference();
-                } catch (e) {
-                    console.log('Could not load game state:', e);
-                }
-            }
-
-            saveGameState() {
-                try {
-                    localStorage.setItem('poohHighScore', this.highScore.toString());
-                    localStorage.setItem('poohTotalPlayTime', (this.totalPlayTime + this.gameTime).toString());
-                } catch (e) {
-                    console.log('Could not save game state:', e);
-                }
-            }
-
-            // ============================================
-            // BACKGROUND INITIALIZATION
-            // ============================================
-            initializeBackground() {
-                // Add blossoms
-                for (let i = 0; i < 15; i++) {
-                    const blossom = document.createElement('div');
-                    blossom.className = 'blossom';
-                    blossom.style.left = `${Math.random() * 100}vw`;
-                    blossom.style.animationDelay = `${Math.random() * 5}s`;
-                    blossom.style.animationDuration = `${20 + Math.random() * 30}s`;
-                    blossom.style.opacity = `${0.3 + Math.random() * 0.4}`;
-                    blossom.style.width = `${8 + Math.random() * 8}px`;
-                    blossom.style.height = blossom.style.width;
-                    this.backgroundLayer.appendChild(blossom);
-                }
-
-                // Add butterflies
-                for (let i = 0; i < 3; i++) {
-                    const butterfly = document.createElement('div');
-                    butterfly.className = 'butterfly';
-                    butterfly.style.left = `${Math.random() * 100}vw`;
-                    butterfly.style.top = `${20 + Math.random() * 60}vh`;
-                    butterfly.style.animationDelay = `${Math.random() * 3}s`;
-                    butterfly.style.animationDuration = `${5 + Math.random() * 5}s`;
-                    this.backgroundLayer.appendChild(butterfly);
-                }
-            }
-
-            // ============================================
-            // CLEANUP
-            // ============================================
-            cleanup() {
-                if (this.animationFrameId) {
-                    cancelAnimationFrame(this.animationFrameId);
-                    this.animationFrameId = null;
-                }
-                
-                this.particleSystem.clear();
-                this.weatherSystem.clear();
-                
-                this.activePopups.forEach(popup => popup.remove());
-                this.activePopups.length = 0;
-            }
-        }
-
-        // ============================================
-        // INITIALIZE GAME
-        // ============================================
-        document.addEventListener('DOMContentLoaded', () => {
-            // Initialize game
-            const game = new PoohHoneyHunt();
-            
-            // Handle page visibility
-            document.addEventListener('visibilitychange', () => {
-                if (document.hidden && game.running && !game.paused) {
-                    game.togglePause();
-                }
-            });
-            
-            // Handle beforeunload
-            window.addEventListener('beforeunload', () => {
-                game.cleanup();
-            });
+      }
+    };
+  }
+
+  play(name) {
+    if (!this.enabled || !this.sounds[name]) return;
+    this.sounds[name].play();
+  }
+
+  updateUI() {
+    const btn = document.getElementById('sound-toggle-btn');
+    if (!btn) return;
+    const iconClass = this.enabled ? 'fa-volume-up' : 'fa-volume-mute';
+    btn.innerHTML = `<i class="fas ${iconClass}"></i>`;
+  }
+
+  toggle() {
+    this.enabled = !this.enabled;
+    this.updateUI();
+    this.play('click');
+    try {
+      localStorage.setItem('poohSoundEnabled', this.enabled.toString());
+    } catch (e) {}
+  }
+
+  loadPreference() {
+    try {
+      const saved = localStorage.getItem('poohSoundEnabled');
+      if (saved !== null) {
+        this.enabled = saved === 'true';
+        this.updateUI();
+      }
+    } catch (e) {}
+  }
+}
+
+/* ============================================
+   ACHIEVEMENTS SYSTEM
+============================================ */
+class AchievementSystem {
+  constructor() {
+    this.achievements = [
+      {
+        id: 'first_taste',
+        name: 'First Taste',
+        icon: '🥄',
+        description: 'Score your first 100 points',
+        condition: (gs) => gs.score >= 100,
+        unlocked: false
+      },
+      {
+        id: 'honey_hoarder',
+        name: 'Honey Hoarder',
+        icon: '🍯',
+        description: 'Catch 50 honey pots in total',
+        condition: (gs) => gs.totalHoneyCaught >= 50,
+        unlocked: false
+      },
+      {
+        id: 'bee_whisperer',
+        name: 'Bee Whisperer',
+        icon: '🐝',
+        description: 'Survive for 60 seconds without getting stung',
+        condition: (gs) => gs.longestNoStingTime >= 60,
+        unlocked: false
+      },
+      {
+        id: 'tiggerific',
+        name: 'Tiggerific!',
+        icon: '🐯',
+        description: 'Reach a streak of 15',
+        condition: (gs) => gs.bestStreak >= 15,
+        unlocked: false
+      },
+      {
+        id: 'golden_touch',
+        name: 'Golden Touch',
+        icon: '🌟',
+        description: 'Catch 10 golden honey pots',
+        condition: (gs) => gs.goldenPotsCaught >= 10,
+        unlocked: false
+      },
+      {
+        id: 'speed_demon',
+        name: 'Speed Demon',
+        icon: '⚡',
+        description: 'Score 500 points in under 2 minutes',
+        condition: (gs) => gs.score >= 500 && gs.timePlayed <= 120,
+        unlocked: false
+      },
+      {
+        id: 'perfect_game',
+        name: 'Perfect Game',
+        icon: '👑',
+        description: 'Complete a game without losing any lives',
+        condition: (gs) => gs.perfectGames > 0,
+        unlocked: false
+      },
+      {
+        id: 'weather_master',
+        name: 'Weather Master',
+        icon: '🌈',
+        description: 'Play with all 5 weather effects',
+        condition: (gs) => gs.weathersUsed >= 5,
+        unlocked: false
+      },
+      {
+        id: 'character_collector',
+        name: 'Character Collector',
+        icon: '🎭',
+        description: 'Play as all 4 characters',
+        condition: (gs) => gs.charactersUsed >= 4,
+        unlocked: false
+      },
+      {
+        id: 'hundred_acre_champ',
+        name: 'Hundred Acre Champ',
+        icon: '🏆',
+        description: 'Reach a score of 1000 points',
+        condition: (gs) => gs.highScore >= 1000,
+        unlocked: false
+      }
+    ];
+
+    // Persistent-ish meta state
+    this.gameState = {
+      score: 0,
+      totalHoneyCaught: 0,     // IMPORTANT: increment per catch (event-driven)
+      goldenPotsCaught: 0,     // can be per-run or lifetime; we keep lifetime here
+      bestStreak: 0,
+      longestNoStingTime: 0,
+      timePlayed: 0,
+      perfectGames: 0,
+      weathersUsed: 0,
+      charactersUsed: 0,
+      highScore: 0,
+      lastStingTime: 0
+    };
+
+    this.init();
+  }
+
+  init() {
+    this.loadAchievements();
+    this.updateDisplay();
+  }
+
+  loadAchievements() {
+    try {
+      const saved = localStorage.getItem('poohAchievements');
+      if (saved) {
+        const data = JSON.parse(saved);
+        this.achievements.forEach((ach, i) => {
+          if (data[i]) ach.unlocked = !!data[i].unlocked;
         });
-    </script>
+      }
+
+      const savedState = localStorage.getItem('poohGameState');
+      if (savedState) {
+        const parsed = JSON.parse(savedState);
+        this.gameState = { ...this.gameState, ...parsed };
+      }
+    } catch (e) {
+      console.log('Could not load achievements:', e);
+    }
+  }
+
+  saveAchievements() {
+    try {
+      const saveData = this.achievements.map(a => ({ id: a.id, unlocked: a.unlocked }));
+      localStorage.setItem('poohAchievements', JSON.stringify(saveData));
+      localStorage.setItem('poohGameState', JSON.stringify(this.gameState));
+    } catch (e) {
+      console.log('Could not save achievements:', e);
+    }
+  }
+
+  checkAchievements(gameState) {
+    let newUnlocks = 0;
+
+    this.achievements.forEach((ach) => {
+      if (!ach.unlocked && ach.condition(gameState)) {
+        ach.unlocked = true;
+        newUnlocks++;
+        this.showAchievementPopup(ach);
+      }
+    });
+
+    if (newUnlocks > 0) {
+      this.saveAchievements();
+      this.updateDisplay();
+    }
+  }
+
+  showAchievementPopup(achievement) {
+    const popup = document.createElement('div');
+    popup.className = 'achievement-popup';
+    popup.innerHTML = `
+      <div class="achievement-popup-title">Achievement Unlocked!</div>
+      <div style="font-size: 2rem; margin: 10px 0;">${achievement.icon}</div>
+      <div style="font-weight: bold; color: var(--wood-brown);">${achievement.name}</div>
+      <div style="font-size: 0.9rem; color: var(--wood-light);">${achievement.description}</div>
+    `;
+
+    document.body.appendChild(popup);
+    if (window.gameEngine) window.gameEngine.soundSystem.play('achievement');
+
+    setTimeout(() => popup.remove(), 3000);
+  }
+
+  updateDisplay() {
+    const unlockedCount = this.achievements.filter(a => a.unlocked).length;
+    const counter = document.getElementById('achievements-count');
+    if (counter) counter.textContent = `${unlockedCount}/${this.achievements.length}`;
+
+    const list = document.getElementById('achievements-list');
+    if (!list) return;
+
+    list.innerHTML = '';
+    this.achievements.forEach((ach) => {
+      const item = document.createElement('div');
+      item.className = `achievement-item ${ach.unlocked ? 'unlocked' : ''}`;
+      item.innerHTML = `
+        <div class="achievement-icon">${ach.icon}</div>
+        <div class="achievement-details">
+          <div class="achievement-name">${ach.name}</div>
+          <div class="achievement-desc">${ach.description}</div>
+          <div style="font-size: 0.8rem; color: ${ach.unlocked ? '#7cb342' : '#e63946'};">
+            ${ach.unlocked ? '✓ Unlocked' : 'Locked'}
+          </div>
+        </div>
+      `;
+      list.appendChild(item);
+    });
+  }
+
+  updateGameState(key, value) {
+    this.gameState[key] = value;
+  }
+
+  incrementGameState(key, amount = 1) {
+    this.gameState[key] = (this.gameState[key] || 0) + amount;
+  }
+}
+
+/* ============================================
+   CHARACTER SYSTEM
+============================================ */
+class CharacterSystem {
+  constructor() {
+    this.characters = {
+      pooh: {
+        name: 'Winnie the Pooh',
+        radius: 38,
+        speed: 1.0,
+        color: '#d4a574',
+        ability: 'Honey Expert',
+        description: '+30% bigger catch radius'
+      },
+      piglet: {
+        name: 'Piglet',
+        radius: 32,
+        speed: 1.25,
+        color: '#ffb7c5',
+        ability: 'Quick Feet',
+        description: 'Moves 25% faster'
+      },
+      tigger: {
+        name: 'Tigger',
+        radius: 32,
+        speed: 1.0,
+        color: '#ff8c00',
+        ability: 'Bouncy',
+        description: 'Can bounce off bees',
+        canBounce: true
+      },
+      rabbit: {
+        name: 'Rabbit',
+        radius: 32,
+        speed: 1.0,
+        color: '#8bc34a',
+        ability: 'Organized',
+        description: 'Double points for combos',
+        comboMultiplier: 2.0
+      }
+    };
+
+    this.currentCharacter = 'pooh';
+    this.usedCharacters = new Set();
+    this.init();
+  }
+
+  init() {
+    this.loadCharacter();
+    this.usedCharacters.add(this.currentCharacter);
+    this.updateCharacterUI();
+    this.syncAchievements();
+  }
+
+  loadCharacter() {
+    try {
+      const saved = localStorage.getItem('poohSelectedCharacter');
+      if (saved && this.characters[saved]) this.currentCharacter = saved;
+    } catch (e) {}
+  }
+
+  saveCharacter() {
+    try {
+      localStorage.setItem('poohSelectedCharacter', this.currentCharacter);
+    } catch (e) {}
+  }
+
+  selectCharacter(characterId) {
+    if (!this.characters[characterId]) return;
+
+    this.currentCharacter = characterId;
+    this.usedCharacters.add(characterId);
+    this.saveCharacter();
+    this.updateCharacterUI();
+    this.syncAchievements();
+  }
+
+  syncAchievements() {
+    if (!window.gameEngine) return;
+    const gs = window.gameEngine.achievementSystem.gameState;
+    gs.charactersUsed = this.usedCharacters.size;
+    window.gameEngine.achievementSystem.checkAchievements(gs);
+    window.gameEngine.achievementSystem.saveAchievements?.();
+  }
+
+  updateCharacterUI() {
+    document.querySelectorAll('.character-card').forEach(card => {
+      card.classList.toggle('selected', card.dataset.character === this.currentCharacter);
+    });
+  }
+
+  getCurrentCharacter() {
+    return this.characters[this.currentCharacter];
+  }
+}
+
+/* ============================================
+   WEATHER SYSTEM
+============================================ */
+class WeatherSystem {
+  constructor() {
+    this.currentWeather = 'none';
+    this.usedWeathers = new Set();
+    this.weatherContainer = null;
+
+    this.weatherTypes = {
+      none: { name: 'Clear', particles: 0, color: '#ffffff' },
+      rain: { name: 'Rain', particles: 160, color: '#4d96ff', animation: 'rainFall' },
+      snow: { name: 'Snow', particles: 120, color: '#ffffff', animation: 'snowFall' },
+      leaves: { name: 'Autumn', particles: 90, color: '#ff6b6b', animation: 'leafFall' },
+      petals: { name: 'Spring', particles: 70, color: '#ffb7c5', animation: 'petalFall' }
+    };
+
+    this.init();
+  }
+
+  init() {
+    this.loadWeather();
+    this.usedWeathers.add(this.currentWeather);
+    this.updateWeatherUI();
+    this.applyWeatherEffects();
+    this.syncAchievements();
+  }
+
+  loadWeather() {
+    try {
+      const saved = localStorage.getItem('poohCurrentWeather');
+      if (saved && this.weatherTypes[saved]) this.currentWeather = saved;
+    } catch (e) {}
+  }
+
+  saveWeather() {
+    try {
+      localStorage.setItem('poohCurrentWeather', this.currentWeather);
+    } catch (e) {}
+  }
+
+  setWeather(weatherType) {
+    if (!this.weatherTypes[weatherType]) return;
+
+    this.currentWeather = weatherType;
+    this.usedWeathers.add(weatherType);
+
+    this.saveWeather();
+    this.updateWeatherUI();
+    this.applyWeatherEffects();
+    this.syncAchievements();
+  }
+
+  syncAchievements() {
+    if (!window.gameEngine) return;
+    const gs = window.gameEngine.achievementSystem.gameState;
+    gs.weathersUsed = this.usedWeathers.size;
+    window.gameEngine.achievementSystem.checkAchievements(gs);
+  }
+
+  updateWeatherUI() {
+    document.querySelectorAll('.weather-btn').forEach(btn => {
+      btn.classList.toggle('active', btn.dataset.weather === this.currentWeather);
+    });
+  }
+
+  applyWeatherEffects() {
+    if (this.weatherContainer) this.weatherContainer.remove();
+    this.weatherContainer = null;
+
+    if (this.currentWeather === 'none') return;
+
+    const weather = this.weatherTypes[this.currentWeather];
+
+    this.weatherContainer = document.createElement('div');
+    this.weatherContainer.id = 'weather-effects';
+    document.body.appendChild(this.weatherContainer);
+
+    for (let i = 0; i < weather.particles; i++) {
+      const particle = document.createElement('div');
+
+      const duration = 8 + Math.random() * 18;
+      const delay = Math.random() * 10;
+      const left = Math.random() * 100;
+      const startY = -60 - Math.random() * 240;
+      const size = this.getParticleSize(this.currentWeather);
+
+      Object.assign(particle.style, {
+        position: 'absolute',
+        left: `${left}vw`,
+        top: `${startY}px`,
+        animationName: weather.animation,
+        animationDuration: `${duration}s`,
+        animationDelay: `${delay}s`,
+        animationTimingFunction: 'linear',
+        animationIterationCount: 'infinite',
+        willChange: 'transform'
+      });
+
+      this.applyParticleStyle(particle, this.currentWeather, size, weather.color);
+      this.weatherContainer.appendChild(particle);
+    }
+  }
+
+  getParticleSize(type) {
+    switch (type) {
+      case 'rain': return { width: 2, height: 14 + Math.random() * 18 };
+      case 'snow': return { width: 3 + Math.random() * 5, height: 3 + Math.random() * 5 };
+      case 'leaves': return { width: 8 + Math.random() * 10, height: 8 + Math.random() * 10 };
+      case 'petals': return { width: 6 + Math.random() * 8, height: 6 + Math.random() * 8 };
+      default: return { width: 5, height: 5 };
+    }
+  }
+
+  applyParticleStyle(p, type, size, color) {
+    switch (type) {
+      case 'rain':
+        p.style.cssText += `
+          width:${size.width}px;height:${size.height}px;background:${color};
+          border-radius:0%;opacity:0.65;transform:rotate(15deg);
+        `;
+        break;
+      case 'snow':
+        p.style.cssText += `
+          width:${size.width}px;height:${size.height}px;background:${color};
+          border-radius:50%;opacity:0.85;filter:drop-shadow(0 2px 2px rgba(0,0,0,0.15));
+        `;
+        break;
+      case 'leaves':
+        p.style.cssText += `
+          width:${size.width}px;height:${size.height}px;background:${color};
+          opacity:0.75;clip-path:polygon(50% 0%,100% 50%,50% 100%,0% 50%);
+          transform:rotate(${Math.random() * 360}deg);
+        `;
+        break;
+      case 'petals':
+        p.style.cssText += `
+          width:${size.width}px;height:${size.height}px;background:${color};
+          border-radius:50% 50% 0 50%;opacity:0.75;transform:rotate(45deg);
+        `;
+        break;
+    }
+  }
+
+  clear() {
+    if (this.weatherContainer) this.weatherContainer.remove();
+    this.weatherContainer = null;
+  }
+}
+
+/* ============================================
+   SHARE SYSTEM
+============================================ */
+class ShareSystem {
+  constructor() {
+    this.gameTitle = "Pooh's Enhanced Honey Hunt";
+    this.gameDescription = "Play Pooh's Enhanced Honey Hunt - help Winnie the Pooh catch honey pots! 🍯🐻";
+    this.gameUrl = window.location.href;
+  }
+
+  shareGame() {
+    this.shareContent(this.gameDescription, this.gameUrl, this.gameTitle);
+  }
+
+  shareScore(score, character) {
+    const text = `I scored ${score} points as ${character} in ${this.gameTitle}! Can you beat my score? 🍯🐻 #PoohHoneyHunt`;
+    this.shareContent(text, this.gameUrl, `My ${this.gameTitle} Score`);
+  }
+
+  shareContent(text, url, title) {
+    if (window.gameEngine) window.gameEngine.soundSystem.play('click');
+
+    if (navigator.share) {
+      navigator.share({ title, text, url }).catch(() => this.fallbackShare(text, url));
+    } else {
+      this.fallbackShare(text, url);
+    }
+  }
+
+  fallbackShare(text, url) {
+    const shareText = `${text}\n\n${url}`;
+
+    if (navigator.clipboard && window.isSecureContext) {
+      navigator.clipboard.writeText(shareText)
+        .then(() => alert('Link copied to clipboard! Share it with your friends.'))
+        .catch(() => alert(`Share this link:\n\n${shareText}`));
+      return;
+    }
+
+    const ta = document.createElement('textarea');
+    ta.value = shareText;
+    ta.style.position = 'fixed';
+    ta.style.top = '0';
+    ta.style.left = '0';
+    ta.style.width = '2em';
+    ta.style.height = '2em';
+    ta.style.opacity = '0';
+    document.body.appendChild(ta);
+    ta.select();
+
+    try {
+      document.execCommand('copy');
+      alert('Link copied to clipboard! Share it with your friends.');
+    } catch (e) {
+      alert(`Share this link:\n\n${shareText}`);
+    }
+    document.body.removeChild(ta);
+  }
+}
+
+/* ============================================
+   GAME ENGINE
+============================================ */
+class PoohHoneyHunt {
+  constructor() {
+    this.canvas = document.getElementById('honey-game');
+    this.ctx = this.canvas.getContext('2d', {
+      alpha: false,
+      desynchronized: true,
+      powerPreference: 'high-performance'
+    });
+
+    // Loop state
+    this.running = false;
+    this.paused = false;
+    this.gameTime = 0;
+    this.lastTime = 0;
+    this.startTime = 0;
+    this.animationFrameId = null;
+    this.canvasRect = null;
+
+    // Run variables
+    this.score = 0;
+    this.streak = 0;
+    this.bestStreak = 0;
+    this.honeyCaught = 0;
+    this.goldenPotsCaught = 0;
+    this.lives = GAME_CONSTANTS.GAME.INITIAL_LIVES;
+    this.lastStingTime = 0; // performance.now() timestamp
+    this.perfectGame = true;
+    this.highScore = 0;
+    this.totalPlayTime = 0;
+
+    // Entities
+    this.player = this.createPlayer();
+    this.honeys = [];
+    this.bees = [];
+    this.activePopups = [];
+
+    // Systems
+    this.soundSystem = new SoundSystem();
+    this.particleSystem = new ParticleSystem();
+    this.achievementSystem = new AchievementSystem();
+    this.characterSystem = new CharacterSystem();
+    this.weatherSystem = new WeatherSystem();
+    this.shareSystem = new ShareSystem();
+
+    // Spawn timers
+    this.honeySpawnTimer = 0;
+    this.beeSpawnTimer = 0;
+
+    // Input
+    this.targetX = this.player.x;
+    this.isDragging = false;
+    this.keys = {};
+
+    // Ach check cadence
+    this._achCheckTimer = 0;
+
+    // UI
+    this.initializeUIElements();
+    this.initializeEventListeners();
+
+    // Boot
+    this.loadGameState();
+    this.initializeBackground();
+    this.updateHUD();
+    this.updateCanvasRect();
+
+    window.gameEngine = this;
+  }
+
+  /* ---------- init ---------- */
+  createPlayer() {
+    return {
+      x: this.canvas.width / 2,
+      y: this.canvas.height - GAME_CONSTANTS.PLAYER.UI_SAFE_BOTTOM,
+      vx: 0,
+      radius: GAME_CONSTANTS.PLAYER.BASE_RADIUS,
+      wobble: 0,
+      armAngle: 0,
+      trail: []
+    };
+  }
+
+  initializeUIElements() {
+    this.scoreEl = document.getElementById('score');
+    this.streakEl = document.getElementById('streak');
+    this.livesEl = document.getElementById('lives');
+    this.achievementsCountEl = document.getElementById('achievements-count');
+
+    this.startOverlay = document.getElementById('start-overlay');
+    this.pauseOverlay = document.getElementById('pause-overlay');
+    this.gameoverOverlay = document.getElementById('gameover-overlay');
+    this.characterSelectOverlay = document.getElementById('character-select-overlay');
+    this.achievementsOverlay = document.getElementById('achievements-overlay');
+
+    this.startBtn = document.getElementById('start-btn');
+    this.restartBtn = document.getElementById('restart-btn');
+    this.selectCharacterBtn = document.getElementById('select-character-btn');
+    this.startWithCharacterBtn = document.getElementById('start-with-character-btn');
+    this.viewAchievementsBtn = document.getElementById('view-achievements-btn');
+    this.closeAchievementsBtn = document.getElementById('close-achievements-btn');
+    this.soundToggleBtn = document.getElementById('sound-toggle-btn');
+    this.shareBtn = document.getElementById('share-btn');
+    this.shareScoreBtn = document.getElementById('share-score-btn');
+    this.weatherBtns = document.querySelectorAll('.weather-btn');
+    this.pauseBtn = document.getElementById('pause-btn');
+    this.resumeBtn = document.getElementById('resume-btn');
+    this.quitBtn = document.getElementById('quit-btn');
+    this.helpBtn = document.getElementById('help-btn');
+    this.achievementsBtn = document.getElementById('achievements-btn');
+
+    this.gameContainer = document.querySelector('.game-container');
+    this.backgroundLayer = document.getElementById('background-layer');
+
+    this.honeyCursor = document.getElementById('honey-cursor');
+
+    this.finalScoreEl = document.getElementById('final-score');
+    this.bestStreakEl = document.getElementById('best-streak');
+    this.honeyCaughtEl = document.getElementById('honey-caught');
+    this.timePlayedEl = document.getElementById('time-played');
+    this.highScoreEl = document.getElementById('high-score');
+    this.achievementsEarnedEl = document.getElementById('achievements-earned');
+  }
+
+  initializeEventListeners() {
+    // Canvas input
+    this.canvas.addEventListener('touchstart', this.handleTouchStart.bind(this), { passive: false });
+    this.canvas.addEventListener('touchmove', this.handleTouchMove.bind(this), { passive: false });
+    this.canvas.addEventListener('touchend', this.handleTouchEnd.bind(this));
+    this.canvas.addEventListener('mousemove', this.handleMouseMove.bind(this));
+    this.canvas.addEventListener('mouseleave', this.handleMouseLeave.bind(this));
+
+    // Keyboard
+    window.addEventListener('keydown', this.handleKeyDown.bind(this));
+    window.addEventListener('keyup', this.handleKeyUp.bind(this));
+
+    // Buttons
+    this.startBtn.addEventListener('click', () => this.startGame());
+    this.restartBtn.addEventListener('click', () => this.startGame());
+    this.selectCharacterBtn.addEventListener('click', () => this.showCharacterSelect());
+    this.startWithCharacterBtn.addEventListener('click', () => this.startGame());
+    this.viewAchievementsBtn.addEventListener('click', () => this.showAchievements());
+    this.closeAchievementsBtn.addEventListener('click', () => this.hideAchievements());
+    this.soundToggleBtn.addEventListener('click', () => this.soundSystem.toggle());
+    this.shareBtn.addEventListener('click', () => this.shareSystem.shareGame());
+    this.shareScoreBtn.addEventListener('click', () => this.shareSystem.shareScore(this.score, this.characterSystem.getCurrentCharacter().name));
+    this.pauseBtn.addEventListener('click', () => this.togglePause());
+    this.resumeBtn.addEventListener('click', () => this.togglePause());
+    this.quitBtn.addEventListener('click', () => this.quitToMenu());
+    this.helpBtn.addEventListener('click', () => this.showHelp());
+    this.achievementsBtn.addEventListener('click', () => this.showAchievements());
+
+    // Character cards
+    document.querySelectorAll('.character-card').forEach(card => {
+      card.addEventListener('click', () => {
+        this.characterSystem.selectCharacter(card.dataset.character);
+        this.soundSystem.play('click');
+      });
+    });
+
+    // Weather buttons
+    this.weatherBtns.forEach(btn => {
+      btn.addEventListener('click', () => this.weatherSystem.setWeather(btn.dataset.weather));
+    });
+
+    // Resize/orientation
+    window.addEventListener('resize', () => {
+      this.updateCanvasRect();
+      this.weatherSystem.applyWeatherEffects();
+    });
+    window.addEventListener('orientationchange', () => {
+      setTimeout(() => {
+        this.updateCanvasRect();
+        this.weatherSystem.applyWeatherEffects();
+      }, 100);
+    });
+
+    this.canvas.addEventListener('contextmenu', (e) => e.preventDefault());
+  }
+
+  updateCanvasRect() { this.canvasRect = this.canvas.getBoundingClientRect(); }
+
+  clientToCanvasX(clientX) {
+    if (!this.canvasRect) this.updateCanvasRect();
+    const scaleX = this.canvas.width / this.canvasRect.width;
+    return (clientX - this.canvasRect.left) * scaleX;
+  }
+
+  clientToCanvasY(clientY) {
+    if (!this.canvasRect) this.updateCanvasRect();
+    const scaleY = this.canvas.height / this.canvasRect.height;
+    return (clientY - this.canvasRect.top) * scaleY;
+  }
+
+  canvasToCssX(x) {
+    if (!this.canvasRect) this.updateCanvasRect();
+    return (x / this.canvas.width) * this.canvasRect.width;
+  }
+
+  canvasToCssY(y) {
+    if (!this.canvasRect) this.updateCanvasRect();
+    return (y / this.canvas.height) * this.canvasRect.height;
+  }
+
+  handleTouchStart(e) {
+    e.preventDefault();
+    this.isDragging = true;
+    const t = e.touches[0];
+    this.targetX = this.clientToCanvasX(t.clientX);
+    this.updateCursor(t.clientX, t.clientY);
+    this.showCursor(true);
+  }
+
+  handleTouchMove(e) {
+    e.preventDefault();
+    const t = e.touches[0];
+    this.targetX = this.clientToCanvasX(t.clientX);
+    this.updateCursor(t.clientX, t.clientY);
+  }
+
+  handleTouchEnd() {
+    this.isDragging = false;
+    this.showCursor(false);
+  }
+
+  handleMouseMove(e) {
+    this.targetX = this.clientToCanvasX(e.clientX);
+    this.updateCursor(e.clientX, e.clientY);
+    this.showCursor(true);
+  }
+
+  handleMouseLeave() { this.showCursor(false); }
+
+  handleKeyDown(e) {
+    this.keys[e.key] = true;
+    switch (e.key) {
+      case 'ArrowLeft':
+        this.targetX = Math.max(this.player.radius, this.targetX - 80);
+        break;
+      case 'ArrowRight':
+        this.targetX = Math.min(this.canvas.width - this.player.radius, this.targetX + 80);
+        break;
+      case ' ':
+      case 'Escape':
+        this.togglePause();
+        break;
+    }
+  }
+
+  handleKeyUp(e) { this.keys[e.key] = false; }
+
+  updateCursor(x, y) {
+    if (!this.honeyCursor) return;
+    this.honeyCursor.style.left = `${x}px`;
+    this.honeyCursor.style.top = `${y}px`;
+  }
+
+  showCursor(show) {
+    if (!this.honeyCursor) return;
+    if (show && this.running && !this.paused) this.honeyCursor.classList.add('active');
+    else this.honeyCursor.classList.remove('active');
+  }
+
+  /* ---------- overlays ---------- */
+  startGame() {
+    this.soundSystem.play('click');
+    this.hideAllOverlays();
+    this.resetGameState();
+    this.updateHUD();
+    this.updateOverlayState();
+
+    this.startTime = performance.now();
+    this.lastTime = this.startTime;
+    this.gameLoop();
+  }
+
+  hideAllOverlays() {
+    this.startOverlay.classList.add('hidden');
+    this.characterSelectOverlay.classList.add('hidden');
+    this.gameoverOverlay.classList.add('hidden');
+    this.achievementsOverlay.classList.add('hidden');
+    this.pauseOverlay.classList.add('hidden');
+  }
+
+  resetGameState() {
+    this.running = true;
+    this.paused = false;
+
+    this.score = 0;
+    this.streak = 0;
+    this.bestStreak = 0;
+    this.honeyCaught = 0;
+    this.goldenPotsCaught = 0;
+    this.lives = GAME_CONSTANTS.GAME.INITIAL_LIVES;
+
+    this.gameTime = 0;
+    this.perfectGame = true;
+    this.lastStingTime = 0;
+
+    this.honeys.length = 0;
+    this.bees.length = 0;
+    this.particleSystem.clear();
+    this.activePopups.length = 0;
+
+    this.honeySpawnTimer = 0;
+    this.beeSpawnTimer = 0;
+
+    this.player = this.createPlayer();
+    this.targetX = this.player.x;
+
+    const character = this.characterSystem.getCurrentCharacter();
+    this.player.radius = character.radius;
+
+    this._achCheckTimer = 0;
+  }
+
+  togglePause() {
+    if (!this.running) return;
+    this.soundSystem.play('click');
+    this.paused = !this.paused;
+    this.pauseOverlay.classList.toggle('hidden', !this.paused);
+    this.showCursor(!this.paused && this.running);
+    this.updateOverlayState();
+  }
+
+  quitToMenu() {
+    this.soundSystem.play('click');
+    this.pauseOverlay.classList.add('hidden');
+    this.startOverlay.classList.remove('hidden');
+    this.running = false;
+    this.paused = false;
+    this.updateOverlayState();
+  }
+
+  showCharacterSelect() {
+    this.soundSystem.play('click');
+    this.startOverlay.classList.add('hidden');
+    this.characterSelectOverlay.classList.remove('hidden');
+    this.updateOverlayState();
+  }
+
+  showAchievements() {
+    this.soundSystem.play('click');
+    if (this.running) {
+      this.paused = true;
+      this.showCursor(false);
+    }
+    this.achievementsOverlay.classList.remove('hidden');
+    this.updateOverlayState();
+  }
+
+  hideAchievements() {
+    this.soundSystem.play('click');
+    this.achievementsOverlay.classList.add('hidden');
+    if (this.running) {
+      this.paused = false;
+      this.showCursor(true);
+    } else {
+      this.startOverlay.classList.remove('hidden');
+    }
+    this.updateOverlayState();
+  }
+
+  showHelp() {
+    this.soundSystem.play('click');
+    alert(
+      "Help Guide:\n\n" +
+      "• Move with mouse/touch or arrow keys\n" +
+      "• Catch honey pots for points\n" +
+      "• Avoid bees - they take lives\n" +
+      "• Build streaks for bonus points\n" +
+      "• Golden honey pots are worth 3x points\n" +
+      "• Try different characters and weather!\n" +
+      "• Unlock achievements as you play!\n\n" +
+      "Character Abilities:\n" +
+      "• Pooh: Larger catch radius\n" +
+      "• Piglet: Moves faster\n" +
+      "• Tigger: Can bounce bees away\n" +
+      "• Rabbit: Double combo points"
+    );
+  }
+
+  updateOverlayState() {
+    const anyOpen = [
+      this.startOverlay,
+      this.pauseOverlay,
+      this.gameoverOverlay,
+      this.characterSelectOverlay,
+      this.achievementsOverlay
+    ].some(el => el && !el.classList.contains('hidden'));
+
+    document.body.classList.toggle('overlay-open', anyOpen);
+  }
+
+  /* ---------- loop ---------- */
+  gameLoop(currentTime = performance.now()) {
+    if (!this.running) {
+      if (this.animationFrameId) {
+        cancelAnimationFrame(this.animationFrameId);
+        this.animationFrameId = null;
+      }
+      return;
+    }
+
+    const dt = Math.min((currentTime - this.lastTime) / 1000, GAME_CONSTANTS.GAME.MAX_FRAME_TIME);
+    this.lastTime = currentTime;
+
+    if (!this.paused) {
+      this.gameTime += dt;
+      this.update(dt);
+      this.particleSystem.update(dt);
+      this.updateAchievementState(false);
+    }
+
+    this.render();
+    this.animationFrameId = requestAnimationFrame(t => this.gameLoop(t));
+  }
+
+  update(dt) {
+    this.updatePlayer(dt);
+    this.updateSpawnTimers(dt);
+    this.updateHoneys(dt);
+    this.updateBees(dt);
+  }
+
+  updatePlayer(dt) {
+    const character = this.characterSystem.getCurrentCharacter();
+    const speedMultiplier = character.speed;
+
+    const dx = (this.targetX - this.player.x) * speedMultiplier;
+    this.player.vx += dx * GAME_CONSTANTS.PLAYER.ACCELERATION;
+    this.player.vx *= GAME_CONSTANTS.PLAYER.DECELERATION;
+    this.player.x += this.player.vx * dt * GAME_CONSTANTS.PLAYER.MAX_SPEED;
+
+    this.player.x = Math.max(this.player.radius, Math.min(this.canvas.width - this.player.radius, this.player.x));
+
+    this.player.wobble += dt * GAME_CONSTANTS.PLAYER.WOBBLE_SPEED;
+    this.player.armAngle = Math.sin(this.player.wobble * GAME_CONSTANTS.PLAYER.ARM_WOBBLE_SPEED) *
+      GAME_CONSTANTS.PLAYER.ARM_ANGLE_MULTIPLIER;
+
+    this.player.trail.unshift({ x: this.player.x, y: this.player.y });
+    if (this.player.trail.length > GAME_CONSTANTS.PLAYER.TRAIL_LENGTH) this.player.trail.pop();
+  }
+
+  updateSpawnTimers(dt) {
+    this.honeySpawnTimer += dt;
+    const honeySpawnRate = Math.max(
+      GAME_CONSTANTS.HONEY.SPAWN_MIN_RATE,
+      GAME_CONSTANTS.HONEY.SPAWN_BASE_RATE - this.score / GAME_CONSTANTS.HONEY.SCORE_RATE_REDUCTION
+    );
+    if (this.honeySpawnTimer > honeySpawnRate) {
+      this.honeys.push(this.spawnHoney());
+      this.honeySpawnTimer = 0;
+    }
+
+    this.beeSpawnTimer += dt;
+    const beeSpawnRate = Math.max(
+      GAME_CONSTANTS.BEE.SPAWN_MIN_RATE,
+      GAME_CONSTANTS.BEE.SPAWN_BASE_RATE - this.score / GAME_CONSTANTS.BEE.SCORE_RATE_REDUCTION
+    );
+    if (this.beeSpawnTimer > beeSpawnRate) {
+      this.bees.push(this.spawnBee());
+      this.beeSpawnTimer = 0;
+    }
+  }
+
+  spawnHoney() {
+    const isGolden = Math.random() < GAME_CONSTANTS.HONEY.GOLDEN_CHANCE;
+    return {
+      x: 40 + Math.random() * (this.canvas.width - 80),
+      y: -40,
+      vy: GAME_CONSTANTS.HONEY.BASE_SPEED + Math.random() * GAME_CONSTANTS.HONEY.SPEED_VARIANCE +
+        (this.score * GAME_CONSTANTS.HONEY.SCORE_SPEED_MODIFIER),
+      wobble: Math.random() * Math.PI * 2,
+      rotation: Math.random() * Math.PI * 2,
+      rotationSpeed: (Math.random() - 0.5) * 0.08,
+      scale: 0.8 + Math.random() * 0.4,
+      type: isGolden ? 'golden' : 'normal'
+    };
+  }
+
+  spawnBee() {
+    const side = Math.random() < 0.5 ? 'left' : 'right';
+    const isAngry = Math.random() < GAME_CONSTANTS.BEE.ANGRY_CHANCE;
+    return {
+      x: side === 'left' ? -40 : this.canvas.width + 40,
+      y: 50 + Math.random() * 300,
+      vx: side === 'left'
+        ? GAME_CONSTANTS.BEE.BASE_SPEED + Math.random() * GAME_CONSTANTS.BEE.SPEED_VARIANCE
+        : -(GAME_CONSTANTS.BEE.BASE_SPEED + Math.random() * GAME_CONSTANTS.BEE.SPEED_VARIANCE),
+      vy: (Math.random() - 0.5) * GAME_CONSTANTS.BEE.VERTICAL_VARIANCE,
+      wobble: Math.random() * Math.PI * 2,
+      wingFlap: 0,
+      angry: isAngry,
+      trail: []
+    };
+  }
+
+  updateHoneys(dt) {
+    for (let i = this.honeys.length - 1; i >= 0; i--) {
+      const h = this.honeys[i];
+      h.y += h.vy * dt;
+      h.wobble += dt * 6;
+      h.rotation += h.rotationSpeed;
+
+      const dist = Math.hypot(h.x - this.player.x, h.y - this.player.y);
+      if (dist < this.player.radius + 22) {
+        this.collectHoney(h, i);
+        continue;
+      }
+
+      if (h.y > this.canvas.height + 60) {
+        if (this.streak > 0) {
+          this.streak = Math.max(0, this.streak - 2);
+          this.updateHUD();
+        }
+        this.honeys.splice(i, 1);
+      }
+    }
+  }
+
+  collectHoney(honey, index) {
+    let multiplier = honey.type === 'golden' ? GAME_CONSTANTS.HONEY.GOLDEN_MULTIPLIER : 1;
+    const character = this.characterSystem.getCurrentCharacter();
+    if (character.comboMultiplier && this.streak >= 5) multiplier *= character.comboMultiplier;
+
+    const points = Math.round(
+      (GAME_CONSTANTS.HONEY.BASE_POINTS + this.streak * GAME_CONSTANTS.HONEY.STREAK_MULTIPLIER) * multiplier
+    );
+
+    this.score += points;
+    this.streak++;
+    this.honeyCaught++;
+
+    // IMPORTANT: totals updated ONCE per catch (no per-frame inflation)
+    const gs = this.achievementSystem.gameState;
+    gs.totalHoneyCaught = (gs.totalHoneyCaught || 0) + 1;
+
+    if (honey.type === 'golden') {
+      this.goldenPotsCaught++;
+      gs.goldenPotsCaught = (gs.goldenPotsCaught || 0) + 1;
+      this.soundSystem.play('collectGolden');
+    } else {
+      this.soundSystem.play('collect');
+    }
+
+    if (this.streak > this.bestStreak) this.bestStreak = this.streak;
+
+    this.particleSystem.createParticles(
+      honey.x,
+      honey.y,
+      honey.type === 'golden' ? '#ffd700' : '#ffa500',
+      honey.type === 'golden' ? GAME_CONSTANTS.HONEY.PARTICLE_COUNT_GOLDEN : GAME_CONSTANTS.HONEY.PARTICLE_COUNT_NORMAL,
+      'mixed'
+    );
+
+    this.showScorePopup(honey.x, honey.y, `+${points}`);
+    this.updateHUD();
+
+    // Force achievement check on meaningful event
+    this.updateAchievementState(true);
+
+    this.honeys.splice(index, 1);
+  }
+
+  updateBees(dt) {
+    for (let i = this.bees.length - 1; i >= 0; i--) {
+      const b = this.bees[i];
+
+      b.x += b.vx * dt;
+      b.y += b.vy * dt;
+      b.wobble += dt * GAME_CONSTANTS.BEE.WOBBLE_SPEED;
+      b.wingFlap += dt * GAME_CONSTANTS.BEE.WING_FLAP_SPEED;
+
+      b.trail.unshift({ x: b.x, y: b.y });
+      if (b.trail.length > GAME_CONSTANTS.BEE.TRAIL_LENGTH) b.trail.pop();
+
+      const dist = Math.hypot(b.x - this.player.x, b.y - this.player.y);
+      if (dist < this.player.radius + 20) {
+        this.handleBeeCollision(b, i);
+        continue;
+      }
+
+      if ((b.x < -100 && b.vx < 0) || (b.x > this.canvas.width + 100 && b.vx > 0)) {
+        this.bees.splice(i, 1);
+      }
+    }
+  }
+
+  handleBeeCollision(bee, index) {
+    const character = this.characterSystem.getCurrentCharacter();
+
+    if (character.canBounce && Math.random() < GAME_CONSTANTS.BEE.BOUNCE_CHANCE) {
+      this.particleSystem.createParticles(bee.x, bee.y, character.color, 25, 'star');
+      this.showHoneyWord(this.player.x, this.player.y, 'BOUNCE!');
+      bee.vx *= -1.5;
+      bee.vy *= -1.5;
+      return;
+    }
+
+    this.lives--;
+    this.streak = 0;
+    this.perfectGame = false;
+
+    // unified timebase
+    this.lastStingTime = performance.now();
+
+    this.soundSystem.play('sting');
+    this.particleSystem.createParticles(bee.x, bee.y, '#000', 25, 'circle');
+    this.particleSystem.createParticles(this.player.x, this.player.y, '#d4a574', 18, 'star');
+    this.shakeScreen();
+    this.showHoneyWord(this.player.x, this.player.y, 'OH BOTHER!');
+
+    if (this.lives <= 0) this.endGame();
+
+    this.updateHUD();
+    this.bees.splice(index, 1);
+  }
+
+  /* ---------- achievements state (fixed) ---------- */
+  updateAchievementState(forceCheck = false) {
+    const now = performance.now();
+    const lastSting = this.lastStingTime || this.startTime;
+    const sinceLastSting = Math.max(0, (now - lastSting) / 1000);
+
+    const gs = this.achievementSystem.gameState;
+
+    // sync (no accumulation here)
+    gs.score = this.score;
+    gs.bestStreak = Math.max(gs.bestStreak || 0, this.bestStreak);
+    gs.timePlayed = this.gameTime;
+    gs.highScore = Math.max(gs.highScore || 0, this.score);
+    gs.longestNoStingTime = Math.max(gs.longestNoStingTime || 0, sinceLastSting);
+
+    if (forceCheck) {
+      this.achievementSystem.checkAchievements(gs);
+      return;
+    }
+
+    // check at a sane cadence instead of 60x/sec
+    this._achCheckTimer += 1 / 60;
+    if (this._achCheckTimer >= 0.5) {
+      this._achCheckTimer = 0;
+      this.achievementSystem.checkAchievements(gs);
+    }
+  }
+
+  /* ---------- render ---------- */
+  render() {
+    this.ctx.clearRect(0, 0, this.canvas.width, this.canvas.height);
+    this.drawBackground();
+    this.drawPooh();
+    this.drawBees();
+    this.drawHoneys();
+    this.particleSystem.draw(this.ctx);
+    this.drawUI();
+  }
+
+  drawBackground() {
+    const time = Date.now() / 1000;
+    const pulse = Math.sin(time * 0.5) * 0.1 + 0.9;
+
+    const sky = this.ctx.createLinearGradient(0, 0, 0, this.canvas.height);
+    sky.addColorStop(0, `rgb(${10 + pulse * 5}, ${61 + pulse * 10}, ${98 + pulse * 10})`);
+    sky.addColorStop(0.2, `rgb(${30 + pulse * 10}, ${111 + pulse * 20}, ${168 + pulse * 20})`);
+    sky.addColorStop(0.4, `rgb(135, 206, 235)`);
+    sky.addColorStop(0.6, `rgb(176, 224, 230)`);
+    sky.addColorStop(0.8, `rgb(168, 213, 163)`);
+    sky.addColorStop(1, `rgb(124, 179, 66)`);
+
+    this.ctx.fillStyle = sky;
+    this.ctx.fillRect(0, 0, this.canvas.width, this.canvas.height);
+
+    const sun = this.ctx.createRadialGradient(340, 90, 0, 340, 90, 60);
+    sun.addColorStop(0, '#fff9e6');
+    sun.addColorStop(0.3, '#ffe066');
+    sun.addColorStop(1, 'rgba(255, 204, 0, 0.2)');
+    this.ctx.fillStyle = sun;
+    this.ctx.beginPath();
+    this.ctx.arc(340, 90, 60, 0, Math.PI * 2);
+    this.ctx.fill();
+
+    this.ctx.fillStyle = '#558b2f';
+    this.ctx.beginPath();
+    this.ctx.moveTo(0, this.canvas.height - 150);
+    this.ctx.bezierCurveTo(100, this.canvas.height - 200, 200, this.canvas.height - 180, 300, this.canvas.height - 150);
+    this.ctx.bezierCurveTo(400, this.canvas.height - 200, this.canvas.width, this.canvas.height - 180, this.canvas.width, this.canvas.height - 150);
+    this.ctx.lineTo(this.canvas.width, this.canvas.height);
+    this.ctx.lineTo(0, this.canvas.height);
+    this.ctx.closePath();
+    this.ctx.fill();
+
+    const grass = this.ctx.createLinearGradient(0, this.canvas.height - 40, 0, this.canvas.height);
+    grass.addColorStop(0, '#7cb342');
+    grass.addColorStop(1, '#558b2f');
+    this.ctx.fillStyle = grass;
+    this.ctx.fillRect(0, this.canvas.height - 40, this.canvas.width, 40);
+
+    this.ctx.strokeStyle = '#8bc34a';
+    this.ctx.lineWidth = 1.5;
+    for (let i = 0; i < this.canvas.width; i += 6) {
+      this.ctx.beginPath();
+      this.ctx.moveTo(i, this.canvas.height - 40);
+      const curve = Math.sin(i * 0.1 + time) * 8;
+      this.ctx.quadraticCurveTo(i + curve, this.canvas.height - 60, i, this.canvas.height - 80);
+      this.ctx.stroke();
+    }
+
+    this.drawTree(80, this.canvas.height - 40, 80, 0.8, time);
+    this.drawTree(200, this.canvas.height - 40, 100, 1, time);
+    this.drawTree(320, this.canvas.height - 40, 90, 0.9, time);
+  }
+
+  drawTree(x, y, height, scale, time) {
+    this.ctx.save();
+    this.ctx.translate(x, y);
+    const sway = Math.sin(time * 0.5 + x * 0.01) * 5;
+    this.ctx.rotate(sway * 0.01);
+
+    const trunk = this.ctx.createLinearGradient(-12, 0, 12, -height);
+    trunk.addColorStop(0, '#8b4513');
+    trunk.addColorStop(1, '#5d4e37');
+    this.ctx.fillStyle = trunk;
+    this.ctx.fillRect(-12 * scale, -height, 24 * scale, height);
+
+    const leaves = this.ctx.createRadialGradient(0, -height, 0, 0, -height, 50 * scale);
+    leaves.addColorStop(0, '#81c784');
+    leaves.addColorStop(1, '#388e3c');
+    this.ctx.fillStyle = leaves;
+
+    this.ctx.beginPath();
+    this.ctx.arc(-20 * scale, -height, 35 * scale, 0, Math.PI * 2);
+    this.ctx.fill();
+
+    this.ctx.beginPath();
+    this.ctx.arc(20 * scale, -height, 35 * scale, 0, Math.PI * 2);
+    this.ctx.fill();
+
+    this.ctx.beginPath();
+    this.ctx.arc(0, -height - 25 * scale, 40 * scale, 0, Math.PI * 2);
+    this.ctx.fill();
+
+    this.ctx.restore();
+  }
+
+  drawPooh() {
+    this.ctx.save();
+    this.ctx.translate(this.player.x, this.player.y);
+
+    const wobble = Math.sin(this.player.wobble) * 3;
+
+    for (let i = 0; i < this.player.trail.length; i++) {
+      const p = this.player.trail[i];
+      const alpha = ((this.player.trail.length - i) / this.player.trail.length) * 0.3;
+      this.ctx.fillStyle = `rgba(212, 165, 116, ${alpha})`;
+      this.ctx.beginPath();
+      this.ctx.arc(p.x - this.player.x, p.y - this.player.y, this.player.radius * (i / this.player.trail.length), 0, Math.PI * 2);
+      this.ctx.fill();
+    }
+
+    this.ctx.globalAlpha = 0.3;
+    this.ctx.fillStyle = '#000';
+    this.ctx.beginPath();
+    this.ctx.ellipse(0, this.player.radius + 12, this.player.radius * 0.7, 10, 0, 0, Math.PI * 2);
+    this.ctx.fill();
+    this.ctx.globalAlpha = 1;
+
+    const body = this.ctx.createRadialGradient(-8, -8, 0, 0, 0, this.player.radius);
+    body.addColorStop(0, '#f0d8b8');
+    body.addColorStop(0.7, '#d4a574');
+    body.addColorStop(1, '#b8863c');
+    this.ctx.fillStyle = body;
+    this.ctx.beginPath();
+    this.ctx.arc(0, wobble, this.player.radius, 0, Math.PI * 2);
+    this.ctx.fill();
+
+    this.ctx.fillStyle = '#e63946';
+    this.ctx.beginPath();
+    this.ctx.arc(0, wobble + 10, this.player.radius - 6, 0, Math.PI);
+    this.ctx.fill();
+
+    this.ctx.save();
+    this.ctx.rotate(this.player.armAngle);
+    this.ctx.fillStyle = '#d4a574';
+    this.ctx.beginPath();
+    this.ctx.ellipse(-this.player.radius + 8, wobble, 10, 16, -0.4, 0, Math.PI * 2);
+    this.ctx.fill();
+    this.ctx.restore();
+
+    this.ctx.save();
+    this.ctx.rotate(-this.player.armAngle);
+    this.ctx.fillStyle = '#d4a574';
+    this.ctx.beginPath();
+    this.ctx.ellipse(this.player.radius - 8, wobble, 10, 16, 0.4, 0, Math.PI * 2);
+    this.ctx.fill();
+    this.ctx.restore();
+
+    this.ctx.fillStyle = '#d4a574';
+    this.ctx.beginPath();
+    this.ctx.arc(-this.player.radius + 10, wobble - this.player.radius + 10, 12, 0, Math.PI * 2);
+    this.ctx.arc(this.player.radius - 10, wobble - this.player.radius + 10, 12, 0, Math.PI * 2);
+    this.ctx.fill();
+
+    this.ctx.fillStyle = '#1a1a1a';
+    this.ctx.beginPath();
+    this.ctx.arc(-10, wobble - 8, 3.5, 0, Math.PI * 2);
+    this.ctx.arc(10, wobble - 8, 3.5, 0, Math.PI * 2);
+    this.ctx.fill();
+
+    this.ctx.fillStyle = '#fff';
+    this.ctx.beginPath();
+    this.ctx.arc(-9, wobble - 9, 1.8, 0, Math.PI * 2);
+    this.ctx.arc(11, wobble - 9, 1.8, 0, Math.PI * 2);
+    this.ctx.fill();
+
+    this.ctx.fillStyle = '#1a1a1a';
+    this.ctx.beginPath();
+    this.ctx.arc(0, wobble + 3, 5, 0, Math.PI * 2);
+    this.ctx.fill();
+
+    this.ctx.strokeStyle = '#1a1a1a';
+    this.ctx.lineWidth = 2;
+    this.ctx.beginPath();
+    this.ctx.arc(0, wobble + 8, 8, 0.2, Math.PI - 0.2);
+    this.ctx.stroke();
+
+    this.ctx.restore();
+  }
+
+  drawHoneys() {
+    for (const honey of this.honeys) {
+      this.ctx.save();
+      this.ctx.translate(honey.x, honey.y);
+      this.ctx.rotate(honey.rotation);
+      this.ctx.scale(honey.scale, honey.scale);
+
+      const pot = this.ctx.createLinearGradient(-15, -12, 15, 15);
+      pot.addColorStop(0, honey.type === 'golden' ? '#ffd700' : '#a0633b');
+      pot.addColorStop(0.5, honey.type === 'golden' ? '#ffa500' : '#8b4513');
+      pot.addColorStop(1, honey.type === 'golden' ? '#da9100' : '#6b3410');
+      this.ctx.fillStyle = pot;
+
+      this.ctx.beginPath();
+      this.ctx.moveTo(-12, -10);
+      this.ctx.quadraticCurveTo(-15, 0, -12, 15);
+      this.ctx.lineTo(12, 15);
+      this.ctx.quadraticCurveTo(15, 0, 12, -10);
+      this.ctx.closePath();
+      this.ctx.fill();
+
+      const honeyGrad = this.ctx.createLinearGradient(-8, -8, 8, 8);
+      honeyGrad.addColorStop(0, '#ffd700');
+      honeyGrad.addColorStop(0.5, '#ffa500');
+      honeyGrad.addColorStop(1, '#da9100');
+      this.ctx.fillStyle = honeyGrad;
+
+      this.ctx.beginPath();
+      this.ctx.ellipse(0, 2, 8, 6, 0, 0, Math.PI * 2);
+      this.ctx.fill();
+
+      this.ctx.fillStyle = '#ffa500';
+      this.ctx.beginPath();
+      this.ctx.moveTo(-2, 8);
+      this.ctx.quadraticCurveTo(0, 15, 2, 8);
+      this.ctx.fill();
+
+      this.ctx.fillStyle = honey.type === 'golden' ? '#fff' : '#fff8e1';
+      this.ctx.font = 'bold 10px "Patrick Hand"';
+      this.ctx.textAlign = 'center';
+      this.ctx.fillText(honey.type === 'golden' ? 'GOLDEN' : 'HUNNY', 0, 4);
+
+      this.ctx.restore();
+    }
+  }
+
+  drawBees() {
+    for (const bee of this.bees) {
+      this.ctx.save();
+      this.ctx.translate(bee.x, bee.y);
+
+      const wobbleY = Math.sin(bee.wobble) * 6;
+      const wingFlap = Math.sin(bee.wingFlap) * 0.5;
+
+      for (let i = 0; i < bee.trail.length; i++) {
+        const p = bee.trail[i];
+        const alpha = ((bee.trail.length - i) / bee.trail.length) * 0.2;
+        this.ctx.fillStyle = `rgba(255, 215, 0, ${alpha})`;
+        this.ctx.beginPath();
+        this.ctx.arc(p.x - bee.x, p.y - bee.y, 4 * (i / bee.trail.length), 0, Math.PI * 2);
+        this.ctx.fill();
+      }
+
+      this.ctx.globalAlpha = 0.6;
+      this.ctx.fillStyle = bee.angry ? '#ff9999' : '#e8f4f8';
+
+      this.ctx.save();
+      this.ctx.rotate(wingFlap);
+      this.ctx.beginPath();
+      this.ctx.ellipse(-12, -10, 12, 20, -0.5, 0, Math.PI * 2);
+      this.ctx.fill();
+      this.ctx.restore();
+
+      this.ctx.save();
+      this.ctx.rotate(-wingFlap);
+      this.ctx.beginPath();
+      this.ctx.ellipse(12, -10, 12, 20, 0.5, 0, Math.PI * 2);
+      this.ctx.fill();
+      this.ctx.restore();
+
+      this.ctx.globalAlpha = 1;
+
+      const body = this.ctx.createLinearGradient(0, -15, 0, 15);
+      body.addColorStop(0, '#ffd700');
+      body.addColorStop(1, bee.angry ? '#ff4444' : '#daa520');
+      this.ctx.fillStyle = body;
+      this.ctx.beginPath();
+      this.ctx.ellipse(0, wobbleY, 15, 20, 0, 0, Math.PI * 2);
+      this.ctx.fill();
+
+      this.ctx.fillStyle = bee.angry ? '#8b0000' : '#1a1a1a';
+      for (let i = 0; i < 3; i++) this.ctx.fillRect(-15, -12 + i * 10 + wobbleY, 30, 5);
+
+      if (bee.angry) {
+        this.ctx.strokeStyle = '#8b0000';
+        this.ctx.lineWidth = 3;
+        this.ctx.lineCap = 'round';
+        this.ctx.beginPath();
+        this.ctx.moveTo(-8, -18 + wobbleY);
+        this.ctx.lineTo(-2, -15 + wobbleY);
+        this.ctx.moveTo(8, -18 + wobbleY);
+        this.ctx.lineTo(2, -15 + wobbleY);
+        this.ctx.stroke();
+      }
+
+      this.ctx.restore();
+    }
+  }
+
+  drawUI() {
+    for (let i = 0; i < this.lives; i++) {
+      const x = 30 + i * 40;
+      const y = this.canvas.height - 30;
+
+      this.ctx.save();
+      this.ctx.translate(x, y);
+
+      const glow = this.ctx.createRadialGradient(0, 0, 0, 0, 0, 15);
+      glow.addColorStop(0, '#ff6b6b');
+      glow.addColorStop(1, 'rgba(255, 107, 107, 0)');
+      this.ctx.fillStyle = glow;
+      this.ctx.beginPath();
+      this.ctx.arc(0, 0, 15, 0, Math.PI * 2);
+      this.ctx.fill();
+
+      this.ctx.fillStyle = '#e63946';
+      this.ctx.beginPath();
+      this.ctx.moveTo(0, 6);
+      this.ctx.bezierCurveTo(-10, -8, -5, -12, 0, -4);
+      this.ctx.bezierCurveTo(5, -12, 10, -8, 0, 6);
+      this.ctx.fill();
+
+      this.ctx.restore();
+    }
+  }
+
+  /* ---------- popups/effects ---------- */
+  showScorePopup(x, y, text) {
+    const popup = document.createElement('div');
+    popup.className = 'score-popup';
+    popup.textContent = text;
+
+    const cssX = this.canvasToCssX(x);
+    const cssY = this.canvasToCssY(y);
+
+    popup.style.left = `${cssX}px`;
+    popup.style.top = `${cssY}px`;
+    popup.style.transform = 'translate(-50%, -50%)';
+
+    this.gameContainer.appendChild(popup);
+    this.activePopups.push(popup);
+
+    setTimeout(() => {
+      const idx = this.activePopups.indexOf(popup);
+      if (idx > -1) this.activePopups.splice(idx, 1);
+      popup.remove();
+    }, 1500);
+  }
+
+  showHoneyWord(x, y, text) {
+    const word = document.createElement('div');
+    word.className = 'honey-word';
+    word.textContent = text;
+
+    const cssX = this.canvasToCssX(x);
+    const cssY = this.canvasToCssY(y);
+
+    word.style.left = `${cssX}px`;
+    word.style.top = `${cssY}px`;
+    word.style.transform = 'translate(-50%, -50%)';
+
+    this.gameContainer.appendChild(word);
+    this.activePopups.push(word);
+
+    setTimeout(() => {
+      const idx = this.activePopups.indexOf(word);
+      if (idx > -1) this.activePopups.splice(idx, 1);
+      word.remove();
+    }, 2500);
+  }
+
+  shakeScreen() {
+    this.gameContainer.style.animation = 'none';
+    setTimeout(() => {
+      this.gameContainer.style.animation = 'shake 0.5s ease-in-out, float 6s ease-in-out infinite';
+    }, 10);
+  }
+
+  updateHUD() {
+    this.scoreEl.textContent = this.score;
+    this.streakEl.textContent = this.streak;
+    this.livesEl.textContent = this.lives;
+    this.achievementsCountEl.textContent = `${this.achievementSystem.achievements.filter(a => a.unlocked).length}/10`;
+  }
+
+  /* ---------- endgame/persistence ---------- */
+  endGame() {
+    this.running = false;
+
+    // Perfect game: no lives lost (i.e., still perfectGame true)
+    if (this.perfectGame) this.achievementSystem.incrementGameState('perfectGames', 1);
+
+    if (this.score > this.highScore) {
+      this.highScore = this.score;
+      try { localStorage.setItem('poohHighScore', this.highScore.toString()); } catch (e) {}
+    }
+
+    // Ensure final achievements check + save
+    this.updateAchievementState(true);
+    this.achievementSystem.saveAchievements();
+
+    this.finalScoreEl.textContent = this.score;
+    this.bestStreakEl.textContent = this.bestStreak;
+    this.honeyCaughtEl.textContent = this.honeyCaught;
+    this.timePlayedEl.textContent = `${Math.round(this.gameTime)}s`;
+    this.highScoreEl.textContent = this.highScore;
+    this.achievementsEarnedEl.textContent = this.achievementSystem.achievements.filter(a => a.unlocked).length;
+
+    this.soundSystem.play('gameover');
+
+    this.gameoverOverlay.classList.remove('hidden');
+    this.updateOverlayState();
+  }
+
+  loadGameState() {
+    try {
+      const hs = localStorage.getItem('poohHighScore');
+      if (hs) this.highScore = parseInt(hs) || 0;
+
+      const t = localStorage.getItem('poohTotalPlayTime');
+      if (t) this.totalPlayTime = parseFloat(t) || 0;
+    } catch (e) {}
+  }
+
+  /* ---------- background ---------- */
+  initializeBackground() {
+    // Blossoms
+    for (let i = 0; i < 15; i++) {
+      const b = document.createElement('div');
+      b.className = 'blossom';
+      b.style.left = `${Math.random() * 100}vw`;
+      b.style.animationDelay = `${Math.random() * 5}s`;
+      b.style.animationDuration = `${20 + Math.random() * 30}s`;
+      b.style.opacity = `${0.3 + Math.random() * 0.4}`;
+      b.style.width = `${8 + Math.random() * 8}px`;
+      b.style.height = b.style.width;
+      this.backgroundLayer.appendChild(b);
+    }
+
+    // Butterflies
+    for (let i = 0; i < 3; i++) {
+      const bf = document.createElement('div');
+      bf.className = 'butterfly';
+      bf.style.left = `${Math.random() * 100}vw`;
+      bf.style.top = `${20 + Math.random() * 60}vh`;
+      bf.style.animationDelay = `${Math.random() * 3}s`;
+      bf.style.animationDuration = `${5 + Math.random() * 5}s`;
+      this.backgroundLayer.appendChild(bf);
+    }
+  }
+
+  cleanup() {
+    if (this.animationFrameId) cancelAnimationFrame(this.animationFrameId);
+    this.animationFrameId = null;
+    this.particleSystem.clear();
+    this.weatherSystem.clear();
+    this.activePopups.forEach(p => p.remove());
+    this.activePopups.length = 0;
+  }
+}
+
+/* ============================================
+   INITIALIZE
+============================================ */
+document.addEventListener('DOMContentLoaded', () => {
+  const game = new PoohHoneyHunt();
+
+  document.addEventListener('visibilitychange', () => {
+    if (document.hidden && game.running && !game.paused) game.togglePause();
+  });
+
+  window.addEventListener('beforeunload', () => game.cleanup());
+});
+</script>
 </body>
 </html>
                         
