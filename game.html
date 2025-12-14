@@ -1071,14 +1071,6 @@
            WEATHER EFFECTS CONTAINER - FIXED
         ================================ */
       /* WEATHER: clipped to gameplay window */
-#weather-effects{
-  position: absolute;
-  inset: 0;                 /* fill the game container */
-  pointer-events: none;
-  z-index: 20;              /* above canvas, below popups if you want */
-  overflow: hidden;         /* CLIPS particles */
-  border-radius: 28px;      /* match canvas radius */
-}
 
 /* make sure the container can clip children */
 .game-container{
@@ -2074,10 +2066,6 @@
         return this.characters[this.currentCharacter];
       }
     }
-// ============================================
-// WEATHER SYSTEM - FIXED (uses weather key, not display name)
-// Replace your entire WeatherSystem class with this.
-// ============================================
 class WeatherSystem {
   constructor() {
     this.currentWeather = 'none';
@@ -2085,9 +2073,8 @@ class WeatherSystem {
     this.weatherContainer = null;
     this.particles = [];
 
-    // Use KEYS for logic; "label" only for display
     this.weatherTypes = {
-      none:   { label: 'Clear',  particles: 0,  class: '',            animation: '',        speed: 0 },
+      none:   { label: 'Clear',  particles: 0,  class: '',               animation: '',         speed: 0   },
       rain:   { label: 'Rain',   particles: 90, class: 'rain-particle',  animation: 'rainFall',  speed: 1.6 },
       snow:   { label: 'Snow',   particles: 70, class: 'snow-particle',  animation: 'snowFall',  speed: 5.5 },
       leaves: { label: 'Autumn', particles: 35, class: 'leaf-particle',  animation: 'leafFall',  speed: 8.0 },
@@ -2105,40 +2092,79 @@ class WeatherSystem {
   }
 
   ensureContainer() {
-    // Prefer the existing DOM node you already have in HTML
-    this.weatherContainer = document.getElementById('weather-effects');
-
-    // If something removed it, recreate it
-    if (!this.weatherContainer) {
-      this.weatherContainer = document.createElement('div');
-      this.weatherContainer.id = 'weather-effects';
-      document.body.appendChild(this.weatherContainer);
+    // Prefer existing DOM node
+    const existing = document.getElementById('weather-effects');
+    if (existing) {
+      this.weatherContainer = existing;
+      // Force correct mounting + style
+      this.mountInsideGameplayWindow();
+      return;
     }
 
-    // Force the correct “overlay” behavior, regardless of CSS duplication
+    // Otherwise create
+    this.createWeatherContainer();
+  }
+
+  mountInsideGameplayWindow() {
+    const host = document.querySelector('.game-container');
+    if (!host) {
+      // Fallback (shouldn’t happen in your layout)
+      if (!this.weatherContainer.parentNode) document.body.appendChild(this.weatherContainer);
+      Object.assign(this.weatherContainer.style, {
+        position: 'fixed',
+        inset: '0',
+        pointerEvents: 'none',
+        zIndex: '2000',
+        overflow: 'hidden',
+        display: 'none'
+      });
+      return;
+    }
+
+    // Ensure clipping
+    host.style.position = host.style.position || 'relative';
+    host.style.overflow = 'hidden';
+    host.style.borderRadius = host.style.borderRadius || '28px';
+
+    if (this.weatherContainer.parentNode !== host) {
+      host.appendChild(this.weatherContainer);
+    }
+
     Object.assign(this.weatherContainer.style, {
-      position: 'fixed',
+      position: 'absolute',
       inset: '0',
-      width: '100vw',
-      height: '100vh',
+      width: '100%',
+      height: '100%',
       pointerEvents: 'none',
-      zIndex: '2000',
+      zIndex: '20',
       overflow: 'hidden',
-      display: 'none'
+      display: 'none',
+      borderRadius: '28px'
     });
+  }
+
+  createWeatherContainer() {
+    // Remove any stray duplicates
+    const existing = document.getElementById('weather-effects');
+    if (existing) existing.remove();
+
+    this.weatherContainer = document.createElement('div');
+    this.weatherContainer.id = 'weather-effects';
+
+    this.mountInsideGameplayWindow();
   }
 
   loadWeather() {
     try {
       const saved = localStorage.getItem('poohCurrentWeather');
       if (saved && this.weatherTypes[saved]) this.currentWeather = saved;
-    } catch (e) {}
+    } catch {}
   }
 
   saveWeather() {
     try {
       localStorage.setItem('poohCurrentWeather', this.currentWeather);
-    } catch (e) {}
+    } catch {}
   }
 
   setWeather(weatherType) {
@@ -2163,6 +2189,11 @@ class WeatherSystem {
     });
   }
 
+  clearParticles() {
+    for (const el of this.particles) el.remove();
+    this.particles.length = 0;
+  }
+
   applyWeatherEffects() {
     this.ensureContainer();
     this.clearParticles();
@@ -2172,64 +2203,55 @@ class WeatherSystem {
       return;
     }
 
-    const w = this.weatherTypes[this.currentWeather];
+    const def = this.weatherTypes[this.currentWeather];
     this.weatherContainer.style.display = 'block';
 
-    for (let i = 0; i < w.particles; i++) {
-      this.createWeatherParticle(this.currentWeather, w, i);
+    for (let i = 0; i < def.particles; i++) {
+      this.createWeatherParticle(this.currentWeather, def);
     }
   }
 
-createWeatherContainer() {
-  console.log("WeatherSystem: Creating container...");
+  createWeatherParticle(typeKey, def) {
+    const el = document.createElement('div');
+    el.className = `weather-particle ${def.class}`;
 
-  // Remove existing container (if any)
-  const existing = document.getElementById('weather-effects');
-  if (existing) {
-    existing.remove();
-    console.log("WeatherSystem: Removed existing container");
+    const { width, height } = this.getParticleSize(typeKey);
+
+    // start slightly above top, random x
+    const x = Math.random() * 100;
+    const delay = Math.random() * 2.5;
+    const dur = def.speed + Math.random() * def.speed;
+
+    Object.assign(el.style, {
+      left: `${x}%`,
+      top: `-${Math.max(40, height)}px`,
+      width: `${width}px`,
+      height: `${height}px`,
+      opacity: `${0.35 + Math.random() * 0.55}`,
+      animationName: def.animation,
+      animationDuration: `${dur}s`,
+      animationTimingFunction: 'linear',
+      animationIterationCount: 'infinite',
+      animationDelay: `${delay}s`,
+      willChange: 'transform'
+    });
+
+    // A little variety per type
+    if (typeKey === 'leaves' || typeKey === 'petals') {
+      el.style.filter = 'drop-shadow(0 2px 2px rgba(0,0,0,.15))';
+    }
+    if (typeKey === 'rain') {
+      el.style.transform = `rotate(15deg)`;
+    }
+
+    this.weatherContainer.appendChild(el);
+    this.particles.push(el);
   }
 
-  // Create new container
-  this.weatherContainer = document.createElement('div');
-  this.weatherContainer.id = 'weather-effects';
-
-  // IMPORTANT: mount inside the gameplay window so it clips to the board
-  const host = document.querySelector('.game-container');
-  if (!host) {
-    console.warn("WeatherSystem: .game-container not found. Falling back to body (will not clip).");
-    document.body.appendChild(this.weatherContainer);
-  } else {
-    // Ensure host clips children
-    host.style.position = host.style.position || 'relative';
-    host.style.overflow = 'hidden';
-    host.style.borderRadius = host.style.borderRadius || '28px';
-
-    host.appendChild(this.weatherContainer);
-  }
-
-  // Style the container to fill the gameplay window
-  Object.assign(this.weatherContainer.style, {
-    position: 'absolute',
-    inset: '0',
-    width: '100%',
-    height: '100%',
-    pointerEvents: 'none',
-    zIndex: '20',          // above canvas, below popups (your popups are ~100+)
-    overflow: 'hidden',
-    display: 'block',
-    borderRadius: '28px'   // match the canvas radius / board radius
-  });
-
-  console.log("WeatherSystem: Container added to gameplay window");
-
-  // Optional: tiny debug label (remove later if you want)
-  // this.weatherContainer.innerHTML =
-  //   '<div style="position:absolute; top:10px; left:10px; color:white; background:rgba(0,0,0,.35); padding:4px 6px; border-radius:8px; font:12px/1.2 system-ui; z-index:9999;">Weather Layer</div>';
-}
   getParticleSize(typeKey) {
     switch (typeKey) {
-      case 'rain':   return { width: 2, height: 18 + Math.random() * 18 };
+      case 'rain':
+        return { width: 2, height: 18 + Math.random() * 18 };
       case 'snow': {
         const s = 4 + Math.random() * 7;
         return { width: s, height: s };
@@ -2242,18 +2264,11 @@ createWeatherContainer() {
         const s = 8 + Math.random() * 12;
         return { width: s, height: s };
       }
-      default: return {no width: 6, height: 6 };
+      default:
+        return { width: 6, height: 6 };
     }
   }
-
-  clearParticles() {
-    if (!this.weatherContainer) return;
-    for (const p of this.particles) p.remove();
-    this.particles = [];
-  }
 }
-    
-
     // ============================================
     // SHARE SYSTEM (FIXED for fallback)
     // ============================================
