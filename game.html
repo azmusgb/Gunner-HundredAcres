@@ -10,7 +10,7 @@
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
   <link href="https://fonts.googleapis.com/css2?family=Patrick+Hand&family=Fredoka+One&family=Bubblegum+Sans&display=swap" rel="stylesheet">
   <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
-  <style>
+<style>
     /* ===============================
        THEME & ANIMATIONS
     ================================ */
@@ -37,6 +37,17 @@
       --powerup-blue: #4d96ff;
       --powerup-purple: #9d4edd;
       --danger-red: #e63946;
+      
+      /* Safe area variables for modern mobile devices */
+      --safe-top: env(safe-area-inset-top, 0px);
+      --safe-right: env(safe-area-inset-right, 0px);
+      --safe-bottom: env(safe-area-inset-bottom, 0px);
+      --safe-left: env(safe-area-inset-left, 0px);
+      
+      /* Layout variables */
+      --header-height: 100px;
+      --controls-height: 140px;
+      --game-max-width: 520px;
     }
 
     @keyframes float {
@@ -193,10 +204,14 @@
       display: flex;
       flex-direction: column;
       align-items: center;
-      justify-content: center;
-      padding: 20px;
+      justify-content: space-between;
+      padding: 0;
       position: relative;
       filter: drop-shadow(0 0 20px rgba(0,0,0,0.1));
+      padding-top: var(--safe-top);
+      padding-bottom: var(--safe-bottom);
+      padding-left: var(--safe-left);
+      padding-right: var(--safe-right);
     }
 
     /* ===============================
@@ -271,7 +286,8 @@
       top: -30px;
       right: 20px;
     }
-.cloud-3 {
+
+    .cloud-3 {
       width: 140px;
       height: 55px;
       top: 8%;
@@ -293,6 +309,7 @@
       top: -22px;
       right: 18px;
     }
+    
     .blossom {
       position: absolute;
       width: 12px;
@@ -335,28 +352,32 @@
     }
 
     /* ===============================
-       TOP BAR
+       TOP BAR - FIXED POSITIONING
     ================================ */
     .top-bar {
-      position: absolute;
-      top: 20px;
+      position: fixed;
+      top: calc(12px + var(--safe-top));
       left: 50%;
       transform: translateX(-50%);
-      width: 100%;
-      max-width: 800px;
+      width: min(95%, 900px);
       display: flex;
-      justify-content: space-between;
-      padding: 0 24px;
-      z-index: 10;
-      gap: 16px;
+      justify-content: center;
+      gap: 12px;
+      padding: 0 10px;
+      z-index: 1000;
       flex-wrap: wrap;
+      pointer-events: none;
+    }
+
+    .top-bar .stat-card {
+      pointer-events: auto;
     }
 
     .stat-card {
       background: linear-gradient(135deg, rgba(255, 248, 225, 0.9) 0%, rgba(255, 232, 184, 0.9) 100%);
       backdrop-filter: blur(10px);
       border: 4px solid var(--wood-brown);
-      padding: 14px 24px;
+      padding: 14px 20px;
       border-radius: 24px;
       box-shadow: 
         var(--shadow-soft),
@@ -367,12 +388,14 @@
       display: flex;
       flex-direction: column;
       gap: 4px;
-      min-width: 110px;
+      min-width: 90px;
+      flex: 1;
       animation: slideIn 0.5s ease-out;
       position: relative;
       border-bottom-width: 6px;
       font-family: 'Fredoka One', cursive;
       transition: transform 0.3s ease;
+      margin: 0 2px;
     }
 
     .stat-card:hover {
@@ -433,7 +456,7 @@
     }
 
     /* ===============================
-       CANVAS CONTAINER
+       GAME CONTAINER - RESPONSIVE SCALING
     ================================ */
     .game-container {
       position: relative;
@@ -442,6 +465,15 @@
         drop-shadow(0 25px 50px rgba(0,0,0,0.3))
         drop-shadow(0 0 20px rgba(255, 215, 0, 0.2));
       transition: filter 0.3s ease;
+      margin-top: var(--header-height);
+      margin-bottom: var(--controls-height);
+      width: 100%;
+      max-width: var(--game-max-width);
+      aspect-ratio: 3/4;
+      max-height: 70vh;
+      display: flex;
+      align-items: center;
+      justify-content: center;
     }
 
     .game-container:hover {
@@ -483,17 +515,18 @@
       cursor: none;
       position: relative;
       overflow: hidden;
-      /* Ensure canvas stays below the overlay highlight */
-      z-index: 1; 
+      z-index: 1;
+      width: 100% !important;
+      height: 100% !important;
+      max-width: 100%;
+      max-height: 100%;
+      object-fit: contain;
     }
-/* ===============================
-   UNIVERSAL HIDE HELPERS (FIX)
-=============================== */
-.hidden { display: none !important; }
 
-/* (Optional redundancy — safe either way) */
-.achievements-overlay.hidden { display: none !important; }
- 
+    /* ===============================
+       UNIVERSAL HIDE HELPERS
+    ================================ */
+    .hidden { display: none !important; }
 
     /* ===============================
        CUSTOM CURSOR
@@ -581,7 +614,7 @@
     }
 
     /* ===============================
-       NEW FEATURE: CHARACTER SELECT OVERLAY
+       CHARACTER SELECT OVERLAY
     ================================ */
     .character-select-overlay {
       position: absolute;
@@ -599,6 +632,10 @@
       border: 12px solid var(--wood-brown);
       box-shadow: inset 0 0 80px rgba(212,165,116,0.4), 0 0 60px rgba(0,0,0,0.2);
       padding: 30px;
+      padding-top: calc(30px + var(--safe-top));
+      padding-bottom: calc(30px + var(--safe-bottom));
+      max-height: 100vh;
+      overflow-y: auto;
     }
 
     .character-select-overlay.hidden {
@@ -673,7 +710,7 @@
     }
 
     /* ===============================
-       NEW FEATURE: ACHIEVEMENTS OVERLAY
+       ACHIEVEMENTS OVERLAY
     ================================ */
     .achievements-overlay {
       position: absolute;
@@ -686,6 +723,10 @@
       z-index: 2000;
       padding: 30px;
       animation: slideIn 0.4s ease-out;
+      padding-top: calc(30px + var(--safe-top));
+      padding-bottom: calc(30px + var(--safe-bottom));
+      max-height: 100vh;
+      overflow-y: auto;
     }
 
     .achievements-content {
@@ -694,7 +735,7 @@
       padding: 30px;
       max-width: 500px;
       width: 90%;
-      max-height: 80vh;
+      max-height: 70vh;
       overflow-y: auto;
       border: 8px solid var(--wood-brown);
       box-shadow: 0 20px 60px rgba(0,0,0,0.5);
@@ -743,7 +784,7 @@
     }
 
     /* ===============================
-       NEW FEATURE: ACHIEVEMENT POPUP
+       ACHIEVEMENT POPUP
     ================================ */
     .achievement-popup {
       position: fixed;
@@ -770,21 +811,22 @@
     }
 
     /* ===============================
-       NEW FEATURE: WEATHER CONTROLS
+       WEATHER CONTROLS - FIXED POSITIONING
     ================================ */
     .weather-controls {
-      position: absolute;
-      bottom: 100px;
+      position: fixed;
+      bottom: calc(100px + var(--safe-bottom));
       left: 50%;
       transform: translateX(-50%);
       display: flex;
-      gap: 15px;
-      z-index: 100;
-      background: rgba(255, 255, 255, 0.8);
-      padding: 15px;
-      border-radius: 20px;
+      gap: 12px;
+      z-index: 1000;
+      background: rgba(255, 255, 255, 0.9);
+      padding: 12px 20px;
+      border-radius: 40px;
       border: 3px solid var(--wood-brown);
       backdrop-filter: blur(10px);
+      box-shadow: 0 8px 32px rgba(0,0,0,0.2);
     }
 
     .weather-btn {
@@ -813,12 +855,12 @@
     }
 
     /* ===============================
-       NEW FEATURE: SHARE BUTTON
+       SHARE BUTTON - FIXED POSITIONING
     ================================ */
     .share-btn {
-      position: absolute;
-      top: 20px;
-      right: 20px;
+      position: fixed;
+      top: calc(12px + var(--safe-top));
+      right: calc(12px + var(--safe-right));
       width: 50px;
       height: 50px;
       border-radius: 50%;
@@ -831,7 +873,7 @@
       align-items: center;
       justify-content: center;
       box-shadow: 0 5px 15px rgba(0,0,0,0.3);
-      z-index: 100;
+      z-index: 1000;
       transition: all 0.3s ease;
     }
 
@@ -841,15 +883,15 @@
     }
 
     /* ===============================
-       NEW FEATURE: SOUND CONTROLS
+       SOUND CONTROLS - FIXED POSITIONING
     ================================ */
     .sound-controls {
-      position: absolute;
-      top: 20px;
-      left: 20px;
+      position: fixed;
+      top: calc(12px + var(--safe-top));
+      left: calc(12px + var(--safe-left));
       display: flex;
       gap: 10px;
-      z-index: 100;
+      z-index: 1000;
     }
 
     .sound-btn {
@@ -897,6 +939,10 @@
         inset 0 0 80px rgba(212,165,116,0.4),
         0 0 60px rgba(0,0,0,0.2);
       padding: 40px;
+      padding-top: calc(40px + var(--safe-top));
+      padding-bottom: calc(40px + var(--safe-bottom));
+      max-height: 100vh;
+      overflow-y: auto;
     }
 
     .overlay::before {
@@ -1106,137 +1152,22 @@
     }
 
     /* ===============================
-       RESPONSIVE
-    ================================ */
-    @media (max-width: 768px) {
-      .top-bar {
-        padding: 0 16px;
-        flex-wrap: wrap;
-        justify-content: center;
-        gap: 12px;
-      }
-      
-      .stat-card {
-        min-width: 90px;
-        padding: 12px 20px;
-        flex-direction: row;
-        justify-content: space-between;
-        align-items: center;
-      }
-
-      .stat-card::before {
-        width: 16px;
-        height: 16px;
-        top: -8px;
-      }
-
-      .overlay h1 {
-        font-size: 3rem;
-      }
-
-      .overlay h2 {
-        font-size: 2rem;
-      }
-
-      .overlay .subtitle {
-        font-size: 1.2rem;
-      }
-
-      .btn {
-        padding: 20px 40px;
-        font-size: 1.2rem;
-      }
-
-  .stats-grid {
-      display: grid;
-      grid-template-columns: repeat(auto-fit, minmax(150px, 1fr));
-      gap: 16px;
-      margin: 24px 0;
-      width: 100%;
-      max-width: 500px;
-    }
-    
-    @media (max-width: 480px) {
-      .stats-grid {
-        grid-template-columns: repeat(2, 1fr);
-      }
-    }
-    
-    @media (max-width: 350px) {
-      .stats-grid {
-        grid-template-columns: 1fr;
-      }
-    }
-
-      .final-score {
-        font-size: 4rem;
-      }
-
-      .character-grid {
-        grid-template-columns: 1fr;
-        max-width: 300px;
-      }
-
-      .achievements-content {
-        padding: 20px;
-      }
-
-      .weather-controls {
-        bottom: 80px;
-        gap: 10px;
-        padding: 10px;
-      }
-
-      .weather-btn, .sound-btn, .share-btn {
-        width: 45px;
-        height: 45px;
-        font-size: 1.2rem;
-      }
-
-      .game-controls {
-        bottom: 20px;
-        gap: 15px;
-      }
-
-      .control-btn {
-        width: 50px;
-        height: 50px;
-        font-size: 1.2rem;
-      }
-    }
-
-    @media (max-height: 700px) {
-      .game-container {
-        transform: scale(0.85);
-      }
-      
-      .overlay {
-        padding: 20px;
-        gap: 20px;
-      }
-      
-      .overlay h1 {
-        font-size: 2.5rem;
-        margin-bottom: 4px;
-      }
-
-      .character-grid {
-        max-height: 300px;
-        overflow-y: auto;
-      }
-    }
-
-    /* ===============================
-       GAME CONTROLS
+       GAME CONTROLS - FIXED POSITIONING
     ================================ */
     .game-controls {
-      position: absolute;
-      bottom: 30px;
+      position: fixed;
+      bottom: calc(20px + var(--safe-bottom));
       left: 50%;
       transform: translateX(-50%);
       display: flex;
       gap: 20px;
-      z-index: 100;
+      z-index: 1000;
+      background: rgba(255, 255, 255, 0.9);
+      padding: 15px 25px;
+      border-radius: 50px;
+      border: 3px solid var(--wood-brown);
+      backdrop-filter: blur(10px);
+      box-shadow: 0 8px 32px rgba(0,0,0,0.2);
     }
 
     .control-btn {
@@ -1283,156 +1214,257 @@
     .game-controls .control-btn.sound {
         display: none;
     }
+
     /* ===============================
-   LAYOUT + SCALING PATCH
-   (drop-in, paste near end of CSS)
-=============================== */
+       RESPONSIVE DESIGN
+    ================================ */
+    @media (max-width: 768px) {
+      :root {
+        --header-height: 85px;
+        --controls-height: 120px;
+      }
+      
+      .top-bar {
+        gap: 8px;
+      }
+      
+      .stat-card {
+        padding: 8px 12px !important;
+        min-width: 70px !important;
+      }
+      
+      .stat-value {
+        font-size: 1.5rem !important;
+      }
+      
+      .stat-label {
+        font-size: 0.65rem !important;
+      }
+      
+      .overlay h1 {
+        font-size: 3rem;
+      }
 
-:root{
-  --safe-top: env(safe-area-inset-top, 0px);
-  --safe-right: env(safe-area-inset-right, 0px);
-  --safe-bottom: env(safe-area-inset-bottom, 0px);
-  --safe-left: env(safe-area-inset-left, 0px);
+      .overlay h2 {
+        font-size: 2rem;
+      }
 
-  /* Tunables */
-  --hud-gap: 12px;
-  --hud-top: calc(var(--safe-top) + 12px);
-  --hud-side: calc(var(--safe-left) + 12px);
-  --hud-side-r: calc(var(--safe-right) + 12px);
+      .overlay .subtitle {
+        font-size: 1.2rem;
+      }
 
-  /* Target board size (CSS px) */
-  --board-max-w: 520px;
-  --board-min-w: 300px;
-}
+      .btn {
+        padding: 20px 40px;
+        font-size: 1.2rem;
+      }
 
-/* Make the app breathe with notches + home bar */
-main#game-root{
-  padding-top: calc(var(--safe-top) + 12px);
-  padding-left: calc(var(--safe-left) + 12px);
-  padding-right: calc(var(--safe-right) + 12px);
-  padding-bottom: calc(var(--safe-bottom) + 12px);
-  width: 100%;
-}
+      .stats-grid {
+        grid-template-columns: repeat(auto-fit, minmax(150px, 1fr));
+        gap: 16px;
+        margin: 24px 0;
+        width: 100%;
+        max-width: 500px;
+      }
 
-/* Keep overlays reliably centered even on short screens */
-.overlay,
-.character-select-overlay,
-.achievements-overlay{
-  padding-top: calc(var(--safe-top) + 24px);
-  padding-bottom: calc(var(--safe-bottom) + 24px);
-}
+      .final-score {
+        font-size: 4rem;
+      }
 
-/* Put top HUD in a predictable place and let it wrap nicely */
-.top-bar{
-  position: fixed;
-  top: var(--hud-top);
-  left: 50%;
-  transform: translateX(-50%);
-  width: min(920px, calc(100vw - 24px - var(--safe-left) - var(--safe-right)));
-  max-width: 920px;
-  padding: 0;
-  gap: var(--hud-gap);
-  justify-content: center;
-  z-index: 1200; /* above board, below popups */
-  pointer-events: none; /* prevents accidental steals */
-}
-.top-bar .stat-card{
-  pointer-events: auto; /* but cards still clickable */
-}
+      .character-grid {
+        grid-template-columns: 1fr;
+        max-width: 300px;
+      }
 
-/* Corner controls: safe-area aware, don’t collide with top bar */
-.sound-controls{
-  position: fixed;
-  top: var(--hud-top);
-  left: var(--hud-side);
-  z-index: 1300;
-}
-.share-btn{
-  position: fixed;
-  top: var(--hud-top);
-  right: var(--hud-side-r);
-  z-index: 1300;
-}
+      .achievements-content {
+        padding: 20px;
+      }
 
-/* Controls cluster: float above home bar */
-.weather-controls{
-  position: fixed;
-  left: 50%;
-  transform: translateX(-50%);
-  bottom: calc(var(--safe-bottom) + 96px);
-  z-index: 1200;
-}
-.game-controls{
-  position: fixed;
-  left: 50%;
-  transform: translateX(-50%);
-  bottom: calc(var(--safe-bottom) + 18px);
-  z-index: 1200;
-}
+      .weather-controls {
+        bottom: calc(85px + var(--safe-bottom));
+        padding: 10px 15px;
+        gap: 8px;
+      }
 
-/* BOARD: scale responsively by width + aspect ratio */
-.game-container{
-  /* Keep the board centered below the HUD */
-  margin-top: calc(84px + var(--safe-top));
-  width: clamp(var(--board-min-w), 92vw, var(--board-max-w));
-  aspect-ratio: 420 / 700;
-  max-height: calc(100dvh - (220px + var(--safe-top) + var(--safe-bottom)));
-  height: auto;
+      .weather-btn, .sound-btn, .share-btn {
+        width: 45px;
+        height: 45px;
+        font-size: 1.2rem;
+      }
 
-  /* No hover tricks on touch screens */
-  filter:
-    drop-shadow(0 25px 50px rgba(0,0,0,0.3))
-    drop-shadow(0 0 20px rgba(255, 215, 0, 0.2));
-}
+      .game-controls {
+        padding: 12px 20px;
+        gap: 15px;
+      }
 
-@media (hover: hover) and (pointer: fine){
-  .game-container:hover{
-    filter:
-      drop-shadow(0 25px 50px rgba(0,0,0,0.3))
-      drop-shadow(0 0 30px rgba(255, 215, 0, 0.4));
-  }
-}
+      .control-btn {
+        width: 50px;
+        height: 50px;
+        font-size: 1.2rem;
+      }
+      
+      .game-container {
+        margin-top: 80px;
+        margin-bottom: 100px;
+        max-height: 60vh;
+      }
+    }
 
-/* Canvas scales to container; drawing stays internal resolution (JS maps input) */
-#honey-game{
-  width: 100%;
-  height: 100%;
-  display: block;
-}
+    @media (max-width: 480px) {
+      :root {
+        --header-height: 75px;
+      }
+      
+      .top-bar {
+        gap: 6px;
+      }
+      
+      .stat-card {
+        padding: 6px 8px !important;
+        min-width: 65px !important;
+        border-radius: 16px !important;
+      }
+      
+      .stat-value {
+        font-size: 1.3rem !important;
+      }
+      
+      .stat-label {
+        font-size: 0.6rem !important;
+        letter-spacing: 1px !important;
+      }
+      
+      .stats-grid {
+        grid-template-columns: repeat(2, 1fr);
+      }
+      
+      .game-container {
+        margin-top: 70px;
+        max-height: 55vh;
+      }
+      
+      .weather-controls,
+      .game-controls {
+        flex-wrap: wrap;
+        justify-content: center;
+        width: 90%;
+      }
+      
+      .overlay h1 {
+        font-size: 2.5rem !important;
+      }
+      
+      .overlay h2 {
+        font-size: 1.8rem !important;
+      }
+      
+      .btn {
+        padding: 16px 24px !important;
+        font-size: 1.1rem !important;
+      }
+      
+      .character-select-title {
+        font-size: 2.2rem;
+      }
+      
+      .character-avatar {
+        width: 60px;
+        height: 60px;
+        font-size: 2rem;
+      }
+      
+      .character-name {
+        font-size: 1.2rem;
+      }
+    }
 
-/* Popups should position relative to the board */
-.game-container{
-  position: relative;
-}
+    @media (max-width: 350px) {
+      .stats-grid {
+        grid-template-columns: 1fr;
+      }
+      
+      .character-grid {
+        gap: 10px;
+      }
+      
+      .character-card {
+        padding: 15px;
+      }
+    }
 
-/* Mobile stat cards: less chunky, better wrap */
-@media (max-width: 768px){
-  .stat-card{
-    padding: 10px 14px;
-    border-radius: 18px;
-    min-width: 92px;
-  }
-  .stat-value{
-    font-size: 1.6rem;
-  }
-  .stat-label{
-    font-size: 0.7rem;
-  }
+    @media (max-height: 700px) {
+      .game-container {
+        max-height: 60vh;
+        margin-bottom: 80px;
+      }
+      
+      .overlay {
+        padding: 20px;
+        gap: 20px;
+      }
+      
+      .overlay h1 {
+        font-size: 2.5rem;
+        margin-bottom: 4px;
+      }
 
-  .weather-controls{
-    bottom: calc(var(--safe-bottom) + 88px);
-    padding: 10px;
-    gap: 10px;
-  }
-}
+      .character-grid {
+        max-height: 300px;
+        overflow-y: auto;
+      }
+      
+      .achievements-content {
+        max-height: 60vh;
+      }
+    }
 
-/* Super-short screens: reduce spacing, keep board visible */
-@media (max-height: 700px){
-  .game-container{
-    margin-top: calc(70px + var(--safe-top));
-    max-height: calc(100dvh - (200px + var(--safe-top) + var(--safe-bottom)));
-  }
-}
+    /* Landscape orientation */
+    @media (orientation: landscape) and (max-height: 500px) {
+      .top-bar {
+        position: absolute;
+        top: 10px;
+        width: 95%;
+        gap: 6px;
+      }
+      
+      .stat-card {
+        padding: 5px 8px !important;
+        min-width: 60px !important;
+      }
+      
+      .game-container {
+        margin-top: 60px;
+        margin-bottom: 60px;
+        max-height: 65vh;
+        max-width: 60vh;
+      }
+      
+      .weather-controls {
+        bottom: 70px;
+        padding: 8px 12px;
+      }
+      
+      .game-controls {
+        bottom: 15px;
+        padding: 10px 15px;
+      }
+      
+      .overlay {
+        padding: 15px;
+      }
+      
+      .overlay h1 {
+        font-size: 2rem;
+      }
+    }
+
+    /* Prevent zoom on mobile input */
+    @media (max-width: 768px) {
+      input,
+      select,
+      textarea {
+        font-size: 16px; /* Prevents iOS zoom */
+      }
+    }
   </style>
 </head>
 
