@@ -1980,43 +1980,42 @@
     // ============================================
     class CharacterSystem {
       constructor() {
-        this.characters = {
-          pooh: {
-            name: 'Winnie the Pooh',
-            radius: 38,
-            speed: 1.0,
-            color: '#d4a574',
-            ability: 'Honey Expert',
-            description: '+30% bigger catch radius'
-          },
-          piglet: {
-            name: 'Piglet',
-            radius: 32,
-            speed: 1.25,
-            color: '#ffb7c5',
-            ability: 'Quick Feet',
-            description: 'Moves 25% faster'
-          },
-          tigger: {
-            name: 'Tigger',
-            radius: 32,
-            speed: 1.0,
-            color: '#ff8c00',
-            ability: 'Bouncy',
-            description: 'Can bounce off bees',
-            canBounce: true
-          },
-          rabbit: {
-            name: 'Rabbit',
-            radius: 32,
-            speed: 1.0,
-            color: '#8bc34a',
-            ability: 'Organized',
-            description: 'Double points for combos',
-            comboMultiplier: 2.0
-          }
-        };
-        
+      this.characters = {
+    pooh: {
+        name: 'Winnie the Pooh',
+        radius: 38,
+        speed: 1.0,
+        color: '#F4C542',  // More golden yellow like classic Pooh
+        ability: 'Honey Expert',
+        description: '+30% bigger catch radius'
+    },
+    piglet: {
+        name: 'Piglet',
+        radius: 32,
+        speed: 1.25,
+        color: '#FFB7C5',  // Pink
+        ability: 'Quick Feet',
+        description: 'Moves 25% faster'
+    },
+    tigger: {
+        name: 'Tigger',
+        radius: 32,
+        speed: 1.0,
+        color: '#FF8C00',  // Orange
+        ability: 'Bouncy',
+        description: 'Can bounce off bees',
+        canBounce: true
+    },
+    rabbit: {
+        name: 'Rabbit',
+        radius: 32,
+        speed: 1.0,
+        color: '#8BC34A',  // Green
+        ability: 'Organized',
+        description: 'Double points for combos',
+        comboMultiplier: 2.0
+    }
+};
         this.currentCharacter = 'pooh';
         this.usedCharacters = new Set(['pooh']);
         this.init();
@@ -3228,71 +3227,103 @@ class WeatherSystem {
         this.ctx.fillRect(0, this.canvas.height - 40, this.canvas.width, 40);
       }
 
-      drawPooh() {
-        this.ctx.save();
-        this.ctx.translate(this.player.x, this.player.y);
-        const wobble = Math.sin(this.player.wobble) * 3;
-        
-        // Body
-        this.ctx.fillStyle = '#d4a574';
-        this.ctx.beginPath();
-        this.ctx.arc(0, wobble, this.player.radius, 0, Math.PI * 2);
-        this.ctx.fill();
-        
-        // Red shirt
-        this.ctx.fillStyle = '#e63946';
-        this.ctx.beginPath();
-        this.ctx.arc(0, wobble + 10, this.player.radius - 6, 0, Math.PI);
-        this.ctx.fill();
-        
-        // Eyes
-        this.ctx.fillStyle = '#1a1a1a';
-        this.ctx.beginPath();
-        this.ctx.arc(-10, wobble - 8, 3.5, 0, Math.PI * 2);
-        this.ctx.arc(10, wobble - 8, 3.5, 0, Math.PI * 2);
-        this.ctx.fill();
-        
-        // Nose
-        this.ctx.beginPath();
-        this.ctx.arc(0, wobble + 3, 5, 0, Math.PI * 2);
-        this.ctx.fill();
-        
-        // Smile
-        this.ctx.strokeStyle = '#1a1a1a';
-        this.ctx.lineWidth = 2;
-        this.ctx.beginPath();
-        this.ctx.arc(0, wobble + 8, 8, 0.2, Math.PI - 0.2);
-        this.ctx.stroke();
-        
-        this.ctx.restore();
-      }
+drawPooh() {
+    this.ctx.save();
+    this.ctx.translate(this.player.x, this.player.y);
+    const wobble = Math.sin(this.player.wobble) * 3;
+    const character = this.characterSystem.getCurrentCharacter();
+    
+    // Use character-specific color
+    const bodyColor = character.color || '#d4a574';
+    
+    // Body (pot belly shape - more Pooh-like)
+    this.ctx.fillStyle = bodyColor;
+    this.ctx.beginPath();
+    
+    // Draw a more Pooh-like body (rounder, pot-bellied)
+    this.ctx.ellipse(0, wobble + 5, this.player.radius, this.player.radius * 1.1, 0, 0, Math.PI * 2);
+    this.ctx.fill();
+    
+    // Red shirt (classic Pooh style with neckline)
+    this.ctx.fillStyle = '#e63946';
+    this.ctx.beginPath();
+    
+    // Shirt top (rounded neckline)
+    this.ctx.arc(0, wobble + 5, this.player.radius - 8, Math.PI * 0.8, Math.PI * 1.2);
+    this.ctx.lineTo(this.player.radius - 8, wobble + this.player.radius);
+    this.ctx.arc(0, wobble + this.player.radius, this.player.radius - 8, 0, Math.PI, true);
+    this.ctx.lineTo(-(this.player.radius - 8), wobble + 5);
+    this.ctx.closePath();
+    this.ctx.fill();
+    
+    // Ears (classic round Pooh ears)
+    this.ctx.fillStyle = bodyColor;
+    
+    // Left ear
+    this.ctx.beginPath();
+    this.ctx.arc(-12, wobble - this.player.radius + 5, 8, 0, Math.PI * 2);
+    this.ctx.fill();
+    
+    // Right ear
+    this.ctx.beginPath();
+    this.ctx.arc(12, wobble - this.player.radius + 5, 8, 0, Math.PI * 2);
+    this.ctx.fill();
+    
+    // Face (lighter circle for the face area)
+    this.ctx.fillStyle = this.adjustColor(bodyColor, 20); // Slightly lighter
+    this.ctx.beginPath();
+    this.ctx.arc(0, wobble, this.player.radius - 10, 0, Math.PI * 2);
+    this.ctx.fill();
+    
+    // Eyes (simple black dots - Pooh has small, kind eyes)
+    this.ctx.fillStyle = '#1a1a1a';
+    this.ctx.beginPath();
+    this.ctx.arc(-8, wobble - 5, 3, 0, Math.PI * 2);
+    this.ctx.arc(8, wobble - 5, 3, 0, Math.PI * 2);
+    this.ctx.fill();
+    
+    // Nose (classic black oval nose)
+    this.ctx.fillStyle = '#1a1a1a';
+    this.ctx.beginPath();
+    this.ctx.ellipse(0, wobble + 3, 6, 4, 0, 0, Math.PI * 2);
+    this.ctx.fill();
+    
+    // Mouth (simple smile - Pooh's gentle smile)
+    this.ctx.strokeStyle = '#1a1a1a';
+    this.ctx.lineWidth = 2;
+    this.ctx.beginPath();
+    this.ctx.arc(0, wobble + 8, 6, 0.2, Math.PI - 0.2);
+    this.ctx.stroke();
+    
+    // Add a little highlight to the nose
+    this.ctx.fillStyle = 'rgba(255, 255, 255, 0.3)';
+    this.ctx.beginPath();
+    this.ctx.arc(-1, wobble + 2, 1, 0, Math.PI * 2);
+    this.ctx.fill();
+    
+    this.ctx.restore();
+}
 
-      drawHoneys() {
-        for (const honey of this.honeys) {
-          this.ctx.save();
-          this.ctx.translate(honey.x, honey.y);
-          this.ctx.rotate(honey.rotation);
-          this.ctx.scale(honey.scale, honey.scale);
-          
-          // Pot
-          this.ctx.fillStyle = honey.type === 'golden' ? '#ffa500' : '#8b4513';
-          this.ctx.beginPath();
-          this.ctx.moveTo(-12, -10);
-          this.ctx.quadraticCurveTo(-15, 0, -12, 15);
-          this.ctx.lineTo(12, 15);
-          this.ctx.quadraticCurveTo(15, 0, 12, -10);
-          this.ctx.closePath();
-          this.ctx.fill();
-          
-          // Honey
-          this.ctx.fillStyle = '#ffa500';
-          this.ctx.beginPath();
-          this.ctx.ellipse(0, 2, 8, 6, 0, 0, Math.PI * 2);
-          this.ctx.fill();
-          
-          this.ctx.restore();
-        }
-      }
+// Helper function to lighten colors
+adjustColor(color, amount) {
+    let usePound = false;
+    
+    if (color[0] === "#") {
+        color = color.slice(1);
+        usePound = true;
+    }
+    
+    const num = parseInt(color, 16);
+    let r = (num >> 16) + amount;
+    let g = ((num >> 8) & 0x00FF) + amount;
+    let b = (num & 0x0000FF) + amount;
+    
+    r = Math.min(Math.max(0, r), 255);
+    g = Math.min(Math.max(0, g), 255);
+    b = Math.min(Math.max(0, b), 255);
+    
+    return (usePound ? "#" : "") + (b | (g << 8) | (r << 16)).toString(16).padStart(6, '0');
+}
 
       drawBees() {
         for (const bee of this.bees) {
