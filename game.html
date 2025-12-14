@@ -148,8 +148,8 @@
 
         /* Weather animations */
         @keyframes rainFall {
-            0% { transform: translateY(-50px) rotate(0deg); }
-            100% { transform: translateY(100vh) rotate(360deg); }
+            0% { transform: translateY(-50px) rotate(15deg); }
+            100% { transform: translateY(100vh) rotate(15deg); }
         }
         @keyframes snowFall {
             0% { transform: translateY(-50px) translateX(0) rotate(0); }
@@ -1059,6 +1059,22 @@
         }
 
         /* ===============================
+           WEATHER EFFECTS CONTAINER
+        ================================ */
+        #weather-effects {
+            position: fixed;
+            inset: 0;
+            pointer-events: none;
+            z-index: 3000;
+            overflow: hidden;
+        }
+
+        .weather-particle {
+            position: absolute;
+            will-change: transform;
+        }
+
+        /* ===============================
            ACCESSIBILITY
         ================================ */
         :focus-visible {
@@ -1088,17 +1104,6 @@
             border-radius: 999px;
             border: 2px solid rgba(255, 255, 255, 0.35);
         }
-
-        /* ===============================
-           WEATHER EFFECTS CONTAINER
-        ================================ */
-#weather-effects {
-    position: fixed;
-    inset: 0;
-    pointer-events: none;
-    z-index: 3000;
-    overflow: hidden;
-}
 
         /* ===============================
            OVERLAY STACKING
@@ -1462,706 +1467,691 @@
         </div>
     </main>
 
-<script>
-/* ============================================
-   Pooh's Enhanced Honey Hunt — Full Script Block (fixed)
-   Key fixes:
-   - Achievements totals no longer inflate per-frame
-   - Unified timebase (performance.now) for sting timing
-   - Event-driven achievement increments (totalHoneyCaught)
-   - Safer achievements checking cadence
-============================================ */
+    <!-- Weather effects container -->
+    <div id="weather-effects"></div>
 
-/* ============================================
-   GAME CONSTANTS
-============================================ */
-const GAME_CONSTANTS = {
-  PLAYER: {
-    BASE_RADIUS: 32,
-    MAX_SPEED: 700,
-    ACCELERATION: 0.25,
-    DECELERATION: 0.75,
-    WOBBLE_SPEED: 4,
-    ARM_WOBBLE_SPEED: 2.5,
-    ARM_ANGLE_MULTIPLIER: 0.4,
-    TRAIL_LENGTH: 8,
-    UI_SAFE_BOTTOM: 190
-  },
-  HONEY: {
-    BASE_SPEED: 120,
-    SPEED_VARIANCE: 80,
-    SCORE_SPEED_MODIFIER: 0.01,
-    GOLDEN_CHANCE: 0.05,
-    BASE_POINTS: 10,
-    STREAK_MULTIPLIER: 4,
-    GOLDEN_MULTIPLIER: 3,
-    SPAWN_BASE_RATE: 1.0,
-    SPAWN_MIN_RATE: 0.4,
-    SCORE_RATE_REDUCTION: 4000,
-    PARTICLE_COUNT_NORMAL: 20,
-    PARTICLE_COUNT_GOLDEN: 30
-  },
-  BEE: {
-    BASE_SPEED: 140,
-    SPEED_VARIANCE: 80,
-    VERTICAL_VARIANCE: 60,
-    ANGRY_CHANCE: 0.3,
-    SPAWN_BASE_RATE: 3.5,
-    SPAWN_MIN_RATE: 1.5,
-    SCORE_RATE_REDUCTION: 3000,
-    WOBBLE_SPEED: 10,
-    WING_FLAP_SPEED: 25,
-    TRAIL_LENGTH: 5,
-    BOUNCE_CHANCE: 0.3
-  },
-  GAME: {
-    INITIAL_LIVES: 3,
-    MAX_FRAME_TIME: 0.033,
-    SHAKE_DURATION: 0.5,
-    POPUP_DURATION: 1.5,
-    WORD_DURATION: 2.5,
-    PERFECT_GAME_THRESHOLD: 0
-  },
-  ACHIEVEMENTS: {
-    FIRST_TASTE: 100,
-    HONEY_HOARDER: 50,
-    BEE_WHISPERER: 60,
-    TIGGERRIFIC_STREAK: 15,
-    GOLDEN_TOUCH: 10,
-    SPEED_DEMON_SCORE: 500,
-    SPEED_DEMON_TIME: 120,
-    HUNDRED_ACRE_CHAMP: 1000
-  }
-};
+    <script>
+    // ============================================
+    // PART 1 of 3: CORE SYSTEMS
+    // ============================================
 
-/* ============================================
-   PARTICLE SYSTEM
-============================================ */
-class ParticleSystem {
-  constructor() {
-    this.particles = [];
-    this.particlePool = [];
-  }
-
-  createParticles(x, y, color, count = 20, type = 'star') {
-    const types = ['circle', 'star', 'heart', 'honey'];
-
-    for (let i = 0; i < count; i++) {
-      const particle = this.getParticle();
-      const particleType = type === 'mixed'
-        ? types[Math.floor(Math.random() * types.length)]
-        : type;
-
-      const angle = (Math.PI * 2 * i) / count + (Math.random() - 0.5);
-      const speed = 60 + Math.random() * 100;
-
-      particle.x = x;
-      particle.y = y;
-      particle.vx = Math.cos(angle) * speed;
-      particle.vy = Math.sin(angle) * speed - 40;
-      particle.life = 1;
-      particle.decay = 0.01 + Math.random() * 0.02;
-      particle.size = 4 + Math.random() * 8;
-      particle.color = color;
-      particle.type = particleType;
-      particle.rotation = Math.random() * Math.PI * 2;
-      particle.rotationSpeed = (Math.random() - 0.5) * 0.3;
-      particle.gravity = type === 'honey' ? 400 : 300;
-      particle.drag = 0.96 + Math.random() * 0.03;
-
-      this.particles.push(particle);
-    }
-  }
-
-  getParticle() {
-    if (this.particlePool.length > 0) {
-      const p = this.particlePool.pop();
-      for (const k of Object.keys(p)) {
-        if (k !== 'id') delete p[k];
+    /* ============================================
+       GAME CONSTANTS
+    ============================================ */
+    const GAME_CONSTANTS = {
+      PLAYER: {
+        BASE_RADIUS: 32,
+        MAX_SPEED: 700,
+        ACCELERATION: 0.25,
+        DECELERATION: 0.75,
+        WOBBLE_SPEED: 4,
+        ARM_WOBBLE_SPEED: 2.5,
+        ARM_ANGLE_MULTIPLIER: 0.4,
+        TRAIL_LENGTH: 8,
+        UI_SAFE_BOTTOM: 190
+      },
+      HONEY: {
+        BASE_SPEED: 120,
+        SPEED_VARIANCE: 80,
+        SCORE_SPEED_MODIFIER: 0.01,
+        GOLDEN_CHANCE: 0.05,
+        BASE_POINTS: 10,
+        STREAK_MULTIPLIER: 4,
+        GOLDEN_MULTIPLIER: 3,
+        SPAWN_BASE_RATE: 1.0,
+        SPAWN_MIN_RATE: 0.4,
+        SCORE_RATE_REDUCTION: 4000,
+        PARTICLE_COUNT_NORMAL: 20,
+        PARTICLE_COUNT_GOLDEN: 30
+      },
+      BEE: {
+        BASE_SPEED: 140,
+        SPEED_VARIANCE: 80,
+        VERTICAL_VARIANCE: 60,
+        ANGRY_CHANCE: 0.3,
+        SPAWN_BASE_RATE: 3.5,
+        SPAWN_MIN_RATE: 1.5,
+        SCORE_RATE_REDUCTION: 3000,
+        WOBBLE_SPEED: 10,
+        WING_FLAP_SPEED: 25,
+        TRAIL_LENGTH: 5,
+        BOUNCE_CHANCE: 0.3
+      },
+      GAME: {
+        INITIAL_LIVES: 3,
+        MAX_FRAME_TIME: 0.033,
+        SHAKE_DURATION: 0.5,
+        POPUP_DURATION: 1.5,
+        WORD_DURATION: 2.5,
+        PERFECT_GAME_THRESHOLD: 0
       }
-      return p;
-    }
-    return {};
-  }
+    };
 
-  recycleParticle(particle) {
-    this.particlePool.push(particle);
-  }
-
-  update(deltaTime) {
-    for (let i = this.particles.length - 1; i >= 0; i--) {
-      const p = this.particles[i];
-
-      p.x += p.vx * deltaTime;
-      p.y += p.vy * deltaTime;
-      p.vy += p.gravity * deltaTime;
-      p.vx *= p.drag;
-      p.rotation += p.rotationSpeed;
-      p.life -= p.decay;
-
-      if (p.life <= 0) {
-        this.recycleParticle(this.particles[i]);
-        this.particles.splice(i, 1);
+    /* ============================================
+       PARTICLE SYSTEM
+    ============================================ */
+    class ParticleSystem {
+      constructor() {
+        this.particles = [];
+        this.particlePool = [];
       }
-    }
-  }
 
-  draw(ctx) {
-    for (const p of this.particles) {
-      ctx.save();
-      ctx.globalAlpha = p.life;
-      ctx.translate(p.x, p.y);
-      ctx.rotate(p.rotation);
-      ctx.fillStyle = p.color;
+      createParticles(x, y, color, count = 20, type = 'star') {
+        const types = ['circle', 'star', 'heart', 'honey'];
 
-      switch (p.type) {
-        case 'star': {
-          ctx.beginPath();
-          for (let i = 0; i < 5; i++) {
-            const a = (i * 4 * Math.PI) / 5;
-            const r = i % 2 === 0 ? p.size : p.size / 2;
-            const px = Math.cos(a) * r;
-            const py = Math.sin(a) * r;
-            if (i === 0) ctx.moveTo(px, py);
-            else ctx.lineTo(px, py);
+        for (let i = 0; i < count; i++) {
+          const particle = this.getParticle();
+          const particleType = type === 'mixed'
+            ? types[Math.floor(Math.random() * types.length)]
+            : type;
+
+          const angle = (Math.PI * 2 * i) / count + (Math.random() - 0.5);
+          const speed = 60 + Math.random() * 100;
+
+          particle.x = x;
+          particle.y = y;
+          particle.vx = Math.cos(angle) * speed;
+          particle.vy = Math.sin(angle) * speed - 40;
+          particle.life = 1;
+          particle.decay = 0.01 + Math.random() * 0.02;
+          particle.size = 4 + Math.random() * 8;
+          particle.color = color;
+          particle.type = particleType;
+          particle.rotation = Math.random() * Math.PI * 2;
+          particle.rotationSpeed = (Math.random() - 0.5) * 0.3;
+          particle.gravity = type === 'honey' ? 400 : 300;
+          particle.drag = 0.96 + Math.random() * 0.03;
+
+          this.particles.push(particle);
+        }
+      }
+
+      getParticle() {
+        if (this.particlePool.length > 0) {
+          const p = this.particlePool.pop();
+          for (const k of Object.keys(p)) {
+            if (k !== 'id') delete p[k];
           }
-          ctx.closePath();
-          ctx.fill();
-          break;
+          return p;
         }
-        case 'heart': {
-          ctx.beginPath();
-          const s = p.size;
-          ctx.moveTo(0, s / 4);
-          ctx.bezierCurveTo(-s, -s / 2, -s / 2, -s, 0, 0);
-          ctx.bezierCurveTo(s / 2, -s, s, -s / 2, 0, s / 4);
-          ctx.fill();
-          break;
-        }
-        case 'honey': {
-          ctx.beginPath();
-          ctx.ellipse(0, 0, p.size, p.size * 0.7, 0, 0, Math.PI * 2);
-          ctx.fill();
-          break;
-        }
-        default: {
-          ctx.beginPath();
-          ctx.arc(0, 0, p.size * p.life, 0, Math.PI * 2);
-          ctx.fill();
+        return {};
+      }
+
+      recycleParticle(particle) {
+        this.particlePool.push(particle);
+      }
+
+      update(deltaTime) {
+        for (let i = this.particles.length - 1; i >= 0; i--) {
+          const p = this.particles[i];
+
+          p.x += p.vx * deltaTime;
+          p.y += p.vy * deltaTime;
+          p.vy += p.gravity * deltaTime;
+          p.vx *= p.drag;
+          p.rotation += p.rotationSpeed;
+          p.life -= p.decay;
+
+          if (p.life <= 0) {
+            this.recycleParticle(this.particles[i]);
+            this.particles.splice(i, 1);
+          }
         }
       }
 
-      ctx.restore();
+      draw(ctx) {
+        for (const p of this.particles) {
+          ctx.save();
+          ctx.globalAlpha = p.life;
+          ctx.translate(p.x, p.y);
+          ctx.rotate(p.rotation);
+          ctx.fillStyle = p.color;
+
+          switch (p.type) {
+            case 'star': {
+              ctx.beginPath();
+              for (let i = 0; i < 5; i++) {
+                const a = (i * 4 * Math.PI) / 5;
+                const r = i % 2 === 0 ? p.size : p.size / 2;
+                const px = Math.cos(a) * r;
+                const py = Math.sin(a) * r;
+                if (i === 0) ctx.moveTo(px, py);
+                else ctx.lineTo(px, py);
+              }
+              ctx.closePath();
+              ctx.fill();
+              break;
+            }
+            case 'heart': {
+              ctx.beginPath();
+              const s = p.size;
+              ctx.moveTo(0, s / 4);
+              ctx.bezierCurveTo(-s, -s / 2, -s / 2, -s, 0, 0);
+              ctx.bezierCurveTo(s / 2, -s, s, -s / 2, 0, s / 4);
+              ctx.fill();
+              break;
+            }
+            case 'honey': {
+              ctx.beginPath();
+              ctx.ellipse(0, 0, p.size, p.size * 0.7, 0, 0, Math.PI * 2);
+              ctx.fill();
+              break;
+            }
+            default: {
+              ctx.beginPath();
+              ctx.arc(0, 0, p.size * p.life, 0, Math.PI * 2);
+              ctx.fill();
+            }
+          }
+
+          ctx.restore();
+        }
+        ctx.globalAlpha = 1;
+      }
+
+      clear() {
+        this.particles.length = 0;
+        this.particlePool.length = 0;
+      }
     }
-    ctx.globalAlpha = 1;
-  }
 
-  clear() {
-    this.particles.length = 0;
-    this.particlePool.length = 0;
-  }
-}
+    /* ============================================
+       SOUND SYSTEM
+    ============================================ */
+    class SoundSystem {
+      constructor() {
+        this.enabled = true;
+        this.sounds = {};
+        this.audioContext = null;
+        this.init();
+        this.loadPreference();
+      }
 
-/* ============================================
-   SOUND SYSTEM
-============================================ */
-class SoundSystem {
-  constructor() {
-    this.enabled = true;
-    this.sounds = {};
-    this.audioContext = null;
-    this.init();
-    this.loadPreference(); // load after init so UI updates safely
-  }
-
-  init() {
-    try {
-      this.audioContext = new (window.AudioContext || window.webkitAudioContext)();
-    } catch (e) {
-      console.log('Audio not supported, disabling sound');
-      this.enabled = false;
-      return;
-    }
-
-    this.sounds = {
-      collect: this.createSound(800, 0.1, 'sine'),
-      collectGolden: this.createSound(1200, 0.15, 'sine'),
-      sting: this.createSound(200, 0.2, 'square'),
-      achievement: this.createSound(1500, 0.3, 'sine'),
-      levelup: this.createSound(600, 0.25, 'sine'),
-      gameover: this.createSound(300, 0.4, 'sawtooth'),
-      click: this.createSound(400, 0.1, 'sine')
-    };
-
-    this.updateUI();
-  }
-
-  createSound(frequency, duration, type) {
-    return {
-      play: () => {
-        if (!this.enabled || !this.audioContext) return;
+      init() {
         try {
-          if (this.audioContext.state === 'suspended') this.audioContext.resume();
-
-          const osc = this.audioContext.createOscillator();
-          const gain = this.audioContext.createGain();
-
-          osc.connect(gain);
-          gain.connect(this.audioContext.destination);
-
-          osc.frequency.value = frequency;
-          osc.type = type;
-
-          const now = this.audioContext.currentTime;
-          gain.gain.setValueAtTime(0.3, now);
-          gain.gain.exponentialRampToValueAtTime(0.01, now + duration);
-
-          osc.start(now);
-          osc.stop(now + duration);
+          this.audioContext = new (window.AudioContext || window.webkitAudioContext)();
         } catch (e) {
-          console.log('Audio error:', e);
+          console.log('Audio not supported, disabling sound');
+          this.enabled = false;
+          return;
         }
-      }
-    };
-  }
 
-  play(name) {
-    if (!this.enabled || !this.sounds[name]) return;
-    this.sounds[name].play();
-  }
+        this.sounds = {
+          collect: this.createSound(800, 0.1, 'sine'),
+          collectGolden: this.createSound(1200, 0.15, 'sine'),
+          sting: this.createSound(200, 0.2, 'square'),
+          achievement: this.createSound(1500, 0.3, 'sine'),
+          levelup: this.createSound(600, 0.25, 'sine'),
+          gameover: this.createSound(300, 0.4, 'sawtooth'),
+          click: this.createSound(400, 0.1, 'sine')
+        };
 
-  updateUI() {
-    const btn = document.getElementById('sound-toggle-btn');
-    if (!btn) return;
-    const iconClass = this.enabled ? 'fa-volume-up' : 'fa-volume-mute';
-    btn.innerHTML = `<i class="fas ${iconClass}"></i>`;
-  }
-
-  toggle() {
-    this.enabled = !this.enabled;
-    this.updateUI();
-    this.play('click');
-    try {
-      localStorage.setItem('poohSoundEnabled', this.enabled.toString());
-    } catch (e) {}
-  }
-
-  loadPreference() {
-    try {
-      const saved = localStorage.getItem('poohSoundEnabled');
-      if (saved !== null) {
-        this.enabled = saved === 'true';
         this.updateUI();
       }
-    } catch (e) {}
-  }
-}
 
-/* ============================================
-   ACHIEVEMENTS SYSTEM
-============================================ */
-class AchievementSystem {
-  constructor() {
-    this.achievements = [
-      {
-        id: 'first_taste',
-        name: 'First Taste',
-        icon: '🥄',
-        description: 'Score your first 100 points',
-        condition: (gs) => gs.score >= 100,
-        unlocked: false
-      },
-      {
-        id: 'honey_hoarder',
-        name: 'Honey Hoarder',
-        icon: '🍯',
-        description: 'Catch 50 honey pots in total',
-        condition: (gs) => gs.totalHoneyCaught >= 50,
-        unlocked: false
-      },
-      {
-        id: 'bee_whisperer',
-        name: 'Bee Whisperer',
-        icon: '🐝',
-        description: 'Survive for 60 seconds without getting stung',
-        condition: (gs) => gs.longestNoStingTime >= 60,
-        unlocked: false
-      },
-      {
-        id: 'tiggerific',
-        name: 'Tiggerific!',
-        icon: '🐯',
-        description: 'Reach a streak of 15',
-        condition: (gs) => gs.bestStreak >= 15,
-        unlocked: false
-      },
-      {
-        id: 'golden_touch',
-        name: 'Golden Touch',
-        icon: '🌟',
-        description: 'Catch 10 golden honey pots',
-        condition: (gs) => gs.goldenPotsCaught >= 10,
-        unlocked: false
-      },
-      {
-        id: 'speed_demon',
-        name: 'Speed Demon',
-        icon: '⚡',
-        description: 'Score 500 points in under 2 minutes',
-        condition: (gs) => gs.score >= 500 && gs.timePlayed <= 120,
-        unlocked: false
-      },
-      {
-        id: 'perfect_game',
-        name: 'Perfect Game',
-        icon: '👑',
-        description: 'Complete a game without losing any lives',
-        condition: (gs) => gs.perfectGames > 0,
-        unlocked: false
-      },
-      {
-        id: 'weather_master',
-        name: 'Weather Master',
-        icon: '🌈',
-        description: 'Play with all 5 weather effects',
-        condition: (gs) => gs.weathersUsed >= 5,
-        unlocked: false
-      },
-      {
-        id: 'character_collector',
-        name: 'Character Collector',
-        icon: '🎭',
-        description: 'Play as all 4 characters',
-        condition: (gs) => gs.charactersUsed >= 4,
-        unlocked: false
-      },
-      {
-        id: 'hundred_acre_champ',
-        name: 'Hundred Acre Champ',
-        icon: '🏆',
-        description: 'Reach a score of 1000 points',
-        condition: (gs) => gs.highScore >= 1000,
-        unlocked: false
+      createSound(frequency, duration, type) {
+        return {
+          play: () => {
+            if (!this.enabled || !this.audioContext) return;
+            try {
+              if (this.audioContext.state === 'suspended') this.audioContext.resume();
+
+              const osc = this.audioContext.createOscillator();
+              const gain = this.audioContext.createGain();
+
+              osc.connect(gain);
+              gain.connect(this.audioContext.destination);
+
+              osc.frequency.value = frequency;
+              osc.type = type;
+
+              const now = this.audioContext.currentTime;
+              gain.gain.setValueAtTime(0.3, now);
+              gain.gain.exponentialRampToValueAtTime(0.01, now + duration);
+
+              osc.start(now);
+              osc.stop(now + duration);
+            } catch (e) {
+              console.log('Audio error:', e);
+            }
+          }
+        };
       }
-    ];
 
-    // Persistent-ish meta state
-    this.gameState = {
-      score: 0,
-      totalHoneyCaught: 0,     // IMPORTANT: increment per catch (event-driven)
-      goldenPotsCaught: 0,     // can be per-run or lifetime; we keep lifetime here
-      bestStreak: 0,
-      longestNoStingTime: 0,
-      timePlayed: 0,
-      perfectGames: 0,
-      weathersUsed: 0,
-      charactersUsed: 0,
-      highScore: 0,
-      lastStingTime: 0
-    };
+      play(name) {
+        if (!this.enabled || !this.sounds[name]) return;
+        this.sounds[name].play();
+      }
 
-    this.init();
-  }
+      updateUI() {
+        const btn = document.getElementById('sound-toggle-btn');
+        if (!btn) return;
+        const iconClass = this.enabled ? 'fa-volume-up' : 'fa-volume-mute';
+        btn.innerHTML = `<i class="fas ${iconClass}"></i>`;
+      }
 
-  init() {
-    this.loadAchievements();
-    this.updateDisplay();
-  }
+      toggle() {
+        this.enabled = !this.enabled;
+        this.updateUI();
+        this.play('click');
+        try {
+          localStorage.setItem('poohSoundEnabled', this.enabled.toString());
+        } catch (e) {}
+      }
 
-  loadAchievements() {
-    try {
-      const saved = localStorage.getItem('poohAchievements');
-      if (saved) {
-        const data = JSON.parse(saved);
-        this.achievements.forEach((ach, i) => {
-          if (data[i]) ach.unlocked = !!data[i].unlocked;
+      loadPreference() {
+        try {
+          const saved = localStorage.getItem('poohSoundEnabled');
+          if (saved !== null) {
+            this.enabled = saved === 'true';
+            this.updateUI();
+          }
+        } catch (e) {}
+      }
+    }
+
+    /* ============================================
+       ACHIEVEMENTS SYSTEM
+    ============================================ */
+    class AchievementSystem {
+      constructor() {
+        this.achievements = [
+          {
+            id: 'first_taste',
+            name: 'First Taste',
+            icon: '🥄',
+            description: 'Score your first 100 points',
+            condition: (gs) => gs.score >= 100,
+            unlocked: false
+          },
+          {
+            id: 'honey_hoarder',
+            name: 'Honey Hoarder',
+            icon: '🍯',
+            description: 'Catch 50 honey pots in total',
+            condition: (gs) => gs.totalHoneyCaught >= 50,
+            unlocked: false
+          },
+          {
+            id: 'bee_whisperer',
+            name: 'Bee Whisperer',
+            icon: '🐝',
+            description: 'Survive for 60 seconds without getting stung',
+            condition: (gs) => gs.longestNoStingTime >= 60,
+            unlocked: false
+          },
+          {
+            id: 'tiggerific',
+            name: 'Tiggerific!',
+            icon: '🐯',
+            description: 'Reach a streak of 15',
+            condition: (gs) => gs.bestStreak >= 15,
+            unlocked: false
+          },
+          {
+            id: 'golden_touch',
+            name: 'Golden Touch',
+            icon: '🌟',
+            description: 'Catch 10 golden honey pots',
+            condition: (gs) => gs.goldenPotsCaught >= 10,
+            unlocked: false
+          },
+          {
+            id: 'speed_demon',
+            name: 'Speed Demon',
+            icon: '⚡',
+            description: 'Score 500 points in under 2 minutes',
+            condition: (gs) => gs.score >= 500 && gs.timePlayed <= 120,
+            unlocked: false
+          },
+          {
+            id: 'perfect_game',
+            name: 'Perfect Game',
+            icon: '👑',
+            description: 'Complete a game without losing any lives',
+            condition: (gs) => gs.perfectGames > 0,
+            unlocked: false
+          },
+          {
+            id: 'weather_master',
+            name: 'Weather Master',
+            icon: '🌈',
+            description: 'Play with all 5 weather effects',
+            condition: (gs) => gs.weathersUsed >= 5,
+            unlocked: false
+          },
+          {
+            id: 'character_collector',
+            name: 'Character Collector',
+            icon: '🎭',
+            description: 'Play as all 4 characters',
+            condition: (gs) => gs.charactersUsed >= 4,
+            unlocked: false
+          },
+          {
+            id: 'hundred_acre_champ',
+            name: 'Hundred Acre Champ',
+            icon: '🏆',
+            description: 'Reach a score of 1000 points',
+            condition: (gs) => gs.highScore >= 1000,
+            unlocked: false
+          }
+        ];
+
+        this.gameState = {
+          score: 0,
+          totalHoneyCaught: 0,
+          goldenPotsCaught: 0,
+          bestStreak: 0,
+          longestNoStingTime: 0,
+          timePlayed: 0,
+          perfectGames: 0,
+          weathersUsed: 0,
+          charactersUsed: 0,
+          highScore: 0,
+          lastStingTime: 0
+        };
+
+        this.init();
+      }
+
+      init() {
+        this.loadAchievements();
+        this.updateDisplay();
+      }
+
+      loadAchievements() {
+        try {
+          const saved = localStorage.getItem('poohAchievements');
+          if (saved) {
+            const data = JSON.parse(saved);
+            this.achievements.forEach((ach, i) => {
+              if (data[i]) ach.unlocked = !!data[i].unlocked;
+            });
+          }
+
+          const savedState = localStorage.getItem('poohGameState');
+          if (savedState) {
+            const parsed = JSON.parse(savedState);
+            this.gameState = { ...this.gameState, ...parsed };
+          }
+        } catch (e) {
+          console.log('Could not load achievements:', e);
+        }
+      }
+
+      saveAchievements() {
+        try {
+          const saveData = this.achievements.map(a => ({ id: a.id, unlocked: a.unlocked }));
+          localStorage.setItem('poohAchievements', JSON.stringify(saveData));
+          localStorage.setItem('poohGameState', JSON.stringify(this.gameState));
+        } catch (e) {
+          console.log('Could not save achievements:', e);
+        }
+      }
+
+      checkAchievements(gameState) {
+        let newUnlocks = 0;
+
+        this.achievements.forEach((ach) => {
+          if (!ach.unlocked && ach.condition(gameState)) {
+            ach.unlocked = true;
+            newUnlocks++;
+            this.showAchievementPopup(ach);
+          }
+        });
+
+        if (newUnlocks > 0) {
+          this.saveAchievements();
+          this.updateDisplay();
+          return true;
+        }
+        return false;
+      }
+
+      showAchievementPopup(achievement) {
+        const popup = document.createElement('div');
+        popup.className = 'achievement-popup';
+        popup.innerHTML = `
+          <div class="achievement-popup-title">Achievement Unlocked!</div>
+          <div style="font-size: 2rem; margin: 10px 0;">${achievement.icon}</div>
+          <div style="font-weight: bold; color: var(--wood-brown);">${achievement.name}</div>
+          <div style="font-size: 0.9rem; color: var(--wood-light);">${achievement.description}</div>
+        `;
+
+        document.body.appendChild(popup);
+        if (window.gameEngine) window.gameEngine.soundSystem.play('achievement');
+
+        setTimeout(() => popup.remove(), 3000);
+      }
+
+      updateDisplay() {
+        const unlockedCount = this.achievements.filter(a => a.unlocked).length;
+        const counter = document.getElementById('achievements-count');
+        if (counter) counter.textContent = `${unlockedCount}/${this.achievements.length}`;
+
+        const list = document.getElementById('achievements-list');
+        if (!list) return;
+
+        list.innerHTML = '';
+        this.achievements.forEach((ach) => {
+          const item = document.createElement('div');
+          item.className = `achievement-item ${ach.unlocked ? 'unlocked' : ''}`;
+          item.innerHTML = `
+            <div class="achievement-icon">${ach.icon}</div>
+            <div class="achievement-details">
+              <div class="achievement-name">${ach.name}</div>
+              <div class="achievement-desc">${ach.description}</div>
+              <div style="font-size: 0.8rem; color: ${ach.unlocked ? '#7cb342' : '#e63946'};">
+                ${ach.unlocked ? '✓ Unlocked' : 'Locked'}
+              </div>
+            </div>
+          `;
+          list.appendChild(item);
         });
       }
 
-      const savedState = localStorage.getItem('poohGameState');
-      if (savedState) {
-        const parsed = JSON.parse(savedState);
-        this.gameState = { ...this.gameState, ...parsed };
+      updateGameState(key, value) {
+        this.gameState[key] = value;
       }
-    } catch (e) {
-      console.log('Could not load achievements:', e);
-    }
-  }
 
-  saveAchievements() {
-    try {
-      const saveData = this.achievements.map(a => ({ id: a.id, unlocked: a.unlocked }));
-      localStorage.setItem('poohAchievements', JSON.stringify(saveData));
-      localStorage.setItem('poohGameState', JSON.stringify(this.gameState));
-    } catch (e) {
-      console.log('Could not save achievements:', e);
-    }
-  }
-
-  checkAchievements(gameState) {
-    let newUnlocks = 0;
-
-    this.achievements.forEach((ach) => {
-      if (!ach.unlocked && ach.condition(gameState)) {
-        ach.unlocked = true;
-        newUnlocks++;
-        this.showAchievementPopup(ach);
+      incrementGameState(key, amount = 1) {
+        this.gameState[key] = (this.gameState[key] || 0) + amount;
       }
-    });
-
-    if (newUnlocks > 0) {
-      this.saveAchievements();
-      this.updateDisplay();
     }
-  }
 
-  showAchievementPopup(achievement) {
-    const popup = document.createElement('div');
-    popup.className = 'achievement-popup';
-    popup.innerHTML = `
-      <div class="achievement-popup-title">Achievement Unlocked!</div>
-      <div style="font-size: 2rem; margin: 10px 0;">${achievement.icon}</div>
-      <div style="font-weight: bold; color: var(--wood-brown);">${achievement.name}</div>
-      <div style="font-size: 0.9rem; color: var(--wood-light);">${achievement.description}</div>
-    `;
+    /* ============================================
+       CHARACTER SYSTEM
+    ============================================ */
+    class CharacterSystem {
+      constructor() {
+        this.characters = {
+          pooh: {
+            name: 'Winnie the Pooh',
+            radius: 38,
+            speed: 1.0,
+            color: '#d4a574',
+            ability: 'Honey Expert',
+            description: '+30% bigger catch radius'
+          },
+          piglet: {
+            name: 'Piglet',
+            radius: 32,
+            speed: 1.25,
+            color: '#ffb7c5',
+            ability: 'Quick Feet',
+            description: 'Moves 25% faster'
+          },
+          tigger: {
+            name: 'Tigger',
+            radius: 32,
+            speed: 1.0,
+            color: '#ff8c00',
+            ability: 'Bouncy',
+            description: 'Can bounce off bees',
+            canBounce: true
+          },
+          rabbit: {
+            name: 'Rabbit',
+            radius: 32,
+            speed: 1.0,
+            color: '#8bc34a',
+            ability: 'Organized',
+            description: 'Double points for combos',
+            comboMultiplier: 2.0
+          }
+        };
 
-    document.body.appendChild(popup);
-    if (window.gameEngine) window.gameEngine.soundSystem.play('achievement');
-
-    setTimeout(() => popup.remove(), 3000);
-  }
-
-  updateDisplay() {
-    const unlockedCount = this.achievements.filter(a => a.unlocked).length;
-    const counter = document.getElementById('achievements-count');
-    if (counter) counter.textContent = `${unlockedCount}/${this.achievements.length}`;
-
-    const list = document.getElementById('achievements-list');
-    if (!list) return;
-
-    list.innerHTML = '';
-    this.achievements.forEach((ach) => {
-      const item = document.createElement('div');
-      item.className = `achievement-item ${ach.unlocked ? 'unlocked' : ''}`;
-      item.innerHTML = `
-        <div class="achievement-icon">${ach.icon}</div>
-        <div class="achievement-details">
-          <div class="achievement-name">${ach.name}</div>
-          <div class="achievement-desc">${ach.description}</div>
-          <div style="font-size: 0.8rem; color: ${ach.unlocked ? '#7cb342' : '#e63946'};">
-            ${ach.unlocked ? '✓ Unlocked' : 'Locked'}
-          </div>
-        </div>
-      `;
-      list.appendChild(item);
-    });
-  }
-
-  updateGameState(key, value) {
-    this.gameState[key] = value;
-  }
-
-  incrementGameState(key, amount = 1) {
-    this.gameState[key] = (this.gameState[key] || 0) + amount;
-  }
-}
-
-/* ============================================
-   CHARACTER SYSTEM
-============================================ */
-class CharacterSystem {
-  constructor() {
-    this.characters = {
-      pooh: {
-        name: 'Winnie the Pooh',
-        radius: 38,
-        speed: 1.0,
-        color: '#d4a574',
-        ability: 'Honey Expert',
-        description: '+30% bigger catch radius'
-      },
-      piglet: {
-        name: 'Piglet',
-        radius: 32,
-        speed: 1.25,
-        color: '#ffb7c5',
-        ability: 'Quick Feet',
-        description: 'Moves 25% faster'
-      },
-      tigger: {
-        name: 'Tigger',
-        radius: 32,
-        speed: 1.0,
-        color: '#ff8c00',
-        ability: 'Bouncy',
-        description: 'Can bounce off bees',
-        canBounce: true
-      },
-      rabbit: {
-        name: 'Rabbit',
-        radius: 32,
-        speed: 1.0,
-        color: '#8bc34a',
-        ability: 'Organized',
-        description: 'Double points for combos',
-        comboMultiplier: 2.0
+        this.currentCharacter = 'pooh';
+        this.usedCharacters = new Set();
+        this.init();
       }
-    };
 
-    this.currentCharacter = 'pooh';
-    this.usedCharacters = new Set();
-    this.init();
-  }
+      init() {
+        this.loadCharacter();
+        this.usedCharacters.add(this.currentCharacter);
+        this.updateCharacterUI();
+        this.syncAchievements();
+      }
 
-  init() {
-    this.loadCharacter();
-    this.usedCharacters.add(this.currentCharacter);
-    this.updateCharacterUI();
-    this.syncAchievements();
-  }
+      loadCharacter() {
+        try {
+          const saved = localStorage.getItem('poohSelectedCharacter');
+          if (saved && this.characters[saved]) this.currentCharacter = saved;
+        } catch (e) {}
+      }
 
-  loadCharacter() {
-    try {
-      const saved = localStorage.getItem('poohSelectedCharacter');
-      if (saved && this.characters[saved]) this.currentCharacter = saved;
-    } catch (e) {}
-  }
+      saveCharacter() {
+        try {
+          localStorage.setItem('poohSelectedCharacter', this.currentCharacter);
+        } catch (e) {}
+      }
 
-  saveCharacter() {
-    try {
-      localStorage.setItem('poohSelectedCharacter', this.currentCharacter);
-    } catch (e) {}
-  }
+      selectCharacter(characterId) {
+        if (!this.characters[characterId]) return;
 
-  selectCharacter(characterId) {
-    if (!this.characters[characterId]) return;
+        this.currentCharacter = characterId;
+        this.usedCharacters.add(characterId);
+        this.saveCharacter();
+        this.updateCharacterUI();
+        this.syncAchievements();
+      }
 
-    this.currentCharacter = characterId;
-    this.usedCharacters.add(characterId);
-    this.saveCharacter();
-    this.updateCharacterUI();
-    this.syncAchievements();
-  }
+      syncAchievements() {
+        if (!window.gameEngine) return;
+        const gs = window.gameEngine.achievementSystem.gameState;
+        gs.charactersUsed = this.usedCharacters.size;
+        window.gameEngine.achievementSystem.checkAchievements(gs);
+        window.gameEngine.achievementSystem.saveAchievements?.();
+      }
 
-  syncAchievements() {
-    if (!window.gameEngine) return;
-    const gs = window.gameEngine.achievementSystem.gameState;
-    gs.charactersUsed = this.usedCharacters.size;
-    window.gameEngine.achievementSystem.checkAchievements(gs);
-    window.gameEngine.achievementSystem.saveAchievements?.();
-  }
+      updateCharacterUI() {
+        document.querySelectorAll('.character-card').forEach(card => {
+          card.classList.toggle('selected', card.dataset.character === this.currentCharacter);
+        });
+      }
 
-  updateCharacterUI() {
-    document.querySelectorAll('.character-card').forEach(card => {
-      card.classList.toggle('selected', card.dataset.character === this.currentCharacter);
-    });
-  }
-
-  getCurrentCharacter() {
-    return this.characters[this.currentCharacter];
-  }
-}
-
-/* ============================================
-   WEATHER SYSTEM
-============================================ */
-class WeatherSystem {
-  constructor() {
-    this.currentWeather = 'none';
-    this.usedWeathers = new Set();
-    this.weatherContainer = null;
-
-    this.weatherTypes = {
-      none: { name: 'Clear', particles: 0, color: '#ffffff' },
-      rain: { name: 'Rain', particles: 160, color: '#4d96ff', animation: 'rainFall' },
-      snow: { name: 'Snow', particles: 120, color: '#ffffff', animation: 'snowFall' },
-      leaves: { name: 'Autumn', particles: 90, color: '#ff6b6b', animation: 'leafFall' },
-      petals: { name: 'Spring', particles: 70, color: '#ffb7c5', animation: 'petalFall' }
-    };
-
-    this.init();
-  }
-
-  init() {
-    this.loadWeather();
-    Object.keys(this.weatherTypes).forEach(w => {
-  if (w === this.currentWeather) this.usedWeathers.add(w);
-});
-    this.updateWeatherUI();
-    this.applyWeatherEffects();
-    this.syncAchievements();
-  }
-
-  loadWeather() {
-    try {
-      const saved = localStorage.getItem('poohCurrentWeather');
-      if (saved && this.weatherTypes[saved]) this.currentWeather = saved;
-    } catch (e) {}
-  }
-
-  saveWeather() {
-    try {
-      localStorage.setItem('poohCurrentWeather', this.currentWeather);
-    } catch (e) {}
-  }
-
-  setWeather(weatherType) {
-    if (!this.weatherTypes[weatherType]) return;
-
-    this.currentWeather = weatherType;
-    this.usedWeathers.add(weatherType);
-
-    this.saveWeather();
-    this.updateWeatherUI();
-    this.applyWeatherEffects();
-    this.syncAchievements();
-  }
-
-  syncAchievements() {
-    if (!window.gameEngine) return;
-    const gs = window.gameEngine.achievementSystem.gameState;
-    gs.weathersUsed = this.usedWeathers.size;
-    window.gameEngine.achievementSystem.checkAchievements(gs);
-  }
-
-  updateWeatherUI() {
-    document.querySelectorAll('.weather-btn').forEach(btn => {
-      btn.classList.toggle('active', btn.dataset.weather === this.currentWeather);
-    });
-  }
-
-  applyWeatherEffects() {
-    // Create container if it doesn't exist
-    if (!this.weatherContainer) {
-        this.weatherContainer = document.createElement('div');
-        this.weatherContainer.id = 'weather-effects';
-        document.body.appendChild(this.weatherContainer);
+      getCurrentCharacter() {
+        return this.characters[this.currentCharacter];
+      }
     }
-    
-    // Clear existing weather particles
-    this.weatherContainer.innerHTML = '';
-    
-    if (this.currentWeather === 'none') {
-        // Optionally hide or keep container empty
-        this.weatherContainer.style.display = 'none';
-        return;
-    }
-    
-    // Show container
-    this.weatherContainer.style.display = 'block';
-    
-    const weather = this.weatherTypes[this.currentWeather];
-    
-    for (let i = 0; i < weather.particles; i++) {
-        const particle = document.createElement('div');
-        
-        const duration = 8 + Math.random() * 18;
-        const delay = Math.random() * 10;
-        const left = Math.random() * 100;
-        const startY = -60 - Math.random() * 240;
-        const size = this.getParticleSize(this.currentWeather);
-        
-        Object.assign(particle.style, {
+
+    /* ============================================
+       WEATHER SYSTEM (FIXED VERSION)
+    ============================================ */
+    class WeatherSystem {
+      constructor() {
+        this.currentWeather = 'none';
+        this.usedWeathers = new Set();
+        this.weatherContainer = document.getElementById('weather-effects');
+
+        this.weatherTypes = {
+          none: { name: 'Clear', particles: 0, color: '#ffffff' },
+          rain: { name: 'Rain', particles: 160, color: '#4d96ff', animation: 'rainFall' },
+          snow: { name: 'Snow', particles: 120, color: '#ffffff', animation: 'snowFall' },
+          leaves: { name: 'Autumn', particles: 90, color: '#ff6b6b', animation: 'leafFall' },
+          petals: { name: 'Spring', particles: 70, color: '#ffb7c5', animation: 'petalFall' }
+        };
+
+        this.init();
+      }
+
+      init() {
+        this.loadWeather();
+        this.usedWeathers.add(this.currentWeather);
+        this.updateWeatherUI();
+        this.applyWeatherEffects();
+        this.syncAchievements();
+      }
+
+      loadWeather() {
+        try {
+          const saved = localStorage.getItem('poohCurrentWeather');
+          if (saved && this.weatherTypes[saved]) this.currentWeather = saved;
+        } catch (e) {}
+      }
+
+      saveWeather() {
+        try {
+          localStorage.setItem('poohCurrentWeather', this.currentWeather);
+        } catch (e) {}
+      }
+
+      setWeather(weatherType) {
+        if (!this.weatherTypes[weatherType]) return;
+
+        this.currentWeather = weatherType;
+        this.usedWeathers.add(weatherType);
+
+        this.saveWeather();
+        this.updateWeatherUI();
+        this.applyWeatherEffects();
+        this.syncAchievements();
+      }
+
+      syncAchievements() {
+        if (!window.gameEngine) return;
+        const gs = window.gameEngine.achievementSystem.gameState;
+        gs.weathersUsed = this.usedWeathers.size;
+        window.gameEngine.achievementSystem.checkAchievements(gs);
+      }
+
+      updateWeatherUI() {
+        document.querySelectorAll('.weather-btn').forEach(btn => {
+          btn.classList.toggle('active', btn.dataset.weather === this.currentWeather);
+        });
+      }
+
+      applyWeatherEffects() {
+        if (!this.weatherContainer) {
+          this.weatherContainer = document.getElementById('weather-effects');
+          if (!this.weatherContainer) {
+            this.weatherContainer = document.createElement('div');
+            this.weatherContainer.id = 'weather-effects';
+            document.body.appendChild(this.weatherContainer);
+          }
+        }
+
+        // Clear existing particles
+        this.weatherContainer.innerHTML = '';
+
+        if (this.currentWeather === 'none') {
+          return;
+        }
+
+        const weather = this.weatherTypes[this.currentWeather];
+
+        for (let i = 0; i < weather.particles; i++) {
+          const particle = document.createElement('div');
+          particle.className = 'weather-particle';
+
+          const duration = 8 + Math.random() * 18;
+          const delay = Math.random() * 10;
+          const left = Math.random() * 100;
+          const startY = -60 - Math.random() * 240;
+          const size = this.getParticleSize(this.currentWeather);
+
+          Object.assign(particle.style, {
             position: 'absolute',
             left: `${left}vw`,
             top: `${startY}px`,
@@ -2171,121 +2161,130 @@ class WeatherSystem {
             animationTimingFunction: 'linear',
             animationIterationCount: 'infinite',
             willChange: 'transform'
-        });
-        
-        this.applyParticleStyle(particle, this.currentWeather, size, weather.color);
-        this.weatherContainer.appendChild(particle);
-    }
-}
-  getParticleSize(type) {
-    switch (type) {
-      case 'rain': return { width: 2, height: 14 + Math.random() * 18 };
-      case 'snow': return { width: 3 + Math.random() * 5, height: 3 + Math.random() * 5 };
-      case 'leaves': return { width: 8 + Math.random() * 10, height: 8 + Math.random() * 10 };
-      case 'petals': return { width: 6 + Math.random() * 8, height: 6 + Math.random() * 8 };
-      default: return { width: 5, height: 5 };
-    }
-  }
+          });
 
-  applyParticleStyle(p, type, size, color) {
-  p.style.width = `${size.width}px`;
-  p.style.height = `${size.height}px`;
+          this.applyParticleStyle(particle, this.currentWeather, size, weather.color);
+          this.weatherContainer.appendChild(particle);
+        }
+      }
 
-  switch (type) {
-    case 'rain':
-      p.style.background = color;
-      p.style.opacity = '0.65';
-      p.style.transform = 'rotate(15deg)';
-      p.style.borderRadius = '0';
-      break;
+      getParticleSize(type) {
+        switch (type) {
+          case 'rain': return { width: 2, height: 14 + Math.random() * 18 };
+          case 'snow': return { width: 3 + Math.random() * 5, height: 3 + Math.random() * 5 };
+          case 'leaves': return { width: 8 + Math.random() * 10, height: 8 + Math.random() * 10 };
+          case 'petals': return { width: 6 + Math.random() * 8, height: 6 + Math.random() * 8 };
+          default: return { width: 5, height: 5 };
+        }
+      }
 
-    case 'snow':
-      p.style.background = color;
-      p.style.opacity = '0.85';
-      p.style.borderRadius = '50%';
-      p.style.filter = 'drop-shadow(0 2px 2px rgba(0,0,0,0.15))';
-      break;
+      applyParticleStyle(p, type, size, color) {
+        p.style.width = `${size.width}px`;
+        p.style.height = `${size.height}px`;
 
-    case 'leaves':
-      p.style.background = color;
-      p.style.opacity = '0.75';
-      p.style.clipPath = 'polygon(50% 0%,100% 50%,50% 100%,0% 50%)';
-      p.style.transform = `rotate(${Math.random() * 360}deg)`;
-      break;
+        switch (type) {
+          case 'rain':
+            p.style.background = color;
+            p.style.opacity = '0.65';
+            p.style.transform = 'rotate(15deg)';
+            p.style.borderRadius = '0';
+            break;
 
-    case 'petals':
-      p.style.background = color;
-      p.style.opacity = '0.75';
-      p.style.borderRadius = '50% 50% 0 50%';
-      p.style.transform = 'rotate(45deg)';
-      break;
-  }
-}
-  clear() {
-    if (this.weatherContainer) this.weatherContainer.remove();
-    this.weatherContainer = null;
-  }
-}
+          case 'snow':
+            p.style.background = color;
+            p.style.opacity = '0.85';
+            p.style.borderRadius = '50%';
+            p.style.filter = 'drop-shadow(0 2px 2px rgba(0,0,0,0.15))';
+            break;
 
-/* ============================================
-   SHARE SYSTEM
-============================================ */
-class ShareSystem {
-  constructor() {
-    this.gameTitle = "Pooh's Enhanced Honey Hunt";
-    this.gameDescription = "Play Pooh's Enhanced Honey Hunt - help Winnie the Pooh catch honey pots! 🍯🐻";
-    this.gameUrl = window.location.href;
-  }
+          case 'leaves':
+            p.style.background = color;
+            p.style.opacity = '0.75';
+            p.style.clipPath = 'polygon(50% 0%,100% 50%,50% 100%,0% 50%)';
+            p.style.transform = `rotate(${Math.random() * 360}deg)`;
+            break;
 
-  shareGame() {
-    this.shareContent(this.gameDescription, this.gameUrl, this.gameTitle);
-  }
+          case 'petals':
+            p.style.background = color;
+            p.style.opacity = '0.75';
+            p.style.borderRadius = '50% 50% 0 50%';
+            p.style.transform = 'rotate(45deg)';
+            break;
+        }
+      }
 
-  shareScore(score, character) {
-    const text = `I scored ${score} points as ${character} in ${this.gameTitle}! Can you beat my score? 🍯🐻 #PoohHoneyHunt`;
-    this.shareContent(text, this.gameUrl, `My ${this.gameTitle} Score`);
-  }
-
-  shareContent(text, url, title) {
-    if (window.gameEngine) window.gameEngine.soundSystem.play('click');
-
-    if (navigator.share) {
-      navigator.share({ title, text, url }).catch(() => this.fallbackShare(text, url));
-    } else {
-      this.fallbackShare(text, url);
-    }
-  }
-
-  fallbackShare(text, url) {
-    const shareText = `${text}\n\n${url}`;
-
-    if (navigator.clipboard && window.isSecureContext) {
-      navigator.clipboard.writeText(shareText)
-        .then(() => alert('Link copied to clipboard! Share it with your friends.'))
-        .catch(() => alert(`Share this link:\n\n${shareText}`));
-      return;
+      clear() {
+        if (this.weatherContainer) {
+          this.weatherContainer.innerHTML = '';
+        }
+      }
     }
 
-    const ta = document.createElement('textarea');
-    ta.value = shareText;
-    ta.style.position = 'fixed';
-    ta.style.top = '0';
-    ta.style.left = '0';
-    ta.style.width = '2em';
-    ta.style.height = '2em';
-    ta.style.opacity = '0';
-    document.body.appendChild(ta);
-    ta.select();
+    /* ============================================
+       SHARE SYSTEM
+    ============================================ */
+    class ShareSystem {
+      constructor() {
+        this.gameTitle = "Pooh's Enhanced Honey Hunt";
+        this.gameDescription = "Play Pooh's Enhanced Honey Hunt - help Winnie the Pooh catch honey pots! 🍯🐻";
+        this.gameUrl = window.location.href;
+      }
 
-    try {
-      document.execCommand('copy');
-      alert('Link copied to clipboard! Share it with your friends.');
-    } catch (e) {
-      alert(`Share this link:\n\n${shareText}`);
+      shareGame() {
+        this.shareContent(this.gameDescription, this.gameUrl, this.gameTitle);
+      }
+
+      shareScore(score, character) {
+        const text = `I scored ${score} points as ${character} in ${this.gameTitle}! Can you beat my score? 🍯🐻 #PoohHoneyHunt`;
+        this.shareContent(text, this.gameUrl, `My ${this.gameTitle} Score`);
+      }
+
+      shareContent(text, url, title) {
+        if (window.gameEngine) window.gameEngine.soundSystem.play('click');
+
+        if (navigator.share) {
+          navigator.share({ title, text, url }).catch(() => this.fallbackShare(text, url));
+        } else {
+          this.fallbackShare(text, url);
+        }
+      }
+
+      fallbackShare(text, url) {
+        const shareText = `${text}\n\n${url}`;
+
+        if (navigator.clipboard && window.isSecureContext) {
+          navigator.clipboard.writeText(shareText)
+            .then(() => alert('Link copied to clipboard! Share it with your friends.'))
+            .catch(() => alert(`Share this link:\n\n${shareText}`));
+          return;
+        }
+
+        const ta = document.createElement('textarea');
+        ta.value = shareText;
+        ta.style.position = 'fixed';
+        ta.style.top = '0';
+        ta.style.left = '0';
+        ta.style.width = '2em';
+        ta.style.height = '2em';
+        ta.style.opacity = '0';
+        document.body.appendChild(ta);
+        ta.select();
+
+        try {
+          document.execCommand('copy');
+          alert('Link copied to clipboard! Share it with your friends.');
+        } catch (e) {
+          alert(`Share this link:\n\n${shareText}`);
+        }
+        document.body.removeChild(ta);
+      }
     }
-    document.body.removeChild(ta);
-  }
-}
+
+    <!-- This is a continuation of the previous code -->
+<script>
+// ============================================
+// PART 2 of 3: GAME ENGINE
+// ============================================
 
 /* ============================================
    GAME ENGINE
@@ -2315,7 +2314,7 @@ class PoohHoneyHunt {
     this.honeyCaught = 0;
     this.goldenPotsCaught = 0;
     this.lives = GAME_CONSTANTS.GAME.INITIAL_LIVES;
-    this.lastStingTime = 0; // performance.now() timestamp
+    this.lastStingTime = 0;
     this.perfectGame = true;
     this.highScore = 0;
     this.totalPlayTime = 0;
@@ -2343,10 +2342,10 @@ class PoohHoneyHunt {
     this.isDragging = false;
     this.keys = {};
 
-    // Ach check cadence
+    // Achievement check cadence
     this._achCheckTimer = 0;
 
-    // UI
+    // UI Elements
     this.initializeUIElements();
     this.initializeEventListeners();
 
@@ -2359,7 +2358,7 @@ class PoohHoneyHunt {
     window.gameEngine = this;
   }
 
-  /* ---------- init ---------- */
+  /* ---------- Player Creation ---------- */
   createPlayer() {
     return {
       x: this.canvas.width / 2,
@@ -2372,6 +2371,7 @@ class PoohHoneyHunt {
     };
   }
 
+  /* ---------- UI Initialization ---------- */
   initializeUIElements() {
     this.scoreEl = document.getElementById('score');
     this.streakEl = document.getElementById('streak');
@@ -2413,6 +2413,7 @@ class PoohHoneyHunt {
     this.achievementsEarnedEl = document.getElementById('achievements-earned');
   }
 
+  /* ---------- Event Listeners ---------- */
   initializeEventListeners() {
     // Canvas input
     this.canvas.addEventListener('touchstart', this.handleTouchStart.bind(this), { passive: false });
@@ -2451,7 +2452,10 @@ class PoohHoneyHunt {
 
     // Weather buttons
     this.weatherBtns.forEach(btn => {
-      btn.addEventListener('click', () => this.weatherSystem.setWeather(btn.dataset.weather));
+      btn.addEventListener('click', () => {
+        console.log('Weather button clicked:', btn.dataset.weather);
+        this.weatherSystem.setWeather(btn.dataset.weather);
+      });
     });
 
     // Resize/orientation
@@ -2469,7 +2473,10 @@ class PoohHoneyHunt {
     this.canvas.addEventListener('contextmenu', (e) => e.preventDefault());
   }
 
-  updateCanvasRect() { this.canvasRect = this.canvas.getBoundingClientRect(); }
+  /* ---------- Input Handling ---------- */
+  updateCanvasRect() {
+    this.canvasRect = this.canvas.getBoundingClientRect();
+  }
 
   clientToCanvasX(clientX) {
     if (!this.canvasRect) this.updateCanvasRect();
@@ -2520,7 +2527,9 @@ class PoohHoneyHunt {
     this.showCursor(true);
   }
 
-  handleMouseLeave() { this.showCursor(false); }
+  handleMouseLeave() {
+    this.showCursor(false);
+  }
 
   handleKeyDown(e) {
     this.keys[e.key] = true;
@@ -2538,7 +2547,9 @@ class PoohHoneyHunt {
     }
   }
 
-  handleKeyUp(e) { this.keys[e.key] = false; }
+  handleKeyUp(e) {
+    this.keys[e.key] = false;
+  }
 
   updateCursor(x, y) {
     if (!this.honeyCursor) return;
@@ -2552,7 +2563,7 @@ class PoohHoneyHunt {
     else this.honeyCursor.classList.remove('active');
   }
 
-  /* ---------- overlays ---------- */
+  /* ---------- Game Flow ---------- */
   startGame() {
     this.soundSystem.play('click');
     this.hideAllOverlays();
@@ -2683,7 +2694,7 @@ class PoohHoneyHunt {
     document.body.classList.toggle('overlay-open', anyOpen);
   }
 
-  /* ---------- loop ---------- */
+  /* ---------- Game Loop ---------- */
   gameLoop(currentTime = performance.now()) {
     if (!this.running) {
       if (this.animationFrameId) {
@@ -2714,6 +2725,7 @@ class PoohHoneyHunt {
     this.updateBees(dt);
   }
 
+  /* ---------- Player Update ---------- */
   updatePlayer(dt) {
     const character = this.characterSystem.getCurrentCharacter();
     const speedMultiplier = character.speed;
@@ -2733,6 +2745,7 @@ class PoohHoneyHunt {
     if (this.player.trail.length > GAME_CONSTANTS.PLAYER.TRAIL_LENGTH) this.player.trail.pop();
   }
 
+  /* ---------- Spawn System ---------- */
   updateSpawnTimers(dt) {
     this.honeySpawnTimer += dt;
     const honeySpawnRate = Math.max(
@@ -2787,6 +2800,7 @@ class PoohHoneyHunt {
     };
   }
 
+  /* ---------- Honey Update ---------- */
   updateHoneys(dt) {
     for (let i = this.honeys.length - 1; i >= 0; i--) {
       const h = this.honeys[i];
@@ -2823,7 +2837,7 @@ class PoohHoneyHunt {
     this.streak++;
     this.honeyCaught++;
 
-    // IMPORTANT: totals updated ONCE per catch (no per-frame inflation)
+    // Update achievement totals
     const gs = this.achievementSystem.gameState;
     gs.totalHoneyCaught = (gs.totalHoneyCaught || 0) + 1;
 
@@ -2854,6 +2868,7 @@ class PoohHoneyHunt {
     this.honeys.splice(index, 1);
   }
 
+  /* ---------- Bee Update ---------- */
   updateBees(dt) {
     for (let i = this.bees.length - 1; i >= 0; i--) {
       const b = this.bees[i];
@@ -2893,7 +2908,6 @@ class PoohHoneyHunt {
     this.streak = 0;
     this.perfectGame = false;
 
-    // unified timebase
     this.lastStingTime = performance.now();
 
     this.soundSystem.play('sting');
@@ -2908,7 +2922,7 @@ class PoohHoneyHunt {
     this.bees.splice(index, 1);
   }
 
-  /* ---------- achievements state (fixed) ---------- */
+  /* ---------- Achievement State Management ---------- */
   updateAchievementState(forceCheck = false) {
     const now = performance.now();
     const lastSting = this.lastStingTime || this.startTime;
@@ -2916,7 +2930,7 @@ class PoohHoneyHunt {
 
     const gs = this.achievementSystem.gameState;
 
-    // sync (no accumulation here)
+    // Update game state
     gs.score = this.score;
     gs.bestStreak = Math.max(gs.bestStreak || 0, this.bestStreak);
     gs.timePlayed = this.gameTime;
@@ -2928,7 +2942,7 @@ class PoohHoneyHunt {
       return;
     }
 
-    // check at a sane cadence instead of 60x/sec
+    // Check achievements at a sane cadence (every 0.5 seconds)
     this._achCheckTimer += 1 / 60;
     if (this._achCheckTimer >= 0.5) {
       this._achCheckTimer = 0;
@@ -2936,325 +2950,7 @@ class PoohHoneyHunt {
     }
   }
 
-  /* ---------- render ---------- */
-  render() {
-    this.ctx.clearRect(0, 0, this.canvas.width, this.canvas.height);
-    this.drawBackground();
-    this.drawPooh();
-    this.drawBees();
-    this.drawHoneys();
-    this.particleSystem.draw(this.ctx);
-    this.drawUI();
-  }
-
-  drawBackground() {
-    const time = Date.now() / 1000;
-    const pulse = Math.sin(time * 0.5) * 0.1 + 0.9;
-
-    const sky = this.ctx.createLinearGradient(0, 0, 0, this.canvas.height);
-    sky.addColorStop(0, `rgb(${10 + pulse * 5}, ${61 + pulse * 10}, ${98 + pulse * 10})`);
-    sky.addColorStop(0.2, `rgb(${30 + pulse * 10}, ${111 + pulse * 20}, ${168 + pulse * 20})`);
-    sky.addColorStop(0.4, `rgb(135, 206, 235)`);
-    sky.addColorStop(0.6, `rgb(176, 224, 230)`);
-    sky.addColorStop(0.8, `rgb(168, 213, 163)`);
-    sky.addColorStop(1, `rgb(124, 179, 66)`);
-
-    this.ctx.fillStyle = sky;
-    this.ctx.fillRect(0, 0, this.canvas.width, this.canvas.height);
-
-    const sun = this.ctx.createRadialGradient(340, 90, 0, 340, 90, 60);
-    sun.addColorStop(0, '#fff9e6');
-    sun.addColorStop(0.3, '#ffe066');
-    sun.addColorStop(1, 'rgba(255, 204, 0, 0.2)');
-    this.ctx.fillStyle = sun;
-    this.ctx.beginPath();
-    this.ctx.arc(340, 90, 60, 0, Math.PI * 2);
-    this.ctx.fill();
-
-    this.ctx.fillStyle = '#558b2f';
-    this.ctx.beginPath();
-    this.ctx.moveTo(0, this.canvas.height - 150);
-    this.ctx.bezierCurveTo(100, this.canvas.height - 200, 200, this.canvas.height - 180, 300, this.canvas.height - 150);
-    this.ctx.bezierCurveTo(400, this.canvas.height - 200, this.canvas.width, this.canvas.height - 180, this.canvas.width, this.canvas.height - 150);
-    this.ctx.lineTo(this.canvas.width, this.canvas.height);
-    this.ctx.lineTo(0, this.canvas.height);
-    this.ctx.closePath();
-    this.ctx.fill();
-
-    const grass = this.ctx.createLinearGradient(0, this.canvas.height - 40, 0, this.canvas.height);
-    grass.addColorStop(0, '#7cb342');
-    grass.addColorStop(1, '#558b2f');
-    this.ctx.fillStyle = grass;
-    this.ctx.fillRect(0, this.canvas.height - 40, this.canvas.width, 40);
-
-    this.ctx.strokeStyle = '#8bc34a';
-    this.ctx.lineWidth = 1.5;
-    for (let i = 0; i < this.canvas.width; i += 6) {
-      this.ctx.beginPath();
-      this.ctx.moveTo(i, this.canvas.height - 40);
-      const curve = Math.sin(i * 0.1 + time) * 8;
-      this.ctx.quadraticCurveTo(i + curve, this.canvas.height - 60, i, this.canvas.height - 80);
-      this.ctx.stroke();
-    }
-
-    this.drawTree(80, this.canvas.height - 40, 80, 0.8, time);
-    this.drawTree(200, this.canvas.height - 40, 100, 1, time);
-    this.drawTree(320, this.canvas.height - 40, 90, 0.9, time);
-  }
-
-  drawTree(x, y, height, scale, time) {
-    this.ctx.save();
-    this.ctx.translate(x, y);
-    const sway = Math.sin(time * 0.5 + x * 0.01) * 5;
-    this.ctx.rotate(sway * 0.01);
-
-    const trunk = this.ctx.createLinearGradient(-12, 0, 12, -height);
-    trunk.addColorStop(0, '#8b4513');
-    trunk.addColorStop(1, '#5d4e37');
-    this.ctx.fillStyle = trunk;
-    this.ctx.fillRect(-12 * scale, -height, 24 * scale, height);
-
-    const leaves = this.ctx.createRadialGradient(0, -height, 0, 0, -height, 50 * scale);
-    leaves.addColorStop(0, '#81c784');
-    leaves.addColorStop(1, '#388e3c');
-    this.ctx.fillStyle = leaves;
-
-    this.ctx.beginPath();
-    this.ctx.arc(-20 * scale, -height, 35 * scale, 0, Math.PI * 2);
-    this.ctx.fill();
-
-    this.ctx.beginPath();
-    this.ctx.arc(20 * scale, -height, 35 * scale, 0, Math.PI * 2);
-    this.ctx.fill();
-
-    this.ctx.beginPath();
-    this.ctx.arc(0, -height - 25 * scale, 40 * scale, 0, Math.PI * 2);
-    this.ctx.fill();
-
-    this.ctx.restore();
-  }
-
-  drawPooh() {
-    this.ctx.save();
-    this.ctx.translate(this.player.x, this.player.y);
-
-    const wobble = Math.sin(this.player.wobble) * 3;
-
-    for (let i = 0; i < this.player.trail.length; i++) {
-      const p = this.player.trail[i];
-      const alpha = ((this.player.trail.length - i) / this.player.trail.length) * 0.3;
-      this.ctx.fillStyle = `rgba(212, 165, 116, ${alpha})`;
-      this.ctx.beginPath();
-      this.ctx.arc(p.x - this.player.x, p.y - this.player.y, this.player.radius * (i / this.player.trail.length), 0, Math.PI * 2);
-      this.ctx.fill();
-    }
-
-    this.ctx.globalAlpha = 0.3;
-    this.ctx.fillStyle = '#000';
-    this.ctx.beginPath();
-    this.ctx.ellipse(0, this.player.radius + 12, this.player.radius * 0.7, 10, 0, 0, Math.PI * 2);
-    this.ctx.fill();
-    this.ctx.globalAlpha = 1;
-
-    const body = this.ctx.createRadialGradient(-8, -8, 0, 0, 0, this.player.radius);
-    body.addColorStop(0, '#f0d8b8');
-    body.addColorStop(0.7, '#d4a574');
-    body.addColorStop(1, '#b8863c');
-    this.ctx.fillStyle = body;
-    this.ctx.beginPath();
-    this.ctx.arc(0, wobble, this.player.radius, 0, Math.PI * 2);
-    this.ctx.fill();
-
-    this.ctx.fillStyle = '#e63946';
-    this.ctx.beginPath();
-    this.ctx.arc(0, wobble + 10, this.player.radius - 6, 0, Math.PI);
-    this.ctx.fill();
-
-    this.ctx.save();
-    this.ctx.rotate(this.player.armAngle);
-    this.ctx.fillStyle = '#d4a574';
-    this.ctx.beginPath();
-    this.ctx.ellipse(-this.player.radius + 8, wobble, 10, 16, -0.4, 0, Math.PI * 2);
-    this.ctx.fill();
-    this.ctx.restore();
-
-    this.ctx.save();
-    this.ctx.rotate(-this.player.armAngle);
-    this.ctx.fillStyle = '#d4a574';
-    this.ctx.beginPath();
-    this.ctx.ellipse(this.player.radius - 8, wobble, 10, 16, 0.4, 0, Math.PI * 2);
-    this.ctx.fill();
-    this.ctx.restore();
-
-    this.ctx.fillStyle = '#d4a574';
-    this.ctx.beginPath();
-    this.ctx.arc(-this.player.radius + 10, wobble - this.player.radius + 10, 12, 0, Math.PI * 2);
-    this.ctx.arc(this.player.radius - 10, wobble - this.player.radius + 10, 12, 0, Math.PI * 2);
-    this.ctx.fill();
-
-    this.ctx.fillStyle = '#1a1a1a';
-    this.ctx.beginPath();
-    this.ctx.arc(-10, wobble - 8, 3.5, 0, Math.PI * 2);
-    this.ctx.arc(10, wobble - 8, 3.5, 0, Math.PI * 2);
-    this.ctx.fill();
-
-    this.ctx.fillStyle = '#fff';
-    this.ctx.beginPath();
-    this.ctx.arc(-9, wobble - 9, 1.8, 0, Math.PI * 2);
-    this.ctx.arc(11, wobble - 9, 1.8, 0, Math.PI * 2);
-    this.ctx.fill();
-
-    this.ctx.fillStyle = '#1a1a1a';
-    this.ctx.beginPath();
-    this.ctx.arc(0, wobble + 3, 5, 0, Math.PI * 2);
-    this.ctx.fill();
-
-    this.ctx.strokeStyle = '#1a1a1a';
-    this.ctx.lineWidth = 2;
-    this.ctx.beginPath();
-    this.ctx.arc(0, wobble + 8, 8, 0.2, Math.PI - 0.2);
-    this.ctx.stroke();
-
-    this.ctx.restore();
-  }
-
-  drawHoneys() {
-    for (const honey of this.honeys) {
-      this.ctx.save();
-      this.ctx.translate(honey.x, honey.y);
-      this.ctx.rotate(honey.rotation);
-      this.ctx.scale(honey.scale, honey.scale);
-
-      const pot = this.ctx.createLinearGradient(-15, -12, 15, 15);
-      pot.addColorStop(0, honey.type === 'golden' ? '#ffd700' : '#a0633b');
-      pot.addColorStop(0.5, honey.type === 'golden' ? '#ffa500' : '#8b4513');
-      pot.addColorStop(1, honey.type === 'golden' ? '#da9100' : '#6b3410');
-      this.ctx.fillStyle = pot;
-
-      this.ctx.beginPath();
-      this.ctx.moveTo(-12, -10);
-      this.ctx.quadraticCurveTo(-15, 0, -12, 15);
-      this.ctx.lineTo(12, 15);
-      this.ctx.quadraticCurveTo(15, 0, 12, -10);
-      this.ctx.closePath();
-      this.ctx.fill();
-
-      const honeyGrad = this.ctx.createLinearGradient(-8, -8, 8, 8);
-      honeyGrad.addColorStop(0, '#ffd700');
-      honeyGrad.addColorStop(0.5, '#ffa500');
-      honeyGrad.addColorStop(1, '#da9100');
-      this.ctx.fillStyle = honeyGrad;
-
-      this.ctx.beginPath();
-      this.ctx.ellipse(0, 2, 8, 6, 0, 0, Math.PI * 2);
-      this.ctx.fill();
-
-      this.ctx.fillStyle = '#ffa500';
-      this.ctx.beginPath();
-      this.ctx.moveTo(-2, 8);
-      this.ctx.quadraticCurveTo(0, 15, 2, 8);
-      this.ctx.fill();
-
-      this.ctx.fillStyle = honey.type === 'golden' ? '#fff' : '#fff8e1';
-      this.ctx.font = 'bold 10px "Patrick Hand"';
-      this.ctx.textAlign = 'center';
-      this.ctx.fillText(honey.type === 'golden' ? 'GOLDEN' : 'HUNNY', 0, 4);
-
-      this.ctx.restore();
-    }
-  }
-
-  drawBees() {
-    for (const bee of this.bees) {
-      this.ctx.save();
-      this.ctx.translate(bee.x, bee.y);
-
-      const wobbleY = Math.sin(bee.wobble) * 6;
-      const wingFlap = Math.sin(bee.wingFlap) * 0.5;
-
-      for (let i = 0; i < bee.trail.length; i++) {
-        const p = bee.trail[i];
-        const alpha = ((bee.trail.length - i) / bee.trail.length) * 0.2;
-        this.ctx.fillStyle = `rgba(255, 215, 0, ${alpha})`;
-        this.ctx.beginPath();
-        this.ctx.arc(p.x - bee.x, p.y - bee.y, 4 * (i / bee.trail.length), 0, Math.PI * 2);
-        this.ctx.fill();
-      }
-
-      this.ctx.globalAlpha = 0.6;
-      this.ctx.fillStyle = bee.angry ? '#ff9999' : '#e8f4f8';
-
-      this.ctx.save();
-      this.ctx.rotate(wingFlap);
-      this.ctx.beginPath();
-      this.ctx.ellipse(-12, -10, 12, 20, -0.5, 0, Math.PI * 2);
-      this.ctx.fill();
-      this.ctx.restore();
-
-      this.ctx.save();
-      this.ctx.rotate(-wingFlap);
-      this.ctx.beginPath();
-      this.ctx.ellipse(12, -10, 12, 20, 0.5, 0, Math.PI * 2);
-      this.ctx.fill();
-      this.ctx.restore();
-
-      this.ctx.globalAlpha = 1;
-
-      const body = this.ctx.createLinearGradient(0, -15, 0, 15);
-      body.addColorStop(0, '#ffd700');
-      body.addColorStop(1, bee.angry ? '#ff4444' : '#daa520');
-      this.ctx.fillStyle = body;
-      this.ctx.beginPath();
-      this.ctx.ellipse(0, wobbleY, 15, 20, 0, 0, Math.PI * 2);
-      this.ctx.fill();
-
-      this.ctx.fillStyle = bee.angry ? '#8b0000' : '#1a1a1a';
-      for (let i = 0; i < 3; i++) this.ctx.fillRect(-15, -12 + i * 10 + wobbleY, 30, 5);
-
-      if (bee.angry) {
-        this.ctx.strokeStyle = '#8b0000';
-        this.ctx.lineWidth = 3;
-        this.ctx.lineCap = 'round';
-        this.ctx.beginPath();
-        this.ctx.moveTo(-8, -18 + wobbleY);
-        this.ctx.lineTo(-2, -15 + wobbleY);
-        this.ctx.moveTo(8, -18 + wobbleY);
-        this.ctx.lineTo(2, -15 + wobbleY);
-        this.ctx.stroke();
-      }
-
-      this.ctx.restore();
-    }
-  }
-
-  drawUI() {
-    for (let i = 0; i < this.lives; i++) {
-      const x = 30 + i * 40;
-      const y = this.canvas.height - 30;
-
-      this.ctx.save();
-      this.ctx.translate(x, y);
-
-      const glow = this.ctx.createRadialGradient(0, 0, 0, 0, 0, 15);
-      glow.addColorStop(0, '#ff6b6b');
-      glow.addColorStop(1, 'rgba(255, 107, 107, 0)');
-      this.ctx.fillStyle = glow;
-      this.ctx.beginPath();
-      this.ctx.arc(0, 0, 15, 0, Math.PI * 2);
-      this.ctx.fill();
-
-      this.ctx.fillStyle = '#e63946';
-      this.ctx.beginPath();
-      this.ctx.moveTo(0, 6);
-      this.ctx.bezierCurveTo(-10, -8, -5, -12, 0, -4);
-      this.ctx.bezierCurveTo(5, -12, 10, -8, 0, 6);
-      this.ctx.fill();
-
-      this.ctx.restore();
-    }
-  }
-
-  /* ---------- popups/effects ---------- */
+  /* ---------- Visual Effects ---------- */
   showScorePopup(x, y, text) {
     const popup = document.createElement('div');
     popup.className = 'score-popup';
@@ -3310,25 +3006,31 @@ class PoohHoneyHunt {
     this.scoreEl.textContent = this.score;
     this.streakEl.textContent = this.streak;
     this.livesEl.textContent = this.lives;
-    this.achievementsCountEl.textContent = `this.achievementSystem.updateDisplay();
+    this.achievementsCountEl.textContent = `${this.achievementSystem.achievements.filter(a => a.unlocked).length}/10`;
   }
 
-  /* ---------- endgame/persistence ---------- */
+  /* ---------- Game End ---------- */
   endGame() {
     this.running = false;
 
-    // Perfect game: no lives lost (i.e., still perfectGame true)
-    if (this.perfectGame) this.achievementSystem.incrementGameState('perfectGames', 1);
-
-    if (this.score > this.highScore) {
-      this.highScore = this.score;
-      try { localStorage.setItem('poohHighScore', this.highScore.toString()); } catch (e) {}
+    // Perfect game achievement
+    if (this.perfectGame) {
+      this.achievementSystem.incrementGameState('perfectGames', 1);
     }
 
-    // Ensure final achievements check + save
+    // Update high score
+    if (this.score > this.highScore) {
+      this.highScore = this.score;
+      try {
+        localStorage.setItem('poohHighScore', this.highScore.toString());
+      } catch (e) {}
+    }
+
+    // Final achievement check and save
     this.updateAchievementState(true);
     this.achievementSystem.saveAchievements();
 
+    // Update game over display
     this.finalScoreEl.textContent = this.score;
     this.bestStreakEl.textContent = this.bestStreak;
     this.honeyCaughtEl.textContent = this.honeyCaught;
@@ -3352,7 +3054,7 @@ class PoohHoneyHunt {
     } catch (e) {}
   }
 
-  /* ---------- background ---------- */
+  /* ---------- Background ---------- */
   initializeBackground() {
     // Blossoms
     for (let i = 0; i < 15; i++) {
@@ -3389,23 +3091,484 @@ class PoohHoneyHunt {
   }
 }
 
-/* ============================================
-   INITIALIZE
-============================================ */
-document.addEventListener('DOMContentLoaded', () => {
-  const game = new PoohHoneyHunt();
-document.addEventListener('touchstart', () => {
-  if (window.gameEngine?.soundSystem?.audioContext?.state === 'suspended') {
-    window.gameEngine.soundSystem.audioContext.resume();
-  }
-}, { once: true });
-  document.addEventListener('visibilitychange', () => {
-    if (document.hidden && game.running && !game.paused) game.togglePause();
-  });
+<!-- This is a continuation of the previous code -->
+<script>
+// ============================================
+// PART 3 of 3: RENDERING SYSTEM & FINAL INIT
+// ============================================
 
-  window.addEventListener('beforeunload', () => game.cleanup());
+/* ============================================
+   RENDERING FUNCTIONS (Continued from Game Engine)
+============================================ */
+
+PoohHoneyHunt.prototype.render = function() {
+  this.ctx.clearRect(0, 0, this.canvas.width, this.canvas.height);
+  this.drawBackground();
+  this.drawPooh();
+  this.drawBees();
+  this.drawHoneys();
+  this.particleSystem.draw(this.ctx);
+  this.drawUI();
+};
+
+PoohHoneyHunt.prototype.drawBackground = function() {
+  const time = Date.now() / 1000;
+  const pulse = Math.sin(time * 0.5) * 0.1 + 0.9;
+
+  const sky = this.ctx.createLinearGradient(0, 0, 0, this.canvas.height);
+  sky.addColorStop(0, `rgb(${10 + pulse * 5}, ${61 + pulse * 10}, ${98 + pulse * 10})`);
+  sky.addColorStop(0.2, `rgb(${30 + pulse * 10}, ${111 + pulse * 20}, ${168 + pulse * 20})`);
+  sky.addColorStop(0.4, `rgb(135, 206, 235)`);
+  sky.addColorStop(0.6, `rgb(176, 224, 230)`);
+  sky.addColorStop(0.8, `rgb(168, 213, 163)`);
+  sky.addColorStop(1, `rgb(124, 179, 66)`);
+
+  this.ctx.fillStyle = sky;
+  this.ctx.fillRect(0, 0, this.canvas.width, this.canvas.height);
+
+  // Sun with glow effect
+  const sun = this.ctx.createRadialGradient(340, 90, 0, 340, 90, 60);
+  sun.addColorStop(0, '#fff9e6');
+  sun.addColorStop(0.3, '#ffe066');
+  sun.addColorStop(1, 'rgba(255, 204, 0, 0.2)');
+  this.ctx.fillStyle = sun;
+  this.ctx.beginPath();
+  this.ctx.arc(340, 90, 60, 0, Math.PI * 2);
+  this.ctx.fill();
+
+  // Hill
+  this.ctx.fillStyle = '#558b2f';
+  this.ctx.beginPath();
+  this.ctx.moveTo(0, this.canvas.height - 150);
+  this.ctx.bezierCurveTo(100, this.canvas.height - 200, 200, this.canvas.height - 180, 300, this.canvas.height - 150);
+  this.ctx.bezierCurveTo(400, this.canvas.height - 200, this.canvas.width, this.canvas.height - 180, this.canvas.width, this.canvas.height - 150);
+  this.ctx.lineTo(this.canvas.width, this.canvas.height);
+  this.ctx.lineTo(0, this.canvas.height);
+  this.ctx.closePath();
+  this.ctx.fill();
+
+  // Grass with gradient
+  const grass = this.ctx.createLinearGradient(0, this.canvas.height - 40, 0, this.canvas.height);
+  grass.addColorStop(0, '#7cb342');
+  grass.addColorStop(1, '#558b2f');
+  this.ctx.fillStyle = grass;
+  this.ctx.fillRect(0, this.canvas.height - 40, this.canvas.width, 40);
+
+  // Grass blades
+  this.ctx.strokeStyle = '#8bc34a';
+  this.ctx.lineWidth = 1.5;
+  for (let i = 0; i < this.canvas.width; i += 6) {
+    this.ctx.beginPath();
+    this.ctx.moveTo(i, this.canvas.height - 40);
+    const curve = Math.sin(i * 0.1 + time) * 8;
+    this.ctx.quadraticCurveTo(i + curve, this.canvas.height - 60, i, this.canvas.height - 80);
+    this.ctx.stroke();
+  }
+
+  // Draw trees
+  this.drawTree(80, this.canvas.height - 40, 80, 0.8, time);
+  this.drawTree(200, this.canvas.height - 40, 100, 1, time);
+  this.drawTree(320, this.canvas.height - 40, 90, 0.9, time);
+};
+
+PoohHoneyHunt.prototype.drawTree = function(x, y, height, scale, time) {
+  this.ctx.save();
+  this.ctx.translate(x, y);
+  const sway = Math.sin(time * 0.5 + x * 0.01) * 5;
+  this.ctx.rotate(sway * 0.01);
+
+  // Trunk with gradient
+  const trunk = this.ctx.createLinearGradient(-12, 0, 12, -height);
+  trunk.addColorStop(0, '#8b4513');
+  trunk.addColorStop(1, '#5d4e37');
+  this.ctx.fillStyle = trunk;
+  this.ctx.fillRect(-12 * scale, -height, 24 * scale, height);
+
+  // Leaves with gradient
+  const leaves = this.ctx.createRadialGradient(0, -height, 0, 0, -height, 50 * scale);
+  leaves.addColorStop(0, '#81c784');
+  leaves.addColorStop(1, '#388e3c');
+  this.ctx.fillStyle = leaves;
+
+  // Left cluster
+  this.ctx.beginPath();
+  this.ctx.arc(-20 * scale, -height, 35 * scale, 0, Math.PI * 2);
+  this.ctx.fill();
+
+  // Right cluster
+  this.ctx.beginPath();
+  this.ctx.arc(20 * scale, -height, 35 * scale, 0, Math.PI * 2);
+  this.ctx.fill();
+
+  // Top cluster
+  this.ctx.beginPath();
+  this.ctx.arc(0, -height - 25 * scale, 40 * scale, 0, Math.PI * 2);
+  this.ctx.fill();
+
+  this.ctx.restore();
+};
+
+PoohHoneyHunt.prototype.drawPooh = function() {
+  this.ctx.save();
+  this.ctx.translate(this.player.x, this.player.y);
+
+  const wobble = Math.sin(this.player.wobble) * 3;
+
+  // Draw trail
+  for (let i = 0; i < this.player.trail.length; i++) {
+    const p = this.player.trail[i];
+    const alpha = ((this.player.trail.length - i) / this.player.trail.length) * 0.3;
+    this.ctx.fillStyle = `rgba(212, 165, 116, ${alpha})`;
+    this.ctx.beginPath();
+    this.ctx.arc(p.x - this.player.x, p.y - this.player.y, this.player.radius * (i / this.player.trail.length), 0, Math.PI * 2);
+    this.ctx.fill();
+  }
+
+  // Shadow
+  this.ctx.globalAlpha = 0.3;
+  this.ctx.fillStyle = '#000';
+  this.ctx.beginPath();
+  this.ctx.ellipse(0, this.player.radius + 12, this.player.radius * 0.7, 10, 0, 0, Math.PI * 2);
+  this.ctx.fill();
+  this.ctx.globalAlpha = 1;
+
+  // Body with gradient
+  const body = this.ctx.createRadialGradient(-8, -8, 0, 0, 0, this.player.radius);
+  body.addColorStop(0, '#f0d8b8');
+  body.addColorStop(0.7, '#d4a574');
+  body.addColorStop(1, '#b8863c');
+  this.ctx.fillStyle = body;
+  this.ctx.beginPath();
+  this.ctx.arc(0, wobble, this.player.radius, 0, Math.PI * 2);
+  this.ctx.fill();
+
+  // Red shirt
+  this.ctx.fillStyle = '#e63946';
+  this.ctx.beginPath();
+  this.ctx.arc(0, wobble + 10, this.player.radius - 6, 0, Math.PI);
+  this.ctx.fill();
+
+  // Left arm
+  this.ctx.save();
+  this.ctx.rotate(this.player.armAngle);
+  this.ctx.fillStyle = '#d4a574';
+  this.ctx.beginPath();
+  this.ctx.ellipse(-this.player.radius + 8, wobble, 10, 16, -0.4, 0, Math.PI * 2);
+  this.ctx.fill();
+  this.ctx.restore();
+
+  // Right arm
+  this.ctx.save();
+  this.ctx.rotate(-this.player.armAngle);
+  this.ctx.fillStyle = '#d4a574';
+  this.ctx.beginPath();
+  this.ctx.ellipse(this.player.radius - 8, wobble, 10, 16, 0.4, 0, Math.PI * 2);
+  this.ctx.fill();
+  this.ctx.restore();
+
+  // Ears
+  this.ctx.fillStyle = '#d4a574';
+  this.ctx.beginPath();
+  this.ctx.arc(-this.player.radius + 10, wobble - this.player.radius + 10, 12, 0, Math.PI * 2);
+  this.ctx.arc(this.player.radius - 10, wobble - this.player.radius + 10, 12, 0, Math.PI * 2);
+  this.ctx.fill();
+
+  // Eyes
+  this.ctx.fillStyle = '#1a1a1a';
+  this.ctx.beginPath();
+  this.ctx.arc(-10, wobble - 8, 3.5, 0, Math.PI * 2);
+  this.ctx.arc(10, wobble - 8, 3.5, 0, Math.PI * 2);
+  this.ctx.fill();
+
+  // Eye highlights
+  this.ctx.fillStyle = '#fff';
+  this.ctx.beginPath();
+  this.ctx.arc(-9, wobble - 9, 1.8, 0, Math.PI * 2);
+  this.ctx.arc(11, wobble - 9, 1.8, 0, Math.PI * 2);
+  this.ctx.fill();
+
+  // Nose
+  this.ctx.fillStyle = '#1a1a1a';
+  this.ctx.beginPath();
+  this.ctx.arc(0, wobble + 3, 5, 0, Math.PI * 2);
+  this.ctx.fill();
+
+  // Smile
+  this.ctx.strokeStyle = '#1a1a1a';
+  this.ctx.lineWidth = 2;
+  this.ctx.beginPath();
+  this.ctx.arc(0, wobble + 8, 8, 0.2, Math.PI - 0.2);
+  this.ctx.stroke();
+
+  this.ctx.restore();
+};
+
+PoohHoneyHunt.prototype.drawHoneys = function() {
+  for (const honey of this.honeys) {
+    this.ctx.save();
+    this.ctx.translate(honey.x, honey.y);
+    this.ctx.rotate(honey.rotation);
+    this.ctx.scale(honey.scale, honey.scale);
+
+    // Honey pot with gradient
+    const pot = this.ctx.createLinearGradient(-15, -12, 15, 15);
+    pot.addColorStop(0, honey.type === 'golden' ? '#ffd700' : '#a0633b');
+    pot.addColorStop(0.5, honey.type === 'golden' ? '#ffa500' : '#8b4513');
+    pot.addColorStop(1, honey.type === 'golden' ? '#da9100' : '#6b3410');
+    this.ctx.fillStyle = pot;
+
+    this.ctx.beginPath();
+    this.ctx.moveTo(-12, -10);
+    this.ctx.quadraticCurveTo(-15, 0, -12, 15);
+    this.ctx.lineTo(12, 15);
+    this.ctx.quadraticCurveTo(15, 0, 12, -10);
+    this.ctx.closePath();
+    this.ctx.fill();
+
+    // Honey inside
+    const honeyGrad = this.ctx.createLinearGradient(-8, -8, 8, 8);
+    honeyGrad.addColorStop(0, '#ffd700');
+    honeyGrad.addColorStop(0.5, '#ffa500');
+    honeyGrad.addColorStop(1, '#da9100');
+    this.ctx.fillStyle = honeyGrad;
+
+    this.ctx.beginPath();
+    this.ctx.ellipse(0, 2, 8, 6, 0, 0, Math.PI * 2);
+    this.ctx.fill();
+
+    // Honey drip
+    this.ctx.fillStyle = '#ffa500';
+    this.ctx.beginPath();
+    this.ctx.moveTo(-2, 8);
+    this.ctx.quadraticCurveTo(0, 15, 2, 8);
+    this.ctx.fill();
+
+    // Label
+    this.ctx.fillStyle = honey.type === 'golden' ? '#fff' : '#fff8e1';
+    this.ctx.font = 'bold 10px "Patrick Hand"';
+    this.ctx.textAlign = 'center';
+    this.ctx.fillText(honey.type === 'golden' ? 'GOLDEN' : 'HUNNY', 0, 4);
+
+    this.ctx.restore();
+  }
+};
+
+PoohHoneyHunt.prototype.drawBees = function() {
+  for (const bee of this.bees) {
+    this.ctx.save();
+    this.ctx.translate(bee.x, bee.y);
+
+    const wobbleY = Math.sin(bee.wobble) * 6;
+    const wingFlap = Math.sin(bee.wingFlap) * 0.5;
+
+    // Trail
+    for (let i = 0; i < bee.trail.length; i++) {
+      const p = bee.trail[i];
+      const alpha = ((bee.trail.length - i) / bee.trail.length) * 0.2;
+      this.ctx.fillStyle = `rgba(255, 215, 0, ${alpha})`;
+      this.ctx.beginPath();
+      this.ctx.arc(p.x - bee.x, p.y - bee.y, 4 * (i / bee.trail.length), 0, Math.PI * 2);
+      this.ctx.fill();
+    }
+
+    // Wings (translucent)
+    this.ctx.globalAlpha = 0.6;
+    this.ctx.fillStyle = bee.angry ? '#ff9999' : '#e8f4f8';
+
+    // Left wing
+    this.ctx.save();
+    this.ctx.rotate(wingFlap);
+    this.ctx.beginPath();
+    this.ctx.ellipse(-12, -10, 12, 20, -0.5, 0, Math.PI * 2);
+    this.ctx.fill();
+    this.ctx.restore();
+
+    // Right wing
+    this.ctx.save();
+    this.ctx.rotate(-wingFlap);
+    this.ctx.beginPath();
+    this.ctx.ellipse(12, -10, 12, 20, 0.5, 0, Math.PI * 2);
+    this.ctx.fill();
+    this.ctx.restore();
+
+    this.ctx.globalAlpha = 1;
+
+    // Body with gradient
+    const body = this.ctx.createLinearGradient(0, -15, 0, 15);
+    body.addColorStop(0, '#ffd700');
+    body.addColorStop(1, bee.angry ? '#ff4444' : '#daa520');
+    this.ctx.fillStyle = body;
+    this.ctx.beginPath();
+    this.ctx.ellipse(0, wobbleY, 15, 20, 0, 0, Math.PI * 2);
+    this.ctx.fill();
+
+    // Stripes
+    this.ctx.fillStyle = bee.angry ? '#8b0000' : '#1a1a1a';
+    for (let i = 0; i < 3; i++) {
+      this.ctx.fillRect(-15, -12 + i * 10 + wobbleY, 30, 5);
+    }
+
+    // Angry eyebrows
+    if (bee.angry) {
+      this.ctx.strokeStyle = '#8b0000';
+      this.ctx.lineWidth = 3;
+      this.ctx.lineCap = 'round';
+      this.ctx.beginPath();
+      this.ctx.moveTo(-8, -18 + wobbleY);
+      this.ctx.lineTo(-2, -15 + wobbleY);
+      this.ctx.moveTo(8, -18 + wobbleY);
+      this.ctx.lineTo(2, -15 + wobbleY);
+      this.ctx.stroke();
+    }
+
+    this.ctx.restore();
+  }
+};
+
+PoohHoneyHunt.prototype.drawUI = function() {
+  // Draw lives as hearts
+  for (let i = 0; i < this.lives; i++) {
+    const x = 30 + i * 40;
+    const y = this.canvas.height - 30;
+
+    this.ctx.save();
+    this.ctx.translate(x, y);
+
+    // Heart glow
+    const glow = this.ctx.createRadialGradient(0, 0, 0, 0, 0, 15);
+    glow.addColorStop(0, '#ff6b6b');
+    glow.addColorStop(1, 'rgba(255, 107, 107, 0)');
+    this.ctx.fillStyle = glow;
+    this.ctx.beginPath();
+    this.ctx.arc(0, 0, 15, 0, Math.PI * 2);
+    this.ctx.fill();
+
+    // Heart shape
+    this.ctx.fillStyle = '#e63946';
+    this.ctx.beginPath();
+    this.ctx.moveTo(0, 6);
+    this.ctx.bezierCurveTo(-10, -8, -5, -12, 0, -4);
+    this.ctx.bezierCurveTo(5, -12, 10, -8, 0, 6);
+    this.ctx.fill();
+
+    this.ctx.restore();
+  }
+};
+
+/* ============================================
+   INITIALIZATION
+============================================ */
+
+// Wait for DOM to be fully loaded
+document.addEventListener('DOMContentLoaded', () => {
+  console.log('Pooh Honey Hunt - Initializing game...');
+  
+  // Create game instance
+  const game = new PoohHoneyHunt();
+  
+  // Debug helper
+  window.debugGame = () => {
+    console.log('=== GAME DEBUG INFO ===');
+    console.log('Running:', game.running);
+    console.log('Paused:', game.paused);
+    console.log('Score:', game.score);
+    console.log('Lives:', game.lives);
+    console.log('Current Character:', game.characterSystem.getCurrentCharacter().name);
+    console.log('Current Weather:', game.weatherSystem.currentWeather);
+    console.log('Weather Container Exists:', !!game.weatherSystem.weatherContainer);
+    console.log('Weather Particles:', game.weatherSystem.weatherContainer?.children.length || 0);
+    console.log('Achievements Unlocked:', game.achievementSystem.achievements.filter(a => a.unlocked).length);
+  };
+  
+  // Weather debug helper
+  window.testWeather = (type = 'rain') => {
+    console.log(`Testing weather: ${type}`);
+    game.weatherSystem.setWeather(type);
+  };
+  
+  // Handle visibility changes
+  document.addEventListener('visibilitychange', () => {
+    if (document.hidden && game.running && !game.paused) {
+      game.togglePause();
+    }
+  });
+  
+  // Handle beforeunload for cleanup
+  window.addEventListener('beforeunload', () => {
+    game.cleanup();
+  });
+  
+  // Test weather immediately on load
+  setTimeout(() => {
+    console.log('Game loaded successfully!');
+    console.log('Try clicking the weather buttons at the bottom to change weather effects!');
+    console.log('Type debugGame() in console for game info.');
+    console.log('Type testWeather("rain") to test rain effect.');
+  }, 1000);
+  
+  // Add some debugging buttons for easier testing (remove in production)
+  const debugDiv = document.createElement('div');
+  debugDiv.style.cssText = `
+    position: fixed;
+    bottom: 10px;
+    right: 10px;
+    z-index: 10000;
+    display: flex;
+    gap: 5px;
+    opacity: 0.7;
+  `;
+  
+  const debugBtn = document.createElement('button');
+  debugBtn.textContent = 'Debug';
+  debugBtn.style.cssText = `
+    background: #333;
+    color: white;
+    border: none;
+    padding: 5px 10px;
+    border-radius: 5px;
+    cursor: pointer;
+    font-size: 12px;
+  `;
+  debugBtn.onclick = () => window.debugGame();
+  
+  const rainBtn = document.createElement('button');
+  rainBtn.textContent = 'Rain';
+  rainBtn.style.cssText = debugBtn.style.cssText;
+  rainBtn.onclick = () => window.testWeather('rain');
+  
+  const snowBtn = document.createElement('button');
+  snowBtn.textContent = 'Snow';
+  snowBtn.style.cssText = debugBtn.style.cssText;
+  snowBtn.onclick = () => window.testWeather('snow');
+  
+  debugDiv.appendChild(debugBtn);
+  debugDiv.appendChild(rainBtn);
+  debugDiv.appendChild(snowBtn);
+  document.body.appendChild(debugDiv);
 });
+
+/* ============================================
+   GAME TIPS FOR PLAYERS
+============================================ */
+console.log(`
+🎮 POOH'S ENHANCED HONEY HUNT - TIPS 🎮
+========================================
+1. Click/tap to move Pooh around
+2. Catch honey pots for points
+3. Avoid bees - they cost lives
+4. Build streaks for bonus points!
+5. Golden honey pots are worth 3x!
+6. Try different characters:
+   • Pooh: Bigger catch radius
+   • Piglet: Faster movement
+   • Tigger: Can bounce bees
+   • Rabbit: Double combo points
+7. Change weather effects for fun!
+8. Unlock achievements as you play!
+
+Click "Start Game" to begin your honey hunt!
+`);
+
 </script>
 </body>
 </html>
-                        
