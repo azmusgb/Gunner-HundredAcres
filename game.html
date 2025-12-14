@@ -164,7 +164,28 @@
             0% { transform: translateY(-50px) translateX(0) rotate(0); }
             100% { transform: translateY(100vh) translateX(80px) rotate(720deg); }
         }
-
+/* GUARANTEED WORKING WEATHER ANIMATIONS */
+        @keyframes rainFall {
+            0% { transform: translateY(0); opacity: 0.8; }
+            70% { opacity: 0.7; }
+            100% { transform: translateY(100vh); opacity: 0; }
+        }
+        
+        @keyframes snowFall {
+            0% { transform: translateY(0) translateX(0); opacity: 0.9; }
+            50% { transform: translateY(50vh) translateX(50px); opacity: 0.7; }
+            100% { transform: translateY(100vh) translateX(100px); opacity: 0; }
+        }
+        
+        @keyframes leafFall {
+            0% { transform: translateY(0) translateX(0) rotate(0deg); opacity: 0.8; }
+            100% { transform: translateY(100vh) translateX(100px) rotate(360deg); opacity: 0; }
+        }
+        
+        @keyframes petalFall {
+            0% { transform: translateY(0) translateX(0) rotate(0deg); opacity: 0.8; }
+            100% { transform: translateY(100vh) translateX(80px) rotate(720deg); opacity: 0; }
+        }
         /* ===============================
            RESET & BASE STYLES
         ================================ */
@@ -3474,6 +3495,58 @@
         alert("Error loading game: " + error.message);
       }
     });
+    // Diagnostic test - run this in console after page loads
+window.testWeatherVisibility = function() {
+    console.log("=== WEATHER VISIBILITY DIAGNOSTIC ===");
+    
+    // 1. Check if container exists
+    const container = document.getElementById('weather-effects');
+    console.log("1. Container exists:", !!container);
+    if (container) {
+        console.log("   Container position:", container.style.position);
+        console.log("   Container z-index:", container.style.zIndex);
+        console.log("   Container display:", container.style.display);
+        console.log("   Container children:", container.children.length);
+        
+        // Check computed styles
+        const computed = window.getComputedStyle(container);
+        console.log("   Computed z-index:", computed.zIndex);
+        console.log("   Computed opacity:", computed.opacity);
+        console.log("   Computed visibility:", computed.visibility);
+    }
+    
+    // 2. Create a test particle that's guaranteed visible
+    const testParticle = document.createElement('div');
+    testParticle.style.cssText = `
+        position: fixed !important;
+        top: 100px !important;
+        left: 100px !important;
+        width: 50px !important;
+        height: 50px !important;
+        background: red !important;
+        z-index: 99999 !important;
+        border: 3px solid yellow !important;
+        animation: rainFall 2s linear infinite !important;
+    `;
+    document.body.appendChild(testParticle);
+    console.log("2. Added bright red test particle at (100px, 100px)");
+    
+    // 3. Check animation support
+    console.log("3. Animation test - you should see a red square falling");
+    
+    setTimeout(() => {
+        console.log("4. Removing test particle");
+        testParticle.remove();
+    }, 3000);
+};
+
+// Run diagnostic after 2 seconds
+setTimeout(() => {
+    if (window.gameEngine) {
+        console.log("=== RUNNING DIAGNOSTIC ===");
+        window.testWeatherVisibility();
+    }
+}, 2000);
     </script>
 </body>
 </html>
