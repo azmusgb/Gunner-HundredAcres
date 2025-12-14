@@ -2084,7 +2084,9 @@ class WeatherSystem {
 
   init() {
     this.loadWeather();
-    this.usedWeathers.add(this.currentWeather);
+    Object.keys(this.weatherTypes).forEach(w => {
+  if (w === this.currentWeather) this.usedWeathers.add(w);
+});
     this.updateWeatherUI();
     this.applyWeatherEffects();
     this.syncAchievements();
@@ -3308,7 +3310,7 @@ class PoohHoneyHunt {
     this.scoreEl.textContent = this.score;
     this.streakEl.textContent = this.streak;
     this.livesEl.textContent = this.lives;
-    this.achievementsCountEl.textContent = `${this.achievementSystem.achievements.filter(a => a.unlocked).length}/10`;
+    this.achievementsCountEl.textContent = `this.achievementSystem.updateDisplay();
   }
 
   /* ---------- endgame/persistence ---------- */
@@ -3392,7 +3394,11 @@ class PoohHoneyHunt {
 ============================================ */
 document.addEventListener('DOMContentLoaded', () => {
   const game = new PoohHoneyHunt();
-
+document.addEventListener('touchstart', () => {
+  if (window.gameEngine?.soundSystem?.audioContext?.state === 'suspended') {
+    window.gameEngine.soundSystem.audioContext.resume();
+  }
+}, { once: true });
   document.addEventListener('visibilitychange', () => {
     if (document.hidden && game.running && !game.paused) game.togglePause();
   });
