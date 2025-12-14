@@ -576,7 +576,10 @@ main#game-root {
       max-height: 100%;
       object-fit: contain;
     }
-
+/* Stop bobbing during gameplay (keeps it pretty in menu, stable in-game) */
+body.is-playing .game-container {
+  animation: none !important;
+}
     /* ===============================
        UNIVERSAL HIDE HELPERS
     ================================ */
@@ -3167,7 +3170,7 @@ function updateHUD() {
     player.y = canvas.height  - 120;
     player.wobble = 0;
     targetX = player.x;
-    
+    document.body.classList.add('is-playing');
     const character = CharacterSystem.getCurrentCharacter();
     player.radius = character.radius;
     
@@ -3199,7 +3202,7 @@ function updateHUD() {
     AchievementsSystem.gameState.bestStreak = Math.max(AchievementsSystem.gameState.bestStreak, bestStreak);
     AchievementsSystem.saveAchievements();
     AchievementsSystem.checkAchievements();
-    
+    document.body.classList.remove('is-playing');
     document.getElementById('final-score').textContent = score;
     document.getElementById('best-streak').textContent = bestStreak;
     document.getElementById('honey-caught').textContent = honeyCaught;
