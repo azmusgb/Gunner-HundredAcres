@@ -1673,6 +1673,36 @@
          #weather-effects > div {
             will-change: transform;
          }
+         /* ===============================
+   OVERLAY STACKING FIX (MOBILE)
+   - Ensures overlays truly sit on top
+   - Hides HUD/controls while overlay is open
+=============================== */
+
+/* Make overlays unambiguously topmost */
+.overlay,
+.character-select-overlay,
+.achievements-overlay {
+  z-index: 5000 !important; /* beats HUD (1200-1300) and weather (900) */
+}
+
+/* When any overlay is open, disable/hide HUD + controls */
+body.overlay-open .top-bar,
+body.overlay-open .sound-controls,
+body.overlay-open .share-btn,
+body.overlay-open .weather-controls,
+body.overlay-open .game-controls,
+body.overlay-open .honey-cursor {
+  opacity: 0 !important;
+  pointer-events: none !important;
+  transform: translateY(-6px);
+}
+
+/* Optional: prevent any accidental taps behind overlays */
+body.overlay-open #honey-game {
+  pointer-events: none;
+}
+         
       </style>
    </head>
 
@@ -3743,7 +3773,17 @@ WeatherSystem.init();
                lastTime = performance.now();
                requestAnimationFrame(loop);
             }
+function syncOverlayState() {
+  const anyOpen = [
+    startOverlay,
+    pauseOverlay,
+    gameoverOverlay,
+    characterSelectOverlay,
+    achievementsOverlay,
+  ].some(el => el && !el.classList.contains("hidden"));
 
+  document.body.classList.toggle("overlay-open", anyOpen);
+}
             function togglePause() {
                if (!running) return;
                paused = !paused;
@@ -3927,6 +3967,7 @@ WeatherSystem.init();
             CharacterSystem.selectCharacter("pooh");
             initBackground();
             updateHUD();
+            syncOverlayState();
          })();
       </script>
    </body>
