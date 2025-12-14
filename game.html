@@ -1,4 +1,4 @@
-#Need some layout improvements. <!DOCTYPE html>
+##Need some layout improvements. <!DOCTYPE html>
 <html lang="en">
 <head>
   <meta charset="UTF-8" />
@@ -1413,6 +1413,8 @@ main#game-root{
     max-height: calc(100dvh - (var(--hud-reserve) + 150px + var(--safe-top) + var(--safe-bottom)));
   }
 }
+#weather-effects { overflow: hidden; }
+#weather-effects > div { will-change: transform; }
   </style>
 </head>
 
@@ -2099,70 +2101,100 @@ petals: { name: 'Spring', icon: 'fas fa-spa', particles: 60, color: '#ffb7c5', a
     },
     
     updateBackgroundEffect: function() {
-        const weather = this.weatherTypes[this.currentWeather];
-        let weatherContainer = document.getElementById('weather-effects');
-        
-        // Remove old container if it exists
-        if (weatherContainer) {
-            weatherContainer.remove();
-        }
+  const weather = this.weatherTypes[this.currentWeather];
+  let weatherContainer = document.getElementById('weather-effects');
 
-        // Create new container only if weather is active
-        if (this.currentWeather !== 'none') {
-            weatherContainer = document.createElement('div');
-            weatherContainer.id = 'weather-effects';
-            weatherContainer.style.position = 'fixed';
-            weatherContainer.style.top = '0';
-            weatherContainer.style.left = '0';
-            weatherContainer.style.width = '100%';
-            weatherContainer.style.height = '100%';
-            weatherContainer.style.pointerEvents = 'none';
-weatherContainer.style.zIndex = '900'; // above canvas, below HUD (top-bar is 1200)
-            document.body.appendChild(weatherContainer);
+  // Remove old container if it exists
+  if (weatherContainer) weatherContainer.remove();
 
-            // Simple CSS-only particles for demonstration
-            const animationName = weather.animationClass + 'Fall';
-            const particleStyle = (color, size, clipPath = '50% 50%', borderRadius = '50%') => {
-                return `
-                    position: absolute;
-                    width: ${size}px;
-                    height: ${size}px;
-                    background-color: ${color};
-                    border-radius: ${borderRadius};
-                    clip-path: ${clipPath};
-                    opacity: 0.7;
-                    animation-name: ${animationName};
-                    animation-timing-function: linear;
-                    animation-iteration-count: infinite;
-                `;
-            };
+  // Create new container only if weather is active
+  if (this.currentWeather === 'none') return;
 
-            for(let i = 0; i < weather.particles; i++) {
-                const element = document.createElement('div');
-                const duration = `${10 + Math.random() * 20}s`;
-                const delay = `${Math.random() * 20}s`;
-                const left = `${Math.random() * 100}vw`;
-                const top = `${-30 - Math.random() * 60}px`; // start above the viewport
-                if (this.currentWeather === 'rain') {
-                    element.style.cssText = particleStyle(weather.color, 2, '50% 50%', '0%') + 
-                        `animation-duration: ${duration}; animation-delay: ${delay}; left: ${left};`;
-                    element.style.height = `${10 + Math.random() * 10}px`;
-                    element.style.transform = 'rotate(15deg)';
-                } else if (this.currentWeather === 'snow') {
-                    element.style.cssText = particleStyle(weather.color, 4 + Math.random() * 4, '50% 50%', '50%') + 
-                        `animation-duration: ${duration}; animation-delay: ${delay}; left: ${left};`;
-                } else if (this.currentWeather === 'leaves') {
-                    element.style.cssText = particleStyle(weather.color, 8 + Math.random() * 4, 'polygon(50% 0%, 100% 50%, 50% 100%, 0% 50%)', '0%') + 
-                        `animation-duration: ${duration}; animation-delay: ${delay}; left: ${left};`;
-                } else if (this.currentWeather === 'petals') {
-                    element.style.cssText = particleStyle(weather.color, 6 + Math.random() * 4, '50% 50%', '50% 50% 0 50%') + 
-                        `animation-duration: ${duration}; animation-delay: ${delay}; left: ${left}; transform: rotate(45deg);`;
-                }
-                
-                weatherContainer.appendChild(element);
-            }
-        }
-    },
+  weatherContainer = document.createElement('div');
+  weatherContainer.id = 'weather-effects';
+  weatherContainer.style.position = 'fixed';
+  weatherContainer.style.inset = '0';
+  weatherContainer.style.pointerEvents = 'none';
+  weatherContainer.style.zIndex = '900'; // above canvas, below HUD
+  weatherContainer.style.overflow = 'hidden';
+  document.body.appendChild(weatherContainer);
+
+  const animationName = `${weather.animationClass}Fall`;
+
+  // Small helper: build safe CSS without bogus clip-path for rain/snow
+  const baseStyle = (color, w, h, opts = {}) => {
+    const {
+      radius = '50%',
+      clipPath = null,
+      opacity = 0.75
+    } = opts;
+
+    return `
+      position:absolute;
+      width:${w}px;
+      height:${h}px;
+      left:0;
+      top:0;
+      background:${color};
+      opacity:${opacity};
+      border-radius:${radius};
+      ${clipPath ? `clip-path:${clipPath};` : ''}
+      animation-name:${animationName};
+      animation-timing-function:linear;
+      animation-iteration-count:infinite;
+      will-change:transform;
+    `;
+  };
+
+  for (let i = 0; i < weather.particles; i++) {
+    const el = document.createElement('div');
+
+    const dur = 8 + Math.random() * 18;
+    const delay = Math.random() * 10;
+    const left = Math.random() * 100; // vw
+    const topPx = -60 - Math.random() * 240; // IMPORTANT: start above viewport
+
+    // Defaults
+    el.style.left = `${left}vw`;
+    el.style.top = `${topPx}px`;
+    el.style.animationDuration = `${dur}s`;
+    el.style.animationDelay = `${delay}s`;
+
+    if (this.currentWeather === 'rain') {
+      const h = 14 + Math.random() * 18;
+      el.style.cssText += baseStyle(weather.color, 2, h, { radius: '0%', opacity: 0.65 });
+      el.style.transform = `rotate(15deg)`;
+    }
+
+    if (this.currentWeather === 'snow') {
+      const s = 3 + Math.random() * 5;
+      el.style.cssText += baseStyle('#ffffff', s, s, { radius: '50%', opacity: 0.85 });
+      // gentle drift
+      el.style.filter = 'drop-shadow(0 2px 2px rgba(0,0,0,0.15))';
+    }
+
+    if (this.currentWeather === 'leaves') {
+      const s = 8 + Math.random() * 10;
+      el.style.cssText += baseStyle(weather.color, s, s, {
+        radius: '0%',
+        clipPath: 'polygon(50% 0%, 100% 50%, 50% 100%, 0% 50%)',
+        opacity: 0.75
+      });
+      el.style.transform = `rotate(${Math.random() * 360}deg)`;
+    }
+
+    if (this.currentWeather === 'petals') {
+      const s = 6 + Math.random() * 8;
+      el.style.cssText += baseStyle(weather.color, s, s, {
+        radius: '50% 50% 0 50%',
+        opacity: 0.75
+      });
+      el.style.transform = `rotate(45deg)`;
+    }
+
+    weatherContainer.appendChild(el);
+  }
+},#
     
     setupEventListeners: function() {
       weatherBtns.forEach(btn => {
@@ -2449,12 +2481,6 @@ canvas.addEventListener('mousemove', (e) => {
 
 canvas.addEventListener('mouseleave', () => showCursor(false));
 
-  canvas.addEventListener('mousemove', (e) => {
-    const rect = canvas.getBoundingClientRect();
-    targetX = e.clientX - rect.left;
-    updateCursor(e.clientX, e.clientY);
-    showCursor(true);
-  });
 
   canvas.addEventListener('mouseleave', () => showCursor(false));
 
