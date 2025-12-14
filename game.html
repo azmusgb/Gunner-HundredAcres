@@ -271,7 +271,27 @@
       top: -30px;
       right: 20px;
     }
-
+/* FIX: initBackground creates cloud-3 but CSS didn't define it */
+.cloud-3{
+  width: 140px;
+  height: 55px;
+  top: 8%;
+  left: -160px;
+  animation-duration: 50s;
+  animation-delay: 4s;
+}
+.cloud-3::before{
+  width: 70px;
+  height: 70px;
+  top: -35px;
+  left: 18px;
+}
+.cloud-3::after{
+  width: 80px;
+  height: 55px;
+  top: -22px;
+  right: 18px;
+}
     .blossom {
       position: absolute;
       width: 12px;
@@ -451,16 +471,7 @@
       overflow: hidden;
     }
 
-    #honey-game::before {
-      content: '';
-      position: absolute;
-      inset: 0;
-      background: 
-        radial-gradient(circle at 20% 80%, rgba(255,255,255,0.1) 0%, transparent 50%),
-        radial-gradient(circle at 80% 20%, rgba(255,255,255,0.1) 0%, transparent 50%);
-      pointer-events: none;
-      z-index: 1;
-    }
+ 
 
     /* ===============================
        CUSTOM CURSOR
@@ -1165,7 +1176,24 @@
         padding: 20px;
         gap: 20px;
       }
-      
+      /* FIX: canvas can't render ::before — use the container instead */
+.game-container::before{
+  content:'';
+  position:absolute;
+  inset:8px;
+  border-radius: 22px;
+  background:
+    radial-gradient(circle at 20% 80%, rgba(255,255,255,0.12) 0%, transparent 55%),
+    radial-gradient(circle at 80% 20%, rgba(255,255,255,0.10) 0%, transparent 55%);
+  pointer-events:none;
+  z-index: 2;
+}
+
+/* Ensure canvas stays below the overlay highlight */
+#honey-game{
+  position: relative;
+  z-index: 1;
+}
       .overlay h1 {
         font-size: 2.5rem;
         margin-bottom: 4px;
@@ -1416,23 +1444,32 @@
     <h2>Oh Bother!</h2>
     <div class="final-score" id="final-score">0</div>
     <div class="stats-grid">
-      <div class="stat-box">
-        <div class="stat-box-label">Best Streak</div>
-        <div class="stat-box-value" id="best-streak">0</div>
-      </div>
-      <div class="stat-box">
-        <div class="stat-box-label">Pots Caught</div>
-        <div class="stat-box-value" id="honey-caught">0</div>
-      </div>
-      <div class="stat-box">
-        <div class="stat-box-label">Achievements</div>
-        <div class="stat-box-value" id="achievements-earned">0</div>
-      </div>
-      <div class="stat-box">
-        <div class="stat-box-label">High Score</div>
-        <div class="stat-box-value" id="high-score">0</div>
-      </div>
-    </div>
+  <div class="stat-box">
+    <div class="stat-box-label">Best Streak</div>
+    <div class="stat-box-value" id="best-streak">0</div>
+  </div>
+  <div class="stat-box">
+    <div class="stat-box-label">Pots Caught</div>
+    <div class="stat-box-value" id="honey-caught">0</div>
+  </div>
+
+  <!-- NEW: fixes missing #time-played that crashed endGame() -->
+  <div class="stat-box">
+    <div class="stat-box-label">Time Played</div>
+    <div class="stat-box-value" id="time-played">0s</div>
+  </div>
+
+  <div class="stat-box">
+    <div class="stat-box-label">High Score</div>
+    <div class="stat-box-value" id="high-score">0</div>
+  </div>
+
+  <!-- Keep Achievements if you want 5 boxes (it will wrap nicely on mobile) -->
+  <div class="stat-box">
+    <div class="stat-box-label">Achievements</div>
+    <div class="stat-box-value" id="achievements-earned">0</div>
+  </div>
+</div>
     <p class="pooh-quote">"A little Consideration, a little Thought for Others, makes all the difference."</p>
     <button class="btn" id="restart-btn">Play Again 🍯</button>
     <button class="btn btn-secondary" id="share-score-btn">
@@ -1482,7 +1519,7 @@
   const quitBtn = document.getElementById('quit-btn');
   const helpBtn = document.getElementById('help-btn');
   const achievementsBtn = document.getElementById('achievements-btn');
-  
+  const soundBtn = document.getElementById('sound-btn');
   const gameContainer = document.querySelector('.game-container');
   const backgroundLayer = document.getElementById('background-layer');
   const achievementsList = document.getElementById('achievements-list');
@@ -1880,12 +1917,22 @@
         this.currentWeather = weatherType;
         this.saveWeather();
         this.updateWeatherUI();
-        this.particles = [];
-        SoundSystem.play('click');
-        
-        if (!this.usedWeathers) this.usedWeathers = new Set();
-        this.usedWeathers.add(weatherType);
-        AchievementsSystem.gameState.weathersUsed = this.usedWeathers.size;
+this.particles = [];
+
+const weather = this.weatherTypes[this.currentWeather];
+if (weather.particles > 0) {
+  this.createParticles(weather.particles);
+} else {
+  // Optional cleanup when turning weather off
+  const container = document.getElementById('weather-effects');
+  if (container) container.remove();
+}
+
+SoundSystem.play('click');
+
+if (!this.usedWeathers) this.usedWeathers = new Set();
+this.usedWeathers.add(weatherType);
+AchievementsSystem.gameState.weathersUsed = this.usedWeathers.size;
       }
     },
     
@@ -2014,6 +2061,9 @@
     setupEventListeners: function() {
       shareBtn.addEventListener('click', () => this.shareGame());
       shareScoreBtn.addEventListener('click', () => this.shareScore());
+      soundBtn?.addEventListener('click', () => {
+  SoundSystem.toggle();
+});
     },
     
     shareGame: function() {
@@ -2269,13 +2319,11 @@
       AchievementsSystem.gameState.timePlayed = timePlayed;
       AchievementsSystem.gameState.highScore = Math.max(highScore, score);
       
-      if (lastStingTime === 0) {
-        lastStingTime = startTime;
-      }
-      AchievementsSystem.gameState.longestNoStingTime = Math.max(
-        AchievementsSystem.gameState.longestNoStingTime,
-        (Date.now() - lastStingTime) / 1000
-      );
+      const sinceLastSting = lastStingTime ? (Date.now() - lastStingTime) / 1000 : (Date.now() - startTime) / 1000;
+AchievementsSystem.gameState.longestNoStingTime = Math.max(
+  AchievementsSystem.gameState.longestNoStingTime,
+  sinceLastSting
+);
     }
     render();
     
@@ -2338,10 +2386,6 @@
         
         if (streak > bestStreak) bestStreak = streak;
         
-        AchievementsSystem.incrementGameState('totalHoneyCaught');
-        if (h.type === 'golden') {
-          AchievementsSystem.incrementGameState('goldenPotsCaught');
-        }
         
         createParticles(h.x, h.y, h.type === 'golden' ? '#ffd700' : '#ffa500', 
                        h.type === 'golden' ? 30 : 20, 'mixed');
@@ -2880,7 +2924,7 @@
     
     AchievementsSystem.gameState.highScore = highScore;
     AchievementsSystem.saveAchievements();
-    
+    AchievementsSystem.checkAchievements();
     document.getElementById('final-score').textContent = score;
     document.getElementById('best-streak').textContent = bestStreak;
     document.getElementById('honey-caught').textContent = honeyCaught;
