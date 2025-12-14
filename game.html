@@ -1092,11 +1092,11 @@
         /* ===============================
            WEATHER EFFECTS CONTAINER
         ================================ */
-        #weather-effects {
+#weather-effects {
     position: fixed;
     inset: 0;
     pointer-events: none;
-    z-index: 3000; /* above canvas, below overlays */
+    z-index: 3000;
     overflow: hidden;
 }
 
@@ -2129,48 +2129,52 @@ class WeatherSystem {
   }
 
   applyWeatherEffects() {
-if (!this.weatherContainer) {
-  this.weatherContainer = document.createElement('div');
-  this.weatherContainer.id = 'weather-effects';
-  document.body.appendChild(this.weatherContainer);
-}
-
-this.weatherContainer.innerHTML = '';
-
-    if (this.currentWeather === 'none') return;
-
-    const weather = this.weatherTypes[this.currentWeather];
-
-    this.weatherContainer = document.createElement('div');
-    this.weatherContainer.id = 'weather-effects';
-    document.body.appendChild(this.weatherContainer);
-
-    for (let i = 0; i < weather.particles; i++) {
-      const particle = document.createElement('div');
-
-      const duration = 8 + Math.random() * 18;
-      const delay = Math.random() * 10;
-      const left = Math.random() * 100;
-      const startY = -60 - Math.random() * 240;
-      const size = this.getParticleSize(this.currentWeather);
-
-      Object.assign(particle.style, {
-        position: 'absolute',
-        left: `${left}vw`,
-        top: `${startY}px`,
-        animationName: weather.animation,
-        animationDuration: `${duration}s`,
-        animationDelay: `${delay}s`,
-        animationTimingFunction: 'linear',
-        animationIterationCount: 'infinite',
-        willChange: 'transform'
-      });
-
-      this.applyParticleStyle(particle, this.currentWeather, size, weather.color);
-      this.weatherContainer.appendChild(particle);
+    // Create container if it doesn't exist
+    if (!this.weatherContainer) {
+        this.weatherContainer = document.createElement('div');
+        this.weatherContainer.id = 'weather-effects';
+        document.body.appendChild(this.weatherContainer);
     }
-  }
-
+    
+    // Clear existing weather particles
+    this.weatherContainer.innerHTML = '';
+    
+    if (this.currentWeather === 'none') {
+        // Optionally hide or keep container empty
+        this.weatherContainer.style.display = 'none';
+        return;
+    }
+    
+    // Show container
+    this.weatherContainer.style.display = 'block';
+    
+    const weather = this.weatherTypes[this.currentWeather];
+    
+    for (let i = 0; i < weather.particles; i++) {
+        const particle = document.createElement('div');
+        
+        const duration = 8 + Math.random() * 18;
+        const delay = Math.random() * 10;
+        const left = Math.random() * 100;
+        const startY = -60 - Math.random() * 240;
+        const size = this.getParticleSize(this.currentWeather);
+        
+        Object.assign(particle.style, {
+            position: 'absolute',
+            left: `${left}vw`,
+            top: `${startY}px`,
+            animationName: weather.animation,
+            animationDuration: `${duration}s`,
+            animationDelay: `${delay}s`,
+            animationTimingFunction: 'linear',
+            animationIterationCount: 'infinite',
+            willChange: 'transform'
+        });
+        
+        this.applyParticleStyle(particle, this.currentWeather, size, weather.color);
+        this.weatherContainer.appendChild(particle);
+    }
+}
   getParticleSize(type) {
     switch (type) {
       case 'rain': return { width: 2, height: 14 + Math.random() * 18 };
