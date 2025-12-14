@@ -1283,6 +1283,156 @@
     .game-controls .control-btn.sound {
         display: none;
     }
+    /* ===============================
+   LAYOUT + SCALING PATCH
+   (drop-in, paste near end of CSS)
+=============================== */
+
+:root{
+  --safe-top: env(safe-area-inset-top, 0px);
+  --safe-right: env(safe-area-inset-right, 0px);
+  --safe-bottom: env(safe-area-inset-bottom, 0px);
+  --safe-left: env(safe-area-inset-left, 0px);
+
+  /* Tunables */
+  --hud-gap: 12px;
+  --hud-top: calc(var(--safe-top) + 12px);
+  --hud-side: calc(var(--safe-left) + 12px);
+  --hud-side-r: calc(var(--safe-right) + 12px);
+
+  /* Target board size (CSS px) */
+  --board-max-w: 520px;
+  --board-min-w: 300px;
+}
+
+/* Make the app breathe with notches + home bar */
+main#game-root{
+  padding-top: calc(var(--safe-top) + 12px);
+  padding-left: calc(var(--safe-left) + 12px);
+  padding-right: calc(var(--safe-right) + 12px);
+  padding-bottom: calc(var(--safe-bottom) + 12px);
+  width: 100%;
+}
+
+/* Keep overlays reliably centered even on short screens */
+.overlay,
+.character-select-overlay,
+.achievements-overlay{
+  padding-top: calc(var(--safe-top) + 24px);
+  padding-bottom: calc(var(--safe-bottom) + 24px);
+}
+
+/* Put top HUD in a predictable place and let it wrap nicely */
+.top-bar{
+  position: fixed;
+  top: var(--hud-top);
+  left: 50%;
+  transform: translateX(-50%);
+  width: min(920px, calc(100vw - 24px - var(--safe-left) - var(--safe-right)));
+  max-width: 920px;
+  padding: 0;
+  gap: var(--hud-gap);
+  justify-content: center;
+  z-index: 1200; /* above board, below popups */
+  pointer-events: none; /* prevents accidental steals */
+}
+.top-bar .stat-card{
+  pointer-events: auto; /* but cards still clickable */
+}
+
+/* Corner controls: safe-area aware, don’t collide with top bar */
+.sound-controls{
+  position: fixed;
+  top: var(--hud-top);
+  left: var(--hud-side);
+  z-index: 1300;
+}
+.share-btn{
+  position: fixed;
+  top: var(--hud-top);
+  right: var(--hud-side-r);
+  z-index: 1300;
+}
+
+/* Controls cluster: float above home bar */
+.weather-controls{
+  position: fixed;
+  left: 50%;
+  transform: translateX(-50%);
+  bottom: calc(var(--safe-bottom) + 96px);
+  z-index: 1200;
+}
+.game-controls{
+  position: fixed;
+  left: 50%;
+  transform: translateX(-50%);
+  bottom: calc(var(--safe-bottom) + 18px);
+  z-index: 1200;
+}
+
+/* BOARD: scale responsively by width + aspect ratio */
+.game-container{
+  /* Keep the board centered below the HUD */
+  margin-top: calc(84px + var(--safe-top));
+  width: clamp(var(--board-min-w), 92vw, var(--board-max-w));
+  aspect-ratio: 420 / 700;
+  max-height: calc(100dvh - (220px + var(--safe-top) + var(--safe-bottom)));
+  height: auto;
+
+  /* No hover tricks on touch screens */
+  filter:
+    drop-shadow(0 25px 50px rgba(0,0,0,0.3))
+    drop-shadow(0 0 20px rgba(255, 215, 0, 0.2));
+}
+
+@media (hover: hover) and (pointer: fine){
+  .game-container:hover{
+    filter:
+      drop-shadow(0 25px 50px rgba(0,0,0,0.3))
+      drop-shadow(0 0 30px rgba(255, 215, 0, 0.4));
+  }
+}
+
+/* Canvas scales to container; drawing stays internal resolution (JS maps input) */
+#honey-game{
+  width: 100%;
+  height: 100%;
+  display: block;
+}
+
+/* Popups should position relative to the board */
+.game-container{
+  position: relative;
+}
+
+/* Mobile stat cards: less chunky, better wrap */
+@media (max-width: 768px){
+  .stat-card{
+    padding: 10px 14px;
+    border-radius: 18px;
+    min-width: 92px;
+  }
+  .stat-value{
+    font-size: 1.6rem;
+  }
+  .stat-label{
+    font-size: 0.7rem;
+  }
+
+  .weather-controls{
+    bottom: calc(var(--safe-bottom) + 88px);
+    padding: 10px;
+    gap: 10px;
+  }
+}
+
+/* Super-short screens: reduce spacing, keep board visible */
+@media (max-height: 700px){
+  .game-container{
+    margin-top: calc(70px + var(--safe-top));
+    max-height: calc(100dvh - (200px + var(--safe-top) + var(--safe-bottom)));
+  }
+}
   </style>
 </head>
 
@@ -2251,7 +2401,39 @@
   let targetX = player.x; // FIX: Initialize targetX
   let isDragging = false;
   const honeyCursor = document.getElementById('honey-cursor');
+  // ===============================
+  // CANVAS SCALE HELPERS (critical)
+  // ===============================
+  function getCanvasScale() {
+    const rect = canvas.getBoundingClientRect();
+    return {
+      rect,
+      sx: canvas.width / rect.width,
+      sy: canvas.height / rect.height,
+      cssX: rect.width / canvas.width,
+      cssY: rect.height / canvas.height
+    };
+  }
 
+  function clientToCanvasX(clientX) {
+    const { rect, sx } = getCanvasScale();
+    return (clientX - rect.left) * sx;
+  }
+
+  function clientToCanvasY(clientY) {
+    const { rect, sy } = getCanvasScale();
+    return (clientY - rect.top) * sy;
+  }
+
+  function canvasToCssX(x) {
+    const { cssX } = getCanvasScale();
+    return x * cssX;
+  }
+
+  function canvasToCssY(y) {
+    const { cssY } = getCanvasScale();
+    return y * cssY;
+  }
   canvas.addEventListener('touchstart', (e) => {
     e.preventDefault();
     isDragging = true;
