@@ -1284,8 +1284,9 @@ Need some layout improvements. <!DOCTYPE html>
         display: none;
     }
     /* ===============================
-   LAYOUT + SCALING PATCH
-   (drop-in, paste near end of CSS)
+   /* ===============================
+   LAYOUT + SCALING PATCH (v2)
+   Replace your current patch block
 =============================== */
 
 :root{
@@ -1294,53 +1295,52 @@ Need some layout improvements. <!DOCTYPE html>
   --safe-bottom: env(safe-area-inset-bottom, 0px);
   --safe-left: env(safe-area-inset-left, 0px);
 
-  /* Tunables */
-  --hud-gap: 12px;
-  --hud-top: calc(var(--safe-top) + 12px);
+  --hud-gap: 10px;
+  --hud-top: calc(var(--safe-top) + 10px);
   --hud-side: calc(var(--safe-left) + 12px);
   --hud-side-r: calc(var(--safe-right) + 12px);
 
-  /* Target board size (CSS px) */
   --board-max-w: 520px;
   --board-min-w: 300px;
+
+  /* Reserve space so the board never tucks under HUD */
+  --hud-reserve: 108px;
 }
 
-/* Make the app breathe with notches + home bar */
+/* Let the layout respect notch + home bar */
 main#game-root{
-  padding-top: calc(var(--safe-top) + 12px);
-  padding-left: calc(var(--safe-left) + 12px);
-  padding-right: calc(var(--safe-right) + 12px);
-  padding-bottom: calc(var(--safe-bottom) + 12px);
   width: 100%;
+  height: 100dvh;
+  padding-top: calc(var(--safe-top) + 10px);
+  padding-left: calc(var(--safe-left) + 10px);
+  padding-right: calc(var(--safe-right) + 10px);
+  padding-bottom: calc(var(--safe-bottom) + 10px);
 }
 
-/* Keep overlays reliably centered even on short screens */
+/* Overlays stay centered even on short screens */
 .overlay,
 .character-select-overlay,
 .achievements-overlay{
-  padding-top: calc(var(--safe-top) + 24px);
-  padding-bottom: calc(var(--safe-bottom) + 24px);
+  padding-top: calc(var(--safe-top) + 20px);
+  padding-bottom: calc(var(--safe-bottom) + 20px);
 }
 
-/* Put top HUD in a predictable place and let it wrap nicely */
+/* HUD pinned and “real” — doesn’t steal touches except where needed */
 .top-bar{
   position: fixed;
   top: var(--hud-top);
   left: 50%;
   transform: translateX(-50%);
   width: min(920px, calc(100vw - 24px - var(--safe-left) - var(--safe-right)));
-  max-width: 920px;
   padding: 0;
   gap: var(--hud-gap);
   justify-content: center;
-  z-index: 1200; /* above board, below popups */
-  pointer-events: none; /* prevents accidental steals */
+  z-index: 1200;
+  pointer-events: none;
 }
-.top-bar .stat-card{
-  pointer-events: auto; /* but cards still clickable */
-}
+.top-bar .stat-card{ pointer-events: auto; }
 
-/* Corner controls: safe-area aware, don’t collide with top bar */
+/* Corner controls: safe-area aware */
 .sound-controls{
   position: fixed;
   top: var(--hud-top);
@@ -1354,90 +1354,74 @@ main#game-root{
   z-index: 1300;
 }
 
-/* Controls cluster: float above home bar */
+/* Controls float above home bar */
 .weather-controls{
   position: fixed;
   left: 50%;
   transform: translateX(-50%);
-  bottom: calc(var(--safe-bottom) + 96px);
+  bottom: calc(var(--safe-bottom) + 88px);
   z-index: 1200;
 }
 .game-controls{
   position: fixed;
   left: 50%;
   transform: translateX(-50%);
-  bottom: calc(var(--safe-bottom) + 18px);
+  bottom: calc(var(--safe-bottom) + 16px);
   z-index: 1200;
 }
 
-/* BOARD: scale responsively by width + aspect ratio */
+/* BOARD: scale by width + available height */
 .game-container{
-  /* Keep the board centered below the HUD */
-  margin-top: calc(84px + var(--safe-top));
+  position: relative;
+  margin-top: calc(var(--hud-reserve) + var(--safe-top));
   width: clamp(var(--board-min-w), 92vw, var(--board-max-w));
   aspect-ratio: 420 / 700;
-  max-height: calc(100dvh - (220px + var(--safe-top) + var(--safe-bottom)));
   height: auto;
-
-  /* No hover tricks on touch screens */
-  filter:
-    drop-shadow(0 25px 50px rgba(0,0,0,0.3))
-    drop-shadow(0 0 20px rgba(255, 215, 0, 0.2));
+  max-height: calc(100dvh - (var(--hud-reserve) + 170px + var(--safe-top) + var(--safe-bottom)));
 }
 
-@media (hover: hover) and (pointer: fine){
-  .game-container:hover{
-    filter:
-      drop-shadow(0 25px 50px rgba(0,0,0,0.3))
-      drop-shadow(0 0 30px rgba(255, 215, 0, 0.4));
-  }
-}
-
-/* Canvas scales to container; drawing stays internal resolution (JS maps input) */
+/* Canvas fills container (visual scaling); logic stays in canvas pixels */
 #honey-game{
   width: 100%;
   height: 100%;
   display: block;
 }
 
-/* Popups should position relative to the board */
-.game-container{
-  position: relative;
-}
-
-/* Mobile stat cards: less chunky, better wrap */
+/* Mobile HUD cards: more compact */
 @media (max-width: 768px){
+  :root{ --hud-reserve: 120px; }
+
   .stat-card{
     padding: 10px 14px;
     border-radius: 18px;
     min-width: 92px;
   }
-  .stat-value{
-    font-size: 1.6rem;
-  }
-  .stat-label{
-    font-size: 0.7rem;
-  }
+  .stat-value{ font-size: 1.6rem; }
+  .stat-label{ font-size: 0.7rem; }
 
   .weather-controls{
-    bottom: calc(var(--safe-bottom) + 88px);
     padding: 10px;
     gap: 10px;
   }
 }
 
-/* Super-short screens: reduce spacing, keep board visible */
+/* Super-short screens: keep the board visible */
 @media (max-height: 700px){
+  :root{ --hud-reserve: 96px; }
   .game-container{
-    margin-top: calc(70px + var(--safe-top));
-    max-height: calc(100dvh - (200px + var(--safe-top) + var(--safe-bottom)));
+    margin-top: calc(var(--hud-reserve) + var(--safe-top));
+    max-height: calc(100dvh - (var(--hud-reserve) + 150px + var(--safe-top) + var(--safe-bottom)));
   }
 }
   </style>
 </head>
 
 <body>
-<div class="background-layer" id="background-layer"></div>
+<div class="background-layer" id="background-layer" aria-hidden="true">
+  <div class="cloud cloud-1"></div>
+  <div class="cloud cloud-2"></div>
+  <div class="cloud cloud-3"></div>
+</div>
 
 <div class="honey-cursor" id="honey-cursor">
   <div class="spoon"></div>
