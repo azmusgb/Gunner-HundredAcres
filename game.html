@@ -1070,22 +1070,21 @@
         /* ===============================
            WEATHER EFFECTS CONTAINER - FIXED
         ================================ */
-        #weather-effects {
-            position: fixed;
-            top: 0;
-            left: 0;
-            width: 100%;
-            height: 100%;
-            pointer-events: none;
-            z-index: 3000;
-            overflow: hidden;
-        }
+      /* WEATHER: clipped to gameplay window */
+#weather-effects{
+  position: absolute;
+  inset: 0;                 /* fill the game container */
+  pointer-events: none;
+  z-index: 20;              /* above canvas, below popups if you want */
+  overflow: hidden;         /* CLIPS particles */
+  border-radius: 28px;      /* match canvas radius */
+}
 
-        .weather-particle {
-            position: absolute;
-            will-change: transform;
-            pointer-events: none;
-        }
+/* make sure the container can clip children */
+.game-container{
+  overflow: hidden;
+  border-radius: 28px;
+}
 
         /* Specific weather particle styles */
         .rain-particle {
@@ -1475,6 +1474,8 @@
         <!-- Game canvas -->
         <div class="game-container">
             <canvas id="honey-game" width="420" height="700" role="img" aria-label="Pooh's Magical Honey Hunt game in the Hundred Acre Wood" aria-describedby="game-status"></canvas>
+            <!-- Weather effects container -->
+    <div id="weather-effects"></div>
         </div>
 
         <!-- Screen reader status -->
@@ -1567,8 +1568,7 @@
         </div>
     </main>
 
-    <!-- Weather effects container -->
-    <div id="weather-effects"></div>
+
 
     <script>
     // ============================================
@@ -2180,36 +2180,53 @@ class WeatherSystem {
     }
   }
 
-  createWeatherParticle(typeKey, w, index) {
-    const particle = document.createElement('div');
-    particle.className = `weather-particle ${w.class}`;
+createWeatherContainer() {
+  console.log("WeatherSystem: Creating container...");
 
-    const startX = Math.random() * 100;
-    const startY = -10 - Math.random() * 30;
-    const duration = (w.speed * (0.7 + Math.random() * 0.7)).toFixed(2);
-    const delay = (Math.random() * 3.5).toFixed(2);
-    const size = this.getParticleSize(typeKey);
-
-    Object.assign(particle.style, {
-      position: 'absolute',
-      left: `${startX}vw`,
-      top: `${startY}vh`,
-      width: `${size.width}px`,
-      height: `${size.height}px`,
-      pointerEvents: 'none',
-      willChange: 'transform',
-      // IMPORTANT: animation is assigned using the configured keyframes name
-      animation: `${w.animation} ${duration}s linear ${delay}s infinite`
-    });
-
-    // Small per-type tweaks (optional, but helps visibility)
-    if (typeKey === 'rain') particle.style.transform = 'rotate(12deg)';
-    if (typeKey === 'petals') particle.style.transform = 'rotate(35deg)';
-
-    this.weatherContainer.appendChild(particle);
-    this.particles.push(particle);
+  // Remove existing container (if any)
+  const existing = document.getElementById('weather-effects');
+  if (existing) {
+    existing.remove();
+    console.log("WeatherSystem: Removed existing container");
   }
 
+  // Create new container
+  this.weatherContainer = document.createElement('div');
+  this.weatherContainer.id = 'weather-effects';
+
+  // IMPORTANT: mount inside the gameplay window so it clips to the board
+  const host = document.querySelector('.game-container');
+  if (!host) {
+    console.warn("WeatherSystem: .game-container not found. Falling back to body (will not clip).");
+    document.body.appendChild(this.weatherContainer);
+  } else {
+    // Ensure host clips children
+    host.style.position = host.style.position || 'relative';
+    host.style.overflow = 'hidden';
+    host.style.borderRadius = host.style.borderRadius || '28px';
+
+    host.appendChild(this.weatherContainer);
+  }
+
+  // Style the container to fill the gameplay window
+  Object.assign(this.weatherContainer.style, {
+    position: 'absolute',
+    inset: '0',
+    width: '100%',
+    height: '100%',
+    pointerEvents: 'none',
+    zIndex: '20',          // above canvas, below popups (your popups are ~100+)
+    overflow: 'hidden',
+    display: 'block',
+    borderRadius: '28px'   // match the canvas radius / board radius
+  });
+
+  console.log("WeatherSystem: Container added to gameplay window");
+
+  // Optional: tiny debug label (remove later if you want)
+  // this.weatherContainer.innerHTML =
+  //   '<div style="position:absolute; top:10px; left:10px; color:white; background:rgba(0,0,0,.35); padding:4px 6px; border-radius:8px; font:12px/1.2 system-ui; z-index:9999;">Weather Layer</div>';
+}
   getParticleSize(typeKey) {
     switch (typeKey) {
       case 'rain':   return { width: 2, height: 18 + Math.random() * 18 };
@@ -2225,7 +2242,7 @@ class WeatherSystem {
         const s = 8 + Math.random() * 12;
         return { width: s, height: s };
       }
-      default: return { width: 6, height: 6 };
+      default: return {no width: 6, height: 6 };
     }
   }
 
