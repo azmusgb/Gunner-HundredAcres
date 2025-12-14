@@ -2418,215 +2418,205 @@
 
             CharacterSystem.init();
 
-            /* ===============================
-     FEATURE 4: WEATHER EFFECTS SYSTEM (Simplified to CSS/Game Logic)
-  ================================ */
-            const WeatherSystem = {
-               currentWeather: "none",
-               particles: [], // For the canvas, if we wanted to implement custom render
-               usedWeathers: new Set(),
-               weatherTypes: {
-                  none: {
-                     name: "Clear",
-                     icon: "fas fa-sun",
-                     particles: 0,
-                     animationClass: "",
-                  },
-                  rain: {
-                     name: "Rain",
-                     icon: "fas fa-cloud-rain",
-                     particles: 150,
-                     color: "#4d96ff",
-                     animationClass: "rain",
-                  },
-                  snow: {
-                     name: "Snow",
-                     icon: "fas fa-snowflake",
-                     particles: 100,
-                     color: "#ffffff",
-                     animationClass: "snow",
-                  },
-                  leaves: {
-                     name: "Autumn",
-                     icon: "fas fa-leaf",
-                     particles: 80,
-                     color: "#ff6b6b",
-                     animationClass: "leaf",
-                  },
-                  petals: {
-                     name: "Spring",
-                     icon: "fas fa-spa",
-                     particles: 60,
-                     color: "#ffb7c5",
-                     animationClass: "petal",
-                  },
-               },
+         /* ===============================
+   FEATURE 4: WEATHER EFFECTS SYSTEM
+   (FULL + FIXED)
+=============================== */
+const WeatherSystem = {
+  currentWeather: "none",
+  usedWeathers: new Set(),
 
-               init: function () {
-                  this.loadWeather();
-                  this.setupEventListeners();
-                  this.usedWeathers.add(this.currentWeather);
-                  AchievementsSystem.gameState.weathersUsed =
-                     this.usedWeathers.size;
-                  this.updateBackgroundEffect();
-               },
+  weatherTypes: {
+    none: {
+      name: "Clear",
+      icon: "fas fa-sun",
+      particles: 0,
+      animationClass: "",
+    },
+    rain: {
+      name: "Rain",
+      icon: "fas fa-cloud-rain",
+      particles: 160,
+      color: "#4d96ff",
+      animationClass: "rain",
+    },
+    snow: {
+      name: "Snow",
+      icon: "fas fa-snowflake",
+      particles: 120,
+      color: "#ffffff",
+      animationClass: "snow",
+    },
+    leaves: {
+      name: "Autumn",
+      icon: "fas fa-leaf",
+      particles: 90,
+      color: "#ff6b6b",
+      animationClass: "leaf",
+    },
+    petals: {
+      name: "Spring",
+      icon: "fas fa-spa",
+      particles: 70,
+      color: "#ffb7c5",
+      animationClass: "petal",
+    },
+  },
 
-               loadWeather: function () {
-                  const saved = localStorage.getItem("poohCurrentWeather");
-                  if (saved && this.weatherTypes[saved]) {
-                     this.currentWeather = saved;
-                  }
-                  this.updateWeatherUI();
-               },
+  init() {
+    this.loadWeather();
+    this.setupEventListeners();
 
-               saveWeather: function () {
-                  localStorage.setItem(
-                     "poohCurrentWeather",
-                     this.currentWeather,
-                  );
-               },
+    this.usedWeathers.add(this.currentWeather);
+    AchievementsSystem.gameState.weathersUsed = this.usedWeathers.size;
 
-               setWeather: function (weatherType) {
-                  if (this.weatherTypes[weatherType]) {
-                     this.currentWeather = weatherType;
-                     this.saveWeather();
-                     this.updateWeatherUI();
-                     this.updateBackgroundEffect();
-                     SoundSystem.play("click");
+    this.updateBackgroundEffect();
+  },
 
-                     this.usedWeathers.add(weatherType);
-                     AchievementsSystem.gameState.weathersUsed =
-                        this.usedWeathers.size;
-                     AchievementsSystem.checkAchievements();
-                  }
-               },
+  loadWeather() {
+    const saved = localStorage.getItem("poohCurrentWeather");
+    if (saved && this.weatherTypes[saved]) {
+      this.currentWeather = saved;
+    }
+    this.updateWeatherUI();
+  },
 
-               updateWeatherUI: function () {
-                  weatherBtns.forEach((btn) => {
-                     btn.classList.remove("active");
-                     if (btn.dataset.weather === this.currentWeather) {
-                        btn.classList.add("active");
-                     }
-                  });
-               },
+  saveWeather() {
+    localStorage.setItem("poohCurrentWeather", this.currentWeather);
+  },
 
-               updateBackgroundEffect: function () {
-                  const weather = this.weatherTypes[this.currentWeather];
-                  let weatherContainer =
-                     document.getElementById("weather-effects");
+  setWeather(weatherType) {
+    if (!this.weatherTypes[weatherType]) return;
 
-                  // Remove old container if it exists
-                  if (weatherContainer) weatherContainer.remove();
+    this.currentWeather = weatherType;
+    this.saveWeather();
+    this.updateWeatherUI();
+    this.updateBackgroundEffect();
 
-                  // Create new container only if weather is active
-                  if (this.currentWeather === "none") return;
+    SoundSystem.play("click");
 
-                  weatherContainer = document.createElement("div");
-                  weatherContainer.id = "weather-effects";
-                  weatherContainer.style.position = "fixed";
-                  weatherContainer.style.inset = "0";
-                  weatherContainer.style.pointerEvents = "none";
-                  weatherContainer.style.zIndex = "900"; // above canvas, below HUD
-                  weatherContainer.style.overflow = "hidden";
-                  document.body.appendChild(weatherContainer);
+    this.usedWeathers.add(weatherType);
+    AchievementsSystem.gameState.weathersUsed = this.usedWeathers.size;
+    AchievementsSystem.checkAchievements();
+  },
 
-                  const animationName = `${weather.animationClass}Fall`;
+  updateWeatherUI() {
+    weatherBtns.forEach((btn) => {
+      btn.classList.toggle(
+        "active",
+        btn.dataset.weather === this.currentWeather,
+      );
+    });
+  },
 
-                  // Small helper: build safe CSS without bogus clip-path for rain/snow
-                  const baseStyle = (color, w, h, opts = {}) => {
-                     const {
-                        radius = "50%",
-                        clipPath = null,
-                        opacity = 0.75,
-                     } = opts;
+  updateBackgroundEffect() {
+    const weather = this.weatherTypes[this.currentWeather];
+    let container = document.getElementById("weather-effects");
 
-                     return `
-      position:absolute;
-      width:${w}px;
-      height:${h}px;
-      left:0;
-      top:0;
-      background:${color};
-      opacity:${opacity};
-      border-radius:${radius};
-      ${clipPath ? `clip-path:${clipPath};` : ""}
-      animation-name:${animationName};
-      animation-timing-function:linear;
-      animation-iteration-count:infinite;
-      will-change:transform;
-    `;
-                  };
+    if (container) container.remove();
+    if (this.currentWeather === "none") return;
 
-                  for (let i = 0; i < weather.particles; i++) {
-                     const el = document.createElement("div");
+    container = document.createElement("div");
+    container.id = "weather-effects";
+    Object.assign(container.style, {
+      position: "fixed",
+      inset: "0",
+      pointerEvents: "none",
+      zIndex: "900", // above canvas, below HUD/overlays
+      overflow: "hidden",
+    });
+    document.body.appendChild(container);
 
-                     const dur = 8 + Math.random() * 18;
-                     const delay = Math.random() * 10;
-                     const left = Math.random() * 100; // vw
-                     const topPx = -60 - Math.random() * 240; // IMPORTANT: start above viewport
+    const animationName = `${weather.animationClass}Fall`;
 
-                     // Defaults
-                     el.style.left = `${left}vw`;
-                     el.style.top = `${topPx}px`;
-                     el.style.animationDuration = `${dur}s`;
-                     el.style.animationDelay = `${delay}s`;
+    // IMPORTANT: no left/top here — per-particle only
+    const baseStyle = (color, w, h, opts = {}) => {
+      const { radius = "50%", clipPath = "", opacity = 0.75 } = opts;
+      return `
+        position:absolute;
+        width:${w}px;
+        height:${h}px;
+        background:${color};
+        opacity:${opacity};
+        border-radius:${radius};
+        ${clipPath ? `clip-path:${clipPath};` : ""}
+        animation-name:${animationName};
+        animation-timing-function:linear;
+        animation-iteration-count:infinite;
+        will-change:transform;
+      `;
+    };
 
-                     if (this.currentWeather === "rain") {
-                        const h = 14 + Math.random() * 18;
-                        el.style.cssText += baseStyle(weather.color, 2, h, {
-                           radius: "0%",
-                           opacity: 0.65,
-                        });
-                        el.style.transform = `rotate(15deg)`;
-                     }
+    for (let i = 0; i < weather.particles; i++) {
+      const el = document.createElement("div");
 
-                     if (this.currentWeather === "snow") {
-                        const s = 3 + Math.random() * 5;
-                        el.style.cssText += baseStyle("#ffffff", s, s, {
-                           radius: "50%",
-                           opacity: 0.85,
-                        });
-                        // gentle drift
-                        el.style.filter =
-                           "drop-shadow(0 2px 2px rgba(0,0,0,0.15))";
-                     }
+      const duration = 8 + Math.random() * 18;
+      const delay = Math.random() * 10;
+      const left = Math.random() * 100;        // vw
+      const startY = -60 - Math.random() * 240;
 
-                     if (this.currentWeather === "leaves") {
-                        const s = 8 + Math.random() * 10;
-                        el.style.cssText += baseStyle(weather.color, s, s, {
-                           radius: "0%",
-                           clipPath:
-                              "polygon(50% 0%, 100% 50%, 50% 100%, 0% 50%)",
-                           opacity: 0.75,
-                        });
-                        el.style.transform = `rotate(${Math.random() * 360}deg)`;
-                     }
+      if (this.currentWeather === "rain") {
+        const h = 14 + Math.random() * 18;
+        el.style.cssText = baseStyle(weather.color, 2, h, {
+          radius: "0%",
+          opacity: 0.65,
+        });
+        el.style.transform = "rotate(15deg)";
+      }
 
-                     if (this.currentWeather === "petals") {
-                        const s = 6 + Math.random() * 8;
-                        el.style.cssText += baseStyle(weather.color, s, s, {
-                           radius: "50% 50% 0 50%",
-                           opacity: 0.75,
-                        });
-                        el.style.transform = `rotate(45deg)`;
-                     }
+      if (this.currentWeather === "snow") {
+        const s = 3 + Math.random() * 5;
+        el.style.cssText = baseStyle("#ffffff", s, s, {
+          radius: "50%",
+          opacity: 0.85,
+        });
+        el.style.filter =
+          "drop-shadow(0 2px 2px rgba(0,0,0,0.15))";
+      }
 
-                     weatherContainer.appendChild(el);
-                  }
-               },
+      if (this.currentWeather === "leaves") {
+        const s = 8 + Math.random() * 10;
+        el.style.cssText = baseStyle(weather.color, s, s, {
+          radius: "0%",
+          clipPath:
+            "polygon(50% 0%, 100% 50%, 50% 100%, 0% 50%)",
+          opacity: 0.75,
+        });
+        el.style.transform = `rotate(${Math.random() * 360}deg)`;
+      }
 
-               setupEventListeners: function () {
-                  weatherBtns.forEach((btn) => {
-                     btn.addEventListener("click", () => {
-                        this.setWeather(btn.dataset.weather);
-                     });
-                  });
-               },
-            };
+      if (this.currentWeather === "petals") {
+        const s = 6 + Math.random() * 8;
+        el.style.cssText = baseStyle(weather.color, s, s, {
+          radius: "50% 50% 0 50%",
+          opacity: 0.75,
+        });
+        el.style.transform = "rotate(45deg)";
+      }
 
-            WeatherSystem.init();
+      // Apply randomized placement AFTER cssText
+      el.style.left = `${left}vw`;
+      el.style.top = `${startY}px`;
+      el.style.animationDuration = `${duration}s`;
+      el.style.animationDelay = `${delay}s`;
 
-            /* ===============================
+      container.appendChild(el);
+    }
+  },
+
+  setupEventListeners() {
+    weatherBtns.forEach((btn) => {
+      btn.addEventListener("click", () => {
+        this.setWeather(btn.dataset.weather);
+      });
+    });
+  },
+};
+
+WeatherSystem.init();
+                  
+                  
+/* ===============================
      FEATURE 5: SHARE FUNCTIONALITY
   ================================ */
             const ShareSystem = {
