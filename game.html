@@ -1093,12 +1093,12 @@
            WEATHER EFFECTS CONTAINER
         ================================ */
         #weather-effects {
-            position: fixed;
-            inset: 0;
-            pointer-events: none;
-            z-index: 900;
-            overflow: hidden;
-        }
+    position: fixed;
+    inset: 0;
+    pointer-events: none;
+    z-index: 3000; /* above canvas, below overlays */
+    overflow: hidden;
+}
 
         /* ===============================
            OVERLAY STACKING
@@ -2129,8 +2129,13 @@ class WeatherSystem {
   }
 
   applyWeatherEffects() {
-    if (this.weatherContainer) this.weatherContainer.remove();
-    this.weatherContainer = null;
+if (!this.weatherContainer) {
+  this.weatherContainer = document.createElement('div');
+  this.weatherContainer.id = 'weather-effects';
+  document.body.appendChild(this.weatherContainer);
+}
+
+this.weatherContainer.innerHTML = '';
 
     if (this.currentWeather === 'none') return;
 
@@ -2177,35 +2182,39 @@ class WeatherSystem {
   }
 
   applyParticleStyle(p, type, size, color) {
-    switch (type) {
-      case 'rain':
-        p.style.cssText += `
-          width:${size.width}px;height:${size.height}px;background:${color};
-          border-radius:0%;opacity:0.65;transform:rotate(15deg);
-        `;
-        break;
-      case 'snow':
-        p.style.cssText += `
-          width:${size.width}px;height:${size.height}px;background:${color};
-          border-radius:50%;opacity:0.85;filter:drop-shadow(0 2px 2px rgba(0,0,0,0.15));
-        `;
-        break;
-      case 'leaves':
-        p.style.cssText += `
-          width:${size.width}px;height:${size.height}px;background:${color};
-          opacity:0.75;clip-path:polygon(50% 0%,100% 50%,50% 100%,0% 50%);
-          transform:rotate(${Math.random() * 360}deg);
-        `;
-        break;
-      case 'petals':
-        p.style.cssText += `
-          width:${size.width}px;height:${size.height}px;background:${color};
-          border-radius:50% 50% 0 50%;opacity:0.75;transform:rotate(45deg);
-        `;
-        break;
-    }
-  }
+  p.style.width = `${size.width}px`;
+  p.style.height = `${size.height}px`;
 
+  switch (type) {
+    case 'rain':
+      p.style.background = color;
+      p.style.opacity = '0.65';
+      p.style.transform = 'rotate(15deg)';
+      p.style.borderRadius = '0';
+      break;
+
+    case 'snow':
+      p.style.background = color;
+      p.style.opacity = '0.85';
+      p.style.borderRadius = '50%';
+      p.style.filter = 'drop-shadow(0 2px 2px rgba(0,0,0,0.15))';
+      break;
+
+    case 'leaves':
+      p.style.background = color;
+      p.style.opacity = '0.75';
+      p.style.clipPath = 'polygon(50% 0%,100% 50%,50% 100%,0% 50%)';
+      p.style.transform = `rotate(${Math.random() * 360}deg)`;
+      break;
+
+    case 'petals':
+      p.style.background = color;
+      p.style.opacity = '0.75';
+      p.style.borderRadius = '50% 50% 0 50%';
+      p.style.transform = 'rotate(45deg)';
+      break;
+  }
+}
   clear() {
     if (this.weatherContainer) this.weatherContainer.remove();
     this.weatherContainer = null;
