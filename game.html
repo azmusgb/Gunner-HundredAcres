@@ -1266,16 +1266,27 @@
             }
         }
 
-        /* ===============================
-           REDUCED MOTION
-        ================================ */
-        @media (prefers-reduced-motion: reduce) {
-            *, *::before, *::after {
-                animation-duration: 0.001ms !important;
-                animation-iteration-count: 1 !important;
-                transition-duration: 0.001ms !important;
-                scroll-behavior: auto !important;
-            }
+   /* ===============================
+   REDUCED MOTION (FIXED: don't kill weather)
+=============================== */
+@media (prefers-reduced-motion: reduce) {
+  /* Calm the big UI motion */
+  .game-container,
+  .cloud, .blossom, .butterfly,
+  .score-popup, .honey-word, .level-up-popup,
+  .achievement-popup,
+  .stat-card::before {
+    animation: none !important;
+    transition: none !important;
+  }
+
+  /* Keep weather visible and gently animated */
+  #weather-effects .weather-particle {
+    /* preserve the animation-name you set inline, just slow it down */
+    animation-duration: 7s !important;
+    animation-iteration-count: infinite !important;
+  }
+}
 
             .game-container {
                 animation: none !important;
