@@ -1793,123 +1793,142 @@ body.is-playing .game-container {
   </div>
 
 </main>
-<script>
+  <script>
 (() => {
   'use strict';
 
   /* =========================================================
-     VIEWPORT STABILITY (iOS SAFE)
-  ========================================================= */
-  function setAppHeight() {
-    document.documentElement.style.setProperty('--app-height', `${window.innerHeight}px`);
-  }
-  setAppHeight();
-  window.addEventListener('resize', setAppHeight, { passive: true });
-  window.addEventListener('orientationchange', () => setTimeout(setAppHeight, 50), { passive: true });
-
-  /* =========================================================
-     CANVAS
+     CANVAS + CONTEXT
   ========================================================= */
   const canvas = document.getElementById('honey-game');
   const ctx = canvas.getContext('2d', { alpha: false, desynchronized: true });
 
   /* =========================================================
-     UI
+     CACHED CANVAS METRICS (NO JITTER)
+  ========================================================= */
+  let rect = canvas.getBoundingClientRect();
+  let scaleX = canvas.width / rect.width;
+  let scaleY = canvas.height / rect.height;
+
+  function recalcCanvas() {
+    rect = canvas.getBoundingClientRect();
+    scaleX = canvas.width / rect.width;
+    scaleY = canvas.height / rect.height;
+  }
+  window.addEventListener('resize', recalcCanvas, { passive: true });
+  window.addEventListener('orientationchange', () => setTimeout(recalcCanvas, 250));
+
+  const toCanvasX = x => (x - rect.left) * scaleX;
+  const toCanvasY = y => (y - rect.top) * scaleY;
+
+  /* =========================================================
+     DOM
   ========================================================= */
   const scoreEl = document.getElementById('score');
   const streakEl = document.getElementById('streak');
   const livesEl = document.getElementById('lives');
+  const gameContainer = document.querySelector('.game-container');
 
   const startOverlay = document.getElementById('start-overlay');
   const pauseOverlay = document.getElementById('pause-overlay');
   const gameoverOverlay = document.getElementById('gameover-overlay');
-
-  const startBtn = document.getElementById('start-btn');
-  const restartBtn = document.getElementById('restart-btn');
-  const pauseBtn = document.getElementById('pause-btn');
-  const resumeBtn = document.getElementById('resume-btn');
-  const quitBtn = document.getElementById('quit-btn');
-
-  const gameContainer = document.querySelector('.game-container');
-  const honeyCursor = document.getElementById('honey-cursor');
 
   /* =========================================================
      GAME STATE
   ========================================================= */
   let running = false;
   let paused = false;
-  let lastTime = 0;
 
   let score = 0;
   let streak = 0;
   let bestStreak = 0;
   let lives = 3;
 
+  let timePlayed = 0;
+  let lastStingTime = 0;
+
   /* =========================================================
-     PLAYER
+     FIXED TIMESTEP LOOP
+  ========================================================= */
+  const FIXED_DT = 1 / 60;
+  let accumulator = 0;
+  let lastFrame = performance.now();
+
+  /* =========================================================
+     PLAYER (CRITICALLY DAMPED)
   ========================================================= */
   const player = {
     x: canvas.width / 2,
-    y: canvas.height - 120,
-    radius: 34
+    y: canvas.height - 70,
+    vx: 0,
+    radius: 32
   };
+
   let targetX = player.x;
+
+  function updatePlayer(dt) {
+    const character = CharacterSystem.getCurrentCharacter();
+    player.radius = character.radius;
+
+    const stiffness = 60 * character.speed;
+    const damping = 16;
+
+    const dx = targetX - player.x;
+    const accel = stiffness * dx - damping * player.vx;
+
+    player.vx += accel * dt;
+    player.x += player.vx * dt;
+
+    player.x = Math.max(
+      player.radius,
+      Math.min(canvas.width - player.radius, player.x)
+    );
+  }
+
+  /* =========================================================
+     INPUT — POINTER EVENTS (ONE PATH)
+  ========================================================= */
+  let pointerDown = false;
+
+  canvas.addEventListener('pointerdown', e => {
+    pointerDown = true;
+    targetX = toCanvasX(e.clientX);
+    canvas.setPointerCapture(e.pointerId);
+  });
+
+  canvas.addEventListener('pointermove', e => {
+    if (!pointerDown) return;
+    targetX = toCanvasX(e.clientX);
+  });
+
+  canvas.addEventListener('pointerup', e => {
+    pointerDown = false;
+    canvas.releasePointerCapture(e.pointerId);
+  });
+
+  canvas.addEventListener('pointercancel', () => pointerDown = false);
+
+  window.addEventListener('keydown', e => {
+    if (e.key === 'ArrowLeft') targetX -= 70;
+    if (e.key === 'ArrowRight') targetX += 70;
+    if (e.key === ' ' || e.key === 'Escape') togglePause();
+  });
 
   /* =========================================================
      OBJECTS
   ========================================================= */
   const honeys = [];
   const bees = [];
-  const particles = [];
 
-  /* =========================================================
-     SCALE CACHE (NO INPUT JITTER)
-  ========================================================= */
-  let scale;
-  function refreshScale() {
-    const r = canvas.getBoundingClientRect();
-    scale = {
-      rect: r,
-      sx: canvas.width / r.width,
-      sy: canvas.height / r.height
-    };
-  }
-  refreshScale();
-  window.addEventListener('resize', refreshScale, { passive: true });
+  let honeyTimer = 0;
+  let beeTimer = 0;
 
-  const toCanvasX = x => (x - scale.rect.left) * scale.sx;
-
-  /* =========================================================
-     INPUT
-  ========================================================= */
-  canvas.addEventListener('mousemove', e => {
-    targetX = toCanvasX(e.clientX);
-    honeyCursor.style.left = `${e.clientX}px`;
-    honeyCursor.style.top = `${e.clientY}px`;
-    if (running && !paused) honeyCursor.classList.add('active');
-  });
-
-  canvas.addEventListener('mouseleave', () => honeyCursor.classList.remove('active'));
-
-  canvas.addEventListener('touchstart', e => {
-    e.preventDefault();
-    targetX = toCanvasX(e.touches[0].clientX);
-  }, { passive: false });
-
-  canvas.addEventListener('touchmove', e => {
-    e.preventDefault();
-    targetX = toCanvasX(e.touches[0].clientX);
-  }, { passive: false });
-
-  /* =========================================================
-     SPAWNERS
-  ========================================================= */
   function spawnHoney() {
     honeys.push({
-      x: 30 + Math.random() * (canvas.width - 60),
-      y: -30,
-      vy: 120 + Math.random() * 80,
-      golden: Math.random() < 0.08
+      x: 40 + Math.random() * (canvas.width - 80),
+      y: -40,
+      vy: 160 + score / 80,
+      golden: Math.random() < 0.05
     });
   }
 
@@ -1917,104 +1936,76 @@ body.is-playing .game-container {
     const left = Math.random() < 0.5;
     bees.push({
       x: left ? -40 : canvas.width + 40,
-      y: 60 + Math.random() * 300,
-      vx: left ? 140 : -140,
-      vy: (Math.random() - 0.5) * 40
+      y: 80 + Math.random() * 300,
+      vx: left ? 220 : -220
     });
   }
 
   /* =========================================================
-     PARTICLES
+     UPDATE (FIXED STEP)
   ========================================================= */
-  function spawnParticles(x, y, color, count = 12) {
-    for (let i = 0; i < count; i++) {
-      particles.push({
-        x, y,
-        vx: (Math.random() - 0.5) * 200,
-        vy: (Math.random() - 1) * 200,
-        life: 1,
-        color
-      });
-    }
-  }
-
-  /* =========================================================
-     UPDATE
-  ========================================================= */
-  let honeyTimer = 0;
-  let beeTimer = 0;
-
-  function update(dt) {
-    // Player (frame-rate independent)
-    const follow = 1 - Math.pow(0.00006, dt);
-    player.x += (targetX - player.x) * follow;
-    player.x = Math.max(player.radius, Math.min(canvas.width - player.radius, player.x));
+  function fixedUpdate(dt) {
+    updatePlayer(dt);
 
     honeyTimer += dt;
     beeTimer += dt;
 
-    if (honeyTimer > 0.9) {
+    if (honeyTimer >= Math.max(0.45, 1 - score / 4000)) {
       spawnHoney();
       honeyTimer = 0;
     }
 
-    if (beeTimer > 2.4) {
+    if (beeTimer >= Math.max(1.5, 3 - score / 3000)) {
       spawnBee();
       beeTimer = 0;
     }
 
-    // Honeys
     for (let i = honeys.length - 1; i >= 0; i--) {
       const h = honeys[i];
       h.y += h.vy * dt;
 
-      if (Math.hypot(h.x - player.x, h.y - player.y) < player.radius + 20) {
-        const pts = h.golden ? 30 : 10;
-        score += pts;
+      const dx = h.x - player.x;
+      const dy = h.y - player.y;
+      if (dx * dx + dy * dy < (player.radius + 22) ** 2) {
+        const points = h.golden ? 30 : 10;
+        score += points;
         streak++;
         bestStreak = Math.max(bestStreak, streak);
-        spawnParticles(h.x, h.y, h.golden ? '#ffd700' : '#ffa500');
         honeys.splice(i, 1);
+        updateHUD();
         continue;
       }
 
-      if (h.y > canvas.height + 40) {
+      if (h.y > canvas.height + 60) {
         streak = 0;
         honeys.splice(i, 1);
+        updateHUD();
       }
     }
 
-    // Bees
     for (let i = bees.length - 1; i >= 0; i--) {
       const b = bees[i];
       b.x += b.vx * dt;
-      b.y += b.vy * dt;
 
-      if (Math.hypot(b.x - player.x, b.y - player.y) < player.radius + 18) {
+      const dx = b.x - player.x;
+      const dy = b.y - player.y;
+      if (dx * dx + dy * dy < (player.radius + 18) ** 2) {
         lives--;
         streak = 0;
-        spawnParticles(player.x, player.y, '#000', 18);
+        lastStingTime = performance.now();
         bees.splice(i, 1);
+        updateHUD();
+
         if (lives <= 0) endGame();
         continue;
       }
 
-      if (b.x < -100 || b.x > canvas.width + 100) {
+      if (b.x < -120 || b.x > canvas.width + 120) {
         bees.splice(i, 1);
       }
     }
 
-    // Particles
-    for (let i = particles.length - 1; i >= 0; i--) {
-      const p = particles[i];
-      p.x += p.vx * dt;
-      p.y += p.vy * dt;
-      p.vy += 400 * dt;
-      p.life -= dt * 2;
-      if (p.life <= 0) particles.splice(i, 1);
-    }
-
-    updateHUD();
+    timePlayed += dt;
   }
 
   /* =========================================================
@@ -2023,54 +2014,52 @@ body.is-playing .game-container {
   function render() {
     ctx.clearRect(0, 0, canvas.width, canvas.height);
 
-    ctx.fillStyle = '#87ceeb';
-    ctx.fillRect(0, 0, canvas.width, canvas.height);
-
-    // Player
+    // Pooh
     ctx.fillStyle = '#d4a574';
     ctx.beginPath();
     ctx.arc(player.x, player.y, player.radius, 0, Math.PI * 2);
     ctx.fill();
 
-    // Honey
-    honeys.forEach(h => {
+    // Honeys
+    for (const h of honeys) {
       ctx.fillStyle = h.golden ? '#ffd700' : '#ffa500';
       ctx.beginPath();
       ctx.arc(h.x, h.y, 14, 0, Math.PI * 2);
       ctx.fill();
-    });
+    }
 
     // Bees
     ctx.fillStyle = '#000';
-    bees.forEach(b => {
+    for (const b of bees) {
       ctx.beginPath();
       ctx.arc(b.x, b.y, 12, 0, Math.PI * 2);
       ctx.fill();
-    });
-
-    // Particles
-    particles.forEach(p => {
-      ctx.globalAlpha = p.life;
-      ctx.fillStyle = p.color;
-      ctx.fillRect(p.x, p.y, 4, 4);
-    });
-    ctx.globalAlpha = 1;
+    }
   }
 
   /* =========================================================
-     LOOP
+     GAME LOOP
   ========================================================= */
-  function loop(now) {
+  function frame(now) {
     if (!running) return;
-    const dt = Math.min((now - lastTime) / 1000, 0.033);
-    lastTime = now;
-    if (!paused) update(dt);
+
+    let delta = (now - lastFrame) / 1000;
+    lastFrame = now;
+
+    delta = Math.min(delta, 0.25);
+    accumulator += delta;
+
+    while (accumulator >= FIXED_DT) {
+      if (!paused) fixedUpdate(FIXED_DT);
+      accumulator -= FIXED_DT;
+    }
+
     render();
-    requestAnimationFrame(loop);
+    requestAnimationFrame(frame);
   }
 
   /* =========================================================
-     HUD
+     UI
   ========================================================= */
   function updateHUD() {
     scoreEl.textContent = score;
@@ -2078,52 +2067,60 @@ body.is-playing .game-container {
     livesEl.textContent = lives;
   }
 
-  /* =========================================================
-     GAME CONTROL
-  ========================================================= */
-  function startGame() {
-    document.body.classList.add('is-playing');
-    running = true;
-    paused = false;
-    score = streak = bestStreak = 0;
-    lives = 3;
-    honeys.length = bees.length = particles.length = 0;
-    startOverlay.classList.add('hidden');
-    gameoverOverlay.classList.add('hidden');
-    updateHUD();
-    lastTime = performance.now();
-    requestAnimationFrame(loop);
-  }
-
-  function endGame() {
-    running = false;
-    document.body.classList.remove('is-playing');
-    gameoverOverlay.classList.remove('hidden');
-  }
-
   function togglePause() {
     if (!running) return;
     paused = !paused;
     pauseOverlay.classList.toggle('hidden', !paused);
+    gameContainer.style.animationPlayState = paused ? 'running' : 'paused';
+  }
+
+  function startGame() {
+    startOverlay.classList.add('hidden');
+    gameoverOverlay.classList.add('hidden');
+    pauseOverlay.classList.add('hidden');
+
+    score = 0;
+    streak = 0;
+    bestStreak = 0;
+    lives = 3;
+    timePlayed = 0;
+
+    honeys.length = 0;
+    bees.length = 0;
+    accumulator = 0;
+
+    player.x = canvas.width / 2;
+    player.vx = 0;
+    targetX = player.x;
+
+    running = true;
+    paused = false;
+
+    gameContainer.style.animationPlayState = 'paused';
+    updateHUD();
+
+    lastFrame = performance.now();
+    requestAnimationFrame(frame);
+  }
+
+  function endGame() {
+    running = false;
+    gameContainer.style.animationPlayState = 'running';
+    gameoverOverlay.classList.remove('hidden');
   }
 
   /* =========================================================
      EVENTS
   ========================================================= */
-  startBtn.addEventListener('click', startGame);
-  restartBtn.addEventListener('click', startGame);
-  pauseBtn.addEventListener('click', togglePause);
-  resumeBtn.addEventListener('click', togglePause);
+  document.getElementById('start-btn')?.addEventListener('click', startGame);
+  document.getElementById('restart-btn')?.addEventListener('click', startGame);
+  document.getElementById('pause-btn')?.addEventListener('click', togglePause);
+  document.getElementById('resume-btn')?.addEventListener('click', togglePause);
 
-  quitBtn.addEventListener('click', () => {
-    running = false;
-    paused = false;
-    document.body.classList.remove('is-playing');
-    pauseOverlay.classList.add('hidden');
-    startOverlay.classList.remove('hidden');
-  });
-
+  recalcCanvas();
+  updateHUD();
 })();
-    </script>
+</script>
+
 </body>
 </html>
