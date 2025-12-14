@@ -458,30 +458,47 @@
     /* ===============================
        GAME CONTAINER - IMPROVED RESPONSIVE SCALING
     ================================ */
-    .game-container {
-      position: relative;
-      animation: float 6s ease-in-out infinite;
-      filter: 
-        drop-shadow(0 25px 50px rgba(0,0,0,0.3))
-        drop-shadow(0 0 20px rgba(255, 215, 0, 0.2));
-      transition: filter 0.3s ease;
-      margin-top: var(--game-margin-top);
-      margin-bottom: var(--game-margin-bottom);
-      width: 95%;
-      max-width: var(--game-max-width);
-      aspect-ratio: 3/4;
-      max-height: 65vh;
-      display: flex;
-      align-items: center;
-      justify-content: center;
-      flex-shrink: 0;
-    }
+  /* ===============================
+   GAME CONTAINER — FIXED LAYOUT + SAFE HUD SPACE
+================================ */
+.game-container {
+  position: relative;
+  animation: float 6s ease-in-out infinite;
+  filter:
+    drop-shadow(0 25px 50px rgba(0,0,0,0.3))
+    drop-shadow(0 0 20px rgba(255, 215, 0, 0.2));
+  transition: filter 0.3s ease;
 
-    .game-container:hover {
-      filter: 
-        drop-shadow(0 25px 50px rgba(0,0,0,0.3))
-        drop-shadow(0 0 30px rgba(255, 215, 0, 0.4));
-    }
+  /* Center + size */
+  width: min(95vw, var(--game-max-width));
+  aspect-ratio: 3 / 4;
+
+  /* KEY FIX: make the canvas always fit between the fixed HUD elements */
+  margin-top: calc(var(--safe-top) + 8px + var(--header-height) + 12px);
+  margin-bottom: calc(var(--safe-bottom) + 20px + var(--controls-height) + 90px);
+
+  /* This prevents “bottom clipped character” on short screens */
+  height: min(
+    70vh,
+    calc(100vh - (var(--safe-top) + var(--safe-bottom) + var(--header-height) + var(--controls-height) + 140px))
+  );
+
+  display: flex;
+  align-items: center;
+  justify-content: center;
+
+  /* Allow shrink when screen is tiny (prevents overflow hidden cutting the bottom) */
+  flex: 1 1 auto;
+  min-height: 260px;
+  max-height: 72vh;
+}
+
+.game-container:hover {
+  filter:
+    drop-shadow(0 25px 50px rgba(0,0,0,0.3))
+    drop-shadow(0 0 30px rgba(255, 215, 0, 0.4));
+}
+
     
     .game-container::before {
       content:'';
@@ -3086,6 +3103,7 @@
     spawnTimer = 0;
     beeSpawnTimer = 0;
     player.x = canvas.width / 2;
+    player.y = canvas.height  - 120;
     player.wobble = 0;
     targetX = player.x;
     
