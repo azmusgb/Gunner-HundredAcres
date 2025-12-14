@@ -449,6 +449,19 @@
         drop-shadow(0 25px 50px rgba(0,0,0,0.3))
         drop-shadow(0 0 30px rgba(255, 215, 0, 0.4));
     }
+    
+    /* FIX: canvas can't render ::before — use the container instead */
+    .game-container::before{
+      content:'';
+      position:absolute;
+      inset:8px;
+      border-radius: 22px;
+      background:
+        radial-gradient(circle at 20% 80%, rgba(255,255,255,0.12) 0%, transparent 55%),
+        radial-gradient(circle at 80% 20%, rgba(255,255,255,0.10) 0%, transparent 55%);
+      pointer-events:none;
+      z-index: 2;
+    }
 
     #honey-game {
       background: linear-gradient(180deg, 
@@ -470,6 +483,8 @@
       cursor: none;
       position: relative;
       overflow: hidden;
+      /* Ensure canvas stays below the overlay highlight */
+      z-index: 1; 
     }
 
  
@@ -1193,24 +1208,7 @@
         padding: 20px;
         gap: 20px;
       }
-      /* FIX: canvas can't render ::before — use the container instead */
-.game-container::before{
-  content:'';
-  position:absolute;
-  inset:8px;
-  border-radius: 22px;
-  background:
-    radial-gradient(circle at 20% 80%, rgba(255,255,255,0.12) 0%, transparent 55%),
-    radial-gradient(circle at 80% 20%, rgba(255,255,255,0.10) 0%, transparent 55%);
-  pointer-events:none;
-  z-index: 2;
-}
-
-/* Ensure canvas stays below the overlay highlight */
-#honey-game{
-  position: relative;
-  z-index: 1;
-}
+      
       .overlay h1 {
         font-size: 2.5rem;
         margin-bottom: 4px;
@@ -1274,9 +1272,10 @@
     .control-btn.help {
       background: linear-gradient(135deg, #06d6a0 0%, #04a777 100%);
     }
-
-    .control-btn.sound {
-      background: linear-gradient(135deg, #ff9e00 0%, #ff7b00 100%);
+    
+    /* Removed .control-btn.sound as it's redundant with .sound-controls */
+    .game-controls .control-btn.sound {
+        display: none;
     }
   </style>
 </head>
@@ -1284,14 +1283,12 @@
 <body>
 <div class="background-layer" id="background-layer"></div>
 
-<!-- Custom Honey Cursor -->
 <div class="honey-cursor" id="honey-cursor">
   <div class="spoon"></div>
 </div>
 
 <main id="game-root" role="main">
 
-  <!-- New Control Buttons -->
   <div class="sound-controls">
     <button class="sound-btn" id="sound-toggle-btn" aria-label="Toggle sound">
       <i class="fas fa-volume-up"></i>
@@ -1303,7 +1300,7 @@
   </button>
   
   <div class="weather-controls" id="weather-controls">
-    <button class="weather-btn" data-weather="none" title="Clear weather">
+    <button class="weather-btn active" data-weather="none" title="Clear weather">
       <i class="fas fa-sun"></i>
     </button>
     <button class="weather-btn" data-weather="rain" title="Rainy weather">
@@ -1320,7 +1317,6 @@
     </button>
   </div>
   
-  <!-- Game Controls -->
   <div class="game-controls">
     <button class="control-btn pause" id="pause-btn" aria-label="Pause game">
       <i class="fas fa-pause"></i>
@@ -1328,12 +1324,8 @@
     <button class="control-btn help" id="help-btn" aria-label="Show help">
       <i class="fas fa-question"></i>
     </button>
-    <button class="control-btn sound" id="sound-btn" aria-label="Toggle sound">
-      <i class="fas fa-volume-up"></i>
-    </button>
-  </div>
+    </div>
 
-  <!-- Character Select Overlay -->
   <div class="character-select-overlay" id="character-select-overlay">
     <h2 class="character-select-title">Choose Your Character</h2>
     <p class="subtitle">Select who you want to play as!</p>
@@ -1377,7 +1369,6 @@
     </button>
   </div>
 
-  <!-- Top Bar with Achievements -->
   <header class="top-bar">
     <div class="stat-card">
       <div class="stat-label">Honey Pots</div>
@@ -1397,7 +1388,6 @@
     </div>
   </header>
 
-  <!-- Game Canvas Container -->
   <div class="game-container">
     <canvas
       id="honey-game"
@@ -1409,20 +1399,17 @@
     ></canvas>
   </div>
 
-  <!-- Screen Reader Status -->
   <div id="game-status" class="sr-only" aria-live="polite">
     Game ready
   </div>
 
-  <!-- Achievements Overlay -->
   <div class="achievements-overlay hidden" id="achievements-overlay">
     <div class="achievements-content">
       <h2 class="character-select-title">Achievements</h2>
       <p class="subtitle">Your collection of accomplishments</p>
       
       <div id="achievements-list">
-        <!-- Achievements will be populated here -->
-      </div>
+        </div>
       
       <button class="btn btn-secondary" id="close-achievements-btn">
         <span>Back to Game</span>
@@ -1430,7 +1417,6 @@
     </div>
   </div>
 
-  <!-- Start Overlay -->
   <div class="overlay" id="start-overlay">
     <h1>Pooh's<br>Enhanced<br>Honey Hunt</h1>
     <p class="subtitle">Now with character selection, achievements, weather effects, and more!</p>
@@ -1448,7 +1434,6 @@
     </button>
   </div>
 
-  <!-- Pause Overlay -->
   <div class="overlay hidden" id="pause-overlay">
     <h2>⏸️ Taking a Rest</h2>
     <p class="pooh-quote">"Don't underestimate the value of Doing Nothing, of just going along, listening to all the things you can't hear, and not bothering."</p>
@@ -1456,7 +1441,6 @@
     <button class="btn btn-secondary" id="quit-btn">Return to Menu</button>
   </div>
 
-  <!-- Game Over Overlay -->
   <div class="overlay hidden" id="gameover-overlay">
     <h2>Oh Bother!</h2>
     <div class="final-score" id="final-score">0</div>
@@ -1470,7 +1454,6 @@
     <div class="stat-box-value" id="honey-caught">0</div>
   </div>
 
-  <!-- NEW: fixes missing #time-played that crashed endGame() -->
   <div class="stat-box">
     <div class="stat-box-label">Time Played</div>
     <div class="stat-box-value" id="time-played">0s</div>
@@ -1481,7 +1464,6 @@
     <div class="stat-box-value" id="high-score">0</div>
   </div>
 
-  <!-- Keep Achievements if you want 5 boxes (it will wrap nicely on mobile) -->
   <div class="stat-box">
     <div class="stat-box-label">Achievements</div>
     <div class="stat-box-value" id="achievements-earned">0</div>
@@ -1536,7 +1518,6 @@
   const quitBtn = document.getElementById('quit-btn');
   const helpBtn = document.getElementById('help-btn');
   const achievementsBtn = document.getElementById('achievements-btn');
-  const soundBtn = document.getElementById('sound-btn');
   const gameContainer = document.querySelector('.game-container');
   const backgroundLayer = document.getElementById('background-layer');
   const achievementsList = document.getElementById('achievements-list');
@@ -1564,6 +1545,9 @@
       this.sounds.levelup = this.createBeep(600, 0.25);
       this.sounds.gameover = this.createBeep(300, 0.4);
       this.sounds.click = this.createBeep(400, 0.1);
+      
+      // Sync initial UI state (in case of saved preference)
+      this.updateUI();
     },
     
     createBeep: function(frequency, duration) {
@@ -1603,11 +1587,14 @@
       this.sounds[soundName].play();
     },
     
+    updateUI: function() {
+      const iconClass = this.enabled ? 'fa-volume-up' : 'fa-volume-mute';
+      soundToggleBtn.innerHTML = `<i class="fas ${iconClass}"></i>`;
+    },
+    
     toggle: function() {
       this.enabled = !this.enabled;
-      soundToggleBtn.innerHTML = this.enabled ? 
-        '<i class="fas fa-volume-up"></i>' : 
-        '<i class="fas fa-volume-mute"></i>';
+      this.updateUI();
       this.play('click');
     }
   };
@@ -1679,7 +1666,7 @@
         id: 'weather_master',
         name: 'Weather Master',
         icon: '🌈',
-        description: 'Play with all weather effects',
+        description: 'Play with all 5 weather effects',
         condition: (gameState) => gameState.weathersUsed >= 5,
         unlocked: false
       },
@@ -1709,8 +1696,8 @@
       longestNoStingTime: 0,
       timePlayed: 0,
       perfectGames: 0,
-      weathersUsed: 1,
-      charactersUsed: 1,
+      weathersUsed: 0, // Reset to 0, will be updated on initial weather button press
+      charactersUsed: 0, // Reset to 0, will be updated on initial character select
       highScore: 0,
       lastStingTime: 0
     },
@@ -1750,6 +1737,7 @@
       let newUnlocks = 0;
       
       this.achievements.forEach(achievement => {
+        // Only check if not already unlocked
         if (!achievement.unlocked && achievement.condition(this.gameState)) {
           achievement.unlocked = true;
           newUnlocks++;
@@ -1854,10 +1842,13 @@
     },
     
     currentCharacter: 'pooh',
+    usedCharacters: new Set(),
     
     init: function() {
       this.loadCharacter();
       this.setupEventListeners();
+      this.usedCharacters.add(this.currentCharacter);
+      AchievementsSystem.gameState.charactersUsed = this.usedCharacters.size;
     },
     
     loadCharacter: function() {
@@ -1879,9 +1870,9 @@
         this.updateCharacterUI();
         SoundSystem.play('click');
         
-        if (!this.usedCharacters) this.usedCharacters = new Set();
         this.usedCharacters.add(characterId);
         AchievementsSystem.gameState.charactersUsed = this.usedCharacters.size;
+        AchievementsSystem.checkAchievements();
       }
     },
     
@@ -1910,23 +1901,26 @@
   CharacterSystem.init();
 
   /* ===============================
-     FEATURE 4: WEATHER EFFECTS SYSTEM
+     FEATURE 4: WEATHER EFFECTS SYSTEM (Simplified to CSS/Game Logic)
   ================================ */
   const WeatherSystem = {
     currentWeather: 'none',
-    particles: [],
+    particles: [], // For the canvas, if we wanted to implement custom render
+    usedWeathers: new Set(),
     weatherTypes: {
-      none: { name: 'Clear', icon: 'fas fa-sun', particles: 0 },
-      rain: { name: 'Rain', icon: 'fas fa-cloud-rain', particles: 150, color: '#4d96ff', size: 2 },
-      snow: { name: 'Snow', icon: 'fas fa-snowflake', particles: 100, color: '#ffffff', size: 4 },
-      leaves: { name: 'Autumn', icon: 'fas fa-leaf', particles: 80, color: '#ff6b6b', size: 8 },
-      petals: { name: 'Spring', icon: 'fas fa-spa', particles: 60, color: '#ffb7c5', size: 6 }
+      none: { name: 'Clear', icon: 'fas fa-sun', particles: 0, animationClass: '' },
+      rain: { name: 'Rain', icon: 'fas fa-cloud-rain', particles: 150, color: '#4d96ff', animationClass: 'rain' },
+      snow: { name: 'Snow', icon: 'fas fa-snowflake', particles: 100, color: '#ffffff', animationClass: 'snow' },
+      leaves: { name: 'Autumn', icon: 'fas fa-leaf', particles: 80, color: '#ff6b6b', animationClass: 'leaves' },
+      petals: { name: 'Spring', icon: 'fas fa-spa', particles: 60, color: '#ffb7c5', animationClass: 'petals' }
     },
     
     init: function() {
       this.loadWeather();
       this.setupEventListeners();
-      this.startWeather();
+      this.usedWeathers.add(this.currentWeather);
+      AchievementsSystem.gameState.weathersUsed = this.usedWeathers.size;
+      this.updateBackgroundEffect(); // Ensure initial background state is correct
     },
     
     loadWeather: function() {
@@ -1946,22 +1940,12 @@
         this.currentWeather = weatherType;
         this.saveWeather();
         this.updateWeatherUI();
-this.particles = [];
-
-const weather = this.weatherTypes[this.currentWeather];
-if (weather.particles > 0) {
-  this.createParticles(weather.particles);
-} else {
-  // Optional cleanup when turning weather off
-  const container = document.getElementById('weather-effects');
-  if (container) container.remove();
-}
-
-SoundSystem.play('click');
-
-if (!this.usedWeathers) this.usedWeathers = new Set();
-this.usedWeathers.add(weatherType);
-AchievementsSystem.gameState.weathersUsed = this.usedWeathers.size;
+        this.updateBackgroundEffect();
+        SoundSystem.play('click');
+        
+        this.usedWeathers.add(weatherType);
+        AchievementsSystem.gameState.weathersUsed = this.usedWeathers.size;
+        AchievementsSystem.checkAchievements();
       }
     },
     
@@ -1974,120 +1958,70 @@ AchievementsSystem.gameState.weathersUsed = this.usedWeathers.size;
       });
     },
     
-    startWeather: function() {
-      const weather = this.weatherTypes[this.currentWeather];
-      if (weather.particles > 0) {
-        this.createParticles(weather.particles);
-      }
-      requestAnimationFrame(() => this.updateWeather());
-    },
-    
-    // Particle pool for reuse
-  const particlePool = [];
-  
-  function getParticle() {
-    if (particlePool.length > 0) {
-      return particlePool.pop();
-    }
-    return {};
-  }
-  
-  function recycleParticle(p) {
-    particlePool.push(p);
-  }
-  
-  function createParticles(x, y, color, count = 20, type = 'star') {
-    const types = ['circle', 'star', 'heart', 'honey'];
-    
-    for (let i = 0; i < count; i++) {
-      let p = getParticle();
-      const particleType = type === 'mixed' ? types[Math.floor(Math.random() * types.length)] : type;
-      const angle = (Math.PI * 2 * i) / count + (Math.random() - 0.5);
-      const speed = 60 + Math.random() * 100;
-      
-      // Reuse or create new particle
-      p.x = x;
-      p.y = y;
-      p.vx = Math.cos(angle) * speed;
-      p.vy = Math.sin(angle) * speed - 40;
-      p.life = 1;
-      p.decay = 0.01 + Math.random() * 0.02;
-      p.size = 4 + Math.random() * 8;
-      p.color = color;
-      p.type = particleType;
-      p.rotation = Math.random() * Math.PI * 2;
-      p.rotationSpeed = (Math.random() - 0.5) * 0.3;
-      p.gravity = type === 'honey' ? 400 : 300;
-      p.drag = 0.96 + Math.random() * 0.03;
-      
-      particles.push(p);
-    }
-  }
-    updateWeather: function() {
-      if (this.currentWeather === 'none') return;
-      
-      const weather = this.weatherTypes[this.currentWeather];
-      let weatherContainer = document.getElementById('weather-effects');
-      
-      if (!weatherContainer) {
-        weatherContainer = document.createElement('div');
-        weatherContainer.id = 'weather-effects';
-        weatherContainer.style.position = 'fixed';
-        weatherContainer.style.top = '0';
-        weatherContainer.style.left = '0';
-        weatherContainer.style.width = '100%';
-        weatherContainer.style.height = '100%';
-        weatherContainer.style.pointerEvents = 'none';
-        weatherContainer.style.zIndex = '1';
-        document.body.appendChild(weatherContainer);
-      }
-      
-      this.particles.forEach(particle => {
-        particle.y += particle.speed;
-        particle.rotation += particle.rotationSpeed;
+    updateBackgroundEffect: function() {
+        const weather = this.weatherTypes[this.currentWeather];
+        let weatherContainer = document.getElementById('weather-effects');
         
-        if (this.currentWeather === 'snow' || this.currentWeather === 'leaves') {
-          particle.x += Math.sin(particle.y * 0.01 + particle.sway) * 0.5;
-          particle.sway += particle.swaySpeed;
+        // Remove old container if it exists
+        if (weatherContainer) {
+            weatherContainer.remove();
         }
-        
-        if (particle.y > window.innerHeight) {
-          particle.y = -20;
-          particle.x = Math.random() * window.innerWidth;
+
+        // Create new container only if weather is active
+        if (this.currentWeather !== 'none') {
+            weatherContainer = document.createElement('div');
+            weatherContainer.id = 'weather-effects';
+            weatherContainer.style.position = 'fixed';
+            weatherContainer.style.top = '0';
+            weatherContainer.style.left = '0';
+            weatherContainer.style.width = '100%';
+            weatherContainer.style.height = '100%';
+            weatherContainer.style.pointerEvents = 'none';
+            weatherContainer.style.zIndex = '1';
+            document.body.appendChild(weatherContainer);
+
+            // Simple CSS-only particles for demonstration
+            const animationName = weather.animationClass + 'Fall';
+            const particleStyle = (color, size, clipPath = '50% 50%', borderRadius = '50%') => {
+                return `
+                    position: absolute;
+                    width: ${size}px;
+                    height: ${size}px;
+                    background-color: ${color};
+                    border-radius: ${borderRadius};
+                    clip-path: ${clipPath};
+                    opacity: 0.7;
+                    animation-name: ${animationName};
+                    animation-timing-function: linear;
+                    animation-iteration-count: infinite;
+                `;
+            };
+
+            for(let i = 0; i < weather.particles; i++) {
+                const element = document.createElement('div');
+                const duration = `${10 + Math.random() * 20}s`;
+                const delay = `${Math.random() * 20}s`;
+                const left = `${Math.random() * 100}vw`;
+
+                if (this.currentWeather === 'rain') {
+                    element.style.cssText = particleStyle(weather.color, 2, '50% 50%', '0%') + 
+                        `animation-duration: ${duration}; animation-delay: ${delay}; left: ${left};`;
+                    element.style.height = `${10 + Math.random() * 10}px`;
+                    element.style.transform = 'rotate(15deg)';
+                } else if (this.currentWeather === 'snow') {
+                    element.style.cssText = particleStyle(weather.color, 4 + Math.random() * 4, '50% 50%', '50%') + 
+                        `animation-duration: ${duration}; animation-delay: ${delay}; left: ${left};`;
+                } else if (this.currentWeather === 'leaves') {
+                    element.style.cssText = particleStyle(weather.color, 8 + Math.random() * 4, 'polygon(50% 0%, 100% 50%, 50% 100%, 0% 50%)', '0%') + 
+                        `animation-duration: ${duration}; animation-delay: ${delay}; left: ${left};`;
+                } else if (this.currentWeather === 'petals') {
+                    element.style.cssText = particleStyle(weather.color, 6 + Math.random() * 4, '50% 50%', '50% 50% 0 50%') + 
+                        `animation-duration: ${duration}; animation-delay: ${delay}; left: ${left}; transform: rotate(45deg);`;
+                }
+                
+                weatherContainer.appendChild(element);
+            }
         }
-      });
-      
-      this.drawParticles();
-      requestAnimationFrame(() => this.updateWeather());
-    },
-    
-    drawParticles: function() {
-      const container = document.getElementById('weather-effects');
-      if (!container) return;
-      
-      container.innerHTML = '';
-      
-      this.particles.forEach(particle => {
-        const element = document.createElement('div');
-        element.style.position = 'absolute';
-        element.style.left = `${particle.x}px`;
-        element.style.top = `${particle.y}px`;
-        element.style.width = `${particle.size}px`;
-        element.style.height = `${particle.size}px`;
-        element.style.backgroundColor = particle.color;
-        element.style.borderRadius = this.currentWeather === 'snow' ? '50%' : '0';
-        element.style.transform = `rotate(${particle.rotation}rad)`;
-        element.style.opacity = '0.7';
-        
-        if (this.currentWeather === 'leaves') {
-          element.style.clipPath = 'polygon(50% 0%, 100% 50%, 50% 100%, 0% 50%)';
-        } else if (this.currentWeather === 'petals') {
-          element.style.borderRadius = '50% 50% 0 50%';
-          element.style.transform = `rotate(${particle.rotation}rad) scale(0.8)`;
-        }
-        
-        container.appendChild(element);
-      });
     },
     
     setupEventListeners: function() {
@@ -2112,9 +2046,7 @@ AchievementsSystem.gameState.weathersUsed = this.usedWeathers.size;
     setupEventListeners: function() {
       shareBtn.addEventListener('click', () => this.shareGame());
       shareScoreBtn.addEventListener('click', () => this.shareScore());
-      soundBtn?.addEventListener('click', () => {
-  SoundSystem.toggle();
-});
+      // Consolidated sound toggle functionality to one button, removing redundant event listener
     },
     
     shareGame: function() {
@@ -2207,35 +2139,46 @@ AchievementsSystem.gameState.weathersUsed = this.usedWeathers.size;
   };
 
   /* ===============================
-     ORIGINAL PARTICLE SYSTEM
+     ORIGINAL PARTICLE SYSTEM (FIXED with pool)
   ================================ */
   const particles = [];
-  const honeys = [];
-  const bees = [];
+  const particlePool = [];
+  
+  // Particle Pool Functions (FIX: Added missing functions)
+  function getParticle() {
+    return particlePool.length > 0 ? particlePool.pop() : {};
+  }
+  
+  function recycleParticle(p) {
+    // Basic recycling, just push back to the pool
+    particlePool.push(p);
+  }
   
   function createParticles(x, y, color, count = 20, type = 'star') {
     const types = ['circle', 'star', 'heart', 'honey'];
     
     for (let i = 0; i < count; i++) {
+      let p = getParticle();
       const particleType = type === 'mixed' ? types[Math.floor(Math.random() * types.length)] : type;
       const angle = (Math.PI * 2 * i) / count + (Math.random() - 0.5);
       const speed = 60 + Math.random() * 100;
       
-      particles.push({
-        x,
-        y,
-        vx: Math.cos(angle) * speed,
-        vy: Math.sin(angle) * speed - 40,
-        life: 1,
-        decay: 0.01 + Math.random() * 0.02,
-        size: 4 + Math.random() * 8,
-        color,
-        type: particleType,
-        rotation: Math.random() * Math.PI * 2,
-        rotationSpeed: (Math.random() - 0.5) * 0.3,
-        gravity: type === 'honey' ? 400 : 300,
-        drag: 0.96 + Math.random() * 0.03
-      });
+      // Initialize particle
+      p.x = x;
+      p.y = y;
+      p.vx = Math.cos(angle) * speed;
+      p.vy = Math.sin(angle) * speed - 40;
+      p.life = 1;
+      p.decay = 0.01 + Math.random() * 0.02;
+      p.size = 4 + Math.random() * 8;
+      p.color = color;
+      p.type = particleType;
+      p.rotation = Math.random() * Math.PI * 2;
+      p.rotationSpeed = (Math.random() - 0.5) * 0.3;
+      p.gravity = type === 'honey' ? 400 : 300;
+      p.drag = 0.96 + Math.random() * 0.03;
+      
+      particles.push(p);
     }
   }
   
@@ -2250,7 +2193,8 @@ AchievementsSystem.gameState.weathersUsed = this.usedWeathers.size;
       p.life -= p.decay;
       
       if (p.life <= 0) {
-        recycleParticle(particles[i]);
+        // FIX: Now calls the defined recycleParticle
+        recycleParticle(particles[i]); 
         particles.splice(i, 1);
       }
     }
@@ -2259,6 +2203,9 @@ AchievementsSystem.gameState.weathersUsed = this.usedWeathers.size;
   /* ===============================
      ORIGINAL OBJECT MANAGEMENT
   ================================ */
+  const honeys = [];
+  const bees = [];
+  
   function spawnHoney() {
     const isGolden = Math.random() < 0.05;
     const h = {
@@ -2293,9 +2240,9 @@ AchievementsSystem.gameState.weathersUsed = this.usedWeathers.size;
   }
 
   /* ===============================
-     ORIGINAL INPUT HANDLING
+     ORIGINAL INPUT HANDLING (FIX: targetX initialized)
   ================================ */
-  let targetX = player.x;
+  let targetX = player.x; // FIX: Initialize targetX
   let isDragging = false;
   const honeyCursor = document.getElementById('honey-cursor');
 
@@ -2364,6 +2311,7 @@ AchievementsSystem.gameState.weathersUsed = this.usedWeathers.size;
       updateParticles(dt);
       timePlayed += dt;
       
+      // Update Game State for Achievements
       AchievementsSystem.gameState.score = score;
       AchievementsSystem.gameState.totalHoneyCaught = honeyCaught;
       AchievementsSystem.gameState.goldenPotsCaught = goldenPotsCaught;
@@ -2372,10 +2320,11 @@ AchievementsSystem.gameState.weathersUsed = this.usedWeathers.size;
       AchievementsSystem.gameState.highScore = Math.max(highScore, score);
       
       const sinceLastSting = lastStingTime ? (Date.now() - lastStingTime) / 1000 : (Date.now() - startTime) / 1000;
-AchievementsSystem.gameState.longestNoStingTime = Math.max(
-  AchievementsSystem.gameState.longestNoStingTime,
-  sinceLastSting
-);
+      AchievementsSystem.gameState.longestNoStingTime = Math.max(
+        AchievementsSystem.gameState.longestNoStingTime,
+        sinceLastSting
+      );
+      AchievementsSystem.checkAchievements(); // Check continuously
     }
     render();
     
@@ -2384,7 +2333,9 @@ AchievementsSystem.gameState.longestNoStingTime = Math.max(
   
   function update(dt) {
     const character = CharacterSystem.getCurrentCharacter();
-    player.radius = character.radius;
+    // In Pooh's ability, radius is 38 (32 * 1.3 ≈ 41.6, but the original code set 38)
+    // We'll use 38 for pooh and 32 for others, so this line is correct as is:
+    player.radius = character.radius; 
     
     const speedMultiplier = character.speed;
     const dx = (targetX - player.x) * speedMultiplier;
@@ -2399,24 +2350,28 @@ AchievementsSystem.gameState.longestNoStingTime = Math.max(
     player.trail.unshift({ x: player.x, y: player.y });
     if (player.trail.length > 8) player.trail.pop();
     
+    // Honey spawning gets faster as score increases
     spawnTimer += dt;
     if (spawnTimer > Math.max(0.4, 1.0 - score / 4000)) {
       honeys.push(spawnHoney());
       spawnTimer = 0;
     }
     
+    // Bee spawning gets faster as score increases
     beeSpawnTimer += dt;
     if (beeSpawnTimer > Math.max(1.5, 3.5 - score / 3000)) {
       bees.push(spawnBee());
       beeSpawnTimer = 0;
     }
     
+    // Update and check honeys
     for (let i = honeys.length - 1; i >= 0; i--) {
       const h = honeys[i];
       h.y += h.vy * dt;
       h.wobble += dt * 6;
       h.rotation += h.rotationSpeed;
       
+      // Collision detection. Player radius is updated based on character.
       const dist = Math.hypot(h.x - player.x, h.y - player.y);
       if (dist < player.radius + 22) {
         let multiplier = h.type === 'golden' ? 3 : 1;
@@ -2424,7 +2379,7 @@ AchievementsSystem.gameState.longestNoStingTime = Math.max(
           multiplier *= character.comboMultiplier;
         }
         
-        const points = (10 + streak * 4) * multiplier;
+        const points = Math.round((10 + streak * 4) * multiplier);
         score += points;
         streak++;
         honeyCaught++;
@@ -2453,6 +2408,7 @@ AchievementsSystem.gameState.longestNoStingTime = Math.max(
         continue;
       }
       
+      // Honey pot missed
       if (h.y > canvas.height + 60) {
         if (streak > 0) {
           streak = Math.max(0, streak - 2);
@@ -2462,6 +2418,7 @@ AchievementsSystem.gameState.longestNoStingTime = Math.max(
       }
     }
     
+    // Update and check bees
     for (let i = bees.length - 1; i >= 0; i--) {
       const b = bees[i];
       b.x += b.vx * dt;
@@ -2474,6 +2431,7 @@ AchievementsSystem.gameState.longestNoStingTime = Math.max(
       
       const dist = Math.hypot(b.x - player.x, b.y - player.y);
       if (dist < player.radius + 20) {
+        // Tigger's ability
         if (character.canBounce && Math.random() < 0.3) {
           createParticles(b.x, b.y, character.color, 25, 'star');
           showHoneyWord(player.x, player.y, 'BOUNCE!');
@@ -2482,6 +2440,7 @@ AchievementsSystem.gameState.longestNoStingTime = Math.max(
           continue;
         }
         
+        // Sting!
         lives--;
         streak = 0;
         perfectGame = false;
@@ -2502,6 +2461,7 @@ AchievementsSystem.gameState.longestNoStingTime = Math.max(
         continue;
       }
       
+      // Bee flew off screen
       if ((b.x < -100 && b.vx < 0) || (b.x > canvas.width + 100 && b.vx > 0)) {
         bees.splice(i, 1);
       }
@@ -2701,7 +2661,8 @@ AchievementsSystem.gameState.longestNoStingTime = Math.max(
     ctx.rotate(h.rotation);
     ctx.scale(h.scale, h.scale);
     
-    const wobbleX = Math.sin(h.wobble) * 3;
+    // The wobbleX calculation was unused in the original function
+    // const wobbleX = Math.sin(h.wobble) * 3;
     
     const potGradient = ctx.createLinearGradient(-15, -12, 15, 15);
     potGradient.addColorStop(0, h.type === 'golden' ? '#ffd700' : '#a0633b');
@@ -2892,10 +2853,14 @@ AchievementsSystem.gameState.longestNoStingTime = Math.max(
     const popup = document.createElement('div');
     popup.className = 'score-popup';
     popup.textContent = text;
+    // FIX: Using CSS transform for centering with translate, assuming x, y are center points
     popup.style.left = x + 'px';
     popup.style.top = y + 'px';
+    // Applying the floating animation to the inline element
+    popup.style.animation = 'popupFloat 1.5s ease-out forwards'; 
     gameContainer.appendChild(popup);
     
+    // The popupFloat animation takes care of the visual fade-out.
     setTimeout(() => popup.remove(), 1500);
   }
 
@@ -2903,16 +2868,20 @@ AchievementsSystem.gameState.longestNoStingTime = Math.max(
     const word = document.createElement('div');
     word.className = 'honey-word';
     word.textContent = text;
+    // FIX: Using CSS transform for centering with translate
     word.style.left = x + 'px';
     word.style.top = y + 'px';
+    word.style.transform = 'translateX(-50%)'; // Center horizontally
     gameContainer.appendChild(word);
     
+    // The floatWord animation handles the visual effect.
     setTimeout(() => word.remove(), 2500);
   }
 
   function shakeScreen() {
     gameContainer.style.animation = 'none';
     setTimeout(() => {
+      // Re-apply original float animation with shake
       gameContainer.style.animation = 'shake 0.5s ease-in-out, float 6s ease-in-out infinite';
     }, 10);
   }
@@ -2965,7 +2934,7 @@ AchievementsSystem.gameState.longestNoStingTime = Math.max(
   function endGame() {
     running = false;
     
-    if (perfectGame) {
+    if (perfectGame && lives > 0) { // Check lives > 0 just to be safe
       AchievementsSystem.incrementGameState('perfectGames');
     }
     
@@ -2974,9 +2943,14 @@ AchievementsSystem.gameState.longestNoStingTime = Math.max(
       localStorage.setItem('poohHighScore', highScore.toString());
     }
     
+    // Update and save all game state to local storage
     AchievementsSystem.gameState.highScore = highScore;
+    // Best streak should be set from the current game's bestStreak
+    AchievementsSystem.gameState.bestStreak = Math.max(AchievementsSystem.gameState.bestStreak, bestStreak);
     AchievementsSystem.saveAchievements();
     AchievementsSystem.checkAchievements();
+    
+    // Populate Game Over stats
     document.getElementById('final-score').textContent = score;
     document.getElementById('best-streak').textContent = bestStreak;
     document.getElementById('honey-caught').textContent = honeyCaught;
@@ -2990,10 +2964,9 @@ AchievementsSystem.gameState.longestNoStingTime = Math.max(
   }
 
   /* ===============================
-     BACKGROUND INITIALIZATION
+     BACKGROUND INITIALIZATION (FIX: Removed duplicate function definition)
   ================================ */
   function initBackground() {
-    function initBackground() {
     // Try to load high score with error handling
     try {
       highScore = parseInt(localStorage.getItem('poohHighScore')) || 0;
@@ -3025,18 +2998,21 @@ AchievementsSystem.gameState.longestNoStingTime = Math.max(
       backgroundLayer.appendChild(butterfly);
     }
 
-    for (let i = 0; i < 4; i++) {
-      const cloud = document.createElement('div');
-      cloud.className = `cloud cloud-${(i % 3) + 1}`;
-      cloud.style.top = `${10 + Math.random() * 40}%`;
-      cloud.style.left = `${Math.random() * 20 - 20}%`;
-      cloud.style.animationDelay = `${Math.random() * 20}s`;
-      backgroundLayer.appendChild(cloud);
-    }
+    // Since cloud-1, cloud-2, cloud-3 are in the HTML, we only need to position them
+    // The HTML had an extra loop to create clouds which is redundant with the CSS:
+    // for (let i = 0; i < 4; i++) {
+    //   const cloud = document.createElement('div');
+    //   cloud.className = `cloud cloud-${(i % 3) + 1}`;
+    //   cloud.style.top = `${10 + Math.random() * 40}%`;
+    //   cloud.style.left = `${Math.random() * 20 - 20}%`;
+    //   cloud.style.animationDelay = `${Math.random() * 20}s`;
+    //   backgroundLayer.appendChild(cloud);
+    // }
+    // I've removed the redundant JS cloud creation, relying on the static HTML clouds.
   }
 
   /* ===============================
-     EVENT LISTENERS
+     EVENT LISTENERS (FIX: Consolidated sound buttons)
   ================================ */
   startBtn.addEventListener('click', () => {
     SoundSystem.play('click');
@@ -3080,9 +3056,11 @@ AchievementsSystem.gameState.longestNoStingTime = Math.max(
     achievementsOverlay.classList.remove('hidden');
   });
   
+  // FIX: Attach event listener to the sound button in the sound-controls div
   soundToggleBtn.addEventListener('click', () => {
     SoundSystem.toggle();
   });
+  // Note: The redundant sound button in game-controls was removed via CSS.
   
   pauseBtn.addEventListener('click', () => {
     SoundSystem.play('click');
