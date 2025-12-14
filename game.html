@@ -454,7 +454,75 @@
             font-family: "Patrick Hand", cursive;
             animation: loadingPulse 2s infinite;
          }
+         
+/* ===============================
+   MENU / OVERLAY CLEAN MODE (FIX)
+   Hide HUD + floating controls while overlays are visible
+================================ */
+body.overlay-open .top-bar,
+body.overlay-open .sound-controls,
+body.overlay-open .share-btn,
+body.overlay-open .weather-controls,
+body.overlay-open .game-controls,
+body.overlay-open .honey-cursor {
+  opacity: 0 !important;
+  pointer-events: none !important;
+  transform: translateY(-6px);
+}
 
+/* Keep overlays scrollable and centered nicely on phones */
+.overlay {
+  padding: calc(22px + var(--safe-top)) 22px calc(22px + var(--safe-bottom)) 22px;
+  gap: 22px;
+}
+
+.overlay h1 {
+  line-height: 1.05;
+  margin-top: 6px;
+}
+
+/* ===============================
+   HUD COMPACT MODE (MOBILE)
+================================ */
+@media (max-width: 520px) {
+  :root {
+    --hud-gap: 8px;
+    --hud-top: calc(var(--safe-top) + 6px);
+    --hud-reserve: 86px; /* less vertical waste */
+  }
+
+  .top-bar {
+    width: calc(100vw - 18px - var(--safe-left) - var(--safe-right));
+    gap: var(--hud-gap);
+    flex-wrap: nowrap;          /* stop stacking into 2 rows */
+    justify-content: space-between;
+  }
+
+  .stat-card {
+    padding: 10px 10px;
+    border-radius: 16px;
+    min-width: 74px;
+    min-height: 64px;
+    border-width: 3px;
+    border-bottom-width: 5px;
+  }
+
+  .stat-label {
+    font-size: 0.65rem;
+    letter-spacing: 1px;
+  }
+
+  .stat-value {
+    font-size: 1.55rem;
+  }
+
+  /* Shrink the glowing “pin” dot so it doesn't look like a big UI wart */
+  .stat-card::before {
+    width: 14px;
+    height: 14px;
+    top: -8px;
+  }
+}
          /* ===============================
            BACKGROUND ELEMENTS
         ================================ */
@@ -2353,7 +2421,17 @@
          // ============================================
          // ENHANCED GAME CODE WITH ALL FIXES
          // ============================================
+function setOverlayOpen(isOpen) {
+  document.body.classList.toggle('overlay-open', !!isOpen);
+}
 
+document.addEventListener('DOMContentLoaded', () => {
+  // Start screen should be clean (no HUD/controls bleeding through)
+  const startOverlay = document.getElementById('start-overlay');
+  if (startOverlay && !startOverlay.classList.contains('hidden')) {
+    setOverlayOpen(true);
+  }
+});
          console.log("Pooh's Enhanced Honey Hunt - Loading with all fixes...");
 
          // GAME CONSTANTS - UPDATED FOR DIFFICULTY PROGRESSION
