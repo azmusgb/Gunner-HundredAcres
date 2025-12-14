@@ -200,7 +200,39 @@
       overflow: hidden;
       touch-action: none;
     }
+/* -------------------------------
+   VIEWPORT STABILITY (iOS/Android)
+-------------------------------- */
+:root{
+  --app-height: 100vh; /* JS will overwrite with px for iOS stability */
+}
 
+/* Prefer stable units when available */
+@supports (height: 100dvh) {
+  :root { --app-height: 100dvh; }
+}
+
+html, body {
+  height: var(--app-height);
+}
+
+/* main already has height:100%; keep it, but ensure it keys off app-height */
+main#game-root {
+  height: var(--app-height);
+}
+
+/* Avoid fractional-pixel “buzz” on fixed layers */
+.top-bar,
+.weather-controls,
+.game-controls,
+.sound-controls,
+.share-btn,
+.background-layer,
+.game-container {
+  transform: translate3d(0,0,0);
+  backface-visibility: hidden;
+  -webkit-font-smoothing: antialiased;
+}
     main {
       height: 100%;
       display: flex;
@@ -441,15 +473,20 @@
       white-space: nowrap;
     }
 
-    .stat-value {
-      font-size: 1.5rem;
-      color: var(--pooh-red);
-      text-shadow: 
-        2px 2px 0 rgba(0,0,0,0.15),
-        -1px -1px 0 rgba(255,255,255,0.5);
-      animation: scorePopIn 0.4s ease-out;
-      line-height: 1;
-    }
+.stat-value {
+  font-size: 1.5rem;
+  color: var(--pooh-red);
+  text-shadow:
+    2px 2px 0 rgba(0,0,0,0.15),
+    -1px -1px 0 rgba(255,255,255,0.5);
+  line-height: 1;
+  will-change: transform;
+}
+
+/* Only animate when we explicitly toggle the class */
+.stat-value.pop {
+  animation: scorePopIn 180ms ease-out;
+}
 
     .stat-card.special .stat-value {
       color: white;
@@ -1756,7 +1793,39 @@
 <script>
 (() => {
   'use strict';
+/* -------------------------------
+   VIEWPORT STABILITY (iOS/Android)
+-------------------------------- */
+:root{
+  --app-height: 100vh; /* JS will overwrite with px for iOS stability */
+}
 
+/* Prefer stable units when available */
+@supports (height: 100dvh) {
+  :root { --app-height: 100dvh; }
+}
+
+html, body {
+  height: var(--app-height);
+}
+
+/* main already has height:100%; keep it, but ensure it keys off app-height */
+main#game-root {
+  height: var(--app-height);
+}
+
+/* Avoid fractional-pixel “buzz” on fixed layers */
+.top-bar,
+.weather-controls,
+.game-controls,
+.sound-controls,
+.share-btn,
+.background-layer,
+.game-container {
+  transform: translate3d(0,0,0);
+  backface-visibility: hidden;
+  -webkit-font-smoothing: antialiased;
+}
   /* ===============================
      ENHANCED GAME WITH ALL FEATURES
   ================================ */
@@ -3039,11 +3108,22 @@
   /* ===============================
      ORIGINAL UI FUNCTIONS
   ================================ */
-  function updateHUD() {
-    scoreEl.textContent = score;
-    streakEl.textContent = streak;
-    livesEl.textContent = lives;
+  function setHUD(el, next) {
+  const prev = el.textContent;
+  if (prev !== String(next)) {
+    el.textContent = next;
+    el.classList.remove('pop'); // reset
+    // force reflow so animation restarts cleanly
+    void el.offsetWidth;
+    el.classList.add('pop');
   }
+}
+
+function updateHUD() {
+  setHUD(scoreEl, score);
+  setHUD(streakEl, streak);
+  setHUD(livesEl, lives);
+}
 
   function showScorePopup(x, y, text) {
     const popup = document.createElement('div');
