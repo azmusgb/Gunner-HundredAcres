@@ -1795,37 +1795,18 @@ main#game-root {
   'use strict';
 /* -------------------------------
    VIEWPORT STABILITY (iOS/Android)
+   (JS version — do NOT put CSS inside <script>)
 -------------------------------- */
-:root{
-  --app-height: 100vh; /* JS will overwrite with px for iOS stability */
+function setAppHeight() {
+  // iOS Safari/Chrome: innerHeight is the reliable “visual viewport” height
+  const h = window.innerHeight;
+  document.documentElement.style.setProperty('--app-height', `${h}px`);
 }
 
-/* Prefer stable units when available */
-@supports (height: 100dvh) {
-  :root { --app-height: 100dvh; }
-}
-
-html, body {
-  height: var(--app-height);
-}
-
-/* main already has height:100%; keep it, but ensure it keys off app-height */
-main#game-root {
-  height: var(--app-height);
-}
-
-/* Avoid fractional-pixel “buzz” on fixed layers */
-.top-bar,
-.weather-controls,
-.game-controls,
-.sound-controls,
-.share-btn,
-.background-layer,
-.game-container {
-  transform: translate3d(0,0,0);
-  backface-visibility: hidden;
-  -webkit-font-smoothing: antialiased;
-}
+// Set once now, and whenever the viewport changes
+setAppHeight();
+window.addEventListener('resize', setAppHeight, { passive: true });
+window.addEventListener('orientationchange', () => setTimeout(setAppHeight, 50), { passive: true });
   /* ===============================
      ENHANCED GAME WITH ALL FEATURES
   ================================ */
