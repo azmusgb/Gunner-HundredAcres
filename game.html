@@ -2419,24 +2419,33 @@ main#game-root{
     return y * cssY;
   }
   canvas.addEventListener('touchstart', (e) => {
-    e.preventDefault();
-    isDragging = true;
-    const rect = canvas.getBoundingClientRect();
-    targetX = e.touches[0].clientX - rect.left;
-    showCursor(true);
-  }, { passive: false });
+  e.preventDefault();
+  isDragging = true;
+  const t = e.touches[0];
+  targetX = clientToCanvasX(t.clientX);
+  updateCursor(t.clientX, t.clientY);
+  showCursor(true);
+}, { passive: false });
 
-  canvas.addEventListener('touchmove', (e) => {
-    e.preventDefault();
-    const rect = canvas.getBoundingClientRect();
-    targetX = e.touches[0].clientX - rect.left;
-    updateCursor(e.touches[0].clientX, e.touches[0].clientY);
-  }, { passive: false });
+canvas.addEventListener('touchmove', (e) => {
+  e.preventDefault();
+  const t = e.touches[0];
+  targetX = clientToCanvasX(t.clientX);
+  updateCursor(t.clientX, t.clientY);
+}, { passive: false });
 
-  canvas.addEventListener('touchend', () => {
-    isDragging = false;
-    showCursor(false);
-  });
+canvas.addEventListener('touchend', () => {
+  isDragging = false;
+  showCursor(false);
+});
+
+canvas.addEventListener('mousemove', (e) => {
+  targetX = clientToCanvasX(e.clientX);
+  updateCursor(e.clientX, e.clientY);
+  showCursor(true);
+});
+
+canvas.addEventListener('mouseleave', () => showCursor(false));
 
   canvas.addEventListener('mousemove', (e) => {
     const rect = canvas.getBoundingClientRect();
@@ -2569,11 +2578,41 @@ main#game-root{
         createParticles(h.x, h.y, h.type === 'golden' ? '#ffd700' : '#ffa500', 
                        h.type === 'golden' ? 30 : 20, 'mixed');
         
-        showScorePopup(h.x, h.y, `+${points}${h.type === 'golden' ? ' ✨' : ''}`);
+
         
-        if (streak % 8 === 0) {
-          showHoneyWord(player.x, player.y, 'TIGGERIFIC!');
-        }
+   function showScorePopup(x, y, text) {
+  const popup = document.createElement('div');
+  popup.className = 'score-popup';
+  popup.textContent = text;
+
+  // convert canvas-space -> CSS-space inside the container
+  const cx = canvasToCssX(x);
+  const cy = canvasToCssY(y);
+
+  popup.style.left = `${cx}px`;
+  popup.style.top  = `${cy}px`;
+  popup.style.transform = 'translate(-50%, -50%)';
+  popup.style.animation = 'popupFloat 1.5s ease-out forwards';
+
+  gameContainer.appendChild(popup);
+  setTimeout(() => popup.remove(), 1500);
+}
+
+function showHoneyWord(x, y, text) {
+  const word = document.createElement('div');
+  word.className = 'honey-word';
+  word.textContent = text;
+
+  const cx = canvasToCssX(x);
+  const cy = canvasToCssY(y);
+
+  word.style.left = `${cx}px`;
+  word.style.top  = `${cy}px`;
+  word.style.transform = 'translate(-50%, -50%)';
+
+  gameContainer.appendChild(word);
+  setTimeout(() => word.remove(), 2500);
+}
         
         updateHUD();
         honeys.splice(i, 1);
