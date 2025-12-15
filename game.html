@@ -1696,23 +1696,111 @@
     }
     return {update,bind};
   })();
+/* ================= SKINS / THEMES ================= */
+const Skins = (() => {
+  // You can change this default any time, or set it based on date.
+  // Options: "classic", "autumn", "winter", "spring"
+  let current = Store.get("skin", "classic");
+
+  const palettes = {
+    classic: {
+      ink: "rgba(93,78,55,.45)",
+      pooh: "#e2b887",
+      poohLight: "#f2d4b3",
+      shirt: "#e63946",
+      honey: "#f5b000",
+      honeyLight: "#ffce3a",
+      honeyRim: "#c88a00",
+      bee: "#ffd400",
+      beeStripe: "#222",
+      wing: "rgba(255,255,255,.7)",
+      ground: "rgba(0,0,0,.06)",
+    },
+    autumn: {
+      ink: "rgba(80,55,30,.50)",
+      pooh: "#ddb27f",
+      poohLight: "#f0cfa9",
+      shirt: "#c1121f",
+      honey: "#e3a300",
+      honeyLight: "#ffd27a",
+      honeyRim: "#a77400",
+      bee: "#ffcc00",
+      beeStripe: "#1f1f1f",
+      wing: "rgba(255,255,255,.65)",
+      ground: "rgba(60,35,15,.08)",
+    },
+    winter: {
+      ink: "rgba(40,55,70,.50)",
+      pooh: "#e6c49a",
+      poohLight: "#f6e1c7",
+      shirt: "#b71d2a",
+      honey: "#f0b000",
+      honeyLight: "#ffe6a6",
+      honeyRim: "#b98500",
+      bee: "#ffd400",
+      beeStripe: "#223",
+      wing: "rgba(255,255,255,.75)",
+      ground: "rgba(120,150,180,.10)",
+    },
+    spring: {
+      ink: "rgba(55,75,45,.45)",
+      pooh: "#e2b887",
+      poohLight: "#f3d9bb",
+      shirt: "#e63946",
+      honey: "#f5b000",
+      honeyLight: "#ffe08a",
+      honeyRim: "#c88a00",
+      bee: "#ffd400",
+      beeStripe: "#222",
+      wing: "rgba(255,255,255,.72)",
+      ground: "rgba(60,120,80,.07)",
+    }
+  };
+
+  function get() { return palettes[current] || palettes.classic; }
+  function set(name) {
+    current = palettes[name] ? name : "classic";
+    Store.set("skin", current);
+  }
+
+  // Optional: auto-season by month (can delete if you want manual control only)
+  function autoByDate() {
+    const m = new Date().getMonth(); // 0-11
+    if ([11,0,1].includes(m)) set("winter");
+    else if ([2,3,4].includes(m)) set("spring");
+    else if ([8,9,10].includes(m)) set("autumn");
+    else set("classic");
+  }
+
+  return { get, set, autoByDate };
+})();
 
   /* ================= STORYBOOK ART ================= */
+/* ================= STORYBOOK ART (SKINNED) ================= */
 const Art = (() => {
-
-  /* ---------- Pooh ---------- */
-  function drawPooh(ctx, x, y, scale = 1) {
+  function drawPooh(ctx, x, y, scale = 1, moodT = 0) {
+    const P = Skins.get();
     ctx.save();
     ctx.translate(x, y);
     ctx.scale(scale, scale);
 
+    // Subtle breathing (tiny, cheap)
+    const breathe = 1 + Math.sin(moodT) * 0.01;
+
     // Body
-    ctx.fillStyle = "#e2b887";
+    ctx.fillStyle = P.pooh;
     ctx.beginPath();
-    ctx.ellipse(0, 28, 56, 52, 0, 0, Math.PI * 2);
+    ctx.ellipse(0, 28, 56 * breathe, 52, 0, 0, Math.PI * 2);
+    ctx.fill();
+
+    // Belly highlight
+    ctx.fillStyle = "rgba(255,255,255,.12)";
+    ctx.beginPath();
+    ctx.ellipse(-10, 34, 26, 20, -0.25, 0, Math.PI * 2);
     ctx.fill();
 
     // Head
+    ctx.fillStyle = P.pooh;
     ctx.beginPath();
     ctx.ellipse(0, -48, 44, 40, 0, 0, Math.PI * 2);
     ctx.fill();
@@ -1724,7 +1812,7 @@ const Art = (() => {
     ctx.fill();
 
     // Snout
-    ctx.fillStyle = "#f2d4b3";
+    ctx.fillStyle = P.poohLight;
     ctx.beginPath();
     ctx.ellipse(0, -38, 18, 14, 0, 0, Math.PI * 2);
     ctx.fill();
@@ -1743,13 +1831,13 @@ const Art = (() => {
     ctx.fill();
 
     // Shirt
-    ctx.fillStyle = "#e63946";
+    ctx.fillStyle = P.shirt;
     ctx.beginPath();
     ctx.ellipse(0, 22, 58, 28, 0, Math.PI, Math.PI * 2);
     ctx.fill();
 
-    // Outline (storybook ink)
-    ctx.strokeStyle = "rgba(93,78,55,.45)";
+    // Storybook outline
+    ctx.strokeStyle = P.ink;
     ctx.lineWidth = 3;
     ctx.beginPath();
     ctx.ellipse(0, 28, 56, 52, 0, 0, Math.PI * 2);
@@ -1761,13 +1849,14 @@ const Art = (() => {
     ctx.restore();
   }
 
-  /* ---------- Honey Pot ---------- */
-  function drawHoney(ctx, x, y, r) {
+  function drawHoneyPot(ctx, x, y, r, spinT = 0) {
+    const P = Skins.get();
     ctx.save();
     ctx.translate(x, y);
+    ctx.rotate(Math.sin(spinT) * 0.05);
 
     // Jar body
-    ctx.fillStyle = "#f5b000";
+    ctx.fillStyle = P.honey;
     ctx.beginPath();
     ctx.moveTo(-r, -r * 0.6);
     ctx.quadraticCurveTo(-r * 1.2, r * 0.8, 0, r);
@@ -1775,64 +1864,75 @@ const Art = (() => {
     ctx.closePath();
     ctx.fill();
 
-    // Honey shine
-    ctx.fillStyle = "rgba(255,255,255,.35)";
+    // Shine
+    ctx.fillStyle = "rgba(255,255,255,.32)";
     ctx.beginPath();
-    ctx.ellipse(-r * 0.3, -r * 0.2, r * 0.2, r * 0.35, 0, 0, Math.PI * 2);
+    ctx.ellipse(-r * 0.3, -r * 0.15, r * 0.22, r * 0.38, -0.2, 0, Math.PI * 2);
     ctx.fill();
-
-    // Rim
-    ctx.strokeStyle = "#c88a00";
-    ctx.lineWidth = 3;
-    ctx.stroke();
 
     // Drip
-    ctx.fillStyle = "#ffce3a";
+    ctx.fillStyle = P.honeyLight;
     ctx.beginPath();
-    ctx.ellipse(r * 0.3, r * 0.9, r * 0.15, r * 0.25, 0, 0, Math.PI * 2);
+    ctx.ellipse(r * 0.28, r * 0.92, r * 0.15, r * 0.25, 0, 0, Math.PI * 2);
     ctx.fill();
+
+    // Rim + outline
+    ctx.strokeStyle = P.honeyRim;
+    ctx.lineWidth = 3;
+    ctx.stroke();
+    ctx.strokeStyle = P.ink;
+    ctx.lineWidth = 2;
+    ctx.stroke();
 
     ctx.restore();
   }
 
-  /* ---------- Bee ---------- */
-  function drawBee(ctx, x, y, r, t) {
+  function drawBee(ctx, x, y, r, flapT = 0) {
+    const P = Skins.get();
     ctx.save();
     ctx.translate(x, y);
 
     // Wings
-    ctx.fillStyle = "rgba(255,255,255,.7)";
+    const flap = Math.sin(flapT) * 0.35;
+    ctx.fillStyle = P.wing;
     ctx.beginPath();
-    ctx.ellipse(-r * 0.6, -r * 0.6, r * 0.6, r * 0.4, Math.sin(t) * 0.2, 0, Math.PI * 2);
-    ctx.ellipse(r * 0.6, -r * 0.6, r * 0.6, r * 0.4, -Math.sin(t) * 0.2, 0, Math.PI * 2);
+    ctx.ellipse(-r * 0.6, -r * 0.6, r * 0.6, r * 0.4, flap, 0, Math.PI * 2);
+    ctx.ellipse(r * 0.6, -r * 0.6, r * 0.6, r * 0.4, -flap, 0, Math.PI * 2);
     ctx.fill();
 
     // Body
-    ctx.fillStyle = "#ffd400";
+    ctx.fillStyle = P.bee;
     ctx.beginPath();
     ctx.ellipse(0, 0, r, r * 0.8, 0, 0, Math.PI * 2);
     ctx.fill();
 
     // Stripes
-    ctx.fillStyle = "#222";
-    ctx.fillRect(-r * 0.8, -r * 0.2, r * 1.6, r * 0.3);
-    ctx.fillRect(-r * 0.8, r * 0.2, r * 1.6, r * 0.3);
+    ctx.fillStyle = P.beeStripe;
+    ctx.fillRect(-r * 0.8, -r * 0.22, r * 1.6, r * 0.30);
+    ctx.fillRect(-r * 0.8, r * 0.18, r * 1.6, r * 0.30);
 
     // Head
     ctx.beginPath();
     ctx.arc(-r * 0.9, 0, r * 0.4, 0, Math.PI * 2);
     ctx.fill();
 
-    // Eyes
-    ctx.fillStyle = "#fff";
+    // Outline
+    ctx.strokeStyle = P.ink;
+    ctx.lineWidth = 2;
     ctx.beginPath();
-    ctx.arc(-r, -2, 2, 0, Math.PI * 2);
-    ctx.fill();
+    ctx.ellipse(0, 0, r, r * 0.8, 0, 0, Math.PI * 2);
+    ctx.stroke();
 
     ctx.restore();
   }
 
-  return { drawPooh, drawHoney, drawBee };
+  function groundWash(ctx, W, H) {
+    const P = Skins.get();
+    ctx.fillStyle = P.ground;
+    ctx.fillRect(0, H - 140, W, 140);
+  }
+
+  return { drawPooh, drawHoneyPot, drawBee, groundWash };
 })();
 
 
@@ -1989,6 +2089,8 @@ const Art = (() => {
     UI.bind();
     UI.update();
     Overlays.open("start");
+  Skins.autoByDate(); "
+
   });
 })();
 </script>
