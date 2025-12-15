@@ -1560,7 +1560,7 @@
 
   </main>
 
- <script>
+<script>
 (() => {
   "use strict";
   if (window.__POOH_HONEY_HUNT__) return;
@@ -1574,8 +1574,8 @@
     const hasLS = (() => {
       try {
         const k = "__t__";
-        localStorage.setItem(k, "1");
-        localStorage.removeItem(k);
+        window.localStorage.setItem(k, "1");
+        window.localStorage.removeItem(k);
         return true;
       } catch { return false; }
     })();
@@ -1610,7 +1610,6 @@
     if (!el) return;
     el.classList.remove("hidden");
     document.body.classList.add("overlay-open");
-    // Focus something sensible
     const focusable = el.querySelector("button, [href], input, [tabindex]:not([tabindex='-1'])");
     if (focusable) setTimeout(() => focusable.focus(), 0);
   };
@@ -1682,9 +1681,7 @@
 
     const getEnabled = () => enabled;
 
-    // restore pref
     enabled = Store.get("soundEnabled", "1") !== "0";
-
     return { ensure, sfx, setEnabled, getEnabled };
   })();
 
@@ -1692,37 +1689,17 @@
      Main
   ================================= */
   window.addEventListener("DOMContentLoaded", () => {
-    const canvas = $("honey-game") || $("game-canvas");
+    const canvas = $("honey-game");
     if (!canvas) { console.error("Canvas not found (#honey-game)."); return; }
 
-    const ctx = canvas.getContext("2d");
+    const ctx = canvas.getContext("2d", { alpha: true, desynchronized: true });
     if (!ctx) { console.error("2D context unavailable."); return; }
 
-    /* ---------- DPR / resize (fix clear + coordinate space) ---------- */
+    /* ---------- DPR / resize ---------- */
     let cssW = 420, cssH = 700, dpr = 1;
+    const clamp = (v, a, b) => Math.max(a, Math.min(b, v));
+    const rand = (a, b) => a + Math.random() * (b - a);
 
-    const resizeCanvas = () => {
-      dpr = Math.max(1, window.devicePixelRatio || 1);
-      const rect = canvas.getBoundingClientRect();
-
-      cssW = Math.max(1, rect.width);
-      cssH = Math.max(1, rect.height);
-
-      canvas.width  = Math.max(1, Math.floor(cssW * dpr));
-      canvas.height = Math.max(1, Math.floor(cssH * dpr));
-
-      // Draw in CSS pixels
-      ctx.setTransform(dpr, 0, 0, dpr, 0, 0);
-
-      // Re-clamp player on resize
-      player.y = cssH - 92;
-      player.x = clamp(player.x, player.r, cssW - player.r);
-      player.targetX = clamp(player.targetX, player.r, cssW - player.r);
-    };
-
-    window.addEventListener("resize", resizeCanvas, { passive: true });
-
-    /* ---------- State ---------- */
     const state = {
       score: 0,
       streak: 0,
@@ -1738,22 +1715,33 @@
     };
 
     const CHAR_MODS = {
-      pooh:   { r: 1.35, s: 1.00, label: "Big catch radius" },
-      piglet: { r: 0.95, s: 1.25, label: "Fast movement" },
-      tigger: { r: 1.08, s: 1.12, label: "Bouncy speed" },
-      rabbit: { r: 1.02, s: 1.06, label: "Steady control" }
+      pooh:   { r: 1.35, s: 1.00 },
+      piglet: { r: 0.95, s: 1.25 },
+      tigger: { r: 1.08, s: 1.12 },
+      rabbit: { r: 1.02, s: 1.06 }
     };
 
-    const clamp = (v, a, b) => Math.max(a, Math.min(b, v));
-    const rand = (a, b) => a + Math.random() * (b - a);
+    const player = { x: 210, y: 610, r: 34, targetX: 210 };
 
-    const player = {
-      x: 210,
-      y: 610,
-      r: 34,
-      targetX: 210
+    const resizeCanvas = () => {
+      dpr = Math.max(1, window.devicePixelRatio || 1);
+      const rect = canvas.getBoundingClientRect();
+      cssW = Math.max(1, rect.width);
+      cssH = Math.max(1, rect.height);
+
+      canvas.width  = Math.max(1, Math.floor(cssW * dpr));
+      canvas.height = Math.max(1, Math.floor(cssH * dpr));
+
+      ctx.setTransform(dpr, 0, 0, dpr, 0, 0);
+
+      player.y = cssH - 92;
+      player.x = clamp(player.x, player.r, cssW - player.r);
+      player.targetX = clamp(player.targetX, player.r, cssW - player.r);
     };
 
+    window.addEventListener("resize", resizeCanvas, { passive: true });
+
+    /* ---------- Entities ---------- */
     const honeys = [];
     const bees = [];
 
@@ -1777,33 +1765,33 @@
     };
 
     /* ---------- HUD sync ---------- */
+    const achievementsCount = $("achievements-count");
     const syncHUD = () => {
       const s = $("score"); if (s) s.textContent = String(state.score);
       const st = $("streak"); if (st) st.textContent = String(state.streak);
       const l = $("lives"); if (l) l.textContent = String(state.lives);
-      updateAchievementCount();
+      if (achievementsCount) achievementsCount.textContent = `${unlocked.size}/${ACH.length}`;
     };
 
     /* ================================
-       Honey Cursor (desktop only-ish)
+       Honey Cursor
     ================================= */
     const cursor = $("honey-cursor");
     const setCursor = (x, y, on) => {
       if (!cursor) return;
-      if (on) cursor.classList.add("active"); else cursor.classList.remove("active");
+      cursor.classList.toggle("active", !!on);
       cursor.style.left = x + "px";
       cursor.style.top  = y + "px";
     };
 
     window.addEventListener("pointermove", (e) => {
       if (!cursor) return;
-      // only show when not overlay and using mouse/pen
       const ok = !anyOverlayOpen() && (e.pointerType === "mouse" || e.pointerType === "pen");
       setCursor(e.clientX, e.clientY, ok);
     }, { passive: true });
 
     /* ================================
-       Weather system (real effects)
+       Weather system (particles)
     ================================= */
     let weatherLayer = $("weather-effects");
     if (!weatherLayer) {
@@ -1865,7 +1853,6 @@
       }
 
       weatherLayer.appendChild(el);
-      // cleanup
       setTimeout(() => el.remove(), (dur + 0.2) * 1000);
     };
 
@@ -1878,29 +1865,52 @@
 
       if (state.weather === "clear") return;
 
-      const kind = state.weather; // rain/snow/leaves/blossoms
+      const kind = state.weather;
       const rateMs = (kind === "rain") ? 90 : (kind === "snow") ? 160 : 140;
 
       weatherTimer = setInterval(() => {
-        // spawn a few per tick to look “alive”
         const n = (kind === "rain") ? 3 : 2;
         for (let i = 0; i < n; i++) makeParticle(kind);
       }, rateMs);
     };
 
     /* ================================
-       Weather drawer wiring
+       Weather drawer wiring (FIXED)
+       - DOES NOT set overlay-open
+       - Adds scrim to block background taps
     ================================= */
     const weatherDrawer = $("weather-drawer");
     const weatherToggle = $("weather-toggle");
     const weatherClose  = $("weather-close");
 
+    const scrim = (() => {
+      const s = document.createElement("div");
+      s.id = "drawer-scrim";
+      s.style.position = "fixed";
+      s.style.inset = "0";
+      s.style.zIndex = "3199";
+      s.style.background = "rgba(0,0,0,.25)";
+      s.style.backdropFilter = "blur(2px)";
+      s.style.opacity = "0";
+      s.style.pointerEvents = "none";
+      s.style.transition = "opacity .18s ease";
+      document.body.appendChild(s);
+      return s;
+    })();
+
     const setWeatherDrawerOpen = (open) => {
       if (!weatherDrawer) return;
-      weatherDrawer.classList.toggle("open", !!open);
-      if (!!open) document.body.classList.add("overlay-open"); // prevents stray clicks behind
-      else if (!anyOverlayOpen()) document.body.classList.remove("overlay-open");
+      const onOpen = !!open;
+      weatherDrawer.classList.toggle("open", onOpen);
+      scrim.style.opacity = onOpen ? "1" : "0";
+      scrim.style.pointerEvents = onOpen ? "auto" : "none";
+      if (onOpen) {
+        const firstBtn = weatherDrawer.querySelector(".weather-btn");
+        if (firstBtn) setTimeout(() => firstBtn.focus(), 0);
+      }
     };
+
+    scrim.addEventListener("click", () => setWeatherDrawerOpen(false));
 
     if (weatherToggle && weatherDrawer) {
       weatherToggle.addEventListener("click", async () => {
@@ -1926,10 +1936,9 @@
     });
 
     /* ================================
-       Achievements (real + rendered)
+       Achievements
     ================================= */
     const ACH_KEY = "achievements_v1";
-
     const ACH = [
       { id:"first_honey", name:"First Taste", desc:"Catch your first honey.", icon:"🍯", test:(g)=>g.honeyCaught >= 1 },
       { id:"score_100",  name:"Sticky Start", desc:"Reach 100 points.", icon:"✨", test:(g)=>g.score >= 100 },
@@ -1947,19 +1956,22 @@
       try { return new Set(JSON.parse(Store.get(ACH_KEY, "[]")) || []); }
       catch { return new Set(); }
     };
-    const saveUnlocked = (set) => {
-      Store.set(ACH_KEY, JSON.stringify(Array.from(set)));
-    };
+    const saveUnlocked = (set) => Store.set(ACH_KEY, JSON.stringify(Array.from(set)));
 
     const unlocked = loadUnlocked();
-
     const achievementsList = $("achievements-list");
-    const achievementsCount = $("achievements-count");
+
+    const showAchievementPopup = (title, icon) => {
+      const p = document.createElement("div");
+      p.className = "achievement-popup";
+      p.innerHTML = `<div style="font-size:1.4rem">${icon || "🏆"}</div><div style="margin-top:6px">Unlocked: <strong>${title}</strong></div>`;
+      document.body.appendChild(p);
+      setTimeout(() => p.remove(), 2600);
+    };
 
     const renderAchievements = () => {
       if (!achievementsList) return;
       achievementsList.innerHTML = "";
-
       for (const a of ACH) {
         const isOn = unlocked.has(a.id);
         const row = document.createElement("div");
@@ -1973,24 +1985,10 @@
         `;
         achievementsList.appendChild(row);
       }
-      updateAchievementCount();
+      syncHUD();
     };
 
-    const updateAchievementCount = () => {
-      if (!achievementsCount) return;
-      achievementsCount.textContent = `${unlocked.size}/${ACH.length}`;
-    };
-
-    const showAchievementPopup = (title, icon) => {
-      const p = document.createElement("div");
-      p.className = "achievement-popup";
-      p.innerHTML = `<div style="font-size:1.4rem">${icon || "🏆"}</div><div style="margin-top:6px">Unlocked: <strong>${title}</strong></div>`;
-      document.body.appendChild(p);
-      setTimeout(() => p.remove(), 2600);
-    };
-
-    const checkAchievements = (context = "tick") => {
-      // context used for future tuning if needed
+    const checkAchievements = () => {
       let newly = 0;
       for (const a of ACH) {
         if (unlocked.has(a.id)) continue;
@@ -2020,26 +2018,23 @@
           await navigator.clipboard.writeText(text);
           showAchievementPopup("Copied to clipboard!", "📋");
         } else {
-          // last resort
           prompt("Copy this:", text);
         }
-      } catch {
-        // user cancelled or share failed; no drama
-      }
+      } catch {}
     };
     on("share-btn", "click", doShare);
 
     /* ================================
-       Sound toggle button
+       Sound toggle
     ================================= */
     const soundBtn = $("sound-toggle-btn");
     const syncSoundIcon = () => {
       if (!soundBtn) return;
       const icon = soundBtn.querySelector("i");
       if (!icon) return;
-      const on = Audio.getEnabled();
-      icon.className = on ? "fas fa-volume-up" : "fas fa-volume-mute";
-      soundBtn.setAttribute("aria-label", on ? "Mute sound" : "Unmute sound");
+      const onS = Audio.getEnabled();
+      icon.className = onS ? "fas fa-volume-up" : "fas fa-volume-mute";
+      soundBtn.setAttribute("aria-label", onS ? "Mute sound" : "Unmute sound");
     };
 
     if (soundBtn) {
@@ -2055,20 +2050,17 @@
        Input (smooth)
     ================================= */
     let dragging = false;
-
     const pointerToX = (e) => {
       const rect = canvas.getBoundingClientRect();
       return clamp(e.clientX - rect.left, 0, rect.width);
     };
 
     canvas.addEventListener("pointerdown", async (e) => {
+      if (anyOverlayOpen()) return;
       dragging = true;
       canvas.setPointerCapture?.(e.pointerId);
       player.targetX = pointerToX(e);
       await Audio.ensure();
-
-      // If start overlay exists, don't auto-start unless you click Start;
-      // if you removed start overlay, you can still auto-start by clicking canvas.
       if (!running && !$("start-overlay")) startGame();
     });
 
@@ -2109,20 +2101,18 @@
       player.targetX = player.x;
       player.y = cssH - 92;
 
-      syncHUD();
       renderAchievements();
+      syncHUD();
     };
 
     const update = (dt) => {
       state.time += dt;
 
-      // Smooth “springy” follow (fast but not jerky)
       const m = CHAR_MODS[state.character] || CHAR_MODS.pooh;
       const speed = 18 * m.s;
       player.x += (player.targetX - player.x) * Math.min(1, dt * speed);
       player.x = clamp(player.x, player.r, cssW - player.r);
 
-      // spawn rates (slightly scale up with time)
       const t = state.time;
       const honeyRate = 0.028 + Math.min(0.020, t * 0.00035);
       const beeRate   = 0.012 + Math.min(0.018, t * 0.00030);
@@ -2133,7 +2123,6 @@
       for (const h of honeys) h.y += h.v * dt;
       for (const b of bees)  b.y += b.v * dt;
 
-      // honey collisions
       for (let i = honeys.length - 1; i >= 0; i--) {
         const h = honeys[i];
         const hit = Math.hypot(h.x - player.x, h.y - player.y) < (player.r + h.r);
@@ -2151,7 +2140,7 @@
             state.score += 10;
             Audio.sfx.catch().catch(()=>{});
           }
-          checkAchievements("catch");
+          checkAchievements();
           continue;
         }
         if (h.y > cssH + 60) {
@@ -2160,7 +2149,6 @@
         }
       }
 
-      // bee collisions
       for (let i = bees.length - 1; i >= 0; i--) {
         const b = bees[i];
         const hit = Math.hypot(b.x - player.x, b.y - player.y) < (player.r + b.r);
@@ -2177,20 +2165,19 @@
       }
 
       syncHUD();
-      checkAchievements("tick");
+      checkAchievements();
     };
 
     const draw = () => {
-      // IMPORTANT: because we draw in CSS pixels, clear using cssW/cssH
       ctx.clearRect(0, 0, cssW, cssH);
 
-      // Pooh (placeholder circle for now)
+      // player (placeholder “Pooh”)
       ctx.beginPath();
       ctx.fillStyle = "#d4a574";
       ctx.arc(player.x, player.y, player.r, 0, Math.PI * 2);
       ctx.fill();
 
-      // Honey
+      // honey
       for (const h of honeys) {
         ctx.fillStyle = h.gold ? "#ffd700" : "#ffa500";
         ctx.beginPath();
@@ -2198,7 +2185,7 @@
         ctx.fill();
       }
 
-      // Bees
+      // bees
       for (const b of bees) {
         ctx.fillStyle = "#222";
         ctx.beginPath();
@@ -2226,7 +2213,6 @@
       paused = false;
       lastTime = performance.now();
 
-      // mark run played
       runsPlayed++;
       Store.set("runsPlayed", String(runsPlayed));
 
@@ -2236,16 +2222,14 @@
     const endGame = () => {
       running = false;
 
-      // high score
       if (state.score > state.hi) {
         state.hi = state.score;
         Store.set("hi", String(state.hi));
       }
 
-      // For achievements that depend on end-of-run
       gamePublic.lastRunHadNoHits = (state.hitsTaken === 0);
-      gamePublic.running = false;
-      checkAchievements("end");
+
+      checkAchievements();
 
       const fs = $("final-score"); if (fs) fs.textContent = String(state.score);
       syncHUD();
@@ -2275,7 +2259,6 @@
       paused = false;
       closeAllOverlays();
       setWeatherDrawerOpen(false);
-      // keep start overlay if it exists
       if ($("start-overlay")) openOverlay("start-overlay");
     });
 
@@ -2291,7 +2274,6 @@
     on("select-character-btn", "click", async () => { await Audio.sfx.click(); openOverlay("character-select-overlay"); });
     on("back-to-menu-btn", "click", async () => { await Audio.sfx.click(); closeOverlay("character-select-overlay"); });
 
-    // Character selection: use `.selected` (your CSS), persist choice
     const syncCharacterCards = () => {
       qsa(".character-card").forEach(b => {
         const c = b.dataset.character || "";
@@ -2311,7 +2293,7 @@
     on("start-with-character-btn", "click", startGame);
 
     /* ================================
-       Keyboard: Esc closes drawers/overlays
+       Keyboard: Esc
     ================================= */
     window.addEventListener("keydown", (e) => {
       if (e.key !== "Escape") return;
@@ -2321,14 +2303,12 @@
         return;
       }
       if (anyOverlayOpen()) {
-        // close topmost-ish: achievements > character > help > pause > gameover > start
         const order = ["achievements-overlay","character-select-overlay","help-overlay","pause-overlay","gameover-overlay","start-overlay"];
         for (const id of order) {
           const el = $(id);
           if (el && !el.classList.contains("hidden")) { closeOverlay(id); break; }
         }
       } else if (running) {
-        // quick pause on Esc
         togglePause().catch(()=>{});
       }
     });
@@ -2343,21 +2323,18 @@
       get goldCaught(){ return state.goldCaught; },
       get time(){ return state.time; },
       get running(){ return running; },
-      set running(v){ /* ignored */ },
       get runsPlayed(){ return runsPlayed; },
       lastRunHadNoHits: false
     };
 
     /* ================================
-       Initial boot
+       Boot
     ================================= */
     resizeCanvas();
 
-    // UI prefs
     syncSoundIcon();
     syncCharacterCards();
 
-    // Weather: set active button + apply
     const initialWeatherBtn = qsa(".weather-btn").find(b => (b.dataset.weather || "clear") === state.weather);
     qsa(".weather-btn").forEach(b => b.classList.remove("active"));
     if (initialWeatherBtn) initialWeatherBtn.classList.add("active");
@@ -2366,12 +2343,12 @@
     renderAchievements();
     syncHUD();
 
-    // Start overlay behavior
     if ($("start-overlay")) openOverlay("start-overlay");
     else startGame();
   });
 })();
 </script>
+
 
 
 
