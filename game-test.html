@@ -6034,7 +6034,68 @@
 
             return (usePound ? "#" : "") + (b | (g << 8) | (r << 16)).toString(16).padStart(6, "0");
         }
+drawHoneys() {
+  for (const honey of this.honeys) {
+    this.ctx.save();
+    this.ctx.translate(honey.x, honey.y);
 
+    const wobbleX = Math.sin(honey.wobble) * 4;
+    const wobbleY = Math.cos(honey.wobble * 0.9) * 3;
+    this.ctx.rotate(honey.rotation || 0);
+
+    const s = honey.scale || 1;
+    this.ctx.scale(s, s);
+    this.ctx.translate(wobbleX, wobbleY);
+
+    const isGolden = honey.type === "golden";
+
+    // Jar body
+    this.ctx.fillStyle = isGolden ? "#ffd700" : "#ffa500";
+    this.ctx.strokeStyle = "rgba(0,0,0,0.25)";
+    this.ctx.lineWidth = 2;
+
+    this.roundRect(-18, -22, 36, 44, 10);
+    this.ctx.fill();
+    this.ctx.stroke();
+
+    // Lid
+    this.ctx.fillStyle = isGolden ? "#caa400" : "#d07a00";
+    this.roundRect(-20, -30, 40, 10, 6);
+    this.ctx.fill();
+
+    // Label
+    this.ctx.fillStyle = "rgba(255,255,255,0.85)";
+    this.roundRect(-14, -6, 28, 16, 6);
+    this.ctx.fill();
+
+    this.ctx.fillStyle = "rgba(0,0,0,0.65)";
+    this.ctx.font = "bold 10px 'Fredoka One', system-ui";
+    this.ctx.textAlign = "center";
+    this.ctx.textBaseline = "middle";
+    this.ctx.fillText("HNY", 0, 2);
+
+    // Shine
+    this.ctx.globalAlpha = 0.25;
+    this.ctx.fillStyle = "#ffffff";
+    this.ctx.beginPath();
+    this.ctx.ellipse(-7, -10, 5, 10, 0.4, 0, Math.PI * 2);
+    this.ctx.fill();
+
+    this.ctx.restore();
+  }
+}
+
+// helper if you don't already have it:
+roundRect(x, y, w, h, r) {
+  const rr = Math.min(r, w / 2, h / 2);
+  this.ctx.beginPath();
+  this.ctx.moveTo(x + rr, y);
+  this.ctx.arcTo(x + w, y, x + w, y + h, rr);
+  this.ctx.arcTo(x + w, y + h, x, y + h, rr);
+  this.ctx.arcTo(x, y + h, x, y, rr);
+  this.ctx.arcTo(x, y, x + w, y, rr);
+  this.ctx.closePath();
+}
         drawBees() {
             for (const bee of this.bees) {
                 this.ctx.save();
