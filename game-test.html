@@ -10,7 +10,863 @@
       <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
       <link href="https://fonts.googleapis.com/css2?family=Patrick+Hand&family=Fredoka+One&family=Bubblegum+Sans&display=swap" rel="stylesheet" />
       <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css" />
-      <link rel="stylesheet" href="styles-game.css">
+      <style>
+         /* ================= BASE STYLES ================= */
+         * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+            -webkit-tap-highlight-color: transparent;
+            -webkit-font-smoothing: antialiased;
+         }
+
+         body {
+            font-family: 'Patrick Hand', cursive;
+            background: linear-gradient(135deg, #87CEEB 0%, #98FB98 100%);
+            color: #8B4513;
+            overflow: hidden;
+            touch-action: none;
+            width: 100vw;
+            height: 100vh;
+            position: fixed;
+         }
+
+         /* ================= BACKGROUND & WEATHER ================= */
+         .background-layer {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            pointer-events: none;
+            z-index: -1;
+         }
+
+         .cloud {
+            position: absolute;
+            background: rgba(255, 255, 255, 0.8);
+            border-radius: 50%;
+         }
+
+         .cloud-1 {
+            width: 120px; height: 40px;
+            top: 20%; left: 10%;
+            animation: drift 45s linear infinite;
+         }
+         .cloud-2 {
+            width: 80px; height: 30px;
+            top: 40%; right: 15%;
+            animation: drift 60s linear infinite reverse;
+         }
+         .cloud-3 {
+            width: 100px; height: 35px;
+            top: 60%; left: 20%;
+            animation: drift 50s linear infinite;
+         }
+
+         @keyframes drift {
+            0% { transform: translateX(-100px); }
+            100% { transform: translateX(calc(100vw + 100px)); }
+         }
+
+         /* ================= HONEY CURSOR ================= */
+         .honey-cursor {
+            position: fixed;
+            width: 40px; height: 40px;
+            pointer-events: none;
+            z-index: 9999;
+            transform: translate(-50%, -50%);
+            opacity: 0.7;
+         }
+         .spoon {
+            width: 100%; height: 100%;
+            background: radial-gradient(circle at 30% 30%, #FFD700, #FF8C00);
+            border-radius: 50% 50% 50% 0;
+            transform: rotate(45deg);
+         }
+
+         /* ================= GAME ROOT ================= */
+         #game-root {
+            position: relative;
+            width: 100%;
+            height: 100%;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: flex-start;
+            padding-top: env(safe-area-inset-top, 0);
+            padding-bottom: env(safe-area-inset-bottom, 0);
+         }
+
+         /* ================= CONTROLS ================= */
+         .sound-controls, .game-controls, .share-btn, .weather-toggle {
+            position: absolute;
+            z-index: 100;
+            background: rgba(255, 248, 220, 0.9);
+            border: 3px solid #D4A574;
+            border-radius: 50%;
+            width: 50px;
+            height: 50px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 22px;
+            color: #8B4513;
+            cursor: pointer;
+            transition: all 0.2s;
+         }
+         .sound-controls:hover, .game-controls:hover, .share-btn:hover, .weather-toggle:hover {
+            transform: scale(1.1);
+            background: #FFF8DC;
+         }
+
+         .sound-controls { top: 20px; left: 20px; }
+         .share-btn { top: 20px; right: 20px; }
+         .game-controls { bottom: 20px; left: 20px; gap: 10px; }
+         .weather-toggle { bottom: 20px; right: 20px; }
+
+         .control-btn {
+            width: 45px; height: 45px;
+            border-radius: 50%;
+            border: none;
+            background: rgba(255, 248, 220, 0.9);
+            border: 2px solid #D4A574;
+            color: #8B4513;
+            font-size: 20px;
+            cursor: pointer;
+            transition: all 0.2s;
+         }
+         .control-btn:hover { transform: scale(1.1); background: #FFF8DC; }
+
+         /* ================= WEATHER DRAWER ================= */
+         .weather-drawer {
+            position: fixed;
+            bottom: 90px;
+            right: 20px;
+            background: rgba(255, 248, 220, 0.95);
+            border: 3px solid #D4A574;
+            border-radius: 20px;
+            padding: 15px;
+            z-index: 101;
+            transform: translateY(150%);
+            transition: transform 0.3s ease;
+            box-shadow: 0 5px 20px rgba(0,0,0,0.2);
+         }
+         .weather-drawer.open { transform: translateY(0); }
+
+         .weather-drawer-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 15px;
+         }
+         .weather-title {
+            font-size: 18px;
+            font-weight: bold;
+            color: #8B4513;
+         }
+         .weather-close {
+            background: none;
+            border: none;
+            font-size: 20px;
+            color: #8B4513;
+            cursor: pointer;
+            width: 30px; height: 30px;
+            border-radius: 50%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+         }
+         .weather-close:hover { background: rgba(139, 69, 19, 0.1); }
+
+         .weather-drawer-buttons {
+            display: grid;
+            grid-template-columns: repeat(3, 1fr);
+            gap: 10px;
+         }
+         .weather-btn {
+            width: 50px; height: 50px;
+            font-size: 24px;
+            border: 2px solid #D4A574;
+            border-radius: 15px;
+            background: rgba(255, 248, 220, 0.8);
+            cursor: pointer;
+            transition: all 0.2s;
+         }
+         .weather-btn:hover, .weather-btn.active {
+            transform: scale(1.1);
+            background: #FFF8DC;
+            border-color: #FFA500;
+         }
+         .weather-btn.active { box-shadow: 0 0 15px rgba(255, 165, 0, 0.5); }
+
+         /* ================= HUD ================= */
+         .hud {
+            width: 100%;
+            max-width: 500px;
+            background: rgba(255, 248, 220, 0.95);
+            border: 3px solid #D4A574;
+            border-radius: 20px;
+            margin: 15px auto 10px;
+            padding: 15px;
+            position: relative;
+            z-index: 10;
+            box-shadow: 0 5px 15px rgba(0,0,0,0.1);
+         }
+
+         .hud-wrap {
+            display: flex;
+            justify-content: space-around;
+            align-items: center;
+         }
+
+         .hud-item {
+            display: flex;
+            align-items: center;
+            gap: 10px;
+            min-width: 70px;
+         }
+
+         .hud-icon {
+            font-size: 28px;
+            min-width: 40px;
+            text-align: center;
+         }
+
+         .hud-meta {
+            display: flex;
+            flex-direction: column;
+         }
+
+         .hud-label {
+            font-size: 12px;
+            color: #A0522D;
+            font-weight: bold;
+            text-transform: uppercase;
+            letter-spacing: 0.5px;
+         }
+
+         .hud-value {
+            font-size: 24px;
+            font-family: 'Fredoka One', sans-serif;
+            color: #8B4513;
+            line-height: 1;
+         }
+
+         .hud-sep {
+            width: 2px;
+            height: 40px;
+            background: linear-gradient(to bottom, transparent, #D4A574, transparent);
+         }
+
+         /* Progression Bar */
+         .progression-bar {
+            width: 90%;
+            height: 12px;
+            background: rgba(139, 69, 19, 0.2);
+            border-radius: 6px;
+            margin: 8px auto;
+            position: relative;
+            overflow: hidden;
+            border: 2px solid #D4A574;
+         }
+
+         .progression-fill {
+            height: 100%;
+            background: linear-gradient(90deg, #FFA500, #FF8C00, #FF6347);
+            border-radius: 4px;
+            width: 0%;
+            transition: width 0.3s ease;
+         }
+
+         .progression-label {
+            position: absolute;
+            top: 50%;
+            left: 50%;
+            transform: translate(-50%, -50%);
+            font-size: 10px;
+            font-weight: bold;
+            color: white;
+            text-shadow: 1px 1px 2px rgba(0,0,0,0.5);
+            font-family: 'Fredoka One', sans-serif;
+         }
+
+         .hud-actions {
+            margin-top: 10px;
+            display: flex;
+            justify-content: center;
+         }
+
+         .hud-ach {
+            background: linear-gradient(135deg, #FFA500, #FF8C00);
+            border: none;
+            border-radius: 25px;
+            padding: 8px 20px;
+            color: white;
+            font-family: 'Patrick Hand', cursive;
+            font-size: 16px;
+            display: flex;
+            align-items: center;
+            gap: 10px;
+            cursor: pointer;
+            transition: all 0.2s;
+         }
+         .hud-ach:hover { transform: scale(1.05); box-shadow: 0 5px 15px rgba(255, 140, 0, 0.3); }
+
+         .hud-ach-icon { font-size: 20px; }
+         .hud-ach-text { display: flex; flex-direction: column; }
+         .hud-ach-label { font-size: 12px; opacity: 0.9; }
+         .hud-ach-value { font-size: 16px; font-weight: bold; }
+         .hud-ach-caret { font-size: 24px; margin-left: 5px; }
+
+         /* HUD Animations */
+         .hud-pop {
+            animation: pop 0.25s ease;
+         }
+         @keyframes pop {
+            0% { transform: scale(1); }
+            50% { transform: scale(1.2); }
+            100% { transform: scale(1); }
+         }
+
+         .hud-shake {
+            animation: shake 0.4s ease;
+         }
+         @keyframes shake {
+            0%, 100% { transform: translateX(0); }
+            25% { transform: translateX(-5px); }
+            75% { transform: translateX(5px); }
+         }
+
+         /* ================= GAME CANVAS ================= */
+         .game-container {
+            width: 100%;
+            max-width: 420px;
+            flex: 1;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            margin: 0 auto;
+            position: relative;
+         }
+
+         #honey-game {
+            display: block;
+            width: 100%;
+            height: auto;
+            max-height: 700px;
+            border-radius: 20px;
+            box-shadow: 0 10px 30px rgba(0,0,0,0.2);
+            background: rgba(255, 248, 220, 0.15);
+         }
+
+         /* ================= OVERLAYS ================= */
+         .overlay {
+            position: fixed;
+            top: 0; left: 0;
+            width: 100%; height: 100%;
+            background: rgba(0,0,0,0.85);
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            z-index: 1000;
+            padding: 20px;
+            text-align: center;
+         }
+
+         .overlay.hidden { display: none; }
+
+         .pooh-intro {
+            width: 120px; height: 120px;
+            background: linear-gradient(135deg, #f7cc63, #f6c44f);
+            border-radius: 50%;
+            margin-bottom: 20px;
+            position: relative;
+            border: 5px solid #8B4513;
+         }
+         .pooh-intro:before, .pooh-intro:after {
+            content: '';
+            position: absolute;
+            background: #f7cc63;
+            border-radius: 50%;
+            border: 3px solid #8B4513;
+         }
+         .pooh-intro:before {
+            width: 40px; height: 40px;
+            top: -20px; left: 20px;
+         }
+         .pooh-intro:after {
+            width: 40px; height: 40px;
+            top: -20px; right: 20px;
+         }
+
+         .overlay h2 {
+            font-family: 'Fredoka One', sans-serif;
+            font-size: 42px;
+            color: #FFD700;
+            margin-bottom: 10px;
+            text-shadow: 3px 3px 0 #8B4513;
+         }
+
+         .story-line {
+            font-size: 22px;
+            color: #FFF8DC;
+            margin-bottom: 30px;
+            max-width: 300px;
+            line-height: 1.4;
+         }
+
+         .subtitle {
+            font-size: 20px;
+            color: #D4A574;
+            margin-bottom: 30px;
+         }
+
+         .btn {
+            background: linear-gradient(135deg, #FFA500, #FF8C00);
+            border: none;
+            border-radius: 30px;
+            padding: 18px 40px;
+            font-family: 'Fredoka One', sans-serif;
+            font-size: 22px;
+            color: white;
+            cursor: pointer;
+            margin: 10px 0;
+            min-width: 250px;
+            transition: all 0.2s;
+            box-shadow: 0 8px 20px rgba(255, 140, 0, 0.3);
+         }
+         .btn:hover { transform: scale(1.05); box-shadow: 0 10px 25px rgba(255, 140, 0, 0.4); }
+         .btn:active { transform: scale(0.98); }
+
+         .btn-secondary {
+            background: linear-gradient(135deg, #D4A574, #8B4513);
+            box-shadow: 0 8px 20px rgba(139, 69, 19, 0.3);
+         }
+         .btn-secondary:hover { box-shadow: 0 10px 25px rgba(139, 69, 19, 0.4); }
+
+         .start-links {
+            margin-top: 30px;
+            display: flex;
+            gap: 20px;
+         }
+
+         .link-btn {
+            background: none;
+            border: 2px solid #FFA500;
+            border-radius: 20px;
+            padding: 12px 25px;
+            font-family: 'Patrick Hand', cursive;
+            font-size: 18px;
+            color: #FFD700;
+            cursor: pointer;
+            transition: all 0.2s;
+         }
+         .link-btn:hover {
+            background: rgba(255, 165, 0, 0.1);
+            transform: scale(1.05);
+         }
+
+         .final-score {
+            font-family: 'Fredoka One', sans-serif;
+            font-size: 72px;
+            color: #FFD700;
+            margin: 20px 0;
+            text-shadow: 4px 4px 0 #8B4513;
+         }
+
+         .gameover-stats {
+            background: rgba(255, 248, 220, 0.9);
+            border-radius: 20px;
+            padding: 20px;
+            margin: 20px 0;
+            max-width: 300px;
+            border: 3px solid #D4A574;
+         }
+
+         .stat-item {
+            display: flex;
+            justify-content: space-between;
+            padding: 8px 0;
+            border-bottom: 1px solid rgba(139, 69, 19, 0.2);
+         }
+         .stat-item:last-child { border-bottom: none; }
+
+         .stat-label {
+            color: #8B4513;
+            font-size: 16px;
+         }
+         .stat-value {
+            color: #FF8C00;
+            font-family: 'Fredoka One', sans-serif;
+            font-size: 18px;
+            font-weight: bold;
+         }
+
+         /* ================= CHARACTER SELECT ================= */
+         .character-select-overlay {
+            background: rgba(0,0,0,0.9);
+         }
+
+         .char-shell {
+            background: linear-gradient(135deg, #FFF8DC, #FFE4B5);
+            border-radius: 30px;
+            padding: 25px;
+            max-width: 450px;
+            width: 90%;
+            border: 5px solid #D4A574;
+            box-shadow: 0 15px 40px rgba(0,0,0,0.3);
+         }
+
+         .char-top {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 20px;
+         }
+
+         .char-title {
+            font-family: 'Fredoka One', sans-serif;
+            font-size: 28px;
+            color: #8B4513;
+            text-shadow: 2px 2px 0 rgba(255, 255, 255, 0.5);
+         }
+
+         .char-subtitle {
+            font-size: 16px;
+            color: #8B4513;
+            text-align: center;
+            margin: 5px 0 20px;
+         }
+
+         .char-x {
+            background: #D4A574;
+            border: none;
+            width: 40px;
+            height: 40px;
+            border-radius: 50%;
+            font-size: 20px;
+            color: white;
+            cursor: pointer;
+            transition: all 0.2s;
+         }
+         .char-x:hover { background: #8B4513; transform: scale(1.1); }
+
+         .char-grid {
+            display: grid;
+            grid-template-columns: repeat(2, 1fr);
+            gap: 15px;
+            margin: 25px 0;
+         }
+
+         .character-card {
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            padding: 15px;
+            background: rgba(255, 248, 220, 0.8);
+            border-radius: 15px;
+            border: 3px solid #D4A574;
+            cursor: pointer;
+            transition: all 0.2s;
+         }
+
+         .character-card:hover {
+            transform: translateY(-5px);
+            background: rgba(255, 228, 181, 0.9);
+         }
+
+         .character-card.active {
+            background: rgba(255, 228, 181, 0.95);
+            border-color: #FFA500;
+            transform: scale(1.05);
+            box-shadow: 0 6px 16px rgba(139, 69, 19, 0.2);
+         }
+
+         .character-card.locked {
+            opacity: 0.6;
+            filter: grayscale(0.5);
+            cursor: not-allowed;
+         }
+
+         .character-card.locked:hover {
+            transform: none !important;
+         }
+
+         .char-icon {
+            font-size: 32px;
+            margin-bottom: 8px;
+         }
+
+         .char-name {
+            font-size: 18px;
+            font-weight: bold;
+            color: #8B4513;
+            margin-bottom: 4px;
+            font-family: 'Fredoka One', sans-serif;
+         }
+
+         .char-ability {
+            font-size: 14px;
+            color: #FF8C00;
+            font-weight: bold;
+            margin-bottom: 4px;
+         }
+
+         .char-desc {
+            font-size: 12px;
+            color: #A0522D;
+            text-align: center;
+            line-height: 1.3;
+         }
+
+         .char-locked {
+            display: block;
+            font-size: 11px;
+            color: #8B4513;
+            background: rgba(139, 69, 19, 0.1);
+            padding: 4px 8px;
+            border-radius: 10px;
+            margin-top: 8px;
+            text-align: center;
+         }
+
+         .char-bottom {
+            margin-top: 20px;
+            display: flex;
+            justify-content: center;
+         }
+
+         /* ================= ACHIEVEMENTS ================= */
+         .achievements-overlay {
+            background: rgba(0,0,0,0.9);
+         }
+
+         .achievements-shell {
+            background: linear-gradient(135deg, #FFF8DC, #FFE4B5);
+            border-radius: 30px;
+            padding: 25px;
+            max-width: 450px;
+            width: 90%;
+            max-height: 80vh;
+            border: 5px solid #D4A574;
+            box-shadow: 0 15px 40px rgba(0,0,0,0.3);
+            display: flex;
+            flex-direction: column;
+         }
+
+         .achievements-top {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 20px;
+         }
+
+         .ach-title {
+            font-family: 'Fredoka One', sans-serif;
+            font-size: 28px;
+            color: #8B4513;
+            text-shadow: 2px 2px 0 rgba(255, 255, 255, 0.5);
+         }
+
+         .ach-x {
+            background: #D4A574;
+            border: none;
+            width: 40px;
+            height: 40px;
+            border-radius: 50%;
+            font-size: 20px;
+            color: white;
+            cursor: pointer;
+            transition: all 0.2s;
+         }
+         .ach-x:hover { background: #8B4513; transform: scale(1.1); }
+
+         .achievements-listWrap {
+            flex: 1;
+            overflow-y: auto;
+            padding-right: 10px;
+            margin: 15px 0;
+         }
+
+         .achievement-item {
+            background: rgba(255, 248, 220, 0.8);
+            border: 2px solid #D4A574;
+            border-radius: 15px;
+            padding: 15px;
+            margin-bottom: 10px;
+            display: flex;
+            align-items: center;
+            gap: 15px;
+            transition: all 0.2s;
+         }
+
+         .achievement-item.unlocked {
+            background: rgba(255, 228, 181, 0.9);
+            border-color: #FFA500;
+         }
+
+         .achievement-icon {
+            font-size: 28px;
+            min-width: 40px;
+            text-align: center;
+         }
+
+         .achievement-details {
+            flex: 1;
+            text-align: left;
+         }
+
+         .achievement-name {
+            font-family: 'Fredoka One', sans-serif;
+            font-size: 18px;
+            color: #8B4513;
+            margin-bottom: 4px;
+         }
+
+         .achievement-desc {
+            font-size: 14px;
+            color: #A0522D;
+         }
+
+         .achievements-bottom {
+            margin-top: 20px;
+            display: flex;
+            justify-content: center;
+         }
+
+         /* ================= SCORE POPUPS ================= */
+         .score-popup {
+            position: absolute;
+            font-family: 'Fredoka One', sans-serif;
+            font-size: 22px;
+            color: #FFD700;
+            text-shadow: 2px 2px 0 #8B4513;
+            pointer-events: none;
+            z-index: 50;
+            animation: popup 1s ease-out forwards;
+         }
+
+         @keyframes popup {
+             0% { opacity: 0; transform: translateY(0) scale(0.5); }
+             20% { opacity: 1; transform: translateY(-20px) scale(1.1); }
+             100% { opacity: 0; transform: translateY(-60px) scale(1); }
+         }
+
+         /* ================= ACHIEVEMENT POPUP ================= */
+         .achievement-popup {
+            position: fixed;
+            top: 50%;
+            left: 50%;
+            transform: translate(-50%, -50%);
+            background: linear-gradient(135deg, #FFD700, #FFA500);
+            border: 4px solid #8B4513;
+            border-radius: 25px;
+            padding: 25px 35px;
+            font-family: 'Fredoka One', sans-serif;
+            font-size: 26px;
+            color: #8B4513;
+            z-index: 1001;
+            text-align: center;
+            box-shadow: 0 15px 40px rgba(0,0,0,0.4);
+            animation: achieveIn 0.5s ease-out, achieveOut 0.5s ease-in 2.5s forwards;
+         }
+
+         @keyframes achieveIn {
+             0% { opacity: 0; transform: translate(-50%, -50%) scale(0.3); }
+             70% { transform: translate(-50%, -50%) scale(1.1); }
+             100% { opacity: 1; transform: translate(-50%, -50%) scale(1); }
+         }
+
+         @keyframes achieveOut {
+             0% { opacity: 1; transform: translate(-50%, -50%) scale(1); }
+             100% { opacity: 0; transform: translate(-50%, -50%) scale(0.3); }
+         }
+
+         /* ================= UNLOCK NOTIFICATION ================= */
+         .unlock-notification {
+            position: fixed;
+            top: 100px;
+            left: 50%;
+            transform: translateX(-50%) translateY(-20px);
+            background: linear-gradient(135deg, #FFD700, #FFA500);
+            border: 3px solid #8B4513;
+            border-radius: 20px;
+            padding: 15px;
+            display: flex;
+            align-items: center;
+            gap: 15px;
+            z-index: 1000;
+            opacity: 0;
+            transition: all 0.3s ease;
+            box-shadow: 0 10px 30px rgba(139, 69, 19, 0.4);
+         }
+
+         .unlock-notification.show {
+            opacity: 1;
+            transform: translateX(-50%) translateY(0);
+         }
+
+         .unlock-icon {
+            font-size: 36px;
+            animation: bounce 0.5s ease infinite alternate;
+         }
+
+         .unlock-content {
+            display: flex;
+            flex-direction: column;
+         }
+
+         .unlock-title {
+            font-size: 14px;
+            color: #8B4513;
+            font-weight: bold;
+            margin-bottom: 4px;
+            font-family: 'Patrick Hand', cursive;
+         }
+
+         .unlock-name {
+            font-size: 20px;
+            color: #8B4513;
+            font-weight: bold;
+            font-family: 'Fredoka One', sans-serif;
+         }
+
+         @keyframes bounce {
+            from { transform: translateY(0); }
+            to { transform: translateY(-5px); }
+         }
+
+         /* ================= RESPONSIVE ================= */
+         @media (max-width: 480px) {
+            .hud { padding: 12px; border-radius: 15px; }
+            .hud-icon { font-size: 24px; min-width: 35px; }
+            .hud-value { font-size: 20px; }
+            .hud-label { font-size: 10px; }
+            
+            .char-grid { grid-template-columns: 1fr; }
+            .start-links { flex-direction: column; gap: 10px; }
+            
+            .overlay h2 { font-size: 36px; }
+            .btn { padding: 15px 30px; font-size: 20px; min-width: 220px; }
+            
+            .control-btn, .sound-controls, .share-btn, .weather-toggle {
+               width: 45px; height: 45px; font-size: 20px;
+            }
+            .game-controls { bottom: 15px; left: 15px; }
+         }
+
+         @media (max-height: 700px) {
+            .hud { padding: 10px; margin: 10px auto 5px; }
+            .hud-value { font-size: 20px; }
+            .progression-bar { height: 10px; margin: 6px auto; }
+            
+            .overlay h2 { font-size: 32px; margin-bottom: 5px; }
+            .story-line, .subtitle { font-size: 18px; margin-bottom: 20px; }
+            .btn { padding: 12px 30px; margin: 5px 0; }
+         }
+      </style>
    </head>
    <body>
       <!-- Background -->
@@ -67,10 +923,10 @@
                </div>
                <div class="hud-sep"></div>
                <div class="hud-item">
-                  <div class="hud-icon">🔥</div>
+                  <div class="hud-icon">📈</div>
                   <div class="hud-meta">
-                     <div class="hud-label">Streak</div>
-                     <div class="hud-value" id="streak">0</div>
+                     <div class="hud-label">Level</div>
+                     <div class="hud-value" id="level">Beginner</div>
                   </div>
                </div>
                <div class="hud-sep"></div>
@@ -81,16 +937,23 @@
                      <div class="hud-value" id="lives">3</div>
                   </div>
                </div>
-               <div class="hud-actions">
-                  <button class="hud-ach" id="achievements-btn">
-                  <span class="hud-ach-icon">🏆</span>
-                  <span class="hud-ach-text">
-                  <span class="hud-ach-label">Achievements</span>
-                  <span class="hud-ach-value" id="achievements-count">0/10</span>
-                  </span>
-                  <span class="hud-ach-caret">›</span>
-                  </button>
-               </div>
+            </div>
+            
+            <!-- Progression Bar -->
+            <div class="progression-bar">
+               <div class="progression-fill" id="progression-fill"></div>
+               <div class="progression-label" id="progression-label">0/300</div>
+            </div>
+            
+            <div class="hud-actions">
+               <button class="hud-ach" id="achievements-btn">
+               <span class="hud-ach-icon">🏆</span>
+               <span class="hud-ach-text">
+               <span class="hud-ach-label">Achievements</span>
+               <span class="hud-ach-value" id="achievements-count">0/14</span>
+               </span>
+               <span class="hud-ach-caret">›</span>
+               </button>
             </div>
          </header>
          <!-- Game Canvas -->
@@ -105,7 +968,7 @@
             🍯 Start Collecting Honey
             </button>
             <div class="start-links">
-               <button class="link-btn" id="select-character-btn">Choose Character</button>
+               <button class="link-btn" id="select-character-btn">Choose Helper</button>
                <button class="link-btn" id="view-achievements-btn">Achievements</button>
             </div>
          </div>
@@ -129,20 +992,34 @@
          <div class="overlay hidden" id="gameover-overlay">
             <h2>Oh Bother!</h2>
             <div class="final-score" id="final-score">0</div>
+            
+            <div class="gameover-stats">
+               <div class="stat-item">
+                  <span class="stat-label">Level Reached:</span>
+                  <span class="stat-value" id="final-level">Beginner</span>
+               </div>
+               <div class="stat-item">
+                  <span class="stat-label">Highest Streak:</span>
+                  <span class="stat-value" id="final-streak">0</span>
+               </div>
+               <div class="stat-item">
+                  <span class="stat-label">Honey Caught:</span>
+                  <span class="stat-value" id="final-honey">0</span>
+               </div>
+            </div>
+            
             <button class="btn" id="restart-btn">Play Again 🍯</button>
          </div>
          <!-- ================= CHARACTER SELECT ================= -->
          <div class="character-select-overlay hidden" id="character-select-overlay">
             <div class="char-shell">
                <div class="char-top">
-                  <h2 class="char-title">Choose Your Character</h2>
+                  <h2 class="char-title">Choose Your Helper</h2>
+                  <p class="char-subtitle">You're always Pooh! Choose a friend to help you.</p>
                   <button class="char-x" id="back-to-menu-btn">✕</button>
                </div>
                <div class="char-grid">
-                  <button class="character-card" data-character="pooh">🐻 Pooh</button>
-                  <button class="character-card" data-character="piglet">🐷 Piglet</button>
-                  <button class="character-card" data-character="tigger">🐯 Tigger</button>
-                  <button class="character-card" data-character="rabbit">🐰 Rabbit</button>
+                  <!-- Helper cards will be generated here -->
                </div>
                <div class="char-bottom">
                   <button class="btn" id="start-with-character-btn">Start 🍯</button>
@@ -177,7 +1054,7 @@
   const lerp = (a, b, t) => a + (b - a) * t;
   const now = () => (typeof performance !== "undefined" ? performance.now() : Date.now());
 
-  // Rounded-rect path helper (cross-browser; avoids ctx.roundRect dependency)
+  // Rounded-rect path helper
   function rrPath(ctx, x, y, w, h, r) {
     r = Math.max(0, Math.min(r, Math.min(w, h) / 2));
     ctx.beginPath();
@@ -193,7 +1070,7 @@
     ctx.closePath();
   }
 
-  // Small seeded RNG for stable “paper grain” without flicker
+  // Small seeded RNG for stable "paper grain"
   function makeRng(seed) {
     let s = seed >>> 0;
     return () => {
@@ -202,7 +1079,7 @@
     };
   }
 
-  // Smooth noise-ish helper (cheap “natural” drift)
+  // Smooth noise-ish helper
   const n1 = (t, seed) => Math.sin((t * 0.0012) + seed) * 0.5 + Math.sin((t * 0.00053) + seed * 1.7) * 0.35 + Math.sin((t * 0.0019) + seed * 0.27) * 0.15;
 
   /* ======================= SAFE STORAGE ======================= */
@@ -241,6 +1118,110 @@
     };
   })();
 
+  /* ======================= PROGRESSIVE GAME SYSTEM ======================= */
+  const ProgressiveSystem = (() => {
+    const LEVELS = [
+      { score: 0,    name: "Beginner",    honeyRate: 620, beeRate: 1200, powerRate: 9000, unlock: null },
+      { score: 300,  name: "Novice",      honeyRate: 580, beeRate: 1100, powerRate: 8500, unlock: "piglet" },
+      { score: 800,  name: "Apprentice",  honeyRate: 540, beeRate: 1000, powerRate: 8000, unlock: "tigger" },
+      { score: 1500, name: "Adept",       honeyRate: 500, beeRate: 900,  powerRate: 7500, unlock: "rabbit" },
+      { score: 2500, name: "Expert",      honeyRate: 460, beeRate: 800,  powerRate: 7000, unlock: "eeyore" },
+      { score: 4000, name: "Master",      honeyRate: 420, beeRate: 700,  powerRate: 6500, unlock: null },
+      { score: 6000, name: "Grandmaster", honeyRate: 380, beeRate: 600,  powerRate: 6000, unlock: null }
+    ];
+
+    let currentLevel = 0;
+    let unlockedHelpers = new Set(["piglet"]); // Start with Piglet unlocked
+
+    // Load unlocked helpers from storage
+    try {
+      const saved = Store.get("unlockedHelpers", "piglet");
+      if (saved) {
+        unlockedHelpers = new Set(saved.split(","));
+      }
+    } catch {}
+
+    function getCurrentLevel(score) {
+      for (let i = LEVELS.length - 1; i >= 0; i--) {
+        if (score >= LEVELS[i].score) {
+          return i;
+        }
+      }
+      return 0;
+    }
+
+    function checkUnlocks(score) {
+      const newLevel = getCurrentLevel(score);
+      const oldLevel = currentLevel;
+      currentLevel = newLevel;
+
+      // Check for new unlocks
+      if (newLevel > oldLevel) {
+        for (let i = oldLevel + 1; i <= newLevel; i++) {
+          const unlock = LEVELS[i].unlock;
+          if (unlock && !unlockedHelpers.has(unlock)) {
+            unlockedHelpers.add(unlock);
+            
+            // Show unlock notification
+            showUnlockNotification(unlock);
+            
+            // Save to storage
+            Store.set("unlockedHelpers", Array.from(unlockedHelpers).join(","));
+          }
+        }
+      }
+
+      return LEVELS[newLevel];
+    }
+
+    function showUnlockNotification(helper) {
+      const helperNames = {
+        piglet: "Piglet",
+        tigger: "Tigger",
+        rabbit: "Rabbit",
+        eeyore: "Eeyore"
+      };
+
+      const pop = document.createElement("div");
+      pop.className = "unlock-notification";
+      pop.innerHTML = `
+        <div class="unlock-icon">🎉</div>
+        <div class="unlock-content">
+          <div class="unlock-title">New Helper Unlocked!</div>
+          <div class="unlock-name">${helperNames[helper]}</div>
+        </div>
+      `;
+      
+      document.body.appendChild(pop);
+      setTimeout(() => pop.classList.add("show"), 10);
+      
+      setTimeout(() => {
+        pop.classList.remove("show");
+        setTimeout(() => pop.remove(), 300);
+      }, 3000);
+
+      Audio.power();
+      vibrate([20, 20, 20]);
+    }
+
+    function isHelperUnlocked(helper) {
+      return unlockedHelpers.has(helper);
+    }
+
+    function getUnlockedHelpers() {
+      return Array.from(unlockedHelpers);
+    }
+
+    return {
+      checkUnlocks,
+      isHelperUnlocked,
+      getUnlockedHelpers,
+      getCurrentLevel: () => currentLevel,
+      getLevelName: (score) => LEVELS[getCurrentLevel(score)].name,
+      LEVELS
+    };
+  })();
+
   /* ======================= APP STATE ======================= */
   const AppState = {
     running: false,
@@ -256,7 +1237,7 @@
 
     soundOn: Store.get("sound", "on") !== "off",
     hapticsOn: Store.get("haptics", "on") !== "off",
-    character: Store.get("character", "pooh") || "pooh",
+    helper: Store.get("helper", "piglet") || "piglet",
 
     combo: { mult: 1, timer: 0, tier: 0 },
 
@@ -273,6 +1254,7 @@
       honeyCaught: 0,
       beesHit: 0,
       powerCollected: 0,
+      highestLevel: 0,
     },
   };
 
@@ -336,6 +1318,123 @@
     }
 
     return { init, toggle, ...sfx };
+  })();
+
+  /* ======================= HELPER EFFECTS ======================= */
+  const HelperEffects = (() => {
+    const cooldowns = {};
+    let pigletApplied = false;
+    let eeyoreSlowApplied = false;
+    
+    const effects = {
+      piglet: {
+        apply(game) {
+          // Piglet gives +1 starting life (applied once at game start)
+          if (!pigletApplied) {
+            AppState.lives = 4; // Start with 4 instead of 3
+            pigletApplied = true;
+          }
+        },
+        onStart() {
+          // This will be called when game starts
+        }
+      },
+      
+      tigger: {
+        apply(game) {
+          const key = 'tigger_bounce';
+          if (!cooldowns[key] || Date.now() - cooldowns[key] > 5000) {
+            // Check for nearby bees
+            game.bees.forEach(bee => {
+              const dx = bee.x - game.player.x;
+              const dy = bee.y - game.player.y;
+              const dist = Math.sqrt(dx * dx + dy * dy);
+              
+              if (dist < 180) { // If bee is close
+                // Push bee away
+                bee.vx += (dx / dist) * 150;
+                bee.vy -= 40; // Give some upward push
+                
+                // Visual effect
+                Particles.emit(bee.x, bee.y, "rgba(255,140,0,1)", 12, 1.2);
+                
+                cooldowns[key] = Date.now();
+                
+                // Show effect indicator
+                spawnScorePopup("🐯 BOUNCE!", game.player.x, game.player.y - 60);
+                Audio.power();
+              }
+            });
+          }
+        }
+      },
+      
+      rabbit: {
+        apply(game) {
+          // Rabbit makes honey drift toward player, stronger with higher combo
+          const pullStrength = 0.5 + (AppState.combo.mult * 0.3);
+          
+          game.honeys.forEach(honey => {
+            const dx = game.player.x - honey.x;
+            const dy = game.player.y - honey.y;
+            const dist = Math.sqrt(dx * dx + dy * dy);
+            
+            if (dist < 350) { // If honey is within range
+              // Gentle pull toward player, stronger when closer
+              const strength = pullStrength * (1 - dist/350);
+              honey.x += (dx / dist) * strength;
+              honey.y += (dy / dist) * (strength * 0.7);
+              
+              // Visual trail
+              if (Math.random() < 0.1) {
+                Particles.emit(honey.x, honey.y, "rgba(80,170,110,0.6)", 1, 0.5);
+              }
+            }
+          });
+        }
+      },
+      
+      eeyore: {
+        apply(game) {
+          // Eeyore slows everything down by 15%
+          if (!eeyoreSlowApplied) {
+            game.honeyFall = 165 * 0.85;
+            game.beeFall = 205 * 0.85;
+            game.beeDrift = 85 * 0.85;
+            eeyoreSlowApplied = true;
+          }
+          
+          // Also gives slight damage reduction (25% chance to ignore bee hit)
+          game.eeyoreProtection = true;
+        }
+      }
+    };
+    
+    return {
+      applyCurrent(game) {
+        const effect = effects[AppState.helper];
+        if (effect && effect.apply) {
+          effect.apply(game);
+        }
+      },
+      
+      onGameStart() {
+        const effect = effects[AppState.helper];
+        if (effect && effect.onStart) {
+          effect.onStart();
+        }
+      },
+      
+      checkEeyoreProtection() {
+        return AppState.helper === 'eeyore' && Math.random() < 0.25;
+      },
+      
+      reset() {
+        pigletApplied = false;
+        eeyoreSlowApplied = false;
+        Object.keys(cooldowns).forEach(key => delete cooldowns[key]);
+      }
+    };
   })();
 
   /* ======================= OVERLAYS ======================= */
@@ -411,12 +1510,94 @@
       icon.className = AppState.soundOn ? "fas fa-volume-up" : "fas fa-volume-mute";
     }
 
+    const HELPER_INFO = {
+      piglet: { 
+        icon: "🐷", 
+        name: "Piglet", 
+        ability: "More Lives", 
+        desc: "Start with +1 extra life",
+        unlockScore: 0 
+      },
+      tigger: { 
+        icon: "🐯", 
+        name: "Tigger", 
+        ability: "Bounce Shield", 
+        desc: "Occasionally bounce bees away",
+        unlockScore: 800 
+      },
+      rabbit: { 
+        icon: "🐰", 
+        name: "Rabbit", 
+        ability: "Honey Magnet", 
+        desc: "Honey pots drift toward you",
+        unlockScore: 1500 
+      },
+      eeyore: { 
+        icon: "🐴", 
+        name: "Eeyore", 
+        ability: "Slow & Steady", 
+        desc: "Everything moves 15% slower",
+        unlockScore: 2500 
+      }
+    };
+
+    function renderHelperCards() {
+      const charGrid = document.querySelector(".char-grid");
+      if (!charGrid) return;
+      
+      charGrid.innerHTML = Object.entries(HELPER_INFO).map(([key, info]) => {
+        const unlocked = ProgressiveSystem.isHelperUnlocked(key);
+        const isActive = AppState.helper === key;
+        
+        return `
+          <button class="character-card ${isActive ? 'active' : ''} ${!unlocked ? 'locked' : ''}" 
+                  data-helper="${key}" ${!unlocked ? 'disabled' : ''}>
+            <span class="char-icon">${info.icon}</span>
+            <span class="char-name">${info.name}</span>
+            <span class="char-ability">${info.ability}</span>
+            <span class="char-desc">${info.desc}</span>
+            ${!unlocked ? 
+              `<span class="char-locked">Unlock at ${info.unlockScore} points</span>` : 
+              ''}
+          </button>
+        `;
+      }).join("");
+    }
+
     function updateHUD(prev = null) {
       setText("score", Math.floor(AppState.score));
       setText("streak", Math.floor(AppState.streak));
       setText("lives", Math.floor(AppState.lives));
+      
+      // Update level display
+      const levelName = ProgressiveSystem.getLevelName(AppState.score);
+      setText("level", levelName);
+      
+      // Update progression bar
+      const currentLevel = ProgressiveSystem.getCurrentLevel(AppState.score);
+      const LEVELS = ProgressiveSystem.LEVELS;
+      
+      if (currentLevel < LEVELS.length - 1) {
+        const currentGoal = LEVELS[currentLevel].score;
+        const nextGoal = LEVELS[currentLevel + 1].score;
+        const progress = AppState.score - currentGoal;
+        const total = nextGoal - currentGoal;
+        const percent = Math.min(100, (progress / total) * 100);
+        
+        const fill = document.getElementById("progression-fill");
+        const label = document.getElementById("progression-label");
+        
+        if (fill) fill.style.width = `${percent}%`;
+        if (label) label.textContent = `${progress}/${total}`;
+      } else {
+        // Max level reached
+        const fill = document.getElementById("progression-fill");
+        const label = document.getElementById("progression-label");
+        if (fill) fill.style.width = "100%";
+        if (label) label.textContent = "MAX";
+      }
 
-      const defsCount = 10;
+      const defsCount = 14;
       const got = Object.values(AppState.achievements || {}).filter(Boolean).length;
       setText("achievements-count", `${got}/${defsCount}`);
 
@@ -438,6 +1619,11 @@
       { key:"noMiss20",  title:"Perfect Flow", desc:"20 streak without a miss." },
       { key:"survive120",title:"Long Walk", desc:"Survive 120 seconds." },
       { key:"score3k",   title:"Legend", desc:"Reach 3000 score." },
+      // New progression achievements
+      { key:"level3",    title:"Rising Star", desc:"Reach Novice level." },
+      { key:"level5",    title:"Honey Master", desc:"Reach Expert level." },
+      { key:"level7",    title:"Grandmaster", desc:"Reach highest level." },
+      { key:"allHelpers",title:"Full Crew", desc:"Unlock all helpers." },
     ];
 
     function renderAchievements() {
@@ -465,6 +1651,11 @@
       Overlays.open("achievements");
     }
 
+    function openCharacterSelect() {
+      renderHelperCards();
+      Overlays.open("character");
+    }
+
     function bind() {
       if (bind._did) return;
       bind._did = true;
@@ -489,26 +1680,28 @@
       on("close-achievements-btn", "click", () => Overlays.close("achievements"));
       on("close-achievements-btn-2", "click", () => Overlays.close("achievements"));
 
-      on("select-character-btn", "click", () => { Audio.ui(); Overlays.open("character"); });
+      on("select-character-btn", "click", () => { Audio.ui(); openCharacterSelect(); });
       on("back-to-menu-btn", "click", () => Overlays.close("character"));
       on("start-with-character-btn", "click", () => { Audio.init(); Overlays.closeAll(); Game.start(); });
 
-      // Character cards
-      const cards = Array.from(document.querySelectorAll(".character-card[data-character]"));
-      const applyCharActive = () => {
-        cards.forEach(btn => btn.classList.toggle("active", btn.getAttribute("data-character") === AppState.character));
-      };
-      cards.forEach(btn => {
-        btn.addEventListener("click", () => {
-          const c = btn.getAttribute("data-character");
-          if (!c) return;
-          AppState.character = c;
-          Store.set("character", c);
-          applyCharActive();
-          Audio.ui();
+      // Helper cards
+      function applyHelperActive() {
+        document.querySelectorAll(".character-card[data-helper]").forEach(btn => {
+          btn.classList.toggle("active", btn.getAttribute("data-helper") === AppState.helper);
         });
+      }
+      
+      document.addEventListener("click", (e) => {
+        const card = e.target.closest(".character-card[data-helper]:not(.locked)");
+        if (card) {
+          const h = card.getAttribute("data-helper");
+          if (!h) return;
+          AppState.helper = h;
+          Store.set("helper", h);
+          applyHelperActive();
+          Audio.ui();
+        }
       });
-      applyCharActive();
 
       // Weather drawer wiring
       const drawer = $("weather-drawer");
@@ -536,7 +1729,7 @@
 
       // Share
       on("share-btn", "click", async () => {
-        const t = `I scored ${Math.floor(AppState.score)} in Pooh’s Honey Hunt 🍯`;
+        const t = `I scored ${Math.floor(AppState.score)} in Pooh's Honey Hunt 🍯`;
         try {
           if (navigator.share) await navigator.share({ text: t });
           else if (navigator.clipboard) await navigator.clipboard.writeText(t);
@@ -566,7 +1759,7 @@
       updateHUD();
     }
 
-    return { bind, updateHUD, openAchievements, renderAchievements };
+    return { bind, updateHUD, openAchievements, renderAchievements, openCharacterSelect };
   })();
 
   /* ======================= WEATHER EFFECTS (DOM overlay) ======================= */
@@ -680,7 +1873,7 @@
   canvas.width = BASE_W;
   canvas.height = BASE_H;
 
-  /* ======================= LAYOUT (make play area taller) ======================= */
+  /* ======================= LAYOUT ======================= */
   const Layout = (() => {
     const root = $("game-root");
     const hud = document.querySelector(".hud");
@@ -695,20 +1888,16 @@
     function apply() {
       if (!container || !canvas) return;
 
-      // Viewport height (handles iOS better than 100vh)
+      // Viewport height
       const vh = Math.max(420, window.innerHeight || 700);
 
       const hudH = hud ? hud.getBoundingClientRect().height : 0;
 
-      // These are overlay-ish, but they still occupy visual space at top
       const topFloat = 8;
-
       const bottomPad = 14;
 
-      // Give the canvas the leftover height under the HUD (this is the “taller” feel)
       const availableH = clamp(vh - hudH - topFloat - bottomPad, 520, 980);
 
-      // Preserve aspect ratio, fit within container width
       const contW = container.getBoundingClientRect().width || 420;
       const desiredW = availableH * (BASE_W / BASE_H);
       const finalW = clamp(desiredW, 300, contW);
@@ -718,14 +1907,10 @@
       if (key === lastKey) return;
       lastKey = key;
 
-      // No CSS file changes: set inline styles
+      container.style.display = "flex";
+      container.style.alignItems = "center";
+      container.style.justifyContent = "center";
 
-container.style.display = "flex";
-container.style.alignItems = "center";
-container.style.justifyContent = "center";
-      
-
-      // Prevent browser scroll-bounce during play on iOS
       if (root) {
         root.style.minHeight = `${vh}px`;
         root.style.overflow = "hidden";
@@ -742,7 +1927,6 @@ container.style.justifyContent = "center";
       };
       window.addEventListener("resize", req, { passive: true });
       window.addEventListener("orientationchange", req, { passive: true });
-      // Safari sometimes changes innerHeight after focus bars settle
       setTimeout(apply, 60);
       setTimeout(apply, 280);
       apply();
@@ -904,6 +2088,15 @@ container.style.justifyContent = "center";
       if (AppState.combo.mult >= 2.0) unlock("combo2x", "Combo Craze");
       if (AppState.streak >= 20) unlock("noMiss20", "Perfect Flow");
       if (AppState.stats.powerCollected >= 3) unlock("powerFan", "Powered Up");
+      
+      // Progression achievements
+      if (AppState.stats.highestLevel >= 2) unlock("level3", "Rising Star");
+      if (AppState.stats.highestLevel >= 4) unlock("level5", "Honey Master");
+      if (AppState.stats.highestLevel >= 6) unlock("level7", "Grandmaster");
+      
+      const allHelpers = ["piglet", "tigger", "rabbit", "eeyore"];
+      const hasAll = allHelpers.every(h => ProgressiveSystem.isHelperUnlocked(h));
+      if (hasAll) unlock("allHelpers", "Full Crew");
     }
 
     return { check };
@@ -928,10 +2121,10 @@ container.style.justifyContent = "center";
     let running = false;
     let last = 0;
 
-    // base spawn (we modulate these over time + director)
+    // base spawn
     let honeyTimer = 0, beeTimer = 0, powerTimer = 0;
     let baseHoneyRate = 520;
-    let baseBeeRate = 980;       // slightly calmer baseline
+    let baseBeeRate = 980;
     let powerRate = 7600;
 
     // movement difficulty
@@ -940,12 +2133,10 @@ container.style.justifyContent = "center";
     let shake = 0;
     let microSlow = 0;
 
-    // make rounds longer: grace + caps
-    const GRACE_MS = 8000;
-    const DIFF_CAP_SEC = 75; // caps the ramp after ~75 seconds
+    // director knobs
+    let directorEase = 0;
 
-    // director knobs (ease when low lives)
-    let directorEase = 0; // 0..1
+    let eeyoreProtection = false;
 
     const hitCircle = (ax, ay, ar, bx, by, br) => {
       const dx = ax - bx, dy = ay - by, rr = ar + br;
@@ -983,6 +2174,7 @@ container.style.justifyContent = "center";
       AppState.stats.honeyCaught = 0;
       AppState.stats.beesHit = 0;
       AppState.stats.powerCollected = 0;
+      AppState.stats.highestLevel = 0;
 
       buffs.shield = 0;
       buffs.slow = 0;
@@ -999,6 +2191,9 @@ container.style.justifyContent = "center";
       microSlow = 0;
 
       directorEase = 0;
+      eeyoreProtection = false;
+
+      HelperEffects.reset();
 
       UI.updateHUD();
     }
@@ -1010,6 +2205,10 @@ container.style.justifyContent = "center";
       running = true;
       last = now();
       Layout.apply();
+      
+      // Apply helper start effects
+      HelperEffects.onGameStart();
+      UI.updateHUD();
     }
 
     function gameOver() {
@@ -1024,6 +2223,11 @@ container.style.justifyContent = "center";
 
       const fs = $("final-score");
       if (fs) fs.textContent = String(Math.floor(AppState.score));
+      
+      // Update game over stats
+      UI.setText("final-level", ProgressiveSystem.getLevelName(AppState.score));
+      UI.setText("final-streak", AppState.stats.maxStreak);
+      UI.setText("final-honey", AppState.stats.honeyCaught);
 
       UI.updateHUD();
       Overlays.closeAll();
@@ -1055,12 +2259,10 @@ container.style.justifyContent = "center";
       });
     }
 
-    // “Natural” bees: each has wander + occasional steer to player
     function spawnBee() {
       const seed = (Math.random() * 1e9) | 0;
       const typeRoll = Math.random();
 
-      // keep it mostly natural with rare “smart” bees
       const type =
         typeRoll < 0.78 ? "wander" :
         typeRoll < 0.92 ? "curious" :
@@ -1079,10 +2281,9 @@ container.style.justifyContent = "center";
         seed,
         type,
 
-        // wandering parameters
         wSeed: Math.random() * 10,
-        wAmp: 18 + Math.random() * 34,      // lateral drift in px-ish
-        wFreq: 0.9 + Math.random() * 1.2,   // how fast it “wiggles”
+        wAmp: 18 + Math.random() * 34,
+        wFreq: 0.9 + Math.random() * 1.2,
         interest: 0,
         steerX: startX,
         steerTimer: 250 + Math.random() * 450,
@@ -1101,27 +2302,29 @@ container.style.justifyContent = "center";
       });
     }
 
-    // Difficulty ramp with caps (prevents “inevitable doom spiral”)
     function updateDifficulty() {
-      const tSec = Math.min(DIFF_CAP_SEC, AppState.timeMs / 1000);
-
-      honeyFall = 165 + tSec * 0.75; // slower ramp
-      beeFall   = 205 + tSec * 0.95; // capped
-      beeDrift  =  85 + tSec * 0.12; // capped
-
-      // director easing (when low lives, back off)
+      // Get current level from progressive system
+      const levelData = ProgressiveSystem.checkUnlocks(AppState.score);
+      AppState.stats.highestLevel = Math.max(AppState.stats.highestLevel, ProgressiveSystem.getCurrentLevel(AppState.score));
+      
+      // Use level-based rates
+      baseHoneyRate = levelData.honeyRate;
+      baseBeeRate = levelData.beeRate;
+      powerRate = levelData.powerRate;
+      
+      // Keep some time-based progression for falling speed
+      const tSec = Math.min(45, AppState.timeMs / 1000);
+      honeyFall = 165 + tSec * 0.5;
+      beeFall = 205 + tSec * 0.7;
+      beeDrift = 85 + tSec * 0.08;
+      
+      // Director easing
       const targetEase = AppState.lives <= 1 ? 1 : (AppState.lives === 2 ? 0.45 : 0);
       directorEase = lerp(directorEase, targetEase, 0.03);
-
-      // spawn rates: ease increases bee interval and slightly increases honey interval (so it’s not trivial)
-      const beeBase = 980 - tSec * 2.2; // very gentle tightening over time
-      const honeyBase = 520 - tSec * 0.6;
-
-      baseBeeRate = clamp(beeBase + directorEase * 520, 720, 1550);
-      baseHoneyRate = clamp(honeyBase + directorEase * 120, 420, 720);
-
-      // power a touch more frequent when struggling
-      powerRate = clamp(7600 - directorEase * 1600, 5200, 9000);
+      
+      // Apply director easing to rates
+      baseBeeRate = clamp(baseBeeRate + directorEase * 300, 600, 1400);
+      baseHoneyRate = clamp(baseHoneyRate + directorEase * 80, 350, 650);
     }
 
     function setComboFromStreak() {
@@ -1155,7 +2358,7 @@ container.style.justifyContent = "center";
         Particles.emit(h.x, h.y, "rgba(180,55,25,1)", 24, 1.2);
         spawnScorePopup("CURSED! -35", h.x, h.y);
 
-        // not instant death: only 1 extra bee (and it’s “curious”)
+        // not instant death: only 1 extra bee
         spawnBee();
 
         Audio.hit();
@@ -1184,9 +2387,9 @@ container.style.justifyContent = "center";
       AppState.score += pts;
 
       let color = "rgba(255,165,0,1)";
-      if (AppState.character === "piglet") color = "rgba(255,140,170,1)";
-      if (AppState.character === "tigger") color = "rgba(255,140,0,1)";
-      if (AppState.character === "rabbit") color = "rgba(80,170,110,1)";
+      if (AppState.helper === "piglet") color = "rgba(255,140,170,1)";
+      if (AppState.helper === "tigger") color = "rgba(255,140,0,1)";
+      if (AppState.helper === "rabbit") color = "rgba(80,170,110,1)";
       if (kind === "gold") color = "rgba(255,220,120,1)";
 
       Particles.emit(h.x, h.y, color, 14 + Math.floor(AppState.combo.mult * 6) + (kind === "gold" ? 10 : 0), 1.05);
@@ -1199,7 +2402,16 @@ container.style.justifyContent = "center";
 
       UI.updateHUD(prev);
     }
+
     function takeHit(b) {
+      // Check Eeyore's protection
+      if (eeyoreProtection && HelperEffects.checkEeyoreProtection()) {
+        spawnScorePopup("💪 NO DAMAGE!", b.x, b.y);
+        Particles.emit(b.x, b.y, "rgba(157,78,221,1)", 15, 1.1);
+        Audio.ui();
+        return;
+      }
+      
       const prev = { score: AppState.score, streak: AppState.streak, lives: AppState.lives };
       AppState.stats.beesHit++;
 
@@ -1350,7 +2562,7 @@ container.style.justifyContent = "center";
       ctx.fill();
       ctx.restore();
 
-      // inside “liquid”
+      // inside "liquid"
       ctx.save();
       ctx.globalAlpha = 0.9;
       const hg = ctx.createRadialGradient(-r * 0.25, r * 0.2, r * 0.2, 0, r * 0.25, r * 1.1);
@@ -1561,27 +2773,6 @@ container.style.justifyContent = "center";
       ctx.beginPath(); ctx.arc( r * 0.15, -r * 0.70, r * 0.06, 0, Math.PI * 2); ctx.fill();
       ctx.beginPath(); ctx.arc(0, -r * 0.57, r * 0.07, 0, Math.PI * 2); ctx.fill();
 
-      // character accents
-      if (AppState.character === "piglet") {
-        ctx.fillStyle = "rgba(255,183,197,0.85)";
-        ctx.beginPath();
-        ctx.arc(-r * 0.32, -r * 1.02, r * 0.18, 0, Math.PI * 2);
-        ctx.arc( r * 0.32, -r * 1.02, r * 0.18, 0, Math.PI * 2);
-        ctx.fill();
-      } else if (AppState.character === "tigger") {
-        ctx.fillStyle = "rgba(0,0,0,0.18)";
-        for (let i = 0; i < 4; i++) {
-          ctx.beginPath();
-          ctx.ellipse(Math.sin(i) * r * 0.18, 12 + i * r * 0.12, r * 0.14, r * 0.06, Math.PI / 4, 0, Math.PI * 2);
-          ctx.fill();
-        }
-      } else if (AppState.character === "rabbit") {
-        ctx.fillStyle = "rgba(100,190,120,0.22)";
-        ctx.beginPath();
-        ctx.ellipse(0, 12, r * 0.65, r * 0.45, 0, 0, Math.PI * 2);
-        ctx.fill();
-      }
-
       // shield ring
       if (buffs.shield > 0) {
         const pulse = 0.65 + 0.35 * Math.sin(AppState.timeMs / 180);
@@ -1647,22 +2838,16 @@ container.style.justifyContent = "center";
 
       const slowFactor = buffs.slow > 0 ? 0.58 : 1;
 
-      // spawn (with grace period)
+      // Apply helper effects
+      HelperEffects.applyCurrent({ honeys, bees, player, honeyFall, beeFall, beeDrift, eeyoreProtection: eeyoreProtection });
+
+      // spawn
       honeyTimer += dt;
       beeTimer += dt;
       powerTimer += dt;
 
       if (honeyTimer >= baseHoneyRate) { honeyTimer = 0; spawnHoney(); }
-
-      if (AppState.timeMs > GRACE_MS) {
-        if (beeTimer >= baseBeeRate) { beeTimer = 0; spawnBee(); }
-      } else {
-        if (AppState.timeMs > GRACE_MS * 0.85 && bees.length === 0) {
-          beeTimer = 0;
-          spawnBee();
-        }
-      }
-
+      if (beeTimer >= baseBeeRate) { beeTimer = 0; spawnBee(); }
       if (powerTimer >= powerRate) { powerTimer = 0; spawnPower(); }
 
       // honeys
@@ -1683,7 +2868,7 @@ container.style.justifyContent = "center";
         }
       }
 
-      // bees (natural motion)
+      // bees
       for (let i = bees.length - 1; i >= 0; i--) {
         const b = bees[i];
         b.flap += dt / 120;
@@ -1785,21 +2970,6 @@ container.style.justifyContent = "center";
         ctx.fillRect(Math.random() * BASE_W, Math.random() * BASE_H, 1, 1);
       }
       ctx.restore();
-
-      if (AppState.timeMs < GRACE_MS) {
-        const a = clamp(1 - (AppState.timeMs / GRACE_MS), 0, 1);
-        ctx.save();
-        ctx.globalAlpha = 0.18 * a;
-        ctx.fillStyle = "rgba(0,0,0,1)";
-        ctx.fillRect(0, 0, BASE_W, 62);
-        ctx.globalAlpha = 0.85 * a;
-        ctx.font = '900 18px "Fredoka One", system-ui';
-        ctx.textAlign = "center";
-        ctx.textBaseline = "middle";
-        ctx.fillStyle = "rgba(255,232,170,0.95)";
-        ctx.fillText("Warm-up… (bees chill for a moment)", BASE_W / 2, 30);
-        ctx.restore();
-      }
 
       ctx.restore();
     }
