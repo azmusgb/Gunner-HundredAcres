@@ -1955,6 +1955,145 @@ $("close-help-btn").onclick=()=>setOverlay(null);
 $("restart-btn").onclick=()=>{ setOverlay(null); startGame(); };
 
 })();
+/* =========================================================
+   GAME ENTITIES
+========================================================= */
+const pots = [];
+const bees = [];
+
+function spawnPot(){
+  const golden = Math.random() < 0.12;
+  pots.push({
+    x: Math.random()*canvas.getBoundingClientRect().width,
+    y: -30,
+    r: golden ? 18 : 14,
+    vy: golden ? 2.6 : 2.2,
+    value: golden ? 3 : 1,
+    golden
+  });
+}
+
+function spawnBee(){
+  bees.push({
+    x: Math.random()*canvas.getBoundingClientRect().width,
+    y: -30,
+    r: 14,
+    vx: (Math.random()<.5?-1:1)*(0.6+Math.random()),
+    vy: 2.4,
+    wobble: Math.random()*Math.PI*2
+  });
+}
+
+let lastSpawn = 0;
+
+/* =========================================================
+   EXTENDED GAME LOOP
+========================================================= */
+function extendedLoop(t){
+  if(!running) return;
+
+  ctx.clearRect(0,0,canvas.width,canvas.height);
+
+  const rect = canvas.getBoundingClientRect();
+  const c = CHAR[character];
+
+  // smooth movement
+  playerX = lerp(playerX, targetX, 0.18*c.speed);
+  playerX = clamp(playerX, 20, rect.width-20);
+
+  // spawn logic
+  if(t-lastSpawn > 700){
+    spawnPot();
+    if(Math.random()<0.35) spawnBee();
+    lastSpawn = t;
+  }
+
+  // draw player
+  ctx.fillStyle="#e63946";
+  ctx.beginPath();
+  ctx.arc(playerX, rect.height-42, 22*c.radius, 0, Math.PI*2);
+  ctx.fill();
+
+  // pots
+  for(let i=pots.length-1;i>=0;i--){
+    const p = pots[i];
+    p.y += p.vy;
+
+    ctx.fillStyle = p.golden ? "#ffd700" : "#ffa500";
+    ctx.beginPath();
+    ctx.arc(p.x, p.y, p.r, 0, Math.PI*2);
+    ctx.fill();
+
+    const dx = p.x-playerX;
+    const dy = p.y-(rect.height-42);
+    if(Math.hypot(dx,dy) < p.r + 22*c.radius){
+      pots.splice(i,1);
+      potsCaught++;
+      streak++;
+      bestStreak = Math.max(bestStreak, streak);
+      score += p.value * (1 + Math.floor(streak/5));
+      updateHUD();
+      checkAchievements();
+      continue;
+    }
+
+    if(p.y > rect.height+40){
+      pots.splice(i,1);
+      streak = 0;
+    }
+  }
+
+  // bees
+  for(let i=bees.length-1;i>=0;i--){
+    const b = bees[i];
+    b.y += b.vy;
+    b.x += Math.sin(b.wobble+=0.08)*b.vx;
+
+    ctx.fillStyle="#000";
+    ctx.beginPath();
+    ctx.arc(b.x,b.y,b.r,0,Math.PI*2);
+    ctx.fill();
+
+    const dx = b.x-playerX;
+    const dy = b.y-(rect.height-42);
+    if(Math.hypot(dx,dy) < b.r + 22*c.radius){
+      if(character==="tigger" && Math.random()<0.4){
+        bees.splice(i,1);
+        continue;
+      }
+      bees.splice(i,1);
+      lives--;
+      streak = 0;
+      updateHUD();
+      if(lives<=0){
+        running=false;
+        $("final-score").textContent = score;
+        $("best-streak").textContent = bestStreak;
+        $("honey-caught").textContent = potsCaught;
+        $("time-played").textContent = Math.floor((t-startTime)/1000)+"s";
+        $("high-score").textContent = Math.max(score, Store.get("hi",0));
+        Store.set("hi", Math.max(score, Store.get("hi",0)));
+        setOverlay("gameover-overlay");
+        return;
+      }
+    }
+
+    if(b.y > rect.height+40) bees.splice(i,1);
+  }
+
+  requestAnimationFrame(extendedLoop);
+}
+
+// override starter
+startGame = ()=>{
+  score=0;streak=0;lives=3;potsCaught=0;bestStreak=0;
+  pots.length=0;bees.length=0;
+  updateHUD();
+  running=true;
+  startTime=performance.now();
+  lastSpawn=0;
+  requestAnimationFrame(extendedLoop);
+};
 </script>
 </body>
 </html>
