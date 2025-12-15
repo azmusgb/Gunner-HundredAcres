@@ -2003,7 +2003,7 @@
 </head>
 <body>
     <!-- Accessibility Skip Link -->
-    <a href="#main-content" class="skip-to-content">Skip to game content</a>
+    <a href="#game-root" class="skip-to-content">Skip to game content</a>
 
     <!-- Error Boundary -->
     <div class="error-boundary" id="error-boundary">
@@ -2051,7 +2051,7 @@
     <div class="tooltip" id="tooltip"></div>
 
     <!-- Main game container -->
-    <main id="game-root" role="main" id="main-content">
+    <main id="game-root" role="main">
         <!-- Sound controls -->
         <div class="sound-controls">
             <button class="sound-btn settings-btn" id="sound-toggle-btn" aria-label="Toggle sound" aria-pressed="true">
@@ -3675,7 +3675,9 @@ document.addEventListener('DOMContentLoaded', () => {
 
                // Canvas setup
                this.canvas = document.getElementById("honey-game");
+               if (!this.canvas) { throw new Error("Missing #honey-game canvas"); }
                this.ctx = this.canvas.getContext("2d");
+               if (!this.ctx) { throw new Error("Could not get 2D context"); }
 
                // Game state
                this.running = false;
@@ -3729,17 +3731,19 @@ document.addEventListener('DOMContentLoaded', () => {
                this.lastClickTime = 0;
                this.clickDebounce = 200; // 200ms debounce
 
-               // Initialize
-               this.initializeUIElements();
-               this.initializeEventListeners();
-               this.loadGameState();
-               this.updateHUD();
-               this.updateCanvasRect();
-
-               // Hide loading screen
-               setTimeout(() => {
-                  this.hideLoadingScreen();
-               }, 1000);
+               // Initialize (guarded)
+               try {
+                  this.initializeUIElements();
+                  this.initializeEventListeners();
+                  this.loadGameState();
+                  this.updateHUD();
+                  this.updateCanvasRect();
+               } catch (err) {
+                  this.showFatalError(err);
+               } finally {
+                  // Never allow the loading overlay to trap the UI
+                  setTimeout(() => this.hideLoadingScreen(), 1200);
+               }
 
                window.gameEngine = this;
                console.log("Game initialized successfully!");
@@ -3768,75 +3772,93 @@ document.addEventListener('DOMContentLoaded', () => {
                }
             }
 
+            showFatalError(err) {
+               console.error(err);
+               const msg = err && err.message ? err.message : String(err);
+
+               // Hide loading overlay if it exists
+               try { this.hideLoadingScreen(); } catch (_) {}
+
+               const boundary = document.getElementById("error-boundary");
+               const messageEl = document.getElementById("error-message");
+               if (messageEl) messageEl.textContent = msg;
+               if (boundary) boundary.classList.add("active");
+            }
+
+
             initializeUIElements() {
-               // Get all UI elements
+               // HUD
                this.scoreEl = document.getElementById("score");
                this.streakEl = document.getElementById("streak");
                this.livesEl = document.getElementById("lives");
-               this.achievementsCountEl =
-                  document.getElementById("achievements-count");
+               this.achievementsCountEl = document.getElementById("achievements-count");
 
+               // Overlays
                this.startOverlay = document.getElementById("start-overlay");
                this.pauseOverlay = document.getElementById("pause-overlay");
-               this.gameoverOverlay =
-                  document.getElementById("gameover-overlay");
-               this.characterSelectOverlay = document.getElementById(
-                  "character-select-overlay",
-               );
-               this.achievementsOverlay = document.getElementById(
-                  "achievements-overlay",
-               );
-               this.tutorialOverlay =
-                  document.getElementById("tutorial-overlay");
+               this.gameoverOverlay = document.getElementById("gameover-overlay");
+               this.characterSelectOverlay = document.getElementById("character-select-overlay");
+               this.achievementsOverlay = document.getElementById("achievements-overlay");
+               this.tutorialOverlay = document.getElementById("tutorial-overlay");
+               this.settingsPanel = document.getElementById("settings-panel");
 
-               // Buttons
+               // Loading + error boundary
+               this.loadingOverlay = document.getElementById("loading-overlay");
+               this.progressBar = document.getElementById("progress-bar");
+               this.progressText = document.getElementById("progress-text");
+               this.errorBoundary = document.getElementById("error-boundary");
+               this.errorMessageEl = document.getElementById("error-message");
+               this.reloadBtn = document.getElementById("reload-btn");
+
+               // Buttons (start/game)
                this.startBtn = document.getElementById("start-btn");
                this.restartBtn = document.getElementById("restart-btn");
-               this.selectCharacterBtn = document.getElementById(
-                  "select-character-btn",
-               );
-               this.startWithCharacterBtn = document.getElementById(
-                  "start-with-character-btn",
-               );
-               this.viewAchievementsBtn = document.getElementById(
-                  "view-achievements-btn",
-               );
-               this.closeAchievementsBtn = document.getElementById(
-                  "close-achievements-btn",
-               );
-               this.soundToggleBtn =
-                  document.getElementById("sound-toggle-btn");
-               this.shareBtn = document.getElementById("share-btn");
-               this.shareScoreBtn = document.getElementById("share-score-btn");
-               this.weatherBtns = document.querySelectorAll(".weather-btn");
+               this.selectCharacterBtn = document.getElementById("select-character-btn");
+               this.startWithCharacterBtn = document.getElementById("start-with-character-btn");
+               this.skipCharacterSelectBtn = document.getElementById("skip-character-select");
+
+               // Buttons (menus)
+               this.viewAchievementsBtn = document.getElementById("view-achievements-btn");
+               this.closeAchievementsBtn = document.getElementById("close-achievements-btn");
+               this.achievementsBtn = document.getElementById("achievements-btn");
+               this.helpBtn = document.getElementById("help-btn");
+               this.showTutorialBtn = document.getElementById("show-tutorial-btn");
+               this.closeTutorialBtn = document.getElementById("close-tutorial-btn");
+
+               // Buttons (runtime)
                this.pauseBtn = document.getElementById("pause-btn");
                this.resumeBtn = document.getElementById("resume-btn");
                this.quitBtn = document.getElementById("quit-btn");
-               this.helpBtn = document.getElementById("help-btn");
-               this.achievementsBtn =
-                  document.getElementById("achievements-btn");
-               this.closeTutorialBtn =
-                  document.getElementById("close-tutorial-btn");
-               this.showTutorialBtn =
-                  document.getElementById("show-tutorial-btn");
+               this.soundToggleBtn = document.getElementById("sound-toggle-btn");
+               this.shareBtn = document.getElementById("share-btn");
+               this.shareScoreBtn = document.getElementById("share-score-btn");
+
+               // Buttons (settings/save)
+               this.settingsBtn = document.getElementById("settings-btn");
+               this.closeSettingsBtn = document.getElementById("close-settings-btn");
+               this.manualSaveBtn = document.getElementById("manual-save-btn");
+               this.loadGameBtn = document.getElementById("load-game-btn");
+               this.pauseSaveBtn = document.getElementById("pause-save-btn");
+               this.gameoverSaveBtn = document.getElementById("gameover-save-btn");
+
+               // Weather buttons
+               this.weatherBtns = document.querySelectorAll(".weather-btn");
 
                // Other elements
                this.gameContainer = document.querySelector(".game-container");
-               this.backgroundLayer =
-                  document.getElementById("background-layer");
+               this.backgroundLayer = document.getElementById("background-layer");
                this.honeyCursor = document.getElementById("honey-cursor");
+               this.tooltip = document.getElementById("tooltip");
 
-               // Game over elements
+               // Game over stats
                this.finalScoreEl = document.getElementById("final-score");
                this.bestStreakEl = document.getElementById("best-streak");
                this.honeyCaughtEl = document.getElementById("honey-caught");
                this.timePlayedEl = document.getElementById("time-played");
                this.highScoreEl = document.getElementById("high-score");
-               this.achievementsEarnedEl = document.getElementById(
-                  "achievements-earned",
-               );
+               this.achievementsEarnedEl = document.getElementById("achievements-earned");
 
-               // Status elements
+               // Status region
                this.gameStatus = document.getElementById("game-status");
             }
 
@@ -3862,7 +3884,7 @@ document.addEventListener('DOMContentLoaded', () => {
                };
 
                // Canvas input with improved touch handling
-               this.canvas.addEventListener(
+               this.canvas && this.canvas.addEventListener(
                   "touchstart",
                   (e) => {
                      e.preventDefault();
@@ -3876,7 +3898,7 @@ document.addEventListener('DOMContentLoaded', () => {
                   { passive: false },
                );
 
-               this.canvas.addEventListener(
+               this.canvas && this.canvas.addEventListener(
                   "touchmove",
                   (e) => {
                      e.preventDefault();
@@ -3887,55 +3909,55 @@ document.addEventListener('DOMContentLoaded', () => {
                   { passive: false },
                );
 
-               this.canvas.addEventListener("touchend", () => {
+               this.canvas && this.canvas.addEventListener("touchend", () => {
                   this.isDragging = false;
                   this.showCursor(false);
                });
 
-               this.canvas.addEventListener("mousemove", (e) => {
+               this.canvas && this.canvas.addEventListener("mousemove", (e) => {
                   this.targetX = this.clientToCanvasX(e.clientX);
                   this.updateCursor(e.clientX, e.clientY);
                   this.showCursor(true);
                });
 
-               this.canvas.addEventListener("mouseleave", () => {
+               this.canvas && this.canvas.addEventListener("mouseleave", () => {
                   this.showCursor(false);
                });
 
                // Game control buttons with debouncing
-               this.startBtn.addEventListener(
+               this.startBtn && this.startBtn.addEventListener(
                   "click",
                   debouncedClick(this.startGame),
                );
-               this.restartBtn.addEventListener(
+               this.restartBtn && this.restartBtn.addEventListener(
                   "click",
                   debouncedClick(this.startGame),
                );
-               this.selectCharacterBtn.addEventListener(
+               this.selectCharacterBtn && this.selectCharacterBtn.addEventListener(
                   "click",
                   debouncedClick(this.showCharacterSelect),
                );
-               this.startWithCharacterBtn.addEventListener(
+               this.startWithCharacterBtn && this.startWithCharacterBtn.addEventListener(
                   "click",
                   debouncedClick(this.startGame),
                );
-               this.viewAchievementsBtn.addEventListener(
+               this.viewAchievementsBtn && this.viewAchievementsBtn.addEventListener(
                   "click",
                   debouncedClick(this.showAchievements),
                );
-               this.closeAchievementsBtn.addEventListener(
+               this.closeAchievementsBtn && this.closeAchievementsBtn.addEventListener(
                   "click",
                   debouncedClick(this.hideAchievements),
                );
-               this.soundToggleBtn.addEventListener(
+               this.soundToggleBtn && this.soundToggleBtn.addEventListener(
                   "click",
                   debouncedClick(() => this.soundSystem.toggle()),
                );
-               this.shareBtn.addEventListener(
+               this.shareBtn && this.shareBtn.addEventListener(
                   "click",
                   debouncedClick(() => this.shareSystem.shareGame()),
                );
-               this.shareScoreBtn.addEventListener(
+               this.shareScoreBtn && this.shareScoreBtn.addEventListener(
                   "click",
                   debouncedClick(() => {
                      const character =
@@ -3943,31 +3965,31 @@ document.addEventListener('DOMContentLoaded', () => {
                      this.shareSystem.shareScore(this.score, character.name);
                   }),
                );
-               this.pauseBtn.addEventListener(
+               this.pauseBtn && this.pauseBtn.addEventListener(
                   "click",
                   debouncedClick(this.togglePause),
                );
-               this.resumeBtn.addEventListener(
+               this.resumeBtn && this.resumeBtn.addEventListener(
                   "click",
                   debouncedClick(this.togglePause),
                );
-               this.quitBtn.addEventListener(
+               this.quitBtn && this.quitBtn.addEventListener(
                   "click",
                   debouncedClick(this.quitToMenu),
                );
-               this.helpBtn.addEventListener(
+               this.helpBtn && this.helpBtn.addEventListener(
                   "click",
                   debouncedClick(this.showTutorial),
                );
-               this.achievementsBtn.addEventListener(
+               this.achievementsBtn && this.achievementsBtn.addEventListener(
                   "click",
                   debouncedClick(this.showAchievements),
                );
-               this.closeTutorialBtn.addEventListener(
+               this.closeTutorialBtn && this.closeTutorialBtn.addEventListener(
                   "click",
                   debouncedClick(this.hideTutorial),
                );
-               this.showTutorialBtn.addEventListener(
+               this.showTutorialBtn && this.showTutorialBtn.addEventListener(
                   "click",
                   debouncedClick(this.showTutorial),
                );
@@ -4055,7 +4077,7 @@ document.addEventListener('DOMContentLoaded', () => {
                });
 
                // Prevent context menu on canvas
-               this.canvas.addEventListener("contextmenu", (e) =>
+               this.canvas && this.canvas.addEventListener("contextmenu", (e) =>
                   e.preventDefault(),
                );
 
@@ -4071,6 +4093,38 @@ document.addEventListener('DOMContentLoaded', () => {
                );
 
                console.log("Event listeners setup complete!");
+            
+
+               // --- Additional wiring: settings / save / load / reload / skip ---
+               const showSettings = () => {
+                  if (!this.settingsPanel) return;
+                  this.settingsPanel.classList.add("active");
+                  this.settingsPanel.setAttribute("aria-hidden", "false");
+               };
+               const hideSettings = () => {
+                  if (!this.settingsPanel) return;
+                  this.settingsPanel.classList.remove("active");
+                  this.settingsPanel.setAttribute("aria-hidden", "true");
+               };
+
+               this.settingsBtn && this.settingsBtn.addEventListener("click", debouncedClick(showSettings));
+               this.closeSettingsBtn && this.closeSettingsBtn.addEventListener("click", debouncedClick(hideSettings));
+
+               // Manual save / load
+               this.manualSaveBtn && this.manualSaveBtn.addEventListener("click", debouncedClick(() => this.saveGameState(true)));
+               this.pauseSaveBtn && this.pauseSaveBtn.addEventListener("click", debouncedClick(() => this.saveGameState(true)));
+               this.gameoverSaveBtn && this.gameoverSaveBtn.addEventListener("click", debouncedClick(() => this.saveGameState(true)));
+               this.loadGameBtn && this.loadGameBtn.addEventListener("click", debouncedClick(() => this.loadGameState(true)));
+
+               // Skip character selection -> start
+               this.skipCharacterSelectBtn && this.skipCharacterSelectBtn.addEventListener("click", debouncedClick(() => {
+                  this.hideCharacterSelect && this.hideCharacterSelect();
+                  this.startGame && this.startGame();
+               }));
+
+               // Reload button for error boundary
+               this.reloadBtn && this.reloadBtn.addEventListener("click", () => window.location.reload());
+
             }
 
             showKeyPressFeedback(direction) {
@@ -5259,7 +5313,18 @@ document.addEventListener('DOMContentLoaded', () => {
                console.log("Enhanced game ready! Click 'Start Game' to begin!");
             } catch (error) {
                console.error("Error creating game:", error);
-               alert("Error loading game: " + error.message);
+               (function(){
+                  try {
+                     const loading = document.getElementById("loading-overlay");
+                     if (loading) { loading.classList.add("hidden"); setTimeout(()=>loading.style.display="none", 300); }
+                     const boundary = document.getElementById("error-boundary");
+                     const msgEl = document.getElementById("error-message");
+                     if (msgEl) msgEl.textContent = "Error loading game: " + (error && error.message ? error.message : String(error));
+                     if (boundary) boundary.classList.add("active");
+                  } catch (_) {
+                     alert("Error loading game: " + error.message);
+                  }
+               })();
             }
          });
 
