@@ -2051,8 +2051,15 @@
 }
 
 
-/* Hard-disable the legacy title/start screen */
-#start-overlay{display:none!important;}
+
+
+/* Ensure start overlay is visible by default */
+#start-overlay {
+    display: flex !important;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+}
 
 </style>
 </head>
@@ -5628,6 +5635,93 @@ try {
          if (window.matchMedia("(prefers-contrast: high)").matches) {
             document.body.classList.add("high-contrast");
          }
+        
+        // ============================================
+// INITIALIZE ENHANCED GAME - FIXED VERSION
+// ============================================
+document.addEventListener("DOMContentLoaded", () => {
+    console.log("DOM loaded, creating enhanced game...");
+
+    if (window.gameEngine) {
+        console.log("Game already initialized!");
+        return;
+    }
+
+    try {
+        // First, ensure loading screen will hide
+        const loadingOverlay = document.getElementById("loading-overlay");
+        if (loadingOverlay) {
+            loadingOverlay.classList.add("hidden");
+            setTimeout(() => {
+                loadingOverlay.style.display = "none";
+            }, 500);
+        }
+
+        // Create game instance
+        const game = new PoohHoneyHunt();
+        window.gameEngine = game;
+
+        // Show start screen
+        setTimeout(() => {
+            if (game.startOverlay) {
+                game.startOverlay.classList.remove("hidden");
+                setOverlayOpen(true);
+                
+                // Focus the start button for accessibility
+                setTimeout(() => {
+                    if (game.startBtn) {
+                        game.startBtn.focus();
+                    }
+                }, 100);
+            }
+            
+            // Announce game is ready
+            game.announceGameStatus("Pooh's Enhanced Honey Hunt is ready! Press Start Game to begin.");
+        }, 100);
+
+        console.log("Enhanced game created successfully!");
+
+        // Debug helper
+        window.debugGame = () => {
+            console.log("=== GAME DEBUG ===");
+            console.log("Running:", game.running);
+            console.log("Paused:", game.paused);
+            console.log("Start Overlay Hidden:", game.startOverlay.classList.contains("hidden"));
+        };
+
+        // Handle page visibility
+        document.addEventListener("visibilitychange", () => {
+            if (document.hidden && game.running && !game.paused) {
+                game.togglePause();
+            }
+        });
+
+        // Auto-save on unload
+        window.addEventListener("beforeunload", () => {
+            if (game.running && !game.paused) {
+                game.saveGameState();
+            }
+        });
+
+    } catch (error) {
+        console.error("Error creating game:", error);
+        // Show error boundary
+        const loading = document.getElementById("loading-overlay");
+        if (loading) {
+            loading.classList.add("hidden");
+            setTimeout(() => loading.style.display = "none", 300);
+        }
+        
+        const boundary = document.getElementById("error-boundary");
+        const msgEl = document.getElementById("error-message");
+        if (msgEl) {
+            msgEl.textContent = "Error loading game: " + (error.message || error);
+        }
+        if (boundary) {
+            boundary.classList.add("active");
+        }
+    }
+});
       </script>
 </body>
 </html>
