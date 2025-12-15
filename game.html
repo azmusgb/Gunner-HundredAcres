@@ -1560,269 +1560,404 @@
 
   </main>
 
-  <script>
+ <script>
 (() => {
   "use strict";
 
-  /* ===============================
-     SAFE STORAGE (SANDBOX SAFE)
-  =============================== */
+  // ---------- Safe storage (sandbox-safe, never throws) ----------
   const Store = (() => {
     const mem = new Map();
-    let hasLS = false;
-    try {
-      localStorage.setItem("__t","1");
-      localStorage.removeItem("__t");
-      hasLS = true;
-    } catch {}
-    return {
-      get:k=>hasLS?localStorage.getItem(k):mem.get(k),
-      set:(k,v)=>hasLS?localStorage.setItem(k,v):mem.set(k,v)
+    const hasLS = (() => {
+      try {
+        const k="__t__";
+        localStorage.setItem(k,"1");
+        localStorage.removeItem(k);
+        return true;
+      } catch { return false; }
+    })();
+
+    const get = (k, fallback=null) => {
+      if (hasLS) { try { const v = localStorage.getItem(k); return (v ?? fallback); } catch {} }
+      return mem.has(k) ? mem.get(k) : fallback;
     };
+    const set = (k, v) => {
+      const sv = String(v);
+      if (hasLS) { try { localStorage.setItem(k, sv); return; } catch {} }
+      mem.set(k, sv);
+    };
+    return { get, set };
   })();
 
-  /* ===============================
-     DOM HELPERS
-  =============================== */
-  const $ = id => document.getElementById(id);
-  const $$ = sel => [...document.querySelectorAll(sel)];
+  // ---------- DOM helpers ----------
+  const $ = (id) => document.getElementById(id);
+  const on = (id, evt, fn) => { const el = $(id); if (el) el.addEventListener(evt, fn); };
+  const qsa = (sel) => Array.from(document.querySelectorAll(sel));
 
-  /* ===============================
-     CANVAS SETUP (CRITICAL)
-  =============================== */
-  const canvas = $("honey-game") || $("game-canvas");
-  if (!canvas) throw new Error("Canvas not found");
-  const ctx = canvas.getContext("2d");
-
-  function resizeCanvas() {
-    const dpr = window.devicePixelRatio || 1;
-    const rect = canvas.getBoundingClientRect();
-    canvas.width  = rect.width  * dpr;
-    canvas.height = rect.height * dpr;
-    ctx.setTransform(dpr,0,0,dpr,0,0);
-  }
-  resizeCanvas();
-  window.addEventListener("resize", resizeCanvas);
-
-  /* ===============================
-     GAME STATE
-  =============================== */
-  let running = false;
-  let paused = false;
-  let lastTime = 0;
-
-  const state = {
-    score: 0,
-    streak: 0,
-    lives: 3,
-    time: 0,
-    honeyCaught: 0,
-    bestStreak: 0,
-    character: "pooh",
-    weather: "clear"
-  };
-
-  /* ===============================
-     PLAYER (POOH)
-  =============================== */
-  const player = {
-    x: canvas.clientWidth/2,
-    y: canvas.clientHeight-90,
-    r: 34,
-    speed: 480
-  };
-
-  const CHAR_MODS = {
-    pooh:   { r: 1.3, s: 1.0 },
-    piglet: { r: 0.8, s: 1.25 },
-    tigger: { r: 1.0, s: 1.1 },
-    rabbit: { r: 1.0, s: 1.0 }
-  };
-
-  /* ===============================
-     ENTITIES
-  =============================== */
-  const honeys = [];
-  const bees   = [];
-
-  function spawnHoney() {
-    honeys.push({
-      x: Math.random()*canvas.clientWidth,
-      y: -30,
-      r: 16,
-      v: 140+Math.random()*120,
-      gold: Math.random()<0.15
-    });
-  }
-
-  function spawnBee() {
-    bees.push({
-      x: Math.random()*canvas.clientWidth,
-      y: -30,
-      r: 18,
-      v: 200+Math.random()*150
-    });
-  }
-
-  /* ===============================
-     INPUT
-  =============================== */
-  let dragging = false;
-
-  canvas.addEventListener("pointerdown", e=>{
-    dragging = true;
-    canvas.setPointerCapture(e.pointerId);
-  });
-  canvas.addEventListener("pointerup", ()=>dragging=false);
-  canvas.addEventListener("pointermove", e=>{
-    if (!dragging) return;
-    const rect = canvas.getBoundingClientRect();
-    player.x = e.clientX - rect.left;
-  });
-
-  window.addEventListener("keydown", e=>{
-    if (e.key==="ArrowLeft")  player.x-=30;
-    if (e.key==="ArrowRight") player.x+=30;
-    if (e.key==="Escape") togglePause();
-  });
-
-  /* ===============================
-     UI WIRING
-  =============================== */
-  function syncHUD() {
-    $("score").textContent = state.score;
-    $("streak").textContent = state.streak;
-    $("lives").textContent = state.lives;
-  }
-
-  function openOverlay(id) {
+  // ---------- Overlay helpers ----------
+  const openOverlay = (id) => {
+    const el = $(id);
+    if (!el) return;
+    el.classList.remove("hidden");
     document.body.classList.add("overlay-open");
-    $(id).classList.remove("hidden");
-  }
-  function closeOverlay(id) {
-    $(id).classList.add("hidden");
+  };
+  const closeOverlay = (id) => {
+    const el = $(id);
+    if (!el) return;
+    el.classList.add("hidden");
+    // only clear overlay-open if none are visible
+    const anyOpen = qsa(".overlay, .character-select-overlay, .achievements-overlay")
+      .some(x => !x.classList.contains("hidden"));
+    if (!anyOpen) document.body.classList.remove("overlay-open");
+  };
+  const closeAllOverlays = () => {
+    qsa(".overlay, .character-select-overlay, .achievements-overlay")
+      .forEach(x => x.classList.add("hidden"));
     document.body.classList.remove("overlay-open");
-  }
-
-  $("start-btn").onclick = () => {
-    closeOverlay("start-overlay");
-    startGame();
   };
 
-  $("pause-btn").onclick = togglePause;
-  $("resume-btn").onclick = togglePause;
-  $("quit-btn").onclick = () => location.reload();
+  // ---------- Start when DOM is ready ----------
+  window.addEventListener("DOMContentLoaded", () => {
+    // Canvas
+    const canvas = $("honey-game") || $("game-canvas");
+    if (!canvas) {
+      console.error("Canvas not found. Expected #honey-game or #game-canvas");
+      return;
+    }
+    const ctx = canvas.getContext("2d");
+    if (!ctx) {
+      console.error("2D context not available");
+      return;
+    }
 
-  function togglePause() {
-    paused = !paused;
-    paused ? openOverlay("pause-overlay") : closeOverlay("pause-overlay");
-  }
-
-  /* ===============================
-     WEATHER
-  =============================== */
-  const weatherLayer = document.createElement("div");
-  weatherLayer.id="weather-effects";
-  document.body.appendChild(weatherLayer);
-
-  $$(".weather-btn").forEach(btn=>{
-    btn.onclick = () => {
-      state.weather = btn.dataset.weather;
-      $$(".weather-btn").forEach(b=>b.classList.remove("active"));
-      btn.classList.add("active");
+    // Resize (correct DPR handling)
+    const resizeCanvas = () => {
+      const dpr = Math.max(1, window.devicePixelRatio || 1);
+      const rect = canvas.getBoundingClientRect();
+      canvas.width  = Math.max(1, Math.floor(rect.width  * dpr));
+      canvas.height = Math.max(1, Math.floor(rect.height * dpr));
+      ctx.setTransform(dpr, 0, 0, dpr, 0, 0);
     };
-  });
+    resizeCanvas();
+    window.addEventListener("resize", resizeCanvas, { passive: true });
 
-  /* ===============================
-     GAME LOOP
-  =============================== */
-  function update(dt) {
-    state.time += dt;
+    // ---------- Game state ----------
+    const state = {
+      score: 0,
+      streak: 0,
+      bestStreak: 0,
+      lives: 3,
+      time: 0,
+      honeyCaught: 0,
+      character: "pooh",
+      weather: "clear",
+      hi: 0
+    };
 
-    if (Math.random()<0.025) spawnHoney();
-    if (Math.random()<0.012) spawnBee();
+    const hiRaw = Store.get("hi", "0");
+    state.hi = Number(hiRaw) || 0;
 
-    honeys.forEach(h=>h.y+=h.v*dt);
-    bees.forEach(b=>b.y+=b.v*dt);
+    // Player
+    const CHAR_MODS = {
+      pooh:   { r: 1.3, s: 1.00 },
+      piglet: { r: 0.9, s: 1.20 },
+      tigger: { r: 1.05, s: 1.12 },
+      rabbit: { r: 1.0, s: 1.05 }
+    };
 
-    // collisions
-    for (let i=honeys.length-1;i>=0;i--){
-      const h=honeys[i];
-      if (Math.hypot(h.x-player.x,h.y-player.y) < player.r+h.r){
-        honeys.splice(i,1);
-        state.honeyCaught++;
-        state.streak++;
-        state.bestStreak=Math.max(state.bestStreak,state.streak);
-        state.score += h.gold?30:10;
-      }
+    const player = {
+      x: canvas.clientWidth / 2,
+      y: canvas.clientHeight - 92,
+      r: 34,
+      vx: 0,
+      targetX: canvas.clientWidth / 2
+    };
+
+    // Entities
+    const honeys = [];
+    const bees = [];
+
+    const rand = (a,b) => a + Math.random() * (b-a);
+
+    const spawnHoney = () => {
+      honeys.push({
+        x: rand(18, canvas.clientWidth - 18),
+        y: -30,
+        r: 16,
+        v: rand(170, 290),
+        gold: Math.random() < 0.15
+      });
+    };
+
+    const spawnBee = () => {
+      bees.push({
+        x: rand(18, canvas.clientWidth - 18),
+        y: -30,
+        r: 16,
+        v: rand(220, 340)
+      });
+    };
+
+    // ---------- HUD sync (won't crash if missing elements) ----------
+    const syncHUD = () => {
+      const s = $("score"); if (s) s.textContent = String(state.score);
+      const st = $("streak"); if (st) st.textContent = String(state.streak);
+      const l = $("lives"); if (l) l.textContent = String(state.lives);
+
+      const hs = $("high-score"); if (hs) hs.textContent = String(state.hi);
+      const bs = $("best-streak"); if (bs) bs.textContent = String(state.bestStreak);
+      const hc = $("honey-caught"); if (hc) hc.textContent = String(state.honeyCaught);
+      const tp = $("time-played"); if (tp) tp.textContent = `${Math.floor(state.time)}s`;
+    };
+
+    // ---------- Weather layer (simple + safe) ----------
+    let weatherLayer = $("weather-effects");
+    if (!weatherLayer) {
+      weatherLayer = document.createElement("div");
+      weatherLayer.id = "weather-effects";
+      document.body.appendChild(weatherLayer);
     }
 
-    for (let i=bees.length-1;i>=0;i--){
-      const b=bees[i];
-      if (Math.hypot(b.x-player.x,b.y-player.y) < player.r+b.r){
-        bees.splice(i,1);
-        state.lives--;
-        state.streak=0;
-        if (state.lives<=0) return endGame();
-      }
-    }
+    const applyWeather = () => {
+      weatherLayer.className = ""; // clear
+      weatherLayer.dataset.weather = state.weather;
+      // Your CSS can key off: #weather-effects[data-weather="rain"] etc.
+    };
 
+    qsa(".weather-btn").forEach(btn => {
+      btn.addEventListener("click", () => {
+        state.weather = btn.dataset.weather || "clear";
+        qsa(".weather-btn").forEach(b => b.classList.remove("active"));
+        btn.classList.add("active");
+        applyWeather();
+      });
+    });
+
+    // ---------- Input (smooth, no jerk) ----------
+    const clamp = (v, a, b) => Math.max(a, Math.min(b, v));
+    let dragging = false;
+
+    const pointerToX = (e) => {
+      const rect = canvas.getBoundingClientRect();
+      const x = (e.clientX - rect.left);
+      return clamp(x, 0, rect.width);
+    };
+
+    canvas.addEventListener("pointerdown", (e) => {
+      dragging = true;
+      canvas.setPointerCapture?.(e.pointerId);
+      player.targetX = pointerToX(e);
+      // Optional: start on first touch if you removed start overlay
+      if (!running) startGame();
+    });
+
+    canvas.addEventListener("pointermove", (e) => {
+      if (!dragging) return;
+      player.targetX = pointerToX(e);
+    });
+
+    const stopDrag = () => { dragging = false; };
+    canvas.addEventListener("pointerup", stopDrag);
+    canvas.addEventListener("pointercancel", stopDrag);
+    canvas.addEventListener("lostpointercapture", stopDrag);
+
+    // ---------- Loop ----------
+    let running = false;
+    let paused = false;
+    let lastTime = 0;
+
+    const resetRun = () => {
+      state.score = 0;
+      state.streak = 0;
+      state.bestStreak = 0;
+      state.lives = 3;
+      state.time = 0;
+      state.honeyCaught = 0;
+      honeys.length = 0;
+      bees.length = 0;
+
+      // re-apply character modifiers
+      const m = CHAR_MODS[state.character] || CHAR_MODS.pooh;
+      player.r = 34 * m.r;
+      player.vx = 0;
+      player.x = canvas.clientWidth / 2;
+      player.targetX = player.x;
+      player.y = canvas.clientHeight - 92;
+
+      syncHUD();
+    };
+
+    const update = (dt) => {
+      state.time += dt;
+
+      // smoother movement: critically damped-ish
+      const m = CHAR_MODS[state.character] || CHAR_MODS.pooh;
+      const speed = 16 * m.s;
+      player.x += (player.targetX - player.x) * Math.min(1, dt * speed);
+
+      player.x = clamp(player.x, player.r, canvas.clientWidth - player.r);
+
+      // spawn
+      if (Math.random() < 0.030) spawnHoney();
+      if (Math.random() < 0.015) spawnBee();
+
+      // move
+      for (const h of honeys) h.y += h.v * dt;
+      for (const b of bees) b.y += b.v * dt;
+
+      // collisions
+      for (let i = honeys.length - 1; i >= 0; i--) {
+        const h = honeys[i];
+        const hit = Math.hypot(h.x - player.x, h.y - player.y) < (player.r + h.r);
+        if (hit) {
+          honeys.splice(i, 1);
+          state.honeyCaught++;
+          state.streak++;
+          state.bestStreak = Math.max(state.bestStreak, state.streak);
+          state.score += h.gold ? 30 : 10;
+          continue;
+        }
+        if (h.y > canvas.clientHeight + 60) {
+          honeys.splice(i, 1);
+          state.streak = 0;
+        }
+      }
+
+      for (let i = bees.length - 1; i >= 0; i--) {
+        const b = bees[i];
+        const hit = Math.hypot(b.x - player.x, b.y - player.y) < (player.r + b.r);
+        if (hit) {
+          bees.splice(i, 1);
+          state.lives--;
+          state.streak = 0;
+          if (state.lives <= 0) {
+            endGame();
+            return;
+          }
+          continue;
+        }
+        if (b.y > canvas.clientHeight + 60) bees.splice(i, 1);
+      }
+
+      syncHUD();
+    };
+
+    const draw = () => {
+      ctx.clearRect(0, 0, canvas.width, canvas.height);
+
+      // Pooh (placeholder circle)
+      ctx.beginPath();
+      ctx.fillStyle = "#d4a574";
+      ctx.arc(player.x, player.y, player.r, 0, Math.PI * 2);
+      ctx.fill();
+
+      // Honey
+      for (const h of honeys) {
+        ctx.fillStyle = h.gold ? "#ffd700" : "#ffa500";
+        ctx.beginPath();
+        ctx.arc(h.x, h.y, h.r, 0, Math.PI * 2);
+        ctx.fill();
+      }
+
+      // Bees
+      for (const b of bees) {
+        ctx.fillStyle = "#222";
+        ctx.beginPath();
+        ctx.arc(b.x, b.y, b.r, 0, Math.PI * 2);
+        ctx.fill();
+      }
+    };
+
+    const loop = (t) => {
+      if (!running) return;
+      const dt = Math.min(0.05, (t - lastTime) / 1000);
+      lastTime = t;
+
+      if (!paused) update(dt);
+      draw();
+      requestAnimationFrame(loop);
+    };
+
+    // ---------- Control ----------
+    const startGame = () => {
+      closeAllOverlays();
+      resetRun();
+      running = true;
+      paused = false;
+      lastTime = performance.now();
+      requestAnimationFrame(loop);
+    };
+
+    const endGame = () => {
+      running = false;
+
+      // High score
+      if (state.score > state.hi) {
+        state.hi = state.score;
+        Store.set("hi", String(state.hi));
+      }
+
+      const fs = $("final-score"); if (fs) fs.textContent = String(state.score);
+      syncHUD();
+      openOverlay("gameover-overlay");
+    };
+
+    const togglePause = () => {
+      if (!running) return;
+      paused = !paused;
+      if (paused) openOverlay("pause-overlay");
+      else closeOverlay("pause-overlay");
+    };
+
+    // ---------- Button wiring (safe) ----------
+    on("start-btn", "click", startGame);
+    on("restart-btn", "click", startGame);
+
+    on("pause-btn", "click", togglePause);
+    on("resume-btn", "click", togglePause);
+
+    on("quit-btn", "click", () => {
+      running = false;
+      paused = false;
+      closeAllOverlays();
+      // If you *removed* the start page, don’t re-open it.
+      // If you still have one and want it, uncomment:
+      // openOverlay("start-overlay");
+    });
+
+    on("help-btn", "click", () => openOverlay("help-overlay"));
+    on("close-help-btn", "click", () => closeOverlay("help-overlay"));
+
+    on("view-achievements-btn", "click", () => openOverlay("achievements-overlay"));
+    on("close-achievements-btn", "click", () => closeOverlay("achievements-overlay"));
+    on("close-achievements-btn-2", "click", () => closeOverlay("achievements-overlay"));
+
+    on("select-character-btn", "click", () => openOverlay("character-select-overlay"));
+    on("back-to-menu-btn", "click", () => closeOverlay("character-select-overlay"));
+
+    qsa(".character-card").forEach(btn => {
+      btn.addEventListener("click", () => {
+        state.character = btn.dataset.character || "pooh";
+        qsa(".character-card").forEach(b => b.classList.remove("active"));
+        btn.classList.add("active");
+      });
+    });
+
+    on("start-with-character-btn", "click", startGame);
+
+    // ---------- Initial state ----------
+    applyWeather();
     syncHUD();
-  }
 
-  function draw() {
-    ctx.clearRect(0,0,canvas.width,canvas.height);
-
-    // Pooh
-    ctx.beginPath();
-    ctx.fillStyle="#d4a574";
-    ctx.arc(player.x,player.y,player.r,0,Math.PI*2);
-    ctx.fill();
-
-    honeys.forEach(h=>{
-      ctx.fillStyle=h.gold?"#ffd700":"#ffa500";
-      ctx.beginPath();
-      ctx.arc(h.x,h.y,h.r,0,Math.PI*2);
-      ctx.fill();
-    });
-
-    bees.forEach(b=>{
-      ctx.fillStyle="#222";
-      ctx.beginPath();
-      ctx.arc(b.x,b.y,b.r,0,Math.PI*2);
-      ctx.fill();
-    });
-  }
-
-  function loop(t){
-    if (!running) return;
-    const dt = Math.min((t-lastTime)/1000,0.05);
-    lastTime=t;
-    if (!paused) update(dt);
-    draw();
-    requestAnimationFrame(loop);
-  }
-
-  function startGame(){
-    running=true;
-    paused=false;
-    lastTime=performance.now();
-    requestAnimationFrame(loop);
-  }
-
-  function endGame(){
-    running=false;
-    $("final-score").textContent=state.score;
-    $("best-streak").textContent=state.bestStreak;
-    $("honey-caught").textContent=state.honeyCaught;
-    $("time-played").textContent=Math.floor(state.time)+"s";
-    $("high-score").textContent=Math.max(state.score,Store.get("hi")||0);
-    Store.set("hi",Math.max(state.score,Store.get("hi")||0));
-    openOverlay("gameover-overlay");
-  }
-
+    // If you removed the start page, auto-start:
+    if (!$("start-overlay")) {
+      startGame();
+    } else {
+      openOverlay("start-overlay"); // keep if it exists
+    }
+  });
 })();
 </script>
+
 
 </body>
 </html>
