@@ -1562,13 +1562,12 @@
 <script>
 (() => {
   "use strict";
-
   if (window.__POOH_HONEY_HUNT__) return;
   window.__POOH_HONEY_HUNT__ = true;
 
   /* ================= SAFE STORAGE ================= */
   const Store = (() => {
-    const mem = new Map(); let hasLS=false;
+    const mem=new Map(); let hasLS=false;
     try{localStorage.setItem("__t__","1");localStorage.removeItem("__t__");hasLS=true;}catch{}
     return {
       get:(k,d=null)=>{ if(hasLS){try{return localStorage.getItem(k)??d;}catch{}} return mem.has(k)?mem.get(k):d; },
@@ -1577,107 +1576,104 @@
   })();
 
   const $ = id => document.getElementById(id);
-  const clamp = (v,a,b)=>Math.max(a,Math.min(b,v));
-  const lerp = (a,b,t)=>a+(b-a)*t;
+  const clamp=(v,a,b)=>Math.max(a,Math.min(b,v));
+  const lerp=(a,b,t)=>a+(b-a)*t;
 
-  /* ================= MOTION PREF ================= */
-  const Motion = (() => {
-    const mq = matchMedia("(prefers-reduced-motion: reduce)");
-    let reduced = mq.matches;
-    mq.addEventListener?.("change",e=>reduced=e.matches);
-    return { get reduced(){return reduced;} };
-  })();
-
-  /* ================= APP STATE ================= */
+  /* ================= STATE ================= */
   const AppState = {
     overlay:"start",
     paused:true,
-    hiddenPaused:false,
     score:0,
     streak:0,
     lives:3,
-    soundOn:Store.get("sound","on")==="on",
-    weather:Store.get("weather","clear"),
-    time:0
+    time:0,
+    character:Store.get("character","pooh"),
+    power:{ shield:0, slow:0, magnet:0 },
+    achievements:JSON.parse(Store.get("achievements","{}"))
   };
+
+  /* ================= ACHIEVEMENTS ================= */
+  const Achievements = (() => {
+    const defs = {
+      firstHoney:{ name:"First Honey", check:()=>AppState.score>0 },
+      streak10:{ name:"Sweet Streak", check:()=>AppState.streak>=10 },
+      survive60:{ name:"Still Hungry", check:()=>AppState.time>=60000 },
+      score1k:{ name:"Honey Hoarder", check:()=>AppState.score>=1000 },
+      beeDodger:{ name:"Bee Dodger", check:()=>AppState.time>=30000 && AppState.lives===3 }
+    };
+
+    function check(){
+      Object.entries(defs).forEach(([id,d])=>{
+        if(!AppState.achievements[id] && d.check()){
+          AppState.achievements[id]=true;
+          Store.set("achievements",JSON.stringify(AppState.achievements));
+        }
+      });
+    }
+
+    return { check };
+  })();
 
   /* ================= OVERLAYS ================= */
   const Overlays = (() => {
-    const map = {
+    const map={
       start:$("start-overlay"),
       pause:$("pause-overlay"),
       help:$("help-overlay"),
-      gameover:$("gameover-overlay"),
-      achievements:$("achievements-overlay"),
-      character:$("character-select-overlay")
+      gameover:$("gameover-overlay")
     };
-    function closeAll(){
+    function open(n){
       Object.values(map).forEach(o=>o?.classList.add("hidden"));
-      document.body.classList.remove("overlay-open");
-      AppState.overlay=null;
-    }
-    function open(name){
-      closeAll();
-      const el=map[name]; if(!el) return;
-      AppState.overlay=name; AppState.paused=true;
-      el.classList.remove("hidden");
+      map[n]?.classList.remove("hidden");
+      AppState.paused=true;
       document.body.classList.add("overlay-open");
-      el.querySelector("button")?.focus();
     }
-    function close(name){
-      map[name]?.classList.add("hidden");
-      AppState.overlay=null;
+    function close(n){
+      map[n]?.classList.add("hidden");
+      AppState.paused=false;
       document.body.classList.remove("overlay-open");
     }
-    return {open,close,closeAll};
+    return {open,close};
   })();
 
   /* ================= UI ================= */
   const UI = (() => {
-    function updateHUD(){
-      $("score").textContent = AppState.score;
-      $("streak").textContent = AppState.streak;
-      $("lives").textContent = AppState.lives;
+    function update(){
+      $("score").textContent=Math.floor(AppState.score);
+      $("streak").textContent=AppState.streak;
+      $("lives").textContent=AppState.lives;
     }
     function bind(){
       $("start-btn")?.addEventListener("click",()=>{Overlays.close("start");Game.start();});
       $("pause-btn")?.addEventListener("click",()=>Overlays.open("pause"));
       $("resume-btn")?.addEventListener("click",()=>{Overlays.close("pause");Game.resume();});
       $("restart-btn")?.addEventListener("click",()=>{Game.reset();Game.start();});
-      $("quit-btn")?.addEventListener("click",()=>{Game.reset();Overlays.open("start");});
-      $("help-btn")?.addEventListener("click",()=>Overlays.open("help"));
-      $("close-help-btn")?.addEventListener("click",()=>Overlays.close("help"));
     }
-    return {updateHUD,bind};
+    return {update,bind};
   })();
 
   /* ================= GAME ================= */
   const Game = (() => {
     const canvas=$("honey-game");
-    const ctx=canvas.getContext("2d",{alpha:true,desynchronized:true});
+    const ctx=canvas.getContext("2d");
     const W=420,H=700;
-    let running=false,last=0;
 
-    /* Pooh */
-    let poohX=W/2, targetX=W/2;
-    const poohY=H-90;
+    let last=0, running=false;
+    let px=W/2, tx=W/2;
+    const py=H-90;
+    let shake=0;
 
-    /* Entities */
-    const honeys=[];
-    const bees=[];
-
-    /* Difficulty */
-    let spawnTimer=0;
-    let beeTimer=0;
+    const honeys=[], bees=[], powers=[];
+    let hTimer=0,bTimer=0,pTimer=0;
 
     function reset(){
       AppState.score=0;
       AppState.streak=0;
       AppState.lives=3;
       AppState.time=0;
-      honeys.length=0;
-      bees.length=0;
-      UI.updateHUD();
+      AppState.power={shield:0,slow:0,magnet:0};
+      honeys.length=bees.length=powers.length=0;
+      UI.update();
     }
 
     function start(){
@@ -1686,91 +1682,100 @@
       last=performance.now();
       requestAnimationFrame(loop);
     }
-    function resume(){
-      AppState.paused=false;
-      last=performance.now();
-    }
+    function resume(){ AppState.paused=false; last=performance.now(); }
 
     function loop(ts){
       if(!running) return;
       const dt=Math.min(32,ts-last); last=ts;
-      if(!AppState.paused && !AppState.hiddenPaused){
+      if(!AppState.paused){
         update(dt);
         render();
       }
       requestAnimationFrame(loop);
     }
 
-    /* ---------- GAMEPLAY ---------- */
     function spawnHoney(){
-      honeys.push({
-        x:Math.random()*(W-40)+20,
-        y:-40,
-        r:18,
-        vy:120+Math.random()*80,
-        value:10
-      });
+      honeys.push({x:Math.random()*(W-40)+20,y:-30,r:18,vy:120,val:10});
     }
     function spawnBee(){
-      bees.push({
+      bees.push({x:Math.random()*(W-40)+20,y:-40,r:20,vy:160});
+    }
+    function spawnPower(){
+      const t=Math.random();
+      powers.push({
+        type: t<0.33?"shield":t<0.66?"slow":"magnet",
         x:Math.random()*(W-40)+20,
-        y:-40,
-        r:20,
-        vy:160+Math.random()*120,
-        sway:Math.random()*Math.PI*2
+        y:-30,r:20,vy:120
       });
     }
 
     function update(dt){
       AppState.time+=dt;
+      hTimer+=dt; bTimer+=dt; pTimer+=dt;
 
-      /* Difficulty ramp */
-      spawnTimer+=dt;
-      beeTimer+=dt;
-      const honeyRate=Math.max(420- AppState.time*0.02,180);
-      const beeRate=Math.max(1200- AppState.time*0.04,520);
+      if(hTimer>360){ spawnHoney(); hTimer=0; }
+      if(bTimer>900){ spawnBee(); bTimer=0; }
+      if(pTimer>8000){ spawnPower(); pTimer=0; }
 
-      if(spawnTimer>honeyRate){ spawnHoney(); spawnTimer=0; }
-      if(beeTimer>beeRate){ spawnBee(); beeTimer=0; }
+      // character ability modifiers
+      let speed=1, beeSpeed=1, magnetR=0, honeyVal=1;
+      if(AppState.character==="tigger") speed=1.3;
+      if(AppState.character==="piglet") beeSpeed=0.85;
+      if(AppState.character==="pooh") magnetR=70;
+      if(AppState.character==="rabbit") honeyVal=1.5;
 
-      /* Pooh smooth */
+      // power timers
+      Object.keys(AppState.power).forEach(k=>{
+        if(AppState.power[k]>0) AppState.power[k]-=dt;
+      });
+
+      if(AppState.power.slow>0) beeSpeed*=0.5;
+
       const t=1-Math.pow(0.001,dt/16);
-      poohX=lerp(poohX,targetX,clamp(t,0.08,0.3));
+      px=lerp(px,tx,clamp(t*speed,0.08,0.35));
 
-      /* Update honey */
-      for(let i=honeys.length-1;i>=0;i--){
-        const h=honeys[i];
+      honeys.forEach((h,i)=>{
         h.y+=h.vy*(dt/1000);
-        if(hit(poohX,poohY,48,h.x,h.y,h.r)){
-          AppState.score+=h.value*(1+AppState.streak*0.1);
+        if(AppState.power.magnet>0 || magnetR){
+          const dx=px-h.x, dy=py-h.y;
+          if(dx*dx+dy*dy<(magnetR+50)**2){ h.x+=dx*0.05; h.y+=dy*0.05; }
+        }
+        if(hit(px,py,48,h.x,h.y,h.r)){
+          AppState.score+=h.val*honeyVal*(1+AppState.streak*0.1);
           AppState.streak++;
           honeys.splice(i,1);
-          UI.updateHUD();
-          continue;
+          UI.update();
         }
-        if(h.y>H+40) honeys.splice(i,1);
-      }
+      });
 
-      /* Update bees */
-      for(let i=bees.length-1;i>=0;i--){
-        const b=bees[i];
-        b.sway+=dt*0.005;
-        b.x+=Math.sin(b.sway)*40*(dt/1000);
-        b.y+=b.vy*(dt/1000);
-        if(hit(poohX,poohY,48,b.x,b.y,b.r)){
-          AppState.lives--;
-          AppState.streak=0;
-          bees.splice(i,1);
-          UI.updateHUD();
-          if(AppState.lives<=0){
-            AppState.paused=true;
-            $("final-score").textContent=Math.floor(AppState.score);
-            Overlays.open("gameover");
+      bees.forEach((b,i)=>{
+        b.y+=b.vy*beeSpeed*(dt/1000);
+        if(hit(px,py,48,b.x,b.y,b.r)){
+          if(AppState.power.shield>0){
+            AppState.power.shield=0;
+          }else{
+            AppState.lives--;
+            AppState.streak=0;
+            shake=12;
+            if(AppState.lives<=0){
+              $("final-score").textContent=Math.floor(AppState.score);
+              Overlays.open("gameover");
+            }
           }
-          continue;
+          bees.splice(i,1);
+          UI.update();
         }
-        if(b.y>H+40) bees.splice(i,1);
-      }
+      });
+
+      powers.forEach((p,i)=>{
+        p.y+=p.vy*(dt/1000);
+        if(hit(px,py,48,p.x,p.y,p.r)){
+          AppState.power[p.type]=6000;
+          powers.splice(i,1);
+        }
+      });
+
+      Achievements.check();
     }
 
     function hit(ax,ay,ar,bx,by,br){
@@ -1778,63 +1783,42 @@
       return dx*dx+dy*dy<(ar+br)*(ar+br);
     }
 
-    /* ---------- RENDER ---------- */
     function render(){
+      ctx.save();
+      if(shake>0){
+        ctx.translate((Math.random()-0.5)*shake,(Math.random()-0.5)*shake);
+        shake*=0.9;
+      }
       ctx.clearRect(0,0,W,H);
 
-      /* Ground */
-      ctx.fillStyle="rgba(0,0,0,.06)";
-      ctx.fillRect(0,H-140,W,140);
-
-      /* Honey */
       honeys.forEach(h=>{
         ctx.fillStyle="#ffa500";
-        ctx.beginPath();
-        ctx.arc(h.x,h.y,h.r,0,Math.PI*2);
-        ctx.fill();
+        ctx.beginPath(); ctx.arc(h.x,h.y,h.r,0,Math.PI*2); ctx.fill();
       });
 
-      /* Bees */
       bees.forEach(b=>{
-        ctx.fillStyle="#1a1a1a";
-        ctx.beginPath();
-        ctx.arc(b.x,b.y,b.r,0,Math.PI*2);
-        ctx.fill();
-        ctx.fillStyle="#ffd700";
-        ctx.beginPath();
-        ctx.arc(b.x-6,b.y-4,4,0,Math.PI*2);
-        ctx.arc(b.x+6,b.y-4,4,0,Math.PI*2);
-        ctx.fill();
+        ctx.fillStyle="#111";
+        ctx.beginPath(); ctx.arc(b.x,b.y,b.r,0,Math.PI*2); ctx.fill();
       });
 
-      /* Pooh */
+      powers.forEach(p=>{
+        ctx.fillStyle=p.type==="shield"?"#4d96ff":p.type==="slow"?"#9d4edd":"#ffd700";
+        ctx.beginPath(); ctx.arc(p.x,p.y,p.r,0,Math.PI*2); ctx.fill();
+      });
+
       ctx.fillStyle="#d4a574";
-      ctx.beginPath();
-      ctx.arc(poohX,poohY,54,0,Math.PI*2);
-      ctx.fill();
-      ctx.beginPath();
-      ctx.arc(poohX,poohY-70,42,0,Math.PI*2);
-      ctx.fill();
-      ctx.beginPath();
-      ctx.arc(poohX-26,poohY-104,16,0,Math.PI*2);
-      ctx.arc(poohX+26,poohY-104,16,0,Math.PI*2);
-      ctx.fill();
+      ctx.beginPath(); ctx.arc(px,py,54,0,Math.PI*2); ctx.fill();
+      ctx.beginPath(); ctx.arc(px,py-70,42,0,Math.PI*2); ctx.fill();
       ctx.fillStyle="#e63946";
-      ctx.beginPath();
-      ctx.ellipse(poohX,poohY-6,56,30,0,0,Math.PI);
-      ctx.fill();
+      ctx.beginPath(); ctx.ellipse(px,py-6,56,30,0,0,Math.PI); ctx.fill();
+
+      ctx.restore();
     }
 
-    /* ---------- INPUT ---------- */
-    canvas.addEventListener("pointerdown",e=>{
+    canvas.addEventListener("pointermove",e=>{
       if(AppState.paused) return;
       const r=canvas.getBoundingClientRect();
-      targetX=clamp((e.clientX-r.left)*(W/r.width),60,W-60);
-    });
-    canvas.addEventListener("pointermove",e=>{
-      if(AppState.paused||e.buttons===0) return;
-      const r=canvas.getBoundingClientRect();
-      targetX=clamp((e.clientX-r.left)*(W/r.width),60,W-60);
+      tx=clamp((e.clientX-r.left)*(W/r.width),60,W-60);
     });
 
     return {start,resume,reset};
@@ -1843,7 +1827,7 @@
   /* ================= BOOT ================= */
   document.addEventListener("DOMContentLoaded",()=>{
     UI.bind();
-    UI.updateHUD();
+    UI.update();
     Overlays.open("start");
   });
 
