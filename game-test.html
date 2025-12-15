@@ -163,7 +163,9 @@
                   <button class="btn btn-secondary" id="close-achievements-btn-2">Back</button>
                </div>
             </div>
-         </div><script>
+         </div>
+         
+         <script>
 (() => {
   "use strict";
   if (window.__POOH_HONEY_HUNT_REPLACE__) return;
@@ -321,6 +323,7 @@
       hit()    { beep(160, 0.10, 0.10, "square"); },
       power()  { beep(520, 0.09, 0.08, "sine"); },
       ui()     { beep(420, 0.04, 0.05, "sine"); },
+      wave()   { beep(620, 0.06, 0.07, "triangle"); setTimeout(() => beep(820, 0.07, 0.06, "triangle"), 70); }
     };
 
     function toggle() {
@@ -375,7 +378,6 @@
       const el = $(id);
       if (!el) return;
       el.classList.remove("hud-pop");
-      // force reflow
       void el.offsetWidth;
       el.classList.add("hud-pop");
       setTimeout(() => el.classList.remove("hud-pop"), 250);
@@ -415,7 +417,6 @@
       const got = Object.values(AppState.achievements || {}).filter(Boolean).length;
       setText("achievements-count", `${got}/${defsCount}`);
 
-      // micro feedback
       if (prev) {
         if (AppState.score !== prev.score) HUDFX.pulse("score");
         if (AppState.streak !== prev.streak && AppState.streak > prev.streak) HUDFX.pulse("streak");
@@ -444,7 +445,6 @@
 
       list.innerHTML = ACH_DEFS.map(d => {
         const ok = unlocked(d.key);
-        // These classnames exist in your CSS (achievement-item / unlocked etc.)
         return `
           <div class="achievement-item ${ok ? "unlocked" : ""}">
             <div class="achievement-icon">${ok ? "🏆" : "🔒"}</div>
@@ -568,7 +568,6 @@
 
   /* ======================= WEATHER EFFECTS (DOM overlay) ======================= */
   const WeatherFX = (() => {
-    // CSS references #weather-effects but HTML doesn’t include it; we create it.
     let host = $("weather-effects");
     if (!host) {
       host = document.createElement("div");
@@ -629,7 +628,6 @@
       const dt = Math.min(50, t - lastT);
       lastT = t;
 
-      // spawn rate tuned for light perf
       if (mode !== "clear") {
         const chance = mode === "rain" ? 0.55 : 0.22;
         if (Math.random() < chance) spawn();
@@ -661,7 +659,6 @@
       }
     }
 
-    // start loop
     setMode(mode);
 
     return { setMode };
@@ -811,7 +808,6 @@
       UI.updateHUD();
       UI.renderAchievements();
 
-      // optional CSS popup exists in your stylesheet
       const pop = document.createElement("div");
       pop.className = "achievement-popup";
       pop.textContent = `🏆 ${title}`;
@@ -844,6 +840,82 @@
     const honeys = [];
     const bees = [];
     const powers = [];
+
+    /* ======================= WAVES + VARIANTS ======================= */
+    const WAVE_MS = 30000;
+
+    const WAVES = [
+      { name: "Warm-up",  honeyRate: 520, beeRate: 980, powerRate: 8200, beeMix: { normal: 0.75, zigzag: 0.15, hunter: 0.10, diver: 0.00 } },
+      { name: "Zigzags",  honeyRate: 500, beeRate: 900, powerRate: 7800, beeMix: { normal: 0.35, zigzag: 0.45, hunter: 0.15, diver: 0.05 } },
+      { name: "Breather", honeyRate: 430, beeRate: 1200, powerRate: 7000, beeMix: { normal: 0.80, zigzag: 0.10, hunter: 0.10, diver: 0.00 } },
+      { name: "Storm",    honeyRate: 540, beeRate: 760, powerRate: 7200, beeMix: { normal: 0.35, zigzag: 0.20, hunter: 0.25, diver: 0.20 } },
+    ];
+
+    const pickFromMix = (mix) => {
+      const r = Math.random();
+      let acc = 0;
+      for (const k of Object.keys(mix)) {
+        acc += mix[k];
+        if (r <= acc) return k;
+      }
+      return "normal";
+    };
+
+    const currentWaveIndex = () => Math.floor(AppState.timeMs / WAVE_MS) % WAVES.length;
+    const currentWave = () => WAVES[currentWaveIndex()];
+
+    // Wave announcer (canvas-rendered)
+    const WaveAnnounce = {
+      idx: -1,
+      timer: 0,
+      title: "",
+      set(idx) {
+        const w = WAVES[idx];
+        if (!w) return;
+        this.idx = idx;
+        this.timer = 1600; // ms
+        this.title = `🌿 Wave: ${w.name}`;
+        Audio.wave();
+        vibrate(15);
+      },
+      update(dt) { this.timer = Math.max(0, this.timer - dt); },
+      render() {
+        if (this.timer <= 0) return;
+        const a = clamp(this.timer / 1600, 0, 1);
+        const ease = 1 - Math.pow(1 - a, 2);
+
+        ctx.save();
+        ctx.globalAlpha = 0.18 + 0.35 * ease;
+
+        // backplate
+        const padW = 320, padH = 54;
+        const x = (BASE_W - padW) / 2;
+        const y = 92;
+
+        ctx.fillStyle = "rgba(20,14,10,0.65)";
+        rrPath(ctx, x, y, padW, padH, 18);
+        ctx.fill();
+
+        ctx.globalAlpha = 0.9 * ease;
+        ctx.strokeStyle = "rgba(255,232,170,0.35)";
+        ctx.lineWidth = 3;
+        rrPath(ctx, x, y, padW, padH, 18);
+        ctx.stroke();
+
+        // text
+        ctx.globalAlpha = 0.95 * ease;
+        ctx.font = '900 22px "Fredoka One", system-ui';
+        ctx.textAlign = "center";
+        ctx.textBaseline = "middle";
+        ctx.lineWidth = 6;
+        ctx.strokeStyle = "rgba(0,0,0,0.35)";
+        ctx.fillStyle = "rgba(255,210,120,0.98)";
+        ctx.strokeText(this.title, BASE_W / 2, y + padH / 2);
+        ctx.fillText(this.title, BASE_W / 2, y + padH / 2);
+
+        ctx.restore();
+      }
+    };
 
     const player = {
       x: BASE_W / 2,
@@ -919,6 +991,11 @@
       shake = 0;
       microSlow = 0;
 
+      // reset wave announce
+      WaveAnnounce.idx = -1;
+      WaveAnnounce.timer = 0;
+      WaveAnnounce.title = "";
+
       UI.updateHUD();
     }
 
@@ -950,18 +1027,37 @@
 
     function spawnHoney() {
       const seed = (Math.random() * 1e9) | 0;
+
+      // 86% normal, 10% golden, 4% cursed
+      const roll = Math.random();
+      const kind =
+        roll < 0.04 ? "cursed" :
+        roll < 0.14 ? "gold"   :
+        "normal";
+
+      const r =
+        kind === "gold" ? 26 :
+        kind === "cursed" ? 22 :
+        24;
+
       honeys.push({
         x: 60 + Math.random() * (BASE_W - 120),
         y: -35,
-        r: 24,
+        r,
         vy: honeyFall * (0.9 + Math.random() * 0.28),
         seed,
+        kind,
+        wob: Math.random() * 10,
       });
     }
 
-    function spawnBee() {
+    function spawnBee(forceType = null) {
       const seed = (Math.random() * 1e9) | 0;
-      bees.push({
+
+      const wave = currentWave();
+      const type = forceType || pickFromMix(wave.beeMix);
+
+      const b = {
         x: 60 + Math.random() * (BASE_W - 120),
         y: -40,
         r: 24,
@@ -969,7 +1065,24 @@
         vx: (Math.random() * 2 - 1) * beeDrift,
         flap: Math.random() * 10,
         seed,
-      });
+        type,
+
+        tele: 0,
+        dived: false,
+        zigT: 0,
+      };
+
+      if (type === "hunter") {
+        b.vx *= 0.6;
+      } else if (type === "zigzag") {
+        b.zigT = 200 + Math.random() * 350;
+      } else if (type === "diver") {
+        b.tele = 260 + Math.random() * 260;
+        b.vx *= 0.25;
+        b.vy *= 0.75;
+      }
+
+      bees.push(b);
     }
 
     function spawnPower() {
@@ -1009,29 +1122,62 @@
 
     function awardHoney(h) {
       const prev = { score: AppState.score, streak: AppState.streak, lives: AppState.lives };
+      const kind = h.kind || "normal";
 
       AppState.stats.honeyCaught++;
+
+      // cursed: punish + chaos
+      if (kind === "cursed") {
+        AppState.streak = 0;
+        AppState.combo = { mult: 1, timer: 0, tier: 0 };
+
+        AppState.score = Math.max(0, AppState.score - 35);
+
+        Particles.emit(h.x, h.y, "rgba(180,55,25,1)", 24, 1.2);
+        spawnScorePopup("CURSED! -35", h.x, h.y);
+
+        // spawn 2 spicy bees
+        spawnBee("hunter");
+        spawnBee("zigzag");
+
+        Audio.hit();
+        vibrate([30, 20, 30]);
+        momentSlow(0.16, 160);
+        screenShake(12);
+
+        UI.updateHUD(prev);
+        return;
+      }
+
+      // normal/gold: streak grows
       AppState.streak++;
       AppState.stats.maxStreak = Math.max(AppState.stats.maxStreak, AppState.streak);
 
       setComboFromStreak();
 
       const base = 10;
-      const pts = Math.round(base * AppState.combo.mult);
+      let pts = Math.round(base * AppState.combo.mult);
+
+      if (kind === "gold") {
+        pts = Math.round((base * 2.25) * AppState.combo.mult);
+        AppState.combo.timer = Math.min(2600, AppState.combo.timer + 450);
+        momentSlow(0.08, 120);
+      }
+
       AppState.score += pts;
 
-      // Character-specific VFX (simple but effective)
       let color = "rgba(255,165,0,1)";
       if (AppState.character === "piglet") color = "rgba(255,140,170,1)";
       if (AppState.character === "tigger") color = "rgba(255,140,0,1)";
       if (AppState.character === "rabbit") color = "rgba(80,170,110,1)";
+      if (kind === "gold") color = "rgba(255,220,120,1)";
 
-      Particles.emit(h.x, h.y, color, 14 + Math.floor(AppState.combo.mult * 6), 1);
-      spawnScorePopup(`+${pts}`, h.x, h.y);
+      Particles.emit(h.x, h.y, color, 14 + Math.floor(AppState.combo.mult * 6) + (kind === "gold" ? 10 : 0), 1.05);
+      spawnScorePopup(`${kind === "gold" ? "✨ " : ""}+${pts}`, h.x, h.y);
 
       punchScale(0.22);
-      vibrate(15);
-      Audio.collect();
+      vibrate(kind === "gold" ? [15, 10, 15] : 15);
+      (kind === "gold" ? Audio.power : Audio.collect)();
       momentSlow(0.06, 90);
 
       UI.updateHUD(prev);
@@ -1098,7 +1244,7 @@
 
     function paperNoise(seed, cx, cy, rad, strength = 0.05) {
       const rng = makeRng(seed);
-      const n = 14; // low = stable perf
+      const n = 14;
       ctx.save();
       ctx.globalAlpha = strength;
       ctx.fillStyle = "rgba(255,255,255,1)";
@@ -1114,19 +1260,35 @@
 
     function drawHoney(h) {
       const r = h.r;
+      const kind = h.kind || "normal";
 
       ctx.save();
       ctx.translate(h.x, h.y);
 
-      const wob = Math.sin((AppState.timeMs + h.y * 3) / 220) * 0.04;
+      const wob = Math.sin((AppState.timeMs + h.y * 3) / 220 + (h.wob || 0)) * 0.04;
       ctx.rotate(wob);
 
-      // body gradient
-      const g = ctx.createRadialGradient(-r * 0.3, -r * 0.35, r * 0.2, 0, 0, r * 1.3);
-      g.addColorStop(0.00, "#fff2b5");
-      g.addColorStop(0.35, "#ffd166");
-      g.addColorStop(0.70, "#f4b400");
-      g.addColorStop(1.00, "#d18a00");
+      // body gradient (variant)
+      let g;
+      if (kind === "gold") {
+        g = ctx.createRadialGradient(-r * 0.25, -r * 0.35, r * 0.18, 0, 0, r * 1.35);
+        g.addColorStop(0.00, "#fff7c7");
+        g.addColorStop(0.30, "#ffe08a");
+        g.addColorStop(0.62, "#f7c400");
+        g.addColorStop(1.00, "#b87400");
+      } else if (kind === "cursed") {
+        g = ctx.createRadialGradient(-r * 0.25, -r * 0.35, r * 0.18, 0, 0, r * 1.35);
+        g.addColorStop(0.00, "#ffe3b5");
+        g.addColorStop(0.35, "#ffb86b");
+        g.addColorStop(0.75, "#e46a2d");
+        g.addColorStop(1.00, "#7b2c14");
+      } else {
+        g = ctx.createRadialGradient(-r * 0.3, -r * 0.35, r * 0.2, 0, 0, r * 1.3);
+        g.addColorStop(0.00, "#fff2b5");
+        g.addColorStop(0.35, "#ffd166");
+        g.addColorStop(0.70, "#f4b400");
+        g.addColorStop(1.00, "#d18a00");
+      }
 
       ctx.fillStyle = g;
       rrPath(ctx, -r * 1.05, -r * 0.95, r * 2.10, r * 1.90, r * 0.55);
@@ -1134,6 +1296,27 @@
 
       inkStroke(3.2, 0.42);
       ctx.stroke();
+
+      // variant aura ring
+      if (kind === "gold") {
+        ctx.save();
+        ctx.globalAlpha = 0.22;
+        ctx.strokeStyle = "rgba(255,236,140,0.95)";
+        ctx.lineWidth = 5;
+        ctx.beginPath();
+        ctx.ellipse(0, 0, r * 1.18, r * 0.98, 0, 0, Math.PI * 2);
+        ctx.stroke();
+        ctx.restore();
+      } else if (kind === "cursed") {
+        ctx.save();
+        ctx.globalAlpha = 0.22;
+        ctx.strokeStyle = "rgba(140,30,10,0.9)";
+        ctx.lineWidth = 5;
+        ctx.beginPath();
+        ctx.ellipse(0, 0, r * 1.18, r * 0.98, 0, 0, Math.PI * 2);
+        ctx.stroke();
+        ctx.restore();
+      }
 
       // lid
       ctx.save();
@@ -1158,16 +1341,16 @@
       ctx.save();
       ctx.globalAlpha = 0.9;
       const hg = ctx.createRadialGradient(-r * 0.25, r * 0.2, r * 0.2, 0, r * 0.25, r * 1.1);
-      hg.addColorStop(0, "#ffe58f");
-      hg.addColorStop(0.6, "#f4b400");
-      hg.addColorStop(1, "#c97800");
+      hg.addColorStop(0, kind === "cursed" ? "#ffd1a8" : "#ffe58f");
+      hg.addColorStop(0.6, kind === "cursed" ? "#e46a2d" : "#f4b400");
+      hg.addColorStop(1, kind === "cursed" ? "#7b2c14" : "#c97800");
       ctx.fillStyle = hg;
       ctx.beginPath();
       ctx.ellipse(0, r * 0.18, r * 0.78, r * 0.56, 0.08, 0, Math.PI * 2);
       ctx.fill();
       ctx.restore();
 
-      // glossy highlight stroke
+      // glossy highlight
       ctx.save();
       ctx.globalAlpha = 0.32;
       ctx.strokeStyle = "rgba(255,255,255,0.95)";
@@ -1201,6 +1384,19 @@
       const lean = Math.sin(b.flap * 0.7) * 0.12;
       ctx.translate(0, bob);
       ctx.rotate(lean);
+
+      // diver telegraph aura
+      if (b.type === "diver" && !b.dived) {
+        ctx.save();
+        const pulse = 0.18 + 0.10 * Math.sin(b.flap * 2.4);
+        ctx.globalAlpha = pulse;
+        ctx.strokeStyle = "rgba(255,255,255,0.85)";
+        ctx.lineWidth = 4;
+        ctx.beginPath();
+        ctx.ellipse(0, 0, r * 1.35, r * 1.05, 0, 0, Math.PI * 2);
+        ctx.stroke();
+        ctx.restore();
+      }
 
       // wings
       const wing = (sx) => {
@@ -1286,7 +1482,6 @@
     }
 
     function drawPower(p) {
-      // trail
       if (p.trail?.length) {
         for (let i = 0; i < p.trail.length; i++) {
           const pos = p.trail[i];
@@ -1445,6 +1640,19 @@
 
       updateDifficulty();
 
+      // wave script (every 30s)
+      const wIdx = currentWaveIndex();
+      const wave = currentWave();
+      baseHoneyRate = wave.honeyRate;
+      baseBeeRate = wave.beeRate;
+      powerRate = wave.powerRate;
+
+      // announce on wave change
+      if (WaveAnnounce.idx !== wIdx) {
+        WaveAnnounce.set(wIdx);
+      }
+      WaveAnnounce.update(dt);
+
       // player movement + spring scale
       player.x = Input.update(dt);
       player.sv += (1 - player.scale) * 0.18;
@@ -1485,7 +1693,42 @@
       for (let i = bees.length - 1; i >= 0; i--) {
         const b = bees[i];
         b.flap += dt / 120;
-        b.y += (b.vy * slowFactor) * (dt / 1000);
+
+        // --- behavior layer ---
+        if (b.type === "hunter") {
+          const steer = clamp((player.x - b.x) * 0.9, -120, 120);
+          b.vx += (steer - b.vx) * 0.06;
+        }
+
+        if (b.type === "zigzag") {
+          b.zigT -= dt;
+          if (b.zigT <= 0) {
+            b.zigT = 180 + Math.random() * 380;
+            b.vx = (Math.random() < 0.5 ? -1 : 1) * (beeDrift * (0.7 + Math.random() * 0.8));
+          }
+        }
+
+        if (b.type === "diver") {
+          if (!b.dived) {
+            b.tele = Math.max(0, b.tele - dt);
+            b.y += (b.vy * 0.35 * slowFactor) * (dt / 1000);
+
+            const aim = clamp((player.x - b.x) * 0.7, -140, 140);
+            b.vx += (aim - b.vx) * 0.05;
+
+            if (b.tele === 0) {
+              b.dived = true;
+              b.vy *= 2.25;
+              b.vx *= 1.15;
+              momentSlow(0.06, 80);
+            }
+          } else {
+            b.y += (b.vy * slowFactor) * (dt / 1000);
+          }
+        } else {
+          b.y += (b.vy * slowFactor) * (dt / 1000);
+        }
+
         b.x += (b.vx * slowFactor) * (dt / 1000);
 
         if (b.x < 40 || b.x > BASE_W - 40) b.vx *= -1;
@@ -1519,7 +1762,6 @@
     function render() {
       ctx.clearRect(0, 0, BASE_W, BASE_H);
 
-      // moment framing contrast wash
       const mf = 1 - AppState.timeScale;
       ctx.save();
 
@@ -1543,14 +1785,16 @@
       for (const p of powers) drawPower(p);
       for (const b of bees) drawBee(b);
 
-      // player
       drawPlayer();
 
       // VFX overlays
       Particles.render(ctx);
       renderCombo();
 
-      // subtle film grain (cheap + feels “storybook”)
+      // wave announce overlay
+      WaveAnnounce.render();
+
+      // subtle film grain
       ctx.save();
       ctx.globalAlpha = 0.03;
       ctx.fillStyle = "#000";
@@ -1594,7 +1838,6 @@
   }
 })();
 </script>
-
       </main>
 
 
