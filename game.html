@@ -5504,6 +5504,19 @@ this.particleSystem.draw(this.ctx);
                const saveInfo = saveSystem.getSaveInfo();
 
                const game = new PoohHoneyHunt();
+// Auto-start (no title screen): ensure the actual game loop begins
+try {
+   if (typeof game.hideAllOverlays === "function") game.hideAllOverlays();
+   if (typeof game.updateOverlayState === "function") game.updateOverlayState();
+   // Let layout settle (mobile Safari) then start
+   requestAnimationFrame(() => {
+      setTimeout(() => {
+         if (typeof game.startGame === "function") game.startGame();
+      }, 0);
+   });
+} catch (e) {
+   console.warn("Auto-start failed:", e);
+}
                console.log("Enhanced game created successfully!");
 
                // Add debug helpers
@@ -5616,13 +5629,5 @@ this.particleSystem.draw(this.ctx);
             document.body.classList.add("high-contrast");
          }
       </script>
-   <script>
-// Auto-start: remove the start screen entirely (fallback)
-try {
-  if (window.gameEngine && typeof window.gameEngine.startGame === 'function') {
-    setTimeout(() => window.gameEngine.startGame(), 0);
-  }
-} catch (e) {}
-</script>
 </body>
 </html>
