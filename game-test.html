@@ -1873,68 +1873,93 @@
   canvas.width = BASE_W;
   canvas.height = BASE_H;
 
-  /* ======================= LAYOUT ======================= */
-  const Layout = (() => {
-    const root = $("game-root");
-    const hud = document.querySelector(".hud");
-    const container = document.querySelector(".game-container");
-    const controls = document.querySelector(".game-controls");
-    const sound = document.querySelector(".sound-controls");
-    const share = $("share-btn");
-    const weatherToggle = $("weather-toggle");
+  /*/* ======================= LAYOUT (iOS-safe, stable) ======================= */
+const Layout = (() => {
+  const root = $("game-root");
+  const hud = document.querySelector(".hud");
+  const container = document.querySelector(".game-container");
 
-    let lastKey = "";
+  let lastKey = "";
+  let stableVH = window.visualViewport?.height || window.innerHeight || 700;
 
-    function apply() {
-      if (!container || !canvas) return;
+  function getVH() {
+    // iOS Safari: visualViewport is the truth serum.
+    const vv = window.visualViewport;
+    if (vv && typeof vv.height === "number") {
+      stableVH = vv.height;
+    } else if (typeof window.innerHeight === "number") {
+      // fallback (still okay on desktop)
+      stableVH = window.innerHeight;
+    }
+    return Math.max(420, stableVH);
+  }
 
-      // Viewport height
-      const vh = Math.max(420, window.innerHeight || 700);
+  function apply() {
+    if (!container || !canvas) return;
 
-      const hudH = hud ? hud.getBoundingClientRect().height : 0;
+    const vh = getVH();
+    const hudH = hud ? hud.getBoundingClientRect().height : 0;
 
-      const topFloat = 8;
-      const bottomPad = 14;
+    // Do NOT subtract your floating buttons; they are overlays.
+    const topPad = 8;
+    const bottomPad = 14;
 
-      const availableH = clamp(vh - hudH - topFloat - bottomPad, 520, 980);
+    const availableH = clamp(vh - hudH - topPad - bottomPad, 520, 980);
+    const contW = container.getBoundingClientRect().width || 420;
 
-      const contW = container.getBoundingClientRect().width || 420;
-      const desiredW = availableH * (BASE_W / BASE_H);
-      const finalW = clamp(desiredW, 300, contW);
-      const finalH = finalW * (BASE_H / BASE_W);
+    // Fit by height, then clamp by container width
+    const desiredW = availableH * (BASE_W / BASE_H);
+    const finalW = clamp(desiredW, 300, contW);
+    const finalH = finalW * (BASE_H / BASE_W);
 
-      const key = `${Math.round(contW)}|${Math.round(availableH)}|${Math.round(finalW)}|${Math.round(finalH)}`;
-      if (key === lastKey) return;
-      lastKey = key;
+    const key = `${Math.round(vh)}|${Math.round(hudH)}|${Math.round(contW)}|${Math.round(finalW)}|${Math.round(finalH)}`;
+    if (key === lastKey) return;
+    lastKey = key;
 
-      container.style.display = "flex";
-      container.style.alignItems = "center";
-      container.style.justifyContent = "center";
+    // Center canvas in the container
+    container.style.display = "flex";
+    container.style.alignItems = "center";
+    container.style.justifyContent = "center";
 
-      if (root) {
-        root.style.minHeight = `${vh}px`;
-        root.style.overflow = "hidden";
-      }
-      document.body.style.overflow = "hidden";
-      document.documentElement.style.overflow = "hidden";
+    // Force the container to reserve the play area height
+    container.style.height = `${Math.round(availableH)}px`;
+
+    // Explicit px sizing avoids iOS “auto” quirks
+    canvas.style.width = `${Math.round(finalW)}px`;
+    canvas.style.height = `${Math.round(finalH)}px`;
+
+    // Prevent scroll / bounce interference
+    if (root) {
+      root.style.minHeight = `${Math.round(vh)}px`;
+      root.style.overflow = "hidden";
+    }
+    document.body.style.overflow = "hidden";
+    document.documentElement.style.overflow = "hidden";
+  }
+
+  function bind() {
+    let r = 0;
+    const req = () => {
+      if (r) cancelAnimationFrame(r);
+      r = requestAnimationFrame(apply);
+    };
+
+    window.addEventListener("resize", req, { passive: true });
+    window.addEventListener("orientationchange", req, { passive: true });
+
+    // iOS: address bar changes trigger visualViewport resize/scroll
+    if (window.visualViewport) {
+      window.visualViewport.addEventListener("resize", req, { passive: true });
+      window.visualViewport.addEventListener("scroll", req, { passive: true });
     }
 
-    function bind() {
-      let r = 0;
-      const req = () => {
-        if (r) cancelAnimationFrame(r);
-        r = requestAnimationFrame(() => apply());
-      };
-      window.addEventListener("resize", req, { passive: true });
-      window.addEventListener("orientationchange", req, { passive: true });
-      setTimeout(apply, 60);
-      setTimeout(apply, 280);
-      apply();
-    }
+    setTimeout(apply, 60);
+    setTimeout(apply, 260);
+    apply();
+  }
 
-    return { bind, apply };
-  })();
-
+  return { bind, apply };
+})();
   /* ======================= INPUT (SMOOTH SPRING) ======================= */
   const Input = (() => {
     let down = false;
