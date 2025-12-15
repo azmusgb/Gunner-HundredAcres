@@ -166,7 +166,7 @@
          </div>
       </main>
 
-  <script>
+ <script>
 (() => {
   "use strict";
   if (window.__POOH_HONEY_HUNT_VNEXT__) return;
@@ -175,6 +175,14 @@
   /* ======================= DOM HELPERS ======================= */
   const $ = (id) => document.getElementById(id);
   const clamp = (v, a, b) => Math.max(a, Math.min(b, v));
+
+  function pulse(id, cls){
+    const el = $(id);
+    if (!el) return;
+    el.classList.remove(cls);
+    void el.offsetWidth; // restart animation
+    el.classList.add(cls);
+  }
 
   /* ======================= SAFE STORAGE ======================= */
   const Store = (() => {
@@ -209,27 +217,21 @@
     streak: 0,
     lives: 3,
 
-    // time
     timeMs: 0,
 
-    // prefs
     soundOn: Store.get("sound","on") !== "off",
     hapticsOn: Store.get("haptics","on") !== "off",
     character: Store.get("character","pooh") || "pooh",
 
-    // combo
     combo: { mult: 1, timer: 0, tier: 0 },
 
-    // achievements
     achievements: (() => {
       try { return JSON.parse(Store.get("achievements","{}")||"{}"); }
       catch { return {}; }
     })(),
 
-    // moment framing
     timeScale: 1,
 
-    // stats
     maxStreak: 0,
     honeyCaught: 0,
     beesHit: 0
@@ -291,38 +293,41 @@
 
   /* ======================= OVERLAYS ======================= */
   const Overlays = (() => {
-   const map = {
-  start: $("start-overlay"),
-  pause: $("pause-overlay"),
-  help: $("help-overlay"),
-  character: $("character-select-overlay"),
-  achievements: $("achievements-overlay"),
-  gameover: $("gameover-overlay"),
-};
+    const map = {
+      start: $("start-overlay"),
+      pause: $("pause-overlay"),
+      help: $("help-overlay"),
+      character: $("character-select-overlay"),
+      achievements: $("achievements-overlay"),
+      gameover: $("gameover-overlay"),
+    };
 
     const anyOpen = () => Object.values(map).some(el => el && !el.classList.contains("hidden"));
-
     const sync = () => document.body.classList.toggle("overlay-open", anyOpen());
 
     function open(name){
       const el = map[name];
       if (!el) return;
       el.classList.remove("hidden");
-      sync();
       if (name === "pause") AppState.paused = true;
+      sync();
     }
+
     function close(name){
       const el = map[name];
       if (!el) return;
       el.classList.add("hidden");
-      sync();
       if (name === "pause") AppState.paused = false;
+      sync();
     }
+
     function closeAll(){
-  for (const el of Object.values(map)) el?.classList.add("hidden");
-  sync();
-}
-    return { open, close, closeAll };
+      for (const el of Object.values(map)) el?.classList.add("hidden");
+      AppState.paused = false;
+      sync();
+    }
+
+    return { open, close, closeAll, sync };
   })();
 
   /* ======================= UI (HUD + BIND) ======================= */
@@ -333,7 +338,6 @@
       setText("score", Math.floor(AppState.score));
       setText("streak", Math.floor(AppState.streak));
       setText("lives", Math.floor(AppState.lives));
-      // achievements-count exists (0/10) in your HUD
       const defsCount = 10;
       const got = Object.values(AppState.achievements||{}).filter(Boolean).length;
       setText("achievements-count", `${got}/${defsCount}`);
@@ -346,7 +350,6 @@
     }
 
     function openAchievements(){
-      // If your achievements overlay exists, populate list if container present
       const list = $("achievements-list");
       if (list) {
         const defs = [
@@ -362,17 +365,34 @@
           { key:"score3k", title:"Legend", desc:"Reach 3000 score." }
         ];
         const unlocked = (k)=>!!AppState.achievements?.[k];
-        list.innerHTML = defs.map(d=>{
-          const ok = unlocked(d.key);
-          return `
-            <div class="ach-row" style="display:flex;gap:12px;align-items:flex-start;padding:10px 12px;border-radius:16px;border:2px solid rgba(93,78,55,.25);background:rgba(255,255,255,.65);margin-bottom:10px">
-              <div style="font-size:1.35rem;line-height:1">${ok?"🏆":"🔒"}</div>
-              <div style="flex:1;min-width:0">
-                <div style="font-family:'Fredoka One',cursive;color:#5d4e37">${d.title} ${ok?"":"<span style='opacity:.65'>(locked)</span>"}</div>
-                <div style="opacity:.78;margin-top:2px">${d.desc}</div>
-              </div>
-            </div>`;
-        }).join("");
+
+        // Use your CSS classes if present
+        const hasCSS = !!document.querySelector(".achievement-item");
+        if (hasCSS) {
+          list.innerHTML = defs.map(d=>{
+            const ok = unlocked(d.key);
+            return `
+              <div class="achievement-item ${ok ? "unlocked" : ""}">
+                <div class="achievement-icon">${ok ? "🏆" : "🔒"}</div>
+                <div class="achievement-meta">
+                  <div class="achievement-title">${d.title}${ok ? "" : " <span class='muted'>(locked)</span>"}</div>
+                  <div class="achievement-desc">${d.desc}</div>
+                </div>
+              </div>`;
+          }).join("");
+        } else {
+          list.innerHTML = defs.map(d=>{
+            const ok = unlocked(d.key);
+            return `
+              <div style="display:flex;gap:12px;align-items:flex-start;padding:10px 12px;border-radius:16px;border:2px solid rgba(93,78,55,.25);background:rgba(255,255,255,.65);margin-bottom:10px">
+                <div style="font-size:1.35rem;line-height:1">${ok?"🏆":"🔒"}</div>
+                <div style="flex:1;min-width:0">
+                  <div style="font-family:'Fredoka One',cursive;color:#5d4e37">${d.title} ${ok?"":"<span style='opacity:.65'>(locked)</span>"}</div>
+                  <div style="opacity:.78;margin-top:2px">${d.desc}</div>
+                </div>
+              </div>`;
+          }).join("");
+        }
       }
       Overlays.open("achievements");
     }
@@ -386,11 +406,14 @@
       on("start-btn","click",()=>{ Audio.init(); Overlays.closeAll(); Game.start(); });
       on("pause-btn","click",()=>Overlays.open("pause"));
       on("resume-btn","click",()=>Overlays.close("pause"));
-      on("restart-btn","click",()=>{ Game.reset(); Game.start(); });
+      on("restart-btn","click",()=>{ Game.reset(); Overlays.closeAll(); Game.start(); });
 
       on("share-btn","click", async ()=>{
         const t = `I scored ${Math.floor(AppState.score)} in Pooh’s Honey Hunt 🍯`;
-        try { navigator.share ? await navigator.share({ text:t }) : await navigator.clipboard.writeText(t); } catch {}
+        try {
+          if (navigator.share) await navigator.share({ text:t });
+          else if (navigator.clipboard) await navigator.clipboard.writeText(t);
+        } catch {}
       });
 
       on("quit-btn","click",()=>{ Game.reset(); Overlays.closeAll(); Overlays.open("start"); });
@@ -409,7 +432,7 @@
       on("back-to-menu-btn","click", ()=>Overlays.close("character"));
       on("start-with-character-btn","click", ()=>{ Audio.init(); Overlays.closeAll(); Game.start(); });
 
-      // Character cards (optional)
+      // Character cards
       document.querySelectorAll(".character-card[data-character]").forEach(btn=>{
         btn.addEventListener("click", ()=>{
           const c = btn.getAttribute("data-character");
@@ -420,7 +443,7 @@
         });
       });
 
-      // Weather drawer wiring (optional)
+      // Weather drawer wiring
       const drawer = $("weather-drawer");
       const setDrawer = (open)=>drawer?.classList.toggle("open", !!open);
       const setWeather = (w)=>{
@@ -443,12 +466,14 @@
       // Keyboard shortcuts
       window.addEventListener("keydown",(e)=>{
         if (e.repeat) return;
+
         if (e.code==="Space"){
           e.preventDefault();
           if (!AppState.running) return;
           if (!document.body.classList.contains("overlay-open")) Overlays.open("pause");
           else Overlays.close("pause");
         }
+
         if (e.code==="Escape"){
           Overlays.close("help");
           Overlays.close("achievements");
@@ -459,6 +484,7 @@
 
       setSoundIcon();
       updateHUD();
+      Overlays.sync();
     }
 
     return { bind, updateHUD, setSoundIcon, openAchievements };
@@ -467,18 +493,24 @@
   /* ======================= CANVAS ======================= */
   const canvas = $("honey-game");
   const ctx = canvas?.getContext("2d", { alpha:true, desynchronized:true });
+  if (!canvas || !ctx) { console.error("Canvas missing"); return; }
 
-  if (!canvas || !ctx) {
-    console.error("Canvas not found or 2D context failed.");
-    return;
-  }
-
-  // Your CSS already sizes the canvas; keep logical render at 420x700 for consistent gameplay
   const BASE_W = 420, BASE_H = 700;
   canvas.width = BASE_W;
   canvas.height = BASE_H;
 
-  /* ======================= INPUT (SMOOTH + RIPPLE) ======================= */
+  /* roundRect fallback (MISSING previously in some drops) */
+  function rrPath(ctx, x, y, w, h, r){
+    if (ctx.roundRect) { ctx.roundRect(x,y,w,h,r); return; }
+    r = Math.min(r, w/2, h/2);
+    ctx.moveTo(x+r, y);
+    ctx.arcTo(x+w, y,   x+w, y+h, r);
+    ctx.arcTo(x+w, y+h, x,   y+h, r);
+    ctx.arcTo(x,   y+h, x,   y,   r);
+    ctx.arcTo(x,   y,   x+w, y,   r);
+  }
+
+  /* ======================= RIPPLE FX ======================= */
   const TouchRipples = (() => {
     const r = [];
     function add(x,y){
@@ -509,6 +541,7 @@
     return { add, update, render };
   })();
 
+  /* ======================= INPUT ======================= */
   const Input = (() => {
     let down=false;
     let tx = BASE_W/2;
@@ -526,7 +559,6 @@
       setTarget(clientX);
       Audio.init();
 
-      // ripple in canvas-space
       const rect = canvas.getBoundingClientRect();
       const nx = (clientX - rect.left) / rect.width;
       const ny = (clientY - rect.top) / rect.height;
@@ -552,9 +584,10 @@
     canvas.addEventListener("touchcancel",()=>down=false,{passive:true});
 
     function update(dt){
-      const t = Math.min(40,dt)/1000;
-      const k = 24;   // stiffness
-      const d = 11;   // damping
+      dt = Math.min(dt, 33); // dt clamp (missing in some versions)
+      const t = dt/1000;
+      const k = 24;
+      const d = 11;
       const ax = (tx - x)*k - vx*d;
       vx += ax*t;
       x += vx*t;
@@ -575,19 +608,13 @@
         if(p.length>=MAX) p.shift();
         const a=Math.random()*Math.PI*2;
         const sp=(1+Math.random()*2.6)*spread;
-        p.push({
-          x,y,
-          vx:Math.cos(a)*sp,
-          vy:Math.sin(a)*sp-(1.5+Math.random()*2),
-          life:1,
-          r:2+Math.random()*3,
-          color
-        });
+        p.push({ x,y, vx:Math.cos(a)*sp, vy:Math.sin(a)*sp-(1.5+Math.random()*2), life:1, r:2+Math.random()*3, color });
       }
     }
 
     function update(dt){
-      const t=Math.min(32,dt)/1000;
+      dt = Math.min(dt, 33);
+      const t=dt/1000;
       for(let i=p.length-1;i>=0;i--){
         const a=p[i];
         a.x += a.vx*(60*t);
@@ -614,7 +641,7 @@
     return { emit, update, render };
   })();
 
-  /* ======================= SCORE POPUPS (DOM, uses your CSS) ======================= */
+  /* ======================= SCORE POPUPS ======================= */
   function spawnScorePopup(text, x, y){
     const host = document.querySelector(".game-container");
     if(!host) return;
@@ -623,7 +650,6 @@
     el.className = "score-popup";
     el.textContent = text;
 
-    // place in host space (host matches 420x700 aspect; map canvas coords -> %)
     const px = (x/BASE_W)*100;
     const py = (y/BASE_H)*100;
     el.style.left = `${px}%`;
@@ -659,29 +685,16 @@
     return { check };
   })();
 
-  /* ======================= GAME (POLISH-FIRST) ======================= */
+  /* ======================= GAME ======================= */
   const Game = (() => {
-    // entities
     const honeys=[];
     const bees=[];
     const powers=[];
 
-    // player
-    const player={
-      x: BASE_W/2,
-      y: BASE_H-86,
-      r: 46,
-
-      // punch/bounce
-      scale: 1,
-      sv: 0
-    };
-
-    // buffs
+    const player={ x: BASE_W/2, y: BASE_H-86, r: 46, scale: 1, sv: 0 };
     const buffs = { shield: 0, slow: 0 };
     let powerCollected = 0;
 
-    // pacing
     let running=false;
     let last=0;
 
@@ -690,14 +703,10 @@
     let baseBeeRate=880;
     let powerRate=7000;
 
-    // difficulty
     let honeyFall=165, beeFall=195, beeDrift=85;
 
-    // screen shake
     let shake=0;
-
-    // moment framing
-    let microSlow=0; // ms
+    let microSlow=0;
 
     const hitCircle=(ax,ay,ar,bx,by,br)=>{
       const dx=ax-bx, dy=ay-by, rr=ar+br;
@@ -705,7 +714,6 @@
     };
 
     function momentSlow(amount=0.15, dur=160){
-      // amount=0..1 slower, dur ms
       microSlow = Math.max(microSlow, dur);
       AppState.timeScale = Math.min(AppState.timeScale, 1 - amount);
     }
@@ -761,27 +769,30 @@
       last=performance.now();
     }
 
-    function gameOver(){
+    function stop(){
       running=false;
       AppState.running=false;
       AppState.paused=false;
+    }
+
+    function gameOver(){
+      stop();
 
       if (AppState.score > AppState.best) {
         AppState.best = AppState.score;
         Store.set("bestScore", String(AppState.best));
       }
 
+      const fs = $("final-score");
+      if (fs) fs.textContent = String(Math.floor(AppState.score));
+
       UI.updateHUD();
-      Overlays.open("start");
+      Overlays.closeAll();
+      Overlays.open("gameover");
     }
 
     function spawnHoney(){
-      honeys.push({
-        x: 60 + Math.random()*(BASE_W-120),
-        y: -30,
-        r: 22,
-        vy: honeyFall*(0.9+Math.random()*0.25)
-      });
+      honeys.push({ x: 60 + Math.random()*(BASE_W-120), y: -30, r: 22, vy: honeyFall*(0.9+Math.random()*0.25) });
     }
 
     function spawnBee(){
@@ -791,20 +802,14 @@
         r: 22,
         vy: beeFall*(0.9+Math.random()*0.25),
         vx: (Math.random()*2-1)*beeDrift,
-        flap: Math.random()*10
+        flap: Math.random()*10,
+        windup: 140
       });
     }
 
     function spawnPower(){
       const type = Math.random() < 0.5 ? "shield" : "slow";
-      powers.push({
-        x: 60 + Math.random()*(BASE_W-120),
-        y: -40,
-        r: 18,
-        vy: 175,
-        type,
-        trail: []
-      });
+      powers.push({ x: 60 + Math.random()*(BASE_W-120), y: -40, r: 18, vy: 175, type, trail: [] });
     }
 
     function updateDifficulty(){
@@ -815,12 +820,12 @@
     }
 
     function setComboFromStreak(){
-      const tier = Math.min(6, Math.floor(AppState.streak/5)); // 0..6
+      const tier = Math.min(6, Math.floor(AppState.streak/5));
       const mult = Math.min(2.2, 1 + tier*0.2);
       AppState.combo.mult = mult;
       AppState.combo.timer = 2000;
+
       if (tier !== AppState.combo.tier && tier >= 2) {
-        // tier-up moment framing
         Audio.combo();
         momentSlow(0.10, 140);
         spawnScorePopup(`COMBO x${mult.toFixed(1)}`, player.x, 120);
@@ -835,19 +840,20 @@
 
       setComboFromStreak();
 
-      // points
       const base = 10;
       const pts = Math.round(base*AppState.combo.mult);
       AppState.score += pts;
 
-      // juice
       Particles.emit(h.x, h.y, "rgba(255,165,0,1)", 12 + Math.floor(AppState.combo.mult*5), 1);
       spawnScorePopup(`+${pts}`, h.x, h.y);
       punchScale(0.22);
       vibrate(15);
       Audio.collect();
 
-      // micro slow on reward (subtle)
+      // HUD micro-feedback hooks (your CSS should define hud-pop / hud-shake)
+      pulse("score", "hud-pop");
+      if (AppState.streak % 5 === 0) pulse("streak", "hud-pop");
+
       momentSlow(0.06, 90);
 
       UI.updateHUD();
@@ -876,7 +882,8 @@
       Audio.hit();
       vibrate([35,25,35]);
 
-      // big moment framing on damage
+      pulse("lives", "hud-shake");
+
       momentSlow(0.22, 180);
       screenShake(16);
 
@@ -903,33 +910,29 @@
     function update(dt){
       if (!running || AppState.paused) return;
 
-      // apply moment framing timescale
+      dt = Math.min(dt, 50);
+
       if (microSlow > 0) {
         microSlow = Math.max(0, microSlow - dt);
-        // ease back to 1
         AppState.timeScale += (1 - AppState.timeScale) * 0.08;
       } else {
         AppState.timeScale += (1 - AppState.timeScale) * 0.12;
       }
       AppState.timeScale = clamp(AppState.timeScale, 0.70, 1);
 
-      dt = Math.min(dt, 50) * AppState.timeScale;
-
+      dt = dt * AppState.timeScale;
       AppState.timeMs += dt;
 
-      // combo decay
       if (AppState.combo.timer > 0) {
         AppState.combo.timer = Math.max(0, AppState.combo.timer - dt);
         if (AppState.combo.timer === 0) AppState.combo = { mult:1, timer:0, tier:0 };
       }
 
-      // buffs decay
       if (buffs.shield > 0) buffs.shield = Math.max(0, buffs.shield - dt);
       if (buffs.slow > 0) buffs.slow = Math.max(0, buffs.slow - dt);
 
       updateDifficulty();
 
-      // player movement + springy scale
       player.x = Input.update(dt);
       player.sv += (1 - player.scale) * 0.18;
       player.sv *= 0.72;
@@ -938,7 +941,6 @@
 
       const slowFactor = buffs.slow > 0 ? 0.58 : 1;
 
-      // spawn
       honeyTimer += dt;
       beeTimer += dt;
       powerTimer += dt;
@@ -947,7 +949,6 @@
       if (beeTimer >= baseBeeRate) { beeTimer = 0; spawnBee(); }
       if (powerTimer >= powerRate) { powerTimer = 0; spawnPower(); }
 
-      // move honeys
       for (let i=honeys.length-1;i>=0;i--){
         const h=honeys[i];
         h.y += (h.vy*slowFactor)*(dt/1000);
@@ -963,12 +964,18 @@
         }
       }
 
-      // move bees
       for (let i=bees.length-1;i>=0;i--){
         const b=bees[i];
         b.flap += dt/120;
-        b.y += (b.vy*slowFactor)*(dt/1000);
-        b.x += (b.vx*slowFactor)*(dt/1000);
+
+        if (b.windup > 0) {
+          b.windup = Math.max(0, b.windup - dt);
+          b.y += 10*(dt/1000);
+        } else {
+          b.y += (b.vy*slowFactor)*(dt/1000);
+          b.x += (b.vx*slowFactor)*(dt/1000);
+        }
+
         if (b.x < 40 || b.x > BASE_W-40) b.vx *= -1;
         if (b.y > BASE_H + 80) { bees.splice(i,1); continue; }
 
@@ -978,7 +985,6 @@
         }
       }
 
-      // move powers + trails
       for (let i=powers.length-1;i>=0;i--){
         const p=powers[i];
         p.y += p.vy*(dt/1000);
@@ -1011,8 +1017,9 @@
       ctx.fillStyle="#f4b400";
       ctx.strokeStyle="rgba(93,78,55,0.35)";
       ctx.lineWidth=3;
+
       ctx.beginPath();
-      ctx.roundRect(-h.r,-h.r,h.r*2,h.r*2,10);
+      rrPath(ctx, -h.r, -h.r, h.r*2, h.r*2, 10);
       ctx.fill(); ctx.stroke();
 
       ctx.globalAlpha=0.22;
@@ -1030,7 +1037,6 @@
       ctx.save();
       ctx.translate(b.x,b.y);
 
-      // wings
       ctx.globalAlpha=0.35;
       ctx.fillStyle="#fff";
       ctx.beginPath();
@@ -1039,7 +1045,6 @@
       ctx.fill();
       ctx.globalAlpha=1;
 
-      // body
       ctx.fillStyle="#ffd86a";
       ctx.strokeStyle="rgba(93,78,55,0.4)";
       ctx.lineWidth=3;
@@ -1047,7 +1052,6 @@
       ctx.ellipse(0,0,r,r*0.8,0,0,Math.PI*2);
       ctx.fill(); ctx.stroke();
 
-      // stripes
       ctx.fillStyle="rgba(0,0,0,0.65)";
       ctx.fillRect(-r*0.8,-r*0.22,r*1.6,r*0.30);
       ctx.fillRect(-r*0.8,r*0.18,r*1.6,r*0.30);
@@ -1056,7 +1060,6 @@
     }
 
     function drawPower(p){
-      // trail
       if (p.trail?.length) {
         for (let i=0;i<p.trail.length;i++){
           const pos=p.trail[i];
@@ -1094,7 +1097,6 @@
       ctx.translate(player.x, player.y);
       ctx.scale(player.scale, player.scale);
 
-      // shadow
       ctx.globalAlpha=0.22;
       ctx.fillStyle="#000";
       ctx.beginPath();
@@ -1102,7 +1104,6 @@
       ctx.fill();
       ctx.globalAlpha=1;
 
-      // body
       ctx.fillStyle="#f6c44f";
       ctx.strokeStyle="rgba(93,78,55,0.35)";
       ctx.lineWidth=3;
@@ -1110,31 +1111,26 @@
       ctx.ellipse(0, 10, r*0.78, r*0.62, 0, 0, Math.PI*2);
       ctx.fill(); ctx.stroke();
 
-      // shirt
       ctx.fillStyle="#d64b3c";
       ctx.beginPath();
       ctx.ellipse(0, 0, r*0.82, r*0.42, 0, 0, Math.PI*2);
       ctx.fill();
 
-      // head
       ctx.fillStyle="#f7cc63";
       ctx.beginPath();
       ctx.arc(0, -r*0.62, r*0.48, 0, Math.PI*2);
       ctx.fill(); ctx.stroke();
 
-      // ears
       ctx.beginPath();
       ctx.arc(-r*0.3, -r*0.98, r*0.18, 0, Math.PI*2);
       ctx.arc(r*0.3, -r*0.98, r*0.18, 0, Math.PI*2);
       ctx.fill(); ctx.stroke();
 
-      // face
       ctx.fillStyle="rgba(0,0,0,0.65)";
       ctx.beginPath(); ctx.arc(-r*0.14,-r*0.68,r*0.05,0,Math.PI*2); ctx.fill();
       ctx.beginPath(); ctx.arc(r*0.14,-r*0.68,r*0.05,0,Math.PI*2); ctx.fill();
       ctx.beginPath(); ctx.arc(0,-r*0.56,r*0.06,0,Math.PI*2); ctx.fill();
 
-      // character “value” (tiny but visible)
       if (AppState.character === "piglet") {
         ctx.fillStyle="rgba(255,183,197,0.85)";
         ctx.beginPath();
@@ -1150,7 +1146,6 @@
         }
       }
 
-      // shield ring
       if (buffs.shield > 0) {
         const pulse = 0.65 + 0.35*Math.sin(AppState.timeMs/180);
         ctx.strokeStyle = `rgba(77,150,255,${pulse})`;
@@ -1182,10 +1177,8 @@
     function render(){
       ctx.clearRect(0,0,BASE_W,BASE_H);
 
-      // moment framing: slightly boost contrast when slowed
       const mf = 1 - AppState.timeScale;
 
-      // apply screen shake
       ctx.save();
       if (shake > 0.01) {
         const dx=(Math.random()-0.5)*shake;
@@ -1194,7 +1187,6 @@
         shake *= 0.88;
       }
 
-      // background wash overlay (lets your CSS gradient show through + adds depth)
       if (mf > 0.01) {
         ctx.globalAlpha = clamp(mf*1.8, 0, 0.22);
         ctx.fillStyle = "rgba(0,0,0,1)";
@@ -1204,15 +1196,12 @@
 
       drawGroundWash();
 
-      // entities
       for (const h of honeys) drawHoney(h);
       for (const p of powers) drawPower(p);
       for (const b of bees) drawBee(b);
 
-      // player
       drawPlayer();
 
-      // overlays
       Particles.render(ctx);
       TouchRipples.render(ctx);
       renderCombo();
@@ -1223,10 +1212,8 @@
     function tick(ts){
       const dt = ts - last;
       last = ts;
-
       update(dt);
       render();
-
       requestAnimationFrame(tick);
     }
 
@@ -1237,7 +1224,7 @@
 
     function getPowerCount(){ return powerCollected; }
 
-    return { reset, start, bootLoop, getPowerCount };
+    return { reset, start, bootLoop, getPowerCount, stop };
   })();
 
   /* ======================= BOOT ======================= */
@@ -1245,6 +1232,7 @@
     UI.bind();
     Game.reset();
     Game.bootLoop();
+    Overlays.closeAll();
     Overlays.open("start");
   }
 
