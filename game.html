@@ -1563,791 +1563,251 @@
 <script>
 (() => {
   "use strict";
+
+  /* ============================================================
+     INIT GUARD
+  ============================================================ */
   if (window.__POOH_HONEY_HUNT__) return;
   window.__POOH_HONEY_HUNT__ = true;
 
-  /* ================================
-     Safe storage (sandbox-safe)
-  ================================= */
+  /* ============================================================
+     SAFE STORAGE (SANDBOX SAFE)
+  ============================================================ */
   const Store = (() => {
     const mem = new Map();
-    const hasLS = (() => {
-      try {
-        const k = "__t__";
-        window.localStorage.setItem(k, "1");
-        window.localStorage.removeItem(k);
-        return true;
-      } catch { return false; }
-    })();
+    let hasLS = false;
+    try {
+      localStorage.setItem("__t__", "1");
+      localStorage.removeItem("__t__");
+      hasLS = true;
+    } catch {}
 
-    const get = (k, fallback = null) => {
-      if (hasLS) { try { const v = localStorage.getItem(k); return (v ?? fallback); } catch {} }
-      return mem.has(k) ? mem.get(k) : fallback;
+    return {
+      get(k, d = null) {
+        if (hasLS) {
+          try { return localStorage.getItem(k) ?? d; } catch {}
+        }
+        return mem.has(k) ? mem.get(k) : d;
+      },
+      set(k, v) {
+        const sv = String(v);
+        if (hasLS) {
+          try { localStorage.setItem(k, sv); return; } catch {}
+        }
+        mem.set(k, sv);
+      }
     };
-    const set = (k, v) => {
-      const sv = String(v);
-      if (hasLS) { try { localStorage.setItem(k, sv); return; } catch {} }
-      mem.set(k, sv);
-    };
-    return { get, set };
   })();
 
-  /* ================================
-     DOM helpers
-  ================================= */
-  const $ = (id) => document.getElementById(id);
-  const qsa = (sel) => Array.from(document.querySelectorAll(sel));
-  const on = (id, evt, fn, opts) => { const el = $(id); if (el) el.addEventListener(evt, fn, opts); };
+  /* ============================================================
+     DOM HELPERS
+  ============================================================ */
+  const $ = id => document.getElementById(id);
+  const on = (id, ev, fn) => { const el = $(id); el && el.addEventListener(ev, fn); };
 
-  /* ================================
-     Overlay helpers
-  ================================= */
-  const overlaySelectors = ".overlay, .character-select-overlay, .achievements-overlay";
-  const anyOverlayOpen = () => qsa(overlaySelectors).some(x => !x.classList.contains("hidden"));
-
-  const openOverlay = (id) => {
-    const el = $(id);
-    if (!el) return;
-    el.classList.remove("hidden");
-    document.body.classList.add("overlay-open");
-    const focusable = el.querySelector("button, [href], input, [tabindex]:not([tabindex='-1'])");
-    if (focusable) setTimeout(() => focusable.focus(), 0);
+  /* ============================================================
+     APP STATE (SINGLE SOURCE OF TRUTH)
+  ============================================================ */
+  const AppState = {
+    overlay: "start",
+    paused: true,
+    score: 0,
+    streak: 0,
+    lives: 3,
+    character: Store.get("character", "pooh"),
+    soundOn: Store.get("sound", "on") === "on",
+    weather: "clear"
   };
 
-  const closeOverlay = (id) => {
-    const el = $(id);
-    if (!el) return;
-    el.classList.add("hidden");
-    if (!anyOverlayOpen()) document.body.classList.remove("overlay-open");
-  };
+  /* ============================================================
+     OVERLAY CONTROLLER
+  ============================================================ */
+  const Overlays = (() => {
+    const map = {
+      start: $("start-overlay"),
+      pause: $("pause-overlay"),
+      help: $("help-overlay"),
+      gameover: $("gameover-overlay"),
+      achievements: $("achievements-overlay"),
+      character: $("character-select-overlay")
+    };
 
-  const closeAllOverlays = () => {
-    qsa(overlaySelectors).forEach(x => x.classList.add("hidden"));
-    document.body.classList.remove("overlay-open");
-  };
+    function closeAll() {
+      Object.values(map).forEach(o => o && o.classList.add("hidden"));
+      document.body.classList.remove("overlay-open");
+      AppState.overlay = null;
+    }
 
-  /* ================================
-     Tiny Audio (no external assets)
-  ================================= */
+    function open(name) {
+      closeAll();
+      const el = map[name];
+      if (!el) return;
+      AppState.overlay = name;
+      AppState.paused = true;
+      el.classList.remove("hidden");
+      document.body.classList.add("overlay-open");
+      const f = el.querySelector("button");
+      f && requestAnimationFrame(() => f.focus());
+    }
+
+    function close(name) {
+      const el = map[name];
+      if (!el) return;
+      el.classList.add("hidden");
+      AppState.overlay = null;
+      document.body.classList.remove("overlay-open");
+    }
+
+    return { open, close, closeAll };
+  })();
+
+  /* ============================================================
+     AUDIO CONTROLLER (STUB – SAFE)
+  ============================================================ */
   const Audio = (() => {
-    let ctx = null;
-    let enabled = true;
-
-    const ensure = async () => {
-      if (!enabled) return null;
-      if (!ctx) {
-        const AC = window.AudioContext || window.webkitAudioContext;
-        if (!AC) return null;
-        ctx = new AC();
-      }
-      if (ctx.state === "suspended") {
-        try { await ctx.resume(); } catch {}
-      }
-      return ctx;
-    };
-
-    const tone = async (freq = 440, dur = 0.08, type = "sine", vol = 0.06) => {
-      const c = await ensure();
-      if (!c) return;
-
-      const t0 = c.currentTime;
-      const o = c.createOscillator();
-      const g = c.createGain();
-
-      o.type = type;
-      o.frequency.setValueAtTime(freq, t0);
-
-      g.gain.setValueAtTime(0, t0);
-      g.gain.linearRampToValueAtTime(vol, t0 + 0.01);
-      g.gain.exponentialRampToValueAtTime(0.0001, t0 + dur);
-
-      o.connect(g).connect(c.destination);
-      o.start(t0);
-      o.stop(t0 + dur + 0.02);
-    };
-
-    const sfx = {
-      catch: () => Promise.all([tone(740, 0.07, "triangle", 0.05), tone(1040, 0.06, "sine", 0.04)]),
-      gold:  () => Promise.all([tone(880, 0.09, "triangle", 0.06), tone(1320, 0.08, "sine", 0.05), tone(1760, 0.06, "sine", 0.035)]),
-      hit:   () => Promise.all([tone(180, 0.10, "sawtooth", 0.04), tone(120, 0.12, "square", 0.03)]),
-      click: () => tone(520, 0.05, "square", 0.03),
-      win:   () => Promise.all([tone(660, 0.10, "triangle", 0.05), tone(990, 0.11, "triangle", 0.05), tone(1320, 0.12, "triangle", 0.045)]),
-    };
-
-    const setEnabled = (v) => {
-      enabled = !!v;
-      Store.set("soundEnabled", enabled ? "1" : "0");
-    };
-
-    const getEnabled = () => enabled;
-
-    enabled = Store.get("soundEnabled", "1") !== "0";
-    return { ensure, sfx, setEnabled, getEnabled };
+    function toggle() {
+      AppState.soundOn = !AppState.soundOn;
+      Store.set("sound", AppState.soundOn ? "on" : "off");
+      $("sound-toggle-btn").innerHTML =
+        AppState.soundOn
+          ? '<i class="fas fa-volume-up"></i>'
+          : '<i class="fas fa-volume-mute"></i>';
+    }
+    return { toggle };
   })();
 
-  /* ================================
-     Main
-  ================================= */
-  window.addEventListener("DOMContentLoaded", () => {
+  /* ============================================================
+     UI CONTROLLER
+  ============================================================ */
+  const UI = (() => {
+    function updateHUD() {
+      $("score").textContent = AppState.score;
+      $("streak").textContent = AppState.streak;
+      $("lives").textContent = AppState.lives;
+    }
+
+    function bind() {
+      on("start-btn", "click", () => { Overlays.close("start"); Game.start(); });
+      on("pause-btn", "click", () => Overlays.open("pause"));
+      on("resume-btn", "click", () => { Overlays.close("pause"); Game.resume(); });
+      on("quit-btn", "click", () => { Game.reset(); Overlays.open("start"); });
+      on("restart-btn", "click", () => { Game.reset(); Game.start(); });
+
+      on("help-btn", "click", () => Overlays.open("help"));
+      on("close-help-btn", "click", () => Overlays.close("help"));
+
+      on("achievements-btn", "click", () => Overlays.open("achievements"));
+      on("view-achievements-btn", "click", () => Overlays.open("achievements"));
+      on("close-achievements-btn", "click", () => Overlays.close("achievements"));
+      on("close-achievements-btn-2", "click", () => Overlays.close("achievements"));
+
+      on("select-character-btn", "click", () => Overlays.open("character"));
+      on("back-to-menu-btn", "click", () => Overlays.open("start"));
+
+      on("sound-toggle-btn", "click", Audio.toggle);
+
+      document.querySelectorAll(".character-card").forEach(btn => {
+        btn.addEventListener("click", () => {
+          AppState.character = btn.dataset.character;
+          Store.set("character", AppState.character);
+          document.querySelectorAll(".character-card").forEach(b => b.classList.remove("selected"));
+          btn.classList.add("selected");
+        });
+      });
+
+      on("start-with-character-btn", "click", () => {
+        Overlays.close("character");
+        Game.start();
+      });
+
+      document.querySelectorAll(".weather-btn").forEach(btn => {
+        btn.addEventListener("click", () => {
+          AppState.weather = btn.dataset.weather;
+          document.querySelectorAll(".weather-btn").forEach(b => b.classList.remove("active"));
+          btn.classList.add("active");
+        });
+      });
+
+      on("weather-toggle", "click", () => $("weather-drawer").classList.add("open"));
+      on("weather-close", "click", () => $("weather-drawer").classList.remove("open"));
+    }
+
+    return { bind, updateHUD };
+  })();
+
+  /* ============================================================
+     GAME ENGINE (STABLE LOOP)
+  ============================================================ */
+  const Game = (() => {
     const canvas = $("honey-game");
-    if (!canvas) { console.error("Canvas not found (#honey-game)."); return; }
-
-    const ctx = canvas.getContext("2d", { alpha: true, desynchronized: true });
-    if (!ctx) { console.error("2D context unavailable."); return; }
-
-    /* ---------- DPR / resize ---------- */
-    let cssW = 420, cssH = 700, dpr = 1;
-    const clamp = (v, a, b) => Math.max(a, Math.min(b, v));
-    const rand = (a, b) => a + Math.random() * (b - a);
-
-    const state = {
-      score: 0,
-      streak: 0,
-      bestStreak: 0,
-      lives: 3,
-      time: 0,
-      honeyCaught: 0,
-      character: Store.get("character", "pooh") || "pooh",
-      weather: Store.get("weather", "clear") || "clear",
-      hi: Number(Store.get("hi", "0")) || 0,
-      hitsTaken: 0,
-      goldCaught: 0,
-    };
-
-    const CHAR_MODS = {
-      pooh:   { r: 1.35, s: 1.00 },
-      piglet: { r: 0.95, s: 1.25 },
-      tigger: { r: 1.08, s: 1.12 },
-      rabbit: { r: 1.02, s: 1.06 }
-    };
-
-    const player = { x: 210, y: 610, r: 34, targetX: 210 };
-
-    const resizeCanvas = () => {
-      dpr = Math.max(1, window.devicePixelRatio || 1);
-      const rect = canvas.getBoundingClientRect();
-      cssW = Math.max(1, rect.width);
-      cssH = Math.max(1, rect.height);
-
-      canvas.width  = Math.max(1, Math.floor(cssW * dpr));
-      canvas.height = Math.max(1, Math.floor(cssH * dpr));
-
-      ctx.setTransform(dpr, 0, 0, dpr, 0, 0);
-
-      player.y = cssH - 92;
-      player.x = clamp(player.x, player.r, cssW - player.r);
-      player.targetX = clamp(player.targetX, player.r, cssW - player.r);
-    };
-
-    window.addEventListener("resize", resizeCanvas, { passive: true });
-
-    /* ---------- Entities ---------- */
-    const honeys = [];
-    const bees = [];
-
-    const spawnHoney = () => {
-      honeys.push({
-        x: rand(18, cssW - 18),
-        y: -30,
-        r: 16,
-        v: rand(170, 290),
-        gold: Math.random() < 0.15
-      });
-    };
-
-    const spawnBee = () => {
-      bees.push({
-        x: rand(18, cssW - 18),
-        y: -30,
-        r: 16,
-        v: rand(220, 340)
-      });
-    };
-
-    /* ---------- HUD sync ---------- */
-    const achievementsCount = $("achievements-count");
-    const syncHUD = () => {
-      const s = $("score"); if (s) s.textContent = String(state.score);
-      const st = $("streak"); if (st) st.textContent = String(state.streak);
-      const l = $("lives"); if (l) l.textContent = String(state.lives);
-      if (achievementsCount) achievementsCount.textContent = `${unlocked.size}/${ACH.length}`;
-    };
-
-    /* ================================
-       Honey Cursor
-    ================================= */
-    const cursor = $("honey-cursor");
-    const setCursor = (x, y, on) => {
-      if (!cursor) return;
-      cursor.classList.toggle("active", !!on);
-      cursor.style.left = x + "px";
-      cursor.style.top  = y + "px";
-    };
-
-    window.addEventListener("pointermove", (e) => {
-      if (!cursor) return;
-      const ok = !anyOverlayOpen() && (e.pointerType === "mouse" || e.pointerType === "pen");
-      setCursor(e.clientX, e.clientY, ok);
-    }, { passive: true });
-
-    /* ================================
-       Weather system (particles)
-    ================================= */
-    let weatherLayer = $("weather-effects");
-    if (!weatherLayer) {
-      weatherLayer = document.createElement("div");
-      weatherLayer.id = "weather-effects";
-      document.body.appendChild(weatherLayer);
-    }
-
-    let weatherTimer = null;
-
-    const clearWeatherParticles = () => {
-      if (weatherTimer) { clearInterval(weatherTimer); weatherTimer = null; }
-      weatherLayer.innerHTML = "";
-      weatherLayer.dataset.weather = "clear";
-    };
-
-    const makeParticle = (kind) => {
-      const el = document.createElement("div");
-      el.style.position = "absolute";
-      el.style.left = rand(-20, window.innerWidth + 20) + "px";
-      el.style.top = rand(-80, -20) + "px";
-      el.style.opacity = String(rand(0.35, 0.95));
-      el.style.transform = "translate3d(0,0,0)";
-      el.style.pointerEvents = "none";
-      el.style.willChange = "transform, opacity";
-
-      const dur = rand(2.4, 5.6);
-
-      if (kind === "rain") {
-        el.style.width = "2px";
-        el.style.height = rand(14, 26) + "px";
-        el.style.borderRadius = "2px";
-        el.style.background = "rgba(77,150,255,.85)";
-        el.style.animation = `rainFall ${dur}s linear forwards`;
-      } else if (kind === "snow") {
-        const s = rand(4, 9);
-        el.style.width = s + "px";
-        el.style.height = s + "px";
-        el.style.borderRadius = "999px";
-        el.style.background = "rgba(255,255,255,.92)";
-        el.style.filter = "drop-shadow(0 6px 12px rgba(0,0,0,.08))";
-        el.style.animation = `snowFall ${dur}s linear forwards`;
-      } else if (kind === "leaves") {
-        const s = rand(10, 18);
-        el.style.width = s + "px";
-        el.style.height = s + "px";
-        el.style.borderRadius = "6px 14px 6px 14px";
-        el.style.background = "linear-gradient(135deg, rgba(139,115,85,.95), rgba(124,179,66,.75))";
-        el.style.filter = "drop-shadow(0 10px 16px rgba(0,0,0,.12))";
-        el.style.animation = `leafFall ${dur}s linear forwards`;
-      } else if (kind === "blossoms") {
-        const s = rand(8, 14);
-        el.style.width = s + "px";
-        el.style.height = s + "px";
-        el.style.borderRadius = "50% 50% 50% 0";
-        el.style.background = "linear-gradient(135deg, rgba(255,183,197,.95), rgba(255,215,221,.95))";
-        el.style.filter = "drop-shadow(0 6px 14px rgba(255,183,197,.18))";
-        el.style.animation = `petalFall ${dur}s linear forwards`;
-      }
-
-      weatherLayer.appendChild(el);
-      setTimeout(() => el.remove(), (dur + 0.2) * 1000);
-    };
-
-    const applyWeather = (weather) => {
-      state.weather = weather || "clear";
-      Store.set("weather", state.weather);
-
-      clearWeatherParticles();
-      weatherLayer.dataset.weather = state.weather;
-
-      if (state.weather === "clear") return;
-
-      const kind = state.weather;
-      const rateMs = (kind === "rain") ? 90 : (kind === "snow") ? 160 : 140;
-
-      weatherTimer = setInterval(() => {
-        const n = (kind === "rain") ? 3 : 2;
-        for (let i = 0; i < n; i++) makeParticle(kind);
-      }, rateMs);
-    };
-
-    /* ================================
-       Weather drawer wiring (FIXED)
-       - DOES NOT set overlay-open
-       - Adds scrim to block background taps
-    ================================= */
-    const weatherDrawer = $("weather-drawer");
-    const weatherToggle = $("weather-toggle");
-    const weatherClose  = $("weather-close");
-
-    const scrim = (() => {
-      const s = document.createElement("div");
-      s.id = "drawer-scrim";
-      s.style.position = "fixed";
-      s.style.inset = "0";
-      s.style.zIndex = "3199";
-      s.style.background = "rgba(0,0,0,.25)";
-      s.style.backdropFilter = "blur(2px)";
-      s.style.opacity = "0";
-      s.style.pointerEvents = "none";
-      s.style.transition = "opacity .18s ease";
-      document.body.appendChild(s);
-      return s;
-    })();
-
-    const setWeatherDrawerOpen = (open) => {
-      if (!weatherDrawer) return;
-      const onOpen = !!open;
-      weatherDrawer.classList.toggle("open", onOpen);
-      scrim.style.opacity = onOpen ? "1" : "0";
-      scrim.style.pointerEvents = onOpen ? "auto" : "none";
-      if (onOpen) {
-        const firstBtn = weatherDrawer.querySelector(".weather-btn");
-        if (firstBtn) setTimeout(() => firstBtn.focus(), 0);
-      }
-    };
-
-    scrim.addEventListener("click", () => setWeatherDrawerOpen(false));
-
-    if (weatherToggle && weatherDrawer) {
-      weatherToggle.addEventListener("click", async () => {
-        await Audio.sfx.click();
-        setWeatherDrawerOpen(!weatherDrawer.classList.contains("open"));
-      });
-    }
-    if (weatherClose && weatherDrawer) {
-      weatherClose.addEventListener("click", async () => {
-        await Audio.sfx.click();
-        setWeatherDrawerOpen(false);
-      });
-    }
-
-    qsa(".weather-btn").forEach(btn => {
-      btn.addEventListener("click", async () => {
-        await Audio.sfx.click();
-        const w = btn.dataset.weather || "clear";
-        qsa(".weather-btn").forEach(b => b.classList.remove("active"));
-        btn.classList.add("active");
-        applyWeather(w);
-      });
-    });
-
-    /* ================================
-       Achievements
-    ================================= */
-    const ACH_KEY = "achievements_v1";
-    const ACH = [
-      { id:"first_honey", name:"First Taste", desc:"Catch your first honey.", icon:"🍯", test:(g)=>g.honeyCaught >= 1 },
-      { id:"score_100",  name:"Sticky Start", desc:"Reach 100 points.", icon:"✨", test:(g)=>g.score >= 100 },
-      { id:"score_500",  name:"Honey Hoarder", desc:"Reach 500 points.", icon:"🏺", test:(g)=>g.score >= 500 },
-      { id:"streak_10",  name:"No Miss Zone", desc:"Get a 10 streak.", icon:"🔥", test:(g)=>g.bestStreak >= 10 },
-      { id:"gold_1",     name:"Liquid Gold", desc:"Catch a golden honey.", icon:"🌟", test:(g)=>g.goldCaught >= 1 },
-      { id:"survive_60", name:"Steady Paws", desc:"Survive 60 seconds.", icon:"⏱️", test:(g)=>g.time >= 60 },
-      { id:"clean_run",  name:"Bee Dodger", desc:"Finish a run with no hits.", icon:"🛡️", test:(g)=>!g.running && g.lastRunHadNoHits === true },
-      { id:"streak_20",  name:"Legendary Streak", desc:"Get a 20 streak.", icon:"🏆", test:(g)=>g.bestStreak >= 20 },
-      { id:"score_1000", name:"Honey Tycoon", desc:"Reach 1000 points.", icon:"👑", test:(g)=>g.score >= 1000 },
-      { id:"play_3",     name:"One More Round", desc:"Play 3 runs.", icon:"🎮", test:(g)=>g.runsPlayed >= 3 },
-    ];
-
-    const loadUnlocked = () => {
-      try { return new Set(JSON.parse(Store.get(ACH_KEY, "[]")) || []); }
-      catch { return new Set(); }
-    };
-    const saveUnlocked = (set) => Store.set(ACH_KEY, JSON.stringify(Array.from(set)));
-
-    const unlocked = loadUnlocked();
-    const achievementsList = $("achievements-list");
-
-    const showAchievementPopup = (title, icon) => {
-      const p = document.createElement("div");
-      p.className = "achievement-popup";
-      p.innerHTML = `<div style="font-size:1.4rem">${icon || "🏆"}</div><div style="margin-top:6px">Unlocked: <strong>${title}</strong></div>`;
-      document.body.appendChild(p);
-      setTimeout(() => p.remove(), 2600);
-    };
-
-    const renderAchievements = () => {
-      if (!achievementsList) return;
-      achievementsList.innerHTML = "";
-      for (const a of ACH) {
-        const isOn = unlocked.has(a.id);
-        const row = document.createElement("div");
-        row.className = "achievement-item" + (isOn ? " unlocked" : "");
-        row.innerHTML = `
-          <div class="achievement-icon">${a.icon}</div>
-          <div class="achievement-text">
-            <div class="achievement-name">${a.name}${isOn ? " ✅" : ""}</div>
-            <div class="achievement-desc">${a.desc}</div>
-          </div>
-        `;
-        achievementsList.appendChild(row);
-      }
-      syncHUD();
-    };
-
-    const checkAchievements = () => {
-      let newly = 0;
-      for (const a of ACH) {
-        if (unlocked.has(a.id)) continue;
-        if (a.test(gamePublic)) {
-          unlocked.add(a.id);
-          newly++;
-          showAchievementPopup(a.name, a.icon);
-          Audio.sfx.win().catch(()=>{});
-        }
-      }
-      if (newly) {
-        saveUnlocked(unlocked);
-        renderAchievements();
-      }
-    };
-
-    /* ================================
-       Share button
-    ================================= */
-    const doShare = async () => {
-      await Audio.sfx.click();
-      const text = `🍯 Pooh’s Honey Hunt\nScore: ${state.score}\nHigh Score: ${state.hi}\nBest Streak: ${state.bestStreak}`;
-      try {
-        if (navigator.share) {
-          await navigator.share({ title: "Pooh’s Honey Hunt", text });
-        } else if (navigator.clipboard?.writeText) {
-          await navigator.clipboard.writeText(text);
-          showAchievementPopup("Copied to clipboard!", "📋");
-        } else {
-          prompt("Copy this:", text);
-        }
-      } catch {}
-    };
-    on("share-btn", "click", doShare);
-
-    /* ================================
-       Sound toggle
-    ================================= */
-    const soundBtn = $("sound-toggle-btn");
-    const syncSoundIcon = () => {
-      if (!soundBtn) return;
-      const icon = soundBtn.querySelector("i");
-      if (!icon) return;
-      const onS = Audio.getEnabled();
-      icon.className = onS ? "fas fa-volume-up" : "fas fa-volume-mute";
-      soundBtn.setAttribute("aria-label", onS ? "Mute sound" : "Unmute sound");
-    };
-
-    if (soundBtn) {
-      soundBtn.addEventListener("click", async () => {
-        const next = !Audio.getEnabled();
-        Audio.setEnabled(next);
-        syncSoundIcon();
-        if (next) { await Audio.ensure(); await Audio.sfx.click(); }
-      });
-    }
-
-    /* ================================
-       Input (smooth)
-    ================================= */
-    let dragging = false;
-    const pointerToX = (e) => {
-      const rect = canvas.getBoundingClientRect();
-      return clamp(e.clientX - rect.left, 0, rect.width);
-    };
-
-    canvas.addEventListener("pointerdown", async (e) => {
-      if (anyOverlayOpen()) return;
-      dragging = true;
-      canvas.setPointerCapture?.(e.pointerId);
-      player.targetX = pointerToX(e);
-      await Audio.ensure();
-      if (!running && !$("start-overlay")) startGame();
-    });
-
-    canvas.addEventListener("pointermove", (e) => {
-      if (!dragging) return;
-      player.targetX = pointerToX(e);
-    });
-
-    const stopDrag = () => { dragging = false; };
-    canvas.addEventListener("pointerup", stopDrag);
-    canvas.addEventListener("pointercancel", stopDrag);
-    canvas.addEventListener("lostpointercapture", stopDrag);
-
-    /* ================================
-       Game loop + logic
-    ================================= */
+    const ctx = canvas.getContext("2d");
+    let last = 0;
     let running = false;
-    let paused = false;
-    let lastTime = 0;
-    let runsPlayed = Number(Store.get("runsPlayed", "0")) || 0;
+    let poohX = canvas.width / 2;
 
-    const resetRun = () => {
-      state.score = 0;
-      state.streak = 0;
-      state.bestStreak = 0;
-      state.lives = 3;
-      state.time = 0;
-      state.honeyCaught = 0;
-      state.hitsTaken = 0;
-      state.goldCaught = 0;
-      honeys.length = 0;
-      bees.length = 0;
+    function reset() {
+      AppState.score = 0;
+      AppState.streak = 0;
+      AppState.lives = 3;
+      UI.updateHUD();
+    }
 
-      const m = CHAR_MODS[state.character] || CHAR_MODS.pooh;
-      player.r = 34 * m.r;
-
-      player.x = cssW / 2;
-      player.targetX = player.x;
-      player.y = cssH - 92;
-
-      renderAchievements();
-      syncHUD();
-    };
-
-    const update = (dt) => {
-      state.time += dt;
-
-      const m = CHAR_MODS[state.character] || CHAR_MODS.pooh;
-      const speed = 18 * m.s;
-      player.x += (player.targetX - player.x) * Math.min(1, dt * speed);
-      player.x = clamp(player.x, player.r, cssW - player.r);
-
-      const t = state.time;
-      const honeyRate = 0.028 + Math.min(0.020, t * 0.00035);
-      const beeRate   = 0.012 + Math.min(0.018, t * 0.00030);
-
-      if (Math.random() < honeyRate) spawnHoney();
-      if (Math.random() < beeRate) spawnBee();
-
-      for (const h of honeys) h.y += h.v * dt;
-      for (const b of bees)  b.y += b.v * dt;
-
-      for (let i = honeys.length - 1; i >= 0; i--) {
-        const h = honeys[i];
-        const hit = Math.hypot(h.x - player.x, h.y - player.y) < (player.r + h.r);
-        if (hit) {
-          honeys.splice(i, 1);
-          state.honeyCaught++;
-          state.streak++;
-          state.bestStreak = Math.max(state.bestStreak, state.streak);
-
-          if (h.gold) {
-            state.score += 30;
-            state.goldCaught++;
-            Audio.sfx.gold().catch(()=>{});
-          } else {
-            state.score += 10;
-            Audio.sfx.catch().catch(()=>{});
-          }
-          checkAchievements();
-          continue;
-        }
-        if (h.y > cssH + 60) {
-          honeys.splice(i, 1);
-          state.streak = 0;
-        }
-      }
-
-      for (let i = bees.length - 1; i >= 0; i--) {
-        const b = bees[i];
-        const hit = Math.hypot(b.x - player.x, b.y - player.y) < (player.r + b.r);
-        if (hit) {
-          bees.splice(i, 1);
-          state.lives--;
-          state.streak = 0;
-          state.hitsTaken++;
-          Audio.sfx.hit().catch(()=>{});
-          if (state.lives <= 0) { endGame(); return; }
-          continue;
-        }
-        if (b.y > cssH + 60) bees.splice(i, 1);
-      }
-
-      syncHUD();
-      checkAchievements();
-    };
-
-    const draw = () => {
-      ctx.clearRect(0, 0, cssW, cssH);
-
-      // player (placeholder “Pooh”)
-      ctx.beginPath();
-      ctx.fillStyle = "#d4a574";
-      ctx.arc(player.x, player.y, player.r, 0, Math.PI * 2);
-      ctx.fill();
-
-      // honey
-      for (const h of honeys) {
-        ctx.fillStyle = h.gold ? "#ffd700" : "#ffa500";
-        ctx.beginPath();
-        ctx.arc(h.x, h.y, h.r, 0, Math.PI * 2);
-        ctx.fill();
-      }
-
-      // bees
-      for (const b of bees) {
-        ctx.fillStyle = "#222";
-        ctx.beginPath();
-        ctx.arc(b.x, b.y, b.r, 0, Math.PI * 2);
-        ctx.fill();
-      }
-    };
-
-    const loop = (t) => {
-      if (!running) return;
-      const dt = Math.min(0.05, (t - lastTime) / 1000);
-      lastTime = t;
-      if (!paused) update(dt);
-      draw();
-      requestAnimationFrame(loop);
-    };
-
-    const startGame = async () => {
-      await Audio.ensure();
-      closeAllOverlays();
-      setWeatherDrawerOpen(false);
-      resetRun();
-
+    function start() {
+      AppState.paused = false;
       running = true;
-      paused = false;
-      lastTime = performance.now();
-
-      runsPlayed++;
-      Store.set("runsPlayed", String(runsPlayed));
-
+      last = performance.now();
       requestAnimationFrame(loop);
-    };
+    }
 
-    const endGame = () => {
-      running = false;
+    function resume() {
+      AppState.paused = false;
+      last = performance.now();
+    }
 
-      if (state.score > state.hi) {
-        state.hi = state.score;
-        Store.set("hi", String(state.hi));
-      }
-
-      gamePublic.lastRunHadNoHits = (state.hitsTaken === 0);
-
-      checkAchievements();
-
-      const fs = $("final-score"); if (fs) fs.textContent = String(state.score);
-      syncHUD();
-      openOverlay("gameover-overlay");
-    };
-
-    const togglePause = async () => {
+    function loop(ts) {
       if (!running) return;
-      await Audio.sfx.click();
-      paused = !paused;
-      if (paused) openOverlay("pause-overlay");
-      else closeOverlay("pause-overlay");
-    };
-
-    /* ================================
-       Buttons wiring
-    ================================= */
-    on("start-btn", "click", startGame);
-    on("restart-btn", "click", startGame);
-
-    on("pause-btn", "click", togglePause);
-    on("resume-btn", "click", togglePause);
-
-    on("quit-btn", "click", async () => {
-      await Audio.sfx.click();
-      running = false;
-      paused = false;
-      closeAllOverlays();
-      setWeatherDrawerOpen(false);
-      if ($("start-overlay")) openOverlay("start-overlay");
-    });
-
-    on("help-btn", "click", async () => { await Audio.sfx.click(); openOverlay("help-overlay"); });
-    on("close-help-btn", "click", async () => { await Audio.sfx.click(); closeOverlay("help-overlay"); });
-
-    on("view-achievements-btn", "click", async () => { await Audio.sfx.click(); renderAchievements(); openOverlay("achievements-overlay"); });
-    on("achievements-btn", "click", async () => { await Audio.sfx.click(); renderAchievements(); openOverlay("achievements-overlay"); });
-
-    on("close-achievements-btn", "click", async () => { await Audio.sfx.click(); closeOverlay("achievements-overlay"); });
-    on("close-achievements-btn-2", "click", async () => { await Audio.sfx.click(); closeOverlay("achievements-overlay"); });
-
-    on("select-character-btn", "click", async () => { await Audio.sfx.click(); openOverlay("character-select-overlay"); });
-    on("back-to-menu-btn", "click", async () => { await Audio.sfx.click(); closeOverlay("character-select-overlay"); });
-
-    const syncCharacterCards = () => {
-      qsa(".character-card").forEach(b => {
-        const c = b.dataset.character || "";
-        b.classList.toggle("selected", c === state.character);
-      });
-    };
-
-    qsa(".character-card").forEach(btn => {
-      btn.addEventListener("click", async () => {
-        await Audio.sfx.click();
-        state.character = btn.dataset.character || "pooh";
-        Store.set("character", state.character);
-        syncCharacterCards();
-      });
-    });
-
-    on("start-with-character-btn", "click", startGame);
-
-    /* ================================
-       Keyboard: Esc
-    ================================= */
-    window.addEventListener("keydown", (e) => {
-      if (e.key !== "Escape") return;
-
-      if (weatherDrawer?.classList.contains("open")) {
-        setWeatherDrawerOpen(false);
-        return;
+      const dt = Math.min(32, ts - last);
+      last = ts;
+      if (!AppState.paused) {
+        update(dt);
+        render();
       }
-      if (anyOverlayOpen()) {
-        const order = ["achievements-overlay","character-select-overlay","help-overlay","pause-overlay","gameover-overlay","start-overlay"];
-        for (const id of order) {
-          const el = $(id);
-          if (el && !el.classList.contains("hidden")) { closeOverlay(id); break; }
-        }
-      } else if (running) {
-        togglePause().catch(()=>{});
-      }
+      requestAnimationFrame(loop);
+    }
+
+    function update(dt) {
+      // placeholder for honey/bee logic
+    }
+
+    function render() {
+      ctx.clearRect(0, 0, canvas.width, canvas.height);
+      ctx.fillStyle = "#f4a944";
+      ctx.beginPath();
+      ctx.arc(poohX, canvas.height - 80, 40, 0, Math.PI * 2);
+      ctx.fill();
+    }
+
+    /* Input */
+    canvas.addEventListener("pointermove", e => {
+      const r = canvas.getBoundingClientRect();
+      poohX = Math.max(40, Math.min(canvas.width - 40, e.clientX - r.left));
     });
 
-    /* ================================
-       Public-ish object for achievements tests
-    ================================= */
-    const gamePublic = {
-      get score(){ return state.score; },
-      get bestStreak(){ return state.bestStreak; },
-      get honeyCaught(){ return state.honeyCaught; },
-      get goldCaught(){ return state.goldCaught; },
-      get time(){ return state.time; },
-      get running(){ return running; },
-      get runsPlayed(){ return runsPlayed; },
-      lastRunHadNoHits: false
-    };
+    return { start, resume, reset };
+  })();
 
-    /* ================================
-       Boot
-    ================================= */
-    resizeCanvas();
-
-    syncSoundIcon();
-    syncCharacterCards();
-
-    const initialWeatherBtn = qsa(".weather-btn").find(b => (b.dataset.weather || "clear") === state.weather);
-    qsa(".weather-btn").forEach(b => b.classList.remove("active"));
-    if (initialWeatherBtn) initialWeatherBtn.classList.add("active");
-    applyWeather(state.weather);
-
-    renderAchievements();
-    syncHUD();
-
-    if ($("start-overlay")) openOverlay("start-overlay");
-    else startGame();
+  /* ============================================================
+     BOOT
+  ============================================================ */
+  document.addEventListener("DOMContentLoaded", () => {
+    UI.bind();
+    UI.updateHUD();
+    Overlays.open("start");
   });
+
 })();
 </script>
+
 
 
 
