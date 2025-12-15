@@ -1588,16 +1588,150 @@
          
              
              function bind(){
-               $("start-btn")?.addEventListener("click",()=>{Audio.init();Overlays.close("start");Game.start();});
-               $("pause-btn")?.addEventListener("click",()=>Overlays.open("pause"));
-               $("resume-btn")?.addEventListener("click",()=>Overlays.close("pause"));
-               $("restart-btn")?.addEventListener("click",()=>{Game.reset();Game.start();});
-               $("share-btn")?.addEventListener("click",async()=>{
-                 const t=`I scored ${Math.floor(AppState.score)} in Pooh’s Honey Hunt 🍯`;
-                 try{ navigator.share?navigator.share({text:t}):navigator.clipboard.writeText(t); }catch{}
-               });
-             }
-             return {update,bind};
+         // Bind-once guard (prevents doubled listeners if UI.bind() ever runs twice)
+         if (bind._didBind) return;
+         bind._didBind = true;
+         
+         const on = (id, ev, fn) => $(id)?.addEventListener(ev, fn);
+         const qsAll = (sel) => Array.from(document.querySelectorAll(sel));
+         
+         // --- Small helpers ---
+         const setSoundIcon = () => {
+         const icon = $("sound-toggle-btn")?.querySelector("i");
+         if (!icon) return;
+         icon.className = AppState.soundOn ? "fas fa-volume-up" : "fas fa-volume-mute";
+         };
+         
+         const openAchievements = () => {
+         const list = $("achievements-list");
+         if (list) {
+         const defs = [
+         { key: "firstHoney", title: "First Honey", desc: "Score any points." },
+         { key: "streak10",   title: "Sticky Streak", desc: "Reach a 10 streak." },
+         { key: "survive60",  title: "Calm & Collected", desc: "Survive 60 seconds." },
+         { key: "score1k",    title: "Honey Hoarder", desc: "Reach 1000 score." },
+         { key: "beeDodger",  title: "Bee Dodger", desc: "30s with full lives." },
+         ];
+         
+         const unlocked = (k) => !!AppState.achievements?.[k];
+         
+         list.innerHTML = defs.map(d => {
+         const ok = unlocked(d.key);
+         return `
+          <div style="
+            display:flex;align-items:flex-start;gap:12px;
+            padding:12px 14px;border-radius:16px;
+            background:rgba(255,255,255,.70);
+            border:2px solid rgba(93,78,55,.35);
+            margin-bottom:10px;
+          ">
+            <div style="font-size:1.35rem;line-height:1">${ok ? "🏆" : "🔒"}</div>
+            <div style="flex:1;min-width:0">
+              <div style="font-family:'Fredoka One',cursive;color:#5d4e37;font-size:1.05rem">
+                ${d.title} ${ok ? "" : "<span style='opacity:.65'>(locked)</span>"}
+              </div>
+              <div style="opacity:.75;margin-top:2px">${d.desc}</div>
+            </div>
+          </div>
+         `;
+         }).join("");
+         
+         const got = defs.reduce((n,d)=> n + (unlocked(d.key) ? 1 : 0), 0);
+         const badge = $("achievements-count");
+         if (badge) badge.textContent = `${got}/${defs.length}`;
+         }
+         
+         Overlays.open("achievements");
+         };
+         
+         const drawer = $("weather-drawer");
+         const setDrawer = (open) => drawer?.classList.toggle("open", !!open);
+         
+         const setWeather = (w) => {
+         Store.set("weather", w);
+         qsAll(".weather-btn[data-weather]").forEach(b => {
+         b.classList.toggle("active", b.getAttribute("data-weather") === w);
+         });
+         };
+         
+         // --- Core buttons (keeps your current wiring) ---
+         on("start-btn", "click", () => { Audio.init(); Overlays.close("start"); Game.start(); });
+         on("pause-btn", "click", () => Overlays.open("pause"));
+         on("resume-btn", "click", () => Overlays.close("pause"));
+         on("restart-btn", "click", () => { Game.reset(); Game.start(); });
+         
+         on("share-btn", "click", async () => {
+         const t = `I scored ${Math.floor(AppState.score)} in Pooh’s Honey Hunt 🍯`;
+         try {
+         if (navigator.share) await navigator.share({ text: t });
+         else await navigator.clipboard.writeText(t);
+         } catch {}
+         });
+         
+         // --- Pause overlay extras ---
+         on("quit-btn", "click", () => {
+         Game.reset();
+         Overlays.close("pause");
+         Overlays.open("start");
+         });
+         
+         // --- Help overlay ---
+         on("help-btn", "click", () => Overlays.open("help"));
+         on("close-help-btn", "click", () => Overlays.close("help"));
+         
+         // --- Sound toggle ---
+         on("sound-toggle-btn", "click", () => {
+         AppState.soundOn = !AppState.soundOn;
+         Store.set("sound", AppState.soundOn ? "on" : "off");
+         if (AppState.soundOn) Audio.init();
+         setSoundIcon();
+         });
+         setSoundIcon();
+         
+         // --- Achievements open/close ---
+         on("achievements-btn", "click", openAchievements);
+         on("view-achievements-btn", "click", openAchievements);
+         on("close-achievements-btn", "click", () => Overlays.close("achievements"));
+         on("close-achievements-btn-2", "click", () => Overlays.close("achievements"));
+         
+         // --- Character select open/close + selection ---
+         on("select-character-btn", "click", () => Overlays.open("character"));
+         on("back-to-menu-btn", "click", () => Overlays.close("character"));
+         
+         qsAll(".character-card[data-character]").forEach(btn => {
+         btn.addEventListener("click", () => {
+         const c = btn.getAttribute("data-character");
+         if (!c) return;
+         AppState.character = c;
+         Store.set("character", c);
+         qsAll(".character-card[data-character]").forEach(b => b.classList.toggle("active", b === btn));
+         });
+         });
+         
+         on("start-with-character-btn", "click", () => {
+         Audio.init();
+         Overlays.close("character");
+         Overlays.close("start");
+         Game.start();
+         });
+         
+         // --- Weather drawer open/close + selection ---
+         on("weather-toggle", "click", () => setDrawer(true));
+         on("weather-close", "click", () => setDrawer(false));
+         
+         qsAll(".weather-btn[data-weather]").forEach(btn => {
+         btn.addEventListener("click", () => {
+         const w = btn.getAttribute("data-weather");
+         if (!w) return;
+         setWeather(w);
+         });
+         });
+         
+         // Restore weather selection from storage (default clear)
+         setWeather(Store.get("weather", "clear"));
+         }
+         return {update,bind};
+         
            })();
          /* ================= SKINS / THEMES ================= */
          const Skins = (() => {
