@@ -291,13 +291,14 @@
 
   /* ======================= OVERLAYS ======================= */
   const Overlays = (() => {
-    const map = {
-      start: $("start-overlay"),
-      pause: $("pause-overlay"),
-      help: $("help-overlay"),
-      character: $("character-overlay"),
-      achievements: $("achievements-overlay")
-    };
+   const map = {
+  start: $("start-overlay"),
+  pause: $("pause-overlay"),
+  help: $("help-overlay"),
+  character: $("character-select-overlay"),
+  achievements: $("achievements-overlay"),
+  gameover: $("gameover-overlay"),
+};
 
     const anyOpen = () => Object.values(map).some(el => el && !el.classList.contains("hidden"));
 
@@ -318,9 +319,9 @@
       if (name === "pause") AppState.paused = false;
     }
     function closeAll(){
-      Object.keys(map).forEach(close);
-      sync();
-    }
+  for (const el of Object.values(map)) el?.classList.add("hidden");
+  sync();
+}
     return { open, close, closeAll };
   })();
 
