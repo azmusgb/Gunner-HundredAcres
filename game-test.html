@@ -446,16 +446,16 @@
             --safe-right: env(safe-area-inset-right, 10px);
             --safe-bottom: env(safe-area-inset-bottom, 10px);
             --safe-left: env(safe-area-inset-left, 10px);
-            --hud-gap: 10px;
+            --hud-gap: 8px;
             --hud-top: calc(var(--safe-top) + 10px);
             --hud-side: calc(var(--safe-left) + 12px);
             --hud-side-r: calc(var(--safe-right) + 12px);
             --board-max-w: 520px;
             --board-min-w: 300px;
-            --hud-reserve: 108px;
+            --hud-reserve: 92px;
 
             /* Game Constants */
-            --player-base-radius: 32px;
+            --player-base-radius: 40px;
             --transition-speed: 0.3s;
             --border-radius-base: 20px;
 
@@ -468,6 +468,40 @@
             --particle-count-medium: 100;
             --particle-count-low: 50;
         }
+        /* ===============================
+           PERFORMANCE CLASSES (mobile/iOS friendly)
+        ================================ */
+        .perf-low .stat-card,
+        .perf-low .weather-controls,
+        .perf-low .performance-indicator,
+        .perf-low .save-indicator,
+        .perf-low .level-indicator {
+            backdrop-filter: none !important;
+            -webkit-backdrop-filter: none !important;
+        }
+        .perf-low .game-container {
+            animation: none !important;
+            filter: drop-shadow(0 18px 30px rgba(0,0,0,0.22)) !important;
+        }
+        .perf-low .cloud,
+        .perf-low .blossom,
+        .perf-low .butterfly {
+            display: none !important;
+        }
+        .perf-low .stat-card::before {
+            animation: none !important;
+        }
+        .perf-low .progress-bar::after {
+            animation: none !important;
+        }
+
+        @media (max-width: 430px) {
+            .top-bar { gap: 8px; }
+            .stat-card { padding: 9px 14px; border-width: 3px; border-bottom-width: 5px; }
+            .stat-value { font-size: 1.6rem; }
+            .stat-label { font-size: 0.72rem; letter-spacing: 1.2px; }
+        }
+
 
         /* ANIMATIONS (keeping original but with reduced motion support) */
         @keyframes float {
@@ -811,6 +845,8 @@
             left: 50%;
             transform: translateX(-50%);
             width: min(920px, calc(100vw - 24px - var(--safe-left) - var(--safe-right)));
+            padding-left: 120px;
+            padding-right: 120px;
             display: flex;
             justify-content: center;
             gap: var(--hud-gap);
@@ -825,7 +861,7 @@
             backdrop-filter: blur(10px);
             border: 4px solid var(--wood-brown);
             border-bottom-width: 6px;
-            padding: 14px 24px;
+            padding: 10px 16px;
             border-radius: 24px;
             box-shadow: var(--shadow-soft), var(--shadow-inset-light), var(--shadow-inset-dark);
             font-weight: 900;
@@ -833,13 +869,13 @@
             display: flex;
             flex-direction: column;
             gap: 4px;
-            min-width: 110px;
+            min-width: 92px;
             animation: slideIn 0.5s ease-out;
             position: relative;
             font-family: "Fredoka One", cursive;
             transition: transform var(--transition-speed) ease;
             cursor: default;
-            min-height: 80px;
+            min-height: 68px;
             touch-action: manipulation;
         }
 
@@ -887,7 +923,7 @@
         }
 
         .stat-value {
-            font-size: 2rem;
+            font-size: 1.7rem;
             color: var(--pooh-red);
             text-shadow: 3px 3px 0 rgba(0, 0, 0, 0.15), -1px -1px 0 rgba(255, 255, 255, 0.5);
             animation: scorePopIn 0.4s ease-out;
@@ -1051,7 +1087,7 @@
             flex-direction: column;
             align-items: center;
             justify-content: center;
-            gap: 20px;
+            gap: 14px;
             text-align: center;
             z-index: 1000;
             animation: slideIn 0.6s ease-out;
@@ -1072,7 +1108,7 @@
         .character-grid {
             display: grid;
             grid-template-columns: repeat(2, 1fr);
-            gap: 20px;
+            gap: 14px;
             margin: 20px 0;
             max-width: 500px;
             width: 100%;
@@ -1088,7 +1124,7 @@
             display: flex;
             flex-direction: column;
             align-items: center;
-            gap: 15px;
+            gap: 10px;
             min-height: 200px;
             touch-action: manipulation;
         }
@@ -1116,7 +1152,7 @@
         }
 
         .character-name {
-            font-size: 1.5rem;
+            font-size: 1.25rem;
             font-weight: 900;
             color: var(--wood-brown);
             font-family: "Fredoka One", cursive;
@@ -1161,8 +1197,8 @@
         .achievement-item {
             display: flex;
             align-items: center;
-            gap: 15px;
-            padding: 15px;
+            gap: 10px;
+            padding: 10px;
             margin-bottom: 10px;
             background: rgba(255, 255, 255, 0.7);
             border-radius: 15px;
@@ -1177,7 +1213,7 @@
         }
 
         .achievement-icon {
-            font-size: 2rem;
+            font-size: 1.7rem;
             min-width: 50px;
             text-align: center;
         }
@@ -1239,15 +1275,15 @@
             position: fixed;
             top: var(--hud-top);
             right: var(--hud-side-r);
-            width: 56px;
-            height: 56px;
-            min-width: 56px;
-            min-height: 56px;
+            width: 48px;
+            height: 48px;
+            min-width: 48px;
+            min-height: 48px;
             border-radius: 50%;
             background: linear-gradient(135deg, #4d96ff 0%, #2a6eff 100%);
             border: 3px solid white;
             color: white;
-            font-size: 1.5rem;
+            font-size: 1.25rem;
             cursor: pointer;
             display: flex;
             align-items: center;
@@ -1268,15 +1304,15 @@
         }
 
         .sound-btn {
-            width: 56px;
-            height: 56px;
-            min-width: 56px;
-            min-height: 56px;
+            width: 48px;
+            height: 48px;
+            min-width: 48px;
+            min-height: 48px;
             border-radius: 50%;
             background: linear-gradient(135deg, #06d6a0 0%, #04a777 100%);
             border: 3px solid white;
             color: white;
-            font-size: 1.5rem;
+            font-size: 1.25rem;
             cursor: pointer;
             display: flex;
             align-items: center;
@@ -1296,15 +1332,15 @@
 
         /* NEW: Settings button */
         .settings-btn {
-            width: 56px;
-            height: 56px;
-            min-width: 56px;
-            min-height: 56px;
+            width: 48px;
+            height: 48px;
+            min-width: 48px;
+            min-height: 48px;
             border-radius: 50%;
             background: linear-gradient(135deg, #9d4edd 0%, #7b2cbf 100%);
             border: 3px solid white;
             color: white;
-            font-size: 1.5rem;
+            font-size: 1.25rem;
             cursor: pointer;
             display: flex;
             align-items: center;
@@ -1324,26 +1360,26 @@
             position: fixed;
             left: 50%;
             transform: translateX(-50%);
-            bottom: calc(var(--safe-bottom) + 88px);
+            bottom: calc(var(--safe-bottom) + 76px);
             display: flex;
-            gap: 15px;
+            gap: 10px;
             z-index: 1200;
             background: rgba(255, 255, 255, 0.8);
-            padding: 15px;
+            padding: 10px;
             border-radius: var(--border-radius-base);
             border: 3px solid var(--wood-brown);
             backdrop-filter: blur(10px);
         }
 
         .weather-btn {
-            width: 56px;
-            height: 56px;
-            min-width: 56px;
-            min-height: 56px;
+            width: 48px;
+            height: 48px;
+            min-width: 48px;
+            min-height: 48px;
             border-radius: 50%;
             border: 3px solid var(--wood-brown);
             background: white;
-            font-size: 1.5rem;
+            font-size: 1.25rem;
             cursor: pointer;
             display: flex;
             align-items: center;
@@ -1374,22 +1410,22 @@
             transform: translateX(-50%);
             bottom: calc(var(--safe-bottom) + 16px);
             display: flex;
-            gap: 20px;
+            gap: 14px;
             z-index: 1200;
         }
 
         .control-btn {
-            width: 64px;
-            height: 64px;
-            min-width: 64px;
-            min-height: 64px;
+            width: 60px;
+            height: 60px;
+            min-width: 60px;
+            min-height: 60px;
             border-radius: 50%;
             background: linear-gradient(135deg, var(--pooh-bear) 0%, #c28f4d 100%);
             border: 4px solid var(--wood-brown);
             display: flex;
             align-items: center;
             justify-content: center;
-            font-size: 1.5rem;
+            font-size: 1.25rem;
             color: white;
             cursor: pointer;
             box-shadow: 0 6px 0 #8b7355, 0 10px 20px rgba(0, 0, 0, 0.3);
@@ -1458,7 +1494,7 @@
         }
 
         .subtitle {
-            font-size: 1.5rem;
+            font-size: 1.25rem;
             color: var(--wood-brown);
             text-shadow: 2px 2px 0 rgba(255, 255, 255, 0.5);
             font-family: "Patrick Hand", cursive;
@@ -1471,7 +1507,7 @@
             background: linear-gradient(135deg, var(--pooh-red) 0%, #c62828 100%);
             border: 6px solid var(--wood-brown);
             padding: 24px 60px;
-            font-size: 1.5rem;
+            font-size: 1.25rem;
             font-weight: 900;
             border-radius: 60px;
             cursor: pointer;
@@ -1513,7 +1549,7 @@
             box-shadow: 0 8px 0 #4a3a24, 0 16px 32px rgba(0, 0, 0, 0.3);
             padding: 20px 40px;
             font-size: 1.2rem;
-            min-height: 64px;
+            min-height: 60px;
         }
 
         .btn-secondary:hover {
@@ -1526,7 +1562,7 @@
             box-shadow: 0 8px 0 #047857, 0 16px 32px rgba(0, 0, 0, 0.3);
             padding: 16px 32px;
             font-size: 1rem;
-            min-height: 56px;
+            min-height: 48px;
         }
 
         /* Game Over Stats */
@@ -1839,7 +1875,7 @@
             }
 
             .overlay h2 {
-                font-size: 2rem;
+                font-size: 1.7rem;
             }
 
             .subtitle {
@@ -1922,7 +1958,7 @@
             }
 
             .overlay {
-                gap: 20px;
+                gap: 14px;
             }
 
             .overlay h1 {
@@ -2002,7 +2038,7 @@
             }
 
             .overlay h1 {
-                font-size: 2rem;
+                font-size: 1.7rem;
             }
 
             .btn {
@@ -2011,43 +2047,11 @@
             }
         }
     
-/* ===============================
-   PERFORMANCE MODES (CSS)
-   - These are toggled by SettingsManager.updatePerformanceSettings()
-   =============================== */
-html.perf-low .stat-card,
-html.perf-low .settings-panel,
-html.perf-low .modal-content,
-html.perf-low .tooltip {
-  backdrop-filter: none !important;
-  -webkit-backdrop-filter: none !important;
-}
-
-html.perf-low .stat-card,
-html.perf-low .game-container,
-html.perf-low .big-button,
-html.perf-low .control-btn,
-html.perf-low .weather-btn {
-  box-shadow: 0 6px 18px rgba(0,0,0,.18) !important;
-}
-
-html.perf-low .game-container::before,
-html.perf-low .game-container::after,
-html.perf-low .stat-card::before,
-html.perf-low .stat-card::after {
-  display: none !important;
-}
-
-html.perf-low .weather-particle {
-  filter: none !important;
-  will-change: transform;
-}
-
-@media (prefers-reduced-motion: reduce) {
-  .weather-particle { animation-duration: 8s !important; }
-  .floaty, .wiggle, .bounce, .sparkle { animation: none !important; }
-}
-
+        @media (max-width: 430px) {
+            .top-bar { padding-left: 96px; padding-right: 96px; }
+            .sound-controls { top: calc(var(--hud-top) + 2px); }
+            .share-btn { top: calc(var(--hud-top) + 2px); }
+        }
 </style>
 </head>
 <body>
@@ -2129,7 +2133,7 @@ html.perf-low .weather-particle {
             </label>
         </div>
         
-        <div style="margin-top: 30px; display: flex; gap: 15px;">
+        <div style="margin-top: 30px; display: flex; gap: 10px;">
             <button class="btn btn-save" id="manual-save-btn">
                 <i class="fas fa-save"></i> Save Game
             </button>
@@ -2671,6 +2675,9 @@ html.perf-low .weather-particle {
             this.performanceIndicator = document.getElementById('performance-indicator');
             this.performanceLevel = document.getElementById('performance-level');
             
+            this.isIOS = /iPad|iPhone|iPod/.test(navigator.userAgent) || (navigator.platform === 'MacIntel' && navigator.maxTouchPoints > 1);
+
+            
             this.init();
         }
 
@@ -2707,24 +2714,13 @@ html.perf-low .weather-particle {
                 if (settings.performance) {
                     this.performanceSelect.value = settings.performance;
                     this.updatePerformanceSettings(settings.performance);
-                } else {
-                    // Auto-pick a sane default for mobile devices if user hasn't chosen yet.
-                    const isMobile = window.matchMedia("(max-width: 820px)").matches;
-                    const prefersReduced = window.matchMedia("(prefers-reduced-motion: reduce)").matches;
-                    const cores = navigator.hardwareConcurrency || 4;
-                    const memory = navigator.deviceMemory || 4; // not supported on iOS; ok
-                    const isIOS = /iP(ad|hone|od)/.test(navigator.userAgent);
-
-                    let autoLevel = "medium";
-                    if (prefersReduced) autoLevel = "low";
-                    if (isMobile && (isIOS || cores <= 4 || memory <= 4)) autoLevel = "low";
-                    if (isMobile && !isIOS && cores >= 8 && memory >= 8) autoLevel = "medium";
-
-                    this.performanceSelect.value = autoLevel;
-                    this.updatePerformanceSettings(autoLevel);
+                } else if (this.performanceSelect) {
+                    // Default on iOS to keep Safari smooth
+                    const defaultLevel = this.isIOS ? 'low' : 'medium';
+                    this.performanceSelect.value = defaultLevel;
+                    this.updatePerformanceSettings(defaultLevel);
                 }
-                
-                if (settings.highContrast !== undefined) {
+if (settings.highContrast !== undefined) {
                     this.highContrastToggle.checked = settings.highContrast;
                     this.toggleHighContrast(settings.highContrast);
                 }
@@ -2920,13 +2916,6 @@ html.perf-low .weather-particle {
             };
             
             const settings = performanceSettings[level] || performanceSettings.medium;
-
-            // Apply CSS perf classes (used to reduce expensive blur/shadows on mobile)
-            const root = document.documentElement;
-            root.classList.toggle('perf-high', level === 'high');
-            root.classList.toggle('perf-medium', level === 'medium');
-            root.classList.toggle('perf-low', level === 'low');
-
             
             // Update game engine if available
             if (window.gameEngine) {
@@ -2947,6 +2936,21 @@ html.perf-low .weather-particle {
                 }
             }
             
+
+
+            // Apply CSS performance hooks
+            const root = document.documentElement;
+            if (root) {
+                root.classList.toggle('perf-low', level === 'low');
+                root.classList.toggle('perf-medium', level === 'medium');
+                root.classList.toggle('perf-high', level === 'high');
+                // Low perf implies reduced motion (can be overridden in settings)
+                if (level === 'low' && this.reduceAnimationsToggle && !this.reduceAnimationsToggle.checked) {
+                    this.reduceAnimationsToggle.checked = true;
+                    document.body.classList.add('reduced-motion');
+                }
+            }
+
             // Update local storage
             localStorage.setItem('poohPerformanceLevel', level);
         }
@@ -2976,7 +2980,7 @@ html.perf-low .weather-particle {
     // ============================================
     const GAME_CONSTANTS = {
         PLAYER: {
-            BASE_RADIUS: 32,
+            BASE_RADIUS: 40,
             MAX_SPEED: 700,
             ACCELERATION: 0.25,
             DECELERATION: 0.75,
@@ -2984,7 +2988,7 @@ html.perf-low .weather-particle {
             ARM_WOBBLE_SPEED: 2.5,
             ARM_ANGLE_MULTIPLIER: 0.4,
             TRAIL_LENGTH: 8,
-            UI_SAFE_BOTTOM: 190,
+            UI_SAFE_BOTTOM: 170,
         },
         HONEY: {
             BASE_SPEED: 120,
@@ -3886,7 +3890,7 @@ html.perf-low .weather-particle {
             popup.setAttribute("aria-live", "assertive");
             popup.innerHTML = `
                 <div class="achievement-popup-title">Achievement Unlocked!</div>
-                <div style="font-size: 2rem; margin: 10px 0;" aria-hidden="true">${achievement.icon}</div>
+                <div style="font-size: 1.7rem; margin: 10px 0;" aria-hidden="true">${achievement.icon}</div>
                 <div style="font-weight: bold; color: var(--wood-brown);">${achievement.name}</div>
                 <div style="font-size: 0.9rem; color: var(--wood-light);">${achievement.description}</div>
             `;
@@ -6117,78 +6121,84 @@ html.perf-low .weather-particle {
             }
         }
 
+
         drawHoneys() {
-            // Draw falling honey pots (kept lightweight for mobile)
-            const rr = (x, y, w, h, r) => {
-                const ctx = this.ctx;
-                const radius = Math.max(0, Math.min(r, Math.min(w, h) / 2)); // clamp
+            // Draw falling honey pots (canvas-only for speed)
+            const ctx = this.ctx;
+            if (!ctx || !this.honeys) return;
+
+            const roundRectPath = (x, y, w, h, r) => {
+                const rr = Math.min(r, w / 2, h / 2);
                 ctx.beginPath();
-                ctx.moveTo(x + radius, y);
-                ctx.lineTo(x + w - radius, y);
-                ctx.quadraticCurveTo(x + w, y, x + w, y + radius);
-                ctx.lineTo(x + w, y + h - radius);
-                ctx.quadraticCurveTo(x + w, y + h, x + w - radius, y + h);
-                ctx.lineTo(x + radius, y + h);
-                ctx.quadraticCurveTo(x, y + h, x, y + h - radius);
-                ctx.lineTo(x, y + radius);
-                ctx.quadraticCurveTo(x, y, x + radius, y);
+                ctx.moveTo(x + rr, y);
+                ctx.lineTo(x + w - rr, y);
+                ctx.quadraticCurveTo(x + w, y, x + w, y + rr);
+                ctx.lineTo(x + w, y + h - rr);
+                ctx.quadraticCurveTo(x + w, y + h, x + w - rr, y + h);
+                ctx.lineTo(x + rr, y + h);
+                ctx.quadraticCurveTo(x, y + h, x, y + h - rr);
+                ctx.lineTo(x, y + rr);
+                ctx.quadraticCurveTo(x, y, x + rr, y);
                 ctx.closePath();
             };
 
-            for (const honey of this.honeys) {
-                const isGolden = honey.type === "golden";
-                const wobbleX = Math.sin(honey.wobble) * 6;
+            for (let i = 0; i < this.honeys.length; i++) {
+                const h = this.honeys[i];
+                const wobbleX = Math.sin((h.wobble || 0) + (Date.now() * 0.004)) * 6;
+                const x = (h.x || 0) + wobbleX;
+                const y = (h.y || 0);
 
-                this.ctx.save();
-                this.ctx.translate(honey.x + wobbleX, honey.y);
-                this.ctx.rotate(honey.rotation || 0);
-                const s = honey.scale || 1;
-                this.ctx.scale(s, s);
+                ctx.save();
+                ctx.translate(x, y);
+                ctx.rotate(h.rotation || 0);
 
-                // Subtle glow for golden pots (avoid expensive shadows on low perf)
-                if (isGolden && this.settingsManager.getPerformanceLevel() !== "low") {
-                    this.ctx.globalAlpha = 0.25;
-                    this.ctx.fillStyle = "#ffd54a";
-                    this.ctx.beginPath();
-                    this.ctx.ellipse(0, 6, 36, 28, 0, 0, Math.PI * 2);
-                    this.ctx.fill();
-                    this.ctx.globalAlpha = 1;
+                const s = h.scale || 1;
+                ctx.scale(s, s);
+
+                const isGolden = h.type === "golden";
+                const bodyW = 42;
+                const bodyH = 48;
+                const lidH = 12;
+
+                // Shadow/glow
+                if (isGolden) {
+                    ctx.shadowColor = "rgba(255, 215, 0, 0.6)";
+                    ctx.shadowBlur = 18;
+                } else {
+                    ctx.shadowColor = "rgba(0,0,0,0.18)";
+                    ctx.shadowBlur = 8;
                 }
 
-                // Jar body
-                this.ctx.fillStyle = isGolden ? "#ffcc33" : "#f0a63a";
-                this.ctx.strokeStyle = "rgba(0,0,0,.25)";
-                this.ctx.lineWidth = 2;
-
-                this.ctx.beginPath();
-                this.ctx.moveTo(-18, -14);
-                this.ctx.quadraticCurveTo(0, -28, 18, -14);
-                this.ctx.lineTo(22, 18);
-                this.ctx.quadraticCurveTo(0, 30, -22, 18);
-                this.ctx.closePath();
-                this.ctx.fill();
-                this.ctx.stroke();
-
                 // Lid
-                this.ctx.fillStyle = "#8b5a2b";
-                rr(-22, -20, 44, 10, 5);
-                this.ctx.fill();
+                ctx.fillStyle = "#c96f2d";
+                ctx.strokeStyle = "rgba(60,30,10,0.55)";
+                ctx.lineWidth = 2;
+                roundRectPath(-bodyW * 0.55, -bodyH * 0.55, bodyW * 1.1, lidH, 6);
+                ctx.fill();
+                ctx.stroke();
+
+                // Jar
+                ctx.fillStyle = isGolden ? "#f5b700" : "#f0a93a";
+                ctx.strokeStyle = "rgba(80,45,15,0.6)";
+                roundRectPath(-bodyW / 2, -bodyH / 2 + lidH - 2, bodyW, bodyH, 10);
+                ctx.fill();
+                ctx.stroke();
 
                 // Label
-                this.ctx.fillStyle = "rgba(255,255,255,.9)";
-                rr(-14, -2, 28, 16, 6);
-                this.ctx.fill();
+                ctx.shadowBlur = 0;
+                ctx.fillStyle = "rgba(255,255,255,0.95)";
+                roundRectPath(-bodyW * 0.3, -2, bodyW * 0.6, 18, 5);
+                ctx.fill();
 
-                this.ctx.fillStyle = "#1a1a1a";
-                this.ctx.font = "bold 10px 'Fredoka One', system-ui";
-                this.ctx.textAlign = "center";
-                this.ctx.textBaseline = "middle";
-                this.ctx.fillText("HNY", 0, 6);
+                ctx.fillStyle = "rgba(40,20,5,0.9)";
+                ctx.font = "bold 12px 'Fredoka One', system-ui, sans-serif";
+                ctx.textAlign = "center";
+                ctx.textBaseline = "middle";
+                ctx.fillText("HNY", 0, 7);
 
-                this.ctx.restore();
+                ctx.restore();
             }
         }
-
 
         drawUI() {
             // Draw hearts for lives
