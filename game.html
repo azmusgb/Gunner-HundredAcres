@@ -1559,7 +1559,6 @@
     </div>
 
   </main>
-
 <script>
 (() => {
   "use strict";
@@ -1584,16 +1583,12 @@
 
     return {
       get(k, d = null) {
-        if (hasLS) {
-          try { return localStorage.getItem(k) ?? d; } catch {}
-        }
+        if (hasLS) { try { return localStorage.getItem(k) ?? d; } catch {} }
         return mem.has(k) ? mem.get(k) : d;
       },
       set(k, v) {
         const sv = String(v);
-        if (hasLS) {
-          try { localStorage.setItem(k, sv); return; } catch {}
-        }
+        if (hasLS) { try { localStorage.setItem(k, sv); return; } catch {} }
         mem.set(k, sv);
       }
     };
@@ -1603,24 +1598,38 @@
      DOM HELPERS
   ============================================================ */
   const $ = id => document.getElementById(id);
-  const on = (id, ev, fn) => { const el = $(id); el && el.addEventListener(ev, fn); };
+  const on = (id, ev, fn, opts) => { const el = $(id); el && el.addEventListener(ev, fn, opts); };
+
+  /* ============================================================
+     SETTINGS / FLAGS
+  ============================================================ */
+  const Motion = (() => {
+    const mq = window.matchMedia?.("(prefers-reduced-motion: reduce)");
+    let reduced = !!mq?.matches;
+    mq?.addEventListener?.("change", () => { reduced = !!mq.matches; });
+    return { get reduced() { return reduced; } };
+  })();
+
+  const clamp = (v, a, b) => Math.max(a, Math.min(b, v));
+  const lerp = (a, b, t) => a + (b - a) * t;
 
   /* ============================================================
      APP STATE (SINGLE SOURCE OF TRUTH)
   ============================================================ */
   const AppState = {
     overlay: "start",
-    paused: true,
+    paused: true,          // logical pause (overlays, user pause)
+    hiddenPaused: false,   // page/tab hidden pause
     score: 0,
     streak: 0,
     lives: 3,
     character: Store.get("character", "pooh"),
     soundOn: Store.get("sound", "on") === "on",
-    weather: "clear"
+    weather: Store.get("weather", "clear") || "clear"
   };
 
   /* ============================================================
-     OVERLAY CONTROLLER
+     OVERLAY CONTROLLER (DETERMINISTIC)
   ============================================================ */
   const Overlays = (() => {
     const map = {
@@ -1642,48 +1651,70 @@
       closeAll();
       const el = map[name];
       if (!el) return;
+
       AppState.overlay = name;
       AppState.paused = true;
+
       el.classList.remove("hidden");
       document.body.classList.add("overlay-open");
-      const f = el.querySelector("button");
+
+      // Pause heavy systems while overlays are open
+      Weather.setEnabled(false);
+
+      const f = el.querySelector("button,[href],input,[tabindex]:not([tabindex='-1'])");
       f && requestAnimationFrame(() => f.focus());
     }
 
     function close(name) {
       const el = map[name];
       if (!el) return;
+
       el.classList.add("hidden");
       AppState.overlay = null;
       document.body.classList.remove("overlay-open");
+
+      // If nothing else opened, re-enable ambient systems
+      if (!AppState.paused && !AppState.hiddenPaused) Weather.setEnabled(!Motion.reduced);
     }
 
     return { open, close, closeAll };
   })();
 
   /* ============================================================
-     AUDIO CONTROLLER (STUB – SAFE)
+     AUDIO CONTROLLER (SAFE STUB)
   ============================================================ */
   const Audio = (() => {
+    function syncButton() {
+      const btn = $("sound-toggle-btn");
+      if (!btn) return;
+      btn.innerHTML = AppState.soundOn
+        ? '<i class="fas fa-volume-up"></i>'
+        : '<i class="fas fa-volume-mute"></i>';
+    }
     function toggle() {
       AppState.soundOn = !AppState.soundOn;
       Store.set("sound", AppState.soundOn ? "on" : "off");
-      $("sound-toggle-btn").innerHTML =
-        AppState.soundOn
-          ? '<i class="fas fa-volume-up"></i>'
-          : '<i class="fas fa-volume-mute"></i>';
+      syncButton();
     }
-    return { toggle };
+    return { toggle, syncButton };
   })();
 
   /* ============================================================
-     UI CONTROLLER
+     HUD / UI
   ============================================================ */
   const UI = (() => {
     function updateHUD() {
       $("score").textContent = AppState.score;
       $("streak").textContent = AppState.streak;
       $("lives").textContent = AppState.lives;
+      const ac = $("achievements-count");
+      if (ac) ac.textContent = "0/10"; // placeholder until ach system is wired
+    }
+
+    function setWeatherActive() {
+      document.querySelectorAll(".weather-btn").forEach(b => {
+        b.classList.toggle("active", b.dataset.weather === AppState.weather);
+      });
     }
 
     function bind() {
@@ -1706,13 +1737,14 @@
 
       on("sound-toggle-btn", "click", Audio.toggle);
 
+      // Character selection
       document.querySelectorAll(".character-card").forEach(btn => {
         btn.addEventListener("click", () => {
-          AppState.character = btn.dataset.character;
+          AppState.character = btn.dataset.character || "pooh";
           Store.set("character", AppState.character);
           document.querySelectorAll(".character-card").forEach(b => b.classList.remove("selected"));
           btn.classList.add("selected");
-        });
+        }, { passive: true });
       });
 
       on("start-with-character-btn", "click", () => {
@@ -1720,30 +1752,245 @@
         Game.start();
       });
 
+      // Weather drawer + buttons
       document.querySelectorAll(".weather-btn").forEach(btn => {
         btn.addEventListener("click", () => {
-          AppState.weather = btn.dataset.weather;
-          document.querySelectorAll(".weather-btn").forEach(b => b.classList.remove("active"));
-          btn.classList.add("active");
-        });
+          AppState.weather = btn.dataset.weather || "clear";
+          Store.set("weather", AppState.weather);
+          setWeatherActive();
+          Weather.setMode(AppState.weather);
+        }, { passive: true });
       });
 
-      on("weather-toggle", "click", () => $("weather-drawer").classList.add("open"));
-      on("weather-close", "click", () => $("weather-drawer").classList.remove("open"));
+      on("weather-toggle", "click", () => $("weather-drawer")?.classList.add("open"));
+      on("weather-close", "click", () => $("weather-drawer")?.classList.remove("open"));
+
+      // Share (safe no-op with feedback)
+      on("share-btn", "click", async () => {
+        const text = `I scored ${AppState.score} in Pooh’s Honey Hunt! 🍯`;
+        try {
+          if (navigator.share) await navigator.share({ text });
+          else if (navigator.clipboard) await navigator.clipboard.writeText(text);
+        } catch {}
+      });
+
+      // Escape closes overlays (except start)
+      window.addEventListener("keydown", (e) => {
+        if (e.key !== "Escape") return;
+        if (AppState.overlay && AppState.overlay !== "start") Overlays.closeAll();
+      });
     }
 
-    return { bind, updateHUD };
+    return { bind, updateHUD, setWeatherActive };
   })();
 
   /* ============================================================
-     GAME ENGINE (STABLE LOOP)
+     WEATHER PARTICLE SYSTEM (POOLED, FAST)
+  ============================================================ */
+  const Weather = (() => {
+    const root = $("weather-effects") || (() => {
+      // If your HTML doesn't include it, create it silently (no CSS changes required)
+      const d = document.createElement("div");
+      d.id = "weather-effects";
+      document.body.appendChild(d);
+      return d;
+    })();
+
+    let enabled = !Motion.reduced;
+    let mode = AppState.weather;
+
+    // Pool
+    const MAX = 70; // keep this modest for mobile
+    const pool = [];
+    const active = [];
+
+    function makeParticle() {
+      const el = document.createElement("div");
+      el.style.position = "absolute";
+      el.style.left = "0px";
+      el.style.top = "-60px";
+      el.style.willChange = "transform, opacity";
+      el.style.pointerEvents = "none";
+      el.style.opacity = "0";
+      root.appendChild(el);
+      return { el, x:0, y:0, vx:0, vy:0, rot:0, vr:0, life:0, max:0, s:1 };
+    }
+
+    for (let i=0;i<MAX;i++) pool.push(makeParticle());
+
+    function styleFor(p) {
+      // minimal, consistent styling; no expensive filters
+      const el = p.el;
+      const m = mode;
+
+      el.style.borderRadius = "999px";
+      el.style.width = "6px";
+      el.style.height = "14px";
+      el.style.background = "rgba(255,255,255,.75)";
+
+      if (m === "snow") {
+        el.style.width = "8px";
+        el.style.height = "8px";
+        el.style.borderRadius = "50%";
+        el.style.background = "rgba(255,255,255,.85)";
+      } else if (m === "leaves") {
+        el.style.width = "10px";
+        el.style.height = "14px";
+        el.style.borderRadius = "6px 10px 6px 10px";
+        el.style.background = "rgba(255,165,0,.7)";
+      } else if (m === "blossoms") {
+        el.style.width = "10px";
+        el.style.height = "10px";
+        el.style.borderRadius = "50% 50% 50% 0";
+        el.style.background = "rgba(255,183,197,.75)";
+      } else if (m === "rain") {
+        el.style.width = "5px";
+        el.style.height = "16px";
+        el.style.borderRadius = "999px";
+        el.style.background = "rgba(255,255,255,.65)";
+      } else {
+        // clear
+        el.style.opacity = "0";
+      }
+    }
+
+    function spawn() {
+      if (!enabled) return;
+      if (mode === "clear") return;
+      if (!pool.length) return;
+
+      const p = pool.pop();
+      styleFor(p);
+
+      const w = window.innerWidth;
+      p.x = Math.random() * w;
+      p.y = -60;
+      p.rot = Math.random() * 360;
+      p.vr = (Math.random() * 120 - 60);
+
+      if (mode === "rain") {
+        p.vx = (Math.random() * 10 - 5);
+        p.vy = 900 + Math.random() * 600;
+        p.s = 1;
+        p.max = 0.9 + Math.random() * 0.5;
+      } else if (mode === "snow") {
+        p.vx = (Math.random() * 80 - 40);
+        p.vy = 160 + Math.random() * 130;
+        p.s = 0.7 + Math.random() * 0.8;
+        p.max = 0.6 + Math.random() * 0.5;
+      } else if (mode === "leaves") {
+        p.vx = (Math.random() * 160 - 80);
+        p.vy = 240 + Math.random() * 180;
+        p.s = 0.7 + Math.random() * 0.8;
+        p.max = 0.5 + Math.random() * 0.5;
+      } else if (mode === "blossoms") {
+        p.vx = (Math.random() * 120 - 60);
+        p.vy = 220 + Math.random() * 160;
+        p.s = 0.7 + Math.random() * 0.8;
+        p.max = 0.5 + Math.random() * 0.5;
+      }
+
+      p.life = 0;
+      p.el.style.opacity = String(p.max);
+      active.push(p);
+    }
+
+    function update(dt) {
+      if (!enabled || mode === "clear") return;
+
+      // Spawn rate tuned by mode
+      const spawnCount =
+        mode === "rain" ? 4 :
+        mode === "snow" ? 2 :
+        mode === "leaves" ? 2 :
+        mode === "blossoms" ? 2 : 0;
+
+      for (let i=0;i<spawnCount;i++) spawn();
+
+      const h = window.innerHeight;
+
+      for (let i=active.length - 1; i>=0; i--) {
+        const p = active[i];
+
+        p.life += dt;
+        p.x += p.vx * (dt / 1000);
+        p.y += p.vy * (dt / 1000);
+        p.rot += p.vr * (dt / 1000);
+
+        // gentle drift for snow/petals/leaves
+        if (mode !== "rain") {
+          p.x += Math.sin((p.life / 700) + p.rot) * (dt / 1000) * 30;
+        }
+
+        p.el.style.transform = `translate3d(${p.x}px, ${p.y}px, 0) rotate(${p.rot}deg) scale(${p.s})`;
+
+        if (p.y > h + 80) {
+          p.el.style.opacity = "0";
+          active.splice(i, 1);
+          pool.push(p);
+        }
+      }
+    }
+
+    function setMode(m) {
+      mode = m || "clear";
+      // Clear existing particles fast
+      for (let i=active.length - 1; i>=0; i--) {
+        const p = active[i];
+        p.el.style.opacity = "0";
+        active.splice(i, 1);
+        pool.push(p);
+      }
+    }
+
+    function setEnabled(v) {
+      enabled = !!v && !Motion.reduced;
+      if (!enabled) setMode("clear");
+      else setMode(AppState.weather);
+    }
+
+    // Expose update hook for the game loop
+    return { update, setMode, setEnabled };
+  })();
+
+  /* ============================================================
+     GAME ENGINE (STABLE LOOP + SMOOTH INPUT + DPR SCALING)
   ============================================================ */
   const Game = (() => {
     const canvas = $("honey-game");
-    const ctx = canvas.getContext("2d");
-    let last = 0;
+    const ctx = canvas.getContext("2d", { alpha: true, desynchronized: true });
+
+    // logical size (CSS/HTML uses 420x700)
+    const BASE_W = 420;
+    const BASE_H = 700;
+
     let running = false;
-    let poohX = canvas.width / 2;
+    let last = 0;
+
+    // Pooh movement smoothing
+    let poohTargetX = BASE_W / 2;
+    let poohX = BASE_W / 2;
+    const poohY = BASE_H - 90;
+    let dragging = false;
+
+    // DPS / performance throttles
+    let accumulated = 0;
+
+    function setPaused(v) {
+      AppState.paused = !!v;
+      if (AppState.paused) Weather.setEnabled(false);
+      else Weather.setEnabled(!AppState.hiddenPaused && !Motion.reduced);
+    }
+
+    function resizeCanvas() {
+      // Keep game logic in BASE coords; scale by DPR for crispness
+      const dpr = clamp(window.devicePixelRatio || 1, 1, 2); // cap DPR to avoid overwork
+      canvas.width = Math.floor(BASE_W * dpr);
+      canvas.height = Math.floor(BASE_H * dpr);
+      canvas.style.width = BASE_W + "px";
+      canvas.style.height = BASE_H + "px";
+      ctx.setTransform(dpr, 0, 0, dpr, 0, 0);
+    }
 
     function reset() {
       AppState.score = 0;
@@ -1753,60 +2000,176 @@
     }
 
     function start() {
-      AppState.paused = false;
+      setPaused(false);
       running = true;
       last = performance.now();
       requestAnimationFrame(loop);
     }
 
     function resume() {
-      AppState.paused = false;
+      setPaused(false);
       last = performance.now();
+    }
+
+    function stop() {
+      running = false;
+      setPaused(true);
     }
 
     function loop(ts) {
       if (!running) return;
+
       const dt = Math.min(32, ts - last);
       last = ts;
-      if (!AppState.paused) {
+
+      // If tab hidden, do minimal work
+      if (!AppState.paused && !AppState.hiddenPaused) {
         update(dt);
         render();
+      } else {
+        // still allow overlay/hidden to keep canvas stable but avoid heavy updates
+        accumulated += dt;
+        if (accumulated > 250) {
+          accumulated = 0;
+          render(); // occasional render (keeps it from looking dead after resize)
+        }
       }
+
       requestAnimationFrame(loop);
     }
 
     function update(dt) {
-      // placeholder for honey/bee logic
+      // Smooth Pooh movement (lerp speed tuned for responsiveness)
+      const t = 1 - Math.pow(0.001, dt / 16); // framerate-independent smoothing
+      poohX = lerp(poohX, poohTargetX, clamp(t, 0.08, 0.28));
+
+      // Weather update (pooled, light)
+      Weather.update(dt);
+
+      // TODO Phase 3: honey + bees spawn/update/collisions
     }
 
     function render() {
-      ctx.clearRect(0, 0, canvas.width, canvas.height);
-      ctx.fillStyle = "#f4a944";
+      // Clear
+      ctx.clearRect(0, 0, BASE_W, BASE_H);
+
+      // Simple ground shading (cheap, gives depth)
+      ctx.fillStyle = "rgba(0,0,0,0.06)";
+      ctx.fillRect(0, BASE_H - 140, BASE_W, 140);
+
+      // Pooh placeholder (bigger + more “present” than Phase 1)
+      // (Phase 3 will replace with proper storybook art, but this already feels better.)
+      const bodyR = 54;
+      const headR = 42;
+
+      // Body
+      ctx.fillStyle = "#d4a574";
       ctx.beginPath();
-      ctx.arc(poohX, canvas.height - 80, 40, 0, Math.PI * 2);
+      ctx.arc(poohX, poohY, bodyR, 0, Math.PI * 2);
       ctx.fill();
+
+      // Head
+      ctx.beginPath();
+      ctx.arc(poohX, poohY - 70, headR, 0, Math.PI * 2);
+      ctx.fill();
+
+      // Ears
+      ctx.beginPath();
+      ctx.arc(poohX - 26, poohY - 104, 16, 0, Math.PI * 2);
+      ctx.arc(poohX + 26, poohY - 104, 16, 0, Math.PI * 2);
+      ctx.fill();
+
+      // Shirt hint (Pooh red)
+      ctx.fillStyle = "#e63946";
+      ctx.beginPath();
+      ctx.ellipse(poohX, poohY - 6, 56, 30, 0, 0, Math.PI);
+      ctx.fill();
+
+      // Outline (cheap, helps cohesion)
+      ctx.strokeStyle = "rgba(93,78,55,.45)";
+      ctx.lineWidth = 3;
+      ctx.beginPath();
+      ctx.arc(poohX, poohY, bodyR, 0, Math.PI * 2);
+      ctx.stroke();
+      ctx.beginPath();
+      ctx.arc(poohX, poohY - 70, headR, 0, Math.PI * 2);
+      ctx.stroke();
     }
 
-    /* Input */
-    canvas.addEventListener("pointermove", e => {
+    /* ---------- INPUT: pointer capture + minimal work ---------- */
+    function pointerToGameX(e) {
       const r = canvas.getBoundingClientRect();
-      poohX = Math.max(40, Math.min(canvas.width - 40, e.clientX - r.left));
+      const x = (e.clientX - r.left) * (BASE_W / r.width);
+      return clamp(x, 60, BASE_W - 60);
+    }
+
+    canvas.addEventListener("pointerdown", (e) => {
+      if (AppState.paused || AppState.hiddenPaused) return;
+      dragging = true;
+      canvas.setPointerCapture?.(e.pointerId);
+      poohTargetX = pointerToGameX(e);
+    }, { passive: true });
+
+    canvas.addEventListener("pointermove", (e) => {
+      if (!dragging) return;
+      poohTargetX = pointerToGameX(e);
+    }, { passive: true });
+
+    const endDrag = (e) => {
+      dragging = false;
+      try { canvas.releasePointerCapture?.(e.pointerId); } catch {}
+    };
+    canvas.addEventListener("pointerup", endDrag, { passive: true });
+    canvas.addEventListener("pointercancel", endDrag, { passive: true });
+
+    window.addEventListener("resize", () => {
+      resizeCanvas();
+      render();
+    }, { passive: true });
+
+    // Visibility pause (big perf win)
+    document.addEventListener("visibilitychange", () => {
+      AppState.hiddenPaused = document.hidden;
+      if (document.hidden) {
+        Weather.setEnabled(false);
+      } else {
+        Weather.setEnabled(!AppState.paused && !Motion.reduced);
+        last = performance.now();
+      }
     });
 
-    return { start, resume, reset };
+    // init
+    resizeCanvas();
+
+    return { start, resume, reset, stop, setPaused };
   })();
 
   /* ============================================================
      BOOT
   ============================================================ */
   document.addEventListener("DOMContentLoaded", () => {
+    // Sync UI defaults
+    Audio.syncButton();
     UI.bind();
     UI.updateHUD();
+
+    // Apply stored character selection styling
+    document.querySelectorAll(".character-card").forEach(b => {
+      b.classList.toggle("selected", (b.dataset.character || "pooh") === AppState.character);
+    });
+
+    // Weather stored state
+    UI.setWeatherActive();
+    Weather.setMode(AppState.weather);
+    Weather.setEnabled(!Motion.reduced); // ambient enabled only when not reduced-motion
+
+    // Start at menu overlay
     Overlays.open("start");
   });
 
 })();
 </script>
+
 
 
 
