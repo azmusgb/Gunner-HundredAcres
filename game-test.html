@@ -2336,6 +2336,46 @@
 <script>
 (() => {
     "use strict";
+
+  /* ---------- Crash guard (show errors on screen) ---------- */
+  (function setupCrashOverlay(){
+    function show(msg){
+      try {
+        var el = document.getElementById('fatal-error');
+        if (!el) {
+          el = document.createElement('div');
+          el.id = 'fatal-error';
+          el.style.position = 'fixed';
+          el.style.left = '12px';
+          el.style.right = '12px';
+          el.style.bottom = '12px';
+          el.style.zIndex = '99999';
+          el.style.padding = '12px 14px';
+          el.style.borderRadius = '14px';
+          el.style.background = 'rgba(0,0,0,0.85)';
+          el.style.color = '#fff';
+          el.style.fontFamily = 'ui-monospace, Menlo, Consolas, monospace';
+          el.style.fontSize = '12px';
+          el.style.lineHeight = '1.35';
+          el.style.whiteSpace = 'pre-wrap';
+          el.style.maxHeight = '40vh';
+          el.style.overflow = 'auto';
+          document.body.appendChild(el);
+        }
+        el.textContent = msg;
+      } catch {}
+    }
+
+    window.addEventListener('error', function(e){
+      show("JS ERROR:\n" + (e.message || e.type) + "\n" + (e.filename || "") + ":" + (e.lineno || "") + ":" + (e.colno || ""));
+      try { console.error(e.error || e.message); } catch {}
+    });
+
+    window.addEventListener('unhandledrejection', function(e){
+      show("PROMISE REJECTION:\n" + (e.reason && (e.reason.stack || e.reason.message) || String(e.reason)));
+      try { console.error(e.reason); } catch {}
+    });
+  })();
     
     if (window.__POOH_HONEY_HUNT_LOADED__) return;
     window.__POOH_HONEY_HUNT_LOADED__ = true;
@@ -2346,9 +2386,42 @@
     const lerp = (a, b, t) => a + (b - a) * t;
     const now = () => performance.now();
 
+  /* ---------- Safe storage (sandbox-safe) ---------- */
+  const SafeStore = (() => {
+    const mem = new Map();
+    const hasLS = (() => {
+      try {
+        const t = "__pooh_test__";
+        window.localStorage.setItem(t, "1");
+        window.localStorage.removeItem(t);
+        return true;
+      } catch { return false; }
+    })();
+
+    return {
+      get(key, fallback = null) {
+        if (hasLS) { try { const v = window.localStorage.getItem(key); return v === null ? fallback : v; } catch {} }
+        return mem.has(key) ? mem.get(key) : fallback;
+      },
+      set(key, value) {
+        if (hasLS) { try { window.localStorage.setItem(key, String(value)); return; } catch {} }
+        mem.set(key, String(value));
+      },
+      remove(key) {
+        if (hasLS) { try { window.localStorage.removeItem(key); } catch {} }
+        mem.delete(key);
+      }
+    };
+  })();
+
+
     /* ======================= CANVAS SETUP ======================= */
     const canvas = $("game-canvas");
-    const ctx = canvas?.getContext("2d", { alpha: true });
+    const ctx = (canvas && canvas.getContext) ? canvas.getContext("2d", { alpha: true }) : null;
+
+    if (!canvas || !ctx) {
+      throw new Error("Canvas context not available. Check #game-canvas and browser canvas support.");
+    }
     
     if (!canvas || !ctx) {
         console.error("Canvas not found or 2D context failed.");
@@ -2368,7 +2441,7 @@
         streak: 0,
         combo: 1.0,
         timeMs: 0,
-        bestScore: parseInt(localStorage.getItem('bestScore') || '0'),
+        bestScore: parseInt(SafeStore.get('bestScore', '0'), 10),
         currentLevel: 0,
         honeyCaught: 0,
         beesAvoided: 0,
@@ -3065,7 +3138,7 @@
         // Update best score
         if (GameState.score > GameState.bestScore) {
             GameState.bestScore = GameState.score;
-            localStorage.setItem('bestScore', GameState.bestScore.toString());
+            SafeStore.set('bestScore', GameState.bestScore);
             $('new-record-badge').classList.remove('hidden');
         } else {
             $('new-record-badge').classList.add('hidden');
@@ -3570,6 +3643,15 @@
     } else {
         setTimeout(init, 100);
     }
+
+
+  /* POST_BOOT_FAILSAFE: last resort */
+  setTimeout(() => {
+    try {
+      const ls = document.getElementById('loading-screen');
+      if (ls && !ls.classList.contains('hidden')) ls.classList.add('hidden');
+    } catch {}
+  }, 8000);
 })();
 </script>
 </body>
