@@ -1,347 +1,393 @@
 <!DOCTYPE html>
 <html lang="en">
-   <head>
-      <meta charset="UTF-8" />
-      <title>Pooh's Enhanced Honey Hunt - Complete Edition</title>
-      <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover, user-scalable=no" />
-      <meta name="theme-color" content="#d4a574" />
-      <meta name="description" content="Help Pooh catch honey pots in the Hundred Acre Wood! Now with achievements, character selection, weather effects, and more!" />
-      <link rel="preconnect" href="https://fonts.googleapis.com" />
-      <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
-      <link href="https://fonts.googleapis.com/css2?family=Patrick+Hand&family=Fredoka+One&family=Bubblegum+Sans&display=swap" rel="stylesheet" />
-      <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css" />
-      <style>
-         /* ================= BASE STYLES ================= */
-         * {
+<head>
+    <meta charset="UTF-8" />
+    <title>Pooh's Honey Hunt: Ultimate Edition 🍯</title>
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover" />
+    <meta name="theme-color" content="#d4a574" />
+    <meta name="description" content="Help Pooh catch honey pots in the Hundred Acre Wood! Ultimate edition with seasonal events, daily challenges, leaderboards, and more!" />
+    <meta name="apple-mobile-web-app-capable" content="yes">
+    <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+    <link rel="preconnect" href="https://fonts.googleapis.com" />
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+    <link href="https://fonts.googleapis.com/css2?family=Patrick+Hand&family=Fredoka+One&family=Bubblegum+Sans&family=Comic+Neue:wght@700&display=swap" rel="stylesheet" />
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css" />
+    <style>
+        /* ================= VARIABLES & RESET ================= */
+        :root {
+            --color-primary: #FF8C00;
+            --color-secondary: #8B4513;
+            --color-accent: #FFD700;
+            --color-bg: linear-gradient(135deg, #87CEEB 0%, #98FB98 100%);
+            --color-paper: #FFF8DC;
+            --color-success: #4CAF50;
+            --color-danger: #FF5252;
+            --color-info: #2196F3;
+            
+            --font-main: 'Patrick Hand', cursive;
+            --font-title: 'Fredoka One', sans-serif;
+            --font-fun: 'Comic Neue', cursive;
+            
+            --shadow-sm: 0 2px 8px rgba(0,0,0,0.1);
+            --shadow-md: 0 5px 15px rgba(0,0,0,0.2);
+            --shadow-lg: 0 10px 30px rgba(0,0,0,0.3);
+            
+            --radius-sm: 12px;
+            --radius-md: 20px;
+            --radius-lg: 30px;
+            
+            --transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+        }
+
+        * {
             margin: 0;
             padding: 0;
             box-sizing: border-box;
             -webkit-tap-highlight-color: transparent;
             -webkit-font-smoothing: antialiased;
-         }
+            -moz-osx-font-smoothing: grayscale;
+        }
 
-         body {
-            font-family: 'Patrick Hand', cursive;
-            background: linear-gradient(135deg, #87CEEB 0%, #98FB98 100%);
-            color: #8B4513;
-            overflow: hidden;
-            touch-action: none;
+        html, body {
             width: 100vw;
             height: 100vh;
+            overflow: hidden;
             position: fixed;
-         }
+            touch-action: none;
+            background: var(--color-bg);
+            font-family: var(--font-main);
+            color: var(--color-secondary);
+        }
 
-         /* ================= BACKGROUND & WEATHER ================= */
-         .background-layer {
+        /* ================= LAYER SYSTEM ================= */
+        .layer {
             position: fixed;
             top: 0;
             left: 0;
             width: 100%;
             height: 100%;
             pointer-events: none;
-            z-index: -1;
-         }
+            z-index: 1;
+        }
 
-         .cloud {
-            position: absolute;
-            background: rgba(255, 255, 255, 0.8);
-            border-radius: 50%;
-         }
+        #bg-layer {
+            z-index: 1;
+            background: var(--color-bg);
+            overflow: hidden;
+        }
 
-         .cloud-1 {
-            width: 120px; height: 40px;
-            top: 20%; left: 10%;
-            animation: drift 45s linear infinite;
-         }
-         .cloud-2 {
-            width: 80px; height: 30px;
-            top: 40%; right: 15%;
-            animation: drift 60s linear infinite reverse;
-         }
-         .cloud-3 {
-            width: 100px; height: 35px;
-            top: 60%; left: 20%;
-            animation: drift 50s linear infinite;
-         }
-
-         @keyframes drift {
-            0% { transform: translateX(-100px); }
-            100% { transform: translateX(calc(100vw + 100px)); }
-         }
-
-         /* ================= HONEY CURSOR ================= */
-         .honey-cursor {
-            position: fixed;
-            width: 40px; height: 40px;
+        #weather-layer {
+            z-index: 3;
             pointer-events: none;
-            z-index: 9999;
-            transform: translate(-50%, -50%);
-            opacity: 0.7;
-         }
-         .spoon {
-            width: 100%; height: 100%;
-            background: radial-gradient(circle at 30% 30%, #FFD700, #FF8C00);
-            border-radius: 50% 50% 50% 0;
-            transform: rotate(45deg);
-         }
+        }
 
-         /* ================= GAME ROOT ================= */
-         #game-root {
-            position: relative;
-            width: 100%;
-            height: 100%;
+        #game-layer {
+            z-index: 5;
             display: flex;
             flex-direction: column;
             align-items: center;
-            justify-content: flex-start;
-            padding-top: env(safe-area-inset-top, 0);
-            padding-bottom: env(safe-area-inset-bottom, 0);
-         }
+            padding: env(safe-area-inset-top) 0 env(safe-area-inset-bottom) 0;
+        }
 
-         /* ================= CONTROLS ================= */
-         .sound-controls, .game-controls, .share-btn, .weather-toggle {
-            position: absolute;
-            z-index: 100;
-            background: rgba(255, 248, 220, 0.9);
-            border: 3px solid #D4A574;
-            border-radius: 50%;
-            width: 50px;
-            height: 50px;
+        #ui-layer {
+            z-index: 10;
+            pointer-events: none;
+        }
+
+        #ui-layer > * {
+            pointer-events: auto;
+        }
+
+        #overlay-layer {
+            z-index: 1000;
+            background: rgba(0,0,0,0.85);
             display: flex;
             align-items: center;
             justify-content: center;
-            font-size: 22px;
-            color: #8B4513;
-            cursor: pointer;
-            transition: all 0.2s;
-            touch-action: manipulation;
-         }
-         .sound-controls:hover, .game-controls:hover, .share-btn:hover, .weather-toggle:hover {
-            transform: scale(1.1);
-            background: #FFF8DC;
-         }
+            transition: opacity 0.3s ease;
+        }
 
-         .sound-controls { top: 20px; left: 20px; }
-         .share-btn { top: 20px; right: 20px; }
-         .game-controls { bottom: 20px; left: 20px; gap: 10px; }
-         .weather-toggle { bottom: 20px; right: 20px; }
+        #overlay-layer.hidden {
+            opacity: 0;
+            pointer-events: none;
+        }
 
-         .control-btn {
-            width: 45px; height: 45px;
+        /* ================= BACKGROUND ELEMENTS ================= */
+        .bg-element {
+            position: absolute;
+            pointer-events: none;
+            animation-timing-function: linear;
+        }
+
+        .cloud {
+            background: rgba(255, 255, 255, 0.9);
+            border-radius: 50px;
+            filter: drop-shadow(0 5px 15px rgba(255,255,255,0.3));
+        }
+
+        .tree {
+            background: linear-gradient(to bottom, #228B22, #006400);
+            border-radius: 20% 20% 0 0;
+            position: absolute;
+            bottom: 0;
+        }
+
+        .tree::after {
+            content: '';
+            position: absolute;
+            top: -30px;
+            left: 50%;
+            transform: translateX(-50%);
+            width: 80%;
+            height: 60px;
+            background: linear-gradient(to bottom, #32CD32, #228B22);
             border-radius: 50%;
-            border: none;
-            background: rgba(255, 248, 220, 0.9);
-            border: 2px solid #D4A574;
-            color: #8B4513;
-            font-size: 20px;
-            cursor: pointer;
-            transition: all 0.2s;
-            touch-action: manipulation;
-         }
-         .control-btn:hover { transform: scale(1.1); background: #FFF8DC; }
+        }
 
-         /* ================= WEATHER DRAWER ================= */
-         .weather-drawer {
+        /* ================= CURSOR ================= */
+        .honey-cursor {
             position: fixed;
-            bottom: 90px;
-            right: 20px;
-            background: rgba(255, 248, 220, 0.95);
-            border: 3px solid #D4A574;
-            border-radius: 20px;
-            padding: 15px;
-            z-index: 101;
-            transform: translateY(150%);
-            transition: transform 0.3s ease;
-            box-shadow: 0 5px 20px rgba(0,0,0,0.2);
-         }
-         .weather-drawer.open { transform: translateY(0); }
+            width: 48px;
+            height: 48px;
+            pointer-events: none;
+            z-index: 9999;
+            transform: translate(-50%, -50%);
+            opacity: 0.9;
+            filter: drop-shadow(0 4px 12px rgba(255,140,0,0.5));
+            transition: transform 0.1s ease;
+        }
 
-         .weather-drawer-header {
+        .spoon {
+            width: 100%;
+            height: 100%;
+            background: radial-gradient(circle at 35% 35%, #FFD700, #FFA500, #FF8C00);
+            border-radius: 50% 50% 50% 0;
+            transform: rotate(45deg);
+            box-shadow: inset 0 0 20px rgba(255,255,255,0.4);
+        }
+
+        /* ================= LOADING SCREEN ================= */
+        .loading-screen {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background: linear-gradient(135deg, #87CEEB 0%, #98FB98 100%);
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            z-index: 9999;
+            transition: opacity 0.5s ease;
+        }
+
+        .loading-screen.hidden {
+            opacity: 0;
+            pointer-events: none;
+        }
+
+        .loading-logo {
+            width: 120px;
+            height: 120px;
+            background: linear-gradient(135deg, #FFD700, #FF8C00);
+            border-radius: 50%;
+            margin-bottom: 30px;
+            position: relative;
+            animation: pulse 2s infinite;
+            border: 6px solid var(--color-secondary);
+            box-shadow: 0 10px 30px rgba(255,140,0,0.4);
+        }
+
+        .loading-logo::before,
+        .loading-logo::after {
+            content: '';
+            position: absolute;
+            background: #FFD700;
+            border-radius: 50%;
+            border: 4px solid var(--color-secondary);
+        }
+
+        .loading-logo::before {
+            width: 45px;
+            height: 45px;
+            top: -25px;
+            left: 25px;
+        }
+
+        .loading-logo::after {
+            width: 45px;
+            height: 45px;
+            top: -25px;
+            right: 25px;
+        }
+
+        .loading-spinner {
+            width: 60px;
+            height: 60px;
+            border: 5px solid rgba(255, 248, 220, 0.3);
+            border-top: 5px solid var(--color-primary);
+            border-radius: 50%;
+            animation: spin 1s linear infinite;
+            margin-bottom: 20px;
+        }
+
+        .loading-progress {
+            width: 200px;
+            height: 8px;
+            background: rgba(255, 248, 220, 0.3);
+            border-radius: 4px;
+            overflow: hidden;
+            margin: 20px 0;
+        }
+
+        .loading-progress-fill {
+            height: 100%;
+            background: linear-gradient(90deg, var(--color-primary), var(--color-accent));
+            border-radius: 4px;
+            width: 0%;
+            transition: width 0.3s ease;
+        }
+
+        .loading-tip {
+            font-size: 16px;
+            color: var(--color-secondary);
+            text-align: center;
+            max-width: 300px;
+            margin-top: 20px;
+            padding: 10px 20px;
+            background: rgba(255, 248, 220, 0.8);
+            border-radius: var(--radius-sm);
+            border: 2px solid var(--color-secondary);
+        }
+
+        /* ================= HUD ================= */
+        .hud {
+            width: 100%;
+            max-width: 500px;
+            background: rgba(255, 248, 220, 0.95);
+            border: 4px solid var(--color-secondary);
+            border-radius: var(--radius-lg);
+            margin: 15px auto;
+            padding: 15px;
+            position: relative;
+            backdrop-filter: blur(10px);
+            box-shadow: var(--shadow-md);
+            transition: var(--transition);
+        }
+
+        .hud-header {
             display: flex;
             justify-content: space-between;
             align-items: center;
             margin-bottom: 15px;
-         }
-         .weather-title {
-            font-size: 18px;
-            font-weight: bold;
-            color: #8B4513;
-         }
-         .weather-close {
-            background: none;
-            border: none;
+            padding-bottom: 10px;
+            border-bottom: 2px dashed var(--color-secondary);
+        }
+
+        .hud-title {
+            font-family: var(--font-title);
             font-size: 20px;
-            color: #8B4513;
-            cursor: pointer;
-            width: 30px; height: 30px;
-            border-radius: 50%;
+            color: var(--color-primary);
             display: flex;
             align-items: center;
-            justify-content: center;
-         }
-         .weather-close:hover { background: rgba(139, 69, 19, 0.1); }
+            gap: 10px;
+        }
 
-         .weather-drawer-buttons {
+        .hud-stats {
             display: grid;
-            grid-template-columns: repeat(3, 1fr);
+            grid-template-columns: repeat(4, 1fr);
             gap: 10px;
-         }
-         .weather-btn {
-            width: 50px; height: 50px;
-            font-size: 24px;
-            border: 2px solid #D4A574;
-            border-radius: 15px;
-            background: rgba(255, 248, 220, 0.8);
-            cursor: pointer;
-            transition: all 0.2s;
-         }
-         .weather-btn:hover, .weather-btn.active {
-            transform: scale(1.1);
-            background: #FFF8DC;
-            border-color: #FFA500;
-         }
-         .weather-btn.active { box-shadow: 0 0 15px rgba(255, 165, 0, 0.5); }
+        }
 
-         /* ================= HUD ================= */
-         .hud {
-            width: 100%;
-            max-width: 500px;
-            background: rgba(255, 248, 220, 0.95);
-            border: 3px solid #D4A574;
-            border-radius: 20px;
-            margin: 15px auto 10px;
-            padding: 15px;
-            position: relative;
-            z-index: 10;
-            box-shadow: 0 5px 15px rgba(0,0,0,0.1);
-         }
-
-         .hud-wrap {
-            display: flex;
-            justify-content: space-around;
-            align-items: center;
-         }
-
-         .hud-item {
-            display: flex;
-            align-items: center;
-            gap: 10px;
-            min-width: 70px;
-         }
-
-         .hud-icon {
-            font-size: 28px;
-            min-width: 40px;
-            text-align: center;
-         }
-
-         .hud-meta {
+        .stat-card {
+            background: rgba(255, 228, 181, 0.8);
+            border: 2px solid var(--color-secondary);
+            border-radius: var(--radius-sm);
+            padding: 10px;
             display: flex;
             flex-direction: column;
-         }
+            align-items: center;
+            transition: var(--transition);
+        }
 
-         .hud-label {
-            font-size: 12px;
-            color: #A0522D;
-            font-weight: bold;
+        .stat-card:hover {
+            transform: translateY(-2px);
+            box-shadow: var(--shadow-sm);
+        }
+
+        .stat-icon {
+            font-size: 24px;
+            margin-bottom: 5px;
+        }
+
+        .stat-value {
+            font-family: var(--font-title);
+            font-size: 20px;
+            color: var(--color-secondary);
+            line-height: 1;
+        }
+
+        .stat-label {
+            font-size: 10px;
+            color: var(--color-secondary);
             text-transform: uppercase;
             letter-spacing: 0.5px;
-         }
+            margin-top: 2px;
+            opacity: 0.8;
+        }
 
-         .hud-value {
-            font-size: 24px;
-            font-family: 'Fredoka One', sans-serif;
-            color: #8B4513;
-            line-height: 1;
-         }
+        .hud-bottom {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-top: 15px;
+            gap: 10px;
+        }
 
-         .hud-sep {
-            width: 2px;
-            height: 40px;
-            background: linear-gradient(to bottom, transparent, #D4A574, transparent);
-         }
-
-         /* Progression Bar */
-         .progression-bar {
-            width: 90%;
-            height: 12px;
+        .progress-container {
+            flex: 1;
             background: rgba(139, 69, 19, 0.2);
-            border-radius: 6px;
-            margin: 8px auto;
+            border-radius: 10px;
+            height: 12px;
+            overflow: hidden;
+            border: 2px solid var(--color-secondary);
+        }
+
+        .progress-fill {
+            height: 100%;
+            background: linear-gradient(90deg, var(--color-primary), var(--color-accent));
+            border-radius: 8px;
+            width: 0%;
+            transition: width 0.5s ease;
             position: relative;
             overflow: hidden;
-            border: 2px solid #D4A574;
-         }
+        }
 
-         .progression-fill {
-            height: 100%;
-            background: linear-gradient(90deg, #FFA500, #FF8C00, #FF6347);
-            border-radius: 4px;
-            width: 0%;
-            transition: width 0.3s ease;
-         }
-
-         .progression-label {
+        .progress-fill::after {
+            content: '';
             position: absolute;
-            top: 50%;
-            left: 50%;
-            transform: translate(-50%, -50%);
-            font-size: 10px;
-            font-weight: bold;
+            top: 0;
+            left: -100%;
+            width: 100%;
+            height: 100%;
+            background: linear-gradient(90deg, transparent, rgba(255,255,255,0.4), transparent);
+            animation: shimmer 2s infinite;
+        }
+
+        .level-display {
+            background: linear-gradient(135deg, var(--color-primary), var(--color-accent));
             color: white;
-            text-shadow: 1px 1px 2px rgba(0,0,0,0.5);
-            font-family: 'Fredoka One', sans-serif;
-         }
+            padding: 8px 16px;
+            border-radius: 20px;
+            font-family: var(--font-title);
+            font-size: 14px;
+            white-space: nowrap;
+            box-shadow: var(--shadow-sm);
+        }
 
-         .hud-actions {
-            margin-top: 10px;
-            display: flex;
-            justify-content: center;
-         }
-
-         .hud-ach {
-            background: linear-gradient(135deg, #FFA500, #FF8C00);
-            border: none;
-            border-radius: 25px;
-            padding: 8px 20px;
-            color: white;
-            font-family: 'Patrick Hand', cursive;
-            font-size: 16px;
-            display: flex;
-            align-items: center;
-            gap: 10px;
-            cursor: pointer;
-            transition: all 0.2s;
-         }
-         .hud-ach:hover { transform: scale(1.05); box-shadow: 0 5px 15px rgba(255, 140, 0, 0.3); }
-
-         .hud-ach-icon { font-size: 20px; }
-         .hud-ach-text { display: flex; flex-direction: column; }
-         .hud-ach-label { font-size: 12px; opacity: 0.9; }
-         .hud-ach-value { font-size: 16px; font-weight: bold; }
-         .hud-ach-caret { font-size: 24px; margin-left: 5px; }
-
-         /* HUD Animations */
-         .hud-pop {
-            animation: pop 0.25s ease;
-         }
-         @keyframes pop {
-            0% { transform: scale(1); }
-            50% { transform: scale(1.2); }
-            100% { transform: scale(1); }
-         }
-
-         .hud-shake {
-            animation: shake 0.4s ease;
-         }
-         @keyframes shake {
-            0%, 100% { transform: translateX(0); }
-            25% { transform: translateX(-5px); }
-            75% { transform: translateX(5px); }
-         }
-
-         /* ================= GAME CANVAS ================= */
-         .game-container {
+        /* ================= GAME CONTAINER ================= */
+        .game-container {
             width: 100%;
             max-width: 420px;
             flex: 1;
@@ -350,996 +396,1385 @@
             justify-content: center;
             margin: 0 auto;
             position: relative;
-         }
+            padding: 10px;
+        }
 
-         #honey-game {
+        #game-canvas {
             display: block;
             width: 100%;
             height: auto;
             max-height: 700px;
-            border-radius: 20px;
-            box-shadow: 0 10px 30px rgba(0,0,0,0.2);
+            border-radius: var(--radius-lg);
+            box-shadow: var(--shadow-lg);
             background: rgba(255, 248, 220, 0.15);
-         }
+            border: 4px solid var(--color-secondary);
+        }
 
-         /* ================= OVERLAYS ================= */
-         .overlay {
+        /* ================= CONTROL CLUSTER ================= */
+        .control-cluster {
             position: fixed;
-            top: 0; left: 0;
-            width: 100%; height: 100%;
-            background: rgba(0,0,0,0.85);
+            z-index: 100;
             display: flex;
-            flex-direction: column;
+            gap: 15px;
+            align-items: center;
+        }
+
+        .control-cluster.top-left {
+            top: calc(env(safe-area-inset-top, 0px) + 20px);
+            left: calc(env(safe-area-inset-left, 0px) + 20px);
+        }
+
+        .control-cluster.top-right {
+            top: calc(env(safe-area-inset-top, 0px) + 20px);
+            right: calc(env(safe-area-inset-right, 0px) + 20px);
+        }
+
+        .control-cluster.bottom-left {
+            bottom: calc(env(safe-area-inset-bottom, 0px) + 20px);
+            left: calc(env(safe-area-inset-left, 0px) + 20px);
+        }
+
+        .control-cluster.bottom-right {
+            bottom: calc(env(safe-area-inset-bottom, 0px) + 20px);
+            right: calc(env(safe-area-inset-right, 0px) + 20px);
+        }
+
+        .control-btn {
+            width: 50px;
+            height: 50px;
+            border-radius: 50%;
+            border: 3px solid var(--color-secondary);
+            background: rgba(255, 248, 220, 0.95);
+            color: var(--color-secondary);
+            font-size: 22px;
+            cursor: pointer;
+            transition: var(--transition);
+            display: flex;
             align-items: center;
             justify-content: center;
-            z-index: 1000;
-            padding: 20px;
-            text-align: center;
-         }
+            box-shadow: var(--shadow-sm);
+            backdrop-filter: blur(5px);
+        }
 
-         .overlay.hidden { display: none; }
+        .control-btn:hover {
+            transform: scale(1.1) rotate(5deg);
+            box-shadow: var(--shadow-md);
+            background: var(--color-paper);
+        }
 
-         .pooh-intro {
-            width: 120px; height: 120px;
-            background: linear-gradient(135deg, #f7cc63, #f6c44f);
-            border-radius: 50%;
-            margin-bottom: 20px;
-            position: relative;
-            border: 5px solid #8B4513;
-         }
-         .pooh-intro:before, .pooh-intro:after {
-            content: '';
-            position: absolute;
-            background: #f7cc63;
-            border-radius: 50%;
-            border: 3px solid #8B4513;
-         }
-         .pooh-intro:before {
-            width: 40px; height: 40px;
-            top: -20px; left: 20px;
-         }
-         .pooh-intro:after {
-            width: 40px; height: 40px;
-            top: -20px; right: 20px;
-         }
+        .control-btn:active {
+            transform: scale(0.95);
+        }
 
-         .overlay h2 {
-            font-family: 'Fredoka One', sans-serif;
-            font-size: 42px;
-            color: #FFD700;
-            margin-bottom: 10px;
-            text-shadow: 3px 3px 0 #8B4513;
-         }
-
-         .story-line {
-            font-size: 22px;
-            color: #FFF8DC;
-            margin-bottom: 30px;
-            max-width: 300px;
-            line-height: 1.4;
-         }
-
-         .subtitle {
-            font-size: 20px;
-            color: #D4A574;
-            margin-bottom: 30px;
-         }
-
-         .btn {
-            background: linear-gradient(135deg, #FFA500, #FF8C00);
-            border: none;
-            border-radius: 30px;
-            padding: 18px 40px;
-            font-family: 'Fredoka One', sans-serif;
-            font-size: 22px;
+        .control-btn.active {
+            background: linear-gradient(135deg, var(--color-primary), var(--color-accent));
             color: white;
-            cursor: pointer;
-            margin: 10px 0;
-            min-width: 250px;
-            transition: all 0.2s;
-            box-shadow: 0 8px 20px rgba(255, 140, 0, 0.3);
-         }
-         .btn:hover { transform: scale(1.05); box-shadow: 0 10px 25px rgba(255, 140, 0, 0.4); }
-         .btn:active { transform: scale(0.98); }
+            border-color: var(--color-primary);
+        }
 
-         .btn-secondary {
-            background: linear-gradient(135deg, #D4A574, #8B4513);
-            box-shadow: 0 8px 20px rgba(139, 69, 19, 0.3);
-         }
-         .btn-secondary:hover { box-shadow: 0 10px 25px rgba(139, 69, 19, 0.4); }
+        /* ================= VIRTUAL JOYSTICK ================= */
+        .virtual-joystick {
+            position: absolute;
+            bottom: 120px;
+            left: 50%;
+            transform: translateX(-50%);
+            width: 150px;
+            height: 150px;
+            opacity: 0.3;
+            transition: opacity 0.3s ease;
+            z-index: 50;
+            display: none;
+        }
 
-         .start-links {
-            margin-top: 30px;
-            display: flex;
-            gap: 20px;
-         }
+        .virtual-joystick.active {
+            opacity: 0.8;
+            display: block;
+        }
 
-         .link-btn {
-            background: none;
-            border: 2px solid #FFA500;
-            border-radius: 20px;
-            padding: 12px 25px;
-            font-family: 'Patrick Hand', cursive;
-            font-size: 18px;
-            color: #FFD700;
-            cursor: pointer;
-            transition: all 0.2s;
-         }
-         .link-btn:hover {
-            background: rgba(255, 165, 0, 0.1);
-            transform: scale(1.05);
-         }
+        .joystick-base {
+            position: absolute;
+            width: 100%;
+            height: 100%;
+            background: rgba(255, 248, 220, 0.7);
+            border: 3px solid var(--color-secondary);
+            border-radius: 50%;
+        }
 
-         .final-score {
-            font-family: 'Fredoka One', sans-serif;
-            font-size: 72px;
-            color: #FFD700;
-            margin: 20px 0;
-            text-shadow: 4px 4px 0 #8B4513;
-         }
+        .joystick-handle {
+            position: absolute;
+            width: 60px;
+            height: 60px;
+            background: linear-gradient(135deg, var(--color-primary), var(--color-accent));
+            border: 3px solid var(--color-secondary);
+            border-radius: 50%;
+            top: 50%;
+            left: 50%;
+            transform: translate(-50%, -50%);
+            cursor: move;
+            box-shadow: var(--shadow-md);
+        }
 
-         .gameover-stats {
-            background: rgba(255, 248, 220, 0.9);
-            border-radius: 20px;
-            padding: 20px;
-            margin: 20px 0;
-            max-width: 300px;
-            border: 3px solid #D4A574;
-         }
-
-         .stat-item {
-            display: flex;
-            justify-content: space-between;
-            padding: 8px 0;
-            border-bottom: 1px solid rgba(139, 69, 19, 0.2);
-         }
-         .stat-item:last-child { border-bottom: none; }
-
-         .stat-label {
-            color: #8B4513;
-            font-size: 16px;
-         }
-         .stat-value {
-            color: #FF8C00;
-            font-family: 'Fredoka One', sans-serif;
-            font-size: 18px;
-            font-weight: bold;
-         }
-
-         /* ================= CHARACTER SELECT ================= */
-         .character-select-overlay {
-            background: rgba(0,0,0,0.9);
-         }
-
-         .char-shell {
-            background: linear-gradient(135deg, #FFF8DC, #FFE4B5);
-            border-radius: 30px;
-            padding: 25px;
+        /* ================= OVERLAYS ================= */
+        .overlay-content {
+            background: linear-gradient(135deg, var(--color-paper), #FFE4B5);
+            border: 5px solid var(--color-secondary);
+            border-radius: var(--radius-lg);
+            padding: 30px;
             max-width: 450px;
             width: 90%;
-            border: 5px solid #D4A574;
-            box-shadow: 0 15px 40px rgba(0,0,0,0.3);
-         }
+            max-height: 85vh;
+            overflow-y: auto;
+            box-shadow: var(--shadow-lg);
+            animation: slideUp 0.4s cubic-bezier(0.34, 1.56, 0.64, 1);
+        }
 
-         .char-top {
+        .overlay-header {
             display: flex;
             justify-content: space-between;
             align-items: center;
-            margin-bottom: 20px;
-         }
+            margin-bottom: 25px;
+            padding-bottom: 15px;
+            border-bottom: 3px solid var(--color-secondary);
+        }
 
-         .char-title {
-            font-family: 'Fredoka One', sans-serif;
-            font-size: 28px;
-            color: #8B4513;
-            text-shadow: 2px 2px 0 rgba(255, 255, 255, 0.5);
-         }
+        .overlay-title {
+            font-family: var(--font-title);
+            font-size: 32px;
+            color: var(--color-primary);
+            text-shadow: 2px 2px 0 var(--color-secondary);
+        }
 
-         .char-subtitle {
-            font-size: 16px;
-            color: #8B4513;
-            text-align: center;
-            margin: 5px 0 20px;
-         }
-
-         .char-x {
-            background: #D4A574;
-            border: none;
+        .close-btn {
             width: 40px;
             height: 40px;
             border-radius: 50%;
+            border: 3px solid var(--color-secondary);
+            background: var(--color-primary);
+            color: white;
+            font-size: 20px;
+            cursor: pointer;
+            transition: var(--transition);
+        }
+
+        .close-btn:hover {
+            transform: rotate(90deg);
+            background: var(--color-danger);
+        }
+
+        .btn {
+            background: linear-gradient(135deg, var(--color-primary), var(--color-accent));
+            border: none;
+            border-radius: 25px;
+            padding: 15px 30px;
+            font-family: var(--font-title);
             font-size: 20px;
             color: white;
             cursor: pointer;
-            transition: all 0.2s;
-         }
-         .char-x:hover { background: #8B4513; transform: scale(1.1); }
+            margin: 10px 5px;
+            transition: var(--transition);
+            box-shadow: var(--shadow-md);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            gap: 10px;
+            width: 100%;
+        }
 
-         .char-grid {
+        .btn:hover {
+            transform: translateY(-3px);
+            box-shadow: var(--shadow-lg);
+        }
+
+        .btn:active {
+            transform: translateY(1px);
+        }
+
+        .btn-secondary {
+            background: linear-gradient(135deg, var(--color-secondary), #A0522D);
+        }
+
+        .btn-success {
+            background: linear-gradient(135deg, var(--color-success), #4CAF50);
+        }
+
+        .btn-danger {
+            background: linear-gradient(135deg, var(--color-danger), #FF5252);
+        }
+
+        /* ================= START OVERLAY ================= */
+        .welcome-section {
+            text-align: center;
+            margin-bottom: 30px;
+        }
+
+        .pooh-avatar {
+            width: 120px;
+            height: 120px;
+            background: linear-gradient(135deg, #FFD700, #FF8C00);
+            border-radius: 50%;
+            margin: 0 auto 20px;
+            position: relative;
+            border: 5px solid var(--color-secondary);
+            animation: bounce 2s infinite;
+        }
+
+        .welcome-text {
+            font-size: 24px;
+            color: var(--color-secondary);
+            margin-bottom: 10px;
+        }
+
+        .subtitle {
+            font-size: 18px;
+            color: var(--color-primary);
+            margin-bottom: 30px;
+        }
+
+        .btn-grid {
             display: grid;
             grid-template-columns: repeat(2, 1fr);
             gap: 15px;
             margin: 25px 0;
-         }
+        }
 
-         .character-card {
-            display: flex;
-            flex-direction: column;
-            align-items: center;
+        .feature-badge {
+            background: rgba(255, 140, 0, 0.1);
+            border: 2px solid var(--color-primary);
+            border-radius: var(--radius-sm);
             padding: 15px;
-            background: rgba(255, 248, 220, 0.8);
-            border-radius: 15px;
-            border: 3px solid #D4A574;
-            cursor: pointer;
-            transition: all 0.2s;
-            min-height: 120px;
-         }
+            margin: 15px 0;
+            text-align: center;
+        }
 
-         .character-card:hover {
-            transform: translateY(-5px);
-            background: rgba(255, 228, 181, 0.9);
-         }
-
-         .character-card.active {
-            background: rgba(255, 228, 181, 0.95);
-            border-color: #FFA500;
-            transform: scale(1.05);
-            box-shadow: 0 6px 16px rgba(139, 69, 19, 0.2);
-         }
-
-         .character-card.locked {
-            opacity: 0.6;
-            filter: grayscale(0.5);
-            cursor: not-allowed;
-         }
-
-         .character-card.locked:hover {
-            transform: none !important;
-         }
-
-         .char-icon {
-            font-size: 32px;
+        .feature-badge h3 {
+            color: var(--color-primary);
             margin-bottom: 8px;
-         }
+            font-family: var(--font-title);
+        }
 
-         .char-name {
+        /* ================= CHARACTER SELECT ================= */
+        .character-grid {
+            display: grid;
+            grid-template-columns: repeat(2, 1fr);
+            gap: 15px;
+            margin: 20px 0;
+        }
+
+        .character-card {
+            background: rgba(255, 248, 220, 0.9);
+            border: 3px solid var(--color-secondary);
+            border-radius: var(--radius-md);
+            padding: 15px;
+            cursor: pointer;
+            transition: var(--transition);
+            position: relative;
+            overflow: hidden;
+        }
+
+        .character-card:hover {
+            transform: translateY(-5px);
+            border-color: var(--color-primary);
+            box-shadow: var(--shadow-md);
+        }
+
+        .character-card.selected {
+            background: linear-gradient(135deg, rgba(255, 140, 0, 0.2), rgba(255, 215, 0, 0.2));
+            border-color: var(--color-primary);
+            box-shadow: 0 0 20px rgba(255, 140, 0, 0.3);
+        }
+
+        .character-card.locked {
+            opacity: 0.6;
+            filter: grayscale(0.8);
+            cursor: not-allowed;
+        }
+
+        .character-card.locked:hover {
+            transform: none;
+            border-color: var(--color-secondary);
+        }
+
+        .character-icon {
+            font-size: 40px;
+            text-align: center;
+            margin-bottom: 10px;
+        }
+
+        .character-name {
+            font-family: var(--font-title);
             font-size: 18px;
-            font-weight: bold;
-            color: #8B4513;
-            margin-bottom: 4px;
-            font-family: 'Fredoka One', sans-serif;
-         }
+            color: var(--color-secondary);
+            text-align: center;
+            margin-bottom: 5px;
+        }
 
-         .char-ability {
-            font-size: 14px;
-            color: #FF8C00;
-            font-weight: bold;
-            margin-bottom: 4px;
-         }
-
-         .char-desc {
+        .character-ability {
             font-size: 12px;
-            color: #A0522D;
+            color: var(--color-primary);
+            text-align: center;
+            font-weight: bold;
+            margin-bottom: 8px;
+        }
+
+        .character-desc {
+            font-size: 11px;
+            color: var(--color-secondary);
             text-align: center;
             line-height: 1.3;
-         }
+        }
 
-         .char-locked {
-            display: block;
-            font-size: 11px;
-            color: #8B4513;
-            background: rgba(139, 69, 19, 0.1);
-            padding: 4px 8px;
-            border-radius: 10px;
-            margin-top: 8px;
-            text-align: center;
-         }
+        .lock-icon {
+            position: absolute;
+            top: 10px;
+            right: 10px;
+            color: var(--color-secondary);
+            opacity: 0.8;
+        }
 
-         .char-bottom {
-            margin-top: 20px;
-            display: flex;
-            justify-content: center;
-         }
-
-         /* ================= ACHIEVEMENTS ================= */
-         .achievements-overlay {
-            background: rgba(0,0,0,0.9);
-         }
-
-         .achievements-shell {
-            background: linear-gradient(135deg, #FFF8DC, #FFE4B5);
-            border-radius: 30px;
-            padding: 25px;
-            max-width: 450px;
-            width: 90%;
-            max-height: 80vh;
-            border: 5px solid #D4A574;
-            box-shadow: 0 15px 40px rgba(0,0,0,0.3);
-            display: flex;
-            flex-direction: column;
-         }
-
-         .achievements-top {
-            display: flex;
-            justify-content: space-between;
-            align-items: center;
-            margin-bottom: 20px;
-         }
-
-         .ach-title {
-            font-family: 'Fredoka One', sans-serif;
-            font-size: 28px;
-            color: #8B4513;
-            text-shadow: 2px 2px 0 rgba(255, 255, 255, 0.5);
-         }
-
-         .ach-x {
-            background: #D4A574;
-            border: none;
-            width: 40px;
-            height: 40px;
-            border-radius: 50%;
-            font-size: 20px;
-            color: white;
-            cursor: pointer;
-            transition: all 0.2s;
-         }
-         .ach-x:hover { background: #8B4513; transform: scale(1.1); }
-
-         .achievements-listWrap {
-            flex: 1;
+        /* ================= ACHIEVEMENTS ================= */
+        .achievements-list {
+            max-height: 400px;
             overflow-y: auto;
             padding-right: 10px;
-            margin: 15px 0;
-         }
+            margin: 20px 0;
+        }
 
-         .achievement-item {
+        .achievement-item {
             background: rgba(255, 248, 220, 0.8);
-            border: 2px solid #D4A574;
-            border-radius: 15px;
+            border: 2px solid var(--color-secondary);
+            border-radius: var(--radius-sm);
             padding: 15px;
             margin-bottom: 10px;
             display: flex;
             align-items: center;
             gap: 15px;
-            transition: all 0.2s;
-         }
+            transition: var(--transition);
+        }
 
-         .achievement-item.unlocked {
+        .achievement-item.unlocked {
             background: rgba(255, 228, 181, 0.9);
-            border-color: #FFA500;
-         }
+            border-color: var(--color-primary);
+            box-shadow: var(--shadow-sm);
+        }
 
-         .achievement-icon {
-            font-size: 28px;
+        .achievement-icon {
+            font-size: 32px;
             min-width: 40px;
             text-align: center;
-         }
+        }
 
-         .achievement-details {
+        .achievement-details {
             flex: 1;
-            text-align: left;
-         }
+        }
 
-         .achievement-name {
-            font-family: 'Fredoka One', sans-serif;
-            font-size: 18px;
-            color: #8B4513;
-            margin-bottom: 4px;
-         }
+        .achievement-name {
+            font-family: var(--font-title);
+            font-size: 16px;
+            color: var(--color-secondary);
+            margin-bottom: 5px;
+        }
 
-         .achievement-desc {
+        .achievement-desc {
             font-size: 14px;
-            color: #A0522D;
-         }
+            color: var(--color-secondary);
+            opacity: 0.8;
+        }
 
-         .achievements-bottom {
-            margin-top: 20px;
+        .achievement-progress {
+            height: 6px;
+            background: rgba(139, 69, 19, 0.2);
+            border-radius: 3px;
+            margin-top: 5px;
+            overflow: hidden;
+        }
+
+        .achievement-progress-fill {
+            height: 100%;
+            background: linear-gradient(90deg, var(--color-primary), var(--color-accent));
+            border-radius: 3px;
+            width: 0%;
+            transition: width 0.5s ease;
+        }
+
+        /* ================= SETTINGS ================= */
+        .settings-section {
+            margin: 20px 0;
+        }
+
+        .setting-item {
             display: flex;
-            justify-content: center;
-         }
+            justify-content: space-between;
+            align-items: center;
+            padding: 15px;
+            background: rgba(255, 248, 220, 0.8);
+            border-radius: var(--radius-sm);
+            margin-bottom: 10px;
+            border: 2px solid transparent;
+            transition: var(--transition);
+        }
 
-         /* ================= SCORE POPUPS ================= */
-         .score-popup {
+        .setting-item:hover {
+            border-color: var(--color-primary);
+            transform: translateX(5px);
+        }
+
+        .setting-label {
+            display: flex;
+            align-items: center;
+            gap: 10px;
+            font-size: 16px;
+            color: var(--color-secondary);
+        }
+
+        .setting-icon {
+            font-size: 20px;
+            color: var(--color-primary);
+            width: 30px;
+        }
+
+        .toggle-switch {
+            position: relative;
+            width: 60px;
+            height: 30px;
+        }
+
+        .toggle-checkbox {
+            display: none;
+        }
+
+        .toggle-slider {
             position: absolute;
-            font-family: 'Fredoka One', sans-serif;
-            font-size: 22px;
-            color: #FFD700;
-            text-shadow: 2px 2px 0 #8B4513;
-            pointer-events: none;
-            z-index: 50;
-            animation: popup 1s ease-out forwards;
-         }
+            cursor: pointer;
+            top: 0;
+            left: 0;
+            right: 0;
+            bottom: 0;
+            background-color: #ccc;
+            transition: .4s;
+            border-radius: 34px;
+        }
 
-         @keyframes popup {
-             0% { opacity: 0; transform: translateY(0) scale(0.5); }
-             20% { opacity: 1; transform: translateY(-20px) scale(1.1); }
-             100% { opacity: 0; transform: translateY(-60px) scale(1); }
-         }
+        .toggle-slider:before {
+            position: absolute;
+            content: "";
+            height: 22px;
+            width: 22px;
+            left: 4px;
+            bottom: 4px;
+            background-color: white;
+            transition: .4s;
+            border-radius: 50%;
+        }
 
-         /* ================= ACHIEVEMENT POPUP ================= */
-         .achievement-popup {
-            position: fixed;
-            top: 50%;
-            left: 50%;
-            transform: translate(-50%, -50%);
-            background: linear-gradient(135deg, #FFD700, #FFA500);
-            border: 4px solid #8B4513;
-            border-radius: 25px;
-            padding: 25px 35px;
-            font-family: 'Fredoka One', sans-serif;
-            font-size: 26px;
-            color: #8B4513;
-            z-index: 1001;
+        .toggle-checkbox:checked + .toggle-slider {
+            background-color: var(--color-primary);
+        }
+
+        .toggle-checkbox:checked + .toggle-slider:before {
+            transform: translateX(30px);
+        }
+
+        /* ================= GAME OVER ================= */
+        .results-section {
             text-align: center;
-            box-shadow: 0 15px 40px rgba(0,0,0,0.4);
-            animation: achieveIn 0.5s ease-out, achieveOut 0.5s ease-in 2.5s forwards;
-         }
+        }
 
-         @keyframes achieveIn {
-             0% { opacity: 0; transform: translate(-50%, -50%) scale(0.3); }
-             70% { transform: translate(-50%, -50%) scale(1.1); }
-             100% { opacity: 1; transform: translate(-50%, -50%) scale(1); }
-         }
+        .final-score {
+            font-family: var(--font-title);
+            font-size: 72px;
+            color: var(--color-accent);
+            text-shadow: 4px 4px 0 var(--color-secondary);
+            margin: 20px 0;
+            animation: popIn 0.5s cubic-bezier(0.68, -0.55, 0.265, 1.55);
+        }
 
-         @keyframes achieveOut {
-             0% { opacity: 1; transform: translate(-50%, -50%) scale(1); }
-             100% { opacity: 0; transform: translate(-50%, -50%) scale(0.3); }
-         }
+        .results-stats {
+            background: rgba(255, 248, 220, 0.9);
+            border-radius: var(--radius-md);
+            padding: 20px;
+            margin: 20px 0;
+            border: 3px solid var(--color-secondary);
+        }
 
-         /* ================= UNLOCK NOTIFICATION ================= */
-         .unlock-notification {
+        .stat-row {
+            display: flex;
+            justify-content: space-between;
+            padding: 10px 0;
+            border-bottom: 1px dashed rgba(139, 69, 19, 0.3);
+        }
+
+        .stat-row:last-child {
+            border-bottom: none;
+        }
+
+        .stat-label {
+            color: var(--color-secondary);
+            font-size: 16px;
+        }
+
+        .stat-value {
+            color: var(--color-primary);
+            font-family: var(--font-title);
+            font-size: 18px;
+            font-weight: bold;
+        }
+
+        .new-record {
+            background: linear-gradient(135deg, var(--color-accent), #FFA500);
+            color: var(--color-secondary);
+            padding: 10px 20px;
+            border-radius: 20px;
+            font-family: var(--font-title);
+            margin: 15px 0;
+            animation: pulse 2s infinite;
+            border: 3px solid var(--color-secondary);
+        }
+
+        /* ================= NOTIFICATIONS ================= */
+        .notification {
             position: fixed;
             top: 100px;
             left: 50%;
-            transform: translateX(-50%) translateY(-20px);
-            background: linear-gradient(135deg, #FFD700, #FFA500);
-            border: 3px solid #8B4513;
-            border-radius: 20px;
-            padding: 15px;
+            transform: translateX(-50%);
+            background: linear-gradient(135deg, var(--color-primary), var(--color-accent));
+            color: white;
+            padding: 15px 25px;
+            border-radius: var(--radius-md);
+            z-index: 2000;
             display: flex;
             align-items: center;
             gap: 15px;
-            z-index: 1000;
-            opacity: 0;
-            transition: all 0.3s ease;
-            box-shadow: 0 10px 30px rgba(139, 69, 19, 0.4);
-         }
+            box-shadow: var(--shadow-lg);
+            animation: slideDown 0.3s ease, slideUp 0.3s ease 2.7s forwards;
+            max-width: 90%;
+            border: 3px solid var(--color-secondary);
+        }
 
-         .unlock-notification.show {
-            opacity: 1;
-            transform: translateX(-50%) translateY(0);
-         }
+        .notification-icon {
+            font-size: 28px;
+            animation: bounce 1s infinite alternate;
+        }
 
-         .unlock-icon {
-            font-size: 36px;
-            animation: bounce 0.5s ease infinite alternate;
-         }
+        .notification-content {
+            flex: 1;
+        }
 
-         .unlock-content {
-            display: flex;
-            flex-direction: column;
-         }
+        .notification-title {
+            font-family: var(--font-title);
+            font-size: 16px;
+            margin-bottom: 5px;
+        }
 
-         .unlock-title {
+        .notification-message {
             font-size: 14px;
-            color: #8B4513;
-            font-weight: bold;
-            margin-bottom: 4px;
-            font-family: 'Patrick Hand', cursive;
-         }
+            opacity: 0.9;
+        }
 
-         .unlock-name {
+        /* ================= DAILY CHALLENGE ================= */
+        .challenge-card {
+            background: linear-gradient(135deg, rgba(255, 215, 0, 0.2), rgba(255, 140, 0, 0.2));
+            border: 3px solid var(--color-primary);
+            border-radius: var(--radius-md);
+            padding: 20px;
+            margin: 20px 0;
+            text-align: center;
+        }
+
+        .challenge-title {
+            font-family: var(--font-title);
+            color: var(--color-primary);
+            margin-bottom: 10px;
             font-size: 20px;
-            color: #8B4513;
-            font-weight: bold;
-            font-family: 'Fredoka One', sans-serif;
-         }
+        }
 
-         @keyframes bounce {
-            from { transform: translateY(0); }
-            to { transform: translateY(-5px); }
-         }
+        .challenge-progress {
+            height: 20px;
+            background: rgba(255, 248, 220, 0.8);
+            border-radius: 10px;
+            margin: 15px 0;
+            overflow: hidden;
+            border: 2px solid var(--color-secondary);
+        }
 
-         /* ================= FIX: Floating buttons vs control cluster ================= */
-         .sound-controls, .share-btn, .weather-toggle{
-           position: absolute;
-           z-index: 100;
-           background: rgba(255, 248, 220, 0.9);
-           border: 3px solid #D4A574;
-           border-radius: 50%;
-           width: 50px;
-           height: 50px;
-           display: flex;
-           align-items: center;
-           justify-content: center;
-           font-size: 22px;
-           color: #8B4513;
-           cursor: pointer;
-           transition: all 0.2s;
-         }
+        .challenge-progress-fill {
+            height: 100%;
+            background: linear-gradient(90deg, var(--color-primary), var(--color-accent));
+            width: 0%;
+            transition: width 0.5s ease;
+        }
 
-         .sound-controls .sound-btn{
-           width: 100%;
-           height: 100%;
-           border: 0;
-           background: transparent;
-           color: inherit;
-           font: inherit;
-           display: flex;
-           align-items: center;
-           justify-content: center;
-           cursor: pointer;
-         }
+        .challenge-reward {
+            display: inline-block;
+            background: var(--color-accent);
+            color: var(--color-secondary);
+            padding: 8px 16px;
+            border-radius: 20px;
+            font-family: var(--font-title);
+            margin-top: 10px;
+            border: 2px solid var(--color-secondary);
+        }
 
-         .game-controls{
-           position: absolute;
-           z-index: 100;
-           bottom: calc(env(safe-area-inset-bottom, 0px) + 14px);
-           left: calc(env(safe-area-inset-left, 0px) + 14px);
-           width: auto;
-           height: auto;
-           border: none;
-           border-radius: 0;
-           background: transparent;
-           display: flex;
-           flex-direction: column;
-           gap: 10px;
-           align-items: center;
-           justify-content: center;
-           padding: 0;
-         }
+        /* ================= WEATHER DRAWER ================= */
+        .weather-drawer {
+            position: fixed;
+            bottom: 100px;
+            right: 20px;
+            background: rgba(255, 248, 220, 0.95);
+            border: 4px solid var(--color-secondary);
+            border-radius: var(--radius-md);
+            padding: 20px;
+            z-index: 101;
+            transform: translateY(150%);
+            transition: transform 0.4s cubic-bezier(0.34, 1.56, 0.64, 1);
+            box-shadow: var(--shadow-lg);
+            backdrop-filter: blur(10px);
+        }
 
-         .sound-controls{
-           top: calc(env(safe-area-inset-top, 0px) + 12px);
-           left: calc(env(safe-area-inset-left, 0px) + 12px);
-         }
-         .share-btn{
-           top: calc(env(safe-area-inset-top, 0px) + 12px);
-           right: calc(env(safe-area-inset-right, 0px) + 12px);
-         }
-         .weather-toggle{
-           bottom: calc(env(safe-area-inset-bottom, 0px) + 14px);
-           right: calc(env(safe-area-inset-right, 0px) + 14px);
-         }
+        .weather-drawer.open {
+            transform: translateY(0);
+        }
 
-         /* HUD needs to start BELOW the top buttons */
-         .hud{
-           margin-top: calc(env(safe-area-inset-top, 0px) + 72px);
-         }
+        .weather-grid {
+            display: grid;
+            grid-template-columns: repeat(3, 1fr);
+            gap: 15px;
+            margin-top: 15px;
+        }
 
-         /* Canvas sizing: keep aspect ratio stable */
-         .game-container{
-           flex: 1;
-           min-height: 0;
-         }
-         #honey-game{
-           height: auto;
-           width: auto;
-           max-height: none;
-         }
+        .weather-option {
+            width: 60px;
+            height: 60px;
+            border: 3px solid var(--color-secondary);
+            border-radius: var(--radius-sm);
+            background: rgba(255, 248, 220, 0.8);
+            font-size: 28px;
+            cursor: pointer;
+            transition: var(--transition);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+        }
 
-         /* ================= LOADING STATES ================= */
-         .loading {
-             position: fixed;
-             top: 0;
-             left: 0;
-             width: 100%;
-             height: 100%;
-             background: linear-gradient(135deg, #87CEEB 0%, #98FB98 100%);
-             display: flex;
-             flex-direction: column;
-             align-items: center;
-             justify-content: center;
-             z-index: 9999;
-             transition: opacity 0.3s ease;
-         }
+        .weather-option:hover,
+        .weather-option.active {
+            transform: scale(1.1) rotate(5deg);
+            border-color: var(--color-primary);
+            background: linear-gradient(135deg, var(--color-primary), var(--color-accent));
+            color: white;
+            box-shadow: var(--shadow-md);
+        }
 
-         .loading.hidden {
-             opacity: 0;
-             pointer-events: none;
-         }
+        /* ================= SEASONAL EFFECTS ================= */
+        .seasonal-effect {
+            position: absolute;
+            pointer-events: none;
+            z-index: 2;
+        }
 
-         .loading-spinner {
-             width: 60px;
-             height: 60px;
-             border: 5px solid rgba(255, 248, 220, 0.3);
-             border-top: 5px solid #FFA500;
-             border-radius: 50%;
-             animation: spin 1s linear infinite;
-             margin-bottom: 20px;
-         }
+        /* ================= ANIMATIONS ================= */
+        @keyframes bounce {
+            0%, 100% { transform: translateY(0); }
+            50% { transform: translateY(-10px); }
+        }
 
-         @keyframes spin {
-             0% { transform: rotate(0deg); }
-             100% { transform: rotate(360deg); }
-         }
+        @keyframes spin {
+            0% { transform: rotate(0deg); }
+            100% { transform: rotate(360deg); }
+        }
 
-         .loading-text {
-             font-family: 'Patrick Hand', cursive;
-             font-size: 24px;
-             color: #8B4513;
-             text-align: center;
-         }
+        @keyframes pulse {
+            0%, 100% { transform: scale(1); opacity: 1; }
+            50% { transform: scale(1.05); opacity: 0.8; }
+        }
 
-         /* ================= RESPONSIVE FIXES ================= */
-         @media (max-width: 480px) {
-             .hud {
-                 margin-top: calc(env(safe-area-inset-top, 0px) + 60px) !important;
-                 padding: 10px 15px;
-                 border-radius: 16px;
-                 margin-left: 15px;
-                 margin-right: 15px;
-                 width: auto;
-             }
-             
-             .hud-wrap {
-                 gap: 15px;
-             }
-             
-             .hud-item {
-                 min-width: 60px;
-             }
-             
-             .hud-icon {
-                 font-size: 22px;
-                 min-width: 30px;
-             }
-             
-             .hud-value {
-                 font-size: 18px;
-             }
-             
-             .hud-label {
-                 font-size: 9px;
-             }
-             
-             .hud-sep {
-                 display: none;
-             }
-             
-             .sound-controls, .share-btn {
-                 top: calc(env(safe-area-inset-top, 0px) + 10px);
-                 width: 42px;
-                 height: 42px;
-                 font-size: 18px;
-             }
-             
-             .sound-controls {
-                 left: calc(env(safe-area-inset-left, 0px) + 15px);
-             }
-             
-             .share-btn {
-                 right: calc(env(safe-area-inset-right, 0px) + 15px);
-             }
-             
-             .weather-toggle {
-                 bottom: calc(env(safe-area-inset-bottom, 0px) + 10px);
-                 right: calc(env(safe-area-inset-right, 0px) + 15px);
-                 width: 42px;
-                 height: 42px;
-                 font-size: 20px;
-             }
-             
-             .game-controls {
-                 bottom: calc(env(safe-area-inset-bottom, 0px) + 10px);
-                 left: calc(env(safe-area-inset-left, 0px) + 15px);
-                 gap: 8px;
-             }
-             
-             .control-btn {
-                 width: 40px;
-                 height: 40px;
-                 font-size: 18px;
-             }
-             
-             .game-container {
-                 padding: 10px;
-                 margin-top: -10px;
-             }
-             
-             .overlay h2 {
-                 font-size: 32px;
-                 margin-bottom: 10px;
-             }
-             
-             .story-line {
-                 font-size: 18px;
-                 margin-bottom: 20px;
-             }
-             
-             .btn {
-                 padding: 14px 28px;
-                 font-size: 18px;
-                 min-width: 200px;
-                 margin: 8px 0;
-             }
-             
-             .start-links {
-                 flex-direction: column;
-                 gap: 12px;
-                 margin-top: 20px;
-             }
-             
-             .char-grid {
-                 grid-template-columns: 1fr;
-                 gap: 12px;
-             }
-             
-             .weather-drawer {
-                 bottom: 75px;
-                 right: 10px;
-                 padding: 12px;
-             }
-         }
+        @keyframes slideUp {
+            from { transform: translateY(100px); opacity: 0; }
+            to { transform: translateY(0); opacity: 1; }
+        }
 
-         @media (max-width: 360px) {
-             .hud {
-                 margin-left: 8px;
-                 margin-right: 8px;
-                 padding: 8px 12px;
-             }
-             
-             .hud-value {
-                 font-size: 16px;
-             }
-             
-             .hud-label {
-                 font-size: 8px;
-             }
-             
-             .btn {
-                 padding: 12px 24px;
-                 font-size: 16px;
-                 min-width: 180px;
-             }
-         }
+        @keyframes slideDown {
+            from { transform: translateY(-100px); opacity: 0; }
+            to { transform: translateY(0); opacity: 1; }
+        }
 
-         @media (min-width: 768px) {
-             .hud {
-                 max-width: 600px;
-                 padding: 20px 30px;
-             }
-             
-             .hud-value {
-                 font-size: 28px;
-             }
-             
-             .hud-label {
-                 font-size: 14px;
-             }
-             
-             .progression-bar {
-                 height: 14px;
-                 margin: 15px auto;
-             }
-             
-             .game-container {
-                 max-width: 600px;
-             }
-         }
+        @keyframes popIn {
+            0% { transform: scale(0); opacity: 0; }
+            70% { transform: scale(1.2); opacity: 0.7; }
+            100% { transform: scale(1); opacity: 1; }
+        }
 
-         @media (max-height: 500px) and (orientation: landscape) {
-             .hud {
-                 margin-top: calc(env(safe-area-inset-top, 0px) + 40px) !important;
-                 padding: 8px 12px;
-             }
-             
-             .hud-wrap {
-                 gap: 8px;
-             }
-             
-             .hud-value {
-                 font-size: 16px;
-             }
-             
-             .hud-label {
-                 font-size: 8px;
-             }
-             
-             .game-container {
-                 height: 65vh !important;
-             }
-             
-             .sound-controls, .share-btn {
-                 top: calc(env(safe-area-inset-top, 0px) + 5px);
-                 width: 36px;
-                 height: 36px;
-                 font-size: 16px;
-             }
-         }
+        @keyframes shimmer {
+            0% { transform: translateX(-100%); }
+            100% { transform: translateX(100%); }
+        }
 
-         @media (hover: none) {
-             .honey-cursor {
-                 display: none;
-             }
-         }
+        @keyframes drift {
+            0% { transform: translateX(-100px) rotate(0deg); }
+            100% { transform: translateX(calc(100vw + 100px)) rotate(360deg); }
+        }
 
-         /* Prevent text selection */
-         .no-select {
-             -webkit-user-select: none;
-             -moz-user-select: none;
-             -ms-user-select: none;
-             user-select: none;
-         }
-      </style>
-   </head>
-   <body class="no-select">
-      <!-- Background -->
-      <div class="background-layer" aria-hidden="true">
-         <div class="cloud cloud-1"></div>
-         <div class="cloud cloud-2"></div>
-         <div class="cloud cloud-3"></div>
-      </div>
-      <!-- Honey Cursor -->
-      <div class="honey-cursor" id="honey-cursor">
-         <div class="spoon"></div>
-      </div>
-      <main id="game-root">
-         <!-- Sound -->
-         <div class="sound-controls">
-            <button class="sound-btn" id="sound-toggle-btn" aria-label="Toggle sound">
-            <i class="fas fa-volume-up"></i>
+        @keyframes float {
+            0%, 100% { transform: translateY(0) rotate(0deg); }
+            50% { transform: translateY(-20px) rotate(180deg); }
+        }
+
+        /* ================= RESPONSIVE DESIGN ================= */
+        @media (max-width: 768px) {
+            .hud {
+                max-width: 95%;
+                padding: 12px;
+                margin: 10px auto;
+            }
+
+            .hud-stats {
+                grid-template-columns: repeat(2, 1fr);
+                gap: 8px;
+            }
+
+            .overlay-content {
+                padding: 20px;
+                width: 95%;
+            }
+
+            .character-grid {
+                grid-template-columns: 1fr;
+                gap: 10px;
+            }
+
+            .btn-grid {
+                grid-template-columns: 1fr;
+            }
+
+            .control-btn {
+                width: 45px;
+                height: 45px;
+                font-size: 20px;
+            }
+
+            .virtual-joystick {
+                width: 120px;
+                height: 120px;
+                bottom: 100px;
+            }
+
+            .final-score {
+                font-size: 50px;
+            }
+
+            .notification {
+                width: 95%;
+                top: 80px;
+                padding: 12px 20px;
+            }
+
+            .weather-drawer {
+                right: 10px;
+                bottom: 90px;
+                padding: 15px;
+            }
+
+            .weather-grid {
+                grid-template-columns: repeat(2, 1fr);
+                gap: 10px;
+            }
+
+            .weather-option {
+                width: 50px;
+                height: 50px;
+                font-size: 24px;
+            }
+        }
+
+        @media (max-width: 480px) {
+            .hud-stats {
+                grid-template-columns: repeat(2, 1fr);
+            }
+
+            .stat-card {
+                padding: 8px;
+            }
+
+            .stat-value {
+                font-size: 18px;
+            }
+
+            .overlay-title {
+                font-size: 24px;
+            }
+
+            .btn {
+                padding: 12px 20px;
+                font-size: 18px;
+            }
+
+            .virtual-joystick {
+                width: 100px;
+                height: 100px;
+                bottom: 90px;
+            }
+
+            .joystick-handle {
+                width: 50px;
+                height: 50px;
+            }
+        }
+
+        @media (max-height: 600px) and (orientation: landscape) {
+            .hud {
+                margin: 5px auto;
+                padding: 8px;
+            }
+
+            .game-container {
+                max-height: 70vh;
+            }
+
+            .overlay-content {
+                max-height: 90vh;
+                padding: 15px;
+            }
+
+            .character-grid {
+                grid-template-columns: repeat(4, 1fr);
+                gap: 10px;
+            }
+
+            .achievements-list {
+                max-height: 300px;
+            }
+        }
+
+        /* ================= UTILITY CLASSES ================= */
+        .sr-only {
+            position: absolute;
+            width: 1px;
+            height: 1px;
+            padding: 0;
+            margin: -1px;
+            overflow: hidden;
+            clip: rect(0, 0, 0, 0);
+            white-space: nowrap;
+            border: 0;
+        }
+
+        .hidden {
+            display: none !important;
+        }
+
+        .fade-in {
+            animation: fadeIn 0.3s ease;
+        }
+
+        @keyframes fadeIn {
+            from { opacity: 0; }
+            to { opacity: 1; }
+        }
+
+        .text-center {
+            text-align: center;
+        }
+
+        .mb-1 { margin-bottom: 5px; }
+        .mb-2 { margin-bottom: 10px; }
+        .mb-3 { margin-bottom: 15px; }
+        .mb-4 { margin-bottom: 20px; }
+        .mb-5 { margin-bottom: 25px; }
+
+        .mt-1 { margin-top: 5px; }
+        .mt-2 { margin-top: 10px; }
+        .mt-3 { margin-top: 15px; }
+        .mt-4 { margin-top: 20px; }
+        .mt-5 { margin-top: 25px; }
+
+        /* ================= PERFECT SCROLLBAR ================= */
+        .ps {
+            overflow: hidden;
+            position: relative;
+        }
+
+        .ps__rail-x,
+        .ps__rail-y {
+            opacity: 0.6;
+            position: absolute;
+        }
+
+        .ps__rail-x {
+            height: 6px;
+            bottom: 0;
+        }
+
+        .ps__rail-y {
+            width: 6px;
+            right: 0;
+        }
+
+        .ps__thumb-x,
+        .ps__thumb-y {
+            background-color: var(--color-primary);
+            border-radius: 3px;
+            position: absolute;
+        }
+
+        .ps__thumb-x {
+            height: 100%;
+            bottom: 0;
+        }
+
+        .ps__thumb-y {
+            width: 100%;
+            right: 0;
+        }
+
+        /* ================= PRINT STYLES ================= */
+        @media print {
+            .no-print {
+                display: none !important;
+            }
+        }
+    </style>
+</head>
+<body>
+    <!-- Loading Screen -->
+    <div class="loading-screen" id="loading-screen">
+        <div class="loading-logo"></div>
+        <div class="loading-spinner"></div>
+        <div class="loading-progress">
+            <div class="loading-progress-fill" id="loading-progress"></div>
+        </div>
+        <div class="loading-tip" id="loading-tip">Loading delicious honey...</div>
+    </div>
+
+    <!-- Layers -->
+    <div class="layer" id="bg-layer"></div>
+    <div class="layer" id="weather-layer"></div>
+    <div class="layer" id="game-layer">
+        <!-- HUD -->
+        <div class="hud" id="hud">
+            <div class="hud-header">
+                <div class="hud-title">
+                    <i class="fas fa-honey-pot"></i>
+                    Pooh's Honey Hunt
+                </div>
+                <div class="level-display" id="level-display">Beginner</div>
+            </div>
+            
+            <div class="hud-stats">
+                <div class="stat-card">
+                    <div class="stat-icon">🍯</div>
+                    <div class="stat-value" id="stat-score">0</div>
+                    <div class="stat-label">Score</div>
+                </div>
+                
+                <div class="stat-card">
+                    <div class="stat-icon">🔥</div>
+                    <div class="stat-value" id="stat-streak">0</div>
+                    <div class="stat-label">Streak</div>
+                </div>
+                
+                <div class="stat-card">
+                    <div class="stat-icon">❤️</div>
+                    <div class="stat-value" id="stat-lives">3</div>
+                    <div class="stat-label">Lives</div>
+                </div>
+                
+                <div class="stat-card">
+                    <div class="stat-icon">⚡</div>
+                    <div class="stat-value" id="stat-combo">1.0x</div>
+                    <div class="stat-label">Combo</div>
+                </div>
+            </div>
+            
+            <div class="hud-bottom">
+                <div class="progress-container">
+                    <div class="progress-fill" id="progress-fill"></div>
+                </div>
+                <div class="level-display" id="next-level-label">0/300</div>
+            </div>
+        </div>
+
+        <!-- Game Canvas -->
+        <div class="game-container">
+            <canvas id="game-canvas" width="420" height="700"></canvas>
+        </div>
+
+        <!-- Virtual Joystick (Mobile) -->
+        <div class="virtual-joystick" id="virtual-joystick">
+            <div class="joystick-base"></div>
+            <div class="joystick-handle" id="joystick-handle"></div>
+        </div>
+    </div>
+
+    <!-- UI Layer -->
+    <div class="layer" id="ui-layer">
+        <!-- Control Clusters -->
+        <div class="control-cluster top-left">
+            <button class="control-btn" id="sound-toggle" aria-label="Toggle sound">
+                <i class="fas fa-volume-up"></i>
             </button>
-         </div>
-         <!-- Share -->
-         <button class="share-btn" id="share-btn" aria-label="Share score">
-         <i class="fas fa-share-alt"></i>
-         </button>
-         <!-- Game Controls -->
-         <div class="game-controls">
-            <button class="control-btn pause" id="pause-btn"><i class="fas fa-pause"></i></button>
-            <button class="control-btn help" id="help-btn"><i class="fas fa-question"></i></button>
-         </div>
-         <!-- Weather Toggle -->
-         <button class="weather-toggle" id="weather-toggle">🌦️</button>
-         <!-- Weather Drawer -->
-         <aside class="weather-drawer" id="weather-drawer">
-            <div class="weather-drawer-header">
-               <span class="weather-title">Weather</span>
-               <button class="weather-close" id="weather-close">✕</button>
-            </div>
-            <div class="weather-drawer-buttons">
-               <button class="weather-btn" data-weather="clear">☀️</button>
-               <button class="weather-btn" data-weather="rain">🌧️</button>
-               <button class="weather-btn" data-weather="snow">❄️</button>
-               <button class="weather-btn" data-weather="leaves">🍂</button>
-               <button class="weather-btn" data-weather="blossoms">🌸</button>
-            </div>
-         </aside>
-         <!-- HUD -->
-         <header class="hud">
-            <div class="hud-wrap">
-               <div class="hud-item hud-score">
-                  <div class="hud-icon">🍯</div>
-                  <div class="hud-meta">
-                     <div class="hud-label">Score</div>
-                     <div class="hud-value" id="score">0</div>
-                  </div>
-               </div>
-               <div class="hud-sep"></div>
-               <div class="hud-item">
-                  <div class="hud-icon">📈</div>
-                  <div class="hud-meta">
-                     <div class="hud-label">Level</div>
-                     <div class="hud-value" id="level">Beginner</div>
-                  </div>
-               </div>
-               <div class="hud-sep"></div>
-               <div class="hud-item">
-                  <div class="hud-icon">❤️</div>
-                  <div class="hud-meta">
-                     <div class="hud-label">Lives</div>
-                     <div class="hud-value" id="lives">3</div>
-                  </div>
-               </div>
-            </div>
-            
-            <!-- Progression Bar -->
-            <div class="progression-bar">
-               <div class="progression-fill" id="progression-fill"></div>
-               <div class="progression-label" id="progression-label">0/300</div>
-            </div>
-            
-            <div class="hud-actions">
-               <button class="hud-ach" id="achievements-btn">
-               <span class="hud-ach-icon">🏆</span>
-               <span class="hud-ach-text">
-               <span class="hud-ach-label">Achievements</span>
-               <span class="hud-ach-value" id="achievements-count">0/14</span>
-               </span>
-               <span class="hud-ach-caret">›</span>
-               </button>
-            </div>
-         </header>
-  
-         <div class="playfield">
-  <div class="game-container">
-    <canvas id="honey-game" width="420" height="700"></canvas>
-  </div>
-</div>
-         <!-- ================= START ================= -->
-         <div class="overlay" id="start-overlay">
-            <div class="pooh-intro"></div>
-            <p class="story-line">Pooh is waiting for honey…</p>
-            <button class="btn" id="start-btn">
-            🍯 Start Collecting Honey
+            <button class="control-btn" id="menu-toggle" aria-label="Open menu">
+                <i class="fas fa-bars"></i>
             </button>
-            <div class="start-links">
-               <button class="link-btn" id="select-character-btn">Choose Helper</button>
-               <button class="link-btn" id="view-achievements-btn">Achievements</button>
-            </div>
-         </div>
-         <!-- ================= PAUSE ================= -->
-         <div class="overlay hidden" id="pause-overlay">
-            <h2>⏸️ Taking a Rest</h2>
-            <p class="subtitle">Paused</p>
-            <button class="btn" id="resume-btn">Resume</button>
-            <button class="btn btn-secondary" id="quit-btn">Return to Menu</button>
-         </div>
-         <!-- ================= HELP ================= -->
-         <div class="overlay hidden" id="help-overlay">
-            <h2>How to Play</h2>
-            <p class="subtitle">
-               Drag Pooh to catch honey.<br>
-               Avoid bees.
-            </p>
-            <button class="btn btn-secondary" id="close-help-btn">Back</button>
-         </div>
-         <!-- ================= GAME OVER ================= -->
-         <div class="overlay hidden" id="gameover-overlay">
-            <h2>Oh Bother!</h2>
-            <div class="final-score" id="final-score">0</div>
-            
-            <div class="gameover-stats">
-               <div class="stat-item">
-                  <span class="stat-label">Level Reached:</span>
-                  <span class="stat-value" id="final-level">Beginner</span>
-               </div>
-               <div class="stat-item">
-                  <span class="stat-label">Highest Streak:</span>
-                  <span class="stat-value" id="final-streak">0</span>
-               </div>
-               <div class="stat-item">
-                  <span class="stat-label">Honey Caught:</span>
-                  <span class="stat-value" id="final-honey">0</span>
-               </div>
+        </div>
+        
+        <div class="control-cluster top-right">
+            <button class="control-btn" id="pause-btn" aria-label="Pause game">
+                <i class="fas fa-pause"></i>
+            </button>
+            <button class="control-btn" id="share-btn" aria-label="Share score">
+                <i class="fas fa-share-alt"></i>
+            </button>
+        </div>
+        
+        <div class="control-cluster bottom-right">
+            <button class="control-btn" id="weather-toggle" aria-label="Change weather">
+                🌦️
+            </button>
+        </div>
+        
+        <div class="control-cluster bottom-left">
+            <button class="control-btn" id="help-btn" aria-label="Show help">
+                <i class="fas fa-question"></i>
+            </button>
+        </div>
+    </div>
+
+    <!-- Overlay Layer -->
+    <div class="layer" id="overlay-layer" class="hidden">
+        <!-- Start Screen -->
+        <div class="overlay-content" id="start-screen">
+            <div class="overlay-header">
+                <h1 class="overlay-title">Welcome to the<br>Hundred Acre Wood</h1>
+                <button class="close-btn" id="close-start">&times;</button>
             </div>
             
-            <button class="btn" id="restart-btn">Play Again 🍯</button>
-         </div>
-         <!-- ================= CHARACTER SELECT ================= -->
-         <div class="overlay character-select-overlay hidden" id="character-select-overlay">
-            <div class="char-shell">
-               <div class="char-top">
-                  <h2 class="char-title">Choose Your Helper</h2>
-                  <p class="char-subtitle">You're always Pooh! Choose a friend to help you.</p>
-                  <button class="char-x" id="back-to-menu-btn">✕</button>
-               </div>
-               <div class="char-grid">
-                  <!-- Helper cards will be generated here -->
-               </div>
-               <div class="char-bottom">
-                  <button class="btn" id="start-with-character-btn">Start 🍯</button>
-               </div>
+            <div class="welcome-section">
+                <div class="pooh-avatar"></div>
+                <p class="welcome-text">Oh bother! I need your help!</p>
+                <p class="subtitle">Catch honey pots, avoid bees, and unlock helpers!</p>
             </div>
-         </div>
-         <!-- ================= ACHIEVEMENTS ================= -->
-         <div class="overlay achievements-overlay hidden" id="achievements-overlay">
-            <div class="achievements-shell">
-               <div class="achievements-top">
-                  <h2 class="ach-title">Achievements</h2>
-                  <button class="ach-x" id="close-achievements-btn">✕</button>
-               </div>
-               <div class="achievements-listWrap">
-                  <div id="achievements-list"></div>
-               </div>
-               <div class="achievements-bottom">
-                  <button class="btn btn-secondary" id="close-achievements-btn-2">Back</button>
-               </div>
+            
+            <div class="feature-badge">
+                <h3>🎮 New Features!</h3>
+                <p>Daily challenges • Seasonal events • Leaderboards • Enhanced graphics</p>
             </div>
-         </div>
-      </main>
+            
+            <div class="btn-grid">
+                <button class="btn" id="quick-start">
+                    <i class="fas fa-play"></i> Quick Start
+                </button>
+                <button class="btn btn-secondary" id="select-character-btn">
+                    <i class="fas fa-users"></i> Choose Helper
+                </button>
+                <button class="btn btn-secondary" id="daily-challenge-btn">
+                    <i class="fas fa-calendar-day"></i> Daily Challenge
+                </button>
+                <button class="btn btn-secondary" id="settings-btn">
+                    <i class="fas fa-cog"></i> Settings
+                </button>
+            </div>
+            
+            <button class="btn btn-success" id="start-game-btn">
+                <i class="fas fa-honey-pot"></i> Start Adventure!
+            </button>
+        </div>
+
+        <!-- Pause Screen -->
+        <div class="overlay-content hidden" id="pause-screen">
+            <div class="overlay-header">
+                <h1 class="overlay-title">Game Paused</h1>
+                <button class="close-btn" id="resume-btn">&times;</button>
+            </div>
+            
+            <div class="results-section">
+                <div class="final-score" id="pause-score">0</div>
+                
+                <div class="results-stats">
+                    <div class="stat-row">
+                        <span class="stat-label">Current Streak</span>
+                        <span class="stat-value" id="pause-streak">0</span>
+                    </div>
+                    <div class="stat-row">
+                        <span class="stat-label">Lives Remaining</span>
+                        <span class="stat-value" id="pause-lives">3</span>
+                    </div>
+                    <div class="stat-row">
+                        <span class="stat-label">Time Played</span>
+                        <span class="stat-value" id="pause-time">0s</span>
+                    </div>
+                </div>
+                
+                <div class="btn-grid">
+                    <button class="btn" id="continue-btn">
+                        <i class="fas fa-play"></i> Continue
+                    </button>
+                    <button class="btn btn-secondary" id="restart-btn">
+                        <i class="fas fa-redo"></i> Restart
+                    </button>
+                    <button class="btn btn-danger" id="quit-btn">
+                        <i class="fas fa-home"></i> Main Menu
+                    </button>
+                </div>
+            </div>
+        </div>
+
+        <!-- Game Over Screen -->
+        <div class="overlay-content hidden" id="gameover-screen">
+            <div class="overlay-header">
+                <h1 class="overlay-title">Game Over!</h1>
+                <button class="close-btn" id="gameover-close">&times;</button>
+            </div>
+            
+            <div class="results-section">
+                <div class="final-score" id="final-score">0</div>
+                
+                <div id="new-record-badge" class="new-record hidden">
+                    🏆 New Personal Best! 🏆
+                </div>
+                
+                <div class="results-stats">
+                    <div class="stat-row">
+                        <span class="stat-label">Total Score</span>
+                        <span class="stat-value" id="final-total">0</span>
+                    </div>
+                    <div class="stat-row">
+                        <span class="stat-label">Highest Streak</span>
+                        <span class="stat-value" id="final-streak">0</span>
+                    </div>
+                    <div class="stat-row">
+                        <span class="stat-label">Honey Caught</span>
+                        <span class="stat-value" id="final-honey">0</span>
+                    </div>
+                    <div class="stat-row">
+                        <span class="stat-label">Level Reached</span>
+                        <span class="stat-value" id="final-level">Beginner</span>
+                    </div>
+                </div>
+                
+                <div class="challenge-card" id="daily-progress">
+                    <h3 class="challenge-title">Daily Challenge Progress</h3>
+                    <div class="challenge-progress">
+                        <div class="challenge-progress-fill" id="challenge-progress-fill"></div>
+                    </div>
+                    <div class="challenge-reward" id="challenge-reward">No active challenge</div>
+                </div>
+                
+                <div class="btn-grid">
+                    <button class="btn" id="play-again-btn">
+                        <i class="fas fa-redo"></i> Play Again
+                    </button>
+                    <button class="btn btn-secondary" id="leaderboard-btn">
+                        <i class="fas fa-trophy"></i> Leaderboard
+                    </button>
+                    <button class="btn btn-secondary" id="share-final-btn">
+                        <i class="fas fa-share"></i> Share Score
+                    </button>
+                </div>
+            </div>
+        </div>
+
+        <!-- Character Select -->
+        <div class="overlay-content hidden" id="character-screen">
+            <div class="overlay-header">
+                <h1 class="overlay-title">Choose Your Helper</h1>
+                <button class="close-btn" id="close-character">&times;</button>
+            </div>
+            
+            <p class="subtitle text-center mb-3">Each helper has unique abilities!</p>
+            
+            <div class="character-grid" id="character-grid">
+                <!-- Characters will be dynamically added -->
+            </div>
+            
+            <div class="btn-grid">
+                <button class="btn" id="confirm-character">
+                    <i class="fas fa-check"></i> Select Helper
+                </button>
+                <button class="btn btn-secondary" id="back-to-menu">
+                    <i class="fas fa-arrow-left"></i> Back to Menu
+                </button>
+            </div>
+        </div>
+
+        <!-- Settings -->
+        <div class="overlay-content hidden" id="settings-screen">
+            <div class="overlay-header">
+                <h1 class="overlay-title">Settings</h1>
+                <button class="close-btn" id="close-settings">&times;</button>
+            </div>
+            
+            <div class="settings-section">
+                <div class="setting-item">
+                    <div class="setting-label">
+                        <i class="fas fa-volume-up setting-icon"></i>
+                        Sound Effects
+                    </div>
+                    <label class="toggle-switch">
+                        <input type="checkbox" id="sound-toggle-setting" checked>
+                        <span class="toggle-slider"></span>
+                    </label>
+                </div>
+                
+                <div class="setting-item">
+                    <div class="setting-label">
+                        <i class="fas fa-music setting-icon"></i>
+                        Background Music
+                    </div>
+                    <label class="toggle-switch">
+                        <input type="checkbox" id="music-toggle-setting" checked>
+                        <span class="toggle-slider"></span>
+                    </label>
+                </div>
+                
+                <div class="setting-item">
+                    <div class="setting-label">
+                        <i class="fas fa-vibrate setting-icon"></i>
+                        Haptic Feedback
+                    </div>
+                    <label class="toggle-switch">
+                        <input type="checkbox" id="haptic-toggle-setting" checked>
+                        <span class="toggle-slider"></span>
+                    </label>
+                </div>
+                
+                <div class="setting-item">
+                    <div class="setting-label">
+                        <i class="fas fa-paint-brush setting-icon"></i>
+                        Visual Effects
+                    </div>
+                    <label class="toggle-switch">
+                        <input type="checkbox" id="effects-toggle-setting" checked>
+                        <span class="toggle-slider"></span>
+                    </label>
+                </div>
+                
+                <div class="setting-item">
+                    <div class="setting-label">
+                        <i class="fas fa-gamepad setting-icon"></i>
+                        Virtual Joystick
+                    </div>
+                    <label class="toggle-switch">
+                        <input type="checkbox" id="joystick-toggle-setting">
+                        <span class="toggle-slider"></span>
+                    </label>
+                </div>
+            </div>
+            
+            <div class="btn-grid">
+                <button class="btn btn-success" id="save-settings">
+                    <i class="fas fa-save"></i> Save Settings
+                </button>
+                <button class="btn btn-secondary" id="reset-progress">
+                    <i class="fas fa-trash"></i> Reset Progress
+                </button>
+                <button class="btn btn-danger" id="reset-confirm" style="display: none;">
+                    <i class="fas fa-exclamation-triangle"></i> Confirm Reset
+                </button>
+            </div>
+        </div>
+
+        <!-- Achievements -->
+        <div class="overlay-content hidden" id="achievements-screen">
+            <div class="overlay-header">
+                <h1 class="overlay-title">Achievements</h1>
+                <button class="close-btn" id="close-achievements">&times;</button>
+            </div>
+            
+            <div class="achievements-list" id="achievements-list">
+                <!-- Achievements will be dynamically added -->
+            </div>
+            
+            <button class="btn btn-secondary" id="back-from-achievements">
+                <i class="fas fa-arrow-left"></i> Back
+            </button>
+        </div>
+
+        <!-- Leaderboard -->
+        <div class="overlay-content hidden" id="leaderboard-screen">
+            <div class="overlay-header">
+                <h1 class="overlay-title">Leaderboard</h1>
+                <button class="close-btn" id="close-leaderboard">&times;</button>
+            </div>
+            
+            <div id="leaderboard-content" class="text-center">
+                <p>Loading leaderboard...</p>
+            </div>
+            
+            <button class="btn btn-secondary" id="back-from-leaderboard">
+                <i class="fas fa-arrow-left"></i> Back
+            </button>
+        </div>
+
+        <!-- Daily Challenge -->
+        <div class="overlay-content hidden" id="challenge-screen">
+            <div class="overlay-header">
+                <h1 class="overlay-title">Daily Challenge</h1>
+                <button class="close-btn" id="close-challenge">&times;</button>
+            </div>
+            
+            <div class="challenge-card">
+                <h3 class="challenge-title" id="challenge-title">Today's Challenge</h3>
+                <p id="challenge-description">Catch 50 honey pots</p>
+                
+                <div class="challenge-progress">
+                    <div class="challenge-progress-fill" id="challenge-fill"></div>
+                </div>
+                
+                <div class="results-stats">
+                    <div class="stat-row">
+                        <span class="stat-label">Progress</span>
+                        <span class="stat-value" id="challenge-progress-text">0/50</span>
+                    </div>
+                    <div class="stat-row">
+                        <span class="stat-label">Time Left</span>
+                        <span class="stat-value" id="challenge-time">23:59:59</span>
+                    </div>
+                </div>
+                
+                <div class="challenge-reward" id="challenge-reward-display">
+                    Reward: 500 Bonus Points
+                </div>
+            </div>
+            
+            <div class="btn-grid">
+                <button class="btn" id="start-challenge-btn">
+                    <i class="fas fa-play"></i> Start Challenge
+                </button>
+                <button class="btn btn-secondary" id="back-from-challenge">
+                    <i class="fas fa-arrow-left"></i> Back
+                </button>
+            </div>
+        </div>
+    </div>
+
+    <!-- Weather Drawer -->
+    <div class="weather-drawer" id="weather-drawer">
+        <div class="overlay-header">
+            <h1 class="overlay-title">Weather Effects</h1>
+            <button class="close-btn" id="close-weather">&times;</button>
+        </div>
+        
+        <p class="subtitle text-center mb-3">Change the atmosphere!</p>
+        
+        <div class="weather-grid">
+            <button class="weather-option" data-weather="clear">☀️</button>
+            <button class="weather-option" data-weather="rain">🌧️</button>
+            <button class="weather-option" data-weather="snow">❄️</button>
+            <button class="weather-option" data-weather="leaves">🍂</button>
+            <button class="weather-option" data-weather="blossoms">🌸</button>
+            <button class="weather-option" data-weather="windy">💨</button>
+            <button class="weather-option" data-weather="foggy">🌫️</button>
+            <button class="weather-option" data-weather="starry">🌠</button>
+        </div>
+    </div>
+
+    <!-- Honey Cursor -->
+    <div class="honey-cursor" id="honey-cursor">
+        <div class="spoon"></div>
+    </div>
+
+    <!-- Notification Container -->
+    <div id="notification-container"></div>
+</main>
 <script>
 (() => {
   "use strict";
