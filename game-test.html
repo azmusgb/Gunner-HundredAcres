@@ -2576,35 +2576,41 @@
         });
         
         // Character selection
+
         function renderCharacterSelect() {
-            const characters = [
-                { id: 'pooh', name: 'Pooh', icon: '🐻', ability: 'Balanced', desc: 'Standard gameplay' },
-                { id: 'piglet', name: 'Piglet', icon: '🐷', ability: 'Extra Lives', desc: 'Start with 5 lives' },
-                { id: 'tigger', name: 'Tigger', icon: '🐯', ability: 'Bounce', desc: 'Bounce bees away' },
-                { id: 'rabbit', name: 'Rabbit', icon: '🐰', ability: 'Magnet', desc: 'Attract honey' }
-            ];
-            
-            const grid = $('#character-grid');
-            grid.innerHTML = '';
-            
-            characters.forEach(char => {
-                const card = document.createElement('button');
-                card.className = `character-card ${GameState.currentHelper === char.id ? 'selected' : ''}`;
-                card.setAttribute('data-helper', char.id);
-       <div class="character-ability">${char.ability}</div>
-                    <div class="character-desc">${char.desc}</div>
-                `;
-                
-                card.addEventListener('click', () => {
-                    GameState.currentHelper = char.id;
-                    document.querySelectorAll('.character-card').forEach(c => c.classList.remove('selected'));
-                    card.classList.add('selected');
-                    playSound('ui');
-                });
-                
-                grid.appendChild(card);
-            });
-        }
+    const characters = [
+        { id: 'pooh', name: 'Pooh', icon: '🐻', ability: 'Balanced', desc: 'Standard gameplay' },
+        { id: 'piglet', name: 'Piglet', icon: '🐷', ability: 'Extra Lives', desc: 'Start with 5 lives' },
+        { id: 'tigger', name: 'Tigger', icon: '🐯', ability: 'Bounce', desc: 'Bounce bees away' },
+        { id: 'rabbit', name: 'Rabbit', icon: '🐰', ability: 'Magnet', desc: 'Attract honey' }
+    ];
+    
+    const grid = $('#character-grid');
+    grid.innerHTML = '';
+    
+    characters.forEach(char => {
+        const card = document.createElement('button');
+        card.className = `character-card ${GameState.currentHelper === char.id ? 'selected' : ''}`;
+        card.setAttribute('data-helper', char.id);
+        
+        // FIXED: Added the closing backtick here
+        card.innerHTML = `
+            <div class="character-icon">${char.icon}</div>
+            <div class="character-name">${char.name}</div>
+            <div class="character-ability">${char.ability}</div>
+            <div class="character-desc">${char.desc}</div>
+        `;
+        
+        card.addEventListener('click', () => {
+            GameState.currentHelper = char.id;
+            document.querySelectorAll('.character-card').forEach(c => c.classList.remove('selected'));
+            card.classList.add('selected');
+            playSound('ui');
+        });
+        
+        grid.appendChild(card);
+    });
+}
         
         // Settings
         $('#settings-btn').addEventListener('click', () => {
