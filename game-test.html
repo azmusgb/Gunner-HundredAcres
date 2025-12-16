@@ -1,282 +1,1344 @@
 <!DOCTYPE html>
 <html lang="en">
-<head>
-  <meta charset="UTF-8" />
-  <title>Pooh's Enhanced Honey Hunt - Complete Edition</title>
-  <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover, user-scalable=no" />
-  <meta name="theme-color" content="#d4a574" />
-  <meta name="description" content="Help Pooh catch honey pots in the Hundred Acre Wood! Now with achievements, character selection, weather effects, and more!" />
+   <head>
+      <meta charset="UTF-8" />
+      <title>Pooh's Enhanced Honey Hunt - Complete Edition</title>
+      <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover, user-scalable=no" />
+      <meta name="theme-color" content="#d4a574" />
+      <meta name="description" content="Help Pooh catch honey pots in the Hundred Acre Wood! Now with achievements, character selection, weather effects, and more!" />
+      <link rel="preconnect" href="https://fonts.googleapis.com" />
+      <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+      <link href="https://fonts.googleapis.com/css2?family=Patrick+Hand&family=Fredoka+One&family=Bubblegum+Sans&display=swap" rel="stylesheet" />
+      <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css" />
+      <style>
+         /* ================= BASE STYLES ================= */
+         * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+            -webkit-tap-highlight-color: transparent;
+            -webkit-font-smoothing: antialiased;
+         }
 
-  <link rel="preconnect" href="https://fonts.googleapis.com" />
-  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
-  <link href="https://fonts.googleapis.com/css2?family=Patrick+Hand&family=Fredoka+One&family=Bubblegum+Sans&display=swap" rel="stylesheet" />
-  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css" />
-  <link rel="stylesheet" href="styles-game.css" />
-</head>
+         body {
+            font-family: 'Patrick Hand', cursive;
+            background: linear-gradient(135deg, #87CEEB 0%, #98FB98 100%);
+            color: #8B4513;
+            overflow: hidden;
+            touch-action: none;
+            width: 100vw;
+            height: 100vh;
+            position: fixed;
+         }
 
-<body>
-  <!-- Background Layer (CSS-driven) -->
-  <div class="background-layer" aria-hidden="true">
-    <div class="cloud cloud-1"></div>
-    <div class="cloud cloud-2"></div>
-    <div class="cloud cloud-3"></div>
+         /* ================= BACKGROUND & WEATHER ================= */
+         .background-layer {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            pointer-events: none;
+            z-index: -1;
+         }
 
-    <!-- A few ambient bits; JS will add more safely -->
-    <div class="blossom" style="left:15%; animation-duration:14s; animation-delay:2s;"></div>
-    <div class="blossom" style="left:55%; animation-duration:18s; animation-delay:0.5s;"></div>
-    <div class="butterfly" style="left:22%; top:25%; animation-duration:3.8s;"></div>
-  </div>
+         .cloud {
+            position: absolute;
+            background: rgba(255, 255, 255, 0.8);
+            border-radius: 50%;
+         }
 
-  <!-- Honey Cursor -->
-  <div class="honey-cursor" id="honey-cursor" aria-hidden="true">
-    <div class="spoon"></div>
-  </div>
+         .cloud-1 {
+            width: 120px; height: 40px;
+            top: 20%; left: 10%;
+            animation: drift 45s linear infinite;
+         }
+         .cloud-2 {
+            width: 80px; height: 30px;
+            top: 40%; right: 15%;
+            animation: drift 60s linear infinite reverse;
+         }
+         .cloud-3 {
+            width: 100px; height: 35px;
+            top: 60%; left: 20%;
+            animation: drift 50s linear infinite;
+         }
 
-  <!-- Sun Element -->
-  <div class="sun" aria-hidden="true"></div>
+         @keyframes drift {
+            0% { transform: translateX(-100px); }
+            100% { transform: translateX(calc(100vw + 100px)); }
+         }
 
-  <!-- Weather Effects Container -->
-  <div id="weather-effects" aria-hidden="true"></div>
+         /* ================= HONEY CURSOR ================= */
+         .honey-cursor {
+            position: fixed;
+            width: 40px; height: 40px;
+            pointer-events: none;
+            z-index: 9999;
+            transform: translate(-50%, -50%);
+            opacity: 0.7;
+         }
+         .spoon {
+            width: 100%; height: 100%;
+            background: radial-gradient(circle at 30% 30%, #FFD700, #FF8C00);
+            border-radius: 50% 50% 50% 0;
+            transform: rotate(45deg);
+         }
 
-  <!-- Main Game Root -->
-  <main id="game-root">
-    <!-- Sound Controls -->
-    <div class="sound-controls">
-      <button class="sound-btn" id="sound-toggle-btn" aria-label="Toggle sound">
-        <i class="fas fa-volume-up" aria-hidden="true"></i>
-      </button>
-    </div>
+         /* ================= GAME ROOT ================= */
+         #game-root {
+            position: relative;
+            width: 100%;
+            height: 100%;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: flex-start;
+            padding-top: env(safe-area-inset-top, 0);
+            padding-bottom: env(safe-area-inset-bottom, 0);
+         }
 
-    <!-- Share Button -->
-    <button class="share-btn" id="share-btn" aria-label="Share score">
-      <i class="fas fa-share-alt" aria-hidden="true"></i>
-    </button>
+         /* ================= CONTROLS ================= */
+         .sound-controls, .game-controls, .share-btn, .weather-toggle {
+            position: absolute;
+            z-index: 100;
+            background: rgba(255, 248, 220, 0.9);
+            border: 3px solid #D4A574;
+            border-radius: 50%;
+            width: 50px;
+            height: 50px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 22px;
+            color: #8B4513;
+            cursor: pointer;
+            transition: all 0.2s;
+            touch-action: manipulation;
+         }
+         .sound-controls:hover, .game-controls:hover, .share-btn:hover, .weather-toggle:hover {
+            transform: scale(1.1);
+            background: #FFF8DC;
+         }
 
-    <!-- HUD -->
-    <header class="hud" role="banner">
-      <div class="hud-wrap">
-        <!-- Score -->
-        <div class="hud-item hud-score">
-          <div class="hud-icon" aria-hidden="true">🍯</div>
-          <div class="hud-meta">
-            <div class="hud-label">Score</div>
-            <div class="hud-value" id="score">0</div>
-          </div>
-        </div>
+         .sound-controls { top: 20px; left: 20px; }
+         .share-btn { top: 20px; right: 20px; }
+         .game-controls { bottom: 20px; left: 20px; gap: 10px; }
+         .weather-toggle { bottom: 20px; right: 20px; }
 
-        <div class="hud-sep" aria-hidden="true"></div>
+         .control-btn {
+            width: 45px; height: 45px;
+            border-radius: 50%;
+            border: none;
+            background: rgba(255, 248, 220, 0.9);
+            border: 2px solid #D4A574;
+            color: #8B4513;
+            font-size: 20px;
+            cursor: pointer;
+            transition: all 0.2s;
+            touch-action: manipulation;
+         }
+         .control-btn:hover { transform: scale(1.1); background: #FFF8DC; }
 
-        <!-- Level -->
-        <div class="hud-item">
-          <div class="hud-icon" aria-hidden="true">📈</div>
-          <div class="hud-meta">
-            <div class="hud-label">Level</div>
-            <div class="hud-value" id="level">Beginner</div>
-          </div>
-        </div>
+         /* ================= WEATHER DRAWER ================= */
+         .weather-drawer {
+            position: fixed;
+            bottom: 90px;
+            right: 20px;
+            background: rgba(255, 248, 220, 0.95);
+            border: 3px solid #D4A574;
+            border-radius: 20px;
+            padding: 15px;
+            z-index: 101;
+            transform: translateY(150%);
+            transition: transform 0.3s ease;
+            box-shadow: 0 5px 20px rgba(0,0,0,0.2);
+         }
+         .weather-drawer.open { transform: translateY(0); }
 
-        <div class="hud-sep" aria-hidden="true"></div>
+         .weather-drawer-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 15px;
+         }
+         .weather-title {
+            font-size: 18px;
+            font-weight: bold;
+            color: #8B4513;
+         }
+         .weather-close {
+            background: none;
+            border: none;
+            font-size: 20px;
+            color: #8B4513;
+            cursor: pointer;
+            width: 30px; height: 30px;
+            border-radius: 50%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+         }
+         .weather-close:hover { background: rgba(139, 69, 19, 0.1); }
 
-        <!-- Lives -->
-        <div class="hud-item">
-          <div class="hud-icon" aria-hidden="true">❤️</div>
-          <div class="hud-meta">
-            <div class="hud-label">Lives</div>
-            <div class="hud-value" id="lives">3</div>
-          </div>
-        </div>
+         .weather-drawer-buttons {
+            display: grid;
+            grid-template-columns: repeat(3, 1fr);
+            gap: 10px;
+         }
+         .weather-btn {
+            width: 50px; height: 50px;
+            font-size: 24px;
+            border: 2px solid #D4A574;
+            border-radius: 15px;
+            background: rgba(255, 248, 220, 0.8);
+            cursor: pointer;
+            transition: all 0.2s;
+         }
+         .weather-btn:hover, .weather-btn.active {
+            transform: scale(1.1);
+            background: #FFF8DC;
+            border-color: #FFA500;
+         }
+         .weather-btn.active { box-shadow: 0 0 15px rgba(255, 165, 0, 0.5); }
 
-        <div class="hud-sep" aria-hidden="true"></div>
+         /* ================= HUD ================= */
+         .hud {
+            width: 100%;
+            max-width: 500px;
+            background: rgba(255, 248, 220, 0.95);
+            border: 3px solid #D4A574;
+            border-radius: 20px;
+            margin: 15px auto 10px;
+            padding: 15px;
+            position: relative;
+            z-index: 10;
+            box-shadow: 0 5px 15px rgba(0,0,0,0.1);
+         }
 
-        <!-- Streak (JS expects this id) -->
-        <div class="hud-item">
-          <div class="hud-icon" aria-hidden="true">🔥</div>
-          <div class="hud-meta">
-            <div class="hud-label">Streak</div>
-            <div class="hud-value" id="streak">0</div>
-          </div>
-        </div>
+         .hud-wrap {
+            display: flex;
+            justify-content: space-around;
+            align-items: center;
+         }
 
-        <!-- Achievements Button -->
-        <div class="hud-actions">
-          <button class="hud-ach" id="achievements-btn" type="button">
-            <span class="hud-ach-icon" aria-hidden="true">🏆</span>
-            <span class="hud-ach-text">
-              <span class="hud-ach-label">Achievements</span>
-              <span class="hud-ach-value" id="achievements-count">0/14</span>
-            </span>
-            <span class="hud-ach-caret" aria-hidden="true">›</span>
-          </button>
-        </div>
+         .hud-item {
+            display: flex;
+            align-items: center;
+            gap: 10px;
+            min-width: 70px;
+         }
+
+         .hud-icon {
+            font-size: 28px;
+            min-width: 40px;
+            text-align: center;
+         }
+
+         .hud-meta {
+            display: flex;
+            flex-direction: column;
+         }
+
+         .hud-label {
+            font-size: 12px;
+            color: #A0522D;
+            font-weight: bold;
+            text-transform: uppercase;
+            letter-spacing: 0.5px;
+         }
+
+         .hud-value {
+            font-size: 24px;
+            font-family: 'Fredoka One', sans-serif;
+            color: #8B4513;
+            line-height: 1;
+         }
+
+         .hud-sep {
+            width: 2px;
+            height: 40px;
+            background: linear-gradient(to bottom, transparent, #D4A574, transparent);
+         }
+
+         /* Progression Bar */
+         .progression-bar {
+            width: 90%;
+            height: 12px;
+            background: rgba(139, 69, 19, 0.2);
+            border-radius: 6px;
+            margin: 8px auto;
+            position: relative;
+            overflow: hidden;
+            border: 2px solid #D4A574;
+         }
+
+         .progression-fill {
+            height: 100%;
+            background: linear-gradient(90deg, #FFA500, #FF8C00, #FF6347);
+            border-radius: 4px;
+            width: 0%;
+            transition: width 0.3s ease;
+         }
+
+         .progression-label {
+            position: absolute;
+            top: 50%;
+            left: 50%;
+            transform: translate(-50%, -50%);
+            font-size: 10px;
+            font-weight: bold;
+            color: white;
+            text-shadow: 1px 1px 2px rgba(0,0,0,0.5);
+            font-family: 'Fredoka One', sans-serif;
+         }
+
+         .hud-actions {
+            margin-top: 10px;
+            display: flex;
+            justify-content: center;
+         }
+
+         .hud-ach {
+            background: linear-gradient(135deg, #FFA500, #FF8C00);
+            border: none;
+            border-radius: 25px;
+            padding: 8px 20px;
+            color: white;
+            font-family: 'Patrick Hand', cursive;
+            font-size: 16px;
+            display: flex;
+            align-items: center;
+            gap: 10px;
+            cursor: pointer;
+            transition: all 0.2s;
+         }
+         .hud-ach:hover { transform: scale(1.05); box-shadow: 0 5px 15px rgba(255, 140, 0, 0.3); }
+
+         .hud-ach-icon { font-size: 20px; }
+         .hud-ach-text { display: flex; flex-direction: column; }
+         .hud-ach-label { font-size: 12px; opacity: 0.9; }
+         .hud-ach-value { font-size: 16px; font-weight: bold; }
+         .hud-ach-caret { font-size: 24px; margin-left: 5px; }
+
+         /* HUD Animations */
+         .hud-pop {
+            animation: pop 0.25s ease;
+         }
+         @keyframes pop {
+            0% { transform: scale(1); }
+            50% { transform: scale(1.2); }
+            100% { transform: scale(1); }
+         }
+
+         .hud-shake {
+            animation: shake 0.4s ease;
+         }
+         @keyframes shake {
+            0%, 100% { transform: translateX(0); }
+            25% { transform: translateX(-5px); }
+            75% { transform: translateX(5px); }
+         }
+
+         /* ================= GAME CANVAS ================= */
+         .game-container {
+            width: 100%;
+            max-width: 420px;
+            flex: 1;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            margin: 0 auto;
+            position: relative;
+         }
+
+         #honey-game {
+            display: block;
+            width: 100%;
+            height: auto;
+            max-height: 700px;
+            border-radius: 20px;
+            box-shadow: 0 10px 30px rgba(0,0,0,0.2);
+            background: rgba(255, 248, 220, 0.15);
+         }
+
+         /* ================= OVERLAYS ================= */
+         .overlay {
+            position: fixed;
+            top: 0; left: 0;
+            width: 100%; height: 100%;
+            background: rgba(0,0,0,0.85);
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            z-index: 1000;
+            padding: 20px;
+            text-align: center;
+         }
+
+         .overlay.hidden { display: none; }
+
+         .pooh-intro {
+            width: 120px; height: 120px;
+            background: linear-gradient(135deg, #f7cc63, #f6c44f);
+            border-radius: 50%;
+            margin-bottom: 20px;
+            position: relative;
+            border: 5px solid #8B4513;
+         }
+         .pooh-intro:before, .pooh-intro:after {
+            content: '';
+            position: absolute;
+            background: #f7cc63;
+            border-radius: 50%;
+            border: 3px solid #8B4513;
+         }
+         .pooh-intro:before {
+            width: 40px; height: 40px;
+            top: -20px; left: 20px;
+         }
+         .pooh-intro:after {
+            width: 40px; height: 40px;
+            top: -20px; right: 20px;
+         }
+
+         .overlay h2 {
+            font-family: 'Fredoka One', sans-serif;
+            font-size: 42px;
+            color: #FFD700;
+            margin-bottom: 10px;
+            text-shadow: 3px 3px 0 #8B4513;
+         }
+
+         .story-line {
+            font-size: 22px;
+            color: #FFF8DC;
+            margin-bottom: 30px;
+            max-width: 300px;
+            line-height: 1.4;
+         }
+
+         .subtitle {
+            font-size: 20px;
+            color: #D4A574;
+            margin-bottom: 30px;
+         }
+
+         .btn {
+            background: linear-gradient(135deg, #FFA500, #FF8C00);
+            border: none;
+            border-radius: 30px;
+            padding: 18px 40px;
+            font-family: 'Fredoka One', sans-serif;
+            font-size: 22px;
+            color: white;
+            cursor: pointer;
+            margin: 10px 0;
+            min-width: 250px;
+            transition: all 0.2s;
+            box-shadow: 0 8px 20px rgba(255, 140, 0, 0.3);
+         }
+         .btn:hover { transform: scale(1.05); box-shadow: 0 10px 25px rgba(255, 140, 0, 0.4); }
+         .btn:active { transform: scale(0.98); }
+
+         .btn-secondary {
+            background: linear-gradient(135deg, #D4A574, #8B4513);
+            box-shadow: 0 8px 20px rgba(139, 69, 19, 0.3);
+         }
+         .btn-secondary:hover { box-shadow: 0 10px 25px rgba(139, 69, 19, 0.4); }
+
+         .start-links {
+            margin-top: 30px;
+            display: flex;
+            gap: 20px;
+         }
+
+         .link-btn {
+            background: none;
+            border: 2px solid #FFA500;
+            border-radius: 20px;
+            padding: 12px 25px;
+            font-family: 'Patrick Hand', cursive;
+            font-size: 18px;
+            color: #FFD700;
+            cursor: pointer;
+            transition: all 0.2s;
+         }
+         .link-btn:hover {
+            background: rgba(255, 165, 0, 0.1);
+            transform: scale(1.05);
+         }
+
+         .final-score {
+            font-family: 'Fredoka One', sans-serif;
+            font-size: 72px;
+            color: #FFD700;
+            margin: 20px 0;
+            text-shadow: 4px 4px 0 #8B4513;
+         }
+
+         .gameover-stats {
+            background: rgba(255, 248, 220, 0.9);
+            border-radius: 20px;
+            padding: 20px;
+            margin: 20px 0;
+            max-width: 300px;
+            border: 3px solid #D4A574;
+         }
+
+         .stat-item {
+            display: flex;
+            justify-content: space-between;
+            padding: 8px 0;
+            border-bottom: 1px solid rgba(139, 69, 19, 0.2);
+         }
+         .stat-item:last-child { border-bottom: none; }
+
+         .stat-label {
+            color: #8B4513;
+            font-size: 16px;
+         }
+         .stat-value {
+            color: #FF8C00;
+            font-family: 'Fredoka One', sans-serif;
+            font-size: 18px;
+            font-weight: bold;
+         }
+
+         /* ================= CHARACTER SELECT ================= */
+         .character-select-overlay {
+            background: rgba(0,0,0,0.9);
+         }
+
+         .char-shell {
+            background: linear-gradient(135deg, #FFF8DC, #FFE4B5);
+            border-radius: 30px;
+            padding: 25px;
+            max-width: 450px;
+            width: 90%;
+            border: 5px solid #D4A574;
+            box-shadow: 0 15px 40px rgba(0,0,0,0.3);
+         }
+
+         .char-top {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 20px;
+         }
+
+         .char-title {
+            font-family: 'Fredoka One', sans-serif;
+            font-size: 28px;
+            color: #8B4513;
+            text-shadow: 2px 2px 0 rgba(255, 255, 255, 0.5);
+         }
+
+         .char-subtitle {
+            font-size: 16px;
+            color: #8B4513;
+            text-align: center;
+            margin: 5px 0 20px;
+         }
+
+         .char-x {
+            background: #D4A574;
+            border: none;
+            width: 40px;
+            height: 40px;
+            border-radius: 50%;
+            font-size: 20px;
+            color: white;
+            cursor: pointer;
+            transition: all 0.2s;
+         }
+         .char-x:hover { background: #8B4513; transform: scale(1.1); }
+
+         .char-grid {
+            display: grid;
+            grid-template-columns: repeat(2, 1fr);
+            gap: 15px;
+            margin: 25px 0;
+         }
+
+         .character-card {
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            padding: 15px;
+            background: rgba(255, 248, 220, 0.8);
+            border-radius: 15px;
+            border: 3px solid #D4A574;
+            cursor: pointer;
+            transition: all 0.2s;
+            min-height: 120px;
+         }
+
+         .character-card:hover {
+            transform: translateY(-5px);
+            background: rgba(255, 228, 181, 0.9);
+         }
+
+         .character-card.active {
+            background: rgba(255, 228, 181, 0.95);
+            border-color: #FFA500;
+            transform: scale(1.05);
+            box-shadow: 0 6px 16px rgba(139, 69, 19, 0.2);
+         }
+
+         .character-card.locked {
+            opacity: 0.6;
+            filter: grayscale(0.5);
+            cursor: not-allowed;
+         }
+
+         .character-card.locked:hover {
+            transform: none !important;
+         }
+
+         .char-icon {
+            font-size: 32px;
+            margin-bottom: 8px;
+         }
+
+         .char-name {
+            font-size: 18px;
+            font-weight: bold;
+            color: #8B4513;
+            margin-bottom: 4px;
+            font-family: 'Fredoka One', sans-serif;
+         }
+
+         .char-ability {
+            font-size: 14px;
+            color: #FF8C00;
+            font-weight: bold;
+            margin-bottom: 4px;
+         }
+
+         .char-desc {
+            font-size: 12px;
+            color: #A0522D;
+            text-align: center;
+            line-height: 1.3;
+         }
+
+         .char-locked {
+            display: block;
+            font-size: 11px;
+            color: #8B4513;
+            background: rgba(139, 69, 19, 0.1);
+            padding: 4px 8px;
+            border-radius: 10px;
+            margin-top: 8px;
+            text-align: center;
+         }
+
+         .char-bottom {
+            margin-top: 20px;
+            display: flex;
+            justify-content: center;
+         }
+
+         /* ================= ACHIEVEMENTS ================= */
+         .achievements-overlay {
+            background: rgba(0,0,0,0.9);
+         }
+
+         .achievements-shell {
+            background: linear-gradient(135deg, #FFF8DC, #FFE4B5);
+            border-radius: 30px;
+            padding: 25px;
+            max-width: 450px;
+            width: 90%;
+            max-height: 80vh;
+            border: 5px solid #D4A574;
+            box-shadow: 0 15px 40px rgba(0,0,0,0.3);
+            display: flex;
+            flex-direction: column;
+         }
+
+         .achievements-top {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 20px;
+         }
+
+         .ach-title {
+            font-family: 'Fredoka One', sans-serif;
+            font-size: 28px;
+            color: #8B4513;
+            text-shadow: 2px 2px 0 rgba(255, 255, 255, 0.5);
+         }
+
+         .ach-x {
+            background: #D4A574;
+            border: none;
+            width: 40px;
+            height: 40px;
+            border-radius: 50%;
+            font-size: 20px;
+            color: white;
+            cursor: pointer;
+            transition: all 0.2s;
+         }
+         .ach-x:hover { background: #8B4513; transform: scale(1.1); }
+
+         .achievements-listWrap {
+            flex: 1;
+            overflow-y: auto;
+            padding-right: 10px;
+            margin: 15px 0;
+         }
+
+         .achievement-item {
+            background: rgba(255, 248, 220, 0.8);
+            border: 2px solid #D4A574;
+            border-radius: 15px;
+            padding: 15px;
+            margin-bottom: 10px;
+            display: flex;
+            align-items: center;
+            gap: 15px;
+            transition: all 0.2s;
+         }
+
+         .achievement-item.unlocked {
+            background: rgba(255, 228, 181, 0.9);
+            border-color: #FFA500;
+         }
+
+         .achievement-icon {
+            font-size: 28px;
+            min-width: 40px;
+            text-align: center;
+         }
+
+         .achievement-details {
+            flex: 1;
+            text-align: left;
+         }
+
+         .achievement-name {
+            font-family: 'Fredoka One', sans-serif;
+            font-size: 18px;
+            color: #8B4513;
+            margin-bottom: 4px;
+         }
+
+         .achievement-desc {
+            font-size: 14px;
+            color: #A0522D;
+         }
+
+         .achievements-bottom {
+            margin-top: 20px;
+            display: flex;
+            justify-content: center;
+         }
+
+         /* ================= SCORE POPUPS ================= */
+         .score-popup {
+            position: absolute;
+            font-family: 'Fredoka One', sans-serif;
+            font-size: 22px;
+            color: #FFD700;
+            text-shadow: 2px 2px 0 #8B4513;
+            pointer-events: none;
+            z-index: 50;
+            animation: popup 1s ease-out forwards;
+         }
+
+         @keyframes popup {
+             0% { opacity: 0; transform: translateY(0) scale(0.5); }
+             20% { opacity: 1; transform: translateY(-20px) scale(1.1); }
+             100% { opacity: 0; transform: translateY(-60px) scale(1); }
+         }
+
+         /* ================= ACHIEVEMENT POPUP ================= */
+         .achievement-popup {
+            position: fixed;
+            top: 50%;
+            left: 50%;
+            transform: translate(-50%, -50%);
+            background: linear-gradient(135deg, #FFD700, #FFA500);
+            border: 4px solid #8B4513;
+            border-radius: 25px;
+            padding: 25px 35px;
+            font-family: 'Fredoka One', sans-serif;
+            font-size: 26px;
+            color: #8B4513;
+            z-index: 1001;
+            text-align: center;
+            box-shadow: 0 15px 40px rgba(0,0,0,0.4);
+            animation: achieveIn 0.5s ease-out, achieveOut 0.5s ease-in 2.5s forwards;
+         }
+
+         @keyframes achieveIn {
+             0% { opacity: 0; transform: translate(-50%, -50%) scale(0.3); }
+             70% { transform: translate(-50%, -50%) scale(1.1); }
+             100% { opacity: 1; transform: translate(-50%, -50%) scale(1); }
+         }
+
+         @keyframes achieveOut {
+             0% { opacity: 1; transform: translate(-50%, -50%) scale(1); }
+             100% { opacity: 0; transform: translate(-50%, -50%) scale(0.3); }
+         }
+
+         /* ================= UNLOCK NOTIFICATION ================= */
+         .unlock-notification {
+            position: fixed;
+            top: 100px;
+            left: 50%;
+            transform: translateX(-50%) translateY(-20px);
+            background: linear-gradient(135deg, #FFD700, #FFA500);
+            border: 3px solid #8B4513;
+            border-radius: 20px;
+            padding: 15px;
+            display: flex;
+            align-items: center;
+            gap: 15px;
+            z-index: 1000;
+            opacity: 0;
+            transition: all 0.3s ease;
+            box-shadow: 0 10px 30px rgba(139, 69, 19, 0.4);
+         }
+
+         .unlock-notification.show {
+            opacity: 1;
+            transform: translateX(-50%) translateY(0);
+         }
+
+         .unlock-icon {
+            font-size: 36px;
+            animation: bounce 0.5s ease infinite alternate;
+         }
+
+         .unlock-content {
+            display: flex;
+            flex-direction: column;
+         }
+
+         .unlock-title {
+            font-size: 14px;
+            color: #8B4513;
+            font-weight: bold;
+            margin-bottom: 4px;
+            font-family: 'Patrick Hand', cursive;
+         }
+
+         .unlock-name {
+            font-size: 20px;
+            color: #8B4513;
+            font-weight: bold;
+            font-family: 'Fredoka One', sans-serif;
+         }
+
+         @keyframes bounce {
+            from { transform: translateY(0); }
+            to { transform: translateY(-5px); }
+         }
+
+         /* ================= FIX: Floating buttons vs control cluster ================= */
+         .sound-controls, .share-btn, .weather-toggle{
+           position: absolute;
+           z-index: 100;
+           background: rgba(255, 248, 220, 0.9);
+           border: 3px solid #D4A574;
+           border-radius: 50%;
+           width: 50px;
+           height: 50px;
+           display: flex;
+           align-items: center;
+           justify-content: center;
+           font-size: 22px;
+           color: #8B4513;
+           cursor: pointer;
+           transition: all 0.2s;
+         }
+
+         .sound-controls .sound-btn{
+           width: 100%;
+           height: 100%;
+           border: 0;
+           background: transparent;
+           color: inherit;
+           font: inherit;
+           display: flex;
+           align-items: center;
+           justify-content: center;
+           cursor: pointer;
+         }
+
+         .game-controls{
+           position: absolute;
+           z-index: 100;
+           bottom: calc(env(safe-area-inset-bottom, 0px) + 14px);
+           left: calc(env(safe-area-inset-left, 0px) + 14px);
+           width: auto;
+           height: auto;
+           border: none;
+           border-radius: 0;
+           background: transparent;
+           display: flex;
+           flex-direction: column;
+           gap: 10px;
+           align-items: center;
+           justify-content: center;
+           padding: 0;
+         }
+
+         .sound-controls{
+           top: calc(env(safe-area-inset-top, 0px) + 12px);
+           left: calc(env(safe-area-inset-left, 0px) + 12px);
+         }
+         .share-btn{
+           top: calc(env(safe-area-inset-top, 0px) + 12px);
+           right: calc(env(safe-area-inset-right, 0px) + 12px);
+         }
+         .weather-toggle{
+           bottom: calc(env(safe-area-inset-bottom, 0px) + 14px);
+           right: calc(env(safe-area-inset-right, 0px) + 14px);
+         }
+
+         /* HUD needs to start BELOW the top buttons */
+         .hud{
+           margin-top: calc(env(safe-area-inset-top, 0px) + 72px);
+         }
+
+         /* Canvas sizing: keep aspect ratio stable */
+         .game-container{
+           flex: 1;
+           min-height: 0;
+         }
+         #honey-game{
+           height: auto;
+           width: auto;
+           max-height: none;
+         }
+
+         /* ================= LOADING STATES ================= */
+         .loading {
+             position: fixed;
+             top: 0;
+             left: 0;
+             width: 100%;
+             height: 100%;
+             background: linear-gradient(135deg, #87CEEB 0%, #98FB98 100%);
+             display: flex;
+             flex-direction: column;
+             align-items: center;
+             justify-content: center;
+             z-index: 9999;
+             transition: opacity 0.3s ease;
+         }
+
+         .loading.hidden {
+             opacity: 0;
+             pointer-events: none;
+         }
+
+         .loading-spinner {
+             width: 60px;
+             height: 60px;
+             border: 5px solid rgba(255, 248, 220, 0.3);
+             border-top: 5px solid #FFA500;
+             border-radius: 50%;
+             animation: spin 1s linear infinite;
+             margin-bottom: 20px;
+         }
+
+         @keyframes spin {
+             0% { transform: rotate(0deg); }
+             100% { transform: rotate(360deg); }
+         }
+
+         .loading-text {
+             font-family: 'Patrick Hand', cursive;
+             font-size: 24px;
+             color: #8B4513;
+             text-align: center;
+         }
+
+         /* ================= RESPONSIVE FIXES ================= */
+         @media (max-width: 480px) {
+             .hud {
+                 margin-top: calc(env(safe-area-inset-top, 0px) + 60px) !important;
+                 padding: 10px 15px;
+                 border-radius: 16px;
+                 margin-left: 15px;
+                 margin-right: 15px;
+                 width: auto;
+             }
+             
+             .hud-wrap {
+                 gap: 15px;
+             }
+             
+             .hud-item {
+                 min-width: 60px;
+             }
+             
+             .hud-icon {
+                 font-size: 22px;
+                 min-width: 30px;
+             }
+             
+             .hud-value {
+                 font-size: 18px;
+             }
+             
+             .hud-label {
+                 font-size: 9px;
+             }
+             
+             .hud-sep {
+                 display: none;
+             }
+             
+             .sound-controls, .share-btn {
+                 top: calc(env(safe-area-inset-top, 0px) + 10px);
+                 width: 42px;
+                 height: 42px;
+                 font-size: 18px;
+             }
+             
+             .sound-controls {
+                 left: calc(env(safe-area-inset-left, 0px) + 15px);
+             }
+             
+             .share-btn {
+                 right: calc(env(safe-area-inset-right, 0px) + 15px);
+             }
+             
+             .weather-toggle {
+                 bottom: calc(env(safe-area-inset-bottom, 0px) + 10px);
+                 right: calc(env(safe-area-inset-right, 0px) + 15px);
+                 width: 42px;
+                 height: 42px;
+                 font-size: 20px;
+             }
+             
+             .game-controls {
+                 bottom: calc(env(safe-area-inset-bottom, 0px) + 10px);
+                 left: calc(env(safe-area-inset-left, 0px) + 15px);
+                 gap: 8px;
+             }
+             
+             .control-btn {
+                 width: 40px;
+                 height: 40px;
+                 font-size: 18px;
+             }
+             
+             .game-container {
+                 padding: 10px;
+                 margin-top: -10px;
+             }
+             
+             .overlay h2 {
+                 font-size: 32px;
+                 margin-bottom: 10px;
+             }
+             
+             .story-line {
+                 font-size: 18px;
+                 margin-bottom: 20px;
+             }
+             
+             .btn {
+                 padding: 14px 28px;
+                 font-size: 18px;
+                 min-width: 200px;
+                 margin: 8px 0;
+             }
+             
+             .start-links {
+                 flex-direction: column;
+                 gap: 12px;
+                 margin-top: 20px;
+             }
+             
+             .char-grid {
+                 grid-template-columns: 1fr;
+                 gap: 12px;
+             }
+             
+             .weather-drawer {
+                 bottom: 75px;
+                 right: 10px;
+                 padding: 12px;
+             }
+         }
+
+         @media (max-width: 360px) {
+             .hud {
+                 margin-left: 8px;
+                 margin-right: 8px;
+                 padding: 8px 12px;
+             }
+             
+             .hud-value {
+                 font-size: 16px;
+             }
+             
+             .hud-label {
+                 font-size: 8px;
+             }
+             
+             .btn {
+                 padding: 12px 24px;
+                 font-size: 16px;
+                 min-width: 180px;
+             }
+         }
+
+         @media (min-width: 768px) {
+             .hud {
+                 max-width: 600px;
+                 padding: 20px 30px;
+             }
+             
+             .hud-value {
+                 font-size: 28px;
+             }
+             
+             .hud-label {
+                 font-size: 14px;
+             }
+             
+             .progression-bar {
+                 height: 14px;
+                 margin: 15px auto;
+             }
+             
+             .game-container {
+                 max-width: 600px;
+             }
+         }
+
+         @media (max-height: 500px) and (orientation: landscape) {
+             .hud {
+                 margin-top: calc(env(safe-area-inset-top, 0px) + 40px) !important;
+                 padding: 8px 12px;
+             }
+             
+             .hud-wrap {
+                 gap: 8px;
+             }
+             
+             .hud-value {
+                 font-size: 16px;
+             }
+             
+             .hud-label {
+                 font-size: 8px;
+             }
+             
+             .game-container {
+                 height: 65vh !important;
+             }
+             
+             .sound-controls, .share-btn {
+                 top: calc(env(safe-area-inset-top, 0px) + 5px);
+                 width: 36px;
+                 height: 36px;
+                 font-size: 16px;
+             }
+         }
+
+         @media (hover: none) {
+             .honey-cursor {
+                 display: none;
+             }
+         }
+
+         /* Prevent text selection */
+         .no-select {
+             -webkit-user-select: none;
+             -moz-user-select: none;
+             -ms-user-select: none;
+             user-select: none;
+         }
+      </style>
+   </head>
+   <body class="no-select">
+      <!-- Background -->
+      <div class="background-layer" aria-hidden="true">
+         <div class="cloud cloud-1"></div>
+         <div class="cloud cloud-2"></div>
+         <div class="cloud cloud-3"></div>
       </div>
-    </header>
-
-    <!-- Game Container -->
-    <div class="game-container">
-      <canvas id="honey-game" width="420" height="700" aria-label="Honey Hunt game canvas"></canvas>
-    </div>
-
-    <!-- Bottom Controls -->
-    <div class="game-controls" role="group" aria-label="Game controls">
-      <button class="control-btn pause" id="pause-btn" type="button" aria-label="Pause">
-        <i class="fas fa-pause" aria-hidden="true"></i>
-      </button>
-      <button class="control-btn help" id="help-btn" type="button" aria-label="Help">
-        <i class="fas fa-question" aria-hidden="true"></i>
-      </button>
-    </div>
-
-    <!-- Weather Toggle -->
-    <button class="weather-toggle" id="weather-toggle" type="button" aria-label="Weather">
-      🌦️
-    </button>
-
-    <!-- Weather Drawer -->
-    <aside class="weather-drawer" id="weather-drawer" aria-label="Weather options">
-      <div class="weather-drawer-header">
-        <span class="weather-title">Weather</span>
-        <button class="weather-close" id="weather-close" type="button" aria-label="Close weather">✕</button>
+      <!-- Honey Cursor -->
+      <div class="honey-cursor" id="honey-cursor">
+         <div class="spoon"></div>
       </div>
-      <div class="weather-drawer-buttons">
-        <button class="weather-btn" type="button" data-weather="clear" aria-label="Clear">☀️</button>
-        <button class="weather-btn" type="button" data-weather="rain" aria-label="Rain">🌧️</button>
-        <button class="weather-btn" type="button" data-weather="snow" aria-label="Snow">❄️</button>
-        <button class="weather-btn" type="button" data-weather="leaves" aria-label="Leaves">🍂</button>
-        <button class="weather-btn" type="button" data-weather="blossoms" aria-label="Blossoms">🌸</button>
-      </div>
-    </aside>
-
-    <!-- ================= OVERLAYS ================= -->
-
-    <!-- START OVERLAY -->
-    <div class="overlay" id="start-overlay" role="dialog" aria-modal="true" aria-label="Start menu">
-      <h1>Pooh's Honey Hunt</h1>
-      <p class="subtitle">Drag Pooh to catch honey pots. Avoid bees. Grab power-ups. Try not to panic when everything starts moving faster.</p>
-      <button class="btn" id="start-btn" type="button">🍯 Start Collecting Honey</button>
-      <div style="margin-top: var(--space-20); display: flex; gap: var(--space-14); flex-wrap: wrap; justify-content: center;">
-        <button class="btn btn-secondary" id="select-character-btn" type="button">Choose Helper</button>
-        <button class="btn btn-secondary" id="view-achievements-btn" type="button">Achievements</button>
-      </div>
-    </div>
-
-    <!-- PAUSE OVERLAY -->
-    <div class="overlay hidden" id="pause-overlay" role="dialog" aria-modal="true" aria-label="Paused">
-      <h2>⏸️ Taking a Rest</h2>
-      <p class="subtitle">Game Paused</p>
-      <button class="btn" id="resume-btn" type="button">Resume</button>
-      <button class="btn btn-secondary" id="quit-btn" type="button">Return to Menu</button>
-    </div>
-
-    <!-- HELP OVERLAY -->
-    <div class="overlay hidden" id="help-overlay" role="dialog" aria-modal="true" aria-label="How to play">
-      <h2>How to Play</h2>
-      <p class="subtitle">
-        Drag Pooh to catch honey pots.<br />
-        Avoid bees — they take lives!<br />
-        Gold pots are worth more.<br />
-        Power-ups do silly helpful things.
-      </p>
-      <button class="btn btn-secondary" id="close-help-btn" type="button">Back to Game</button>
-    </div>
-
-    <!-- GAME OVER OVERLAY -->
-    <div class="overlay hidden" id="gameover-overlay" role="dialog" aria-modal="true" aria-label="Game over">
-      <h2>Oh Bother!</h2>
-      <div class="final-score" id="final-score">0</div>
-
-      <div class="stats-grid">
-        <div class="stat-box">
-          <div class="stat-box-label">Level Reached</div>
-          <div class="stat-box-value" id="final-level">Beginner</div>
-        </div>
-        <div class="stat-box">
-          <div class="stat-box-label">Highest Streak</div>
-          <div class="stat-box-value" id="final-streak">0</div>
-        </div>
-        <div class="stat-box">
-          <div class="stat-box-label">Honey Caught</div>
-          <div class="stat-box-value" id="final-honey">0</div>
-        </div>
-      </div>
-
-      <button class="btn" id="restart-btn" type="button">Play Again 🍯</button>
-    </div>
-
-    <!-- CHARACTER SELECT OVERLAY -->
-    <div class="character-select-overlay hidden" id="character-select-overlay" role="dialog" aria-modal="true" aria-label="Choose helper">
-      <div class="char-shell">
-        <div class="char-top">
-          <div class="char-titleRow">
-            <div>
-              <h2 class="char-title">Choose Your Helper</h2>
-              <p class="char-subtitle">You're always Pooh. Pick a friend for bonus effects.</p>
+      <main id="game-root">
+         <!-- Sound -->
+         <div class="sound-controls">
+            <button class="sound-btn" id="sound-toggle-btn" aria-label="Toggle sound">
+            <i class="fas fa-volume-up"></i>
+            </button>
+         </div>
+         <!-- Share -->
+         <button class="share-btn" id="share-btn" aria-label="Share score">
+         <i class="fas fa-share-alt"></i>
+         </button>
+         <!-- Game Controls -->
+         <div class="game-controls">
+            <button class="control-btn pause" id="pause-btn"><i class="fas fa-pause"></i></button>
+            <button class="control-btn help" id="help-btn"><i class="fas fa-question"></i></button>
+         </div>
+         <!-- Weather Toggle -->
+         <button class="weather-toggle" id="weather-toggle">🌦️</button>
+         <!-- Weather Drawer -->
+         <aside class="weather-drawer" id="weather-drawer">
+            <div class="weather-drawer-header">
+               <span class="weather-title">Weather</span>
+               <button class="weather-close" id="weather-close">✕</button>
             </div>
-            <button class="char-x" id="back-to-menu-btn" type="button" aria-label="Close">✕</button>
-          </div>
-
-          <div class="char-hint">
-            <span class="char-hint-badge">Tip</span>
-            <span>Unlock more helpers by reaching higher scores.</span>
-          </div>
-        </div>
-
-        <div class="char-grid" aria-label="Helpers list">
-          <!-- JS populates -->
-        </div>
-
-        <div class="char-bottom">
-          <button class="btn" id="start-with-character-btn" type="button">Start Game 🍯</button>
-          <button class="btn btn-secondary" id="back-to-menu-btn-2" type="button">Back</button>
-        </div>
-      </div>
-    </div>
-
-    <!-- ACHIEVEMENTS OVERLAY -->
-    <div class="achievements-overlay hidden" id="achievements-overlay" role="dialog" aria-modal="true" aria-label="Achievements">
-      <div class="achievements-shell">
-        <div class="achievements-top">
-          <div class="achievements-titleRow">
-            <div>
-              <h2 class="ach-title">Achievements</h2>
-              <p class="ach-subtitle">Complete challenges to unlock rewards</p>
+            <div class="weather-drawer-buttons">
+               <button class="weather-btn" data-weather="clear">☀️</button>
+               <button class="weather-btn" data-weather="rain">🌧️</button>
+               <button class="weather-btn" data-weather="snow">❄️</button>
+               <button class="weather-btn" data-weather="leaves">🍂</button>
+               <button class="weather-btn" data-weather="blossoms">🌸</button>
             </div>
-            <button class="ach-x" id="close-achievements-btn" type="button" aria-label="Close">✕</button>
-          </div>
-
-          <div class="ach-progress">
-            <div class="ach-progressText">Progress: <span id="ach-progress-text">0/14</span></div>
-            <div class="ach-progressBar">
-              <div class="ach-progressFill" id="ach-progress-fill" style="width:0%"></div>
+         </aside>
+         <!-- HUD -->
+         <header class="hud">
+            <div class="hud-wrap">
+               <div class="hud-item hud-score">
+                  <div class="hud-icon">🍯</div>
+                  <div class="hud-meta">
+                     <div class="hud-label">Score</div>
+                     <div class="hud-value" id="score">0</div>
+                  </div>
+               </div>
+               <div class="hud-sep"></div>
+               <div class="hud-item">
+                  <div class="hud-icon">📈</div>
+                  <div class="hud-meta">
+                     <div class="hud-label">Level</div>
+                     <div class="hud-value" id="level">Beginner</div>
+                  </div>
+               </div>
+               <div class="hud-sep"></div>
+               <div class="hud-item">
+                  <div class="hud-icon">❤️</div>
+                  <div class="hud-meta">
+                     <div class="hud-label">Lives</div>
+                     <div class="hud-value" id="lives">3</div>
+                  </div>
+               </div>
             </div>
-          </div>
-
-          <div class="ach-controls">
-            <div class="ach-search">
-              <span class="ach-searchIcon" aria-hidden="true">🔍</span>
-              <input id="ach-search-input" type="text" placeholder="Search achievements..." autocomplete="off" />
+            
+            <!-- Progression Bar -->
+            <div class="progression-bar">
+               <div class="progression-fill" id="progression-fill"></div>
+               <div class="progression-label" id="progression-label">0/300</div>
             </div>
-            <div class="ach-filters" role="tablist" aria-label="Achievement filters">
-              <button class="ach-filter is-active" type="button" data-filter="all">All</button>
-              <button class="ach-filter" type="button" data-filter="unlocked">Unlocked</button>
-              <button class="ach-filter" type="button" data-filter="locked">Locked</button>
+            
+            <div class="hud-actions">
+               <button class="hud-ach" id="achievements-btn">
+               <span class="hud-ach-icon">🏆</span>
+               <span class="hud-ach-text">
+               <span class="hud-ach-label">Achievements</span>
+               <span class="hud-ach-value" id="achievements-count">0/14</span>
+               </span>
+               <span class="hud-ach-caret">›</span>
+               </button>
             </div>
-          </div>
-        </div>
-
-        <div class="achievements-listWrap">
-          <div id="achievements-list">
-            <!-- JS populates -->
-          </div>
-        </div>
-
-        <div class="achievements-bottom">
-          <button class="btn btn-secondary" id="close-achievements-btn-2" type="button">Back to Game</button>
-        </div>
-      </div>
-    </div>
-  </main>
-
-  <script>
+         </header>
+         <!-- Game Canvas -->
+         <div class="game-container">
+            <canvas id="honey-game" width="420" height="700"></canvas>
+         </div>
+         <!-- ================= START ================= -->
+         <div class="overlay" id="start-overlay">
+            <div class="pooh-intro"></div>
+            <p class="story-line">Pooh is waiting for honey…</p>
+            <button class="btn" id="start-btn">
+            🍯 Start Collecting Honey
+            </button>
+            <div class="start-links">
+               <button class="link-btn" id="select-character-btn">Choose Helper</button>
+               <button class="link-btn" id="view-achievements-btn">Achievements</button>
+            </div>
+         </div>
+         <!-- ================= PAUSE ================= -->
+         <div class="overlay hidden" id="pause-overlay">
+            <h2>⏸️ Taking a Rest</h2>
+            <p class="subtitle">Paused</p>
+            <button class="btn" id="resume-btn">Resume</button>
+            <button class="btn btn-secondary" id="quit-btn">Return to Menu</button>
+         </div>
+         <!-- ================= HELP ================= -->
+         <div class="overlay hidden" id="help-overlay">
+            <h2>How to Play</h2>
+            <p class="subtitle">
+               Drag Pooh to catch honey.<br>
+               Avoid bees.
+            </p>
+            <button class="btn btn-secondary" id="close-help-btn">Back</button>
+         </div>
+         <!-- ================= GAME OVER ================= -->
+         <div class="overlay hidden" id="gameover-overlay">
+            <h2>Oh Bother!</h2>
+            <div class="final-score" id="final-score">0</div>
+            
+            <div class="gameover-stats">
+               <div class="stat-item">
+                  <span class="stat-label">Level Reached:</span>
+                  <span class="stat-value" id="final-level">Beginner</span>
+               </div>
+               <div class="stat-item">
+                  <span class="stat-label">Highest Streak:</span>
+                  <span class="stat-value" id="final-streak">0</span>
+               </div>
+               <div class="stat-item">
+                  <span class="stat-label">Honey Caught:</span>
+                  <span class="stat-value" id="final-honey">0</span>
+               </div>
+            </div>
+            
+            <button class="btn" id="restart-btn">Play Again 🍯</button>
+         </div>
+         <!-- ================= CHARACTER SELECT ================= -->
+         <div class="overlay character-select-overlay hidden" id="character-select-overlay">
+            <div class="char-shell">
+               <div class="char-top">
+                  <h2 class="char-title">Choose Your Helper</h2>
+                  <p class="char-subtitle">You're always Pooh! Choose a friend to help you.</p>
+                  <button class="char-x" id="back-to-menu-btn">✕</button>
+               </div>
+               <div class="char-grid">
+                  <!-- Helper cards will be generated here -->
+               </div>
+               <div class="char-bottom">
+                  <button class="btn" id="start-with-character-btn">Start 🍯</button>
+               </div>
+            </div>
+         </div>
+         <!-- ================= ACHIEVEMENTS ================= -->
+         <div class="overlay achievements-overlay hidden" id="achievements-overlay">
+            <div class="achievements-shell">
+               <div class="achievements-top">
+                  <h2 class="ach-title">Achievements</h2>
+                  <button class="ach-x" id="close-achievements-btn">✕</button>
+               </div>
+               <div class="achievements-listWrap">
+                  <div id="achievements-list"></div>
+               </div>
+               <div class="achievements-bottom">
+                  <button class="btn btn-secondary" id="close-achievements-btn-2">Back</button>
+               </div>
+            </div>
+         </div>
+      </main>
+<script>
 (() => {
   "use strict";
   if (window.__POOH_HONEY_HUNT_REPLACE__) return;
@@ -355,13 +1417,13 @@
   /* ======================= PROGRESSIVE GAME SYSTEM ======================= */
   const ProgressiveSystem = (() => {
     const LEVELS = [
-      { score: 0,    name: "Beginner",    honeyRate: 620, beeRate: 1200, powerRate: 9000, unlock: null },
-      { score: 300,  name: "Novice",      honeyRate: 580, beeRate: 1100, powerRate: 8500, unlock: "piglet" },
-      { score: 800,  name: "Apprentice",  honeyRate: 540, beeRate: 1000, powerRate: 8000, unlock: "tigger" },
-      { score: 1500, name: "Adept",       honeyRate: 500, beeRate: 900,  powerRate: 7500, unlock: "rabbit" },
-      { score: 2500, name: "Expert",      honeyRate: 460, beeRate: 800,  powerRate: 7000, unlock: "eeyore" },
-      { score: 4000, name: "Master",      honeyRate: 420, beeRate: 700,  powerRate: 6500, unlock: null },
-      { score: 6000, name: "Grandmaster", honeyRate: 380, beeRate: 600,  powerRate: 6000, unlock: null }
+      { score: 0,    name: "Beginner",    honeyRate: 850, beeRate: 2000, powerRate: 12000, unlock: null },
+      { score: 300,  name: "Novice",      honeyRate: 750, beeRate: 1800, powerRate: 11000, unlock: "piglet" },
+      { score: 800,  name: "Apprentice",  honeyRate: 680, beeRate: 1600, powerRate: 10000, unlock: "tigger" },
+      { score: 1500, name: "Adept",       honeyRate: 620, beeRate: 1400, powerRate: 9000,  unlock: "rabbit" },
+      { score: 2500, name: "Expert",      honeyRate: 580, beeRate: 1200, powerRate: 8000,  unlock: "eeyore" },
+      { score: 4000, name: "Master",      honeyRate: 520, beeRate: 1000, powerRate: 7000,  unlock: null },
+      { score: 6000, name: "Grandmaster", honeyRate: 460, beeRate: 900,  powerRate: 6000,  unlock: null }
     ];
 
     let currentLevel = 0;
@@ -563,9 +1625,9 @@
     const effects = {
       piglet: {
         apply(game) {
-          // Piglet gives +1 starting life (applied once at game start)
+          // Piglet gives +2 starting life (applied once at game start)
           if (!pigletApplied) {
-            AppState.lives = 4; // Start with 4 instead of 3
+            AppState.lives = 5; // Start with 5 instead of 3
             pigletApplied = true;
           }
         },
@@ -584,13 +1646,13 @@
               const dy = bee.y - game.player.y;
               const dist = Math.sqrt(dx * dx + dy * dy);
               
-              if (dist < 180) { // If bee is close
+              if (dist < 200) { // If bee is close (increased range)
                 // Push bee away
-                bee.vx += (dx / dist) * 150;
-                bee.vy -= 40; // Give some upward push
+                bee.vx += (dx / dist) * 200; // Stronger push
+                bee.vy -= 60; // More upward push
                 
                 // Visual effect
-                Particles.emit(bee.x, bee.y, "rgba(255,140,0,1)", 12, 1.2);
+                Particles.emit(bee.x, bee.y, "rgba(255,140,0,1)", 15, 1.4);
                 
                 cooldowns[key] = Date.now();
                 
@@ -606,22 +1668,22 @@
       rabbit: {
         apply(game) {
           // Rabbit makes honey drift toward player, stronger with higher combo
-          const pullStrength = 0.5 + (AppState.combo.mult * 0.3);
+          const pullStrength = 0.8 + (AppState.combo.mult * 0.5); // Increased
           
           game.honeys.forEach(honey => {
             const dx = game.player.x - honey.x;
             const dy = game.player.y - honey.y;
             const dist = Math.sqrt(dx * dx + dy * dy);
             
-            if (dist < 350) { // If honey is within range
+            if (dist < 450) { // Increased range
               // Gentle pull toward player, stronger when closer
-              const strength = pullStrength * (1 - dist/350);
-              honey.x += (dx / dist) * strength;
-              honey.y += (dy / dist) * (strength * 0.7);
+              const strength = pullStrength * (1 - dist/450);
+              honey.x += (dx / dist) * strength * 1.5; // Stronger pull
+              honey.y += (dy / dist) * (strength * 0.9);
               
               // Visual trail
-              if (Math.random() < 0.1) {
-                Particles.emit(honey.x, honey.y, "rgba(80,170,110,0.6)", 1, 0.5);
+              if (Math.random() < 0.2) {
+                Particles.emit(honey.x, honey.y, "rgba(80,170,110,0.8)", 2, 0.7);
               }
             }
           });
@@ -630,15 +1692,15 @@
       
       eeyore: {
         apply(game) {
-          // Eeyore slows everything down by 15%
+          // Eeyore slows everything down by 20%
           if (!eeyoreSlowApplied) {
-            game.honeyFall = 165 * 0.85;
-            game.beeFall = 205 * 0.85;
-            game.beeDrift = 85 * 0.85;
+            game.honeyFall = 140 * 0.80; // 20% slower
+            game.beeFall = 160 * 0.80;
+            game.beeDrift = 60 * 0.80;
             eeyoreSlowApplied = true;
           }
           
-          // Also gives slight damage reduction (25% chance to ignore bee hit)
+          // Also gives damage reduction (30% chance to ignore bee hit)
           game.eeyoreProtection = true;
         }
       }
@@ -660,7 +1722,7 @@
       },
       
       checkEeyoreProtection() {
-        return AppState.helper === 'eeyore' && Math.random() < 0.25;
+        return AppState.helper === 'eeyore' && Math.random() < 0.30;
       },
       
       reset() {
@@ -748,15 +1810,15 @@
       piglet: { 
         icon: "🐷", 
         name: "Piglet", 
-        ability: "More Lives", 
-        desc: "Start with +1 extra life",
+        ability: "Extra Lives", 
+        desc: "Start with 2 extra lives",
         unlockScore: 0 
       },
       tigger: { 
         icon: "🐯", 
         name: "Tigger", 
         ability: "Bounce Shield", 
-        desc: "Occasionally bounce bees away",
+        desc: "Bounce bees away when close",
         unlockScore: 800 
       },
       rabbit: { 
@@ -770,7 +1832,7 @@
         icon: "🐴", 
         name: "Eeyore", 
         ability: "Slow & Steady", 
-        desc: "Everything moves 15% slower",
+        desc: "Everything moves 20% slower",
         unlockScore: 2500 
       }
     };
@@ -993,7 +2055,7 @@
       updateHUD();
     }
 
-return { bind, updateHUD, openAchievements, renderAchievements, openCharacterSelect, setText };
+    return { bind, updateHUD, openAchievements, renderAchievements, openCharacterSelect, setText };
   })();
 
   /* ======================= WEATHER EFFECTS (DOM overlay) ======================= */
@@ -1107,93 +2169,100 @@ return { bind, updateHUD, openAchievements, renderAchievements, openCharacterSel
   canvas.width = BASE_W;
   canvas.height = BASE_H;
 
-  /*/* ======================= LAYOUT (iOS-safe, stable) ======================= */
-const Layout = (() => {
-  const root = $("game-root");
-  const hud = document.querySelector(".hud");
-  const container = document.querySelector(".game-container");
+  /* ======================= LAYOUT (Improved Responsive) ======================= */
+  const Layout = (() => {
+    const root = $("game-root");
+    const hud = document.querySelector(".hud");
+    const container = document.querySelector(".game-container");
 
-  let lastKey = "";
-  let stableVH = window.visualViewport?.height || window.innerHeight || 700;
+    let lastKey = "";
+    let stableVH = window.visualViewport?.height || window.innerHeight || 700;
 
-  function getVH() {
-    // iOS Safari: visualViewport is the truth serum.
-    const vv = window.visualViewport;
-    if (vv && typeof vv.height === "number") {
-      stableVH = vv.height;
-    } else if (typeof window.innerHeight === "number") {
-      // fallback (still okay on desktop)
-      stableVH = window.innerHeight;
-    }
-    return Math.max(420, stableVH);
-  }
-
-  function apply() {
-    if (!container || !canvas) return;
-
-    const vh = getVH();
-    const hudH = hud ? hud.getBoundingClientRect().height : 0;
-
-    // Do NOT subtract your floating buttons; they are overlays.
-    const topPad = 8;
-    const bottomPad = 14;
-
-    const availableH = clamp(vh - hudH - topPad - bottomPad, 520, 980);
-    const contW = container.getBoundingClientRect().width || 420;
-
-    // Fit by height, then clamp by container width
-    const desiredW = availableH * (BASE_W / BASE_H);
-    const finalW = clamp(desiredW, 300, contW);
-    const finalH = finalW * (BASE_H / BASE_W);
-
-    const key = `${Math.round(vh)}|${Math.round(hudH)}|${Math.round(contW)}|${Math.round(finalW)}|${Math.round(finalH)}`;
-    if (key === lastKey) return;
-    lastKey = key;
-
-    // Center canvas in the container
-    container.style.display = "flex";
-    container.style.alignItems = "center";
-    container.style.justifyContent = "center";
-
-    // Force the container to reserve the play area height
-    container.style.height = `${Math.round(availableH)}px`;
-
-    // Explicit px sizing avoids iOS “auto” quirks
-    canvas.style.width = `${Math.round(finalW)}px`;
-    canvas.style.height = `${Math.round(finalH)}px`;
-
-    // Prevent scroll / bounce interference
-    if (root) {
-      root.style.minHeight = `${Math.round(vh)}px`;
-      root.style.overflow = "hidden";
-    }
-    document.body.style.overflow = "hidden";
-    document.documentElement.style.overflow = "hidden";
-  }
-
-  function bind() {
-    let r = 0;
-    const req = () => {
-      if (r) cancelAnimationFrame(r);
-      r = requestAnimationFrame(apply);
-    };
-
-    window.addEventListener("resize", req, { passive: true });
-    window.addEventListener("orientationchange", req, { passive: true });
-
-    // iOS: address bar changes trigger visualViewport resize/scroll
-    if (window.visualViewport) {
-      window.visualViewport.addEventListener("resize", req, { passive: true });
-      window.visualViewport.addEventListener("scroll", req, { passive: true });
+    function getVH() {
+      const vv = window.visualViewport;
+      if (vv && typeof vv.height === "number") {
+        stableVH = vv.height;
+      } else if (typeof window.innerHeight === "number") {
+        stableVH = window.innerHeight;
+      }
+      return Math.max(420, stableVH);
     }
 
-    setTimeout(apply, 60);
-    setTimeout(apply, 260);
-    apply();
-  }
+    function apply() {
+      if (!container || !canvas) return;
 
-  return { bind, apply };
-})();
+      const vh = getVH();
+      const hudH = hud ? hud.getBoundingClientRect().height : 0;
+      
+      // Calculate available space more accurately
+      const topPad = 15; // Space above HUD
+      const bottomPad = 20; // Space for bottom controls
+      
+      // Ensure minimum playable area
+      const availableH = Math.max(
+          400, 
+          clamp(vh - hudH - topPad - bottomPad, 400, 800)
+      );
+      
+      const contW = container.getBoundingClientRect().width || BASE_W;
+      
+      // Maintain aspect ratio
+      const desiredW = availableH * (BASE_W / BASE_H);
+      const finalW = clamp(desiredW, 300, Math.min(contW, 500));
+      const finalH = finalW * (BASE_H / BASE_W);
+
+      const key = `${Math.round(vh)}|${Math.round(hudH)}|${Math.round(contW)}|${Math.round(finalW)}|${Math.round(finalH)}`;
+      if (key === lastKey) return;
+      lastKey = key;
+
+      // Center canvas
+      container.style.display = "flex";
+      container.style.alignItems = "center";
+      container.style.justifyContent = "center";
+      container.style.padding = "10px";
+      container.style.minHeight = `${Math.round(finalH)}px`;
+      container.style.maxHeight = `${Math.round(finalH)}px`;
+
+      // Set canvas size explicitly
+      canvas.style.width = `${Math.round(finalW)}px`;
+      canvas.style.height = `${Math.round(finalH)}px`;
+      canvas.style.maxWidth = "100%";
+      canvas.style.maxHeight = "100%";
+
+      // Prevent scroll
+      if (root) {
+          root.style.minHeight = `${Math.round(vh)}px`;
+          root.style.overflow = "hidden";
+      }
+      
+      document.body.style.overflow = "hidden";
+      document.documentElement.style.overflow = "hidden";
+    }
+
+    function bind() {
+      let r = 0;
+      const req = () => {
+        if (r) cancelAnimationFrame(r);
+        r = requestAnimationFrame(apply);
+      };
+
+      window.addEventListener("resize", req, { passive: true });
+      window.addEventListener("orientationchange", req, { passive: true });
+
+      if (window.visualViewport) {
+        window.visualViewport.addEventListener("resize", req, { passive: true });
+        window.visualViewport.addEventListener("scroll", req, { passive: true });
+      }
+
+      // Initial apply with delays for iOS
+      setTimeout(apply, 60);
+      setTimeout(apply, 260);
+      apply();
+    }
+
+    return { bind, apply };
+  })();
+
   /* ======================= INPUT (SMOOTH SPRING) ======================= */
   const Input = (() => {
     let down = false;
@@ -1316,6 +2385,65 @@ const Layout = (() => {
     el.addEventListener("animationend", () => el.remove(), { once: true });
   }
 
+  /* ======================= GAMEPLAY TIPS ======================= */
+  function showGameplayTip() {
+    const tips = [
+      "💡 Tip: Try to maintain your combo for bonus points!",
+      "💡 Tip: Piglet gives you extra lives to start with!",
+      "💡 Tip: Gold honey pots give double points!",
+      "💡 Tip: Watch out for cursed honey - it hurts!",
+      "💡 Tip: Power-ups appear as you play longer!",
+      "💡 Tip: Try different weather effects for fun!",
+      "💡 Tip: Unlock all helpers by reaching higher scores!"
+    ];
+    
+    const tip = tips[Math.floor(Math.random() * tips.length)];
+    
+    // Don't show tip if one already exists
+    if ($("gameplay-tip")) return;
+    
+    const tipEl = document.createElement("div");
+    tipEl.id = "gameplay-tip";
+    tipEl.style.cssText = `
+        position: fixed;
+        top: 50%;
+        left: 50%;
+        transform: translate(-50%, -50%);
+        background: rgba(0,0,0,0.8);
+        color: #FFD700;
+        padding: 15px 25px;
+        border-radius: 15px;
+        border: 3px solid #D4A574;
+        font-family: 'Patrick Hand', cursive;
+        font-size: 18px;
+        text-align: center;
+        max-width: 80%;
+        z-index: 1002;
+        animation: fadeInOut 4s ease forwards;
+    `;
+    
+    // Add animation
+    const style = document.createElement('style');
+    style.textContent = `
+        @keyframes fadeInOut {
+            0% { opacity: 0; transform: translate(-50%, -50%) scale(0.8); }
+            15% { opacity: 1; transform: translate(-50%, -50%) scale(1); }
+            85% { opacity: 1; transform: translate(-50%, -50%) scale(1); }
+            100% { opacity: 0; transform: translate(-50%, -50%) scale(0.8); }
+        }
+    `;
+    document.head.appendChild(style);
+    
+    tipEl.textContent = tip;
+    document.body.appendChild(tipEl);
+    
+    setTimeout(() => {
+      if (tipEl.parentNode) {
+        tipEl.remove();
+      }
+    }, 4000);
+  }
+
   /* ======================= ACHIEVEMENTS ======================= */
   const Achievements = (() => {
     const unlock = (k, title = "Achievement!") => {
@@ -1367,22 +2495,6 @@ const Layout = (() => {
     const bees = [];
     const powers = [];
 
-// Mutable context passed to helper effects (so they can tweak difficulty safely)
-const GameCtx = {
-  honeys,
-  bees,
-  player: null,
-  get honeyFall(){ return honeyFall; },
-  set honeyFall(v){ honeyFall = v; },
-  get beeFall(){ return beeFall; },
-  set beeFall(v){ beeFall = v; },
-  get beeDrift(){ return beeDrift; },
-  set beeDrift(v){ beeDrift = v; },
-  get eeyoreProtection(){ return eeyoreProtection; },
-  set eeyoreProtection(v){ eeyoreProtection = !!v; }
-};
-
-
     const player = {
       x: BASE_W / 2,
       y: BASE_H - 86,
@@ -1391,8 +2503,6 @@ const GameCtx = {
       sv: 0,
     };
 
-    GameCtx.player = player;
-
     const buffs = { shield: 0, slow: 0 };
 
     let running = false;
@@ -1400,12 +2510,12 @@ const GameCtx = {
 
     // base spawn
     let honeyTimer = 0, beeTimer = 0, powerTimer = 0;
-    let baseHoneyRate = 520;
-    let baseBeeRate = 980;
+    let baseHoneyRate = 650;
+    let baseBeeRate = 2200;
     let powerRate = 7600;
 
-    // movement difficulty
-    let honeyFall = 165, beeFall = 205, beeDrift = 85;
+    // movement difficulty - EASIER VALUES
+    let honeyFall = 140, beeFall = 160, beeDrift = 60;
 
     let shake = 0;
     let microSlow = 0;
@@ -1457,7 +2567,7 @@ const GameCtx = {
       buffs.slow = 0;
 
       honeyTimer = beeTimer = powerTimer = 0;
-      honeyFall = 165; beeFall = 205; beeDrift = 85;
+      honeyFall = 140; beeFall = 160; beeDrift = 60; // EASIER
 
       player.x = BASE_W / 2;
       player.y = BASE_H - 86;
@@ -1483,8 +2593,15 @@ const GameCtx = {
       last = now();
       Layout.apply();
       
+      // Show a helpful tip
+      showGameplayTip();
+      
       // Apply helper start effects
       HelperEffects.onGameStart();
+      // Piglet: start with extra lives
+      if (AppState.score === 0 && AppState.timeMs === 0) {
+        AppState.lives = (AppState.helper === 'piglet') ? 5 : 3;
+      }
       UI.updateHUD();
     }
 
@@ -1589,19 +2706,19 @@ const GameCtx = {
       baseBeeRate = levelData.beeRate;
       powerRate = levelData.powerRate;
       
-      // Keep some time-based progression for falling speed
+      // Keep some time-based progression for falling speed (slower progression)
       const tSec = Math.min(45, AppState.timeMs / 1000);
-      honeyFall = 165 + tSec * 0.5;
-      beeFall = 205 + tSec * 0.7;
-      beeDrift = 85 + tSec * 0.08;
+      honeyFall = 140 + tSec * 0.3; // Slower increase
+      beeFall = 160 + tSec * 0.4;   // Slower increase
+      beeDrift = 60 + tSec * 0.05;  // Slower increase
       
-      // Director easing
-      const targetEase = AppState.lives <= 1 ? 1 : (AppState.lives === 2 ? 0.45 : 0);
-      directorEase = lerp(directorEase, targetEase, 0.03);
+      // Director easing (more forgiving)
+      const targetEase = AppState.lives <= 1 ? 0.7 : (AppState.lives === 2 ? 0.3 : 0);
+      directorEase = lerp(directorEase, targetEase, 0.02);
       
-      // Apply director easing to rates
-      baseBeeRate = clamp(baseBeeRate + directorEase * 300, 600, 1400);
-      baseHoneyRate = clamp(baseHoneyRate + directorEase * 80, 350, 650);
+      // Apply director easing to rates (less severe)
+      baseBeeRate = clamp(baseBeeRate + directorEase * 200, 900, 2000);
+      baseHoneyRate = clamp(baseHoneyRate + directorEase * 60, 450, 750);
     }
 
     function setComboFromStreak() {
@@ -1630,10 +2747,10 @@ const GameCtx = {
         AppState.streak = 0;
         AppState.combo = { mult: 1, timer: 0, tier: 0 };
 
-        AppState.score = Math.max(0, AppState.score - 35);
+        AppState.score = Math.max(0, AppState.score - 25); // Less penalty
 
         Particles.emit(h.x, h.y, "rgba(180,55,25,1)", 24, 1.2);
-        spawnScorePopup("CURSED! -35", h.x, h.y);
+        spawnScorePopup("CURSED! -25", h.x, h.y);
 
         // not instant death: only 1 extra bee
         spawnBee();
@@ -2113,10 +3230,17 @@ const GameCtx = {
       player.scale += player.sv;
       player.scale = clamp(player.scale, 0.88, 1.25);
 
-      const slowFactor = buffs.slow > 0 ? 0.58 : 1;
+      let slowFactor = buffs.slow > 0 ? 0.58 : 1;
+      // Eeyore: constant gentle slow + occasional protection
+      if (AppState.helper === 'eeyore') {
+        slowFactor *= 0.80;
+        eeyoreProtection = true;
+      } else {
+        eeyoreProtection = false;
+      }
 
-      // Apply helper effects
-      HelperEffects.applyCurrent(GameCtx);
+      // Apply helper effects (Tigger/Rabbit do active behaviors)
+      HelperEffects.applyCurrent({ honeys, bees, player });
 
       // spawn
       honeyTimer += dt;
@@ -2139,7 +3263,17 @@ const GameCtx = {
           continue;
         }
 
-        if (hitCircle(player.x, player.y, player.r, h.x, h.y, h.r)) {
+        // Adaptive collision radius - easier at lower levels
+        const basePlayerRadius = 54;
+        const currentLevel = ProgressiveSystem.getCurrentLevel(AppState.score);
+        let collisionRadius = basePlayerRadius;
+        if (currentLevel <= 1) collisionRadius = 42; // Beginner/Novice
+        else if (currentLevel <= 3) collisionRadius = 48; // Apprentice/Adept
+        else collisionRadius = 54; // Expert+
+        
+        const hitBuffer = 3; // Extra pixels for easier dodging
+
+        if (hitCircle(player.x, player.y, collisionRadius - hitBuffer, h.x, h.y, h.r)) {
           awardHoney(h);
           honeys.splice(i, 1);
         }
@@ -2185,8 +3319,18 @@ const GameCtx = {
 
         if (b.y > BASE_H + 80) { bees.splice(i, 1); continue; }
 
-        const beePlayerR = player.r * 0.78;
-        if (hitCircle(player.x, player.y, beePlayerR, b.x, b.y, b.r)) {
+        // Adaptive collision radius - easier at lower levels
+        const basePlayerRadius = 54;
+        const currentLevel = ProgressiveSystem.getCurrentLevel(AppState.score);
+        let collisionRadius = basePlayerRadius;
+        if (currentLevel <= 1) collisionRadius = 42; // Beginner/Novice
+        else if (currentLevel <= 3) collisionRadius = 48; // Apprentice/Adept
+        else collisionRadius = 54; // Expert+
+        
+        const beePlayerR = collisionRadius * 0.78;
+        const hitBuffer = 3; // Extra pixels for easier dodging
+        
+        if (hitCircle(player.x, player.y, beePlayerR + hitBuffer, b.x, b.y, b.r)) {
           takeHit(b);
           bees.splice(i, 1);
         }
@@ -2270,6 +3414,23 @@ const GameCtx = {
 
   /* ======================= BOOT ======================= */
   function boot() {
+    // Prevent zoom on mobile
+    document.addEventListener('touchmove', function(e) {
+      if(e.scale !== 1) {
+        e.preventDefault();
+      }
+    }, { passive: false });
+    
+    // Prevent double-tap zoom
+    let lastTouchEnd = 0;
+    document.addEventListener('touchend', function(e) {
+      const now = Date.now();
+      if (now - lastTouchEnd <= 300) {
+        e.preventDefault();
+      }
+      lastTouchEnd = now;
+    }, { passive: false });
+    
     UI.bind();
     Layout.bind();
     Game.reset();
@@ -2283,6 +3444,7 @@ const GameCtx = {
     boot();
   }
 })();
-  </script>
-</body>
+</script>
+      
+   </body>
 </html>
