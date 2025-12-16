@@ -1635,7 +1635,6 @@
         (() => {
             "use strict";
             
-            // Prevent multiple initializations
             if (window.__POOH_HONEY_HUNT_LOADED__) return;
             window.__POOH_HONEY_HUNT_LOADED__ = true;
 
@@ -1643,1062 +1642,12 @@
             const $ = (id) => document.getElementById(id);
             const clamp = (v, a, b) => Math.max(a, Math.min(b, v));
             const lerp = (a, b, t) => a + (b - a) * t;
-            const now = () => (typeof performance !== "undefined" ? performance.now() : Date.now());
+            const now = () => performance.now();
 
-            // Rounded-rect path helper
-            function rrPath(ctx, x, y, w, h, r) {
-                r = Math.max(0, Math.min(r, Math.min(w, h) / 2));
-                ctx.beginPath();
-                ctx.moveTo(x + r, y);
-                ctx.lineTo(x + w - r, y);
-                ctx.quadraticCurveTo(x + w, y, x + w, y + r);
-                ctx.lineTo(x + w, y + h - r);
-                ctx.quadraticCurveTo(x + w, y + h, x + w - r, y + h);
-                ctx.lineTo(x + r, y + h);
-                ctx.quadraticCurveTo(x, y + h, x, y + h - r);
-                ctx.lineTo(x, y + r);
-                ctx.quadraticCurveTo(x, y, x + r, y);
-                ctx.closePath();
-            }
-
-            // Small seeded RNG for stable "paper grain"
-            function makeRng(seed) {
-                let s = seed >>> 0;
-                return () => {
-                    s = (s * 1664525 + 1013904223) >>> 0;
-                    return (s & 0xfffffff) / 0xfffffff;
-                };
-            }
-
-            // Smooth noise-ish helper
-            const n1 = (t, seed) => Math.sin((t * 0.0012) + seed) * 0.5 + Math.sin((t * 0.00053) + seed * 1.7) * 0.35 + Math.sin((t * 0.0019) + seed * 0.27) * 0.15;
-
-            /* ======================= SAFE STORAGE ======================= */
-            const Store = (() => {
-                const mem = new Map();
-                const hasLS = (() => {
-                    try {
-                        const t = "__t__";
-                        localStorage.setItem(t, "1");
-                        localStorage.removeItem(t);
-                        return true;
-                    } catch {
-                        return false;
-                    }
-                })();
-
-                return {
-                    get(k, fallback = null) {
-                        if (hasLS) {
-                            try {
-                                const v = localStorage.getItem(k);
-                                return v === null ? fallback : v;
-                            } catch {}
-                        }
-                        return mem.has(k) ? mem.get(k) : fallback;
-                    },
-                    set(k, v) {
-                        if (hasLS) {
-                            try {
-                                localStorage.setItem(k, String(v));
-                                return;
-                            } catch {}
-                        }
-                        mem.set(k, String(v));
-                    },
-                    remove(k) {
-                        if (hasLS) {
-                            try {
-                                localStorage.removeItem(k);
-                            } catch {}
-                        }
-                        mem.delete(k);
-                    },
-                    clear() {
-                        if (hasLS) {
-                            try {
-                                localStorage.clear();
-                            } catch {}
-                        }
-                        mem.clear();
-                    }
-                };
-            })();
-
-            /* ======================= PROGRESSIVE GAME SYSTEM ======================= */
-            const ProgressiveSystem = (() => {
-                const LEVELS = [
-                    { score: 0,    name: "Beginner",    honeyRate: 850, beeRate: 2000, powerRate: 12000, unlock: null },
-                    { score: 300,  name: "Novice",      honeyRate: 750, beeRate: 1800, powerRate: 11000, unlock: "piglet" },
-                    { score: 800,  name: "Apprentice",  honeyRate: 680, beeRate: 1600, powerRate: 10000, unlock: "tigger" },
-                    { score: 1500, name: "Adept",       honeyRate: 620, beeRate: 1400, powerRate: 9000,  unlock: "rabbit" },
-                    { score: 2500, name: "Expert",      honeyRate: 580, beeRate: 1200, powerRate: 8000,  unlock: "eeyore" },
-                    { score: 4000, name: "Master",      honeyRate: 520, beeRate: 1000, powerRate: 7000,  unlock: null },
-                    { score: 6000, name: "Grandmaster", honeyRate: 460, beeRate: 900,  powerRate: 6000,  unlock: null }
-                ];
-
-                let currentLevel = 0;
-                let unlockedHelpers = new Set(["piglet"]); // Start with Piglet unlocked
-
-                // Load unlocked helpers from storage
-                try {
-                    const saved = Store.get("unlockedHelpers", "piglet");
-                    if (saved) {
-                        unlockedHelpers = new Set(saved.split(","));
-                    }
-                } catch {}
-
-                function getCurrentLevel(score) {
-                    for (let i = LEVELS.length - 1; i >= 0; i--) {
-                        if (score >= LEVELS[i].score) {
-                            return i;
-                        }
-                    }
-                    return 0;
-                }
-
-                function checkUnlocks(score) {
-                    const newLevel = getCurrentLevel(score);
-                    const oldLevel = currentLevel;
-                    currentLevel = newLevel;
-
-                    // Check for new unlocks
-                    if (newLevel > oldLevel) {
-                        for (let i = oldLevel + 1; i <= newLevel; i++) {
-                            const unlock = LEVELS[i].unlock;
-                            if (unlock && !unlockedHelpers.has(unlock)) {
-                                unlockedHelpers.add(unlock);
-                                
-                                // Show unlock notification
-                                showUnlockNotification(unlock);
-                                
-                                // Save to storage
-                                Store.set("unlockedHelpers", Array.from(unlockedHelpers).join(","));
-                            }
-                        }
-                    }
-
-                    return LEVELS[newLevel];
-                }
-
-                function showUnlockNotification(helper) {
-                    const helperNames = {
-                        piglet: "Piglet",
-                        tigger: "Tigger",
-                        rabbit: "Rabbit",
-                        eeyore: "Eeyore"
-                    };
-
-                    const pop = document.createElement("div");
-                    pop.className = "unlock-notification";
-                    pop.innerHTML = `
-                        <div class="unlock-icon">🎉</div>
-                        <div class="unlock-content">
-                            <div class="unlock-title">New Helper Unlocked!</div>
-                            <div class="unlock-name">${helperNames[helper]}</div>
-                        </div>
-                    `;
-                    
-                    document.body.appendChild(pop);
-                    setTimeout(() => pop.classList.add("show"), 10);
-                    
-                    setTimeout(() => {
-                        pop.classList.remove("show");
-                        setTimeout(() => pop.remove(), 300);
-                    }, 3000);
-
-                    Audio.power();
-                    vibrate([20, 20, 20]);
-                }
-
-                function isHelperUnlocked(helper) {
-                    return unlockedHelpers.has(helper);
-                }
-
-                function getUnlockedHelpers() {
-                    return Array.from(unlockedHelpers);
-                }
-
-                function reset() {
-                    unlockedHelpers = new Set(["piglet"]);
-                    currentLevel = 0;
-                    Store.remove("unlockedHelpers");
-                }
-
-                return {
-                    checkUnlocks,
-                    isHelperUnlocked,
-                    getUnlockedHelpers,
-                    reset,
-                    getCurrentLevel: () => currentLevel,
-                    getLevelName: (score) => LEVELS[getCurrentLevel(score)].name,
-                    LEVELS
-                };
-            })();
-
-            /* ======================= APP STATE ======================= */
-            const AppState = {
-                running: false,
-                paused: false,
-
-                score: 0,
-                best: Number(Store.get("bestScore", "0") || 0),
-                streak: 0,
-                lives: 3,
-
-                timeMs: 0,
-                timeScale: 1,
-
-                soundOn: Store.get("sound", "on") !== "off",
-                hapticsOn: Store.get("haptics", "on") !== "off",
-                helper: Store.get("helper", "piglet") || "piglet",
-
-                combo: { mult: 1, timer: 0, tier: 0 },
-
-                achievements: (() => {
-                    try {
-                        const saved = Store.get("achievements", "{}");
-                        return JSON.parse(saved || "{}");
-                    } catch {
-                        return {};
-                    }
-                })(),
-
-                stats: {
-                    maxStreak: 0,
-                    honeyCaught: 0,
-                    beesHit: 0,
-                    powerCollected: 0,
-                    highestLevel: 0,
-                },
-            };
-
-            const persistAchievements = () => {
-                try {
-                    Store.set("achievements", JSON.stringify(AppState.achievements || {}));
-                } catch {}
-            };
-
-            const vibrate = (pattern = 20) => {
-                try {
-                    if (AppState.hapticsOn && navigator.vibrate) navigator.vibrate(pattern);
-                } catch {}
-            };
-
-            /* ======================= AUDIO (tiny synth sfx) ======================= */
-            const Audio = (() => {
-                let ctx = null, master = null;
-                let audioResumeAttempts = 0;
-
-                function init() {
-                    if (!AppState.soundOn) return;
-                    if (ctx) return;
-                    try {
-                        ctx = new (window.AudioContext || window.webkitAudioContext)();
-                        master = ctx.createGain();
-                        master.gain.value = 0.22;
-                        master.connect(ctx.destination);
-                        
-                        // Resume context if suspended (required by some browsers)
-                        if (ctx.state === 'suspended') {
-                            ctx.resume().catch(e => console.log('Audio context resume failed:', e));
-                        }
-                    } catch (e) {
-                        console.log('Audio initialization failed:', e);
-                        ctx = null;
-                        master = null;
-                    }
-                }
-
-                function resume() {
-                    if (ctx && ctx.state === 'suspended' && audioResumeAttempts < 3) {
-                        audioResumeAttempts++;
-                        ctx.resume().catch(e => {
-                            console.log('Audio resume attempt failed:', e);
-                        });
-                    }
-                }
-
-                function beep(freq = 440, dur = 0.06, gain = 0.07, type = "sine") {
-                    if (!AppState.soundOn || !ctx || !master) return;
-                    
-                    // Ensure context is running
-                    if (ctx.state === 'suspended') {
-                        resume();
-                        return;
-                    }
-
-                    const t = ctx.currentTime;
-                    const o = ctx.createOscillator();
-                    const g = ctx.createGain();
-                    o.type = type;
-                    o.frequency.setValueAtTime(freq, t);
-                    g.gain.setValueAtTime(gain, t);
-                    g.gain.exponentialRampToValueAtTime(0.0001, t + dur);
-                    o.connect(g);
-                    g.connect(master);
-                    o.start(t);
-                    o.stop(t + dur);
-                }
-
-                const sfx = {
-                    collect() { beep(740, 0.05, 0.085, "triangle"); },
-                    combo()  { beep(920, 0.08, 0.08, "sawtooth"); },
-                    hit()    { beep(160, 0.10, 0.10, "square"); },
-                    power()  { beep(520, 0.09, 0.08, "sine"); },
-                    ui()     { beep(420, 0.04, 0.06, "triangle"); }
-                };
-
-                function toggle() {
-                    AppState.soundOn = !AppState.soundOn;
-                    Store.set("sound", AppState.soundOn ? "on" : "off");
-                    if (AppState.soundOn) {
-                        init();
-                        ui();
-                    }
-                }
-
-                return { init, toggle, resume, ...sfx };
-            })();
-
-            /* ======================= HELPER EFFECTS ======================= */
-            const HelperEffects = (() => {
-                const cooldowns = {};
-                let pigletApplied = false;
-                let eeyoreSlowApplied = false;
-                
-                const effects = {
-                    piglet: {
-                        apply(game) {
-                            // Piglet gives +2 starting life (applied once at game start)
-                            if (!pigletApplied) {
-                                AppState.lives = 5; // Start with 5 instead of 3
-                                pigletApplied = true;
-                            }
-                        },
-                        onStart() {
-                            // This will be called when game starts
-                        }
-                    },
-                    
-                    tigger: {
-                        apply(game) {
-                            const key = 'tigger_bounce';
-                            if (!cooldowns[key] || Date.now() - cooldowns[key] > 5000) {
-                                // Check for nearby bees
-                                game.bees.forEach(bee => {
-                                    const dx = bee.x - game.player.x;
-                                    const dy = bee.y - game.player.y;
-                                    const dist = Math.sqrt(dx * dx + dy * dy);
-                                    
-                                    if (dist < 200) { // If bee is close (increased range)
-                                        // Push bee away
-                                        bee.vx += (dx / dist) * 200; // Stronger push
-                                        bee.vy -= 60; // More upward push
-                                        
-                                        // Visual effect
-                                        Particles.emit(bee.x, bee.y, "rgba(255,140,0,1)", 15, 1.4);
-                                        
-                                        cooldowns[key] = Date.now();
-                                        
-                                        // Show effect indicator
-                                        spawnScorePopup("🐯 BOUNCE!", game.player.x, game.player.y - 60);
-                                        Audio.power();
-                                    }
-                                });
-                            }
-                        }
-                    },
-                    
-                    rabbit: {
-                        apply(game) {
-                            // Rabbit makes honey drift toward player, stronger with higher combo
-                            const pullStrength = 0.8 + (AppState.combo.mult * 0.5); // Increased
-                            
-                            game.honeys.forEach(honey => {
-                                const dx = game.player.x - honey.x;
-                                const dy = game.player.y - honey.y;
-                                const dist = Math.sqrt(dx * dx + dy * dy);
-                                
-                                if (dist < 450) { // Increased range
-                                    // Gentle pull toward player, stronger when closer
-                                    const strength = pullStrength * (1 - dist/450);
-                                    honey.x += (dx / dist) * strength * 1.5; // Stronger pull
-                                    honey.y += (dy / dist) * (strength * 0.9);
-                                    
-                                    // Visual trail
-                                    if (Math.random() < 0.2) {
-                                        Particles.emit(honey.x, honey.y, "rgba(80,170,110,0.8)", 2, 0.7);
-                                    }
-                                }
-                            });
-                        }
-                    },
-                    
-                    eeyore: {
-                        apply(game) {
-                            // Eeyore slows everything down by 20%
-                            if (!eeyoreSlowApplied) {
-                                game.honeyFall = 140 * 0.80; // 20% slower
-                                game.beeFall = 160 * 0.80;
-                                game.beeDrift = 60 * 0.80;
-                                eeyoreSlowApplied = true;
-                            }
-                            
-                            // Also gives damage reduction (30% chance to ignore bee hit)
-                            game.eeyoreProtection = true;
-                        }
-                    }
-                };
-                
-                return {
-                    applyCurrent(game) {
-                        const effect = effects[AppState.helper];
-                        if (effect && effect.apply) {
-                            effect.apply(game);
-                        }
-                    },
-                    
-                    onGameStart() {
-                        const effect = effects[AppState.helper];
-                        if (effect && effect.onStart) {
-                            effect.onStart();
-                        }
-                    },
-                    
-                    checkEeyoreProtection() {
-                        return AppState.helper === 'eeyore' && Math.random() < 0.30;
-                    },
-                    
-                    reset() {
-                        pigletApplied = false;
-                        eeyoreSlowApplied = false;
-                        Object.keys(cooldowns).forEach(key => delete cooldowns[key]);
-                    }
-                };
-            })();
-
-            /* ======================= OVERLAYS ======================= */
-            const Overlays = (() => {
-                const map = {
-                    start: $("start-screen"),
-                    pause: $("pause-screen"),
-                    help: $("help-screen"),
-                    character: $("character-screen"),
-                    achievements: $("achievements-screen"),
-                    gameover: $("gameover-screen"),
-                    settings: $("settings-screen")
-                };
-
-                const anyOpen = () => Object.values(map).some(el => el && !el.classList.contains("hidden"));
-                const sync = () => document.body.classList.toggle("overlay-open", anyOpen());
-
-                function open(name) {
-                    const el = map[name];
-                    if (!el) return;
-                    el.classList.remove("hidden");
-                    sync();
-                    if (name === "pause") AppState.paused = true;
-                    
-                    // Focus management for accessibility
-                    setTimeout(() => {
-                        const firstBtn = el.querySelector('button');
-                        if (firstBtn) firstBtn.focus();
-                    }, 50);
-                }
-                
-                function close(name) {
-                    const el = map[name];
-                    if (!el) return;
-                    el.classList.add("hidden");
-                    sync();
-                    if (name === "pause") AppState.paused = false;
-                }
-                
-                function closeAll() {
-                    for (const el of Object.values(map)) if (el) el.classList.add("hidden");
-                    AppState.paused = false;
-                    sync();
-                }
-
-                return { open, close, closeAll };
-            })();
-
-            /* ======================= HUD MICRO-INTERACTIONS ======================= */
-            const HUDFX = (() => {
-                const pulse = (id) => {
-                    const el = $(id);
-                    if (!el) return;
-                    el.classList.remove("hud-pop");
-                    void el.offsetWidth;
-                    el.classList.add("hud-pop");
-                    setTimeout(() => el.classList.remove("hud-pop"), 250);
-                };
-
-                const shake = (id) => {
-                    const el = $(id);
-                    if (!el) return;
-                    el.classList.remove("hud-shake");
-                    void el.offsetWidth;
-                    el.classList.add("hud-shake");
-                    setTimeout(() => el.classList.remove("hud-shake"), 380);
-                };
-
-                return { pulse, shake };
-            })();
-
-            /* ======================= UI BINDINGS ======================= */
-            const UI = (() => {
-                function setText(id, v) {
-                    const el = $(id);
-                    if (el) el.textContent = String(v);
-                }
-
-                function setSoundIcon() {
-                    const icon = $("sound-toggle-btn")?.querySelector("i");
-                    if (!icon) return;
-                    icon.className = AppState.soundOn ? "fas fa-volume-up" : "fas fa-volume-mute";
-                }
-
-                const HELPER_INFO = {
-                    piglet: { 
-                        icon: "🐷", 
-                        name: "Piglet", 
-                        ability: "Extra Lives", 
-                        desc: "Start with 2 extra lives",
-                        unlockScore: 0 
-                    },
-                    tigger: { 
-                        icon: "🐯", 
-                        name: "Tigger", 
-                        ability: "Bounce Shield", 
-                        desc: "Bounce bees away when close",
-                        unlockScore: 800 
-                    },
-                    rabbit: { 
-                        icon: "🐰", 
-                        name: "Rabbit", 
-                        ability: "Honey Magnet", 
-                        desc: "Honey pots drift toward you",
-                        unlockScore: 1500 
-                    },
-                    eeyore: { 
-                        icon: "🐴", 
-                        name: "Eeyore", 
-                        ability: "Slow & Steady", 
-                        desc: "Everything moves 20% slower",
-                        unlockScore: 2500 
-                    }
-                };
-
-                function renderHelperCards() {
-                    const charGrid = $("character-grid");
-                    if (!charGrid) return;
-                    
-                    charGrid.innerHTML = Object.entries(HELPER_INFO).map(([key, info]) => {
-                        const unlocked = ProgressiveSystem.isHelperUnlocked(key);
-                        const isActive = AppState.helper === key;
-                        
-                        return `
-                            <button class="character-card ${isActive ? 'selected' : ''} ${!unlocked ? 'locked' : ''}" 
-                                    data-helper="${key}" ${!unlocked ? 'disabled' : ''}
-                                    aria-label="${info.name} - ${info.ability}${!unlocked ? ' (Locked)' : ''}">
-                                ${!unlocked ? '<i class="fas fa-lock lock-icon" aria-hidden="true"></i>' : ''}
-                                <div class="character-icon">${info.icon}</div>
-                                <div class="character-name">${info.name}</div>
-                                <div class="character-ability">${info.ability}</div>
-                                <div class="character-desc">${info.desc}</div>
-                                ${!unlocked ? 
-                                    `<div class="character-desc" style="color: var(--color-primary); margin-top: 5px;">Unlock at ${info.unlockScore} points</div>` : 
-                                    ''}
-                            </button>
-                        `;
-                    }).join("");
-                }
-
-                function updateHUD(prev = null) {
-                    setText("stat-score", Math.floor(AppState.score));
-                    setText("stat-lives", Math.floor(AppState.lives));
-                    setText("stat-combo", AppState.combo.mult.toFixed(1) + "x");
-                    
-                    // Update level display
-                    const levelName = ProgressiveSystem.getLevelName(AppState.score);
-                    setText("level-display", levelName);
-                    
-                    // Update progression bar
-                    const currentLevel = ProgressiveSystem.getCurrentLevel(AppState.score);
-                    const LEVELS = ProgressiveSystem.LEVELS;
-                    
-                    if (currentLevel < LEVELS.length - 1) {
-                        const currentGoal = LEVELS[currentLevel].score;
-                        const nextGoal = LEVELS[currentLevel + 1].score;
-                        const progress = AppState.score - currentGoal;
-                        const total = nextGoal - currentGoal;
-                        const percent = Math.min(100, (progress / total) * 100);
-                        
-                        const fill = $("progress-fill");
-                        const label = $("next-level-label");
-                        
-                        if (fill) fill.style.width = `${percent}%`;
-                        if (label) label.textContent = `${Math.floor(progress)}/${total}`;
-                    } else {
-                        // Max level reached
-                        const fill = $("progress-fill");
-                        const label = $("next-level-label");
-                        if (fill) fill.style.width = "100%";
-                        if (label) label.textContent = "MAX";
-                    }
-
-                    const defsCount = 14;
-                    const got = Object.values(AppState.achievements || {}).filter(Boolean).length;
-                    setText("achievements-count", `${got}/${defsCount}`);
-
-                    if (prev) {
-                        if (AppState.score !== prev.score) HUDFX.pulse("stat-score");
-                        if (AppState.lives < prev.lives) HUDFX.shake("stat-lives");
-                    }
-                }
-
-                const ACH_DEFS = [
-                    { key:"firstHoney", title:"First Honey", desc:"Catch any honey." },
-                    { key:"streak10",  title:"Sticky Streak", desc:"Reach a 10 streak." },
-                    { key:"survive60", title:"Steady Paws", desc:"Survive 60 seconds." },
-                    { key:"score1k",   title:"Honey Hoarder", desc:"Reach 1000 score." },
-                    { key:"beeDodger", title:"Bee Dodger", desc:"30s with full lives." },
-                    { key:"combo2x",   title:"Combo Craze", desc:"Hit 2.0× combo." },
-                    { key:"powerFan",  title:"Powered Up", desc:"Collect 3 power-ups." },
-                    { key:"noMiss20",  title:"Perfect Flow", desc:"20 streak without a miss." },
-                    { key:"survive120",title:"Long Walk", desc:"Survive 120 seconds." },
-                    { key:"score3k",   title:"Legend", desc:"Reach 3000 score." },
-                    // New progression achievements
-                    { key:"level3",    title:"Rising Star", desc:"Reach Novice level." },
-                    { key:"level5",    title:"Honey Master", desc:"Reach Expert level." },
-                    { key:"level7",    title:"Grandmaster", desc:"Reach highest level." },
-                    { key:"allHelpers",title:"Full Crew", desc:"Unlock all helpers." },
-                ];
-
-                function renderAchievements() {
-                    const list = $("achievements-list");
-                    if (!list) return;
-
-                    const unlocked = (k) => !!AppState.achievements?.[k];
-
-                    list.innerHTML = ACH_DEFS.map(d => {
-                        const ok = unlocked(d.key);
-                        return `
-                            <div class="achievement-item ${ok ? "unlocked" : ""}">
-                                <div class="achievement-icon">${ok ? "🏆" : "🔒"}</div>
-                                <div class="achievement-details">
-                                    <div class="achievement-name">${d.title}</div>
-                                    <div class="achievement-desc">${d.desc}</div>
-                                </div>
-                            </div>
-                        `;
-                    }).join("");
-                }
-
-                function openAchievements() {
-                    renderAchievements();
-                    Overlays.open("achievements");
-                }
-
-                function openCharacterSelect() {
-                    renderHelperCards();
-                    Overlays.open("character");
-                }
-
-                function bind() {
-                    if (bind._did) return;
-                    bind._did = true;
-
-                    const on = (id, ev, fn, opts) => $(id)?.addEventListener(ev, fn, opts);
-
-                    // Start game
-                    on("start-btn", "click", () => { 
-                        try{Audio.init();}catch{} 
-                        Overlays.closeAll(); 
-                        Game.start(); 
-                        Audio.ui(); 
-                    });
-                    
-                    on("quick-start", "click", () => { 
-                        try{Audio.init();}catch{} 
-                        Overlays.closeAll(); 
-                        Game.start(); 
-                        Audio.ui(); 
-                    });
-                    
-                    on("start-with-character-btn", "click", () => { 
-                        try{Audio.init();}catch{} 
-                        Overlays.closeAll(); 
-                        Game.start(); 
-                        Audio.ui(); 
-                    });
-
-                    // Pause controls
-                    on("pause-toggle", "click", () => { 
-                        if (AppState.running && !AppState.paused) {
-                            Overlays.open("pause");
-                            Audio.ui();
-                        } else if (AppState.paused) {
-                            Overlays.close("pause");
-                            Audio.ui();
-                        }
-                    });
-                    
-                    on("resume-btn", "click", () => Overlays.close("pause"));
-                    on("continue-btn", "click", () => Overlays.close("pause"));
-
-                    // Restart
-                    on("restart-btn", "click", () => { 
-                        Game.reset(); 
-                        Overlays.closeAll(); 
-                        Game.start(); 
-                        Audio.ui(); 
-                    });
-                    
-                    on("play-again-btn", "click", () => { 
-                        Game.reset(); 
-                        Overlays.closeAll(); 
-                        Game.start(); 
-                        Audio.ui(); 
-                    });
-
-                    // Quit to menu
-                    on("quit-btn", "click", () => { 
-                        Game.reset(); 
-                        Overlays.closeAll(); 
-                        Overlays.open("start"); 
-                        Audio.ui(); 
-                    });
-                    
-                    on("close-start", "click", () => { 
-                        Overlays.close("start"); 
-                        Audio.ui(); 
-                    });
-                    
-                    on("back-to-menu-btn", "click", () => { 
-                        Overlays.close("character"); 
-                        Overlays.open("start"); 
-                        Audio.ui(); 
-                    });
-
-                    // Help
-                    on("help-btn", "click", () => { 
-                        Overlays.open("help"); 
-                        Audio.ui(); 
-                    });
-                    
-                    on("close-help-btn", "click", () => Overlays.close("help"));
-
-                    // Sound toggle
-                    on("sound-toggle-btn", "click", () => { 
-                        Audio.toggle(); 
-                        setSoundIcon(); 
-                        Audio.ui(); 
-                    });
-
-                    // Achievements
-                    on("achievements-pill", "click", () => { 
-                        Audio.ui(); 
-                        openAchievements(); 
-                    });
-                    
-                    on("view-achievements-btn", "click", () => { 
-                        Audio.ui(); 
-                        openAchievements(); 
-                    });
-                    
-                    on("close-achievements-btn", "click", () => Overlays.close("achievements"));
-                    on("close-achievements-btn-2", "click", () => Overlays.close("achievements"));
-
-                    // Character select
-                    on("select-character-btn", "click", () => { 
-                        Audio.ui(); 
-                        openCharacterSelect(); 
-                    });
-                    
-                    on("close-character", "click", () => { 
-                        Overlays.close("character"); 
-                        Audio.ui(); 
-                    });
-
-                    // Helper cards selection
-                    function applyHelperActive() {
-                        document.querySelectorAll(".character-card[data-helper]").forEach(btn => {
-                            btn.classList.toggle("selected", btn.getAttribute("data-helper") === AppState.helper);
-                        });
-                    }
-                    
-                    document.addEventListener("click", (e) => {
-                        const card = e.target.closest(".character-card[data-helper]:not(.locked)");
-                        if (card) {
-                            const h = card.getAttribute("data-helper");
-                            if (!h) return;
-                            AppState.helper = h;
-                            Store.set("helper", h);
-                            applyHelperActive();
-                            Audio.ui();
-                        }
-                    });
-
-                    // Weather drawer wiring
-                    const drawer = $("weather-drawer");
-                    const setDrawer = (open) => drawer?.classList.toggle("open", !!open);
-
-                    const setWeather = (w) => {
-                        Store.set("weather", w);
-                        document.querySelectorAll(".weather-btn[data-weather]").forEach(b => {
-                            b.classList.toggle("active", b.getAttribute("data-weather") === w);
-                        });
-                        WeatherFX.setMode(w);
-                    };
-
-                    on("weather-toggle", "click", () => setDrawer(true));
-                    on("weather-close", "click", () => setDrawer(false));
-
-                    document.querySelectorAll(".weather-btn[data-weather]").forEach(btn => {
-                        btn.addEventListener("click", () => {
-                            const w = btn.getAttribute("data-weather");
-                            if (w) setWeather(w);
-                            Audio.ui();
-                        });
-                    });
-
-                    setWeather(Store.get("weather", "clear"));
-
-                    // Share
-                    on("share-btn", "click", async () => {
-                        const t = `I scored ${Math.floor(AppState.score)} in Pooh's Honey Hunt 🍯`;
-                        try {
-                            if (navigator.share) await navigator.share({ text: t });
-                            else if (navigator.clipboard) await navigator.clipboard.writeText(t);
-                        } catch {}
-                        Audio.ui();
-                    });
-                    
-                    on("share-final-btn", "click", async () => {
-                        const t = `I scored ${Math.floor(AppState.score)} in Pooh's Honey Hunt 🍯`;
-                        try {
-                            if (navigator.share) await navigator.share({ text: t });
-                            else if (navigator.clipboard) await navigator.clipboard.writeText(t);
-                        } catch {}
-                        Audio.ui();
-                    });
-
-                    // Settings
-                    on("settings-btn", "click", () => { 
-                        Overlays.open("settings"); 
-                        Audio.ui(); 
-                    });
-                    
-                    on("close-settings", "click", () => { 
-                        Overlays.close("settings"); 
-                        Audio.ui(); 
-                    });
-                    
-                    on("save-settings", "click", () => { 
-                        // Save settings from checkboxes
-                        AppState.soundOn = document.getElementById("sound-toggle-setting").checked;
-                        AppState.hapticsOn = document.getElementById("haptic-toggle-setting").checked;
-                        Store.set("sound", AppState.soundOn ? "on" : "off");
-                        Store.set("haptics", AppState.hapticsOn ? "on" : "off");
-                        Overlays.close("settings"); 
-                        Audio.ui(); 
-                    });
-                    
-                    on("reset-progress", "click", () => {
-                        const confirmBtn = document.getElementById("reset-confirm");
-                        if (confirmBtn.style.display === "none") {
-                            confirmBtn.style.display = "block";
-                            setTimeout(() => {
-                                confirmBtn.style.display = "none";
-                            }, 3000);
-                        }
-                    });
-                    
-                    on("reset-confirm", "click", () => {
-                        if (confirm("Are you sure you want to reset all progress? This cannot be undone.")) {
-                            Store.clear();
-                            ProgressiveSystem.reset();
-                            AppState.achievements = {};
-                            AppState.best = 0;
-                            AppState.helper = "piglet";
-                            location.reload();
-                        }
-                    });
-
-                    // Game over
-                    on("gameover-close", "click", () => { 
-                        Overlays.close("gameover"); 
-                        Overlays.open("start"); 
-                        Audio.ui(); 
-                    });
-
-                    // Keyboard shortcuts
-                    window.addEventListener("keydown", (e) => {
-                        if (e.repeat) return;
-
-                        if (e.code === "Space" || e.code === "KeyP") {
-                            e.preventDefault();
-                            if (!AppState.running) return;
-                            if (!document.body.classList.contains("overlay-open")) Overlays.open("pause");
-                            else Overlays.close("pause");
-                        }
-
-                        if (e.code === "Escape") {
-                            Overlays.close("help");
-                            Overlays.close("achievements");
-                            Overlays.close("character");
-                            Overlays.close("pause");
-                            Overlays.close("settings");
-                        }
-                    });
-
-                    // Loading screen
-                    const loadingScreen = $("loading-screen");
-                    const loadingProgress = $("loading-progress");
-                    const loadingTip = $("loading-tip");
-                    
-                    const tips = [
-                        "Tip: Try to maintain your combo for bonus points!",
-                        "Tip: Piglet gives you extra lives to start with!",
-                        "Tip: Gold honey pots give double points!",
-                        "Tip: Watch out for cursed honey - it hurts!",
-                        "Tip: Power-ups appear as you play longer!",
-                        "Tip: Try different weather effects for fun!",
-                        "Tip: Unlock all helpers by reaching higher scores!"
-                    ];
-                    
-                    // Simulate loading
-                    let progress = 0;
-                    const interval = setInterval(() => {
-                        progress += Math.random() * 10 + 5; // More controlled progression
-                        if (progress >= 100) {
-                            progress = 100;
-                            clearInterval(interval);
-                            setTimeout(() => {
-                                loadingScreen.classList.add("hidden");
-                                Overlays.open("start");
-                            }, 300);
-                        }
-                        loadingProgress.style.width = `${progress}%`;
-                        
-                        // Change tip every 25% progress
-                        if (Math.floor(progress / 25) > Math.floor((progress - 15) / 25)) {
-                            loadingTip.textContent = tips[Math.floor(Math.random() * tips.length)];
-                        }
-                    }, 100);
-
-                    setSoundIcon();
-                    updateHUD();
-                }
-
-                return { bind, updateHUD, openAchievements, renderAchievements, openCharacterSelect, setText };
-            })();
-
-            /* ======================= WEATHER EFFECTS (DOM overlay) ======================= */
-            const WeatherFX = (() => {
-                let host = $("weather-effects");
-                if (!host) {
-                    host = document.createElement("div");
-                    host.id = "weather-effects";
-                    host.setAttribute("aria-hidden", "true");
-                    document.body.appendChild(host);
-                }
-
-                let mode = Store.get("weather", "clear") || "clear";
-                let raf = 0;
-                let lastT = 0;
-                const bits = [];
-
-                function reset() {
-                    bits.length = 0;
-                    host.innerHTML = "";
-                }
-
-                function spawn() {
-                    if (mode === "clear") return;
-
-                    const el = document.createElement("div");
-                    el.style.position = "absolute";
-                    el.style.left = (Math.random() * 100) + "vw";
-                    el.style.top = "-8vh";
-                    el.style.pointerEvents = "none";
-                    el.style.willChange = "transform, opacity";
-                    el.style.opacity = "0.95";
-
-                    let emoji = "•";
-                    if (mode === "rain") emoji = "💧";
-                    if (mode === "snow") emoji = "❄️";
-                    if (mode === "leaves") emoji = "🍂";
-                    if (mode === "blossoms") emoji = "🌸";
-
-                    el.textContent = emoji;
-                    el.style.fontSize = (18 + Math.random() * 18) + "px";
-
-                    host.appendChild(el);
-
-                    bits.push({
-                        el,
-                        x: parseFloat(el.style.left),
-                        y: -10,
-                        vy: (mode === "rain" ? 90 : 40) + Math.random() * 60,
-                        vx: (Math.random() * 20 - 10),
-                        rot: Math.random() * 360,
-                        vr: (Math.random() * 80 - 40),
-                    });
-
-                    if (bits.length > 60) {
-                        const a = bits.shift();
-                        a?.el?.remove();
-                    }
-                }
-
-                function tick(t) {
-                    const dt = Math.min(50, t - lastT);
-                    lastT = t;
-
-                    if (mode !== "clear") {
-                        const chance = mode === "rain" ? 0.55 : 0.22;
-                        if (Math.random() < chance) spawn();
-                    }
-
-                    for (let i = bits.length - 1; i >= 0; i--) {
-                        const b = bits[i];
-                        b.y += (b.vy * dt) / 1000;
-                        b.x += (b.vx * dt) / 1000;
-                        b.rot += (b.vr * dt) / 1000;
-
-                        b.el.style.transform = `translate(${b.x}vw, ${b.y}vh) rotate(${b.rot}deg)`;
-
-                        if (b.y > 115) {
-                            b.el.remove();
-                            bits.splice(i, 1);
-                        }
-                    }
-
-                    raf = requestAnimationFrame(tick);
-                }
-
-                function setMode(m) {
-                    mode = m || "clear";
-                    reset();
-                    if (!raf) {
-                        lastT = now();
-                        raf = requestAnimationFrame(tick);
-                    }
-                }
-
-                setMode(mode);
-
-                return { setMode };
-            })();
-
-            /* ======================= CANVAS ======================= */
+            /* ======================= CANVAS SETUP ======================= */
             const canvas = $("game-canvas");
-            const ctx = canvas?.getContext("2d", { alpha: true, desynchronized: true });
-
+            const ctx = canvas?.getContext("2d", { alpha: true });
+            
             if (!canvas || !ctx) {
                 console.error("Canvas not found or 2D context failed.");
                 return;
@@ -2708,1251 +1657,703 @@
             canvas.width = BASE_W;
             canvas.height = BASE_H;
 
-            /* ======================= LAYOUT (Improved Responsive) ======================= */
-            const Layout = (() => {
-                const container = $("game-container");
-                const gameLayer = $("game-layer");
+            /* ======================= GAME STATE ======================= */
+            const GameState = {
+                running: false,
+                paused: false,
+                score: 0,
+                lives: 3,
+                streak: 0,
+                combo: 1.0,
+                timeMs: 0,
+                bestScore: 0,
+                currentLevel: 0,
+                honeyCaught: 0,
+                beesAvoided: 0
+            };
 
-                let lastKey = "";
-                let stableVH = window.visualViewport?.height || window.innerHeight || 700;
+            /* ======================= GAME OBJECTS ======================= */
+            const player = {
+                x: BASE_W / 2,
+                y: BASE_H - 100,
+                r: 30,
+                speed: 5
+            };
 
-                function getVH() {
-                    const vv = window.visualViewport;
-                    if (vv && typeof vv.height === "number") stableVH = vv.height;
-                    else if (typeof window.innerHeight === "number") stableVH = window.innerHeight;
-                    return Math.max(420, stableVH);
-                }
+            const honeys = [];
+            const bees = [];
+            const particles = [];
 
-                function apply() {
-                    if (!container || !canvas) return;
-
-                    const vh = getVH();
-                    const hud = $("hud");
-                    const hudH = hud ? hud.getBoundingClientRect().height : 0;
-
-                    // Read safe-area padding from CSS
-                    const gls = gameLayer ? getComputedStyle(gameLayer) : null;
-                    const safeTop = gls ? (parseFloat(gls.paddingTop) || 0) : 0;
-                    const safeBottom = gls ? (parseFloat(gls.paddingBottom) || 0) : 0;
-
-                    const topPad = 15;
-                    const bottomPad = 20;
-
-                    const availableH = Math.max(
-                        380,
-                        vh - hudH - topPad - bottomPad - safeTop - safeBottom
-                    );
-
-                    const contW = container.getBoundingClientRect().width || BASE_W;
-
-                    // Maintain aspect ratio
-                    const desiredW = availableH * (BASE_W / BASE_H);
-                    const finalW = clamp(desiredW, 300, Math.min(contW, 500));
-                    const finalH = finalW * (BASE_H / BASE_W);
-
-                    const key = `${Math.round(vh)}|${Math.round(hudH)}|${Math.round(contW)}|${Math.round(finalW)}|${Math.round(finalH)}`;
-                    if (key === lastKey) return;
-                    lastKey = key;
-
-                    container.style.display = "flex";
-                    container.style.alignItems = "center";
-                    container.style.justifyContent = "center";
-                    container.style.padding = "10px";
-                    container.style.minHeight = `${Math.round(finalH)}px`;
-                    container.style.maxHeight = `${Math.round(finalH)}px`;
-
-                    canvas.style.width = `${Math.round(finalW)}px`;
-                    canvas.style.height = `${Math.round(finalH)}px`;
-                    canvas.style.maxWidth = "100%";
-                    canvas.style.maxHeight = "100%";
-
-                    document.body.style.overflow = "hidden";
-                    document.documentElement.style.overflow = "hidden";
-                }
-
-                function bind() {
-                    let r = 0;
-                    const req = () => {
-                        if (r) cancelAnimationFrame(r);
-                        r = requestAnimationFrame(apply);
-                    };
-
-                    window.addEventListener("resize", req, { passive: true });
-                    window.addEventListener("orientationchange", req, { passive: true });
-
-                    if (window.visualViewport) {
-                        window.visualViewport.addEventListener("resize", req, { passive: true });
-                        window.visualViewport.addEventListener("scroll", req, { passive: true });
-                    }
-
-                    setTimeout(apply, 60);
-                    setTimeout(apply, 260);
-                    apply();
-                }
-
-                return { bind, apply };
-            })();
-
-            /* ======================= INPUT (SMOOTH SPRING) ======================= */
-            const Input = (() => {
-                let down = false;
-                let tx = BASE_W / 2;
-                let x = BASE_W / 2;
-                let vx = 0;
-
-                const setTarget = (clientX) => {
-                    const rect = canvas.getBoundingClientRect();
-                    const nx = (clientX - rect.left) / rect.width;
-                    tx = clamp(nx * BASE_W, 52, BASE_W - 52);
-                };
-
-                const downAt = (clientX) => {
-                    down = true;
-                    setTarget(clientX);
-                    try{Audio.init();}catch{}
-                };
-
-                canvas.addEventListener("mousedown", (e) => downAt(e.clientX));
-                window.addEventListener("mousemove", (e) => { if (down) setTarget(e.clientX); });
-                window.addEventListener("mouseup", () => (down = false));
-
-                canvas.addEventListener("touchstart", (e) => {
-                    const t = e.touches?.[0];
-                    if (!t) return;
-                    downAt(t.clientX);
-                }, { passive: false });
-
-                canvas.addEventListener("touchmove", (e) => {
-                    if (!down) return;
-                    const t = e.touches?.[0];
-                    if (!t) return;
-                    setTarget(t.clientX);
-                }, { passive: false });
-
-                canvas.addEventListener("touchend", () => (down = false), { passive: true });
-                canvas.addEventListener("touchcancel", () => (down = false), { passive: true });
-
-                function update(dt) {
-                    const t = Math.min(40, dt) / 1000;
-                    const k = 26;  // stiffness
-                    const d = 12;  // damping
-                    const ax = (tx - x) * k - vx * d;
-                    vx += ax * t;
-                    x += vx * t;
-                    x = clamp(x, 52, BASE_W - 52);
-                    return x;
-                }
-
-                return { update };
-            })();
-
-            /* ======================= PARTICLES (cheap + juicy) ======================= */
-            const Particles = (() => {
-                const p = [];
-                const MAX = 220;
-
-                function emit(x, y, color, count = 10, spread = 1) {
-                    for (let i = 0; i < count; i++) {
-                        if (p.length >= MAX) p.shift();
-                        const a = Math.random() * Math.PI * 2;
-                        const sp = (1 + Math.random() * 2.6) * spread;
-                        p.push({
-                            x, y,
-                            vx: Math.cos(a) * sp,
-                            vy: Math.sin(a) * sp - (1.5 + Math.random() * 2),
-                            life: 1,
-                            r: 2 + Math.random() * 3,
-                            color,
-                        });
-                    }
-                }
-
-                function update(dt) {
-                    const t = Math.min(32, dt) / 1000;
-                    for (let i = p.length - 1; i >= 0; i--) {
-                        const a = p[i];
-                        a.x += a.vx * (60 * t);
-                        a.y += a.vy * (60 * t);
-                        a.vy += 0.12 * (60 * t);
-                        a.life -= 1.35 * t;
-                        if (a.life <= 0) p.splice(i, 1);
-                    }
-                }
-
-                function render(ctx) {
-                    if (!p.length) return;
-                    ctx.save();
-                    for (const a of p) {
-                        ctx.globalAlpha = Math.max(0, a.life);
-                        ctx.fillStyle = a.color;
-                        ctx.beginPath();
-                        ctx.arc(a.x, a.y, a.r, 0, Math.PI * 2);
-                        ctx.fill();
-                    }
-                    ctx.restore();
-                }
-
-                return { emit, update, render };
-            })();
-
-            /* ======================= SCORE POPUPS (DOM) ======================= */
-            function spawnScorePopup(text, x, y) {
-                const host = document.querySelector(".game-container");
-                if (!host) return;
-
-                const el = document.createElement("div");
-                el.className = "score-popup";
-                el.textContent = text;
-
-                const px = (x / BASE_W) * 100;
-                const py = (y / BASE_H) * 100;
-                el.style.left = `${px}%`;
-                el.style.top = `${py}%`;
-
-                host.appendChild(el);
-                el.addEventListener("animationend", () => el.remove(), { once: true });
+            /* ======================= HELPER FUNCTIONS ======================= */
+            function spawnHoney() {
+                honeys.push({
+                    x: Math.random() * (BASE_W - 60) + 30,
+                    y: -30,
+                    r: 15,
+                    vy: 2 + Math.random() * 2,
+                    type: Math.random() < 0.1 ? 'gold' : 'normal'
+                });
             }
 
-            /* ======================= GAMEPLAY TIPS ======================= */
-            const GameTips = (() => {
-                let currentTip = null;
-                let tipStyle = null;
-                
-                if (!tipStyle) {
-                    tipStyle = document.createElement('style');
-                    tipStyle.textContent = `
-                        @keyframes fadeInOut {
-                            0% { opacity: 0; transform: translate(-50%, -50%) scale(0.8); }
-                            15% { opacity: 1; transform: translate(-50%, -50%) scale(1); }
-                            85% { opacity: 1; transform: translate(-50%, -50%) scale(1); }
-                            100% { opacity: 0; transform: translate(-50%, -50%) scale(0.8); }
-                        }
-                    `;
-                    document.head.appendChild(tipStyle);
-                }
+            function spawnBee() {
+                bees.push({
+                    x: Math.random() * (BASE_W - 60) + 30,
+                    y: -40,
+                    r: 12,
+                    vy: 3 + Math.random() * 2,
+                    vx: (Math.random() - 0.5) * 2
+                });
+            }
 
+            function spawnParticles(x, y, color, count = 10) {
+                for (let i = 0; i < count; i++) {
+                    particles.push({
+                        x: x,
+                        y: y,
+                        vx: (Math.random() - 0.5) * 4,
+                        vy: (Math.random() - 0.5) * 4 - 2,
+                        life: 1.0,
+                        color: color,
+                        r: 2 + Math.random() * 3
+                    });
+                }
+            }
+
+            function checkCollision(obj1, obj2) {
+                const dx = obj1.x - obj2.x;
+                const dy = obj1.y - obj2.y;
+                const distance = Math.sqrt(dx * dx + dy * dy);
+                return distance < (obj1.r + obj2.r);
+            }
+
+            /* ======================= DRAWING FUNCTIONS ======================= */
+            function drawPlayer() {
+                // Body
+                ctx.fillStyle = '#F7C44F';
+                ctx.beginPath();
+                ctx.arc(player.x, player.y, player.r, 0, Math.PI * 2);
+                ctx.fill();
+                
+                // Shirt
+                ctx.fillStyle = '#D64B3C';
+                ctx.beginPath();
+                ctx.ellipse(player.x, player.y + 5, player.r * 0.9, player.r * 0.6, 0, 0, Math.PI * 2);
+                ctx.fill();
+                
+                // Face
+                ctx.fillStyle = '#000';
+                ctx.beginPath();
+                ctx.arc(player.x - 10, player.y - 5, 4, 0, Math.PI * 2);
+                ctx.arc(player.x + 10, player.y - 5, 4, 0, Math.PI * 2);
+                ctx.fill();
+                
+                // Mouth
+                ctx.beginPath();
+                ctx.arc(player.x, player.y + 3, 6, 0.2, Math.PI - 0.2);
+                ctx.strokeStyle = '#000';
+                ctx.lineWidth = 2;
+                ctx.stroke();
+            }
+
+            function drawHoney(honey) {
+                if (honey.type === 'gold') {
+                    // Gold honey
+                    ctx.fillStyle = '#FFD700';
+                    ctx.strokeStyle = '#FFA500';
+                } else {
+                    // Normal honey
+                    ctx.fillStyle = '#FFA500';
+                    ctx.strokeStyle = '#D2691E';
+                }
+                
+                ctx.beginPath();
+                ctx.arc(honey.x, honey.y, honey.r, 0, Math.PI * 2);
+                ctx.fill();
+                ctx.stroke();
+                
+                // Lid
+                ctx.fillStyle = '#8B4513';
+                ctx.beginPath();
+                ctx.ellipse(honey.x, honey.y - honey.r * 0.6, honey.r * 0.8, honey.r * 0.3, 0, 0, Math.PI * 2);
+                ctx.fill();
+            }
+
+            function drawBee(bee) {
+                // Body
+                ctx.fillStyle = '#FFD700';
+                ctx.beginPath();
+                ctx.ellipse(bee.x, bee.y, bee.r * 1.2, bee.r, 0, 0, Math.PI * 2);
+                ctx.fill();
+                
+                // Stripes
+                ctx.fillStyle = '#000';
+                ctx.beginPath();
+                ctx.ellipse(bee.x, bee.y, bee.r * 0.8, bee.r * 0.3, 0, 0, Math.PI * 2);
+                ctx.fill();
+                
+                // Wings
+                ctx.fillStyle = 'rgba(255, 255, 255, 0.6)';
+                ctx.beginPath();
+                ctx.ellipse(bee.x - bee.r * 0.8, bee.y - bee.r * 0.5, bee.r * 0.6, bee.r * 0.4, Math.PI/4, 0, Math.PI * 2);
+                ctx.fill();
+                ctx.beginPath();
+                ctx.ellipse(bee.x + bee.r * 0.8, bee.y - bee.r * 0.5, bee.r * 0.6, bee.r * 0.4, -Math.PI/4, 0, Math.PI * 2);
+                ctx.fill();
+            }
+
+            function drawParticles() {
+                for (let i = particles.length - 1; i >= 0; i--) {
+                    const p = particles[i];
+                    
+                    ctx.globalAlpha = p.life;
+                    ctx.fillStyle = p.color;
+                    ctx.beginPath();
+                    ctx.arc(p.x, p.y, p.r, 0, Math.PI * 2);
+                    ctx.fill();
+                    
+                    p.x += p.vx;
+                    p.y += p.vy;
+                    p.vy += 0.1;
+                    p.life -= 0.02;
+                    
+                    if (p.life <= 0) {
+                        particles.splice(i, 1);
+                    }
+                }
+                ctx.globalAlpha = 1;
+            }
+
+            function drawBackground() {
+                // Sky gradient
+                const gradient = ctx.createLinearGradient(0, 0, 0, BASE_H);
+                gradient.addColorStop(0, '#87CEEB');
+                gradient.addColorStop(1, '#98FB98');
+                ctx.fillStyle = gradient;
+                ctx.fillRect(0, 0, BASE_W, BASE_H);
+                
+                // Clouds
+                ctx.fillStyle = 'rgba(255, 255, 255, 0.8)';
+                for (let i = 0; i < 3; i++) {
+                    const x = (GameState.timeMs * 0.01 + i * 150) % (BASE_W + 200) - 100;
+                    const y = 80 + i * 60;
+                    const size = 30 + i * 5;
+                    
+                    ctx.beginPath();
+                    ctx.arc(x, y, size, 0, Math.PI * 2);
+                    ctx.arc(x + size * 0.6, y - size * 0.3, size * 0.7, 0, Math.PI * 2);
+                    ctx.arc(x + size * 1.2, y, size * 0.8, 0, Math.PI * 2);
+                    ctx.fill();
+                }
+            }
+
+            function drawHUD() {
+                // Score
+                $('stat-score').textContent = GameState.score;
+                $('stat-lives').textContent = GameState.lives;
+                $('stat-combo').textContent = GameState.combo.toFixed(1) + 'x';
+                
+                // Progress bar
+                const progress = (GameState.score % 300) / 300 * 100;
+                $('progress-fill').style.width = `${progress}%`;
+                $('next-level-label').textContent = `${GameState.score % 300}/300`;
+                
+                // Level display
+                const levelNames = ['Beginner', 'Novice', 'Apprentice', 'Adept', 'Expert', 'Master', 'Grandmaster'];
+                GameState.currentLevel = Math.min(6, Math.floor(GameState.score / 300));
+                $('level-display').textContent = levelNames[GameState.currentLevel];
+            }
+
+            /* ======================= INPUT HANDLING ======================= */
+            let mouseX = player.x;
+            let touchActive = false;
+
+            canvas.addEventListener('mousemove', (e) => {
+                const rect = canvas.getBoundingClientRect();
+                mouseX = e.clientX - rect.left;
+                mouseX = clamp(mouseX, player.r, canvas.width - player.r);
+            });
+
+            canvas.addEventListener('touchmove', (e) => {
+                e.preventDefault();
+                const rect = canvas.getBoundingClientRect();
+                const touch = e.touches[0];
+                mouseX = touch.clientX - rect.left;
+                mouseX = clamp(mouseX, player.r, canvas.width - player.r);
+                touchActive = true;
+            }, { passive: false });
+
+            canvas.addEventListener('touchstart', (e) => {
+                e.preventDefault();
+                const rect = canvas.getBoundingClientRect();
+                const touch = e.touches[0];
+                mouseX = touch.clientX - rect.left;
+                mouseX = clamp(mouseX, player.r, canvas.width - player.r);
+                touchActive = true;
+            }, { passive: false });
+
+            canvas.addEventListener('touchend', () => {
+                touchActive = false;
+            });
+
+            /* ======================= GAME LOGIC ======================= */
+            function updateGame(dt) {
+                if (!GameState.running || GameState.paused) return;
+                
+                GameState.timeMs += dt;
+                
+                // Move player smoothly toward mouse/touch
+                player.x += (mouseX - player.x) * 0.1;
+                
+                // Spawn objects
+                if (GameState.timeMs % 1000 < dt) {
+                    spawnHoney();
+                    if (Math.random() < 0.3) spawnBee();
+                }
+                
+                // Update honeys
+                for (let i = honeys.length - 1; i >= 0; i--) {
+                    const honey = honeys[i];
+                    honey.y += honey.vy;
+                    
+                    // Check collision with player
+                    if (checkCollision(player, honey)) {
+                        GameState.honeyCaught++;
+                        GameState.streak++;
+                        
+                        let points = 10;
+                        if (honey.type === 'gold') points = 25;
+                        
+                        GameState.score += points * GameState.combo;
+                        
+                        // Update combo
+                        GameState.combo = 1 + Math.floor(GameState.streak / 5) * 0.2;
+                        GameState.combo = Math.min(GameState.combo, 3.0);
+                        
+                        // Spawn particles
+                        spawnParticles(honey.x, honey.y, honey.type === 'gold' ? '#FFD700' : '#FFA500');
+                        
+                        // Play sound
+                        playSound('collect');
+                        
+                        // Remove honey
+                        honeys.splice(i, 1);
+                    }
+                    
+                    // Remove if off screen
+                    if (honey.y > BASE_H + 50) {
+                        honeys.splice(i, 1);
+                        GameState.streak = 0;
+                        GameState.combo = 1.0;
+                    }
+                }
+                
+                // Update bees
+                for (let i = bees.length - 1; i >= 0; i--) {
+                    const bee = bees[i];
+                    bee.x += bee.vx;
+                    bee.y += bee.vy;
+                    
+                    // Bounce off walls
+                    if (bee.x < bee.r || bee.x > BASE_W - bee.r) {
+                        bee.vx *= -1;
+                    }
+                    
+                    // Check collision with player
+                    if (checkCollision(player, bee)) {
+                        GameState.lives--;
+                        GameState.streak = 0;
+                        GameState.combo = 1.0;
+                        
+                        // Spawn particles
+                        spawnParticles(bee.x, bee.y, '#FF0000');
+                        
+                        // Play sound
+                        playSound('hit');
+                        
+                        // Remove bee
+                        bees.splice(i, 1);
+                        
+                        // Check game over
+                        if (GameState.lives <= 0) {
+                            gameOver();
+                            return;
+                        }
+                    }
+                    
+                    // Remove if off screen
+                    if (bee.y > BASE_H + 50) {
+                        bees.splice(i, 1);
+                        GameState.beesAvoided++;
+                    }
+                }
+                
+                // Update particles
+                for (let i = particles.length - 1; i >= 0; i--) {
+                    const p = particles[i];
+                    p.x += p.vx;
+                    p.y += p.vy;
+                    p.vy += 0.1;
+                    p.life -= 0.02;
+                    
+                    if (p.life <= 0) {
+                        particles.splice(i, 1);
+                    }
+                }
+                
+                // Update HUD
+                drawHUD();
+            }
+
+            function renderGame() {
+                // Clear canvas
+                drawBackground();
+                
+                // Draw all game objects
+                honeys.forEach(drawHoney);
+                bees.forEach(drawBee);
+                drawParticles();
+                drawPlayer();
+                
+                // Draw combo text if > 1
+                if (GameState.combo > 1.1) {
+                    ctx.fillStyle = '#FFD700';
+                    ctx.font = 'bold 24px Fredoka One';
+                    ctx.textAlign = 'center';
+                    ctx.fillText(`COMBO x${GameState.combo.toFixed(1)}`, BASE_W / 2, 100);
+                }
+            }
+
+            /* ======================= GAME FLOW ======================= */
+            function startGame() {
+                GameState.running = true;
+                GameState.paused = false;
+                GameState.score = 0;
+                GameState.lives = 3;
+                GameState.streak = 0;
+                GameState.combo = 1.0;
+                GameState.timeMs = 0;
+                GameState.honeyCaught = 0;
+                GameState.beesAvoided = 0;
+                
+                honeys.length = 0;
+                bees.length = 0;
+                particles.length = 0;
+                
+                player.x = BASE_W / 2;
+                mouseX = player.x;
+                
+                Overlays.closeAll();
+                drawHUD();
+            }
+
+            function gameOver() {
+                GameState.running = false;
+                
+                // Update final score display
+                $('final-score').textContent = GameState.score;
+                $('final-total').textContent = GameState.score;
+                $('final-streak').textContent = GameState.streak;
+                $('final-honey').textContent = GameState.honeyCaught;
+                $('final-level').textContent = $('level-display').textContent;
+                
+                // Check for new record
+                if (GameState.score > GameState.bestScore) {
+                    GameState.bestScore = GameState.score;
+                    $('new-record-badge').classList.remove('hidden');
+                } else {
+                    $('new-record-badge').classList.add('hidden');
+                }
+                
+                Overlays.open('gameover');
+            }
+
+            /* ======================= AUDIO ======================= */
+            const Audio = {
+                ctx: null,
+                sounds: {},
+                
+                init() {
+                    if (!this.ctx) {
+                        this.ctx = new (window.AudioContext || window.webkitAudioContext)();
+                    }
+                },
+                
+                playSound(type) {
+                    if (!this.ctx) this.init();
+                    
+                    const oscillator = this.ctx.createOscillator();
+                    const gainNode = this.ctx.createGain();
+                    
+                    oscillator.connect(gainNode);
+                    gainNode.connect(this.ctx.destination);
+                    
+                    switch(type) {
+                        case 'collect':
+                            oscillator.frequency.setValueAtTime(523.25, this.ctx.currentTime); // C5
+                            break;
+                        case 'hit':
+                            oscillator.frequency.setValueAtTime(220, this.ctx.currentTime); // A3
+                            break;
+                        case 'ui':
+                            oscillator.frequency.setValueAtTime(392, this.ctx.currentTime); // G4
+                            break;
+                    }
+                    
+                    gainNode.gain.setValueAtTime(0.1, this.ctx.currentTime);
+                    gainNode.gain.exponentialRampToValueAtTime(0.01, this.ctx.currentTime + 0.2);
+                    
+                    oscillator.start();
+                    oscillator.stop(this.ctx.currentTime + 0.2);
+                }
+            };
+
+            function playSound(type) {
+                try {
+                    Audio.playSound(type);
+                } catch (e) {
+                    console.log('Audio error:', e);
+                }
+            }
+
+            /* ======================= UI CONTROLS ======================= */
+            const Overlays = {
+                open(name) {
+                    const overlay = $(name + '-screen');
+                    if (overlay) overlay.classList.remove('hidden');
+                    if (name === 'pause') GameState.paused = true;
+                },
+                
+                close(name) {
+                    const overlay = $(name + '-screen');
+                    if (overlay) overlay.classList.add('hidden');
+                    if (name === 'pause') GameState.paused = false;
+                },
+                
+                closeAll() {
+                    document.querySelectorAll('.overlay-content').forEach(el => {
+                        el.classList.add('hidden');
+                    });
+                    GameState.paused = false;
+                }
+            };
+
+            // Bind UI events
+            function setupUI() {
+                // Start buttons
+                $('#start-btn').addEventListener('click', () => {
+                    startGame();
+                    playSound('ui');
+                });
+                
+                $('#quick-start').addEventListener('click', () => {
+                    startGame();
+                    playSound('ui');
+                });
+                
+                // Pause/Resume
+                $('#pause-toggle').addEventListener('click', () => {
+                    if (GameState.running && !GameState.paused) {
+                        Overlays.open('pause');
+                    } else if (GameState.paused) {
+                        Overlays.close('pause');
+                    }
+                    playSound('ui');
+                });
+                
+                $('#resume-btn').addEventListener('click', () => Overlays.close('pause'));
+                $('#continue-btn').addEventListener('click', () => Overlays.close('pause'));
+                
+                // Restart
+                $('#restart-btn').addEventListener('click', () => {
+                    startGame();
+                    playSound('ui');
+                });
+                
+                $('#play-again-btn').addEventListener('click', () => {
+                    startGame();
+                    playSound('ui');
+                });
+                
+                // Menu navigation
+                $('#quit-btn').addEventListener('click', () => {
+                    GameState.running = false;
+                    Overlays.closeAll();
+                    Overlays.open('start');
+                    playSound('ui');
+                });
+                
+                $('#close-start').addEventListener('click', () => Overlays.close('start'));
+                $('#gameover-close').addEventListener('click', () => {
+                    Overlays.close('gameover');
+                    Overlays.open('start');
+                });
+                
+                // Help
+                $('#help-btn').addEventListener('click', () => {
+                    Overlays.open('help');
+                    playSound('ui');
+                });
+                
+                $('#close-help-btn').addEventListener('click', () => Overlays.close('help'));
+                
+                // Achievements
+                $('#achievements-pill').addEventListener('click', () => {
+                    Overlays.open('achievements');
+                    playSound('ui');
+                });
+                
+                $('#close-achievements-btn').addEventListener('click', () => Overlays.close('achievements'));
+                $('#close-achievements-btn-2').addEventListener('click', () => Overlays.close('achievements'));
+                
+                // Character select
+                $('#select-character-btn').addEventListener('click', () => {
+                    Overlays.open('character');
+                    playSound('ui');
+                });
+                
+                $('#close-character').addEventListener('click', () => Overlays.close('character'));
+                $('#back-to-menu-btn').addEventListener('click', () => {
+                    Overlays.close('character');
+                    Overlays.open('start');
+                });
+                
+                $('#start-with-character-btn').addEventListener('click', () => {
+                    startGame();
+                    playSound('ui');
+                });
+                
+                // Settings
+                $('#settings-btn').addEventListener('click', () => {
+                    Overlays.open('settings');
+                    playSound('ui');
+                });
+                
+                $('#close-settings').addEventListener('click', () => Overlays.close('settings'));
+                
+                $('#save-settings').addEventListener('click', () => {
+                    Overlays.close('settings');
+                    playSound('ui');
+                });
+                
+                // Sound toggle
+                $('#sound-toggle-btn').addEventListener('click', () => {
+                    const icon = $('#sound-toggle-btn i');
+                    if (icon.classList.contains('fa-volume-up')) {
+                        icon.className = 'fas fa-volume-mute';
+                    } else {
+                        icon.className = 'fas fa-volume-up';
+                        playSound('ui');
+                    }
+                });
+                
+                // Weather drawer
+                const weatherDrawer = $('#weather-drawer');
+                $('#weather-toggle').addEventListener('click', () => {
+                    weatherDrawer.classList.toggle('open');
+                    playSound('ui');
+                });
+                
+                $('#weather-close').addEventListener('click', () => {
+                    weatherDrawer.classList.remove('open');
+                    playSound('ui');
+                });
+                
+                document.querySelectorAll('.weather-btn').forEach(btn => {
+                    btn.addEventListener('click', () => {
+                        document.querySelectorAll('.weather-btn').forEach(b => b.classList.remove('active'));
+                        btn.classList.add('active');
+                        playSound('ui');
+                    });
+                });
+                
+                // Share button
+                $('#share-btn').addEventListener('click', async () => {
+                    const text = `I scored ${GameState.score} in Pooh's Honey Hunt! 🍯`;
+                    try {
+                        if (navigator.share) {
+                            await navigator.share({ text });
+                        } else {
+                            await navigator.clipboard.writeText(text);
+                            alert('Score copied to clipboard!');
+                        }
+                    } catch (err) {
+                        console.log('Share failed:', err);
+                    }
+                    playSound('ui');
+                });
+                
+                $('#share-final-btn').addEventListener('click', async () => {
+                    const text = `I scored ${GameState.score} in Pooh's Honey Hunt! 🍯`;
+                    try {
+                        if (navigator.share) {
+                            await navigator.share({ text });
+                        } else {
+                            await navigator.clipboard.writeText(text);
+                            alert('Score copied to clipboard!');
+                        }
+                    } catch (err) {
+                        console.log('Share failed:', err);
+                    }
+                    playSound('ui');
+                });
+            }
+
+            /* ======================= LOADING SCREEN ======================= */
+            function initLoading() {
+                const loadingScreen = $('#loading-screen');
+                const progress = $('#loading-progress');
+                const tip = $('#loading-tip');
+                
                 const tips = [
-                    "💡 Tip: Try to maintain your combo for bonus points!",
-                    "💡 Tip: Piglet gives you extra lives to start with!",
-                    "💡 Tip: Gold honey pots give double points!",
-                    "💡 Tip: Watch out for cursed honey - it hurts!",
-                    "💡 Tip: Power-ups appear as you play longer!",
-                    "💡 Tip: Try different weather effects for fun!",
-                    "💡 Tip: Unlock all helpers by reaching higher scores!"
+                    "Tip: Try to maintain your combo for bonus points!",
+                    "Tip: Gold honey pots give double points!",
+                    "Tip: Watch out for cursed honey - it hurts!",
+                    "Tip: Unlock all helpers by reaching higher scores!"
                 ];
                 
-                function show() {
-                    // Don't show tip if one already exists
-                    if (currentTip) return;
+                let loadProgress = 0;
+                const interval = setInterval(() => {
+                    loadProgress += Math.random() * 10 + 5;
+                    if (loadProgress >= 100) {
+                        loadProgress = 100;
+                        clearInterval(interval);
+                        setTimeout(() => {
+                            loadingScreen.classList.add('hidden');
+                            Overlays.open('start');
+                        }, 300);
+                    }
+                    progress.style.width = `${loadProgress}%`;
                     
-                    const tip = tips[Math.floor(Math.random() * tips.length)];
-                    
-                    currentTip = document.createElement("div");
-                    currentTip.style.cssText = `
-                        position: fixed;
-                        top: 50%;
-                        left: 50%;
-                        transform: translate(-50%, -50%);
-                        background: rgba(0,0,0,0.8);
-                        color: #FFD700;
-                        padding: 15px 25px;
-                        border-radius: 15px;
-                        border: 3px solid #D4A574;
-                        font-family: 'Patrick Hand', cursive;
-                        font-size: 18px;
-                        text-align: center;
-                        max-width: 80%;
-                        z-index: 1002;
-                        animation: fadeInOut 4s ease forwards;
-                    `;
-                    
-                    currentTip.textContent = tip;
-                    document.body.appendChild(currentTip);
-                    
-                    setTimeout(() => {
-                        if (currentTip && currentTip.parentNode) {
-                            currentTip.remove();
-                            currentTip = null;
-                        }
-                    }, 4000);
-                }
+                    // Change tip every 25%
+                    if (Math.floor(loadProgress / 25) > Math.floor((loadProgress - 15) / 25)) {
+                        tip.textContent = tips[Math.floor(Math.random() * tips.length)];
+                    }
+                }, 100);
+            }
+
+            /* ======================= GAME LOOP ======================= */
+            let lastTime = 0;
+            
+            function gameLoop(currentTime) {
+                const dt = currentTime - lastTime || 0;
+                lastTime = currentTime;
                 
-                return { show };
-            })();
-
-            /* ======================= ACHIEVEMENTS ======================= */
-            const Achievements = (() => {
-                const unlock = (k, title = "Achievement!") => {
-                    if (AppState.achievements[k]) return false;
-                    AppState.achievements[k] = true;
-                    persistAchievements();
-                    UI.updateHUD();
-                    UI.renderAchievements();
-
-                    const pop = document.createElement("div");
-                    pop.className = "achievement-popup";
-                    pop.textContent = `🏆 ${title}`;
-                    document.body.appendChild(pop);
-                    pop.addEventListener("animationend", () => pop.remove(), { once: true });
-
-                    Audio.power();
-                    vibrate(25);
-                    return true;
-                };
-
-                function check() {
-                    if (AppState.score > 0) unlock("firstHoney", "First Honey");
-                    if (AppState.streak >= 10) unlock("streak10", "Sticky Streak");
-                    if (AppState.timeMs >= 60000) unlock("survive60", "Steady Paws");
-                    if (AppState.timeMs >= 120000) unlock("survive120", "Long Walk");
-                    if (AppState.score >= 1000) unlock("score1k", "Honey Hoarder");
-                    if (AppState.score >= 3000) unlock("score3k", "Legend");
-                    if (AppState.timeMs >= 30000 && AppState.lives >= 3) unlock("beeDodger", "Bee Dodger");
-                    if (AppState.combo.mult >= 2.0) unlock("combo2x", "Combo Craze");
-                    if (AppState.streak >= 20) unlock("noMiss20", "Perfect Flow");
-                    if (AppState.stats.powerCollected >= 3) unlock("powerFan", "Powered Up");
-                    
-                    // Progression achievements
-                    if (AppState.stats.highestLevel >= 2) unlock("level3", "Rising Star");
-                    if (AppState.stats.highestLevel >= 4) unlock("level5", "Honey Master");
-                    if (AppState.stats.highestLevel >= 6) unlock("level7", "Grandmaster");
-                    
-                    const allHelpers = ["piglet", "tigger", "rabbit", "eeyore"];
-                    const hasAll = allHelpers.every(h => ProgressiveSystem.isHelperUnlocked(h));
-                    if (hasAll) unlock("allHelpers", "Full Crew");
-                }
-
-                return { check, unlock };
-            })();
-
-            /* ======================= GAME ======================= */
-            const Game = (() => {
-                const honeys = [];
-                const bees = [];
-                const powers = [];
-
-                const player = {
-                    x: BASE_W / 2,
-                    y: BASE_H - 86,
-                    r: 54,
-                    scale: 1,
-                    sv: 0,
-                };
-
-                const buffs = { shield: 0, slow: 0 };
-
-                let running = false;
-                let last = 0;
-
-                // base spawn
-                let honeyTimer = 0, beeTimer = 0, powerTimer = 0;
-                let baseHoneyRate = 850; // Start with level-based rate
-                let baseBeeRate = 2000;
-                let powerRate = 12000;
-
-                // movement difficulty
-                let honeyFall = 140, beeFall = 160, beeDrift = 60;
-
-                let shake = 0;
-                let microSlow = 0;
-
-                // director knobs
-                let directorEase = 0;
-
-                let eeyoreProtection = false;
-
-                const hitCircle = (ax, ay, ar, bx, by, br) => {
-                    const dx = ax - bx, dy = ay - by, rr = ar + br;
-                    return dx * dx + dy * dy <= rr * rr;
-                };
-
-                function momentSlow(amount = 0.15, dur = 160) {
-                    microSlow = Math.max(microSlow, dur);
-                    AppState.timeScale = Math.min(AppState.timeScale, 1 - amount);
-                }
-
-                function screenShake(intensity = 10) {
-                    shake = Math.max(shake, intensity);
-                }
-
-                function punchScale(amount = 0.22) {
-                    player.sv -= amount;
-                }
-
-                function reset() {
-                    honeys.length = 0; bees.length = 0; powers.length = 0;
-
-                    running = false;
-                    AppState.running = false;
-                    AppState.paused = false;
-
-                    AppState.score = 0;
-                    AppState.streak = 0;
-                    AppState.lives = 3;
-                    AppState.timeMs = 0;
-                    AppState.timeScale = 1;
-                    AppState.combo = { mult: 1, timer: 0, tier: 0 };
-
-                    AppState.stats.maxStreak = 0;
-                    AppState.stats.honeyCaught = 0;
-                    AppState.stats.beesHit = 0;
-                    AppState.stats.powerCollected = 0;
-                    AppState.stats.highestLevel = 0;
-
-                    buffs.shield = 0;
-                    buffs.slow = 0;
-
-                    honeyTimer = beeTimer = powerTimer = 0;
-                    honeyFall = 140; beeFall = 160; beeDrift = 60;
-
-                    player.x = BASE_W / 2;
-                    player.y = BASE_H - 86;
-                    player.scale = 1;
-                    player.sv = 0;
-
-                    shake = 0;
-                    microSlow = 0;
-
-                    directorEase = 0;
-                    eeyoreProtection = false;
-
-                    HelperEffects.reset();
-
-                    UI.updateHUD();
-                }
-
-                function start() {
-                    Overlays.closeAll();
-                    AppState.running = true;
-                    AppState.paused = false;
-                    running = true;
-                    last = now();
-                    Layout.apply();
-                    
-                    // Show a helpful tip after 2 seconds
-                    setTimeout(() => GameTips.show(), 2000);
-                    
-                    // Apply helper start effects
-                    HelperEffects.onGameStart();
-                    // Piglet: start with extra lives
-                    if (AppState.helper === 'piglet') {
-                        AppState.lives = 5;
-                    }
-                    UI.updateHUD();
-                }
-
-                function gameOver() {
-                    running = false;
-                    AppState.running = false;
-                    AppState.paused = false;
-
-                    if (AppState.score > AppState.best) {
-                        AppState.best = AppState.score;
-                        Store.set("bestScore", String(AppState.best));
-                        const newRecordBadge = $("new-record-badge");
-                        if (newRecordBadge) newRecordBadge.classList.remove("hidden");
-                    }
-
-                    const fs = $("final-score");
-                    if (fs) fs.textContent = String(Math.floor(AppState.score));
-                    
-                    // Update game over stats
-                    UI.setText("final-level", ProgressiveSystem.getLevelName(AppState.score));
-                    UI.setText("final-streak", AppState.stats.maxStreak);
-                    UI.setText("final-honey", AppState.stats.honeyCaught);
-                    UI.setText("final-total", Math.floor(AppState.score));
-
-                    UI.updateHUD();
-                    Overlays.closeAll();
-                    Overlays.open("gameover");
-                }
-
-                function spawnHoney() {
-                    const seed = (Math.random() * 1e9) | 0;
-
-                    const roll = Math.random();
-                    const kind =
-                        roll < 0.04 ? "cursed" :
-                        roll < 0.14 ? "gold"   :
-                        "normal";
-
-                    const r =
-                        kind === "gold" ? 26 :
-                        kind === "cursed" ? 22 :
-                        24;
-
-                    honeys.push({
-                        x: 60 + Math.random() * (BASE_W - 120),
-                        y: -35,
-                        r,
-                        vy: honeyFall * (0.9 + Math.random() * 0.28),
-                        seed,
-                        kind,
-                        wob: Math.random() * 10,
-                    });
-                }
-
-                function spawnBee() {
-                    const seed = (Math.random() * 1e9) | 0;
-                    const typeRoll = Math.random();
-
-                    const type =
-                        typeRoll < 0.78 ? "wander" :
-                        typeRoll < 0.92 ? "curious" :
-                        "pounce";
-
-                    const startX = 60 + Math.random() * (BASE_W - 120);
-
-                    bees.push({
-                        x: startX,
-                        y: -40,
-                        r: 24,
-                        vy: beeFall * (0.92 + Math.random() * 0.24),
-                        vx: (Math.random() * 2 - 1) * beeDrift * 0.45,
-
-                        flap: Math.random() * 10,
-                        seed,
-                        type,
-
-                        wSeed: Math.random() * 10,
-                        wAmp: 18 + Math.random() * 34,
-                        wFreq: 0.9 + Math.random() * 1.2,
-                        interest: 0,
-                        steerX: startX,
-                        steerTimer: 250 + Math.random() * 450,
-                    });
-                }
-
-                function spawnPower() {
-                    const type = Math.random() < 0.5 ? "shield" : "slow";
-                    powers.push({
-                        x: 60 + Math.random() * (BASE_W - 120),
-                        y: -40,
-                        r: 18,
-                        vy: 175,
-                        type,
-                        trail: [],
-                    });
-                }
-
-                function updateDifficulty() {
-                    // Get current level from progressive system
-                    const levelData = ProgressiveSystem.checkUnlocks(AppState.score);
-                    AppState.stats.highestLevel = Math.max(AppState.stats.highestLevel, ProgressiveSystem.getCurrentLevel(AppState.score));
-                    
-                    // Use level-based rates
-                    baseHoneyRate = levelData.honeyRate;
-                    baseBeeRate = levelData.beeRate;
-                    powerRate = levelData.powerRate;
-                    
-                    // Keep some time-based progression for falling speed
-                    const tSec = Math.min(45, AppState.timeMs / 1000);
-                    honeyFall = 140 + tSec * 0.3;
-                    beeFall = 160 + tSec * 0.4;
-                    beeDrift = 60 + tSec * 0.05;
-                    
-                    // Director easing
-                    const targetEase = AppState.lives <= 1 ? 0.7 : (AppState.lives === 2 ? 0.3 : 0);
-                    directorEase = lerp(directorEase, targetEase, 0.02);
-                    
-                    // Apply director easing to rates
-                    baseBeeRate = clamp(baseBeeRate + directorEase * 200, 900, 2000);
-                    baseHoneyRate = clamp(baseHoneyRate + directorEase * 60, 450, 750);
-                }
-
-                function setComboFromStreak() {
-                    const tier = Math.min(6, Math.floor(AppState.streak / 5));
-                    const mult = Math.min(2.2, 1 + tier * 0.2);
-                    const prevTier = AppState.combo.tier;
-
-                    AppState.combo.mult = mult;
-                    AppState.combo.timer = 2000;
-                    AppState.combo.tier = tier;
-
-                    if (tier !== prevTier && tier >= 2) {
-                        Audio.combo();
-                        momentSlow(0.10, 140);
-                        spawnScorePopup(`COMBO x${mult.toFixed(1)}`, player.x, 120);
-                    }
-                }
-
-                function awardHoney(h) {
-                    const prev = { score: AppState.score, streak: AppState.streak, lives: AppState.lives };
-                    const kind = h.kind || "normal";
-
-                    AppState.stats.honeyCaught++;
-
-                    if (kind === "cursed") {
-                        AppState.streak = 0;
-                        AppState.combo = { mult: 1, timer: 0, tier: 0 };
-
-                        AppState.score = Math.max(0, AppState.score - 25);
-
-                        Particles.emit(h.x, h.y, "rgba(180,55,25,1)", 24, 1.2);
-                        spawnScorePopup("CURSED! -25", h.x, h.y);
-
-                        // not instant death: only 1 extra bee
-                        spawnBee();
-
-                        Audio.hit();
-                        vibrate([30, 20, 30]);
-                        momentSlow(0.16, 160);
-                        screenShake(12);
-
-                        UI.updateHUD(prev);
-                        return;
-                    }
-
-                    AppState.streak++;
-                    AppState.stats.maxStreak = Math.max(AppState.stats.maxStreak, AppState.streak);
-
-                    setComboFromStreak();
-
-                    const base = 10;
-                    let pts = Math.round(base * AppState.combo.mult);
-
-                    if (kind === "gold") {
-                        pts = Math.round((base * 2.25) * AppState.combo.mult);
-                        AppState.combo.timer = Math.min(2600, AppState.combo.timer + 450);
-                        momentSlow(0.08, 120);
-                    }
-
-                    AppState.score += pts;
-
-                    let color = "rgba(255,165,0,1)";
-                    if (AppState.helper === "piglet") color = "rgba(255,140,170,1)";
-                    if (AppState.helper === "tigger") color = "rgba(255,140,0,1)";
-                    if (AppState.helper === "rabbit") color = "rgba(80,170,110,1)";
-                    if (kind === "gold") color = "rgba(255,220,120,1)";
-
-                    Particles.emit(h.x, h.y, color, 14 + Math.floor(AppState.combo.mult * 6) + (kind === "gold" ? 10 : 0), 1.05);
-                    spawnScorePopup(`${kind === "gold" ? "✨ " : ""}+${pts}`, h.x, h.y);
-
-                    punchScale(0.22);
-                    vibrate(kind === "gold" ? [15, 10, 15] : 15);
-                    (kind === "gold" ? Audio.power : Audio.collect)();
-                    momentSlow(0.06, 90);
-
-                    UI.updateHUD(prev);
-                }
-
-                function takeHit(b) {
-                    // Check Eeyore's protection
-                    if (eeyoreProtection && HelperEffects.checkEeyoreProtection()) {
-                        spawnScorePopup("💪 NO DAMAGE!", b.x, b.y);
-                        Particles.emit(b.x, b.y, "rgba(157,78,221,1)", 15, 1.1);
-                        Audio.ui();
-                        return;
-                    }
-                    
-                    const prev = { score: AppState.score, streak: AppState.streak, lives: AppState.lives };
-                    AppState.stats.beesHit++;
-
-                    if (buffs.shield > 0) {
-                        buffs.shield = 0;
-                        Particles.emit(b.x, b.y, "rgba(77,150,255,1)", 18, 1.1);
-                        spawnScorePopup("🛡️", b.x, b.y);
-                        Audio.power();
-                        vibrate([20, 20, 20]);
-                        momentSlow(0.10, 120);
-                        screenShake(10);
-                        UI.updateHUD(prev);
-                        return;
-                    }
-
-                    AppState.lives = Math.max(0, AppState.lives - 1);
-                    AppState.streak = 0;
-                    AppState.combo = { mult: 1, timer: 0, tier: 0 };
-
-                    Particles.emit(b.x, b.y, "rgba(201,76,76,1)", 22, 1.2);
-                    spawnScorePopup("OUCH!", player.x, player.y - 40);
-                    Audio.hit();
-                    vibrate([35, 25, 35]);
-
-                    momentSlow(0.22, 180);
-                    screenShake(16);
-
-                    UI.updateHUD(prev);
-                    if (AppState.lives <= 0) gameOver();
-                }
-
-                function takePower(p) {
-                    AppState.stats.powerCollected++;
-
-                    if (p.type === "shield") {
-                        buffs.shield = 12000;
-                        spawnScorePopup("🛡️ Shield", p.x, p.y);
-                        Particles.emit(p.x, p.y, "rgba(77,150,255,1)", 18, 1.1);
-                    } else {
-                        buffs.slow = 7000;
-                        spawnScorePopup("⏳ Slow", p.x, p.y);
-                        Particles.emit(p.x, p.y, "rgba(157,78,221,1)", 18, 1.05);
-                    }
-
-                    Audio.power();
-                    vibrate(20);
-                    momentSlow(0.12, 140);
-                }
-
-                /* ======================= STORYBOOK DRAWING ======================= */
-                function inkStroke(width = 3, alpha = 0.45) {
-                    ctx.lineWidth = width;
-                    ctx.strokeStyle = `rgba(60,45,28,${alpha})`;
-                    ctx.lineJoin = "round";
-                    ctx.lineCap = "round";
-                }
-
-                function paperNoise(seed, cx, cy, rad, strength = 0.05) {
-                    const rng = makeRng(seed);
-                    const n = 14;
-                    ctx.save();
-                    ctx.globalAlpha = strength;
-                    ctx.fillStyle = "rgba(255,255,255,1)";
-                    for (let i = 0; i < n; i++) {
-                        const a = rng() * Math.PI * 2;
-                        const d = rng() * rad * 0.85;
-                        ctx.beginPath();
-                        ctx.arc(cx + Math.cos(a) * d, cy + Math.sin(a) * d, 0.7 + rng() * 0.9, 0, Math.PI * 2);
-                        ctx.fill();
-                    }
-                    ctx.restore();
-                }
-
-                function drawHoney(h) {
-                    const r = h.r;
-                    const kind = h.kind || "normal";
-
-                    ctx.save();
-                    ctx.translate(h.x, h.y);
-
-                    const wob = Math.sin((AppState.timeMs + h.y * 3) / 220 + (h.wob || 0)) * 0.04;
-                    ctx.rotate(wob);
-
-                    let g;
-                    if (kind === "gold") {
-                        g = ctx.createRadialGradient(-r * 0.25, -r * 0.35, r * 0.18, 0, 0, r * 1.35);
-                        g.addColorStop(0.00, "#fff7c7");
-                        g.addColorStop(0.30, "#ffe08a");
-                        g.addColorStop(0.62, "#f7c400");
-                        g.addColorStop(1.00, "#b87400");
-                    } else if (kind === "cursed") {
-                        g = ctx.createRadialGradient(-r * 0.25, -r * 0.35, r * 0.18, 0, 0, r * 1.35);
-                        g.addColorStop(0.00, "#ffe3b5");
-                        g.addColorStop(0.35, "#ffb86b");
-                        g.addColorStop(0.75, "#e46a2d");
-                        g.addColorStop(1.00, "#7b2c14");
-                    } else {
-                        g = ctx.createRadialGradient(-r * 0.3, -r * 0.35, r * 0.2, 0, 0, r * 1.3);
-                        g.addColorStop(0.00, "#fff2b5");
-                        g.addColorStop(0.35, "#ffd166");
-                        g.addColorStop(0.70, "#f4b400");
-                        g.addColorStop(1.00, "#d18a00");
-                    }
-
-                    ctx.fillStyle = g;
-                    rrPath(ctx, -r * 1.05, -r * 0.95, r * 2.10, r * 1.90, r * 0.55);
-                    ctx.fill();
-
-                    inkStroke(3.2, 0.42);
-                    ctx.stroke();
-
-                    if (kind === "gold") {
-                        ctx.save();
-                        ctx.globalAlpha = 0.22;
-                        ctx.strokeStyle = "rgba(255,236,140,0.95)";
-                        ctx.lineWidth = 5;
-                        ctx.beginPath();
-                        ctx.ellipse(0, 0, r * 1.18, r * 0.98, 0, 0, Math.PI * 2);
-                        ctx.stroke();
-                        ctx.restore();
-                    } else if (kind === "cursed") {
-                        ctx.save();
-                        ctx.globalAlpha = 0.22;
-                        ctx.strokeStyle = "rgba(140,30,10,0.9)";
-                        ctx.lineWidth = 5;
-                        ctx.beginPath();
-                        ctx.ellipse(0, 0, r * 1.18, r * 0.98, 0, 0, Math.PI * 2);
-                        ctx.stroke();
-                        ctx.restore();
-                    }
-
-                    // lid
-                    ctx.save();
-                    ctx.translate(0, -r * 0.72);
-                    const lidG = ctx.createLinearGradient(0, -r * 0.25, 0, r * 0.28);
-                    lidG.addColorStop(0, "#9d6a3a");
-                    lidG.addColorStop(1, "#6e4324");
-                    ctx.fillStyle = lidG;
-                    rrPath(ctx, -r * 1.00, -r * 0.22, r * 2.00, r * 0.44, r * 0.18);
-                    ctx.fill();
-                    inkStroke(2.6, 0.45);
-                    ctx.stroke();
-
-                    ctx.globalAlpha = 0.18;
-                    ctx.fillStyle = "#fff";
-                    ctx.beginPath();
-                    ctx.ellipse(-r * 0.35, -r * 0.08, r * 0.35, r * 0.14, -0.2, 0, Math.PI * 2);
-                    ctx.fill();
-                    ctx.restore();
-
-                    // inside "liquid"
-                    ctx.save();
-                    ctx.globalAlpha = 0.9;
-                    const hg = ctx.createRadialGradient(-r * 0.25, r * 0.2, r * 0.2, 0, r * 0.25, r * 1.1);
-                    hg.addColorStop(0, kind === "cursed" ? "#ffd1a8" : "#ffe58f");
-                    hg.addColorStop(0.6, kind === "cursed" ? "#e46a2d" : "#f4b400");
-                    hg.addColorStop(1, kind === "cursed" ? "#7b2c14" : "#c97800");
-                    ctx.fillStyle = hg;
-                    ctx.beginPath();
-                    ctx.ellipse(0, r * 0.18, r * 0.78, r * 0.56, 0.08, 0, Math.PI * 2);
-                    ctx.fill();
-                    ctx.restore();
-
-                    // glossy highlight
-                    ctx.save();
-                    ctx.globalAlpha = 0.32;
-                    ctx.strokeStyle = "rgba(255,255,255,0.95)";
-                    ctx.lineWidth = 3;
-                    ctx.beginPath();
-                    ctx.arc(-r * 0.25, -r * 0.05, r * 0.72, Math.PI * 1.05, Math.PI * 1.55);
-                    ctx.stroke();
-                    ctx.restore();
-
-                    // base shadow
-                    ctx.save();
-                    ctx.globalAlpha = 0.18;
-                    ctx.fillStyle = "#000";
-                    ctx.beginPath();
-                    ctx.ellipse(0, r * 1.05, r * 0.85, r * 0.22, 0, 0, Math.PI * 2);
-                    ctx.fill();
-                    ctx.restore();
-
-                    paperNoise(h.seed, 0, 0, r * 1.05, 0.05);
-
-                    ctx.restore();
-                }
-
-                function drawBee(b) {
-                    const r = b.r;
-
-                    ctx.save();
-                    ctx.translate(b.x, b.y);
-
-                    const bob = Math.sin(b.flap) * r * 0.08;
-                    const lean = Math.sin(b.flap * 0.7) * 0.12;
-                    ctx.translate(0, bob);
-                    ctx.rotate(lean);
-
-                    // wings
-                    const wing = (sx) => {
-                        ctx.save();
-                        ctx.globalAlpha = 0.32 + 0.12 * Math.sin(b.flap * 1.6 + sx);
-                        const wg = ctx.createRadialGradient(sx * r * 0.25, -r * 0.7, r * 0.2, sx * r * 0.45, -r * 0.55, r * 1.05);
-                        wg.addColorStop(0, "rgba(255,255,255,0.95)");
-                        wg.addColorStop(0.6, "rgba(255,255,255,0.35)");
-                        wg.addColorStop(1, "rgba(255,255,255,0)");
-                        ctx.fillStyle = wg;
-                        ctx.beginPath();
-                        ctx.ellipse(sx * r * 0.75, -r * 0.6, r * 0.78, r * 0.46, sx * 0.25 + Math.sin(b.flap) * 0.35, 0, Math.PI * 2);
-                        ctx.fill();
-                        inkStroke(2.2, 0.18);
-                        ctx.stroke();
-                        ctx.restore();
-                    };
-                    wing(-1); wing(1);
-
-                    // body gradient
-                    const bg = ctx.createRadialGradient(-r * 0.35, -r * 0.25, r * 0.25, 0, 0, r * 1.25);
-                    bg.addColorStop(0, "#fff3b8");
-                    bg.addColorStop(0.35, "#ffd86a");
-                    bg.addColorStop(0.75, "#f2b93a");
-                    bg.addColorStop(1, "#c27a12");
-
-                    ctx.fillStyle = bg;
-                    ctx.beginPath();
-                    ctx.ellipse(0, 0, r * 1.05, r * 0.82, 0, 0, Math.PI * 2);
-                    ctx.fill();
-
-                    inkStroke(3.0, 0.48);
-                    ctx.stroke();
-
-                    const stripe = (y, w, h, a = 0.62) => {
-                        ctx.save();
-                        ctx.globalAlpha = a;
-                        const sg = ctx.createLinearGradient(0, y - h, 0, y + h);
-                        sg.addColorStop(0, "rgba(40,28,18,0.15)");
-                        sg.addColorStop(0.45, "rgba(35,25,17,0.85)");
-                        sg.addColorStop(1, "rgba(40,28,18,0.20)");
-                        ctx.fillStyle = sg;
-                        rrPath(ctx, -r * w, y - h, r * w * 2, h * 2, h * 0.9);
-                        ctx.fill();
-                        ctx.restore();
-                    };
-                    stripe(-r * 0.22, 0.92, r * 0.17);
-                    stripe( r * 0.10, 0.98, r * 0.18);
-
-                    // face + stinger
-                    ctx.save();
-                    ctx.fillStyle = "rgba(25,18,12,0.75)";
-                    ctx.beginPath(); ctx.arc(-r * 0.22, -r * 0.10, r * 0.08, 0, Math.PI * 2); ctx.fill();
-                    ctx.beginPath(); ctx.arc( r * 0.22, -r * 0.10, r * 0.08, 0, Math.PI * 2); ctx.fill();
-
-                    ctx.globalAlpha = 0.18;
-                    ctx.fillStyle = "#fff";
-                    ctx.beginPath(); ctx.ellipse(-r * 0.35, -r * 0.28, r * 0.28, r * 0.14, -0.3, 0, Math.PI * 2); ctx.fill();
-
-                    ctx.globalAlpha = 0.9;
-                    ctx.fillStyle = "rgba(35,25,17,0.85)";
-                    ctx.beginPath();
-                    ctx.moveTo(0, r * 0.78);
-                    ctx.lineTo(-r * 0.12, r * 1.02);
-                    ctx.lineTo( r * 0.12, r * 1.02);
-                    ctx.closePath();
-                    ctx.fill();
-                    ctx.restore();
-
-                    // shadow
-                    ctx.save();
-                    ctx.globalAlpha = 0.16;
-                    ctx.fillStyle = "#000";
-                    ctx.beginPath();
-                    ctx.ellipse(0, r * 0.98, r * 0.95, r * 0.22, 0, 0, Math.PI * 2);
-                    ctx.fill();
-                    ctx.restore();
-
-                    paperNoise(b.seed, 0, 0, r * 1.05, 0.045);
-
-                    ctx.restore();
-                }
-
-                function drawPower(p) {
-                    if (p.trail?.length) {
-                        for (let i = 0; i < p.trail.length; i++) {
-                            const pos = p.trail[i];
-                            const alpha = 0.5 * (1 - i / p.trail.length);
-                            ctx.fillStyle =
-                                p.type === "shield" ? `rgba(77,150,255,${alpha})` :
-                                `rgba(157,78,221,${alpha})`;
-                            ctx.beginPath();
-                            ctx.arc(pos.x, pos.y, p.r * (0.75 - i * 0.05), 0, Math.PI * 2);
-                            ctx.fill();
-                        }
-                    }
-
-                    ctx.save();
-                    ctx.translate(p.x, p.y);
-                    ctx.fillStyle = p.type === "shield" ? "#4a9eff" : "#9d4edd";
-                    inkStroke(2.8, 0.35);
-                    ctx.beginPath();
-                    ctx.arc(0, 0, p.r, 0, Math.PI * 2);
-                    ctx.fill();
-                    ctx.stroke();
-
-                    ctx.fillStyle = "rgba(255,255,255,0.9)";
-                    ctx.font = '900 14px "Fredoka One", system-ui';
-                    ctx.textAlign = "center";
-                    ctx.textBaseline = "middle";
-                    ctx.fillText(p.type === "shield" ? "S" : "⏳", 0, 1);
-
-                    ctx.restore();
-                }
-
-                function drawPlayer() {
-                    const r = player.r;
-
-                    ctx.save();
-                    ctx.translate(player.x, player.y);
-                    ctx.scale(player.scale, player.scale);
-
-                    // shadow
-                    ctx.globalAlpha = 0.22;
-                    ctx.fillStyle = "#000";
-                    ctx.beginPath();
-                    ctx.ellipse(0, r * 0.72, r * 0.95, r * 0.28, 0, 0, Math.PI * 2);
-                    ctx.fill();
-                    ctx.globalAlpha = 1;
-
-                    // body
-                    ctx.fillStyle = "#f6c44f";
-                    inkStroke(3.0, 0.40);
-                    ctx.beginPath();
-                    ctx.ellipse(0, 10, r * 0.82, r * 0.66, 0, 0, Math.PI * 2);
-                    ctx.fill();
-                    ctx.stroke();
-
-                    // shirt
-                    ctx.fillStyle = "#d64b3c";
-                    ctx.beginPath();
-                    ctx.ellipse(0, 0, r * 0.88, r * 0.44, 0, 0, Math.PI * 2);
-                    ctx.fill();
-
-                    // head
-                    ctx.fillStyle = "#f7cc63";
-                    ctx.beginPath();
-                    ctx.arc(0, -r * 0.62, r * 0.52, 0, Math.PI * 2);
-                    ctx.fill();
-                    ctx.stroke();
-
-                    // ears
-                    ctx.beginPath();
-                    ctx.arc(-r * 0.32, -r * 1.02, r * 0.20, 0, Math.PI * 2);
-                    ctx.arc( r * 0.32, -r * 1.02, r * 0.20, 0, Math.PI * 2);
-                    ctx.fill();
-                    ctx.stroke();
-
-                    // face
-                    ctx.fillStyle = "rgba(0,0,0,0.65)";
-                    ctx.beginPath(); ctx.arc(-r * 0.15, -r * 0.70, r * 0.06, 0, Math.PI * 2); ctx.fill();
-                    ctx.beginPath(); ctx.arc( r * 0.15, -r * 0.70, r * 0.06, 0, Math.PI * 2); ctx.fill();
-                    ctx.beginPath(); ctx.arc(0, -r * 0.57, r * 0.07, 0, Math.PI * 2); ctx.fill();
-
-                    // shield ring
-                    if (buffs.shield > 0) {
-                        const pulse = 0.65 + 0.35 * Math.sin(AppState.timeMs / 180);
-                        ctx.strokeStyle = `rgba(77,150,255,${pulse})`;
-                        ctx.lineWidth = 5;
-                        ctx.beginPath();
-                        ctx.arc(0, 0, r * 1.06, 0, Math.PI * 2);
-                        ctx.stroke();
-                    }
-
-                    ctx.restore();
-                }
-
-                function renderCombo() {
-                    if (AppState.combo.timer <= 0 || AppState.streak < 4) return;
-                    const a = 0.25 + (AppState.combo.timer / 2000) * 0.75;
-                    ctx.save();
-                    ctx.globalAlpha = a;
-                    ctx.font = '900 34px "Fredoka One", system-ui';
-                    ctx.textAlign = "center";
-                    ctx.lineWidth = 6;
-                    ctx.strokeStyle = "rgba(93,78,55,0.35)";
-                    ctx.fillStyle = "rgba(255,165,0,0.95)";
-                    const msg = `COMBO x${AppState.combo.mult.toFixed(1)}`;
-                    ctx.strokeText(msg, BASE_W / 2, 150);
-                    ctx.fillText(msg, BASE_W / 2, 150);
-                    ctx.restore();
-                }
-
-                function update(dt) {
-                    if (!running || AppState.paused) return;
-
-                    // timescale easing
-                    if (microSlow > 0) {
-                        microSlow = Math.max(0, microSlow - dt);
-                        AppState.timeScale += (1 - AppState.timeScale) * 0.08;
-                    } else {
-                        AppState.timeScale += (1 - AppState.timeScale) * 0.12;
-                    }
-                    AppState.timeScale = clamp(AppState.timeScale, 0.70, 1);
-
-                    dt = Math.min(dt, 50) * AppState.timeScale;
-                    AppState.timeMs += dt;
-
-                    // combo decay
-                    if (AppState.combo.timer > 0) {
-                        AppState.combo.timer = Math.max(0, AppState.combo.timer - dt);
-                        if (AppState.combo.timer === 0) AppState.combo = { mult: 1, timer: 0, tier: 0 };
-                    }
-
-                    // buffs decay
-                    if (buffs.shield > 0) buffs.shield = Math.max(0, buffs.shield - dt);
-                    if (buffs.slow > 0) buffs.slow = Math.max(0, buffs.slow - dt);
-
-                    updateDifficulty();
-
-                    // player movement + spring scale
-                    player.x = Input.update(dt);
-                    player.sv += (1 - player.scale) * 0.18;
-                    player.sv *= 0.72;
-                    player.scale += player.sv;
-                    player.scale = clamp(player.scale, 0.88, 1.25);
-
-                    let slowFactor = buffs.slow > 0 ? 0.58 : 1;
-                    // Eeyore: constant gentle slow + occasional protection
-                    if (AppState.helper === 'eeyore') {
-                        slowFactor *= 0.80;
-                        eeyoreProtection = true;
-                    } else {
-                        eeyoreProtection = false;
-                    }
-
-                    // Apply helper effects (Tigger/Rabbit do active behaviors)
-                    HelperEffects.applyCurrent({ honeys, bees, player });
-
-                    // spawn
-                    honeyTimer += dt;
-                    beeTimer += dt;
-                    powerTimer += dt;
-
-                    if (honeyTimer >= baseHoneyRate) { honeyTimer = 0; spawnHoney(); }
-                    if (beeTimer >= baseBeeRate) { beeTimer = 0; spawnBee(); }
-                    if (powerTimer >= powerRate) { powerTimer = 0; spawnPower(); }
-
-                    // honeys
-                    for (let i = honeys.length - 1; i >= 0; i--) {
-                        const h = honeys[i];
-                        h.y += (h.vy * slowFactor) * (dt / 1000);
-
-                        if (h.y > BASE_H + 60) {
-                            honeys.splice(i, 1);
-                            AppState.streak = 0;
-                            AppState.combo = { mult: 1, timer: 0, tier: 0 };
-                            continue;
-                        }
-
-                        // Consistent collision radius
-                        const collisionRadius = 48;
-                        const hitBuffer = 3;
-
-                        if (hitCircle(player.x, player.y, collisionRadius - hitBuffer, h.x, h.y, h.r)) {
-                            awardHoney(h);
-                            honeys.splice(i, 1);
-                        }
-                    }
-
-                    // bees
-                    for (let i = bees.length - 1; i >= 0; i--) {
-                        const b = bees[i];
-                        b.flap += dt / 120;
-
-                        b.y += (b.vy * slowFactor) * (dt / 1000);
-
-                        const drift = n1(AppState.timeMs * b.wFreq, b.wSeed) * b.wAmp;
-                        const wanderVx = (drift * 0.9);
-
-                        b.steerTimer -= dt;
-                        if (b.steerTimer <= 0) {
-                            b.steerTimer = 260 + Math.random() * 520;
-                            b.interest = Math.random();
-                            b.steerX = clamp(player.x + (Math.random() * 140 - 70), 45, BASE_W - 45);
-                        }
-
-                        let targetVx = wanderVx;
-
-                        if (b.type === "curious" && b.interest > 0.35) {
-                            const dx = (b.steerX - b.x);
-                            targetVx += clamp(dx * 1.2, -140, 140);
-                        }
-
-                        if (b.type === "pounce") {
-                            const dx = (player.x - b.x);
-                            targetVx += clamp(dx * 1.8, -190, 190);
-                        }
-
-                        targetVx *= (1 - directorEase * 0.28);
-
-                        b.vx += (targetVx - b.vx) * 0.06;
-
-                        b.x += (b.vx * slowFactor) * (dt / 1000);
-
-                        if (b.x < 34) { b.x = 34; b.vx *= -0.75; }
-                        if (b.x > BASE_W - 34) { b.x = BASE_W - 34; b.vx *= -0.75; }
-
-                        if (b.y > BASE_H + 80) { bees.splice(i, 1); continue; }
-
-                        // Consistent collision radius
-                        const beePlayerR = 42;
-                        const hitBuffer = 3;
-                        
-                        if (hitCircle(player.x, player.y, beePlayerR + hitBuffer, b.x, b.y, b.r)) {
-                            takeHit(b);
-                            bees.splice(i, 1);
-                        }
-                    }
-
-                    // powers
-                    for (let i = powers.length - 1; i >= 0; i--) {
-                        const p = powers[i];
-                        p.y += p.vy * (dt / 1000);
-                        p.trail.unshift({ x: p.x, y: p.y });
-                        if (p.trail.length > 8) p.trail.pop();
-
-                        if (p.y > BASE_H + 80) { powers.splice(i, 1); continue; }
-
-                        if (hitCircle(player.x, player.y, player.r, p.x, p.y, p.r)) {
-                            takePower(p);
-                            powers.splice(i, 1);
-                        }
-                    }
-
-                    Particles.update(dt);
-                    Achievements.check();
-                }
-
-                function render() {
-                    // Clear with sky gradient
-                    const gradient = ctx.createLinearGradient(0, 0, 0, BASE_H);
-                    gradient.addColorStop(0, "#87CEEB");
-                    gradient.addColorStop(1, "#98FB98");
-                    ctx.fillStyle = gradient;
-                    ctx.fillRect(0, 0, BASE_W, BASE_H);
-
-                    // Draw clouds
-                    ctx.save();
-                    ctx.globalAlpha = 0.3;
-                    ctx.fillStyle = "white";
-                    for (let i = 0; i < 3; i++) {
-                        const x = (AppState.timeMs * 0.02 + i * 200) % (BASE_W + 200) - 100;
-                        const y = 80 + i * 60;
-                        const size = 40 + i * 10;
-                        
-                        ctx.beginPath();
-                        ctx.arc(x, y, size, 0, Math.PI * 2);
-                        ctx.arc(x + size * 0.6, y - size * 0.3, size * 0.8, 0, Math.PI * 2);
-                        ctx.arc(x + size * 1.2, y, size * 0.9, 0, Math.PI * 2);
-                        ctx.fill();
-                    }
-                    ctx.restore();
-
-                    // Screen shake
-                    const shakeX = shake > 0 ? (Math.random() * 2 - 1) * shake : 0;
-                    const shakeY = shake > 0 ? (Math.random() * 2 - 1) * shake : 0;
-                    ctx.save();
-                    ctx.translate(shakeX, shakeY);
-                    shake = Math.max(0, shake - 1);
-
-                    // Draw all game objects
-                    powers.forEach(drawPower);
-                    honeys.forEach(drawHoney);
-                    bees.forEach(drawBee);
-                    Particles.render(ctx);
-                    drawPlayer();
-                    renderCombo();
-
-                    ctx.restore();
-                }
-
-                function gameLoop(t) {
-                    if (!last) last = t;
-                    const dt = t - last;
-                    last = t;
-
-                    update(dt);
-                    render();
-
-                    if (running) {
-                        requestAnimationFrame(gameLoop);
-                    }
-                }
-
-                function bootLoop() {
-                    gameLoop(0);
-                }
-
-                return {
-                    start,
-                    reset,
-                    bootLoop
-                };
-            })();
-
-            /* ======================= BOOT ======================= */
-            function boot() {
+                updateGame(dt);
+                renderGame();
+                
+                requestAnimationFrame(gameLoop);
+            }
+
+            /* ======================= INITIALIZATION ======================= */
+            function init() {
+                setupUI();
+                initLoading();
+                drawHUD();
+                requestAnimationFrame(gameLoop);
+                
                 // Prevent zoom on mobile
                 document.addEventListener('touchmove', function(e) {
-                    if(e.scale !== 1) {
+                    if (e.scale !== 1) {
                         e.preventDefault();
                     }
                 }, { passive: false });
@@ -3966,17 +2367,13 @@
                     }
                     lastTouchEnd = now;
                 }, false);
-                
-                UI.bind();
-                Layout.bind();
-                Game.reset();
-                Game.bootLoop();
             }
 
-            if (document.readyState === "loading") {
-                document.addEventListener("DOMContentLoaded", boot, { once: true });
+            // Start everything when page loads
+            if (document.readyState === 'loading') {
+                document.addEventListener('DOMContentLoaded', init);
             } else {
-                setTimeout(boot, 100); // Small delay to ensure DOM is ready
+                init();
             }
         })();
     </script>
