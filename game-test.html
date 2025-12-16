@@ -866,6 +866,91 @@
             .story-line, .subtitle { font-size: 18px; margin-bottom: 20px; }
             .btn { padding: 12px 30px; margin: 5px 0; }
          }
+         /* ================= FIX: Floating buttons vs control cluster ================= */
+
+/* Keep the round "floating" look for single buttons only */
+.sound-controls, .share-btn, .weather-toggle{
+  position: absolute;
+  z-index: 100;
+  background: rgba(255, 248, 220, 0.9);
+  border: 3px solid #D4A574;
+  border-radius: 50%;
+  width: 50px;
+  height: 50px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 22px;
+  color: #8B4513;
+  cursor: pointer;
+  transition: all 0.2s;
+}
+
+/* The sound container is a DIV in your HTML, so make the inner button fill it */
+.sound-controls .sound-btn{
+  width: 100%;
+  height: 100%;
+  border: 0;
+  background: transparent;
+  color: inherit;
+  font: inherit;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  cursor: pointer;
+}
+
+/* IMPORTANT: game-controls is a CLUSTER, not a round button */
+.game-controls{
+  position: absolute;
+  z-index: 100;
+  bottom: calc(env(safe-area-inset-bottom, 0px) + 14px);
+  left: calc(env(safe-area-inset-left, 0px) + 14px);
+
+  /* remove the "circle" styling it inherited */
+  width: auto;
+  height: auto;
+  border: none;
+  border-radius: 0;
+  background: transparent;
+
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+  align-items: center;
+  justify-content: center;
+  padding: 0;
+}
+
+/* Re-position top buttons using safe area, and push HUD below them */
+.sound-controls{
+  top: calc(env(safe-area-inset-top, 0px) + 12px);
+  left: calc(env(safe-area-inset-left, 0px) + 12px);
+}
+.share-btn{
+  top: calc(env(safe-area-inset-top, 0px) + 12px);
+  right: calc(env(safe-area-inset-right, 0px) + 12px);
+}
+.weather-toggle{
+  bottom: calc(env(safe-area-inset-bottom, 0px) + 14px);
+  right: calc(env(safe-area-inset-right, 0px) + 14px);
+}
+
+/* HUD needs to start BELOW the top buttons */
+.hud{
+  margin-top: calc(env(safe-area-inset-top, 0px) + 72px);
+}
+
+/* Canvas sizing: keep aspect ratio stable */
+.game-container{
+  flex: 1;
+  min-height: 0; /* crucial for flex children on iOS */
+}
+#honey-game{
+  height: auto;
+  width: auto;        /* Layout JS will set exact px size */
+  max-height: none;   /* don't fight JS */
+}
       </style>
    </head>
    <body>
