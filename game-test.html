@@ -2232,699 +2232,644 @@
     <div id="notification-container"></div>
     <div id="weather-effects"></div>
 
-
-    <script>
+<script>
 (() => {
-    "use strict";
+  "use strict";
 
-    // iOS detection
-    const isIOS = /iPad|iPhone|iPod/.test(navigator.userAgent) && !window.MSStream;
-    const isSafari = /^((?!chrome|android).)*safari/i.test(navigator.userAgent);
-    const isIOSSafari = isIOS && isSafari;
+  /* ======================= PLATFORM DETECTION ======================= */
+  const isIOS = /iPad|iPhone|iPod/.test(navigator.userAgent) && !window.MSStream;
+  const isSafari = /^((?!chrome|android).)*safari/i.test(navigator.userAgent);
+  const isIOSSafari = isIOS && isSafari;
 
-    // Disable smooth scrolling on iOS for better performance
-    if (isIOS) {
-        document.documentElement.style.webkitOverflowScrolling = 'touch';
+  /* ======================= CONSTANTS ======================= */
+  const GAME_CONFIG = {
+    BASE_WIDTH: 420,
+    BASE_HEIGHT: 700,
+  };
+
+  /* ======================= CRASH OVERLAY ======================= */
+  (function setupCrashOverlay(){
+    function show(msg){
+      try {
+        const el = document.getElementById('error-overlay');
+        if (!el) return;
+        el.textContent = String(msg);
+        el.classList.remove('hidden');
+      } catch {}
     }
 
-    /* ======================= CONSTANTS & CONFIG ======================= */
-    const GAME_CONFIG = {
-        BASE_WIDTH: 420,
-        BASE_HEIGHT: 700,
-        MAX_PARTICLES: 100,
-        MAX_HONEYS: 30,
-        MAX_BEES: 20,
-        MAX_POWERS: 5
-    };
+    window.addEventListener('error', (e) => {
+      show("JS ERROR:\n" + (e.message || e.type) + "\n" + (e.filename || "") + ":" + (e.lineno || ""));
+    });
 
-    /* ---------- Crash guard ---------- */
-    (function setupCrashOverlay(){
-        function show(msg){
-            try {
-                const el = document.getElementById('error-overlay');
-                if (!el) return;
-                el.textContent = String(msg).substring(0, 500);
-                el.classList.remove('hidden');
-            } catch {}
-        }
+    window.addEventListener('unhandledrejection', (e) => {
+      show("PROMISE REJECTION:\n" + (e.reason?.message || String(e.reason)));
+    });
+  })();
 
-        window.addEventListener('error', function(e){
-            show("JS ERROR: " + (e.message || e.type));
-        });
+  if (window.__POOH_HONEY_HUNT_LOADED__) return;
+  window.__POOH_HONEY_HUNT_LOADED__ = true;
 
-        window.addEventListener('unhandledrejection', function(e){
-            show("PROMISE REJECTION: " + (e.reason?.message || String(e.reason)));
-        });
-    })();
+  /* ======================= DOM HELPERS ======================= */
+  const $ = (sel) => document.getElementById(sel) || document.querySelector(sel);
 
-    if (window.__POOH_HONEY_HUNT_LOADED__) {
-        console.log('Game already loaded');
-        return;
+  const clamp = (v, a, b) => Math.max(a, Math.min(b, v));
+  const dist2 = (x1,y1,x2,y2) => {
+    const dx = x2 - x1, dy = y2 - y1;
+    return dx*dx + dy*dy;
+  };
+
+  /* ======================= SAFE STORAGE ======================= */
+  const Storage = {
+    get(key, fallback = null) {
+      try {
+        const v = localStorage.getItem(key);
+        return v == null ? fallback : JSON.parse(v);
+      } catch {
+        return fallback;
+      }
+    },
+    set(key, value) {
+      try { localStorage.setItem(key, JSON.stringify(value)); } catch {}
+    },
+    remove(key) {
+      try { localStorage.removeItem(key); } catch {}
     }
-    window.__POOH_HONEY_HUNT_LOADED__ = true;
+  };
 
-    /* ======================= DOM + UTILS ======================= */
-    const $ = (sel) => {
-        if (typeof sel !== 'string') return null;
-        return document.getElementById(sel) || document.querySelector(sel);
-    };
+  /* ======================= GAME STATE ======================= */
+  const GameState = {
+    running: false,
+    paused: false,
+    score: 0,
+    lives: 3,
+    combo: 1.0,
+    soundEnabled: true,
+    musicEnabled: false,
+    visualEffects: true,
+  };
 
-    const clamp = (v, a, b) => Math.max(a, Math.min(b, v));
-    const distance = (x1, y1, x2, y2) => Math.sqrt((x2 - x1) ** 2 + (y2 - y1) ** 2);
+  const savedSettings = Storage.get('gameSettings');
+  if (savedSettings && typeof savedSettings === 'object') Object.assign(GameState, savedSettings);
 
-    /* ======================= STORAGE MANAGEMENT ======================= */
-    const Storage = {
-        get(key, fallback = null) {
-            try {
-                const v = localStorage.getItem(key);
-                return v === null ? fallback : JSON.parse(v);
-            } catch {
-                return fallback;
-            }
-        },
-        set(key, value) {
-            try {
-                localStorage.setItem(key, JSON.stringify(value));
-            } catch {}
-        },
-        remove(key) {
-            try {
-                localStorage.removeItem(key);
-            } catch {}
-        }
-    };
+  if (isIOS) {
+    GameState.musicEnabled = false;
+    // keep effects if you want, but iOS Safari can struggle; safe default:
+    // GameState.visualEffects = false;
+  }
 
-    /* ======================= GAME STATE ======================= */
-    const GameState = {
-        running: false,
-        paused: false,
-        score: 0,
-        lives: 3,
-        combo: 1.0,
-        soundEnabled: true,
-        musicEnabled: false, // Disabled by default on iOS
-        currentHelper: 'pooh',
-        weather: 'clear'
-    };
+  /* ======================= CANVAS SETUP (FIXED FOR iOS) ======================= */
+  const canvas = $("game-canvas");
+  if (!canvas) return;
 
-    // Initialize from storage
-    const savedSettings = Storage.get('gameSettings');
-    if (savedSettings) {
-        Object.assign(GameState, savedSettings);
-    }
+  const ctx = canvas.getContext("2d", { alpha: false, desynchronized: true });
 
-    // On iOS, disable music by default and reduce effects
-    if (isIOS) {
-        GameState.musicEnabled = false;
-        GameState.visualEffects = false;
-    }
+  const BASE_W = GAME_CONFIG.BASE_WIDTH;
+  const BASE_H = GAME_CONFIG.BASE_HEIGHT;
 
-    /* ======================= CANVAS SETUP ======================= */
-    const canvas = $("game-canvas");
-    if (!canvas) {
-        console.error("Canvas not found");
-        return;
-    }
+  // We will draw in "logical" coordinates BASE_W x BASE_H.
+  // Canvas will be resized to device pixels, and we map logical->device via ctx.setTransform.
+  const Render = {
+    dpr: 1,
+    cssW: BASE_W,
+    cssH: BASE_H,
+    scale: 1,
+    offsetX: 0,
+    offsetY: 0,
+  };
 
-    const ctx = canvas.getContext("2d");
-    const { BASE_WIDTH: BASE_W, BASE_HEIGHT: BASE_H } = GAME_CONFIG;
-    
-    // iOS Safari has issues with certain canvas sizes - use power of two
-    canvas.width = 512;
-    canvas.height = 854;
-    
-    // But we'll use our logical dimensions for drawing
-    const scaleX = canvas.width / BASE_W;
-    const scaleY = canvas.height / BASE_H;
+  function applyCanvasTransform() {
+    // Reset transform first (critical on iOS)
+    ctx.setTransform(1, 0, 0, 1, 0, 0);
+    // Clear in device pixels
+    ctx.clearRect(0, 0, canvas.width, canvas.height);
 
-    /* ======================= GAME OBJECTS ======================= */
-    const player = {
-        x: BASE_W / 2,
-        y: BASE_H - 100,
-        r: 30,
-        speed: 5
-    };
+    // Map logical space into the centered letterboxed area
+    // device px: (offsetX, offsetY) + logical * (scale*dpr)
+    ctx.setTransform(
+      Render.scale * Render.dpr, 0,
+      0, Render.scale * Render.dpr,
+      Render.offsetX * Render.dpr, Render.offsetY * Render.dpr
+    );
 
-    const honeys = [];
-    const bees = [];
-    const particles = [];
+    // Tuning for iOS
+    ctx.imageSmoothingEnabled = true;
+  }
 
-    /* ======================= IOS-SPECIFIC FIXES ======================= */
-    
-    // Fix for iOS Safari's 300ms click delay and touch events
-    document.addEventListener('touchstart', function(e) {
-        // Prevent double-tap zoom
-        if (e.touches.length > 1) {
-            e.preventDefault();
-        }
-    }, { passive: false });
+  function resizeCanvas() {
+    const container = $("game-container");
+    const rect = (container || canvas).getBoundingClientRect();
 
-    // Fix for iOS scrolling during gameplay
-    document.addEventListener('touchmove', function(e) {
-        if (GameState.running && !GameState.paused) {
-            e.preventDefault();
-        }
-    }, { passive: false });
+    // CSS size we WANT to occupy
+    const cssW = Math.max(1, Math.floor(rect.width));
+    const cssH = Math.max(1, Math.floor(rect.height));
 
-    // Fix canvas rendering on iOS
-    function fixIOSCanvas() {
-        if (!isIOS) return;
-        
-        // Force GPU rendering
-        canvas.style.transform = 'translateZ(0)';
-        canvas.style.webkitTransform = 'translateZ(0)';
-        
-        // Disable image smoothing for better performance
-        ctx.imageSmoothingEnabled = false;
-        ctx.webkitImageSmoothingEnabled = false;
-        ctx.mozImageSmoothingEnabled = false;
+    // DPR (limit to reduce iOS memory spikes)
+    const dpr = Math.min(2, window.devicePixelRatio || 1);
+
+    // Keep aspect ratio of logical base
+    const scale = Math.min(cssW / BASE_W, cssH / BASE_H);
+
+    const drawW = Math.floor(BASE_W * scale);
+    const drawH = Math.floor(BASE_H * scale);
+
+    const offsetX = Math.floor((cssW - drawW) / 2);
+    const offsetY = Math.floor((cssH - drawH) / 2);
+
+    // Set device pixel size
+    const pxW = Math.max(1, Math.floor(cssW * dpr));
+    const pxH = Math.max(1, Math.floor(cssH * dpr));
+
+    // Only touch canvas width/height when needed (prevents flicker)
+    if (canvas.width !== pxW || canvas.height !== pxH) {
+      canvas.width = pxW;
+      canvas.height = pxH;
     }
 
-    /* ======================= SIMPLIFIED GAME FUNCTIONS ======================= */
-    function spawnHoney() {
-        honeys.push({
-            x: Math.random() * (BASE_W - 60) + 30,
-            y: -30,
-            r: 15,
-            vy: 2 + Math.random() * 2,
-            type: Math.random() < 0.1 ? 'gold' : 'normal'
-        });
+    // Set CSS size
+    canvas.style.width = cssW + "px";
+    canvas.style.height = cssH + "px";
+
+    Render.dpr = dpr;
+    Render.cssW = cssW;
+    Render.cssH = cssH;
+    Render.scale = scale;
+    Render.offsetX = offsetX;
+    Render.offsetY = offsetY;
+
+    applyCanvasTransform();
+  }
+
+  // iOS: stop page bounce/scroll during play
+  document.addEventListener('touchmove', (e) => {
+    if (GameState.running && !GameState.paused) e.preventDefault();
+  }, { passive: false });
+
+  // iOS: prevent double-tap zoom weirdness
+  document.addEventListener('touchstart', (e) => {
+    if (e.touches && e.touches.length > 1) e.preventDefault();
+  }, { passive: false });
+
+  /* ======================= GAME OBJECTS ======================= */
+  const player = { x: BASE_W / 2, y: BASE_H - 100, r: 30 };
+  const honeys = [];
+  const bees = [];
+
+  function spawnHoney() {
+    honeys.push({
+      x: Math.random() * (BASE_W - 60) + 30,
+      y: -30,
+      r: 15,
+      vy: 2 + Math.random() * 2,
+      type: Math.random() < 0.1 ? 'gold' : 'normal'
+    });
+  }
+
+  function spawnBee() {
+    bees.push({
+      x: Math.random() * (BASE_W - 60) + 30,
+      y: -40,
+      r: 12,
+      vy: 3 + Math.random() * 2,
+      vx: (Math.random() - 0.5) * 2
+    });
+  }
+
+  function collides(a, b) {
+    const rr = (a.r + b.r);
+    return dist2(a.x, a.y, b.x, b.y) < rr * rr;
+  }
+
+  /* ======================= INPUT (FIXED COORD MAPPING) ======================= */
+  let targetX = player.x;
+  let isTracking = false;
+
+  function clientToLogicalX(clientX) {
+    const rect = canvas.getBoundingClientRect();
+
+    // Position inside canvas element in CSS pixels
+    const xCss = clientX - rect.left;
+
+    // Remove letterbox offset, then divide by scale to reach logical coords
+    const xInDraw = (xCss - Render.offsetX);
+    const xLogical = xInDraw / Render.scale;
+
+    return clamp(xLogical, player.r, BASE_W - player.r);
+  }
+
+  function onTouch(e) {
+    e.preventDefault();
+    const t = e.touches && e.touches[0];
+    if (!t) return;
+    targetX = clientToLogicalX(t.clientX);
+    isTracking = true;
+  }
+
+  canvas.addEventListener('touchstart', onTouch, { passive: false });
+  canvas.addEventListener('touchmove', onTouch, { passive: false });
+  canvas.addEventListener('touchend', () => { isTracking = false; }, { passive: true });
+  canvas.addEventListener('touchcancel', () => { isTracking = false; }, { passive: true });
+
+  // Mouse (desktop)
+  function onMouseMove(e) {
+    targetX = clientToLogicalX(e.clientX);
+    isTracking = true;
+  }
+  canvas.addEventListener('mousedown', onMouseMove);
+  window.addEventListener('mousemove', (e) => {
+    if (!isTracking) return;
+    onMouseMove(e);
+  });
+  window.addEventListener('mouseup', () => { isTracking = false; });
+
+  /* ======================= DRAW (IN LOGICAL COORDS) ======================= */
+  function drawBackground() {
+    const g = ctx.createLinearGradient(0, 0, 0, BASE_H);
+    g.addColorStop(0, '#87CEEB');
+    g.addColorStop(1, '#98FB98');
+    ctx.fillStyle = g;
+    ctx.fillRect(0, 0, BASE_W, BASE_H);
+  }
+
+  function drawPlayer() {
+    ctx.save();
+    ctx.translate(player.x, player.y);
+
+    ctx.fillStyle = '#F7C44F';
+    ctx.beginPath();
+    ctx.arc(0, 0, player.r, 0, Math.PI * 2);
+    ctx.fill();
+
+    ctx.fillStyle = '#000';
+    ctx.beginPath();
+    ctx.arc(-10, -5, 4, 0, Math.PI * 2);
+    ctx.arc(10, -5, 4, 0, Math.PI * 2);
+    ctx.fill();
+
+    ctx.restore();
+  }
+
+  function drawHoney(h) {
+    ctx.save();
+    ctx.translate(h.x, h.y);
+    ctx.fillStyle = h.type === 'gold' ? '#FFD700' : '#FFA500';
+    ctx.beginPath();
+    ctx.ellipse(0, 0, h.r, h.r * 0.8, 0, 0, Math.PI * 2);
+    ctx.fill();
+    ctx.restore();
+  }
+
+  function drawBee(b) {
+    ctx.save();
+    ctx.translate(b.x, b.y);
+    ctx.fillStyle = '#FFD700';
+    ctx.beginPath();
+    ctx.ellipse(0, 0, b.r * 1.2, b.r, 0, 0, Math.PI * 2);
+    ctx.fill();
+    ctx.restore();
+  }
+
+  /* ======================= HUD ======================= */
+  function updateHUD() {
+    const scoreEl = $('stat-score');
+    const livesEl = $('stat-lives');
+    if (scoreEl) scoreEl.textContent = String(GameState.score);
+    if (livesEl) livesEl.textContent = String(GameState.lives);
+  }
+
+  /* ======================= AUDIO (iOS SAFE: UNLOCK ON FIRST GESTURE) ======================= */
+  const AudioSys = (() => {
+    let ctx = null;
+    let unlocked = false;
+
+    function ensure() {
+      if (unlocked && ctx) return ctx;
+      const AC = window.AudioContext || window.webkitAudioContext;
+      if (!AC) return null;
+      ctx = ctx || new AC();
+      return ctx;
     }
 
-    function spawnBee() {
-        bees.push({
-            x: Math.random() * (BASE_W - 60) + 30,
-            y: -40,
-            r: 12,
-            vy: 3 + Math.random() * 2,
-            vx: (Math.random() - 0.5) * 2
-        });
+    async function unlock() {
+      try {
+        const c = ensure();
+        if (!c) return;
+        if (c.state === 'suspended') await c.resume();
+        // tiny silent blip to satisfy some iOS versions
+        const o = c.createOscillator();
+        const g = c.createGain();
+        g.gain.value = 0.00001;
+        o.connect(g); g.connect(c.destination);
+        o.start(); o.stop(c.currentTime + 0.01);
+        unlocked = true;
+      } catch {}
     }
 
-    function checkCollision(obj1, obj2) {
-        return distance(obj1.x, obj1.y, obj2.x, obj2.y) < (obj1.r + obj2.r);
+    function beep(freq, dur = 0.08) {
+      if (!GameState.soundEnabled) return;
+      const c = ensure();
+      if (!c || !unlocked) return;
+      const o = c.createOscillator();
+      const g = c.createGain();
+      o.type = 'sine';
+      o.frequency.value = freq;
+      g.gain.value = 0.12;
+      o.connect(g); g.connect(c.destination);
+      o.start();
+      o.stop(c.currentTime + dur);
     }
 
-    /* ======================= SIMPLIFIED DRAWING ======================= */
-    function drawBackground() {
-        // Simple gradient - faster on iOS
-        const gradient = ctx.createLinearGradient(0, 0, 0, canvas.height);
-        gradient.addColorStop(0, '#87CEEB');
-        gradient.addColorStop(1, '#98FB98');
-        ctx.fillStyle = gradient;
-        ctx.fillRect(0, 0, canvas.width, canvas.height);
-    }
+    return { unlock, beep };
+  })();
 
-    function drawPlayer() {
-        ctx.save();
-        ctx.translate(player.x * scaleX, player.y * scaleY);
-        ctx.scale(scaleX, scaleY);
-        
-        // Simple circle for player
-        ctx.fillStyle = '#F7C44F';
-        ctx.beginPath();
-        ctx.arc(0, 0, player.r, 0, Math.PI * 2);
-        ctx.fill();
-        
-        // Simple face
-        ctx.fillStyle = '#000';
-        ctx.beginPath();
-        ctx.arc(-10, -5, 4, 0, Math.PI * 2);
-        ctx.arc(10, -5, 4, 0, Math.PI * 2);
-        ctx.fill();
-        
-        ctx.restore();
-    }
+  function playSound(type) {
+    if (!GameState.soundEnabled) return;
+    let f = 440;
+    if (type === 'collect') f = 523.25;
+    if (type === 'hit') f = 220;
+    if (type === 'start') f = 783.99;
+    AudioSys.beep(f);
+  }
 
-    function drawHoney(honey) {
-        ctx.save();
-        ctx.translate(honey.x * scaleX, honey.y * scaleY);
-        ctx.scale(scaleX, scaleY);
-        
-        ctx.fillStyle = honey.type === 'gold' ? '#FFD700' : '#FFA500';
-        ctx.beginPath();
-        ctx.ellipse(0, 0, honey.r, honey.r * 0.8, 0, 0, Math.PI * 2);
-        ctx.fill();
-        
-        ctx.restore();
-    }
+  // Unlock audio on first real gesture (iOS requirement)
+  ['touchstart','pointerdown','mousedown','keydown'].forEach(evt => {
+    window.addEventListener(evt, () => { AudioSys.unlock(); }, { once: true, passive: true });
+  });
 
-    function drawBee(bee) {
-        ctx.save();
-        ctx.translate(bee.x * scaleX, bee.y * scaleY);
-        ctx.scale(scaleX, scaleY);
-        
-        ctx.fillStyle = '#FFD700';
-        ctx.beginPath();
-        ctx.ellipse(0, 0, bee.r * 1.2, bee.r, 0, 0, Math.PI * 2);
-        ctx.fill();
-        
-        ctx.restore();
-    }
+  /* ======================= GAME FLOW ======================= */
+  function hideAllOverlays() {
+    document.querySelectorAll('.overlay-content').forEach(el => el.classList.add('hidden'));
+    document.body.classList.remove('overlay-open');
+  }
 
-    /* ======================= INPUT HANDLING (IOS FIXED) ======================= */
-    let touchX = player.x;
-    let isTouching = false;
-    
-    // Touch handling optimized for iOS
-    canvas.addEventListener('touchstart', handleTouch, { passive: false });
-    canvas.addEventListener('touchmove', handleTouch, { passive: false });
-    canvas.addEventListener('touchend', () => { isTouching = false; }, { passive: true });
-    
-    function handleTouch(e) {
-        e.preventDefault();
-        if (!e.touches[0]) return;
-        
-        const rect = canvas.getBoundingClientRect();
-        const touch = e.touches[0];
-        
-        // Convert touch position to canvas coordinates
-        const x = (touch.clientX - rect.left) / scaleX;
-        const y = (touch.clientY - rect.top) / scaleY;
-        
-        // Only track horizontal movement
-        touchX = clamp(x, player.r, BASE_W - player.r);
-        isTouching = true;
-    }
+  function startGame() {
+    GameState.running = true;
+    GameState.paused = false;
+    GameState.score = 0;
+    GameState.lives = 3;
 
-    // Mouse support for debugging
-    canvas.addEventListener('mousedown', handleMouse);
-    canvas.addEventListener('mousemove', handleMouse);
-    
-    function handleMouse(e) {
-        const rect = canvas.getBoundingClientRect();
-        const x = (e.clientX - rect.left) / scaleX;
-        touchX = clamp(x, player.r, BASE_W - player.r);
-        isTouching = true;
-        
-        if (e.type === 'mouseup') {
-            isTouching = false;
-        }
-    }
+    honeys.length = 0;
+    bees.length = 0;
 
-    /* ======================= GAME LOGIC ======================= */
-    function updateGame(dt) {
-        if (!GameState.running || GameState.paused) return;
-        
-        // Player movement (follow touch/mouse)
-        if (isTouching) {
-            const dx = touchX - player.x;
-            player.x += dx * 0.3; // Smooth movement
-        }
-        
-        player.x = clamp(player.x, player.r, BASE_W - player.r);
-        
-        // Spawn objects
-        if (Math.random() < 0.02) spawnHoney();
-        if (Math.random() < 0.01) spawnBee();
-        
-        // Update honeys
-        for (let i = honeys.length - 1; i >= 0; i--) {
-            const honey = honeys[i];
-            honey.y += honey.vy;
-            
-            if (checkCollision(player, honey)) {
-                GameState.score += honey.type === 'gold' ? 25 : 10;
-                updateHUD();
-                honeys.splice(i, 1);
-                continue;
-            }
-            
-            if (honey.y > BASE_H + 50) {
-                honeys.splice(i, 1);
-            }
-        }
-        
-        // Update bees
-        for (let i = bees.length - 1; i >= 0; i--) {
-            const bee = bees[i];
-            bee.x += bee.vx;
-            bee.y += bee.vy;
-            
-            if (bee.x < bee.r || bee.x > BASE_W - bee.r) {
-                bee.vx *= -1;
-            }
-            
-            if (checkCollision(player, bee)) {
-                GameState.lives--;
-                updateHUD();
-                bees.splice(i, 1);
-                
-                if (GameState.lives <= 0) {
-                    gameOver();
-                    return;
-                }
-                continue;
-            }
-            
-            if (bee.y > BASE_H + 50) {
-                bees.splice(i, 1);
-            }
-        }
-    }
+    player.x = BASE_W / 2;
+    targetX = player.x;
+    isTracking = false;
 
-    function updateHUD() {
-        const scoreEl = $('#stat-score');
-        const livesEl = $('#stat-lives');
-        
-        if (scoreEl) scoreEl.textContent = GameState.score;
-        if (livesEl) livesEl.textContent = GameState.lives;
-    }
+    hideAllOverlays();
+    updateHUD();
 
-    function renderGame() {
-        drawBackground();
-        
-        // Draw all game objects
-        honeys.forEach(drawHoney);
-        bees.forEach(drawBee);
-        drawPlayer();
-    }
+    playSound('start');
+  }
 
-    /* ======================= GAME FLOW ======================= */
-    function startGame() {
-        GameState.running = true;
-        GameState.paused = false;
-        GameState.score = 0;
-        GameState.lives = 3;
-        
-        honeys.length = 0;
-        bees.length = 0;
-        particles.length = 0;
-        
-        player.x = BASE_W / 2;
-        touchX = player.x;
-        
-        // Close all overlays
-        document.querySelectorAll('.overlay-content').forEach(el => {
-            el.classList.add('hidden');
-        });
-        
+  function gameOver() {
+    GameState.running = false;
+    const gameover = $('gameover-screen');
+    if (gameover) gameover.classList.remove('hidden');
+    const finalScore = $('final-score');
+    if (finalScore) finalScore.textContent = String(GameState.score);
+  }
+
+  const Overlays = {
+    open(name) {
+      const el = $(name + '-screen');
+      if (el) {
+        el.classList.remove('hidden');
+        document.body.classList.add('overlay-open');
+      }
+      if (name === 'pause') GameState.paused = true;
+    },
+    close(name) {
+      const el = $(name + '-screen');
+      if (el) el.classList.add('hidden');
+
+      const anyOpen = document.querySelectorAll('.overlay-content:not(.hidden)').length > 0;
+      if (!anyOpen) document.body.classList.remove('overlay-open');
+
+      if (name === 'pause') GameState.paused = false;
+    }
+  };
+
+  /* ======================= UPDATE + RENDER ======================= */
+  function updateGame(dtMs) {
+    if (!GameState.running || GameState.paused) return;
+
+    // Smooth follow
+    if (isTracking) {
+      const dx = targetX - player.x;
+      player.x += dx * 0.25;
+    }
+    player.x = clamp(player.x, player.r, BASE_W - player.r);
+
+    // Spawn
+    if (Math.random() < 0.02) spawnHoney();
+    if (Math.random() < 0.01) spawnBee();
+
+    // Honeys
+    for (let i = honeys.length - 1; i >= 0; i--) {
+      const h = honeys[i];
+      h.y += h.vy;
+
+      if (collides(player, h)) {
+        GameState.score += (h.type === 'gold' ? 25 : 10);
         updateHUD();
-        
-        // Try to play sound (iOS requires user gesture)
-        if (GameState.soundEnabled) {
-            try {
-                playSound('start');
-            } catch (e) {
-                console.log('Sound not available:', e);
-            }
-        }
+        playSound('collect');
+        honeys.splice(i, 1);
+        continue;
+      }
+
+      if (h.y > BASE_H + 60) honeys.splice(i, 1);
     }
 
-    function gameOver() {
-        GameState.running = false;
-        
-        // Show game over screen
-        const gameoverScreen = $('#gameover-screen');
-        if (gameoverScreen) {
-            gameoverScreen.classList.remove('hidden');
-        }
-        
-        // Update final score
-        const finalScoreEl = $('#final-score');
-        if (finalScoreEl) finalScoreEl.textContent = GameState.score;
-    }
+    // Bees
+    for (let i = bees.length - 1; i >= 0; i--) {
+      const b = bees[i];
+      b.x += b.vx;
+      b.y += b.vy;
 
-    /* ======================= SIMPLIFIED AUDIO ======================= */
-    function playSound(type) {
-        if (!GameState.soundEnabled) return;
-        
-        // Simple beep sounds that work on iOS
-        const audioContext = new (window.AudioContext || window.webkitAudioContext)();
-        const oscillator = audioContext.createOscillator();
-        const gainNode = audioContext.createGain();
-        
-        oscillator.connect(gainNode);
-        gainNode.connect(audioContext.destination);
-        
-        let frequency = 440;
-        if (type === 'collect') frequency = 523.25;
-        if (type === 'hit') frequency = 220;
-        if (type === 'start') frequency = 783.99;
-        
-        oscillator.frequency.value = frequency;
-        gainNode.gain.value = 0.1;
-        
-        oscillator.start();
-        
-        // Stop after short duration
+      if (b.x < b.r || b.x > BASE_W - b.r) b.vx *= -1;
+
+      if (collides(player, b)) {
+        GameState.lives--;
+        updateHUD();
+        playSound('hit');
+        bees.splice(i, 1);
+        if (GameState.lives <= 0) { gameOver(); return; }
+        continue;
+      }
+
+      if (b.y > BASE_H + 60) bees.splice(i, 1);
+    }
+  }
+
+  function renderGame() {
+    // Because we use ctx.setTransform to map logical->device, we draw in logical coords:
+    drawBackground();
+    for (const h of honeys) drawHoney(h);
+    for (const b of bees) drawBee(b);
+    drawPlayer();
+  }
+
+  /* ======================= UI WIRING ======================= */
+  function setupUI() {
+    const startBtn = $('start-btn');
+    const quickStart = $('quick-start');
+    const pauseBtn = $('pause-toggle');
+    const resumeBtn = $('resume-btn');
+    const continueBtn = $('continue-btn');
+    const playAgainBtn = $('play-again-btn');
+    const closeStart = $('close-start');
+    const closeGameOver = $('gameover-close');
+    const settingsBtn = $('settings-btn');
+    const closeSettings = $('close-settings');
+    const soundToggle = $('sound-toggle-btn');
+
+    if (startBtn) startBtn.addEventListener('click', startGame);
+    if (quickStart) quickStart.addEventListener('click', startGame);
+
+    if (pauseBtn) pauseBtn.addEventListener('click', () => {
+      if (GameState.running && !GameState.paused) Overlays.open('pause');
+      else if (GameState.paused) Overlays.close('pause');
+    });
+
+    if (resumeBtn) resumeBtn.addEventListener('click', () => Overlays.close('pause'));
+    if (continueBtn) continueBtn.addEventListener('click', () => Overlays.close('pause'));
+
+    if (playAgainBtn) playAgainBtn.addEventListener('click', startGame);
+
+    if (closeStart) closeStart.addEventListener('click', () => {
+      const s = $('start-screen');
+      if (s) s.classList.add('hidden');
+      document.body.classList.remove('overlay-open');
+    });
+
+    if (closeGameOver) closeGameOver.addEventListener('click', () => {
+      const g = $('gameover-screen');
+      if (g) g.classList.add('hidden');
+      const s = $('start-screen');
+      if (s) s.classList.remove('hidden');
+      document.body.classList.add('overlay-open');
+    });
+
+    if (settingsBtn) settingsBtn.addEventListener('click', () => {
+      const s = $('settings-screen');
+      if (s) s.classList.remove('hidden');
+      document.body.classList.add('overlay-open');
+    });
+
+    if (closeSettings) closeSettings.addEventListener('click', () => {
+      const s = $('settings-screen');
+      if (s) s.classList.add('hidden');
+      const anyOpen = document.querySelectorAll('.overlay-content:not(.hidden)').length > 0;
+      if (!anyOpen) document.body.classList.remove('overlay-open');
+    });
+
+    if (soundToggle) soundToggle.addEventListener('click', () => {
+      GameState.soundEnabled = !GameState.soundEnabled;
+      const icon = soundToggle.querySelector('i');
+      if (icon) icon.className = GameState.soundEnabled ? 'fas fa-volume-up' : 'fas fa-volume-mute';
+      Storage.set('gameSettings', {
+        soundEnabled: GameState.soundEnabled,
+        musicEnabled: GameState.musicEnabled,
+        visualEffects: GameState.visualEffects
+      });
+    });
+  }
+
+  /* ======================= LOADING SCREEN ======================= */
+  function initLoading() {
+    const loadingScreen = $('loading-screen');
+    const progressFill = $('loading-progress');
+    const tip = $('loading-tip');
+    if (!loadingScreen || !progressFill || !tip) return;
+
+    const tips = [
+      "Tap and drag to move Pooh!",
+      "Catch honey, avoid bees!",
+      "Golden honey gives more points!",
+      "Keep your Pooh safe.",
+      "Try a quick start!"
+    ];
+
+    let loadProgress = 0;
+    let lastBucket = -1;
+
+    const interval = setInterval(() => {
+      loadProgress += Math.random() * 12 + 6;
+      if (loadProgress >= 100) loadProgress = 100;
+
+      progressFill.style.width = loadProgress + "%";
+
+      const bucket = Math.floor(loadProgress / 25);
+      if (bucket !== lastBucket) {
+        lastBucket = bucket;
+        tip.textContent = tips[Math.floor(Math.random() * tips.length)];
+      }
+
+      if (loadProgress >= 100) {
+        clearInterval(interval);
         setTimeout(() => {
-            oscillator.stop();
-            audioContext.close();
-        }, 100);
+          loadingScreen.classList.add('hidden');
+          const start = $('start-screen');
+          if (start) start.classList.remove('hidden');
+          document.body.classList.add('overlay-open');
+        }, 250);
+      }
+    }, 100);
+  }
+
+  /* ======================= MAIN LOOP ======================= */
+  let lastT = 0;
+  function loop(t) {
+    const dt = Math.min(50, (t - lastT) || 16);
+    lastT = t;
+
+    // If iOS did an orientation change, canvas can "forget" transforms.
+    // Re-apply transform occasionally (cheap, saves pain).
+    applyCanvasTransform();
+
+    updateGame(dt);
+    renderGame();
+
+    requestAnimationFrame(loop);
+  }
+
+  /* ======================= INIT ======================= */
+  function init() {
+    setupUI();
+    resizeCanvas();
+
+    window.addEventListener('resize', () => {
+      resizeCanvas();
+    }, { passive: true });
+
+    // iOS Safari: visualViewport fires on URL bar show/hide; fixes “canvas jumps”
+    if (window.visualViewport) {
+      visualViewport.addEventListener('resize', resizeCanvas, { passive: true });
+      visualViewport.addEventListener('scroll', resizeCanvas, { passive: true });
     }
 
-    /* ======================= UI MANAGEMENT ======================= */
-    const Overlays = {
-        open(name) {
-            const overlay = $(name + '-screen');
-            if (overlay) {
-                overlay.classList.remove('hidden');
-                document.body.classList.add('overlay-open');
-            }
-            if (name === 'pause') GameState.paused = true;
-        },
-        
-        close(name) {
-            const overlay = $(name + '-screen');
-            if (overlay) overlay.classList.add('hidden');
-            
-            const anyOpen = document.querySelectorAll('.overlay-content:not(.hidden)').length > 0;
-            if (!anyOpen) {
-                document.body.classList.remove('overlay-open');
-            }
-            
-            if (name === 'pause') GameState.paused = false;
-        }
-    };
+    initLoading();
+    updateHUD();
+    requestAnimationFrame(loop);
+  }
 
-    /* ======================= INITIALIZATION (IOS FIXED) ======================= */
-    function init() {
-        console.log('Initializing game on iOS:', isIOS);
-        
-        // Apply iOS fixes
-        fixIOSCanvas();
-        
-        // Setup responsive canvas
-        function resizeCanvas() {
-            const container = $('#game-container');
-            if (!container || !canvas) return;
-            
-            const containerWidth = container.clientWidth;
-            const containerHeight = container.clientHeight;
-            
-            // Maintain aspect ratio
-            const aspectRatio = BASE_W / BASE_H;
-            let canvasWidth = containerWidth;
-            let canvasHeight = containerWidth / aspectRatio;
-            
-            if (canvasHeight > containerHeight) {
-                canvasHeight = containerHeight;
-                canvasWidth = containerHeight * aspectRatio;
-            }
-            
-            // On iOS, ensure pixel perfect rendering
-            if (isIOS) {
-                const pixelRatio = window.devicePixelRatio || 1;
-                canvas.width = canvasWidth * pixelRatio;
-                canvas.height = canvasHeight * pixelRatio;
-                ctx.scale(pixelRatio, pixelRatio);
-            }
-            
-            canvas.style.width = `${canvasWidth}px`;
-            canvas.style.height = `${canvasHeight}px`;
-        }
-        
-        window.addEventListener('resize', resizeCanvas);
-        resizeCanvas();
-        
-        // Setup basic UI event listeners
-        setupUI();
-        
-        // Initialize loading screen
-        initLoading();
-        
-        // Start game loop
-        requestAnimationFrame(gameLoop);
-    }
+  if (document.readyState === 'loading') {
+    document.addEventListener('DOMContentLoaded', init, { once: true });
+  } else {
+    init();
+  }
 
-    /* ======================= SIMPLIFIED UI EVENT HANDLERS ======================= */
-    function setupUI() {
-        // Start button
-        const startBtn = $('#start-btn');
-        if (startBtn) {
-            startBtn.addEventListener('click', () => {
-                startGame();
-            });
-        }
-        
-        // Quick start
-        const quickStart = $('#quick-start');
-        if (quickStart) {
-            quickStart.addEventListener('click', () => {
-                startGame();
-            });
-        }
-        
-        // Pause button
-        const pauseBtn = $('#pause-toggle');
-        if (pauseBtn) {
-            pauseBtn.addEventListener('click', () => {
-                if (GameState.running && !GameState.paused) {
-                    Overlays.open('pause');
-                } else if (GameState.paused) {
-                    Overlays.close('pause');
-                }
-            });
-        }
-        
-        // Resume button
-        const resumeBtn = $('#resume-btn');
-        if (resumeBtn) {
-            resumeBtn.addEventListener('click', () => Overlays.close('pause'));
-        }
-        
-        // Continue button
-        const continueBtn = $('#continue-btn');
-        if (continueBtn) {
-            continueBtn.addEventListener('click', () => Overlays.close('pause'));
-        }
-        
-        // Play again
-        const playAgain = $('#play-again-btn');
-        if (playAgain) {
-            playAgain.addEventListener('click', () => {
-                startGame();
-            });
-        }
-        
-        // Close start screen
-        const closeStart = $('#close-start');
-        if (closeStart) {
-            closeStart.addEventListener('click', () => {
-                const startScreen = $('#start-screen');
-                if (startScreen) startScreen.classList.add('hidden');
-            });
-        }
-        
-        // Close game over
-        const closeGameOver = $('#gameover-close');
-        if (closeGameOver) {
-            closeGameOver.addEventListener('click', () => {
-                const gameoverScreen = $('#gameover-screen');
-                if (gameoverScreen) gameoverScreen.classList.add('hidden');
-                const startScreen = $('#start-screen');
-                if (startScreen) startScreen.classList.remove('hidden');
-            });
-        }
-        
-        // Simple settings
-        const settingsBtn = $('#settings-btn');
-        if (settingsBtn) {
-            settingsBtn.addEventListener('click', () => {
-                const settingsScreen = $('#settings-screen');
-                if (settingsScreen) settingsScreen.classList.remove('hidden');
-            });
-        }
-        
-        const closeSettings = $('#close-settings');
-        if (closeSettings) {
-            closeSettings.addEventListener('click', () => {
-                const settingsScreen = $('#settings-screen');
-                if (settingsScreen) settingsScreen.classList.add('hidden');
-            });
-        }
-        
-        // Sound toggle
-        const soundToggle = $('#sound-toggle-btn');
-        if (soundToggle) {
-            soundToggle.addEventListener('click', () => {
-                GameState.soundEnabled = !GameState.soundEnabled;
-                const icon = soundToggle.querySelector('i');
-                if (icon) {
-                    icon.className = GameState.soundEnabled ? 'fas fa-volume-up' : 'fas fa-volume-mute';
-                }
-                Storage.set('gameSettings', GameState);
-            });
-        }
+  // Failsafe: never get stuck behind loading overlay
+  setTimeout(() => {
+    const ls = $('loading-screen');
+    if (ls && !ls.classList.contains('hidden')) {
+      ls.classList.add('hidden');
+      const start = $('start-screen');
+      if (start) start.classList.remove('hidden');
+      document.body.classList.add('overlay-open');
     }
+  }, 3500);
 
-    /* ======================= LOADING SCREEN ======================= */
-    function initLoading() {
-        const loadingScreen = $('#loading-screen');
-        const progress = $('#loading-progress');
-        const tip = $('#loading-tip');
-        
-        if (!loadingScreen || !progress || !tip) return;
-        
-        const tips = [
-            "Tap to move Pooh left and right!",
-            "Catch honey, avoid bees!",
-            "Golden honey gives more points!",
-            "Watch out for cursed honey!",
-            "Complete daily challenges!"
-        ];
-        
-        let loadProgress = 0;
-        const interval = setInterval(() => {
-            loadProgress += Math.random() * 10 + 5;
-            if (loadProgress >= 100) {
-                loadProgress = 100;
-                clearInterval(interval);
-                setTimeout(() => {
-                    loadingScreen.classList.add('hidden');
-                    
-                    // Show start screen
-                    const startScreen = $('#start-screen');
-                    if (startScreen) {
-                        startScreen.classList.remove('hidden');
-                    }
-                }, 300);
-            }
-            progress.style.width = `${loadProgress}%`;
-            
-            // Change tip every 25%
-            if (Math.floor(loadProgress / 25) > Math.floor((loadProgress - 15) / 25)) {
-                const randomTip = tips[Math.floor(Math.random() * tips.length)];
-                tip.textContent = randomTip;
-            }
-        }, 100);
-    }
-
-    /* ======================= GAME LOOP ======================= */
-    let lastTime = 0;
-    
-    function gameLoop(currentTime) {
-        const dt = Math.min(100, currentTime - lastTime || 0);
-        lastTime = currentTime;
-        
-        updateGame(dt);
-        renderGame();
-        
-        requestAnimationFrame(gameLoop);
-    }
-
-    /* ======================= START EVERYTHING ======================= */
-    // Wait for DOM and use iOS-safe initialization
-    if (document.readyState === 'loading') {
-        document.addEventListener('DOMContentLoaded', init);
-    } else {
-        // DOM already loaded
-        setTimeout(init, 100);
-    }
-    
-    // Failsafe timeout for iOS
-    setTimeout(() => {
-        const ls = $('#loading-screen');
-        if (ls && !ls.classList.contains('hidden')) {
-            console.log('Loading screen timeout - forcing start');
-            ls.classList.add('hidden');
-            const startScreen = $('#start-screen');
-            if (startScreen) {
-                startScreen.classList.remove('hidden');
-            }
-        }
-    }, 3000);
 })();
 </script>
 </body>
