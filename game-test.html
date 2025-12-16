@@ -1331,6 +1331,106 @@
                 display: none !important;
             }
         }
+
+        /* ================= GAME-SPECIFIC STYLES ================= */
+        .achievement-popup {
+            position: fixed;
+            top: 50%;
+            left: 50%;
+            transform: translate(-50%, -50%);
+            background: linear-gradient(135deg, var(--color-primary), var(--color-accent));
+            color: white;
+            padding: 20px 30px;
+            border-radius: 20px;
+            font-family: var(--font-title);
+            font-size: 24px;
+            z-index: 2001;
+            animation: popIn 0.5s ease, fadeOut 0.5s ease 2.5s forwards;
+            box-shadow: 0 10px 30px rgba(0,0,0,0.3);
+            border: 4px solid var(--color-secondary);
+        }
+
+        .score-popup {
+            position: absolute;
+            font-family: var(--font-title);
+            font-size: 24px;
+            color: var(--color-accent);
+            text-shadow: 2px 2px 0 var(--color-secondary);
+            animation: floatUp 1s ease-out forwards;
+            pointer-events: none;
+            z-index: 100;
+        }
+
+        @keyframes floatUp {
+            0% { transform: translate(-50%, -50%); opacity: 1; }
+            100% { transform: translate(-50%, -150%); opacity: 0; }
+        }
+
+        @keyframes fadeOut {
+            to { opacity: 0; transform: translate(-50%, -50%) scale(0.9); }
+        }
+
+        .hud-pop {
+            animation: pop 0.25s ease;
+        }
+
+        .hud-shake {
+            animation: shake 0.4s ease;
+        }
+
+        @keyframes pop {
+            0% { transform: scale(1); }
+            50% { transform: scale(1.15); }
+            100% { transform: scale(1); }
+        }
+
+        @keyframes shake {
+            0%, 100% { transform: translateX(0); }
+            20% { transform: translateX(-8px); }
+            40% { transform: translateX(8px); }
+            60% { transform: translateX(-8px); }
+            80% { transform: translateX(8px); }
+        }
+
+        .unlock-notification {
+            position: fixed;
+            top: 50%;
+            left: 50%;
+            transform: translate(-50%, -50%) scale(0.8);
+            background: linear-gradient(135deg, var(--color-primary), var(--color-accent));
+            color: white;
+            padding: 25px 35px;
+            border-radius: 25px;
+            font-family: var(--font-title);
+            font-size: 28px;
+            z-index: 2001;
+            opacity: 0;
+            transition: all 0.3s ease;
+            box-shadow: 0 15px 40px rgba(0,0,0,0.4);
+            border: 5px solid var(--color-secondary);
+            text-align: center;
+        }
+
+        .unlock-notification.show {
+            opacity: 1;
+            transform: translate(-50%, -50%) scale(1);
+        }
+
+        .unlock-icon {
+            font-size: 48px;
+            margin-bottom: 10px;
+        }
+
+        .unlock-title {
+            font-size: 20px;
+            opacity: 0.9;
+            margin-bottom: 5px;
+        }
+
+        .unlock-name {
+            font-size: 32px;
+            color: var(--color-accent);
+        }
     </style>
 </head>
 <body>
@@ -1408,7 +1508,7 @@
     <div class="layer" id="ui-layer">
         <!-- Control Clusters -->
         <div class="control-cluster top-left">
-            <button class="control-btn" id="sound-toggle" aria-label="Toggle sound">
+            <button class="control-btn" id="sound-toggle-btn" aria-label="Toggle sound">
                 <i class="fas fa-volume-up"></i>
             </button>
             <button class="control-btn" id="menu-toggle" aria-label="Open menu">
@@ -1417,7 +1517,7 @@
         </div>
         
         <div class="control-cluster top-right">
-            <button class="control-btn" id="pause-btn" aria-label="Pause game">
+            <button class="control-btn" id="pause-toggle" aria-label="Pause game">
                 <i class="fas fa-pause"></i>
             </button>
             <button class="control-btn" id="share-btn" aria-label="Share score">
@@ -1435,11 +1535,14 @@
             <button class="control-btn" id="help-btn" aria-label="Show help">
                 <i class="fas fa-question"></i>
             </button>
+            <button class="control-btn" id="achievements-btn" aria-label="View achievements">
+                <i class="fas fa-trophy"></i>
+            </button>
         </div>
     </div>
 
     <!-- Overlay Layer -->
-    <div class="layer" id="overlay-layer" class="hidden">
+    <div class="layer" id="overlay-layer">
         <!-- Start Screen -->
         <div class="overlay-content" id="start-screen">
             <div class="overlay-header">
@@ -1473,7 +1576,7 @@
                 </button>
             </div>
             
-            <button class="btn btn-success" id="start-game-btn">
+            <button class="btn btn-success" id="start-btn">
                 <i class="fas fa-honey-pot"></i> Start Adventure!
             </button>
         </div>
@@ -1550,14 +1653,6 @@
                     </div>
                 </div>
                 
-                <div class="challenge-card" id="daily-progress">
-                    <h3 class="challenge-title">Daily Challenge Progress</h3>
-                    <div class="challenge-progress">
-                        <div class="challenge-progress-fill" id="challenge-progress-fill"></div>
-                    </div>
-                    <div class="challenge-reward" id="challenge-reward">No active challenge</div>
-                </div>
-                
                 <div class="btn-grid">
                     <button class="btn" id="play-again-btn">
                         <i class="fas fa-redo"></i> Play Again
@@ -1586,10 +1681,10 @@
             </div>
             
             <div class="btn-grid">
-                <button class="btn" id="confirm-character">
-                    <i class="fas fa-check"></i> Select Helper
+                <button class="btn" id="start-with-character-btn">
+                    <i class="fas fa-check"></i> Start Game
                 </button>
-                <button class="btn btn-secondary" id="back-to-menu">
+                <button class="btn btn-secondary" id="back-to-menu-btn">
                     <i class="fas fa-arrow-left"></i> Back to Menu
                 </button>
             </div>
@@ -1676,73 +1771,84 @@
         <div class="overlay-content hidden" id="achievements-screen">
             <div class="overlay-header">
                 <h1 class="overlay-title">Achievements</h1>
-                <button class="close-btn" id="close-achievements">&times;</button>
+                <button class="close-btn" id="close-achievements-btn">&times;</button>
             </div>
             
             <div class="achievements-list" id="achievements-list">
                 <!-- Achievements will be dynamically added -->
             </div>
             
-            <button class="btn btn-secondary" id="back-from-achievements">
+            <button class="btn btn-secondary" id="close-achievements-btn-2">
                 <i class="fas fa-arrow-left"></i> Back
             </button>
         </div>
 
-        <!-- Leaderboard -->
-        <div class="overlay-content hidden" id="leaderboard-screen">
+        <!-- Help Screen -->
+        <div class="overlay-content hidden" id="help-screen">
             <div class="overlay-header">
-                <h1 class="overlay-title">Leaderboard</h1>
-                <button class="close-btn" id="close-leaderboard">&times;</button>
+                <h1 class="overlay-title">How to Play</h1>
+                <button class="close-btn" id="close-help-btn">&times;</button>
             </div>
             
-            <div id="leaderboard-content" class="text-center">
-                <p>Loading leaderboard...</p>
+            <div class="settings-section">
+                <div class="setting-item">
+                    <div class="setting-label">
+                        <i class="fas fa-mouse-pointer setting-icon"></i>
+                        <div>
+                            <strong>Controls:</strong><br>
+                            Move mouse or touch to control Pooh
+                        </div>
+                    </div>
+                </div>
+                
+                <div class="setting-item">
+                    <div class="setting-label">
+                        <i class="fas fa-honey-pot setting-icon"></i>
+                        <div>
+                            <strong>Catch Honey:</strong><br>
+                            Golden honey = double points<br>
+                            Cursed honey = penalty!
+                        </div>
+                    </div>
+                </div>
+                
+                <div class="setting-item">
+                    <div class="setting-label">
+                        <i class="fas fa-bee setting-icon"></i>
+                        <div>
+                            <strong>Avoid Bees:</strong><br>
+                            Bees reduce your lives<br>
+                            Keep your streak for bonus points
+                        </div>
+                    </div>
+                </div>
+                
+                <div class="setting-item">
+                    <div class="setting-label">
+                        <i class="fas fa-bolt setting-icon"></i>
+                        <div>
+                            <strong>Power-ups:</strong><br>
+                            Shield = protection from bees<br>
+                            Slow = slows everything down
+                        </div>
+                    </div>
+                </div>
+                
+                <div class="setting-item">
+                    <div class="setting-label">
+                        <i class="fas fa-users setting-icon"></i>
+                        <div>
+                            <strong>Helpers:</strong><br>
+                            Unlock new helpers as you progress<br>
+                            Each has unique abilities
+                        </div>
+                    </div>
+                </div>
             </div>
             
-            <button class="btn btn-secondary" id="back-from-leaderboard">
-                <i class="fas fa-arrow-left"></i> Back
+            <button class="btn" id="view-achievements-btn">
+                <i class="fas fa-trophy"></i> View Achievements
             </button>
-        </div>
-
-        <!-- Daily Challenge -->
-        <div class="overlay-content hidden" id="challenge-screen">
-            <div class="overlay-header">
-                <h1 class="overlay-title">Daily Challenge</h1>
-                <button class="close-btn" id="close-challenge">&times;</button>
-            </div>
-            
-            <div class="challenge-card">
-                <h3 class="challenge-title" id="challenge-title">Today's Challenge</h3>
-                <p id="challenge-description">Catch 50 honey pots</p>
-                
-                <div class="challenge-progress">
-                    <div class="challenge-progress-fill" id="challenge-fill"></div>
-                </div>
-                
-                <div class="results-stats">
-                    <div class="stat-row">
-                        <span class="stat-label">Progress</span>
-                        <span class="stat-value" id="challenge-progress-text">0/50</span>
-                    </div>
-                    <div class="stat-row">
-                        <span class="stat-label">Time Left</span>
-                        <span class="stat-value" id="challenge-time">23:59:59</span>
-                    </div>
-                </div>
-                
-                <div class="challenge-reward" id="challenge-reward-display">
-                    Reward: 500 Bonus Points
-                </div>
-            </div>
-            
-            <div class="btn-grid">
-                <button class="btn" id="start-challenge-btn">
-                    <i class="fas fa-play"></i> Start Challenge
-                </button>
-                <button class="btn btn-secondary" id="back-from-challenge">
-                    <i class="fas fa-arrow-left"></i> Back
-                </button>
-            </div>
         </div>
     </div>
 
@@ -1750,20 +1856,20 @@
     <div class="weather-drawer" id="weather-drawer">
         <div class="overlay-header">
             <h1 class="overlay-title">Weather Effects</h1>
-            <button class="close-btn" id="close-weather">&times;</button>
+            <button class="close-btn" id="weather-close">&times;</button>
         </div>
         
         <p class="subtitle text-center mb-3">Change the atmosphere!</p>
         
         <div class="weather-grid">
-            <button class="weather-option" data-weather="clear">☀️</button>
-            <button class="weather-option" data-weather="rain">🌧️</button>
-            <button class="weather-option" data-weather="snow">❄️</button>
-            <button class="weather-option" data-weather="leaves">🍂</button>
-            <button class="weather-option" data-weather="blossoms">🌸</button>
-            <button class="weather-option" data-weather="windy">💨</button>
-            <button class="weather-option" data-weather="foggy">🌫️</button>
-            <button class="weather-option" data-weather="starry">🌠</button>
+            <button class="weather-option weather-btn" data-weather="clear">☀️</button>
+            <button class="weather-option weather-btn" data-weather="rain">🌧️</button>
+            <button class="weather-option weather-btn" data-weather="snow">❄️</button>
+            <button class="weather-option weather-btn" data-weather="leaves">🍂</button>
+            <button class="weather-option weather-btn" data-weather="blossoms">🌸</button>
+            <button class="weather-option weather-btn" data-weather="windy">💨</button>
+            <button class="weather-option weather-btn" data-weather="foggy">🌫️</button>
+            <button class="weather-option weather-btn" data-weather="starry">🌠</button>
         </div>
     </div>
 
@@ -1774,7 +1880,8 @@
 
     <!-- Notification Container -->
     <div id="notification-container"></div>
-</main>
+    <div id="weather-effects"></div>
+
 <script>
 (() => {
   "use strict";
@@ -2173,12 +2280,12 @@
   /* ======================= OVERLAYS ======================= */
   const Overlays = (() => {
     const map = {
-      start: $("start-overlay"),
-      pause: $("pause-overlay"),
-      help: $("help-overlay"),
-      character: $("character-select-overlay"),
-      achievements: $("achievements-overlay"),
-      gameover: $("gameover-overlay"),
+      start: $("start-screen"),
+      pause: $("pause-screen"),
+      help: $("help-screen"),
+      character: $("character-screen"),
+      achievements: $("achievements-screen"),
+      gameover: $("gameover-screen"),
     };
 
     const anyOpen = () => Object.values(map).some(el => el && !el.classList.contains("hidden"));
@@ -2199,7 +2306,7 @@
       if (name === "pause") AppState.paused = false;
     }
     function closeAll() {
-      for (const el of Object.values(map)) el?.classList.add("hidden");
+      for (const el of Object.values(map)) if (el) el.classList.add("hidden");
       AppState.paused = false;
       sync();
     }
@@ -2275,7 +2382,7 @@
     };
 
     function renderHelperCards() {
-      const charGrid = document.querySelector(".char-grid");
+      const charGrid = $("character-grid");
       if (!charGrid) return;
       
       charGrid.innerHTML = Object.entries(HELPER_INFO).map(([key, info]) => {
@@ -2283,14 +2390,15 @@
         const isActive = AppState.helper === key;
         
         return `
-          <button class="character-card ${isActive ? 'active' : ''} ${!unlocked ? 'locked' : ''}" 
+          <button class="character-card ${isActive ? 'selected' : ''} ${!unlocked ? 'locked' : ''}" 
                   data-helper="${key}" ${!unlocked ? 'disabled' : ''}>
-            <span class="char-icon">${info.icon}</span>
-            <span class="char-name">${info.name}</span>
-            <span class="char-ability">${info.ability}</span>
-            <span class="char-desc">${info.desc}</span>
+            ${!unlocked ? '<i class="fas fa-lock lock-icon"></i>' : ''}
+            <div class="character-icon">${info.icon}</div>
+            <div class="character-name">${info.name}</div>
+            <div class="character-ability">${info.ability}</div>
+            <div class="character-desc">${info.desc}</div>
             ${!unlocked ? 
-              `<span class="char-locked">Unlock at ${info.unlockScore} points</span>` : 
+              `<div class="character-desc" style="color: var(--color-primary); margin-top: 5px;">Unlock at ${info.unlockScore} points</div>` : 
               ''}
           </button>
         `;
@@ -2298,13 +2406,14 @@
     }
 
     function updateHUD(prev = null) {
-      setText("score", Math.floor(AppState.score));
-      setText("streak", Math.floor(AppState.streak));
-      setText("lives", Math.floor(AppState.lives));
+      setText("stat-score", Math.floor(AppState.score));
+      setText("stat-streak", Math.floor(AppState.streak));
+      setText("stat-lives", Math.floor(AppState.lives));
+      setText("stat-combo", AppState.combo.mult.toFixed(1) + "x");
       
       // Update level display
       const levelName = ProgressiveSystem.getLevelName(AppState.score);
-      setText("level", levelName);
+      setText("level-display", levelName);
       
       // Update progression bar
       const currentLevel = ProgressiveSystem.getCurrentLevel(AppState.score);
@@ -2317,15 +2426,15 @@
         const total = nextGoal - currentGoal;
         const percent = Math.min(100, (progress / total) * 100);
         
-        const fill = document.getElementById("progression-fill");
-        const label = document.getElementById("progression-label");
+        const fill = $("progress-fill");
+        const label = $("next-level-label");
         
         if (fill) fill.style.width = `${percent}%`;
-        if (label) label.textContent = `${progress}/${total}`;
+        if (label) label.textContent = `${Math.floor(progress)}/${total}`;
       } else {
         // Max level reached
-        const fill = document.getElementById("progression-fill");
-        const label = document.getElementById("progression-label");
+        const fill = $("progress-fill");
+        const label = $("next-level-label");
         if (fill) fill.style.width = "100%";
         if (label) label.textContent = "MAX";
       }
@@ -2335,9 +2444,9 @@
       setText("achievements-count", `${got}/${defsCount}`);
 
       if (prev) {
-        if (AppState.score !== prev.score) HUDFX.pulse("score");
-        if (AppState.streak !== prev.streak && AppState.streak > prev.streak) HUDFX.pulse("streak");
-        if (AppState.lives < prev.lives) HUDFX.shake("lives");
+        if (AppState.score !== prev.score) HUDFX.pulse("stat-score");
+        if (AppState.streak !== prev.streak && AppState.streak > prev.streak) HUDFX.pulse("stat-streak");
+        if (AppState.lives < prev.lives) HUDFX.shake("stat-lives");
       }
     }
 
@@ -2395,32 +2504,120 @@
 
       const on = (id, ev, fn, opts) => $(id)?.addEventListener(ev, fn, opts);
 
-      on("start-btn", "click", () => { Audio.init(); Overlays.closeAll(); Game.start(); });
-      on("pause-btn", "click", () => { if (AppState.running) Overlays.open("pause"); });
+      // Start game
+      on("start-btn", "click", () => { 
+        Audio.init(); 
+        Overlays.closeAll(); 
+        Game.start(); 
+        Audio.ui(); 
+      });
+      
+      on("quick-start", "click", () => { 
+        Audio.init(); 
+        Overlays.closeAll(); 
+        Game.start(); 
+        Audio.ui(); 
+      });
+      
+      on("start-with-character-btn", "click", () => { 
+        Audio.init(); 
+        Overlays.closeAll(); 
+        Game.start(); 
+        Audio.ui(); 
+      });
+
+      // Pause controls
+      on("pause-toggle", "click", () => { 
+        if (AppState.running && !AppState.paused) {
+          Overlays.open("pause");
+          Audio.ui();
+        } else if (AppState.paused) {
+          Overlays.close("pause");
+          Audio.ui();
+        }
+      });
+      
       on("resume-btn", "click", () => Overlays.close("pause"));
-      on("restart-btn", "click", () => { Game.reset(); Overlays.closeAll(); Game.start(); });
+      on("continue-btn", "click", () => Overlays.close("pause"));
 
-      on("quit-btn", "click", () => { Game.reset(); Overlays.closeAll(); Overlays.open("start"); });
+      // Restart
+      on("restart-btn", "click", () => { 
+        Game.reset(); 
+        Overlays.closeAll(); 
+        Game.start(); 
+        Audio.ui(); 
+      });
+      
+      on("play-again-btn", "click", () => { 
+        Game.reset(); 
+        Overlays.closeAll(); 
+        Game.start(); 
+        Audio.ui(); 
+      });
 
-      on("help-btn", "click", () => Overlays.open("help"));
+      // Quit to menu
+      on("quit-btn", "click", () => { 
+        Game.reset(); 
+        Overlays.closeAll(); 
+        Overlays.open("start"); 
+        Audio.ui(); 
+      });
+      
+      on("close-start", "click", () => { 
+        Overlays.close("start"); 
+        Audio.ui(); 
+      });
+      
+      on("back-to-menu-btn", "click", () => { 
+        Overlays.close("character"); 
+        Overlays.open("start"); 
+        Audio.ui(); 
+      });
+
+      // Help
+      on("help-btn", "click", () => { 
+        Overlays.open("help"); 
+        Audio.ui(); 
+      });
+      
       on("close-help-btn", "click", () => Overlays.close("help"));
 
-      on("sound-toggle-btn", "click", () => { Audio.toggle(); setSoundIcon(); Audio.ui(); });
+      // Sound toggle
+      on("sound-toggle-btn", "click", () => { 
+        Audio.toggle(); 
+        setSoundIcon(); 
+        Audio.ui(); 
+      });
 
-      on("achievements-btn", "click", () => { Audio.ui(); openAchievements(); });
-      on("view-achievements-btn", "click", () => { Audio.ui(); openAchievements(); });
-
+      // Achievements
+      on("achievements-btn", "click", () => { 
+        Audio.ui(); 
+        openAchievements(); 
+      });
+      
+      on("view-achievements-btn", "click", () => { 
+        Audio.ui(); 
+        openAchievements(); 
+      });
+      
       on("close-achievements-btn", "click", () => Overlays.close("achievements"));
       on("close-achievements-btn-2", "click", () => Overlays.close("achievements"));
 
-      on("select-character-btn", "click", () => { Audio.ui(); openCharacterSelect(); });
-      on("back-to-menu-btn", "click", () => Overlays.close("character"));
-      on("start-with-character-btn", "click", () => { Audio.init(); Overlays.closeAll(); Game.start(); });
+      // Character select
+      on("select-character-btn", "click", () => { 
+        Audio.ui(); 
+        openCharacterSelect(); 
+      });
+      
+      on("close-character", "click", () => { 
+        Overlays.close("character"); 
+        Audio.ui(); 
+      });
 
-      // Helper cards
+      // Helper cards selection
       function applyHelperActive() {
         document.querySelectorAll(".character-card[data-helper]").forEach(btn => {
-          btn.classList.toggle("active", btn.getAttribute("data-helper") === AppState.helper);
+          btn.classList.toggle("selected", btn.getAttribute("data-helper") === AppState.helper);
         });
       }
       
@@ -2455,6 +2652,7 @@
         btn.addEventListener("click", () => {
           const w = btn.getAttribute("data-weather");
           if (w) setWeather(w);
+          Audio.ui();
         });
       });
 
@@ -2467,6 +2665,40 @@
           if (navigator.share) await navigator.share({ text: t });
           else if (navigator.clipboard) await navigator.clipboard.writeText(t);
         } catch {}
+        Audio.ui();
+      });
+      
+      on("share-final-btn", "click", async () => {
+        const t = `I scored ${Math.floor(AppState.score)} in Pooh's Honey Hunt 🍯`;
+        try {
+          if (navigator.share) await navigator.share({ text: t });
+          else if (navigator.clipboard) await navigator.clipboard.writeText(t);
+        } catch {}
+        Audio.ui();
+      });
+
+      // Settings
+      on("settings-btn", "click", () => { 
+        Overlays.open("settings"); 
+        Audio.ui(); 
+      });
+      
+      on("close-settings", "click", () => { 
+        Overlays.close("settings"); 
+        Audio.ui(); 
+      });
+      
+      on("save-settings", "click", () => { 
+        // Save settings logic would go here
+        Overlays.close("settings"); 
+        Audio.ui(); 
+      });
+
+      // Game over
+      on("gameover-close", "click", () => { 
+        Overlays.close("gameover"); 
+        Overlays.open("start"); 
+        Audio.ui(); 
       });
 
       // Keyboard shortcuts
@@ -2485,8 +2717,44 @@
           Overlays.close("achievements");
           Overlays.close("character");
           Overlays.close("pause");
+          Overlays.close("settings");
         }
       });
+
+      // Loading screen
+      const loadingScreen = $("loading-screen");
+      const loadingProgress = $("loading-progress");
+      const loadingTip = $("loading-tip");
+      
+      const tips = [
+        "Tip: Try to maintain your combo for bonus points!",
+        "Tip: Piglet gives you extra lives to start with!",
+        "Tip: Gold honey pots give double points!",
+        "Tip: Watch out for cursed honey - it hurts!",
+        "Tip: Power-ups appear as you play longer!",
+        "Tip: Try different weather effects for fun!",
+        "Tip: Unlock all helpers by reaching higher scores!"
+      ];
+      
+      // Simulate loading
+      let progress = 0;
+      const interval = setInterval(() => {
+        progress += Math.random() * 15;
+        if (progress >= 100) {
+          progress = 100;
+          clearInterval(interval);
+          setTimeout(() => {
+            loadingScreen.classList.add("hidden");
+            Overlays.open("start");
+          }, 300);
+        }
+        loadingProgress.style.width = `${progress}%`;
+        
+        // Change tip every 25% progress
+        if (Math.floor(progress / 25) > Math.floor((progress - 15) / 25)) {
+          loadingTip.textContent = tips[Math.floor(Math.random() * tips.length)];
+        }
+      }, 100);
 
       setSoundIcon();
       updateHUD();
@@ -2594,7 +2862,7 @@
   })();
 
   /* ======================= CANVAS ======================= */
-  const canvas = $("honey-game");
+  const canvas = $("game-canvas");
   const ctx = canvas?.getContext("2d", { alpha: true, desynchronized: true });
 
   if (!canvas || !ctx) {
@@ -2608,9 +2876,7 @@
 
   /* ======================= LAYOUT (Improved Responsive) ======================= */
   const Layout = (() => {
-    const root = $("game-root");
-    const hud = document.querySelector(".hud");
-    const container = document.querySelector(".game-container");
+    const container = $("game-container");
 
     let lastKey = "";
     let stableVH = window.visualViewport?.height || window.innerHeight || 700;
@@ -2629,6 +2895,7 @@
       if (!container || !canvas) return;
 
       const vh = getVH();
+      const hud = $("hud");
       const hudH = hud ? hud.getBoundingClientRect().height : 0;
       
       // Calculate available space more accurately
@@ -2667,11 +2934,6 @@
       canvas.style.maxHeight = "100%";
 
       // Prevent scroll
-      if (root) {
-          root.style.minHeight = `${Math.round(vh)}px`;
-          root.style.overflow = "hidden";
-      }
-      
       document.body.style.overflow = "hidden";
       document.documentElement.style.overflow = "hidden";
     }
@@ -3031,7 +3293,7 @@
       Layout.apply();
       
       // Show a helpful tip
-      showGameplayTip();
+      setTimeout(() => showGameplayTip(), 2000);
       
       // Apply helper start effects
       HelperEffects.onGameStart();
@@ -3050,6 +3312,8 @@
       if (AppState.score > AppState.best) {
         AppState.best = AppState.score;
         Store.set("bestScore", String(AppState.best));
+        const newRecordBadge = $("new-record-badge");
+        if (newRecordBadge) newRecordBadge.classList.remove("hidden");
       }
 
       const fs = $("final-score");
@@ -3059,6 +3323,7 @@
       UI.setText("final-level", ProgressiveSystem.getLevelName(AppState.score));
       UI.setText("final-streak", AppState.stats.maxStreak);
       UI.setText("final-honey", AppState.stats.honeyCaught);
+      UI.setText("final-total", Math.floor(AppState.score));
 
       UI.updateHUD();
       Overlays.closeAll();
@@ -3838,7 +4103,7 @@
 
       update(dt);
       render();
-      requestAnimationFrame(tick);
+      if (running) requestAnimationFrame(tick);
     }
 
     function bootLoop() {
@@ -3872,7 +4137,6 @@
     Layout.bind();
     Game.reset();
     Game.bootLoop();
-    Overlays.open("start");
   }
 
   if (document.readyState === "loading") {
@@ -3882,6 +4146,5 @@
   }
 })();
 </script>
-      
-   </body>
+</body>
 </html>
