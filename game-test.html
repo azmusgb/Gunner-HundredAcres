@@ -1555,7 +1555,8 @@
         </div>
 
         <!-- Game Canvas -->
-        <div class="game-container">
+<div class="game-container" id="game-container">
+
             <canvas id="game-canvas" width="420" height="700"></canvas>
         </div>
 
@@ -3005,93 +3006,89 @@
   canvas.height = BASE_H;
 
   /* ======================= LAYOUT (Improved Responsive) ======================= */
-  const Layout = (() => {
-    const container = $("game-container");
+const Layout = (() => {
+  const container = $("game-container");     // now exists
+  const gameLayer = $("game-layer");         // has CSS padding using env()
 
-    let lastKey = "";
-    let stableVH = window.visualViewport?.height || window.innerHeight || 700;
+  let lastKey = "";
+  let stableVH = window.visualViewport?.height || window.innerHeight || 700;
 
-    function getVH() {
-      const vv = window.visualViewport;
-      if (vv && typeof vv.height === "number") {
-        stableVH = vv.height;
-      } else if (typeof window.innerHeight === "number") {
-        stableVH = window.innerHeight;
-      }
-      return Math.max(420, stableVH);
+  function getVH() {
+    const vv = window.visualViewport;
+    if (vv && typeof vv.height === "number") stableVH = vv.height;
+    else if (typeof window.innerHeight === "number") stableVH = window.innerHeight;
+    return Math.max(420, stableVH);
+  }
+
+  function apply() {
+    if (!container || !canvas) return;
+
+    const vh = getVH();
+    const hud = $("hud");
+    const hudH = hud ? hud.getBoundingClientRect().height : 0;
+
+    // Read safe-area padding from CSS (since CSS env() already applies it there)
+    const gls = gameLayer ? getComputedStyle(gameLayer) : null;
+    const safeTop = gls ? (parseFloat(gls.paddingTop) || 0) : 0;
+    const safeBottom = gls ? (parseFloat(gls.paddingBottom) || 0) : 0;
+
+    const topPad = 15;
+    const bottomPad = 20;
+
+    const availableH = Math.max(
+      380,
+      vh - hudH - topPad - bottomPad - safeTop - safeBottom
+    );
+
+    const contW = container.getBoundingClientRect().width || BASE_W;
+
+    // Maintain aspect ratio
+    const desiredW = availableH * (BASE_W / BASE_H);
+    const finalW = clamp(desiredW, 300, Math.min(contW, 500));
+    const finalH = finalW * (BASE_H / BASE_W);
+
+    const key = `${Math.round(vh)}|${Math.round(hudH)}|${Math.round(contW)}|${Math.round(finalW)}|${Math.round(finalH)}`;
+    if (key === lastKey) return;
+    lastKey = key;
+
+    container.style.display = "flex";
+    container.style.alignItems = "center";
+    container.style.justifyContent = "center";
+    container.style.padding = "10px";
+    container.style.minHeight = `${Math.round(finalH)}px`;
+    container.style.maxHeight = `${Math.round(finalH)}px`;
+
+    canvas.style.width = `${Math.round(finalW)}px`;
+    canvas.style.height = `${Math.round(finalH)}px`;
+    canvas.style.maxWidth = "100%";
+    canvas.style.maxHeight = "100%";
+
+    document.body.style.overflow = "hidden";
+    document.documentElement.style.overflow = "hidden";
+  }
+
+  function bind() {
+    let r = 0;
+    const req = () => {
+      if (r) cancelAnimationFrame(r);
+      r = requestAnimationFrame(apply);
+    };
+
+    window.addEventListener("resize", req, { passive: true });
+    window.addEventListener("orientationchange", req, { passive: true });
+
+    if (window.visualViewport) {
+      window.visualViewport.addEventListener("resize", req, { passive: true });
+      window.visualViewport.addEventListener("scroll", req, { passive: true });
     }
 
-    function apply() {
-      if (!container || !canvas) return;
+    setTimeout(apply, 60);
+    setTimeout(apply, 260);
+    apply();
+  }
 
-      const vh = getVH();
-      const hud = $("hud");
-      const hudH = hud ? hud.getBoundingClientRect().height : 0;
-      
-      // Calculate available space
-      const safeTop = env(safe-area-inset-top, 0);
-      const safeBottom = env(safe-area-inset-bottom, 0);
-      const topPad = 15;
-      const bottomPad = 20;
-      
-      const availableH = Math.max(
-          400, 
-          vh - hudH - topPad - bottomPad - safeTop - safeBottom
-      );
-      
-      const contW = container.getBoundingClientRect().width || BASE_W;
-      
-      // Maintain aspect ratio
-      const desiredW = availableH * (BASE_W / BASE_H);
-      const finalW = clamp(desiredW, 300, Math.min(contW, 500));
-      const finalH = finalW * (BASE_H / BASE_W);
-
-      const key = `${Math.round(vh)}|${Math.round(hudH)}|${Math.round(contW)}|${Math.round(finalW)}|${Math.round(finalH)}`;
-      if (key === lastKey) return;
-      lastKey = key;
-
-      // Center canvas
-      container.style.display = "flex";
-      container.style.alignItems = "center";
-      container.style.justifyContent = "center";
-      container.style.padding = "10px";
-      container.style.minHeight = `${Math.round(finalH)}px`;
-      container.style.maxHeight = `${Math.round(finalH)}px`;
-
-      // Set canvas size explicitly
-      canvas.style.width = `${Math.round(finalW)}px`;
-      canvas.style.height = `${Math.round(finalH)}px`;
-      canvas.style.maxWidth = "100%";
-      canvas.style.maxHeight = "100%";
-
-      // Prevent scroll
-      document.body.style.overflow = "hidden";
-      document.documentElement.style.overflow = "hidden";
-    }
-
-    function bind() {
-      let r = 0;
-      const req = () => {
-        if (r) cancelAnimationFrame(r);
-        r = requestAnimationFrame(apply);
-      };
-
-      window.addEventListener("resize", req, { passive: true });
-      window.addEventListener("orientationchange", req, { passive: true });
-
-      if (window.visualViewport) {
-        window.visualViewport.addEventListener("resize", req, { passive: true });
-        window.visualViewport.addEventListener("scroll", req, { passive: true });
-      }
-
-      // Initial apply with delays for iOS
-      setTimeout(apply, 60);
-      setTimeout(apply, 260);
-      apply();
-    }
-
-    return { bind, apply };
-  })();
+  return { bind, apply };
+})();
 
   /* ======================= INPUT (SMOOTH SPRING) ======================= */
   const Input = (() => {
