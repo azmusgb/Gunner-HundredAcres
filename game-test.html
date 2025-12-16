@@ -1631,7 +1631,1238 @@
     <div id="notification-container"></div>
     <div id="weather-effects"></div>
 
+<script>
+(() => {
+    "use strict";
+    
+    if (window.__POOH_HONEY_HUNT_LOADED__) return;
+    window.__POOH_HONEY_HUNT_LOADED__ = true;
 
+    /* ======================= DOM + UTILS ======================= */
+    const $ = (id) => document.getElementById(id);
+    const clamp = (v, a, b) => Math.max(a, Math.min(b, v));
+    const lerp = (a, b, t) => a + (b - a) * t;
+    const now = () => performance.now();
 
+    /* ======================= CANVAS SETUP ======================= */
+    const canvas = $("game-canvas");
+    const ctx = canvas?.getContext("2d", { alpha: true });
+    
+    if (!canvas || !ctx) {
+        console.error("Canvas not found or 2D context failed.");
+        return;
+    }
+
+    const BASE_W = 420, BASE_H = 700;
+    canvas.width = BASE_W;
+    canvas.height = BASE_H;
+
+    /* ======================= GAME STATE ======================= */
+    const GameState = {
+        running: false,
+        paused: false,
+        score: 0,
+        lives: 3,
+        streak: 0,
+        combo: 1.0,
+        timeMs: 0,
+        bestScore: parseInt(localStorage.getItem('bestScore') || '0'),
+        currentLevel: 0,
+        honeyCaught: 0,
+        beesAvoided: 0,
+        soundEnabled: true,
+        currentHelper: 'pooh'
+    };
+
+    /* ======================= GAME OBJECTS ======================= */
+    const player = {
+        x: BASE_W / 2,
+        y: BASE_H - 100,
+        r: 30,
+        speed: 5,
+        vx: 0
+    };
+
+    const honeys = [];
+    const bees = [];
+    const powers = [];
+    const particles = [];
+    const effects = [];
+
+    /* ======================= HELPER FUNCTIONS ======================= */
+    function spawnHoney() {
+        const type = Math.random() < 0.08 ? 'gold' : 
+                    Math.random() < 0.04 ? 'cursed' : 'normal';
+        
+        honeys.push({
+            x: Math.random() * (BASE_W - 60) + 30,
+            y: -30,
+            r: type === 'cursed' ? 12 : 15,
+            vy: 2 + Math.random() * 2,
+            type: type,
+            wobble: Math.random() * Math.PI * 2
+        });
+    }
+
+    function spawnBee() {
+        bees.push({
+            x: Math.random() * (BASE_W - 60) + 30,
+            y: -40,
+            r: 12,
+            vy: 3 + Math.random() * 2,
+            vx: (Math.random() - 0.5) * 2,
+            angle: 0,
+            flap: 0
+        });
+    }
+
+    function spawnPower() {
+        const types = ['shield', 'slow', 'magnet'];
+        const type = types[Math.floor(Math.random() * types.length)];
+        
+        powers.push({
+            x: Math.random() * (BASE_W - 60) + 30,
+            y: -40,
+            r: 12,
+            vy: 2 + Math.random() * 2,
+            type: type,
+            pulse: 0
+        });
+    }
+
+    function spawnParticles(x, y, color, count = 10, size = 3) {
+        for (let i = 0; i < count; i++) {
+            particles.push({
+                x: x,
+                y: y,
+                vx: (Math.random() - 0.5) * 6,
+                vy: (Math.random() - 0.5) * 6 - 2,
+                life: 1.0,
+                color: color,
+                r: size + Math.random() * size
+            });
+        }
+    }
+
+    function addEffect(type, duration) {
+        effects.push({
+            type: type,
+            duration: duration,
+            timer: duration
+        });
+    }
+
+    function hasEffect(type) {
+        return effects.some(effect => effect.type === type && effect.timer > 0);
+    }
+
+    function checkCollision(obj1, obj2) {
+        const dx = obj1.x - obj2.x;
+        const dy = obj1.y - obj2.y;
+        const distance = Math.sqrt(dx * dx + dy * dy);
+        return distance < (obj1.r + obj2.r);
+    }
+
+    /* ======================= DRAWING FUNCTIONS ======================= */
+    function drawPlayer() {
+        // Apply helper effects
+        const scale = hasEffect('shield') ? 1.2 : 1.0;
+        
+        ctx.save();
+        ctx.translate(player.x, player.y);
+        ctx.scale(scale, scale);
+        
+        // Shield effect
+        if (hasEffect('shield')) {
+            ctx.strokeStyle = 'rgba(0, 150, 255, 0.5)';
+            ctx.lineWidth = 3;
+            ctx.beginPath();
+            ctx.arc(0, 0, player.r + 5, 0, Math.PI * 2);
+            ctx.stroke();
+        }
+        
+        // Body
+        ctx.fillStyle = '#F7C44F';
+        ctx.beginPath();
+        ctx.arc(0, 0, player.r, 0, Math.PI * 2);
+        ctx.fill();
+        
+        // Shirt
+        ctx.fillStyle = '#D64B3C';
+        ctx.beginPath();
+        ctx.ellipse(0, 5, player.r * 0.9, player.r * 0.6, 0, 0, Math.PI * 2);
+        ctx.fill();
+        
+        // Face
+        ctx.fillStyle = '#000';
+        ctx.beginPath();
+        ctx.arc(-10, -5, 4, 0, Math.PI * 2);
+        ctx.arc(10, -5, 4, 0, Math.PI * 2);
+        ctx.fill();
+        
+        // Mouth
+        ctx.beginPath();
+        ctx.arc(0, 3, 6, 0.2, Math.PI - 0.2);
+        ctx.strokeStyle = '#000';
+        ctx.lineWidth = 2;
+        ctx.stroke();
+        
+        ctx.restore();
+    }
+
+    function drawHoney(honey) {
+        ctx.save();
+        ctx.translate(honey.x, honey.y);
+        
+        // Wobble animation
+        const wobble = Math.sin(honey.wobble) * 3;
+        ctx.rotate(wobble * 0.05);
+        
+        let color, lidColor;
+        switch(honey.type) {
+            case 'gold':
+                color = '#FFD700';
+                lidColor = '#FFA500';
+                break;
+            case 'cursed':
+                color = '#8B0000';
+                lidColor = '#4B0082';
+                break;
+            default:
+                color = '#FFA500';
+                lidColor = '#8B4513';
+        }
+        
+        // Jar
+        ctx.fillStyle = color;
+        ctx.beginPath();
+        ctx.ellipse(0, 0, honey.r, honey.r * 0.8, 0, 0, Math.PI * 2);
+        ctx.fill();
+        
+        // Highlight
+        ctx.fillStyle = 'rgba(255, 255, 255, 0.3)';
+        ctx.beginPath();
+        ctx.ellipse(-honey.r * 0.3, -honey.r * 0.2, honey.r * 0.3, honey.r * 0.2, 0, 0, Math.PI * 2);
+        ctx.fill();
+        
+        // Lid
+        ctx.fillStyle = lidColor;
+        ctx.beginPath();
+        ctx.ellipse(0, -honey.r * 0.6, honey.r * 0.8, honey.r * 0.3, 0, 0, Math.PI * 2);
+        ctx.fill();
+        
+        // Cursed effect
+        if (honey.type === 'cursed') {
+            ctx.strokeStyle = '#FF0000';
+            ctx.lineWidth = 2;
+            ctx.beginPath();
+            ctx.moveTo(-honey.r * 0.5, honey.r * 0.5);
+            ctx.lineTo(honey.r * 0.5, -honey.r * 0.5);
+            ctx.stroke();
+            
+            ctx.beginPath();
+            ctx.moveTo(-honey.r * 0.5, -honey.r * 0.5);
+            ctx.lineTo(honey.r * 0.5, honey.r * 0.5);
+            ctx.stroke();
+        }
+        
+        ctx.restore();
+    }
+
+    function drawBee(bee) {
+        ctx.save();
+        ctx.translate(bee.x, bee.y);
+        
+        // Flap animation
+        bee.flap += 0.2;
+        const wingY = Math.sin(bee.flap) * 3;
+        
+        // Body
+        ctx.fillStyle = '#FFD700';
+        ctx.beginPath();
+        ctx.ellipse(0, 0, bee.r * 1.2, bee.r, 0, 0, Math.PI * 2);
+        ctx.fill();
+        
+        // Stripes
+        ctx.fillStyle = '#000';
+        ctx.beginPath();
+        ctx.ellipse(0, 0, bee.r * 0.8, bee.r * 0.3, 0, 0, Math.PI * 2);
+        ctx.fill();
+        
+        // Wings
+        ctx.fillStyle = 'rgba(255, 255, 255, 0.6)';
+        ctx.beginPath();
+        ctx.ellipse(-bee.r * 0.8, wingY, bee.r * 0.6, bee.r * 0.4, Math.PI/4, 0, Math.PI * 2);
+        ctx.fill();
+        
+        ctx.beginPath();
+        ctx.ellipse(bee.r * 0.8, wingY, bee.r * 0.6, bee.r * 0.4, -Math.PI/4, 0, Math.PI * 2);
+        ctx.fill();
+        
+        // Eyes
+        ctx.fillStyle = '#000';
+        ctx.beginPath();
+        ctx.arc(-bee.r * 0.4, -bee.r * 0.3, 2, 0, Math.PI * 2);
+        ctx.arc(bee.r * 0.4, -bee.r * 0.3, 2, 0, Math.PI * 2);
+        ctx.fill();
+        
+        ctx.restore();
+    }
+
+    function drawPower(power) {
+        ctx.save();
+        ctx.translate(power.x, power.y);
+        
+        power.pulse += 0.1;
+        const pulseScale = 1 + Math.sin(power.pulse) * 0.2;
+        ctx.scale(pulseScale, pulseScale);
+        
+        let color, symbol;
+        switch(power.type) {
+            case 'shield':
+                color = '#0096FF';
+                symbol = '🛡️';
+                break;
+            case 'slow':
+                color = '#9D4EDD';
+                symbol = '⏳';
+                break;
+            case 'magnet':
+                color = '#FF6B6B';
+                symbol = '🧲';
+                break;
+        }
+        
+        // Circle
+        ctx.fillStyle = color;
+        ctx.beginPath();
+        ctx.arc(0, 0, power.r, 0, Math.PI * 2);
+        ctx.fill();
+        
+        // Symbol
+        ctx.fillStyle = '#FFF';
+        ctx.font = '16px Arial';
+        ctx.textAlign = 'center';
+        ctx.textBaseline = 'middle';
+        ctx.fillText(symbol, 0, 0);
+        
+        ctx.restore();
+    }
+
+    function drawParticles() {
+        for (let i = particles.length - 1; i >= 0; i--) {
+            const p = particles[i];
+            
+            ctx.globalAlpha = p.life;
+            ctx.fillStyle = p.color;
+            ctx.beginPath();
+            ctx.arc(p.x, p.y, p.r, 0, Math.PI * 2);
+            ctx.fill();
+            
+            p.x += p.vx;
+            p.y += p.vy;
+            p.vy += 0.1;
+            p.life -= 0.02;
+            
+            if (p.life <= 0) {
+                particles.splice(i, 1);
+            }
+        }
+        ctx.globalAlpha = 1;
+    }
+
+    function drawBackground() {
+        // Sky gradient
+        const gradient = ctx.createLinearGradient(0, 0, 0, BASE_H);
+        gradient.addColorStop(0, '#87CEEB');
+        gradient.addColorStop(1, '#98FB98');
+        ctx.fillStyle = gradient;
+        ctx.fillRect(0, 0, BASE_W, BASE_H);
+        
+        // Clouds
+        ctx.fillStyle = 'rgba(255, 255, 255, 0.8)';
+        for (let i = 0; i < 3; i++) {
+            const x = (GameState.timeMs * 0.01 + i * 150) % (BASE_W + 200) - 100;
+            const y = 80 + i * 60;
+            const size = 30 + i * 5;
+            
+            ctx.beginPath();
+            ctx.arc(x, y, size, 0, Math.PI * 2);
+            ctx.arc(x + size * 0.6, y - size * 0.3, size * 0.7, 0, Math.PI * 2);
+            ctx.arc(x + size * 1.2, y, size * 0.8, 0, Math.PI * 2);
+            ctx.fill();
+        }
+    }
+
+    function drawHUD() {
+        // Update HUD elements
+        $('stat-score').textContent = Math.floor(GameState.score);
+        $('stat-lives').textContent = GameState.lives;
+        $('stat-combo').textContent = GameState.combo.toFixed(1) + 'x';
+        
+        // Progress bar
+        const nextLevel = (GameState.currentLevel + 1) * 300;
+        const progress = GameState.score % 300;
+        const progressPercent = (progress / 300) * 100;
+        $('progress-fill').style.width = `${progressPercent}%`;
+        $('next-level-label').textContent = `${progress}/${300}`;
+        
+        // Level display
+        const levelNames = ['Beginner', 'Novice', 'Apprentice', 'Adept', 'Expert', 'Master', 'Grandmaster'];
+        GameState.currentLevel = Math.min(6, Math.floor(GameState.score / 300));
+        $('level-display').textContent = levelNames[GameState.currentLevel];
+        
+        // Update pause screen
+        if ($('pause-score')) $('pause-score').textContent = Math.floor(GameState.score);
+        if ($('pause-streak')) $('pause-streak').textContent = GameState.streak;
+        if ($('pause-lives')) $('pause-lives').textContent = GameState.lives;
+        if ($('pause-time')) $('pause-time').textContent = Math.floor(GameState.timeMs / 1000) + 's';
+    }
+
+    /* ======================= INPUT HANDLING ======================= */
+    let mouseX = player.x;
+    let touchActive = false;
+
+    canvas.addEventListener('mousemove', (e) => {
+        const rect = canvas.getBoundingClientRect();
+        mouseX = e.clientX - rect.left;
+        mouseX = clamp(mouseX, player.r, canvas.width - player.r);
+    });
+
+    canvas.addEventListener('touchmove', (e) => {
+        e.preventDefault();
+        const rect = canvas.getBoundingClientRect();
+        const touch = e.touches[0];
+        mouseX = touch.clientX - rect.left;
+        mouseX = clamp(mouseX, player.r, canvas.width - player.r);
+        touchActive = true;
+    }, { passive: false });
+
+    canvas.addEventListener('touchstart', (e) => {
+        e.preventDefault();
+        const rect = canvas.getBoundingClientRect();
+        const touch = e.touches[0];
+        mouseX = touch.clientX - rect.left;
+        mouseX = clamp(mouseX, player.r, canvas.width - player.r);
+        touchActive = true;
+    }, { passive: false });
+
+    canvas.addEventListener('touchend', () => {
+        touchActive = false;
+    });
+
+    /* ======================= GAME LOGIC ======================= */
+    function updateGame(dt) {
+        if (!GameState.running || GameState.paused) return;
+        
+        GameState.timeMs += dt;
+        
+        // Move player smoothly toward mouse/touch
+        const targetX = mouseX;
+        player.x += (targetX - player.x) * 0.15;
+        player.x = clamp(player.x, player.r, BASE_W - player.r);
+        
+        // Apply magnet effect
+        if (hasEffect('magnet')) {
+            honeys.forEach(honey => {
+                const dx = player.x - honey.x;
+                const dy = player.y - honey.y;
+                const dist = Math.sqrt(dx * dx + dy * dy);
+                
+                if (dist < 200) {
+                    honey.x += (dx / dist) * 3;
+                    honey.y += (dy / dist) * 3;
+                }
+            });
+        }
+        
+        // Apply slow effect
+        const slowFactor = hasEffect('slow') ? 0.5 : 1.0;
+        
+        // Spawn objects based on time
+        const spawnInterval = 1000 - Math.min(500, GameState.currentLevel * 100);
+        if (GameState.timeMs % spawnInterval < dt) {
+            spawnHoney();
+            if (Math.random() < 0.3 + GameState.currentLevel * 0.05) {
+                spawnBee();
+            }
+            if (Math.random() < 0.05) {
+                spawnPower();
+            }
+        }
+        
+        // Update honey wobble
+        honeys.forEach(honey => {
+            honey.wobble += 0.1;
+        });
+        
+        // Update honeys
+        for (let i = honeys.length - 1; i >= 0; i--) {
+            const honey = honeys[i];
+            honey.y += honey.vy * slowFactor;
+            
+            // Check collision with player
+            if (checkCollision(player, honey)) {
+                GameState.honeyCaught++;
+                GameState.streak++;
+                
+                let points = 10;
+                let color = '#FFA500';
+                
+                if (honey.type === 'gold') {
+                    points = 25;
+                    color = '#FFD700';
+                    showFloatingText('GOLD! +' + points, honey.x, honey.y, '#FFD700');
+                } else if (honey.type === 'cursed') {
+                    points = -15;
+                    GameState.lives = Math.max(0, GameState.lives - 1);
+                    GameState.streak = 0;
+                    color = '#FF0000';
+                    showFloatingText('CURSED! ' + points, honey.x, honey.y, '#FF0000');
+                } else {
+                    showFloatingText('+' + points, honey.x, honey.y, '#00FF00');
+                }
+                
+                GameState.score += points * GameState.combo;
+                GameState.score = Math.max(0, GameState.score);
+                
+                // Update combo
+                GameState.combo = 1 + Math.floor(GameState.streak / 5) * 0.2;
+                GameState.combo = Math.min(GameState.combo, 3.0);
+                
+                // Spawn particles
+                spawnParticles(honey.x, honey.y, color, 15);
+                
+                // Play sound
+                if (GameState.soundEnabled) {
+                    playSound(honey.type === 'cursed' ? 'hit' : 'collect');
+                }
+                
+                // Remove honey
+                honeys.splice(i, 1);
+                
+                // Check game over from cursed honey
+                if (GameState.lives <= 0) {
+                    gameOver();
+                    return;
+                }
+            }
+            
+            // Remove if off screen
+            if (honey.y > BASE_H + 50) {
+                honeys.splice(i, 1);
+                if (honey.type !== 'cursed') {
+                    GameState.streak = 0;
+                    GameState.combo = 1.0;
+                }
+            }
+        }
+        
+        // Update bees
+        for (let i = bees.length - 1; i >= 0; i--) {
+            const bee = bees[i];
+            bee.x += bee.vx * slowFactor;
+            bee.y += bee.vy * slowFactor;
+            
+            // Bounce off walls
+            if (bee.x < bee.r || bee.x > BASE_W - bee.r) {
+                bee.vx *= -1;
+            }
+            
+            // Check collision with player
+            if (checkCollision(player, bee)) {
+                if (hasEffect('shield')) {
+                    // Shield protects from damage
+                    removeEffect('shield');
+                    spawnParticles(bee.x, bee.y, '#0096FF', 20);
+                    showFloatingText('SHIELD!', bee.x, bee.y, '#0096FF');
+                } else {
+                    GameState.lives--;
+                    GameState.streak = 0;
+                    GameState.combo = 1.0;
+                    
+                    // Spawn particles
+                    spawnParticles(bee.x, bee.y, '#FF0000', 20);
+                    showFloatingText('OUCH!', bee.x, bee.y, '#FF0000');
+                    
+                    if (GameState.soundEnabled) {
+                        playSound('hit');
+                    }
+                }
+                
+                // Remove bee
+                bees.splice(i, 1);
+                
+                // Check game over
+                if (GameState.lives <= 0) {
+                    gameOver();
+                    return;
+                }
+            }
+            
+            // Remove if off screen
+            if (bee.y > BASE_H + 50) {
+                bees.splice(i, 1);
+                GameState.beesAvoided++;
+            }
+        }
+        
+        // Update powers
+        for (let i = powers.length - 1; i >= 0; i--) {
+            const power = powers[i];
+            power.y += power.vy * slowFactor;
+            
+            // Check collision with player
+            if (checkCollision(player, power)) {
+                addEffect(power.type, 5000); // 5 seconds
+                
+                // Spawn particles
+                let color;
+                switch(power.type) {
+                    case 'shield': color = '#0096FF'; break;
+                    case 'slow': color = '#9D4EDD'; break;
+                    case 'magnet': color = '#FF6B6B'; break;
+                }
+                spawnParticles(power.x, power.y, color, 20);
+                showFloatingText(power.type.toUpperCase() + '!', power.x, power.y, color);
+                
+                if (GameState.soundEnabled) {
+                    playSound('power');
+                }
+                
+                // Remove power
+                powers.splice(i, 1);
+            }
+            
+            // Remove if off screen
+            if (power.y > BASE_H + 50) {
+                powers.splice(i, 1);
+            }
+        }
+        
+        // Update particles
+        for (let i = particles.length - 1; i >= 0; i--) {
+            const p = particles[i];
+            p.x += p.vx;
+            p.y += p.vy;
+            p.vy += 0.1;
+            p.life -= 0.02;
+            
+            if (p.life <= 0) {
+                particles.splice(i, 1);
+            }
+        }
+        
+        // Update effects
+        for (let i = effects.length - 1; i >= 0; i--) {
+            effects[i].timer -= dt;
+            if (effects[i].timer <= 0) {
+                effects.splice(i, 1);
+            }
+        }
+        
+        // Update HUD
+        drawHUD();
+    }
+
+    function removeEffect(type) {
+        for (let i = effects.length - 1; i >= 0; i--) {
+            if (effects[i].type === type) {
+                effects.splice(i, 1);
+                break;
+            }
+        }
+    }
+
+    function showFloatingText(text, x, y, color) {
+        const textEl = document.createElement('div');
+        textEl.className = 'score-popup';
+        textEl.textContent = text;
+        textEl.style.color = color;
+        textEl.style.left = (x / BASE_W * 100) + '%';
+        textEl.style.top = (y / BASE_H * 100) + '%';
+        
+        const container = $('game-container');
+        container.appendChild(textEl);
+        
+        setTimeout(() => {
+            if (textEl.parentNode) {
+                textEl.parentNode.removeChild(textEl);
+            }
+        }, 1000);
+    }
+
+    function renderGame() {
+        // Clear canvas
+        drawBackground();
+        
+        // Draw all game objects
+        powers.forEach(drawPower);
+        honeys.forEach(drawHoney);
+        bees.forEach(drawBee);
+        drawParticles();
+        drawPlayer();
+        
+        // Draw combo text if > 1
+        if (GameState.combo > 1.1) {
+            ctx.fillStyle = '#FFD700';
+            ctx.font = 'bold 24px Fredoka One';
+            ctx.textAlign = 'center';
+            ctx.shadowColor = '#000';
+            ctx.shadowBlur = 4;
+            ctx.fillText(`COMBO x${GameState.combo.toFixed(1)}`, BASE_W / 2, 100);
+            ctx.shadowBlur = 0;
+        }
+        
+        // Draw active effects
+        if (effects.length > 0) {
+            ctx.fillStyle = '#FFF';
+            ctx.font = '14px Arial';
+            ctx.textAlign = 'left';
+            ctx.fillText('Active:', 10, 30);
+            
+            effects.forEach((effect, i) => {
+                const timeLeft = Math.ceil(effect.timer / 1000);
+                ctx.fillText(`${effect.type}: ${timeLeft}s`, 10, 50 + i * 20);
+            });
+        }
+    }
+
+    /* ======================= GAME FLOW ======================= */
+    function startGame() {
+        GameState.running = true;
+        GameState.paused = false;
+        GameState.score = 0;
+        GameState.lives = GameState.currentHelper === 'piglet' ? 5 : 3;
+        GameState.streak = 0;
+        GameState.combo = 1.0;
+        GameState.timeMs = 0;
+        GameState.honeyCaught = 0;
+        GameState.beesAvoided = 0;
+        
+        honeys.length = 0;
+        bees.length = 0;
+        powers.length = 0;
+        particles.length = 0;
+        effects.length = 0;
+        
+        player.x = BASE_W / 2;
+        mouseX = player.x;
+        
+        Overlays.closeAll();
+        drawHUD();
+        
+        if (GameState.soundEnabled) {
+            playSound('start');
+        }
+    }
+
+    function gameOver() {
+        GameState.running = false;
+        
+        // Update best score
+        if (GameState.score > GameState.bestScore) {
+            GameState.bestScore = GameState.score;
+            localStorage.setItem('bestScore', GameState.bestScore.toString());
+            $('new-record-badge').classList.remove('hidden');
+        } else {
+            $('new-record-badge').classList.add('hidden');
+        }
+        
+        // Update final score display
+        $('final-score').textContent = Math.floor(GameState.score);
+        $('final-total').textContent = Math.floor(GameState.score);
+        $('final-streak').textContent = GameState.streak;
+        $('final-honey').textContent = GameState.honeyCaught;
+        $('final-level').textContent = $('level-display').textContent;
+        
+        Overlays.open('gameover');
+        
+        if (GameState.soundEnabled) {
+            playSound('gameover');
+        }
+    }
+
+    /* ======================= AUDIO ======================= */
+    const Audio = {
+        ctx: null,
+        
+        init() {
+            if (!this.ctx && GameState.soundEnabled) {
+                try {
+                    this.ctx = new (window.AudioContext || window.webkitAudioContext)();
+                } catch (e) {
+                    console.log('Audio context failed:', e);
+                }
+            }
+        },
+        
+        playSound(type) {
+            if (!GameState.soundEnabled) return;
+            
+            this.init();
+            if (!this.ctx) return;
+            
+            const oscillator = this.ctx.createOscillator();
+            const gainNode = this.ctx.createGain();
+            
+            oscillator.connect(gainNode);
+            gainNode.connect(this.ctx.destination);
+            
+            let frequency = 440;
+            let duration = 0.2;
+            
+            switch(type) {
+                case 'collect':
+                    frequency = 523.25; // C5
+                    break;
+                case 'hit':
+                    frequency = 220; // A3
+                    duration = 0.3;
+                    break;
+                case 'power':
+                    frequency = 659.25; // E5
+                    break;
+                case 'start':
+                    frequency = 783.99; // G5
+                    break;
+                case 'gameover':
+                    frequency = 174.61; // F3
+                    duration = 0.5;
+                    break;
+                case 'ui':
+                    frequency = 392; // G4
+                    duration = 0.1;
+                    break;
+            }
+            
+            oscillator.frequency.setValueAtTime(frequency, this.ctx.currentTime);
+            gainNode.gain.setValueAtTime(0.1, this.ctx.currentTime);
+            gainNode.gain.exponentialRampToValueAtTime(0.01, this.ctx.currentTime + duration);
+            
+            oscillator.start();
+            oscillator.stop(this.ctx.currentTime + duration);
+        }
+    };
+
+    function playSound(type) {
+        try {
+            Audio.playSound(type);
+        } catch (e) {
+            console.log('Audio error:', e);
+        }
+    }
+
+    /* ======================= UI CONTROLS ======================= */
+    const Overlays = {
+        open(name) {
+            const overlay = $(name + '-screen');
+            if (overlay) {
+                overlay.classList.remove('hidden');
+                document.body.classList.add('overlay-open');
+            }
+            if (name === 'pause') GameState.paused = true;
+        },
+        
+        close(name) {
+            const overlay = $(name + '-screen');
+            if (overlay) {
+                overlay.classList.add('hidden');
+                document.body.classList.remove('overlay-open');
+            }
+            if (name === 'pause') GameState.paused = false;
+        },
+        
+        closeAll() {
+            document.querySelectorAll('.overlay-content').forEach(el => {
+                el.classList.add('hidden');
+            });
+            document.body.classList.remove('overlay-open');
+            GameState.paused = false;
+        }
+    };
+
+    // Bind UI events
+    function setupUI() {
+        // Start buttons
+        $('#start-btn').addEventListener('click', () => {
+            startGame();
+            playSound('ui');
+        });
+        
+        $('#quick-start').addEventListener('click', () => {
+            startGame();
+            playSound('ui');
+        });
+        
+        $('#start-with-character-btn').addEventListener('click', () => {
+            startGame();
+            playSound('ui');
+        });
+        
+        // Pause/Resume
+        $('#pause-toggle').addEventListener('click', () => {
+            if (GameState.running && !GameState.paused) {
+                Overlays.open('pause');
+            } else if (GameState.paused) {
+                Overlays.close('pause');
+            }
+            playSound('ui');
+        });
+        
+        $('#resume-btn').addEventListener('click', () => Overlays.close('pause'));
+        $('#continue-btn').addEventListener('click', () => Overlays.close('pause'));
+        
+        // Restart
+        $('#restart-btn').addEventListener('click', () => {
+            startGame();
+            playSound('ui');
+        });
+        
+        $('#play-again-btn').addEventListener('click', () => {
+            startGame();
+            playSound('ui');
+        });
+        
+        // Menu navigation
+        $('#quit-btn').addEventListener('click', () => {
+            GameState.running = false;
+            Overlays.closeAll();
+            Overlays.open('start');
+            playSound('ui');
+        });
+        
+        $('#close-start').addEventListener('click', () => Overlays.close('start'));
+        $('#gameover-close').addEventListener('click', () => {
+            Overlays.close('gameover');
+            Overlays.open('start');
+            playSound('ui');
+        });
+        
+        // Help
+        $('#help-btn').addEventListener('click', () => {
+            Overlays.open('help');
+            playSound('ui');
+        });
+        
+        $('#close-help-btn').addEventListener('click', () => Overlays.close('help'));
+        
+        // Achievements
+        $('#achievements-pill').addEventListener('click', () => {
+            Overlays.open('achievements');
+            playSound('ui');
+        });
+        
+        $('#view-achievements-btn').addEventListener('click', () => {
+            Overlays.open('achievements');
+            playSound('ui');
+        });
+        
+        $('#close-achievements-btn').addEventListener('click', () => Overlays.close('achievements'));
+        $('#close-achievements-btn-2').addEventListener('click', () => Overlays.close('achievements'));
+        
+        // Character select
+        $('#select-character-btn').addEventListener('click', () => {
+            renderCharacterSelect();
+            Overlays.open('character');
+            playSound('ui');
+        });
+        
+        $('#close-character').addEventListener('click', () => Overlays.close('character'));
+        $('#back-to-menu-btn').addEventListener('click', () => {
+            Overlays.close('character');
+            Overlays.open('start');
+            playSound('ui');
+        });
+        
+        // Character selection
+        function renderCharacterSelect() {
+            const characters = [
+                { id: 'pooh', name: 'Pooh', icon: '🐻', ability: 'Balanced', desc: 'Standard gameplay' },
+                { id: 'piglet', name: 'Piglet', icon: '🐷', ability: 'Extra Lives', desc: 'Start with 5 lives' },
+                { id: 'tigger', name: 'Tigger', icon: '🐯', ability: 'Bounce', desc: 'Bounce bees away' },
+                { id: 'rabbit', name: 'Rabbit', icon: '🐰', ability: 'Magnet', desc: 'Attract honey' }
+            ];
+            
+            const grid = $('#character-grid');
+            grid.innerHTML = '';
+            
+            characters.forEach(char => {
+                const card = document.createElement('button');
+                card.className = `character-card ${GameState.currentHelper === char.id ? 'selected' : ''}`;
+                card.setAttribute('data-helper', char.id);
+       <div class="character-ability">${char.ability}</div>
+                    <div class="character-desc">${char.desc}</div>
+                `;
+                
+                card.addEventListener('click', () => {
+                    GameState.currentHelper = char.id;
+                    document.querySelectorAll('.character-card').forEach(c => c.classList.remove('selected'));
+                    card.classList.add('selected');
+                    playSound('ui');
+                });
+                
+                grid.appendChild(card);
+            });
+        }
+        
+        // Settings
+        $('#settings-btn').addEventListener('click', () => {
+            // Set toggle states
+            $('#sound-toggle-setting').checked = GameState.soundEnabled;
+            $('#haptic-toggle-setting').checked = GameState.soundEnabled;
+            $('#effects-toggle-setting').checked = true;
+            
+            Overlays.open('settings');
+            playSound('ui');
+        });
+        
+        $('#close-settings').addEventListener('click', () => Overlays.close('settings'));
+        
+        $('#save-settings').addEventListener('click', () => {
+            GameState.soundEnabled = $('#sound-toggle-setting').checked;
+            
+            // Update sound icon
+            const soundIcon = $('#sound-toggle-btn i');
+            soundIcon.className = GameState.soundEnabled ? 'fas fa-volume-up' : 'fas fa-volume-mute';
+            
+            Overlays.close('settings');
+            playSound('ui');
+        });
+        
+        $('#reset-progress').addEventListener('click', () => {
+            const confirmBtn = $('#reset-confirm');
+            confirmBtn.style.display = 'block';
+            setTimeout(() => {
+                confirmBtn.style.display = 'none';
+            }, 3000);
+        });
+        
+        $('#reset-confirm').addEventListener('click', () => {
+            if (confirm('Are you sure you want to reset all progress? This cannot be undone.')) {
+                localStorage.clear();
+                GameState.bestScore = 0;
+                GameState.currentHelper = 'pooh';
+                location.reload();
+            }
+        });
+        
+        // Sound toggle
+        $('#sound-toggle-btn').addEventListener('click', () => {
+            GameState.soundEnabled = !GameState.soundEnabled;
+            const icon = $('#sound-toggle-btn i');
+            icon.className = GameState.soundEnabled ? 'fas fa-volume-up' : 'fas fa-volume-mute';
+            
+            if (GameState.soundEnabled) {
+                playSound('ui');
+            }
+        });
+        
+        // Weather drawer
+        const weatherDrawer = $('#weather-drawer');
+        $('#weather-toggle').addEventListener('click', () => {
+            weatherDrawer.classList.toggle('open');
+            playSound('ui');
+        });
+        
+        $('#weather-close').addEventListener('click', () => {
+            weatherDrawer.classList.remove('open');
+            playSound('ui');
+        });
+        
+        document.querySelectorAll('.weather-btn').forEach(btn => {
+            btn.addEventListener('click', () => {
+                document.querySelectorAll('.weather-btn').forEach(b => b.classList.remove('active'));
+                btn.classList.add('active');
+                
+                // Here you would implement weather effects
+                const weather = btn.getAttribute('data-weather');
+                console.log('Weather changed to:', weather);
+                
+                playSound('ui');
+            });
+        });
+        
+        // Share buttons
+        $('#share-btn').addEventListener('click', async () => {
+            await shareScore();
+        });
+        
+        $('#share-final-btn').addEventListener('click', async () => {
+            await shareScore();
+        });
+        
+        async function shareScore() {
+            const text = `I scored ${Math.floor(GameState.score)} points in Pooh's Honey Hunt! 🍯 Can you beat my score?`;
+            
+            try {
+                if (navigator.share) {
+                    await navigator.share({
+                        title: 'Pooh\'s Honey Hunt',
+                        text: text,
+                        url: window.location.href
+                    });
+                } else if (navigator.clipboard) {
+                    await navigator.clipboard.writeText(text);
+                    alert('Score copied to clipboard!');
+                } else {
+                    // Fallback for browsers without clipboard API
+                    const textArea = document.createElement('textarea');
+                    textArea.value = text;
+                    document.body.appendChild(textArea);
+                    textArea.select();
+                    document.execCommand('copy');
+                    document.body.removeChild(textArea);
+                    alert('Score copied to clipboard!');
+                }
+            } catch (err) {
+                console.log('Share failed:', err);
+            }
+            
+            playSound('ui');
+        }
+        
+        // Keyboard shortcuts
+        window.addEventListener('keydown', (e) => {
+            if (e.code === 'Space' || e.code === 'KeyP') {
+                e.preventDefault();
+                if (GameState.running && !GameState.paused) {
+                    Overlays.open('pause');
+                } else if (GameState.paused) {
+                    Overlays.close('pause');
+                }
+                playSound('ui');
+            }
+            
+            if (e.code === 'Escape') {
+                Overlays.closeAll();
+                if (GameState.running) {
+                    GameState.paused = false;
+                }
+            }
+        });
+    }
+
+    /* ======================= LOADING SCREEN ======================= */
+    function initLoading() {
+        const loadingScreen = $('#loading-screen');
+        const progress = $('#loading-progress');
+        const tip = $('#loading-tip');
+        
+        const tips = [
+            "Tip: Try to maintain your combo for bonus points!",
+            "Tip: Gold honey pots give double points!",
+            "Tip: Watch out for cursed honey - it hurts!",
+            "Tip: Unlock all helpers by reaching higher scores!",
+            "Tip: Power-ups give you special abilities!",
+            "Tip: Piglet starts with extra lives!",
+            "Tip: The magnet power-up attracts honey to you!"
+        ];
+        
+        let loadProgress = 0;
+        const interval = setInterval(() => {
+            loadProgress += Math.random() * 10 + 5;
+            if (loadProgress >= 100) {
+                loadProgress = 100;
+                clearInterval(interval);
+                setTimeout(() => {
+                    loadingScreen.classList.add('hidden');
+                    Overlays.open('start');
+                }, 300);
+            }
+            progress.style.width = `${loadProgress}%`;
+            
+            // Change tip every 25%
+            if (Math.floor(loadProgress / 25) > Math.floor((loadProgress - 15) / 25)) {
+                tip.textContent = tips[Math.floor(Math.random() * tips.length)];
+            }
+        }, 100);
+    }
+
+    /* ======================= GAME LOOP ======================= */
+    let lastTime = 0;
+    let gameLoopId = null;
+    
+    function gameLoop(currentTime) {
+        const dt = currentTime - lastTime || 0;
+        lastTime = currentTime;
+        
+        updateGame(dt);
+        renderGame();
+        
+        gameLoopId = requestAnimationFrame(gameLoop);
+    }
+
+    /* ======================= INITIALIZATION ======================= */
+    function init() {
+        // Setup responsive canvas
+        function resizeCanvas() {
+            const container = $('#game-container');
+            const canvas = $('#game-canvas');
+            
+            if (!container || !canvas) return;
+            
+            const containerWidth = container.clientWidth;
+            const containerHeight = container.clientHeight;
+            
+            // Maintain aspect ratio
+            const aspectRatio = BASE_W / BASE_H;
+            let canvasWidth = containerWidth;
+            let canvasHeight = containerWidth / aspectRatio;
+            
+            if (canvasHeight > containerHeight) {
+                canvasHeight = containerHeight;
+                canvasWidth = containerHeight * aspectRatio;
+            }
+            
+            canvas.style.width = `${canvasWidth}px`;
+            canvas.style.height = `${canvasHeight}px`;
+        }
+        
+        window.addEventListener('resize', resizeCanvas);
+        resizeCanvas();
+        
+        // Initialize everything
+        setupUI();
+        initLoading();
+        drawHUD();
+        
+        // Start game loop
+        gameLoopId = requestAnimationFrame(gameLoop);
+        
+        // Prevent zoom on mobile
+        document.addEventListener('touchmove', function(e) {
+            if (e.scale !== 1) {
+                e.preventDefault();
+            }
+        }, { passive: false });
+        
+        // Prevent double-tap zoom
+        let lastTouchEnd = 0;
+        document.addEventListener('touchend', function(e) {
+            const now = Date.now();
+            if (now - lastTouchEnd <= 300) {
+                e.preventDefault();
+            }
+            lastTouchEnd = now;
+        }, false);
+        
+        // Initialize audio context on first user interaction
+        document.addEventListener('click', function initAudio() {
+            if (GameState.soundEnabled) {
+                Audio.init();
+            }
+            document.removeEventListener('click', initAudio);
+        }, { once: true });
+    }
+
+    // Start everything when page loads
+    if (document.readyState === 'loading') {
+        document.addEventListener('DOMContentLoaded', init);
+    } else {
+        setTimeout(init, 100);
+    }
+})();
+</script>
 </body>
 </html>
