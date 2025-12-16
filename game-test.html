@@ -4204,7 +4204,28 @@
                     Particles.update(dt);
                     Achievements.check();
                 }
+/* ======================= START GAME WIRES ======================= */
 
+function startGame() {
+    const overlay = document.getElementById("overlay-layer");
+    overlay.classList.add("hidden");
+
+    AppState.running = true;
+    AppState.paused = false;
+
+    Audio.resume?.();
+
+    // Safety: enable joystick on mobile
+    if ("ontouchstart" in window) {
+        const vj = document.getElementById("virtual-joystick");
+        vj && vj.classList.add("active");
+    }
+
+    requestAnimationFrame(gameLoop);
+}
+
+document.getElementById("quick-start")?.addEventListener("click", startGame);
+document.getElementById("start-btn")?.addEventListener("click", startGame);
                 function render() {
                     ctx.clearRect(0, 0, BASE_W, BASE_H);
 
@@ -4293,6 +4314,7 @@
                 setTimeout(boot, 100); // Small delay to ensure DOM is ready
             }
         })();
+        
     </script>
 </body>
 </html>
