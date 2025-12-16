@@ -2236,640 +2236,1602 @@
 (() => {
   "use strict";
 
-  /* ======================= PLATFORM DETECTION ======================= */
+  /* ======================= DEVICE / SAFETY ======================= */
   const isIOS = /iPad|iPhone|iPod/.test(navigator.userAgent) && !window.MSStream;
-  const isSafari = /^((?!chrome|android).)*safari/i.test(navigator.userAgent);
-  const isIOSSafari = isIOS && isSafari;
 
-  /* ======================= CONSTANTS ======================= */
-  const GAME_CONFIG = {
-    BASE_WIDTH: 420,
-    BASE_HEIGHT: 700,
-  };
-
-  /* ======================= CRASH OVERLAY ======================= */
-  (function setupCrashOverlay(){
-    function show(msg){
+  (function setupCrashOverlay() {
+    function show(msg) {
       try {
-        const el = document.getElementById('error-overlay');
+        const el = document.getElementById("error-overlay");
         if (!el) return;
-        el.textContent = String(msg);
-        el.classList.remove('hidden');
+        el.textContent = String(msg).substring(0, 1200);
+        el.classList.remove("hidden");
       } catch {}
     }
-
-    window.addEventListener('error', (e) => {
-      show("JS ERROR:\n" + (e.message || e.type) + "\n" + (e.filename || "") + ":" + (e.lineno || ""));
-    });
-
-    window.addEventListener('unhandledrejection', (e) => {
-      show("PROMISE REJECTION:\n" + (e.reason?.message || String(e.reason)));
-    });
+    window.addEventListener("error", (e) => show("JS ERROR: " + (e.message || e.type)));
+    window.addEventListener("unhandledrejection", (e) =>
+      show("PROMISE REJECTION: " + (e.reason?.message || String(e.reason)))
+    );
   })();
 
   if (window.__POOH_HONEY_HUNT_LOADED__) return;
   window.__POOH_HONEY_HUNT_LOADED__ = true;
 
   /* ======================= DOM HELPERS ======================= */
-  const $ = (sel) => document.getElementById(sel) || document.querySelector(sel);
+  const $ = (sel) => (typeof sel === "string" ? document.getElementById(sel) || document.querySelector(sel) : null);
+
+  function addPress(el, fn, opts = {}) {
+    if (!el) return;
+    const handler = (e) => {
+      if (opts.prevent !== false) e.preventDefault();
+      if (opts.stop !== false) e.stopPropagation();
+      fn(e);
+    };
+    el.addEventListener("pointerdown", handler, { passive: false });
+    el.addEventListener("touchstart", handler, { passive: false });
+    el.addEventListener("click", handler, { passive: false });
+  }
 
   const clamp = (v, a, b) => Math.max(a, Math.min(b, v));
-  const dist2 = (x1,y1,x2,y2) => {
-    const dx = x2 - x1, dy = y2 - y1;
-    return dx*dx + dy*dy;
-  };
+  const distance = (x1, y1, x2, y2) => Math.sqrt((x2 - x1) ** 2 + (y2 - y1) ** 2);
 
   /* ======================= SAFE STORAGE ======================= */
   const Storage = {
     get(key, fallback = null) {
       try {
         const v = localStorage.getItem(key);
-        return v == null ? fallback : JSON.parse(v);
+        return v === null ? fallback : JSON.parse(v);
       } catch {
         return fallback;
       }
     },
     set(key, value) {
-      try { localStorage.setItem(key, JSON.stringify(value)); } catch {}
+      try {
+        localStorage.setItem(key, JSON.stringify(value));
+      } catch {}
     },
     remove(key) {
-      try { localStorage.removeItem(key); } catch {}
-    }
+      try {
+        localStorage.removeItem(key);
+      } catch {}
+    },
   };
 
-  /* ======================= GAME STATE ======================= */
+  /* ======================= STORYBOOK VOICE ======================= */
+  const Story = (() => {
+    const host = $("notification-container");
+
+    function toast(text, ms = 2200) {
+      if (!host) return;
+      const n = document.createElement("div");
+      n.style.pointerEvents = "none";
+      n.style.marginBottom = "10px";
+      n.style.padding = "12px 14px";
+      n.style.borderRadius = "16px";
+      n.style.border = "3px solid rgba(44,62,80,0.25)";
+      n.style.background = "rgba(255,255,255,0.96)";
+      n.style.boxShadow = "0 6px 20px rgba(0,0,0,0.16)";
+      n.style.fontFamily = "var(--font-body)";
+      n.style.fontSize = "16px";
+      n.style.lineHeight = "1.25";
+      n.textContent = text;
+      host.appendChild(n);
+      setTimeout(() => {
+        n.style.opacity = "0";
+        n.style.transition = "opacity 280ms ease";
+        setTimeout(() => n.remove(), 320);
+      }, ms);
+    }
+
+    const Lines = {
+      poohStart: [
+        "Pooh: Right then. Let’s be brave about it.",
+        "Pooh: This seems like a good time for honey.",
+        "Pooh: Pooh is ready. Mostly.",
+      ],
+      poohCollect: [
+        "Pooh: That one looks like a particularly sensible honey.",
+        "Pooh: A very respectable catch.",
+        "Pooh: That’s the sort of honey you can trust.",
+      ],
+      pigletEncourage: [
+        "Piglet: You’re doing ever so well. Truly.",
+        "Piglet: Just a tiny bit more… and you’ve got it.",
+        "Piglet: I’m with you. Quietly. But definitely.",
+      ],
+      rabbitRules: [
+        "Rabbit: If we’re doing this properly, we should mind the bees.",
+        "Rabbit: Try not to rush. Rushing is how trouble starts.",
+        "Rabbit: Rules are simple: honey good, bees not good.",
+      ],
+      tiggerHype: [
+        "Tigger: Bouncy feeling detected! Keep going!",
+        "Tigger: That’s the way—quick quick quick!",
+        "Tigger: Hoo-hoo! Everything’s getting exciting!",
+      ],
+      eeyoreGameOver: [
+        "Eeyore: Well. That was a thing that happened.",
+        "Eeyore: If you needed me, I was here the whole time.",
+        "Eeyore: Not the worst ending. Not the best either.",
+      ],
+    };
+
+    function pick(arr) {
+      return arr[(Math.random() * arr.length) | 0];
+    }
+
+    return { toast, pick, Lines };
+  })();
+
+  /* ======================= CONFIG ======================= */
+  const GAME_CONFIG = {
+    BASE_W: 420,
+    BASE_H: 700,
+    MAX_HONEYS: 40,
+    MAX_BEES: 26,
+    MAX_POWERS: 6,
+  };
+
+  /* ======================= STATE ======================= */
   const GameState = {
     running: false,
     paused: false,
+
     score: 0,
     lives: 3,
     combo: 1.0,
+    streak: 0,
+
+    honeyCaught: 0,
+    beesHit: 0,
+
+    startTimeMs: 0,
+    timePlayedMs: 0,
+
     soundEnabled: true,
     musicEnabled: false,
+    hapticEnabled: true,
     visualEffects: true,
+
+    weather: "clear",
+    weatherIntensity: 5,
+
+    power: {
+      shieldUntil: 0,
+      slowUntil: 0,
+      magnetUntil: 0,
+    },
   };
 
-  const savedSettings = Storage.get('gameSettings');
-  if (savedSettings && typeof savedSettings === 'object') Object.assign(GameState, savedSettings);
+  const saved = Storage.get("gameSettings");
+  if (saved) Object.assign(GameState, saved);
 
   if (isIOS) {
     GameState.musicEnabled = false;
-    // keep effects if you want, but iOS Safari can struggle; safe default:
-    // GameState.visualEffects = false;
   }
 
-  /* ======================= CANVAS SETUP (FIXED FOR iOS) ======================= */
+  /* ======================= CANVAS ======================= */
   const canvas = $("game-canvas");
   if (!canvas) return;
+  const ctx = canvas.getContext("2d", { alpha: false });
 
-  const ctx = canvas.getContext("2d", { alpha: false, desynchronized: true });
+  const { BASE_W, BASE_H } = GAME_CONFIG;
 
-  const BASE_W = GAME_CONFIG.BASE_WIDTH;
-  const BASE_H = GAME_CONFIG.BASE_HEIGHT;
-
-  // We will draw in "logical" coordinates BASE_W x BASE_H.
-  // Canvas will be resized to device pixels, and we map logical->device via ctx.setTransform.
-  const Render = {
-    dpr: 1,
-    cssW: BASE_W,
-    cssH: BASE_H,
-    scale: 1,
-    offsetX: 0,
-    offsetY: 0,
-  };
-
-  function applyCanvasTransform() {
-    // Reset transform first (critical on iOS)
-    ctx.setTransform(1, 0, 0, 1, 0, 0);
-    // Clear in device pixels
-    ctx.clearRect(0, 0, canvas.width, canvas.height);
-
-    // Map logical space into the centered letterboxed area
-    // device px: (offsetX, offsetY) + logical * (scale*dpr)
-    ctx.setTransform(
-      Render.scale * Render.dpr, 0,
-      0, Render.scale * Render.dpr,
-      Render.offsetX * Render.dpr, Render.offsetY * Render.dpr
-    );
-
-    // Tuning for iOS
-    ctx.imageSmoothingEnabled = true;
+  function fixIOSCanvas() {
+    if (!isIOS) return;
+    canvas.style.transform = "translateZ(0)";
+    canvas.style.webkitTransform = "translateZ(0)";
   }
 
-  function resizeCanvas() {
-    const container = $("game-container");
-    const rect = (container || canvas).getBoundingClientRect();
+  /* ======================= WORLD OBJECTS ======================= */
+  const player = { x: BASE_W / 2, y: BASE_H - 96, r: 30 };
 
-    // CSS size we WANT to occupy
-    const cssW = Math.max(1, Math.floor(rect.width));
-    const cssH = Math.max(1, Math.floor(rect.height));
-
-    // DPR (limit to reduce iOS memory spikes)
-    const dpr = Math.min(2, window.devicePixelRatio || 1);
-
-    // Keep aspect ratio of logical base
-    const scale = Math.min(cssW / BASE_W, cssH / BASE_H);
-
-    const drawW = Math.floor(BASE_W * scale);
-    const drawH = Math.floor(BASE_H * scale);
-
-    const offsetX = Math.floor((cssW - drawW) / 2);
-    const offsetY = Math.floor((cssH - drawH) / 2);
-
-    // Set device pixel size
-    const pxW = Math.max(1, Math.floor(cssW * dpr));
-    const pxH = Math.max(1, Math.floor(cssH * dpr));
-
-    // Only touch canvas width/height when needed (prevents flicker)
-    if (canvas.width !== pxW || canvas.height !== pxH) {
-      canvas.width = pxW;
-      canvas.height = pxH;
-    }
-
-    // Set CSS size
-    canvas.style.width = cssW + "px";
-    canvas.style.height = cssH + "px";
-
-    Render.dpr = dpr;
-    Render.cssW = cssW;
-    Render.cssH = cssH;
-    Render.scale = scale;
-    Render.offsetX = offsetX;
-    Render.offsetY = offsetY;
-
-    applyCanvasTransform();
-  }
-
-  // iOS: stop page bounce/scroll during play
-  document.addEventListener('touchmove', (e) => {
-    if (GameState.running && !GameState.paused) e.preventDefault();
-  }, { passive: false });
-
-  // iOS: prevent double-tap zoom weirdness
-  document.addEventListener('touchstart', (e) => {
-    if (e.touches && e.touches.length > 1) e.preventDefault();
-  }, { passive: false });
-
-  /* ======================= GAME OBJECTS ======================= */
-  const player = { x: BASE_W / 2, y: BASE_H - 100, r: 30 };
   const honeys = [];
   const bees = [];
+  const powers = []; // {x,y,r,vy,type}
+  // power types: shield, slow, magnet
 
-  function spawnHoney() {
-    honeys.push({
-      x: Math.random() * (BASE_W - 60) + 30,
-      y: -30,
-      r: 15,
-      vy: 2 + Math.random() * 2,
-      type: Math.random() < 0.1 ? 'gold' : 'normal'
-    });
-  }
-
-  function spawnBee() {
-    bees.push({
-      x: Math.random() * (BASE_W - 60) + 30,
-      y: -40,
-      r: 12,
-      vy: 3 + Math.random() * 2,
-      vx: (Math.random() - 0.5) * 2
-    });
-  }
-
-  function collides(a, b) {
-    const rr = (a.r + b.r);
-    return dist2(a.x, a.y, b.x, b.y) < rr * rr;
-  }
-
-  /* ======================= INPUT (FIXED COORD MAPPING) ======================= */
+  /* ======================= INPUT ======================= */
   let targetX = player.x;
-  let isTracking = false;
+  let isTouching = false;
 
-  function clientToLogicalX(clientX) {
+  function setTargetFromClientX(clientX) {
     const rect = canvas.getBoundingClientRect();
-
-    // Position inside canvas element in CSS pixels
-    const xCss = clientX - rect.left;
-
-    // Remove letterbox offset, then divide by scale to reach logical coords
-    const xInDraw = (xCss - Render.offsetX);
-    const xLogical = xInDraw / Render.scale;
-
-    return clamp(xLogical, player.r, BASE_W - player.r);
+    const x = ((clientX - rect.left) / rect.width) * BASE_W;
+    targetX = clamp(x, player.r, BASE_W - player.r);
+    isTouching = true;
   }
 
-  function onTouch(e) {
-    e.preventDefault();
-    const t = e.touches && e.touches[0];
-    if (!t) return;
-    targetX = clientToLogicalX(t.clientX);
-    isTracking = true;
-  }
+  // iOS scroll/zoom guards
+  document.addEventListener(
+    "touchstart",
+    (e) => {
+      if (e.touches && e.touches.length > 1) e.preventDefault();
+    },
+    { passive: false }
+  );
 
-  canvas.addEventListener('touchstart', onTouch, { passive: false });
-  canvas.addEventListener('touchmove', onTouch, { passive: false });
-  canvas.addEventListener('touchend', () => { isTracking = false; }, { passive: true });
-  canvas.addEventListener('touchcancel', () => { isTracking = false; }, { passive: true });
+  document.addEventListener(
+    "touchmove",
+    (e) => {
+      if (GameState.running && !GameState.paused) e.preventDefault();
+    },
+    { passive: false }
+  );
 
-  // Mouse (desktop)
-  function onMouseMove(e) {
-    targetX = clientToLogicalX(e.clientX);
-    isTracking = true;
-  }
-  canvas.addEventListener('mousedown', onMouseMove);
-  window.addEventListener('mousemove', (e) => {
-    if (!isTracking) return;
-    onMouseMove(e);
+  canvas.addEventListener(
+    "touchstart",
+    (e) => {
+      e.preventDefault();
+      const t = e.touches?.[0];
+      if (!t) return;
+      setTargetFromClientX(t.clientX);
+    },
+    { passive: false }
+  );
+
+  canvas.addEventListener(
+    "touchmove",
+    (e) => {
+      e.preventDefault();
+      const t = e.touches?.[0];
+      if (!t) return;
+      setTargetFromClientX(t.clientX);
+    },
+    { passive: false }
+  );
+
+  canvas.addEventListener(
+    "touchend",
+    () => {
+      isTouching = false;
+    },
+    { passive: true }
+  );
+
+  canvas.addEventListener("mousedown", (e) => setTargetFromClientX(e.clientX));
+  canvas.addEventListener("mousemove", (e) => {
+    if (e.buttons) setTargetFromClientX(e.clientX);
   });
-  window.addEventListener('mouseup', () => { isTracking = false; });
+  window.addEventListener("mouseup", () => (isTouching = false));
 
-  /* ======================= DRAW (IN LOGICAL COORDS) ======================= */
-  function drawBackground() {
-    const g = ctx.createLinearGradient(0, 0, 0, BASE_H);
-    g.addColorStop(0, '#87CEEB');
-    g.addColorStop(1, '#98FB98');
-    ctx.fillStyle = g;
-    ctx.fillRect(0, 0, BASE_W, BASE_H);
+  /* ======================= VIRTUAL JOYSTICK ======================= */
+  const Joy = (() => {
+    const root = $("virtual-joystick");
+    const handle = $("joystick-handle");
+    let active = false;
+    let centerX = 0;
+    let radius = 46;
+
+    function setActive(on) {
+      if (!root) return;
+      root.classList.toggle("active", !!on);
+      active = !!on;
+    }
+
+    function attach() {
+      if (!root || !handle) return;
+
+      function start(e) {
+        if (!active) return;
+        const t = e.touches?.[0] || e;
+        const rect = root.getBoundingClientRect();
+        centerX = rect.left + rect.width / 2;
+        move(t);
+      }
+
+      function move(t) {
+        if (!active) return;
+        const dx = clamp(t.clientX - centerX, -radius, radius);
+        handle.style.transform = `translate(calc(-50% + ${dx}px), -50%)`;
+        // map dx to targetX offset
+        const pct = dx / radius; // -1..1
+        targetX = clamp(player.x + pct * 120, player.r, BASE_W - player.r);
+        isTouching = true;
+      }
+
+      function end() {
+        if (!active) return;
+        handle.style.transform = "translate(-50%, -50%)";
+        isTouching = false;
+      }
+
+      root.addEventListener("touchstart", (e) => (e.preventDefault(), start(e)), { passive: false });
+      root.addEventListener("touchmove", (e) => (e.preventDefault(), move(e.touches[0])), { passive: false });
+      root.addEventListener("touchend", end, { passive: true });
+    }
+
+    return { setActive, attach };
+  })();
+
+  /* ======================= WEATHER FX (DOM PARTICLES) ======================= */
+  const WeatherFX = (() => {
+    const host = $("weather-effects");
+    let timer = 0;
+
+    function clearAll() {
+      if (!host) return;
+      host.innerHTML = "";
+    }
+
+    function spawnOne() {
+      if (!host) return;
+      const w = GameState.weather;
+      if (!w || w === "clear") return;
+
+      const p = document.createElement("div");
+      p.className = "weather-particle";
+
+      const x = Math.random() * 100;
+      const delay = Math.random() * 0.6;
+
+      p.style.left = x + "vw";
+      p.style.top = "-40px";
+      p.style.animationDelay = delay + "s";
+
+      let inner = document.createElement("div");
+
+      if (w === "rain") inner.className = "rain-drop";
+      else if (w === "snow") inner.className = "snow-flake";
+      else if (w === "leaves" || w === "windy") inner.className = "leaf";
+      else if (w === "blossoms") inner.className = "blossom";
+      else if (w === "foggy") inner.className = "fog-particle";
+      else if (w === "starry") inner.className = "star";
+
+      p.appendChild(inner);
+      host.appendChild(p);
+
+      // cleanup after animation window
+      setTimeout(() => p.remove(), 12000);
+    }
+
+    function tick(dt) {
+      if (!host) return;
+      const w = GameState.weather;
+      if (!w || w === "clear") return;
+
+      // spawn rate based on intensity + weather type
+      const intensity = clamp(Number(GameState.weatherIntensity) || 5, 1, 10);
+      const base = w === "foggy" ? 700 : w === "starry" ? 450 : w === "rain" ? 90 : 130;
+      const interval = clamp(base - intensity * 6, 50, 900);
+
+      timer += dt;
+      while (timer >= interval) {
+        timer -= interval;
+        spawnOne();
+      }
+    }
+
+    return { clearAll, tick };
+  })();
+
+  /* ======================= DAILY CHALLENGE ======================= */
+  const Daily = (() => {
+    function dayKey() {
+      const d = new Date();
+      return `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, "0")}-${String(d.getDate()).padStart(2, "0")}`;
+    }
+
+    function genForToday() {
+      // deterministic-ish by day
+      const key = dayKey();
+      let seed = 0;
+      for (let i = 0; i < key.length; i++) seed = (seed * 31 + key.charCodeAt(i)) >>> 0;
+
+      const pick = seed % 3; // 0..2
+      let challenge;
+      if (pick === 0) challenge = { type: "catch", goal: 35 + (seed % 26), reward: 100 };
+      else if (pick === 1) challenge = { type: "score", goal: 300 + (seed % 401), reward: 150 };
+      else challenge = { type: "streak", goal: 10 + (seed % 9), reward: 120 };
+
+      return { key, ...challenge, progress: 0, completed: false, claimed: false };
+    }
+
+    function load() {
+      const saved = Storage.get("dailyChallenge");
+      const today = dayKey();
+      if (!saved || saved.key !== today) {
+        const fresh = genForToday();
+        Storage.set("dailyChallenge", fresh);
+        return fresh;
+      }
+      return saved;
+    }
+
+    function save(dc) {
+      Storage.set("dailyChallenge", dc);
+    }
+
+    function describe(dc) {
+      if (!dc) return "A small challenge is loading…";
+      if (dc.type === "catch") return `Catch ${dc.goal} honey pots`;
+      if (dc.type === "score") return `Reach ${dc.goal} points`;
+      return `Keep a streak of ${dc.goal} honey`;
+    }
+
+    function progressText(dc) {
+      if (!dc) return "0/0";
+      return `${Math.min(dc.progress, dc.goal)}/${dc.goal}`;
+    }
+
+    function applyEvent(evt) {
+      const dc = load();
+      if (!dc || dc.completed) return dc;
+
+      if (dc.type === "catch" && evt.type === "honey") dc.progress += 1;
+      if (dc.type === "score" && evt.type === "score") dc.progress = Math.max(dc.progress, evt.value);
+      if (dc.type === "streak" && evt.type === "streak") dc.progress = Math.max(dc.progress, evt.value);
+
+      if (dc.progress >= dc.goal) {
+        dc.completed = true;
+      }
+
+      save(dc);
+      return dc;
+    }
+
+    function maybeRewardOnGameOver() {
+      const dc = load();
+      if (dc && dc.completed && !dc.claimed) {
+        // auto-claim reward once per day
+        dc.claimed = true;
+        save(dc);
+        return dc.reward || 0;
+      }
+      return 0;
+    }
+
+    function renderAll() {
+      const dc = load();
+      const desc = describe(dc);
+
+      const startCardDesc = $("daily-challenge-desc");
+      const startCardProg = $("daily-challenge-progress");
+      const startCardReward = $("daily-challenge-reward");
+
+      if (startCardDesc) startCardDesc.textContent = desc;
+      if (startCardReward) startCardReward.textContent = `+${dc.reward} Bonus Points`;
+
+      const pct = dc.goal ? (clamp(dc.progress, 0, dc.goal) / dc.goal) * 100 : 0;
+      if (startCardProg) startCardProg.style.width = `${pct}%`;
+
+      const currTitle = $("current-daily-title");
+      const currDesc = $("current-daily-desc");
+      const currProg = $("current-daily-progress");
+      const currReward = $("current-daily-reward");
+
+      if (currTitle) currTitle.textContent = "Today’s Challenge";
+      if (currDesc) currDesc.textContent = desc;
+      if (currReward) currReward.textContent = `+${dc.reward} Bonus Points`;
+      if (currProg) currProg.style.width = `${pct}%`;
+
+      const pauseDaily = $("pause-daily");
+      if (pauseDaily) pauseDaily.textContent = progressText(dc);
+    }
+
+    return { load, applyEvent, renderAll, maybeRewardOnGameOver, describe };
+  })();
+
+  /* ======================= LEADERBOARD (LOCAL) ======================= */
+  const Leaderboard = (() => {
+    const KEY = "poohLeaderboard";
+
+    function load() {
+      return Storage.get(KEY, []);
+    }
+
+    function save(list) {
+      Storage.set(KEY, list);
+    }
+
+    function add(score) {
+      const list = load();
+      const entry = {
+        score: Math.max(0, score | 0),
+        when: Date.now(),
+      };
+      list.push(entry);
+      list.sort((a, b) => b.score - a.score);
+      const top = list.slice(0, 10);
+      save(top);
+      return top;
+    }
+
+    function clear() {
+      save([]);
+      render();
+    }
+
+    function fmtTime(ms) {
+      try {
+        const d = new Date(ms);
+        return d.toLocaleDateString() + " " + d.toLocaleTimeString([], { hour: "2-digit", minute: "2-digit" });
+      } catch {
+        return "";
+      }
+    }
+
+    function render() {
+      const list = load();
+      const host = $("leaderboard-list");
+      if (!host) return;
+
+      host.innerHTML = "";
+      if (!list.length) {
+        const empty = document.createElement("div");
+        empty.className = "setting-item";
+        empty.innerHTML = `
+          <div class="setting-label">
+            <i class="fas fa-info-circle setting-icon"></i>
+            <div><strong>No scores yet.</strong><br><small>Play a round, then come back and have a look.</small></div>
+          </div>`;
+        host.appendChild(empty);
+        return;
+      }
+
+      list.forEach((e, idx) => {
+        const row = document.createElement("div");
+        row.className = "setting-item";
+        row.innerHTML = `
+          <div class="setting-label">
+            <i class="fas fa-crown setting-icon"></i>
+            <div><strong>#${idx + 1} — ${e.score} points</strong><br><small>${fmtTime(e.when)}</small></div>
+          </div>`;
+        host.appendChild(row);
+      });
+    }
+
+    function bestScore() {
+      const list = load();
+      return list.length ? list[0].score : 0;
+    }
+
+    return { add, clear, render, bestScore };
+  })();
+
+  /* ======================= ACHIEVEMENTS ======================= */
+  const Achievements = (() => {
+    const KEY = "poohAchievementsUnlocked";
+
+    const defs = [
+      { id: "first_honey", name: "A Taste for Honey", desc: "Catch your first honey pot.", test: (s) => s.honeyCaught >= 1 },
+      { id: "hundred", name: "Quite a Lot", desc: "Reach 100 points.", test: (s) => s.score >= 100 },
+      { id: "three_hundred", name: "Properly Busy", desc: "Reach 300 points.", test: (s) => s.score >= 300 },
+      { id: "five_hundred", name: "A Big Sort of Day", desc: "Reach 500 points.", test: (s) => s.score >= 500 },
+      { id: "no_bees_60", name: "Bee-Free Minute", desc: "Play 60 seconds without being hit.", test: (s) => s.timePlayedMs >= 60000 && s.beesHit === 0 },
+      { id: "streak_10", name: "On a Roll", desc: "Catch 10 honey in a row.", test: (s) => s.streak >= 10 },
+      { id: "streak_20", name: "Very Determined", desc: "Catch 20 honey in a row.", test: (s) => s.streak >= 20 },
+      { id: "survive_2", name: "Still Here", desc: "Finish a game with 2+ lives.", test: (s) => !s.running && s.lives >= 2 && s.score > 0 },
+      { id: "use_shield", name: "Not Today, Bees", desc: "Use a shield.", test: (s) => s._usedShield },
+      { id: "use_slow", name: "A Small Breath", desc: "Use slow motion.", test: (s) => s._usedSlow },
+      { id: "use_magnet", name: "Honey Finds You", desc: "Use a honey magnet.", test: (s) => s._usedMagnet },
+      { id: "daily_done", name: "Daily Sort of Hero", desc: "Complete today’s challenge.", test: () => Daily.load().completed === true },
+      { id: "top_1", name: "Highest of the High", desc: "Take the #1 spot on your local leaderboard.", test: (s) => s.score >= Leaderboard.bestScore() && s.score > 0 },
+    ];
+
+    function loadUnlocked() {
+      return new Set(Storage.get(KEY, []));
+    }
+
+    function saveUnlocked(set) {
+      Storage.set(KEY, Array.from(set));
+    }
+
+    function unlock(id) {
+      const set = loadUnlocked();
+      if (set.has(id)) return false;
+      set.add(id);
+      saveUnlocked(set);
+      render();
+      updateCount();
+      Story.toast("Pooh: An achievement! That seems important.", 2000);
+      return true;
+    }
+
+    function evaluate() {
+      const set = loadUnlocked();
+      let changed = false;
+      for (const a of defs) {
+        if (!set.has(a.id) && a.test(GameState)) {
+          set.add(a.id);
+          changed = true;
+        }
+      }
+      if (changed) {
+        saveUnlocked(set);
+        render();
+        updateCount();
+      }
+    }
+
+    function updateCount() {
+      const set = loadUnlocked();
+      const el = $("achievements-count");
+      if (el) el.textContent = `${set.size}/${Math.max(20, defs.length)}`;
+      const pillCount = $("achievements-count");
+      if (pillCount) pillCount.textContent = `${set.size}/${Math.max(20, defs.length)}`;
+    }
+
+    function render() {
+      const host = $("achievements-list");
+      if (!host) return;
+      const set = loadUnlocked();
+      host.innerHTML = "";
+      defs.forEach((a) => {
+        const item = document.createElement("div");
+        item.className = "achievement-item" + (set.has(a.id) ? " unlocked" : "");
+        item.innerHTML = `
+          <div class="achievement-icon">${set.has(a.id) ? "🏆" : "🔒"}</div>
+          <div class="achievement-details">
+            <div class="achievement-name">${a.name}</div>
+            <div class="achievement-desc">${a.desc}</div>
+          </div>`;
+        host.appendChild(item);
+      });
+    }
+
+    return { evaluate, render, updateCount };
+  })();
+
+  /* ======================= HUD + OVERLAYS ======================= */
+  const Overlays = {
+    open(name) {
+      const overlay = $(name + "-screen");
+      if (overlay) {
+        overlay.classList.remove("hidden");
+        document.body.classList.add("overlay-open");
+      }
+      if (name === "pause") GameState.paused = true;
+    },
+    close(name) {
+      const overlay = $(name + "-screen");
+      if (overlay) overlay.classList.add("hidden");
+      const anyOpen = document.querySelectorAll(".overlay-content:not(.hidden)").length > 0;
+      if (!anyOpen) document.body.classList.remove("overlay-open");
+      if (name === "pause") GameState.paused = false;
+    },
+  };
+
+  function updateHUD() {
+    const scoreEl = $("stat-score");
+    const livesEl = $("stat-lives");
+    const comboEl = $("stat-combo");
+    const pauseScore = $("pause-score");
+    const pauseLives = $("pause-lives");
+    const pauseStreak = $("pause-streak");
+    const pauseTime = $("pause-time");
+    const nextLevel = $("next-level-label");
+    const prog = $("progress-fill");
+
+    if (scoreEl) scoreEl.textContent = String(GameState.score);
+    if (livesEl) livesEl.textContent = String(GameState.lives);
+    if (comboEl) comboEl.textContent = `${GameState.combo.toFixed(1)}x`;
+
+    if (pauseScore) pauseScore.textContent = String(GameState.score);
+    if (pauseLives) pauseLives.textContent = String(GameState.lives);
+    if (pauseStreak) pauseStreak.textContent = String(GameState.streak);
+
+    if (pauseTime) pauseTime.textContent = `${Math.floor(GameState.timePlayedMs / 1000)}s`;
+
+    // Simple "level" progress: 0..300 per tier
+    const tier = Math.floor(GameState.score / 300);
+    const within = GameState.score % 300;
+    if (nextLevel) nextLevel.textContent = `${within}/300`;
+    if (prog) prog.style.width = `${(within / 300) * 100}%`;
+
+    const levelDisplay = $("level-display");
+    if (levelDisplay) {
+      const names = ["Beginner", "Brave", "Busy", "Very Busy", "Legendary"];
+      levelDisplay.textContent = names[Math.min(tier, names.length - 1)];
+    }
+
+    // power indicators
+    const now = performance.now();
+    $("shield-indicator")?.classList.toggle("active", GameState.power.shieldUntil > now);
+    $("slow-indicator")?.classList.toggle("active", GameState.power.slowUntil > now);
+    $("magnet-indicator")?.classList.toggle("active", GameState.power.magnetUntil > now);
   }
 
+  /* ======================= AUDIO (IOS-SAFE BEEPS) ======================= */
+  let audioCtx = null;
+  function ensureAudio() {
+    if (!GameState.soundEnabled) return null;
+    try {
+      if (!audioCtx) audioCtx = new (window.AudioContext || window.webkitAudioContext)();
+      if (audioCtx.state === "suspended") audioCtx.resume();
+      return audioCtx;
+    } catch {
+      return null;
+    }
+  }
+
+  function playSound(type) {
+    if (!GameState.soundEnabled) return;
+    const ac = ensureAudio();
+    if (!ac) return;
+
+    const osc = ac.createOscillator();
+    const gain = ac.createGain();
+    osc.connect(gain);
+    gain.connect(ac.destination);
+
+    let f = 440;
+    if (type === "collect") f = 523.25;
+    if (type === "hit") f = 220;
+    if (type === "start") f = 783.99;
+    if (type === "power") f = 659.25;
+
+    osc.frequency.value = f;
+    gain.gain.value = 0.08;
+
+    const now = ac.currentTime;
+    gain.gain.setValueAtTime(0.0001, now);
+    gain.gain.exponentialRampToValueAtTime(0.08, now + 0.01);
+    gain.gain.exponentialRampToValueAtTime(0.0001, now + 0.12);
+
+    osc.start();
+    osc.stop(now + 0.14);
+  }
+
+  // unlock audio with user gesture
+  ["pointerdown", "touchstart", "mousedown"].forEach((evt) => {
+    document.addEventListener(
+      evt,
+      function initAudioOnce() {
+        ensureAudio();
+      },
+      { once: true, passive: true }
+    );
+  });
+
+  /* ======================= DRAWING ======================= */
+  // background
+  function drawBackground() {
+    const g = ctx.createLinearGradient(0, 0, 0, canvas.height);
+    g.addColorStop(0, "#87CEEB");
+    g.addColorStop(1, "#98FB98");
+    ctx.fillStyle = g;
+    ctx.fillRect(0, 0, canvas.width, canvas.height);
+  }
+
+  // Pooh (simple)
   function drawPlayer() {
     ctx.save();
-    ctx.translate(player.x, player.y);
+    ctx.translate((player.x / BASE_W) * canvas.width, (player.y / BASE_H) * canvas.height);
 
-    ctx.fillStyle = '#F7C44F';
+    const sx = canvas.width / BASE_W;
+    const sy = canvas.height / BASE_H;
+    ctx.scale(sx, sy);
+
+    // shirt
+    ctx.fillStyle = "#d63a2f";
+    ctx.beginPath();
+    if (ctx.roundRect) ctx.roundRect(-26, 10, 52, 34, 10);
+    else ctx.rect(-26, 10, 52, 34);
+    ctx.fill();
+
+    // head
+    ctx.fillStyle = "#f7c44f";
     ctx.beginPath();
     ctx.arc(0, 0, player.r, 0, Math.PI * 2);
     ctx.fill();
 
-    ctx.fillStyle = '#000';
+    // ears
+    ctx.fillStyle = "#f2b83e";
     ctx.beginPath();
-    ctx.arc(-10, -5, 4, 0, Math.PI * 2);
-    ctx.arc(10, -5, 4, 0, Math.PI * 2);
+    ctx.arc(-18, -20, 10, 0, Math.PI * 2);
+    ctx.arc(18, -20, 10, 0, Math.PI * 2);
     ctx.fill();
+
+    // snout
+    ctx.fillStyle = "#f2b83e";
+    ctx.beginPath();
+    ctx.ellipse(0, 10, 14, 10, 0, 0, Math.PI * 2);
+    ctx.fill();
+
+    // eyes
+    ctx.fillStyle = "#1b1b1b";
+    ctx.beginPath();
+    ctx.arc(-10, -6, 3.2, 0, Math.PI * 2);
+    ctx.arc(10, -6, 3.2, 0, Math.PI * 2);
+    ctx.fill();
+
+    // nose
+    ctx.beginPath();
+    ctx.ellipse(0, 6, 4, 3, 0, 0, Math.PI * 2);
+    ctx.fill();
+
+    // smile
+    ctx.strokeStyle = "rgba(0,0,0,0.65)";
+    ctx.lineWidth = 2;
+    ctx.beginPath();
+    ctx.arc(0, 14, 10, 0.15 * Math.PI, 0.85 * Math.PI);
+    ctx.stroke();
 
     ctx.restore();
   }
 
   function drawHoney(h) {
     ctx.save();
-    ctx.translate(h.x, h.y);
-    ctx.fillStyle = h.type === 'gold' ? '#FFD700' : '#FFA500';
+    const x = (h.x / BASE_W) * canvas.width;
+    const y = (h.y / BASE_H) * canvas.height;
+    const sx = canvas.width / BASE_W;
+    const sy = canvas.height / BASE_H;
+    ctx.translate(x, y);
+    ctx.scale(sx, sy);
+
+    ctx.fillStyle = h.type === "gold" ? "#FFD700" : h.type === "cursed" ? "#7d3cff" : "#FFA500";
     ctx.beginPath();
     ctx.ellipse(0, 0, h.r, h.r * 0.8, 0, 0, Math.PI * 2);
     ctx.fill();
+
+    // tiny shine
+    ctx.fillStyle = "rgba(255,255,255,0.35)";
+    ctx.beginPath();
+    ctx.ellipse(-5, -5, 5, 3.5, -0.4, 0, Math.PI * 2);
+    ctx.fill();
+
     ctx.restore();
   }
 
   function drawBee(b) {
     ctx.save();
-    ctx.translate(b.x, b.y);
-    ctx.fillStyle = '#FFD700';
+    const x = (b.x / BASE_W) * canvas.width;
+    const y = (b.y / BASE_H) * canvas.height;
+    const sx = canvas.width / BASE_W;
+    const sy = canvas.height / BASE_H;
+    ctx.translate(x, y);
+    ctx.scale(sx, sy);
+
+    ctx.fillStyle = "#FFD700";
     ctx.beginPath();
-    ctx.ellipse(0, 0, b.r * 1.2, b.r, 0, 0, Math.PI * 2);
+    ctx.ellipse(0, 0, b.r * 1.25, b.r, 0, 0, Math.PI * 2);
     ctx.fill();
+
+    ctx.fillStyle = "rgba(0,0,0,0.25)";
+    ctx.fillRect(-6, -b.r + 2, 3, b.r * 2 - 4);
+    ctx.fillRect(0, -b.r + 2, 3, b.r * 2 - 4);
+
     ctx.restore();
   }
 
-  /* ======================= HUD ======================= */
-  function updateHUD() {
-    const scoreEl = $('stat-score');
-    const livesEl = $('stat-lives');
-    if (scoreEl) scoreEl.textContent = String(GameState.score);
-    if (livesEl) livesEl.textContent = String(GameState.lives);
+  function drawPower(p) {
+    ctx.save();
+    const x = (p.x / BASE_W) * canvas.width;
+    const y = (p.y / BASE_H) * canvas.height;
+    const sx = canvas.width / BASE_W;
+    const sy = canvas.height / BASE_H;
+    ctx.translate(x, y);
+    ctx.scale(sx, sy);
+
+    const color = p.type === "shield" ? "#0096ff" : p.type === "slow" ? "#9d4edd" : "#ff6b6b";
+    ctx.fillStyle = color;
+    ctx.beginPath();
+    ctx.arc(0, 0, p.r, 0, Math.PI * 2);
+    ctx.fill();
+
+    ctx.fillStyle = "rgba(255,255,255,0.9)";
+    ctx.font = "bold 14px sans-serif";
+    ctx.textAlign = "center";
+    ctx.textBaseline = "middle";
+    ctx.fillText(p.type === "shield" ? "S" : p.type === "slow" ? "⏳" : "M", 0, 1);
+
+    ctx.restore();
   }
 
-  /* ======================= AUDIO (iOS SAFE: UNLOCK ON FIRST GESTURE) ======================= */
-  const AudioSys = (() => {
-    let ctx = null;
-    let unlocked = false;
-
-    function ensure() {
-      if (unlocked && ctx) return ctx;
-      const AC = window.AudioContext || window.webkitAudioContext;
-      if (!AC) return null;
-      ctx = ctx || new AC();
-      return ctx;
-    }
-
-    async function unlock() {
-      try {
-        const c = ensure();
-        if (!c) return;
-        if (c.state === 'suspended') await c.resume();
-        // tiny silent blip to satisfy some iOS versions
-        const o = c.createOscillator();
-        const g = c.createGain();
-        g.gain.value = 0.00001;
-        o.connect(g); g.connect(c.destination);
-        o.start(); o.stop(c.currentTime + 0.01);
-        unlocked = true;
-      } catch {}
-    }
-
-    function beep(freq, dur = 0.08) {
-      if (!GameState.soundEnabled) return;
-      const c = ensure();
-      if (!c || !unlocked) return;
-      const o = c.createOscillator();
-      const g = c.createGain();
-      o.type = 'sine';
-      o.frequency.value = freq;
-      g.gain.value = 0.12;
-      o.connect(g); g.connect(c.destination);
-      o.start();
-      o.stop(c.currentTime + dur);
-    }
-
-    return { unlock, beep };
-  })();
-
-  function playSound(type) {
-    if (!GameState.soundEnabled) return;
-    let f = 440;
-    if (type === 'collect') f = 523.25;
-    if (type === 'hit') f = 220;
-    if (type === 'start') f = 783.99;
-    AudioSys.beep(f);
+  function renderGame() {
+    drawBackground();
+    honeys.forEach(drawHoney);
+    bees.forEach(drawBee);
+    powers.forEach(drawPower);
+    drawPlayer();
   }
 
-  // Unlock audio on first real gesture (iOS requirement)
-  ['touchstart','pointerdown','mousedown','keydown'].forEach(evt => {
-    window.addEventListener(evt, () => { AudioSys.unlock(); }, { once: true, passive: true });
-  });
-
-  /* ======================= GAME FLOW ======================= */
-  function hideAllOverlays() {
-    document.querySelectorAll('.overlay-content').forEach(el => el.classList.add('hidden'));
-    document.body.classList.remove('overlay-open');
+  /* ======================= SPAWN / COLLISION ======================= */
+  function spawnHoney() {
+    if (honeys.length >= GAME_CONFIG.MAX_HONEYS) return;
+    const roll = Math.random();
+    const type = roll < 0.08 ? "gold" : roll < 0.12 ? "cursed" : "normal";
+    honeys.push({
+      x: Math.random() * (BASE_W - 60) + 30,
+      y: -30,
+      r: 15,
+      vy: 2 + Math.random() * 2,
+      type,
+    });
   }
 
-  function startGame() {
-    GameState.running = true;
-    GameState.paused = false;
-    GameState.score = 0;
-    GameState.lives = 3;
-
-    honeys.length = 0;
-    bees.length = 0;
-
-    player.x = BASE_W / 2;
-    targetX = player.x;
-    isTracking = false;
-
-    hideAllOverlays();
-    updateHUD();
-
-    playSound('start');
+  function spawnBee() {
+    if (bees.length >= GAME_CONFIG.MAX_BEES) return;
+    bees.push({
+      x: Math.random() * (BASE_W - 60) + 30,
+      y: -40,
+      r: 12,
+      vy: 3 + Math.random() * 2,
+      vx: (Math.random() - 0.5) * 2,
+    });
   }
 
-  function gameOver() {
-    GameState.running = false;
-    const gameover = $('gameover-screen');
-    if (gameover) gameover.classList.remove('hidden');
-    const finalScore = $('final-score');
-    if (finalScore) finalScore.textContent = String(GameState.score);
+  function spawnPower() {
+    if (powers.length >= GAME_CONFIG.MAX_POWERS) return;
+    const r = Math.random();
+    const type = r < 0.34 ? "shield" : r < 0.67 ? "slow" : "magnet";
+    powers.push({
+      x: Math.random() * (BASE_W - 60) + 30,
+      y: -40,
+      r: 14,
+      vy: 2.4 + Math.random() * 1.2,
+      type,
+    });
   }
 
-  const Overlays = {
-    open(name) {
-      const el = $(name + '-screen');
-      if (el) {
-        el.classList.remove('hidden');
-        document.body.classList.add('overlay-open');
-      }
-      if (name === 'pause') GameState.paused = true;
-    },
-    close(name) {
-      const el = $(name + '-screen');
-      if (el) el.classList.add('hidden');
+  function collides(a, b) {
+    return distance(a.x, a.y, b.x, b.y) < a.r + b.r;
+  }
 
-      const anyOpen = document.querySelectorAll('.overlay-content:not(.hidden)').length > 0;
-      if (!anyOpen) document.body.classList.remove('overlay-open');
+  /* ======================= GAME LOGIC ======================= */
+  let didFirstHoneyLine = false;
+  let lastPepTalkAt = 0;
+  let lastTiggerAt = 0;
 
-      if (name === 'pause') GameState.paused = false;
-    }
-  };
+  function slowFactor(now) {
+    return GameState.power.slowUntil > now ? 0.55 : 1.0;
+  }
 
-  /* ======================= UPDATE + RENDER ======================= */
-  function updateGame(dtMs) {
+  function magnetOn(now) {
+    return GameState.power.magnetUntil > now;
+  }
+
+  function shieldOn(now) {
+    return GameState.power.shieldUntil > now;
+  }
+
+  function updateGame(dt) {
     if (!GameState.running || GameState.paused) return;
 
-    // Smooth follow
-    if (isTracking) {
+    const now = performance.now();
+    GameState.timePlayedMs = now - GameState.startTimeMs;
+
+    const sf = slowFactor(now);
+
+    // player smoothing
+    if (isTouching) {
       const dx = targetX - player.x;
-      player.x += dx * 0.25;
+      player.x += dx * 0.28;
     }
     player.x = clamp(player.x, player.r, BASE_W - player.r);
 
-    // Spawn
-    if (Math.random() < 0.02) spawnHoney();
-    if (Math.random() < 0.01) spawnBee();
+    // spawns
+    const honeyChance = 0.018 * sf;
+    const beeChance = 0.010 * sf;
+    const powerChance = 0.0026 * sf;
 
-    // Honeys
+    if (Math.random() < honeyChance) spawnHoney();
+    if (Math.random() < beeChance) spawnBee();
+    if (Math.random() < powerChance) spawnPower();
+
+    // update honeys
     for (let i = honeys.length - 1; i >= 0; i--) {
       const h = honeys[i];
-      h.y += h.vy;
+
+      // magnet pulls honey
+      if (magnetOn(now)) {
+        const pull = clamp((player.x - h.x) * 0.03, -2.2, 2.2);
+        h.x += pull;
+      }
+
+      h.y += h.vy * sf;
 
       if (collides(player, h)) {
-        GameState.score += (h.type === 'gold' ? 25 : 10);
-        updateHUD();
-        playSound('collect');
+        if (h.type === "cursed") {
+          GameState.score = Math.max(0, GameState.score - 15);
+          GameState.lives = Math.max(0, GameState.lives - 1);
+          GameState.streak = 0;
+          GameState.combo = 1.0;
+          playSound("hit");
+          Story.toast("Rabbit: That one was a terrible idea.", 2000);
+        } else {
+          GameState.honeyCaught += 1;
+          GameState.streak += 1;
+          GameState.combo = clamp(1 + GameState.streak * 0.05, 1, 2.5);
+
+          const add = h.type === "gold" ? 25 : 10;
+          GameState.score += Math.round(add * GameState.combo);
+          playSound("collect");
+
+          Daily.applyEvent({ type: "honey" });
+          Daily.applyEvent({ type: "streak", value: GameState.streak });
+          Daily.applyEvent({ type: "score", value: GameState.score });
+
+          if (!didFirstHoneyLine) {
+            didFirstHoneyLine = true;
+            Story.toast(Story.pick(Story.Lines.pigletEncourage), 2400);
+          } else if (Math.random() < 0.12) {
+            Story.toast(Story.pick(Story.Lines.poohCollect), 2100);
+          }
+
+          if (GameState.streak >= 10 && now - lastTiggerAt > 4500 && Math.random() < 0.55) {
+            lastTiggerAt = now;
+            Story.toast(Story.pick(Story.Lines.tiggerHype), 2200);
+          }
+        }
+
         honeys.splice(i, 1);
+        updateHUD();
+        Daily.renderAll();
+        Achievements.evaluate();
+
+        if (GameState.lives <= 0) {
+          gameOver();
+          return;
+        }
         continue;
       }
 
-      if (h.y > BASE_H + 60) honeys.splice(i, 1);
+      if (h.y > BASE_H + 60) {
+        // missed honey breaks streak gently
+        GameState.streak = Math.max(0, GameState.streak - 1);
+        GameState.combo = clamp(1 + GameState.streak * 0.05, 1, 2.5);
+        honeys.splice(i, 1);
+      }
     }
 
-    // Bees
+    // update bees
     for (let i = bees.length - 1; i >= 0; i--) {
       const b = bees[i];
-      b.x += b.vx;
-      b.y += b.vy;
+      b.x += b.vx * sf;
+      b.y += b.vy * sf;
 
       if (b.x < b.r || b.x > BASE_W - b.r) b.vx *= -1;
 
       if (collides(player, b)) {
-        GameState.lives--;
-        updateHUD();
-        playSound('hit');
+        if (shieldOn(now)) {
+          // consume shield once
+          GameState.power.shieldUntil = 0;
+          GameState._usedShield = true;
+          playSound("power");
+          Story.toast("Pooh: That was close. Quite close.", 2000);
+        } else {
+          GameState.beesHit += 1;
+          GameState.lives -= 1;
+          GameState.streak = 0;
+          GameState.combo = 1.0;
+          playSound("hit");
+
+          if (GameState.lives <= 1 && now - lastPepTalkAt > 4500) {
+            lastPepTalkAt = now;
+            Story.toast(Story.pick(Story.Lines.pigletEncourage), 2600);
+          }
+        }
+
         bees.splice(i, 1);
-        if (GameState.lives <= 0) { gameOver(); return; }
+        updateHUD();
+        Achievements.evaluate();
+
+        if (GameState.lives <= 0) {
+          gameOver();
+          return;
+        }
         continue;
       }
 
       if (b.y > BASE_H + 60) bees.splice(i, 1);
     }
+
+    // update powers
+    for (let i = powers.length - 1; i >= 0; i--) {
+      const p = powers[i];
+      p.y += p.vy * sf;
+
+      if (collides(player, p)) {
+        const t = performance.now();
+        if (p.type === "shield") {
+          GameState.power.shieldUntil = t + 6500;
+          GameState._usedShield = true;
+          Story.toast("Pooh: A shield! That seems helpful.", 2000);
+        } else if (p.type === "slow") {
+          GameState.power.slowUntil = t + 5200;
+          GameState._usedSlow = true;
+          Story.toast("Piglet: Everything’s… taking a small breath.", 2200);
+        } else {
+          GameState.power.magnetUntil = t + 5200;
+          GameState._usedMagnet = true;
+          Story.toast("Pooh: The honey is coming to us. How polite.", 2200);
+        }
+        playSound("power");
+        powers.splice(i, 1);
+        updateHUD();
+        Achievements.evaluate();
+        continue;
+      }
+
+      if (p.y > BASE_H + 60) powers.splice(i, 1);
+    }
+
+    updateHUD();
   }
 
-  function renderGame() {
-    // Because we use ctx.setTransform to map logical->device, we draw in logical coords:
-    drawBackground();
-    for (const h of honeys) drawHoney(h);
-    for (const b of bees) drawBee(b);
-    drawPlayer();
+  /* ======================= GAME FLOW ======================= */
+  function startGame() {
+    GameState.running = true;
+    GameState.paused = false;
+
+    GameState.score = 0;
+    GameState.lives = 3;
+    GameState.combo = 1.0;
+    GameState.streak = 0;
+    GameState.honeyCaught = 0;
+    GameState.beesHit = 0;
+
+    GameState._usedShield = false;
+    GameState._usedSlow = false;
+    GameState._usedMagnet = false;
+
+    GameState.power.shieldUntil = 0;
+    GameState.power.slowUntil = 0;
+    GameState.power.magnetUntil = 0;
+
+    didFirstHoneyLine = false;
+    lastPepTalkAt = 0;
+    lastTiggerAt = 0;
+
+    honeys.length = 0;
+    bees.length = 0;
+    powers.length = 0;
+
+    player.x = BASE_W / 2;
+    targetX = player.x;
+
+    GameState.startTimeMs = performance.now();
+    GameState.timePlayedMs = 0;
+
+    document.querySelectorAll(".overlay-content").forEach((el) => el.classList.add("hidden"));
+    document.body.classList.remove("overlay-open");
+
+    updateHUD();
+    Daily.renderAll();
+    Achievements.evaluate();
+
+    playSound("start");
+    Story.toast(Story.pick(Story.Lines.poohStart), 2200);
   }
 
-  /* ======================= UI WIRING ======================= */
+  function gameOver() {
+    GameState.running = false;
+    GameState.paused = false;
+
+    // reward daily if completed
+    const reward = Daily.maybeRewardOnGameOver();
+    if (reward > 0) {
+      GameState.score += reward;
+      $("daily-complete-badge")?.classList.remove("hidden");
+      Story.toast("Rabbit: Daily challenge complete. That’s a sensible thing.", 2400);
+    } else {
+      $("daily-complete-badge")?.classList.add("hidden");
+    }
+
+    // leaderboard + record badge
+    const bestBefore = Leaderboard.bestScore();
+    const list = Leaderboard.add(GameState.score);
+    const isNew = GameState.score > bestBefore;
+
+    const newRecord = $("new-record-badge");
+    if (newRecord) newRecord.classList.toggle("hidden", !isNew);
+
+    // final screen fields
+    $("final-score") && ($("final-score").textContent = String(GameState.score));
+    $("final-total") && ($("final-total").textContent = String(GameState.score));
+    $("final-streak") && ($("final-streak").textContent = String(GameState.streak));
+    $("final-honey") && ($("final-honey").textContent = String(GameState.honeyCaught));
+    $("final-bees") && ($("final-bees").textContent = String(Math.max(0, GameState.honeyCaught - GameState.beesHit)));
+    $("final-level") && ($("final-level").textContent = $("level-display")?.textContent || "Beginner");
+
+    // open gameover
+    $("gameover-screen")?.classList.remove("hidden");
+    document.body.classList.add("overlay-open");
+
+    Leaderboard.render();
+    Daily.renderAll();
+    Achievements.evaluate();
+    Achievements.render();
+    Achievements.updateCount();
+
+    Story.toast(Story.pick(Story.Lines.eeyoreGameOver), 2600);
+  }
+
+  /* ======================= UI WIRING (ALL BUTTONS) ======================= */
   function setupUI() {
-    const startBtn = $('start-btn');
-    const quickStart = $('quick-start');
-    const pauseBtn = $('pause-toggle');
-    const resumeBtn = $('resume-btn');
-    const continueBtn = $('continue-btn');
-    const playAgainBtn = $('play-again-btn');
-    const closeStart = $('close-start');
-    const closeGameOver = $('gameover-close');
-    const settingsBtn = $('settings-btn');
-    const closeSettings = $('close-settings');
-    const soundToggle = $('sound-toggle-btn');
+    const startScreen = $("start-screen");
+    const weatherDrawer = $("weather-drawer");
 
-    if (startBtn) startBtn.addEventListener('click', startGame);
-    if (quickStart) quickStart.addEventListener('click', startGame);
+    const openOverlay = (id) => {
+      const el = $(id);
+      if (!el) return;
+      el.classList.remove("hidden");
+      document.body.classList.add("overlay-open");
+    };
 
-    if (pauseBtn) pauseBtn.addEventListener('click', () => {
-      if (GameState.running && !GameState.paused) Overlays.open('pause');
-      else if (GameState.paused) Overlays.close('pause');
+    const closeOverlay = (id) => {
+      const el = $(id);
+      if (!el) return;
+      el.classList.add("hidden");
+      const anyOpen = document.querySelectorAll(".overlay-content:not(.hidden)").length > 0;
+      if (!anyOpen) document.body.classList.remove("overlay-open");
+    };
+
+    // start / quick
+    addPress($("start-btn"), startGame);
+    addPress($("quick-start"), startGame);
+
+    // close start
+    addPress($("close-start"), () => {
+      startScreen?.classList.add("hidden");
+      const anyOpen = document.querySelectorAll(".overlay-content:not(.hidden)").length > 0;
+      if (!anyOpen) document.body.classList.remove("overlay-open");
     });
 
-    if (resumeBtn) resumeBtn.addEventListener('click', () => Overlays.close('pause'));
-    if (continueBtn) continueBtn.addEventListener('click', () => Overlays.close('pause'));
-
-    if (playAgainBtn) playAgainBtn.addEventListener('click', startGame);
-
-    if (closeStart) closeStart.addEventListener('click', () => {
-      const s = $('start-screen');
-      if (s) s.classList.add('hidden');
-      document.body.classList.remove('overlay-open');
+    // pause / resume
+    addPress($("pause-toggle"), () => {
+      if (!GameState.running) return;
+      if (!GameState.paused) {
+        Overlays.open("pause");
+        Story.toast(Story.pick(Story.Lines.rabbitRules), 2200);
+      } else Overlays.close("pause");
+      updateHUD();
+      Daily.renderAll();
     });
 
-    if (closeGameOver) closeGameOver.addEventListener('click', () => {
-      const g = $('gameover-screen');
-      if (g) g.classList.add('hidden');
-      const s = $('start-screen');
-      if (s) s.classList.remove('hidden');
-      document.body.classList.add('overlay-open');
+    addPress($("resume-btn"), () => Overlays.close("pause"));
+    addPress($("continue-btn"), () => Overlays.close("pause"));
+
+    addPress($("restart-btn"), () => {
+      Overlays.close("pause");
+      startGame();
     });
 
-    if (settingsBtn) settingsBtn.addEventListener('click', () => {
-      const s = $('settings-screen');
-      if (s) s.classList.remove('hidden');
-      document.body.classList.add('overlay-open');
+    addPress($("quit-btn"), () => {
+      GameState.running = false;
+      GameState.paused = false;
+      document.querySelectorAll(".overlay-content").forEach((el) => el.classList.add("hidden"));
+      startScreen?.classList.remove("hidden");
+      document.body.classList.add("overlay-open");
+      updateHUD();
     });
 
-    if (closeSettings) closeSettings.addEventListener('click', () => {
-      const s = $('settings-screen');
-      if (s) s.classList.add('hidden');
-      const anyOpen = document.querySelectorAll('.overlay-content:not(.hidden)').length > 0;
-      if (!anyOpen) document.body.classList.remove('overlay-open');
+    // game over close
+    addPress($("gameover-close"), () => {
+      closeOverlay("gameover-screen");
+      startScreen?.classList.remove("hidden");
+      document.body.classList.add("overlay-open");
+      Leaderboard.render();
+      Daily.renderAll();
     });
 
-    if (soundToggle) soundToggle.addEventListener('click', () => {
-      GameState.soundEnabled = !GameState.soundEnabled;
-      const icon = soundToggle.querySelector('i');
-      if (icon) icon.className = GameState.soundEnabled ? 'fas fa-volume-up' : 'fas fa-volume-mute';
-      Storage.set('gameSettings', {
+    // play again
+    addPress($("play-again-btn"), startGame);
+
+    // help
+    addPress($("help-btn"), () => {
+      openOverlay("help-screen");
+      Story.toast(Story.pick(Story.Lines.rabbitRules), 2200);
+    });
+    addPress($("close-help-btn"), () => closeOverlay("help-screen"));
+
+    // tutorial
+    addPress($("tutorial-btn"), () => $("tutorial-overlay")?.classList.remove("hidden"));
+    addPress($("tutorial-start"), () => {
+      $("tutorial-overlay")?.classList.add("hidden");
+      startGame();
+    });
+    addPress($("tutorial-next"), () => {
+      $("tutorial-step-1")?.classList.remove("active");
+      $("tutorial-step-2")?.classList.add("active");
+    });
+    addPress($("tutorial-next-2"), () => {
+      $("tutorial-step-2")?.classList.remove("active");
+      $("tutorial-step-3")?.classList.add("active");
+    });
+    addPress($("tutorial-prev"), () => {
+      $("tutorial-step-2")?.classList.remove("active");
+      $("tutorial-step-1")?.classList.add("active");
+    });
+    addPress($("tutorial-prev-2"), () => {
+      $("tutorial-step-3")?.classList.remove("active");
+      $("tutorial-step-2")?.classList.add("active");
+    });
+
+    // achievements open/close
+    const openAch = () => {
+      openOverlay("achievements-screen");
+      Achievements.render();
+      Achievements.updateCount();
+    };
+    addPress($("achievements-pill"), openAch);
+    addPress($("view-achievements-btn"), openAch);
+    addPress($("close-achievements-btn"), () => closeOverlay("achievements-screen"));
+    addPress($("close-achievements-btn-2"), () => closeOverlay("achievements-screen"));
+
+    // settings open/close + save toggles
+    addPress($("settings-btn"), () => {
+      openOverlay("settings-screen");
+      Story.toast("Rabbit: Let’s make everything sensible again.", 2200);
+
+      $("sound-toggle-setting") && ($("sound-toggle-setting").checked = !!GameState.soundEnabled);
+      $("music-toggle-setting") && ($("music-toggle-setting").checked = !!GameState.musicEnabled);
+      $("haptic-toggle-setting") && ($("haptic-toggle-setting").checked = !!GameState.hapticEnabled);
+      $("effects-toggle-setting") && ($("effects-toggle-setting").checked = !!GameState.visualEffects);
+      $("joystick-toggle-setting") && ($("joystick-toggle-setting").checked = $("virtual-joystick")?.classList.contains("active") || false);
+      $("contrast-toggle-setting") && document.body.classList.toggle("high-contrast", false);
+    });
+
+    addPress($("close-settings"), () => closeOverlay("settings-screen"));
+
+    addPress($("save-settings"), () => {
+      const s = $("sound-toggle-setting");
+      const m = $("music-toggle-setting");
+      const h = $("haptic-toggle-setting");
+      const e = $("effects-toggle-setting");
+      const j = $("joystick-toggle-setting");
+      const c = $("contrast-toggle-setting");
+
+      if (s) GameState.soundEnabled = !!s.checked;
+      if (m) GameState.musicEnabled = !!m.checked;
+      if (h) GameState.hapticEnabled = !!h.checked;
+      if (e) GameState.visualEffects = !!e.checked;
+
+      if (j) Joy.setActive(!!j.checked);
+      if (c) document.body.classList.toggle("high-contrast", !!c.checked);
+
+      Storage.set("gameSettings", {
         soundEnabled: GameState.soundEnabled,
         musicEnabled: GameState.musicEnabled,
-        visualEffects: GameState.visualEffects
+        hapticEnabled: GameState.hapticEnabled,
+        visualEffects: GameState.visualEffects,
+        weather: GameState.weather,
+        weatherIntensity: GameState.weatherIntensity,
       });
+
+      Story.toast("Pooh: That feels better already.", 2000);
+      updateHUD();
+      closeOverlay("settings-screen");
+    });
+
+    // reset progress (leaderboard + achievements + daily)
+    addPress($("reset-progress"), () => {
+      $("reset-confirm") && ($("reset-confirm").style.display = "flex");
+      Story.toast("Rabbit: Are you quite sure about that?", 2200);
+    });
+
+    addPress($("reset-confirm"), () => {
+      Storage.remove("poohLeaderboard");
+      Storage.remove("poohAchievementsUnlocked");
+      Storage.remove("dailyChallenge");
+      Leaderboard.render();
+      Achievements.render();
+      Achievements.updateCount();
+      Daily.renderAll();
+      $("reset-confirm") && ($("reset-confirm").style.display = "none");
+      Story.toast("Eeyore: Everything’s gone now. If that helps.", 2400);
+    });
+
+    // menu button: bring up pause if running, otherwise start screen
+    addPress($("menu-toggle"), () => {
+      if (GameState.running && !GameState.paused) {
+        Overlays.open("pause");
+        Story.toast(Story.pick(Story.Lines.rabbitRules), 2200);
+        updateHUD();
+        Daily.renderAll();
+      } else {
+        startScreen?.classList.remove("hidden");
+        document.body.classList.add("overlay-open");
+      }
+    });
+
+    // sound quick toggle
+    addPress($("sound-toggle-btn"), () => {
+      GameState.soundEnabled = !GameState.soundEnabled;
+      const icon = $("sound-toggle-btn")?.querySelector("i");
+      if (icon) icon.className = GameState.soundEnabled ? "fas fa-volume-up" : "fas fa-volume-mute";
+      Storage.set("gameSettings", { ...Storage.get("gameSettings", {}), soundEnabled: GameState.soundEnabled });
+      playSound("collect");
+      Story.toast(GameState.soundEnabled ? "Pooh: That sounds nice." : "Pooh: Quiet is also nice.", 1800);
+    });
+
+    // share
+    async function shareScore() {
+      const text = `Pooh’s Honey Hunt — ${GameState.score} points 🍯`;
+      try {
+        if (navigator.share) await navigator.share({ title: "Pooh’s Honey Hunt", text });
+        else await navigator.clipboard?.writeText(text);
+        Story.toast("Piglet: Sent along very nicely.", 1800);
+      } catch {}
+    }
+    addPress($("share-btn"), shareScore);
+    addPress($("share-final-btn"), shareScore);
+
+    // leaderboard open/close + refresh/clear
+    const openLB = () => {
+      openOverlay("leaderboard-screen");
+      Leaderboard.render();
+    };
+    addPress($("leaderboard-btn-main"), openLB);
+    addPress($("leaderboard-btn"), openLB);
+    addPress($("close-leaderboard-btn"), () => closeOverlay("leaderboard-screen"));
+    addPress($("refresh-leaderboard"), () => {
+      Leaderboard.render();
+      Story.toast("Rabbit: Updated.", 1600);
+    });
+    addPress($("clear-leaderboard"), () => {
+      Leaderboard.clear();
+      Story.toast("Eeyore: Nobody’s winning now.", 2000);
+    });
+
+    // daily challenge open/close + start daily mode (just starts a normal game, but tracks daily)
+    const openDaily = () => {
+      openOverlay("daily-challenge-screen");
+      Daily.renderAll();
+    };
+    addPress($("daily-challenge-btn"), openDaily);
+    addPress($("close-daily-btn"), () => closeOverlay("daily-challenge-screen"));
+    addPress($("start-daily-challenge"), () => {
+      closeOverlay("daily-challenge-screen");
+      startGame();
+      Story.toast("Pooh: Today’s challenge. That sounds busy.", 2200);
+    });
+
+    // weather drawer open/close + icons + intensity
+    addPress($("weather-toggle"), () => {
+      weatherDrawer?.classList.add("open");
+      Story.toast("Pooh: Weather is important. For moods.", 2000);
+    });
+    addPress($("weather-close"), () => weatherDrawer?.classList.remove("open"));
+
+    document.querySelectorAll(".weather-btn").forEach((btn) => {
+      addPress(btn, () => {
+        document.querySelectorAll(".weather-btn").forEach((b) => b.classList.remove("active"));
+        btn.classList.add("active");
+        GameState.weather = btn.dataset.weather || "clear";
+        Storage.set("gameSettings", { ...Storage.get("gameSettings", {}), weather: GameState.weather });
+        WeatherFX.clearAll();
+      });
+    });
+
+    const intensity = $("weather-intensity");
+    if (intensity) {
+      intensity.value = String(GameState.weatherIntensity || 5);
+      intensity.addEventListener("input", () => {
+        GameState.weatherIntensity = clamp(Number(intensity.value) || 5, 1, 10);
+        Storage.set("gameSettings", { ...Storage.get("gameSettings", {}), weatherIntensity: GameState.weatherIntensity });
+      });
+    }
+
+    // joystick toggle button
+    addPress($("virtual-joystick-toggle"), () => {
+      const on = !$("virtual-joystick")?.classList.contains("active");
+      Joy.setActive(on);
+      Story.toast(on ? "Tigger: Ooo! A bouncy control thing!" : "Rabbit: Back to sensible controls.", 2000);
+    });
+
+    // friends panel (if you kept it)
+    addPress($("friends-btn"), () => {
+      const p = $("friends-panel");
+      if (!p) return;
+      p.style.display = p.style.display === "none" || !p.style.display ? "block" : "none";
     });
   }
 
   /* ======================= LOADING SCREEN ======================= */
   function initLoading() {
-    const loadingScreen = $('loading-screen');
-    const progressFill = $('loading-progress');
-    const tip = $('loading-tip');
-    if (!loadingScreen || !progressFill || !tip) return;
+    const loadingScreen = $("loading-screen");
+    const progress = $("loading-progress");
+    const tip = $("loading-tip");
+    if (!loadingScreen || !progress || !tip) return;
 
     const tips = [
-      "Tap and drag to move Pooh!",
-      "Catch honey, avoid bees!",
-      "Golden honey gives more points!",
-      "Keep your Pooh safe.",
-      "Try a quick start!"
+      "You always play as Pooh — his friends pop in when it matters.",
+      "Honey is splendid. Bees are… less splendid.",
+      "Move left and right. Try not to look too surprised about it.",
+      "Golden honey is extra lovely — like finding a good idea twice.",
+      "If things get tricky, pause and take a small think.",
     ];
 
     let loadProgress = 0;
     let lastBucket = -1;
 
     const interval = setInterval(() => {
-      loadProgress += Math.random() * 12 + 6;
-      if (loadProgress >= 100) loadProgress = 100;
+      loadProgress += Math.random() * 10 + 6;
+      if (loadProgress >= 100) {
+        loadProgress = 100;
+        clearInterval(interval);
+        setTimeout(() => {
+          loadingScreen.classList.add("hidden");
+          $("start-screen")?.classList.remove("hidden");
+          document.body.classList.add("overlay-open");
+          Daily.renderAll();
+          Leaderboard.render();
+          Achievements.render();
+          Achievements.updateCount();
+        }, 280);
+      }
 
-      progressFill.style.width = loadProgress + "%";
+      progress.style.width = `${loadProgress}%`;
 
       const bucket = Math.floor(loadProgress / 25);
       if (bucket !== lastBucket) {
         lastBucket = bucket;
-        tip.textContent = tips[Math.floor(Math.random() * tips.length)];
-      }
-
-      if (loadProgress >= 100) {
-        clearInterval(interval);
-        setTimeout(() => {
-          loadingScreen.classList.add('hidden');
-          const start = $('start-screen');
-          if (start) start.classList.remove('hidden');
-          document.body.classList.add('overlay-open');
-        }, 250);
+        tip.textContent = tips[(Math.random() * tips.length) | 0];
       }
     }, 100);
+
+    // failsafe
+    setTimeout(() => {
+      if (!loadingScreen.classList.contains("hidden")) {
+        loadingScreen.classList.add("hidden");
+        $("start-screen")?.classList.remove("hidden");
+        document.body.classList.add("overlay-open");
+        Daily.renderAll();
+        Leaderboard.render();
+        Achievements.render();
+        Achievements.updateCount();
+      }
+    }, 3200);
   }
 
-  /* ======================= MAIN LOOP ======================= */
-  let lastT = 0;
-  function loop(t) {
-    const dt = Math.min(50, (t - lastT) || 16);
-    lastT = t;
+  /* ======================= RESIZE ======================= */
+  function resizeCanvas() {
+    const container = $("game-container");
+    if (!container) return;
 
-    // If iOS did an orientation change, canvas can "forget" transforms.
-    // Re-apply transform occasionally (cheap, saves pain).
-    applyCanvasTransform();
+    const cw = container.clientWidth;
+    const ch = container.clientHeight;
+
+    const aspect = BASE_W / BASE_H;
+    let w = cw;
+    let h = cw / aspect;
+
+    if (h > ch) {
+      h = ch;
+      w = ch * aspect;
+    }
+
+    canvas.style.width = `${w}px`;
+    canvas.style.height = `${h}px`;
+  }
+
+  /* ======================= LOOP ======================= */
+  let last = 0;
+  function loop(t) {
+    const dt = Math.min(64, t - last || 0);
+    last = t;
 
     updateGame(dt);
     renderGame();
+
+    if (GameState.visualEffects !== false) WeatherFX.tick(dt);
 
     requestAnimationFrame(loop);
   }
 
   /* ======================= INIT ======================= */
   function init() {
-    setupUI();
+    fixIOSCanvas();
+    Joy.attach();
+    window.addEventListener("resize", resizeCanvas, { passive: true });
     resizeCanvas();
 
-    window.addEventListener('resize', () => {
-      resizeCanvas();
-    }, { passive: true });
-
-    // iOS Safari: visualViewport fires on URL bar show/hide; fixes “canvas jumps”
-    if (window.visualViewport) {
-      visualViewport.addEventListener('resize', resizeCanvas, { passive: true });
-      visualViewport.addEventListener('scroll', resizeCanvas, { passive: true });
-    }
+    setupUI();
+    Daily.renderAll();
+    Leaderboard.render();
+    Achievements.render();
+    Achievements.updateCount();
+    updateHUD();
 
     initLoading();
-    updateHUD();
     requestAnimationFrame(loop);
   }
 
-  if (document.readyState === 'loading') {
-    document.addEventListener('DOMContentLoaded', init, { once: true });
-  } else {
-    init();
-  }
-
-  // Failsafe: never get stuck behind loading overlay
-  setTimeout(() => {
-    const ls = $('loading-screen');
-    if (ls && !ls.classList.contains('hidden')) {
-      ls.classList.add('hidden');
-      const start = $('start-screen');
-      if (start) start.classList.remove('hidden');
-      document.body.classList.add('overlay-open');
-    }
-  }, 3500);
-
+  if (document.readyState === "loading") document.addEventListener("DOMContentLoaded", init);
+  else setTimeout(init, 50);
 })();
 </script>
 </body>
