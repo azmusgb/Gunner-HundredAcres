@@ -1,1846 +1,2874 @@
 <!DOCTYPE html>
 <html lang="en">
-   <head>
-      <meta charset="UTF-8" />
-      <title>Pooh's Enhanced Honey Hunt - Complete Edition</title>
-      <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover, user-scalable=no" />
-      <meta name="theme-color" content="#d4a574" />
-      <meta name="description" content="Help Pooh catch honey pots in the Hundred Acre Wood! Now with achievements, character selection, weather effects, and more!" />
-      <link rel="preconnect" href="https://fonts.googleapis.com" />
-      <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
-      <link href="https://fonts.googleapis.com/css2?family=Patrick+Hand&family=Fredoka+One&family=Bubblegum+Sans&display=swap" rel="stylesheet" />
-      <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css" />
-      <link rel="stylesheet" href="styles-game.css">
-   </head>
-   <body>
-      <!-- Background -->
-      <div class="background-layer" aria-hidden="true">
-         <div class="cloud cloud-1"></div>
-         <div class="cloud cloud-2"></div>
-         <div class="cloud cloud-3"></div>
-      </div>
-      <!-- Honey Cursor -->
-      <div class="honey-cursor" id="honey-cursor">
-         <div class="spoon"></div>
-      </div>
-      <main id="game-root">
-         <!-- Sound -->
-         <div class="sound-controls">
-            <button class="sound-btn" id="sound-toggle-btn" aria-label="Toggle sound">
-            <i class="fas fa-volume-up"></i>
+<head>
+    <meta charset="UTF-8" />
+    <title>Pooh's Honey Hunt: Ultimate Edition 🍯</title>
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover" />
+    <meta name="theme-color" content="#d4a574" />
+    <meta name="description" content="Help Pooh catch honey pots in the Hundred Acre Wood! Ultimate edition with seasonal events, daily challenges, leaderboards, and more!" />
+    <meta name="apple-mobile-web-app-capable" content="yes">
+    <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+    <link rel="preconnect" href="https://fonts.googleapis.com" />
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+    <link href="https://fonts.googleapis.com/css2?family=Patrick+Hand&family=Fredoka+One&family=Bubblegum+Sans&family=Comic+Neue:wght@700&display=swap" rel="stylesheet" />
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css" />
+    <style>
+        /* ======================= BASE STYLES ======================= */
+        :root {
+            --color-primary: #d4a574;
+            --color-secondary: #f7c44f;
+            --color-accent: #e67e22;
+            --color-danger: #e74c3c;
+            --color-success: #2ecc71;
+            --color-dark: #2c3e50;
+            --color-light: #f9f3e9;
+            --color-shadow: rgba(44, 62, 80, 0.3);
+            
+            --shadow-sm: 0 2px 8px rgba(0,0,0,0.1);
+            --shadow-md: 0 4px 16px rgba(0,0,0,0.15);
+            --shadow-lg: 0 8px 32px rgba(0,0,0,0.2);
+            
+            --radius-sm: 12px;
+            --radius-md: 20px;
+            --radius-lg: 30px;
+            
+            --font-title: 'Bubblegum Sans', cursive;
+            --font-body: 'Patrick Hand', cursive;
+            --font-ui: 'Fredoka One', system-ui;
+            --font-fun: 'Comic Neue', cursive;
+        }
+
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+            -webkit-tap-highlight-color: transparent;
+        }
+
+        html, body {
+            width: 100%;
+            height: 100%;
+            overflow: hidden;
+            touch-action: manipulation;
+            font-family: var(--font-body);
+            background: linear-gradient(135deg, #f9f3e9 0%, #f0d9b5 100%);
+            color: var(--color-dark);
+            user-select: none;
+        }
+
+        body {
+            position: fixed;
+            width: 100%;
+            height: 100%;
+            padding: env(safe-area-inset-top) env(safe-area-inset-right) env(safe-area-inset-bottom) env(safe-area-inset-left);
+        }
+
+        /* ======================= LAYERS ======================= */
+        .layer {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            pointer-events: none;
+        }
+
+        #game-layer {
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            padding-top: env(safe-area-inset-top);
+            padding-bottom: env(safe-area-inset-bottom);
+            pointer-events: none;
+        }
+
+        #ui-layer, #overlay-layer {
+            pointer-events: auto;
+        }
+
+        /* ======================= LOADING SCREEN ======================= */
+        .loading-screen {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background: linear-gradient(135deg, var(--color-primary) 0%, var(--color-accent) 100%);
+            display: flex;
+            flex-direction: column;
+            justify-content: center;
+            align-items: center;
+            z-index: 9999;
+            transition: opacity 0.5s ease;
+        }
+
+        .loading-screen.hidden {
+            opacity: 0;
+            pointer-events: none;
+        }
+
+        .loading-logo {
+            width: 120px;
+            height: 120px;
+            background: url('data:image/svg+xml,<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 100 100"><circle cx="50" cy="50" r="48" fill="%23f7c44f" stroke="%232c3e50" stroke-width="2"/><path d="M30,40 Q50,20 70,40 Q60,60 40,60 Q30,50 30,40" fill="%23d4a574"/><circle cx="40" cy="40" r="5" fill="%232c3e50"/><circle cx="60" cy="40" r="5" fill="%232c3e50"/><path d="M45,55 Q50,60 55,55" stroke="%232c3e50" stroke-width="3" fill="none"/></svg>');
+            background-size: contain;
+            margin-bottom: 30px;
+            animation: bounce 2s infinite;
+        }
+
+        @keyframes bounce {
+            0%, 100% { transform: translateY(0); }
+            50% { transform: translateY(-15px); }
+        }
+
+        .loading-spinner {
+            width: 60px;
+            height: 60px;
+            border: 4px solid rgba(255,255,255,0.3);
+            border-top-color: white;
+            border-radius: 50%;
+            animation: spin 1s linear infinite;
+            margin-bottom: 20px;
+        }
+
+        @keyframes spin {
+            to { transform: rotate(360deg); }
+        }
+
+        .loading-progress {
+            width: 80%;
+            max-width: 300px;
+            height: 12px;
+            background: rgba(255,255,255,0.2);
+            border-radius: 6px;
+            overflow: hidden;
+            margin-bottom: 15px;
+        }
+
+        .loading-progress-fill {
+            height: 100%;
+            background: linear-gradient(90deg, #ffd166, #f4b400);
+            border-radius: 6px;
+            transition: width 0.3s ease;
+            width: 0%;
+        }
+
+        .loading-tip {
+            color: white;
+            font-size: 16px;
+            text-align: center;
+            padding: 0 20px;
+            max-width: 300px;
+            opacity: 0.9;
+            font-family: var(--font-fun);
+        }
+
+        /* ======================= HUD ======================= */
+        .hud {
+            width: 100%;
+            max-width: 500px;
+            padding: 12px 16px;
+            background: rgba(255, 255, 255, 0.95);
+            border-radius: var(--radius-lg);
+            margin: 12px auto 8px;
+            box-shadow: var(--shadow-lg);
+            pointer-events: auto;
+            position: relative;
+            border: 3px solid var(--color-primary);
+        }
+
+        .hud-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 12px;
+        }
+
+        .hud-title {
+            font-family: var(--font-title);
+            font-size: 20px;
+            color: var(--color-accent);
+            display: flex;
+            align-items: center;
+            gap: 8px;
+        }
+
+        .level-display {
+            background: var(--color-secondary);
+            color: var(--color-dark);
+            padding: 4px 12px;
+            border-radius: 20px;
+            font-family: var(--font-ui);
+            font-size: 14px;
+            font-weight: bold;
+            border: 2px solid var(--color-primary);
+        }
+
+        .hud-stats {
+            display: flex;
+            justify-content: space-around;
+            gap: 8px;
+            margin-bottom: 12px;
+        }
+
+        .stat-card {
+            flex: 1;
+            background: var(--color-light);
+            border-radius: var(--radius-md);
+            padding: 10px;
+            text-align: center;
+            border: 2px solid var(--color-primary);
+            transition: transform 0.2s ease;
+        }
+
+        .stat-card:hover {
+            transform: translateY(-2px);
+        }
+
+        .stat-icon {
+            font-size: 24px;
+            margin-bottom: 4px;
+        }
+
+        .stat-value {
+            font-family: var(--font-ui);
+            font-size: 24px;
+            font-weight: bold;
+            color: var(--color-dark);
+            line-height: 1;
+        }
+
+        .stat-label {
+            font-size: 12px;
+            color: var(--color-dark);
+            opacity: 0.8;
+            margin-top: 2px;
+        }
+
+        .hud-bottom {
+            display: flex;
+            align-items: center;
+            gap: 12px;
+            margin-top: 10px;
+        }
+
+        .progress-container {
+            flex: 1;
+            height: 12px;
+            background: var(--color-light);
+            border-radius: 6px;
+            overflow: hidden;
+            border: 2px solid var(--color-primary);
+        }
+
+        .progress-fill {
+            height: 100%;
+            background: linear-gradient(90deg, var(--color-secondary), var(--color-accent));
+            border-radius: 6px;
+            width: 0%;
+            transition: width 0.3s ease;
+        }
+
+        .hud-achievements {
+            position: absolute;
+            bottom: -25px;
+            left: 50%;
+            transform: translateX(-50%);
+        }
+
+        .achievements-pill {
+            background: linear-gradient(135deg, #ffd166, #f4b400);
+            border: 3px solid var(--color-primary);
+            border-radius: 25px;
+            padding: 8px 16px;
+            display: flex;
+            align-items: center;
+            gap: 8px;
+            font-family: var(--font-ui);
+            color: var(--color-dark);
+            font-weight: bold;
+            cursor: pointer;
+            transition: all 0.2s ease;
+            pointer-events: auto;
+            box-shadow: var(--shadow-sm);
+        }
+
+        .achievements-pill:hover {
+            transform: translateY(-2px);
+            box-shadow: var(--shadow-md);
+        }
+
+        .achievements-pill:active {
+            transform: translateY(0);
+        }
+
+        .achievements-pill .trophy {
+            font-size: 20px;
+        }
+
+        .achievements-pill .label {
+            font-size: 14px;
+        }
+
+        .achievements-pill .count {
+            background: rgba(255,255,255,0.9);
+            padding: 2px 8px;
+            border-radius: 10px;
+            font-size: 12px;
+        }
+
+        .achievements-pill .chev {
+            font-size: 20px;
+            margin-left: 2px;
+        }
+
+        /* ======================= GAME CONTAINER ======================= */
+        .game-container {
+            flex: 1;
+            width: 100%;
+            max-width: 500px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            position: relative;
+            pointer-events: none;
+        }
+
+        canvas {
+            display: block;
+            width: 100%;
+            height: 100%;
+            max-height: 700px;
+            border-radius: var(--radius-lg);
+            box-shadow: var(--shadow-lg);
+            background: linear-gradient(180deg, #87CEEB 0%, #98FB98 100%);
+            border: 5px solid var(--color-primary);
+            pointer-events: auto;
+        }
+
+        /* ======================= CONTROL CLUSTERS ======================= */
+        .control-cluster {
+            position: fixed;
+            display: flex;
+            flex-direction: column;
+            gap: 12px;
+            pointer-events: auto;
+            z-index: 100;
+        }
+
+        .control-cluster.top-left {
+            top: calc(env(safe-area-inset-top) + 20px);
+            left: 20px;
+        }
+
+        .control-cluster.top-right {
+            top: calc(env(safe-area-inset-top) + 20px);
+            right: 20px;
+        }
+
+        .control-cluster.bottom-right {
+            bottom: calc(env(safe-area-inset-bottom) + 20px);
+            right: 20px;
+        }
+
+        .control-cluster.bottom-left {
+            bottom: calc(env(safe-area-inset-bottom) + 20px);
+            left: 20px;
+        }
+
+        .control-btn {
+            width: 50px;
+            height: 50px;
+            border-radius: 50%;
+            background: rgba(255, 255, 255, 0.95);
+            border: 3px solid var(--color-primary);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 22px;
+            color: var(--color-dark);
+            cursor: pointer;
+            transition: all 0.2s ease;
+            box-shadow: var(--shadow-md);
+        }
+
+        .control-btn:hover {
+            transform: scale(1.1);
+            box-shadow: var(--shadow-lg);
+        }
+
+        .control-btn:active {
+            transform: scale(0.95);
+        }
+
+        /* ======================= OVERLAY STYLES ======================= */
+        .overlay-content {
+            position: fixed;
+            top: 50%;
+            left: 50%;
+            transform: translate(-50%, -50%);
+            width: 90%;
+            max-width: 500px;
+            max-height: 85vh;
+            background: rgba(255, 255, 255, 0.98);
+            border-radius: var(--radius-lg);
+            padding: 24px;
+            box-shadow: var(--shadow-lg);
+            border: 5px solid var(--color-primary);
+            overflow-y: auto;
+            pointer-events: auto;
+            z-index: 1000;
+        }
+
+        .overlay-content.hidden {
+            display: none;
+        }
+
+        body.overlay-open {
+            overflow: hidden;
+        }
+
+        .overlay-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 20px;
+        }
+
+        .overlay-title {
+            font-family: var(--font-title);
+            font-size: 28px;
+            color: var(--color-accent);
+            text-align: center;
+            line-height: 1.2;
+        }
+
+        .close-btn {
+            background: none;
+            border: none;
+            font-size: 32px;
+            color: var(--color-dark);
+            cursor: pointer;
+            width: 40px;
+            height: 40px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            border-radius: 50%;
+            transition: background-color 0.2s ease;
+        }
+
+        .close-btn:hover {
+            background: rgba(0,0,0,0.1);
+        }
+
+        /* ======================= BUTTONS ======================= */
+        .btn {
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            gap: 10px;
+            width: 100%;
+            padding: 16px 24px;
+            border: none;
+            border-radius: var(--radius-md);
+            font-family: var(--font-ui);
+            font-size: 18px;
+            font-weight: bold;
+            cursor: pointer;
+            transition: all 0.2s ease;
+            text-decoration: none;
+            margin: 8px 0;
+            box-shadow: var(--shadow-sm);
+        }
+
+        .btn i {
+            font-size: 20px;
+        }
+
+        .btn:hover {
+            transform: translateY(-2px);
+            box-shadow: var(--shadow-md);
+        }
+
+        .btn:active {
+            transform: translateY(0);
+        }
+
+        .btn-secondary {
+            background: var(--color-light);
+            color: var(--color-dark);
+            border: 3px solid var(--color-primary);
+        }
+
+        .btn-secondary:hover {
+            background: #f0e6d2;
+        }
+
+        .btn-success {
+            background: linear-gradient(135deg, var(--color-success), #27ae60);
+            color: white;
+            border: 3px solid #27ae60;
+        }
+
+        .btn-success:hover {
+            background: linear-gradient(135deg, #27ae60, #219653);
+        }
+
+        .btn-danger {
+            background: linear-gradient(135deg, var(--color-danger), #c0392b);
+            color: white;
+            border: 3px solid #c0392b;
+        }
+
+        .btn-danger:hover {
+            background: linear-gradient(135deg, #c0392b, #a93226);
+        }
+
+        .btn-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(140px, 1fr));
+            gap: 12px;
+            margin: 20px 0;
+        }
+
+        /* ======================= START SCREEN ======================= */
+        .welcome-section {
+            text-align: center;
+            margin: 20px 0;
+        }
+
+        .pooh-avatar {
+            width: 100px;
+            height: 100px;
+            background: url('data:image/svg+xml,<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 100 100"><circle cx="50" cy="50" r="48" fill="%23f7c44f" stroke="%232c3e50" stroke-width="2"/><path d="M30,40 Q50,20 70,40 Q60,60 40,60 Q30,50 30,40" fill="%23d4a574"/><circle cx="40" cy="40" r="5" fill="%232c3e50"/><circle cx="60" cy="40" r="5" fill="%232c3e50"/><path d="M45,55 Q50,60 55,55" stroke="%232c3e50" stroke-width="3" fill="none"/></svg>');
+            background-size: contain;
+            margin: 0 auto 15px;
+        }
+
+        .welcome-text {
+            font-family: var(--font-title);
+            font-size: 24px;
+            color: var(--color-accent);
+            margin-bottom: 8px;
+        }
+
+        .subtitle {
+            font-size: 16px;
+            color: var(--color-dark);
+            opacity: 0.8;
+            margin-bottom: 20px;
+        }
+
+        .feature-badge {
+            background: linear-gradient(135deg, #ffeaa7, #fdcb6e);
+            border-radius: var(--radius-md);
+            padding: 15px;
+            margin: 20px 0;
+            border: 3px solid var(--color-primary);
+            text-align: center;
+        }
+
+        .feature-badge h3 {
+            font-family: var(--font-title);
+            color: var(--color-accent);
+            margin-bottom: 8px;
+            font-size: 20px;
+        }
+
+        .feature-badge p {
+            font-size: 14px;
+            color: var(--color-dark);
+        }
+
+        /* ======================= RESULTS SCREENS ======================= */
+        .results-section {
+            text-align: center;
+        }
+
+        .final-score {
+            font-family: var(--font-title);
+            font-size: 48px;
+            color: var(--color-accent);
+            margin: 20px 0;
+            text-shadow: 3px 3px 0 var(--color-shadow);
+        }
+
+        .new-record {
+            background: linear-gradient(135deg, #ffd166, #f4b400);
+            color: var(--color-dark);
+            padding: 12px;
+            border-radius: var(--radius-md);
+            margin: 15px 0;
+            font-family: var(--font-ui);
+            font-weight: bold;
+            border: 3px solid var(--color-primary);
+            animation: pulse 1.5s infinite;
+        }
+
+        @keyframes pulse {
+            0%, 100% { opacity: 1; }
+            50% { opacity: 0.8; }
+        }
+
+        .results-stats {
+            background: var(--color-light);
+            border-radius: var(--radius-md);
+            padding: 20px;
+            margin: 20px 0;
+            border: 3px solid var(--color-primary);
+        }
+
+        .stat-row {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            padding: 10px 0;
+            border-bottom: 1px solid rgba(0,0,0,0.1);
+        }
+
+        .stat-row:last-child {
+            border-bottom: none;
+        }
+
+        .stat-label {
+            font-size: 16px;
+            color: var(--color-dark);
+        }
+
+        .stat-value {
+            font-family: var(--font-ui);
+            font-size: 20px;
+            font-weight: bold;
+            color: var(--color-accent);
+        }
+
+        /* ======================= CHARACTER SELECT ======================= */
+        .character-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(150px, 1fr));
+            gap: 15px;
+            margin: 20px 0;
+        }
+
+        .character-card {
+            background: var(--color-light);
+            border: 3px solid var(--color-primary);
+            border-radius: var(--radius-md);
+            padding: 15px;
+            text-align: center;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            position: relative;
+        }
+
+        .character-card:hover {
+            transform: translateY(-5px);
+            box-shadow: var(--shadow-md);
+        }
+
+        .character-card.selected {
+            background: linear-gradient(135deg, #ffeaa7, #fdcb6e);
+            border-color: var(--color-accent);
+            transform: scale(1.05);
+        }
+
+        .character-card.locked {
+            opacity: 0.6;
+            cursor: not-allowed;
+        }
+
+        .character-card.locked:hover {
+            transform: none;
+            box-shadow: none;
+        }
+
+        .lock-icon {
+            position: absolute;
+            top: 10px;
+            right: 10px;
+            color: var(--color-dark);
+            font-size: 16px;
+        }
+
+        .character-icon {
+            font-size: 40px;
+            margin-bottom: 10px;
+        }
+
+        .character-name {
+            font-family: var(--font-title);
+            font-size: 20px;
+            color: var(--color-accent);
+            margin-bottom: 5px;
+        }
+
+        .character-ability {
+            font-family: var(--font-ui);
+            font-size: 14px;
+            color: var(--color-dark);
+            font-weight: bold;
+            margin-bottom: 5px;
+        }
+
+        .character-desc {
+            font-size: 12px;
+            color: var(--color-dark);
+            opacity: 0.8;
+        }
+
+        /* ======================= SETTINGS ======================= */
+        .settings-section {
+            background: var(--color-light);
+            border-radius: var(--radius-md);
+            padding: 20px;
+            margin: 20px 0;
+            border: 3px solid var(--color-primary);
+        }
+
+        .setting-item {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            padding: 15px 0;
+            border-bottom: 1px solid rgba(0,0,0,0.1);
+        }
+
+        .setting-item:last-child {
+            border-bottom: none;
+        }
+
+        .setting-label {
+            display: flex;
+            align-items: center;
+            gap: 12px;
+            font-size: 16px;
+            color: var(--color-dark);
+        }
+
+        .setting-icon {
+            font-size: 20px;
+            color: var(--color-accent);
+            width: 30px;
+        }
+
+        .toggle-switch {
+            position: relative;
+            display: inline-block;
+            width: 60px;
+            height: 30px;
+        }
+
+        .toggle-switch input {
+            opacity: 0;
+            width: 0;
+            height: 0;
+        }
+
+        .toggle-slider {
+            position: absolute;
+            cursor: pointer;
+            top: 0;
+            left: 0;
+            right: 0;
+            bottom: 0;
+            background-color: #ccc;
+            transition: .4s;
+            border-radius: 34px;
+        }
+
+        .toggle-slider:before {
+            position: absolute;
+            content: "";
+            height: 22px;
+            width: 22px;
+            left: 4px;
+            bottom: 4px;
+            background-color: white;
+            transition: .4s;
+            border-radius: 50%;
+        }
+
+        input:checked + .toggle-slider {
+            background-color: var(--color-success);
+        }
+
+        input:checked + .toggle-slider:before {
+            transform: translateX(30px);
+        }
+
+        /* ======================= ACHIEVEMENTS ======================= */
+        .achievements-list {
+            max-height: 300px;
+            overflow-y: auto;
+            margin: 20px 0;
+            padding-right: 10px;
+        }
+
+        .achievement-item {
+            display: flex;
+            align-items: center;
+            gap: 15px;
+            padding: 15px;
+            background: var(--color-light);
+            border-radius: var(--radius-md);
+            margin-bottom: 10px;
+            border: 2px solid var(--color-primary);
+            transition: transform 0.2s ease;
+        }
+
+        .achievement-item:hover {
+            transform: translateX(5px);
+        }
+
+        .achievement-item.unlocked {
+            background: linear-gradient(135deg, #ffeaa7, #fdcb6e);
+            border-color: var(--color-accent);
+        }
+
+        .achievement-icon {
+            font-size: 30px;
+            width: 50px;
+            text-align: center;
+        }
+
+        .achievement-details {
+            flex: 1;
+        }
+
+        .achievement-name {
+            font-family: var(--font-title);
+            font-size: 18px;
+            color: var(--color-dark);
+            margin-bottom: 5px;
+        }
+
+        .achievement-desc {
+            font-size: 14px;
+            color: var(--color-dark);
+            opacity: 0.8;
+        }
+
+        /* ======================= WEATHER DRAWER ======================= */
+        .weather-drawer {
+            position: fixed;
+            top: 0;
+            right: -100%;
+            width: 300px;
+            height: 100%;
+            background: rgba(255, 255, 255, 0.98);
+            border-left: 5px solid var(--color-primary);
+            padding: 24px;
+            transition: right 0.3s ease;
+            z-index: 1001;
+            box-shadow: var(--shadow-lg);
+            overflow-y: auto;
+        }
+
+        .weather-drawer.open {
+            right: 0;
+        }
+
+        .weather-grid {
+            display: grid;
+            grid-template-columns: repeat(3, 1fr);
+            gap: 15px;
+            margin: 20px 0;
+        }
+
+        .weather-option {
+            width: 70px;
+            height: 70px;
+            border-radius: var(--radius-md);
+            border: 3px solid var(--color-primary);
+            background: var(--color-light);
+            font-size: 30px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            cursor: pointer;
+            transition: all 0.2s ease;
+        }
+
+        .weather-option:hover {
+            transform: scale(1.1);
+            background: #f0e6d2;
+        }
+
+        .weather-option.active {
+            background: linear-gradient(135deg, #ffeaa7, #fdcb6e);
+            border-color: var(--color-accent);
+            transform: scale(1.05);
+        }
+
+        /* ======================= ANIMATIONS & EFFECTS ======================= */
+        @keyframes hud-pop {
+            0% { transform: scale(1); }
+            50% { transform: scale(1.1); }
+            100% { transform: scale(1); }
+        }
+
+        .hud-pop {
+            animation: hud-pop 0.3s ease;
+        }
+
+        @keyframes hud-shake {
+            0%, 100% { transform: translateX(0); }
+            25% { transform: translateX(-5px); }
+            75% { transform: translateX(5px); }
+        }
+
+        .hud-shake {
+            animation: hud-shake 0.4s ease;
+        }
+
+        .score-popup {
+            position: absolute;
+            font-family: var(--font-title);
+            font-size: 24px;
+            font-weight: bold;
+            color: var(--color-accent);
+            text-shadow: 2px 2px 0 var(--color-shadow);
+            pointer-events: none;
+            z-index: 100;
+            animation: floatUp 1s ease forwards;
+        }
+
+        @keyframes floatUp {
+            0% {
+                opacity: 0;
+                transform: translate(-50%, -50%) scale(0.5);
+            }
+            20% {
+                opacity: 1;
+                transform: translate(-50%, -100%) scale(1);
+            }
+            100% {
+                opacity: 0;
+                transform: translate(-50%, -200%) scale(0.8);
+            }
+        }
+
+        .achievement-popup {
+            position: fixed;
+            top: 50%;
+            left: 50%;
+            transform: translate(-50%, -50%);
+            background: linear-gradient(135deg, #ffeaa7, #fdcb6e);
+            color: var(--color-dark);
+            padding: 20px 40px;
+            border-radius: var(--radius-lg);
+            font-family: var(--font-title);
+            font-size: 24px;
+            font-weight: bold;
+            text-align: center;
+            z-index: 1002;
+            border: 5px solid var(--color-primary);
+            box-shadow: var(--shadow-lg);
+            animation: popInOut 2s ease forwards;
+        }
+
+        @keyframes popInOut {
+            0%, 100% {
+                opacity: 0;
+                transform: translate(-50%, -50%) scale(0.5);
+            }
+            15%, 85% {
+                opacity: 1;
+                transform: translate(-50%, -50%) scale(1);
+            }
+        }
+
+        .unlock-notification {
+            position: fixed;
+            top: 50%;
+            left: 50%;
+            transform: translate(-50%, -50%) scale(0.8);
+            background: linear-gradient(135deg, #a29bfe, #6c5ce7);
+            color: white;
+            padding: 20px;
+            border-radius: var(--radius-lg);
+            display: flex;
+            align-items: center;
+            gap: 15px;
+            z-index: 1002;
+            box-shadow: var(--shadow-lg);
+            border: 5px solid #8e44ad;
+            opacity: 0;
+            transition: all 0.3s ease;
+        }
+
+        .unlock-notification.show {
+            opacity: 1;
+            transform: translate(-50%, -50%) scale(1);
+        }
+
+        .unlock-icon {
+            font-size: 40px;
+        }
+
+        .unlock-content {
+            text-align: left;
+        }
+
+        .unlock-title {
+            font-family: var(--font-title);
+            font-size: 18px;
+            margin-bottom: 5px;
+        }
+
+        .unlock-name {
+            font-family: var(--font-ui);
+            font-size: 24px;
+            font-weight: bold;
+        }
+
+        /* ======================= VIRTUAL JOYSTICK ======================= */
+        .virtual-joystick {
+            position: fixed;
+            bottom: calc(env(safe-area-inset-bottom) + 120px);
+            left: 50%;
+            transform: translateX(-50%);
+            display: none;
+            pointer-events: none;
+            z-index: 99;
+        }
+
+        .virtual-joystick.active {
+            display: block;
+        }
+
+        .joystick-base {
+            width: 120px;
+            height: 120px;
+            background: rgba(255, 255, 255, 0.7);
+            border-radius: 50%;
+            border: 3px solid var(--color-primary);
+            box-shadow: var(--shadow-md);
+        }
+
+        .joystick-handle {
+            position: absolute;
+            top: 50%;
+            left: 50%;
+            transform: translate(-50%, -50%);
+            width: 60px;
+            height: 60px;
+            background: linear-gradient(135deg, var(--color-accent), #d35400);
+            border-radius: 50%;
+            border: 3px solid var(--color-primary);
+            box-shadow: var(--shadow-md);
+        }
+
+        /* ======================= RESPONSIVE ======================= */
+        @media (max-width: 768px) {
+            .overlay-content {
+                width: 95%;
+                padding: 20px;
+            }
+            
+            .hud {
+                margin: 8px auto 4px;
+                padding: 10px 12px;
+            }
+            
+            .control-cluster {
+                gap: 8px;
+            }
+            
+            .control-btn {
+                width: 45px;
+                height: 45px;
+                font-size: 20px;
+            }
+            
+            .overlay-title {
+                font-size: 24px;
+            }
+            
+            .final-score {
+                font-size: 36px;
+            }
+            
+            .character-grid {
+                grid-template-columns: repeat(2, 1fr);
+            }
+            
+            .weather-drawer {
+                width: 250px;
+            }
+            
+            .weather-grid {
+                grid-template-columns: repeat(2, 1fr);
+            }
+        }
+
+        @media (max-width: 480px) {
+            .hud-title {
+                font-size: 18px;
+            }
+            
+            .stat-value {
+                font-size: 20px;
+            }
+            
+            .btn {
+                padding: 14px 20px;
+                font-size: 16px;
+            }
+            
+            .overlay-title {
+                font-size: 22px;
+            }
+            
+            .character-grid {
+                grid-template-columns: 1fr;
+            }
+            
+            .weather-drawer {
+                width: 100%;
+            }
+        }
+
+        /* ======================= UTILITY CLASSES ======================= */
+        .hidden {
+            display: none !important;
+        }
+
+        .text-center {
+            text-align: center;
+        }
+
+        .mb-3 {
+            margin-bottom: 15px;
+        }
+
+        .mt-3 {
+            margin-top: 15px;
+        }
+
+        /* ======================= HONEY CURSOR ======================= */
+        .honey-cursor {
+            position: fixed;
+            width: 40px;
+            height: 40px;
+            pointer-events: none;
+            z-index: 9999;
+            transform: translate(-50%, -50%);
+            display: none;
+        }
+
+        .spoon {
+            width: 40px;
+            height: 40px;
+            background: url('data:image/svg+xml,<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 40 40"><path d="M20,5 Q25,0 30,5 Q35,10 30,15 L25,35 Q20,40 15,35 L10,15 Q5,10 10,5 Q15,0 20,5" fill="%23f7c44f" stroke="%23d4a574" stroke-width="2"/></svg>');
+            background-size: contain;
+            animation: wobble 2s infinite;
+        }
+
+        @keyframes wobble {
+            0%, 100% { transform: rotate(0deg); }
+            25% { transform: rotate(5deg); }
+            75% { transform: rotate(-5deg); }
+        }
+
+        /* ======================= NOTIFICATIONS ======================= */
+        #notification-container {
+            position: fixed;
+            top: 20px;
+            right: 20px;
+            z-index: 1002;
+            pointer-events: none;
+        }
+
+        #weather-effects {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            pointer-events: none;
+            z-index: 1;
+        }
+    </style>
+</head>
+<body>
+    <!-- Loading Screen -->
+    <div class="loading-screen" id="loading-screen">
+        <div class="loading-logo"></div>
+        <div class="loading-spinner"></div>
+        <div class="loading-progress">
+            <div class="loading-progress-fill" id="loading-progress"></div>
+        </div>
+        <div class="loading-tip" id="loading-tip">Loading delicious honey...</div>
+    </div>
+
+    <!-- Layers -->
+    <div class="layer" id="bg-layer"></div>
+    <div class="layer" id="weather-layer"></div>
+    <div class="layer" id="game-layer">
+        <!-- HUD -->
+        <div class="hud" id="hud">
+            <div class="hud-header">
+                <div class="hud-title">
+                    <i class="fas fa-honey-pot"></i>
+                    Pooh's Honey Hunt
+                </div>
+                <div class="level-display" id="level-display">Beginner</div>
+            </div>
+            
+            <div class="hud-stats">
+                <div class="stat-card">
+                    <div class="stat-icon">🍯</div>
+                    <div class="stat-value" id="stat-score">0</div>
+                    <div class="stat-label">Score</div>
+                </div>
+                
+                <div class="stat-card">
+                    <div class="stat-icon">❤️</div>
+                    <div class="stat-value" id="stat-lives">3</div>
+                    <div class="stat-label">Lives</div>
+                </div>
+                
+                <div class="stat-card">
+                    <div class="stat-icon">⚡</div>
+                    <div class="stat-value" id="stat-combo">1.0x</div>
+                    <div class="stat-label">Combo</div>
+                </div>
+            </div>
+            
+            <div class="hud-bottom">
+                <div class="progress-container">
+                    <div class="progress-fill" id="progress-fill"></div>
+                </div>
+                <div class="level-display" id="next-level-label">0/300</div>
+            </div>
+
+            <!-- Achievements pill inside HUD -->
+            <div class="hud-achievements">
+                <button class="achievements-pill" id="achievements-pill" aria-label="View achievements">
+                    <span class="trophy">🏆</span>
+                    <span class="label">Achievements</span>
+                    <span class="count" id="achievements-count">0/14</span>
+                    <span class="chev">›</span>
+                </button>
+            </div>
+        </div>
+
+        <!-- Game Canvas -->
+        <div class="game-container" id="game-container">
+            <canvas id="game-canvas" width="420" height="700"></canvas>
+        </div>
+
+        <!-- Virtual Joystick (Mobile) -->
+        <div class="virtual-joystick" id="virtual-joystick">
+            <div class="joystick-base"></div>
+            <div class="joystick-handle" id="joystick-handle"></div>
+        </div>
+    </div>
+
+    <!-- UI Layer -->
+    <div class="layer" id="ui-layer">
+        <!-- Control Clusters -->
+        <div class="control-cluster top-left">
+            <button class="control-btn" id="sound-toggle-btn" aria-label="Toggle sound">
+                <i class="fas fa-volume-up"></i>
             </button>
-         </div>
-         <!-- Share -->
-         <button class="share-btn" id="share-btn" aria-label="Share score">
-         <i class="fas fa-share-alt"></i>
-         </button>
-         <!-- Game Controls -->
-         <div class="game-controls">
-            <button class="control-btn pause" id="pause-btn"><i class="fas fa-pause"></i></button>
-            <button class="control-btn help" id="help-btn"><i class="fas fa-question"></i></button>
-         </div>
-         <!-- Weather Toggle -->
-         <button class="weather-toggle" id="weather-toggle">🌦️</button>
-         <!-- Weather Drawer -->
-         <aside class="weather-drawer" id="weather-drawer">
-            <div class="weather-drawer-header">
-               <span class="weather-title">Weather</span>
-               <button class="weather-close" id="weather-close">✕</button>
-            </div>
-            <div class="weather-drawer-buttons">
-               <button class="weather-btn" data-weather="clear">☀️</button>
-               <button class="weather-btn" data-weather="rain">🌧️</button>
-               <button class="weather-btn" data-weather="snow">❄️</button>
-               <button class="weather-btn" data-weather="leaves">🍂</button>
-               <button class="weather-btn" data-weather="blossoms">🌸</button>
-            </div>
-         </aside>
-         <!-- HUD -->
-         <header class="hud">
-            <div class="hud-wrap">
-               <div class="hud-item hud-score">
-                  <div class="hud-icon">🍯</div>
-                  <div class="hud-meta">
-                     <div class="hud-label">Score</div>
-                     <div class="hud-value" id="score">0</div>
-                  </div>
-               </div>
-               <div class="hud-sep"></div>
-               <div class="hud-item">
-                  <div class="hud-icon">🔥</div>
-                  <div class="hud-meta">
-                     <div class="hud-label">Streak</div>
-                     <div class="hud-value" id="streak">0</div>
-                  </div>
-               </div>
-               <div class="hud-sep"></div>
-               <div class="hud-item">
-                  <div class="hud-icon">❤️</div>
-                  <div class="hud-meta">
-                     <div class="hud-label">Lives</div>
-                     <div class="hud-value" id="lives">3</div>
-                  </div>
-               </div>
-               <div class="hud-actions">
-                  <button class="hud-ach" id="achievements-btn">
-                  <span class="hud-ach-icon">🏆</span>
-                  <span class="hud-ach-text">
-                  <span class="hud-ach-label">Achievements</span>
-                  <span class="hud-ach-value" id="achievements-count">0/10</span>
-                  </span>
-                  <span class="hud-ach-caret">›</span>
-                  </button>
-               </div>
-            </div>
-         </header>
-         <!-- Game Canvas -->
-         <div class="game-container">
-            <canvas id="honey-game" width="420" height="700"></canvas>
-         </div>
-         <!-- ================= START ================= -->
-         <div class="overlay" id="start-overlay">
-            <div class="pooh-intro"></div>
-            <p class="story-line">Pooh is waiting for honey…</p>
-            <button class="btn" id="start-btn">
-            🍯 Start Collecting Honey
+            <button class="control-btn" id="menu-toggle" aria-label="Open menu">
+                <i class="fas fa-bars"></i>
             </button>
-            <div class="start-links">
-               <button class="link-btn" id="select-character-btn">Choose Character</button>
-               <button class="link-btn" id="view-achievements-btn">Achievements</button>
+        </div>
+        
+        <div class="control-cluster top-right">
+            <button class="control-btn" id="pause-toggle" aria-label="Pause game">
+                <i class="fas fa-pause"></i>
+            </button>
+            <button class="control-btn" id="share-btn" aria-label="Share score">
+                <i class="fas fa-share-alt"></i>
+            </button>
+        </div>
+        
+        <div class="control-cluster bottom-right">
+            <button class="control-btn" id="weather-toggle" aria-label="Change weather">
+                🌦️
+            </button>
+        </div>
+        
+        <div class="control-cluster bottom-left">
+            <button class="control-btn" id="help-btn" aria-label="Show help">
+                <i class="fas fa-question"></i>
+            </button>
+        </div>
+    </div>
+
+    <!-- Overlay Layer -->
+    <div class="layer" id="overlay-layer">
+        <!-- Start Screen -->
+        <div class="overlay-content" id="start-screen">
+            <div class="overlay-header">
+                <h1 class="overlay-title">Welcome to the<br>Hundred Acre Wood</h1>
+                <button class="close-btn" id="close-start">&times;</button>
             </div>
-         </div>
-         <!-- ================= PAUSE ================= -->
-         <div class="overlay hidden" id="pause-overlay">
-            <h2>⏸️ Taking a Rest</h2>
-            <p class="subtitle">Paused</p>
-            <button class="btn" id="resume-btn">Resume</button>
-            <button class="btn btn-secondary" id="quit-btn">Return to Menu</button>
-         </div>
-         <!-- ================= HELP ================= -->
-         <div class="overlay hidden" id="help-overlay">
-            <h2>How to Play</h2>
-            <p class="subtitle">
-               Drag Pooh to catch honey.<br>
-               Avoid bees.
-            </p>
-            <button class="btn btn-secondary" id="close-help-btn">Back</button>
-         </div>
-         <!-- ================= GAME OVER ================= -->
-         <div class="overlay hidden" id="gameover-overlay">
-            <h2>Oh Bother!</h2>
-            <div class="final-score" id="final-score">0</div>
-            <button class="btn" id="restart-btn">Play Again 🍯</button>
-         </div>
-         <!-- ================= CHARACTER SELECT ================= -->
-         <div class="character-select-overlay hidden" id="character-select-overlay">
-            <div class="char-shell">
-               <div class="char-top">
-                  <h2 class="char-title">Choose Your Character</h2>
-                  <button class="char-x" id="back-to-menu-btn">✕</button>
-               </div>
-               <div class="char-grid">
-                  <button class="character-card" data-character="pooh">🐻 Pooh</button>
-                  <button class="character-card" data-character="piglet">🐷 Piglet</button>
-                  <button class="character-card" data-character="tigger">🐯 Tigger</button>
-                  <button class="character-card" data-character="rabbit">🐰 Rabbit</button>
-               </div>
-               <div class="char-bottom">
-                  <button class="btn" id="start-with-character-btn">Start 🍯</button>
-               </div>
+            
+            <div class="welcome-section">
+                <div class="pooh-avatar"></div>
+                <p class="welcome-text">Oh bother! I need your help!</p>
+                <p class="subtitle">Catch honey pots, avoid bees, and unlock helpers!</p>
             </div>
-         </div>
-         <!-- ================= ACHIEVEMENTS ================= -->
-         <div class="achievements-overlay hidden" id="achievements-overlay">
-            <div class="achievements-shell">
-               <div class="achievements-top">
-                  <h2 class="ach-title">Achievements</h2>
-                  <button class="ach-x" id="close-achievements-btn">✕</button>
-               </div>
-               <div class="achievements-listWrap">
-                  <div id="achievements-list"></div>
-               </div>
-               <div class="achievements-bottom">
-                  <button class="btn btn-secondary" id="close-achievements-btn-2">Back</button>
-               </div>
+            
+            <div class="feature-badge">
+                <h3>🎮 New Features!</h3>
+                <p>Daily challenges • Seasonal events • Leaderboards • Enhanced graphics</p>
             </div>
-         </div>
-         
-         <script>
+            
+            <div class="btn-grid">
+                <button class="btn" id="quick-start">
+                    <i class="fas fa-play"></i> Quick Start
+                </button>
+                <button class="btn btn-secondary" id="select-character-btn">
+                    <i class="fas fa-users"></i> Choose Helper
+                </button>
+                <button class="btn btn-secondary" id="daily-challenge-btn">
+                    <i class="fas fa-calendar-day"></i> Daily Challenge
+                </button>
+                <button class="btn btn-secondary" id="settings-btn">
+                    <i class="fas fa-cog"></i> Settings
+                </button>
+            </div>
+            
+            <button class="btn btn-success" id="start-btn">
+                <i class="fas fa-honey-pot"></i> Start Adventure!
+            </button>
+        </div>
+
+        <!-- Pause Screen -->
+        <div class="overlay-content hidden" id="pause-screen">
+            <div class="overlay-header">
+                <h1 class="overlay-title">Game Paused</h1>
+                <button class="close-btn" id="resume-btn">&times;</button>
+            </div>
+            
+            <div class="results-section">
+                <div class="final-score" id="pause-score">0</div>
+                
+                <div class="results-stats">
+                    <div class="stat-row">
+                        <span class="stat-label">Current Streak</span>
+                        <span class="stat-value" id="pause-streak">0</span>
+                    </div>
+                    <div class="stat-row">
+                        <span class="stat-label">Lives Remaining</span>
+                        <span class="stat-value" id="pause-lives">3</span>
+                    </div>
+                    <div class="stat-row">
+                        <span class="stat-label">Time Played</span>
+                        <span class="stat-value" id="pause-time">0s</span>
+                    </div>
+                </div>
+                
+                <div class="btn-grid">
+                    <button class="btn" id="continue-btn">
+                        <i class="fas fa-play"></i> Continue
+                    </button>
+                    <button class="btn btn-secondary" id="restart-btn">
+                        <i class="fas fa-redo"></i> Restart
+                    </button>
+                    <button class="btn btn-danger" id="quit-btn">
+                        <i class="fas fa-home"></i> Main Menu
+                    </button>
+                </div>
+            </div>
+        </div>
+
+        <!-- Game Over Screen -->
+        <div class="overlay-content hidden" id="gameover-screen">
+            <div class="overlay-header">
+                <h1 class="overlay-title">Game Over!</h1>
+                <button class="close-btn" id="gameover-close">&times;</button>
+            </div>
+            
+            <div class="results-section">
+                <div class="final-score" id="final-score">0</div>
+                
+                <div id="new-record-badge" class="new-record hidden">
+                    🏆 New Personal Best! 🏆
+                </div>
+                
+                <div class="results-stats">
+                    <div class="stat-row">
+                        <span class="stat-label">Total Score</span>
+                        <span class="stat-value" id="final-total">0</span>
+                    </div>
+                    <div class="stat-row">
+                        <span class="stat-label">Highest Streak</span>
+                        <span class="stat-value" id="final-streak">0</span>
+                    </div>
+                    <div class="stat-row">
+                        <span class="stat-label">Honey Caught</span>
+                        <span class="stat-value" id="final-honey">0</span>
+                    </div>
+                    <div class="stat-row">
+                        <span class="stat-label">Level Reached</span>
+                        <span class="stat-value" id="final-level">Beginner</span>
+                    </div>
+                </div>
+                
+                <div class="btn-grid">
+                    <button class="btn" id="play-again-btn">
+                        <i class="fas fa-redo"></i> Play Again
+                    </button>
+                    <button class="btn btn-secondary" id="leaderboard-btn">
+                        <i class="fas fa-trophy"></i> Leaderboard
+                    </button>
+                    <button class="btn btn-secondary" id="share-final-btn">
+                        <i class="fas fa-share"></i> Share Score
+                    </button>
+                </div>
+            </div>
+        </div>
+
+        <!-- Character Select -->
+        <div class="overlay-content hidden" id="character-screen">
+            <div class="overlay-header">
+                <h1 class="overlay-title">Choose Your Helper</h1>
+                <button class="close-btn" id="close-character">&times;</button>
+            </div>
+            
+            <p class="subtitle text-center mb-3">Each helper has unique abilities!</p>
+            
+            <div class="character-grid" id="character-grid">
+                <!-- Characters will be dynamically added -->
+            </div>
+            
+            <div class="btn-grid">
+                <button class="btn" id="start-with-character-btn">
+                    <i class="fas fa-check"></i> Start Game
+                </button>
+                <button class="btn btn-secondary" id="back-to-menu-btn">
+                    <i class="fas fa-arrow-left"></i> Back to Menu
+                </button>
+            </div>
+        </div>
+
+        <!-- Settings -->
+        <div class="overlay-content hidden" id="settings-screen">
+            <div class="overlay-header">
+                <h1 class="overlay-title">Settings</h1>
+                <button class="close-btn" id="close-settings">&times;</button>
+            </div>
+            
+            <div class="settings-section">
+                <div class="setting-item">
+                    <div class="setting-label">
+                        <i class="fas fa-volume-up setting-icon"></i>
+                        Sound Effects
+                    </div>
+                    <label class="toggle-switch">
+                        <input type="checkbox" id="sound-toggle-setting" checked>
+                        <span class="toggle-slider"></span>
+                    </label>
+                </div>
+                
+                <div class="setting-item">
+                    <div class="setting-label">
+                        <i class="fas fa-music setting-icon"></i>
+                        Background Music
+                    </div>
+                    <label class="toggle-switch">
+                        <input type="checkbox" id="music-toggle-setting" checked>
+                        <span class="toggle-slider"></span>
+                    </label>
+                </div>
+                
+                <div class="setting-item">
+                    <div class="setting-label">
+                        <i class="fas fa-vibrate setting-icon"></i>
+                        Haptic Feedback
+                    </div>
+                    <label class="toggle-switch">
+                        <input type="checkbox" id="haptic-toggle-setting" checked>
+                        <span class="toggle-slider"></span>
+                    </label>
+                </div>
+                
+                <div class="setting-item">
+                    <div class="setting-label">
+                        <i class="fas fa-paint-brush setting-icon"></i>
+                        Visual Effects
+                    </div>
+                    <label class="toggle-switch">
+                        <input type="checkbox" id="effects-toggle-setting" checked>
+                        <span class="toggle-slider"></span>
+                    </label>
+                </div>
+            </div>
+            
+            <div class="btn-grid">
+                <button class="btn btn-success" id="save-settings">
+                    <i class="fas fa-save"></i> Save Settings
+                </button>
+                <button class="btn btn-secondary" id="reset-progress">
+                    <i class="fas fa-trash"></i> Reset Progress
+                </button>
+                <button class="btn btn-danger" id="reset-confirm" style="display: none;">
+                    <i class="fas fa-exclamation-triangle"></i> Confirm Reset
+                </button>
+            </div>
+        </div>
+
+        <!-- Achievements -->
+        <div class="overlay-content hidden" id="achievements-screen">
+            <div class="overlay-header">
+                <h1 class="overlay-title">Achievements</h1>
+                <button class="close-btn" id="close-achievements-btn">&times;</button>
+            </div>
+            
+            <div class="achievements-list" id="achievements-list">
+                <!-- Achievements will be dynamically added -->
+            </div>
+            
+            <button class="btn btn-secondary" id="close-achievements-btn-2">
+                <i class="fas fa-arrow-left"></i> Back
+            </button>
+        </div>
+
+        <!-- Help Screen -->
+        <div class="overlay-content hidden" id="help-screen">
+            <div class="overlay-header">
+                <h1 class="overlay-title">How to Play</h1>
+                <button class="close-btn" id="close-help-btn">&times;</button>
+            </div>
+            
+            <div class="settings-section">
+                <div class="setting-item">
+                    <div class="setting-label">
+                        <i class="fas fa-mouse-pointer setting-icon"></i>
+                        <div>
+                            <strong>Controls:</strong><br>
+                            Move mouse or touch to control Pooh
+                        </div>
+                    </div>
+                </div>
+                
+                <div class="setting-item">
+                    <div class="setting-label">
+                        <i class="fas fa-honey-pot setting-icon"></i>
+                        <div>
+                            <strong>Catch Honey:</strong><br>
+                            Golden honey = double points<br>
+                            Cursed honey = penalty!
+                        </div>
+                    </div>
+                </div>
+                
+                <div class="setting-item">
+                    <div class="setting-label">
+                        <i class="fas fa-bee setting-icon"></i>
+                        <div>
+                            <strong>Avoid Bees:</strong><br>
+                            Bees reduce your lives<br>
+                            Keep your streak for bonus points
+                        </div>
+                    </div>
+                </div>
+                
+                <div class="setting-item">
+                    <div class="setting-label">
+                        <i class="fas fa-bolt setting-icon"></i>
+                        <div>
+                            <strong>Power-ups:</strong><br>
+                            Shield = protection from bees<br>
+                            Slow = slows everything down
+                        </div>
+                    </div>
+                </div>
+                
+                <div class="setting-item">
+                    <div class="setting-label">
+                        <i class="fas fa-users setting-icon"></i>
+                        <div>
+                            <strong>Helpers:</strong><br>
+                            Unlock new helpers as you progress<br>
+                            Each has unique abilities
+                        </div>
+                    </div>
+                </div>
+            </div>
+            
+            <button class="btn" id="view-achievements-btn">
+                <i class="fas fa-trophy"></i> View Achievements
+            </button>
+        </div>
+    </div>
+
+    <!-- Weather Drawer -->
+    <div class="weather-drawer" id="weather-drawer">
+        <div class="overlay-header">
+            <h1 class="overlay-title">Weather Effects</h1>
+            <button class="close-btn" id="weather-close">&times;</button>
+        </div>
+        
+        <p class="subtitle text-center mb-3">Change the atmosphere!</p>
+        
+        <div class="weather-grid">
+            <button class="weather-option weather-btn" data-weather="clear">☀️</button>
+            <button class="weather-option weather-btn" data-weather="rain">🌧️</button>
+            <button class="weather-option weather-btn" data-weather="snow">❄️</button>
+            <button class="weather-option weather-btn" data-weather="leaves">🍂</button>
+            <button class="weather-option weather-btn" data-weather="blossoms">🌸</button>
+            <button class="weather-option weather-btn" data-weather="windy">💨</button>
+            <button class="weather-option weather-btn" data-weather="foggy">🌫️</button>
+            <button class="weather-option weather-btn" data-weather="starry">🌠</button>
+        </div>
+    </div>
+
+    <!-- Honey Cursor -->
+    <div class="honey-cursor" id="honey-cursor">
+        <div class="spoon"></div>
+    </div>
+
+    <!-- Notification Container -->
+    <div id="notification-container"></div>
+    <div id="weather-effects"></div>
+
+<script>
 (() => {
-  "use strict";
-  if (window.__POOH_HONEY_HUNT_REPLACE__) return;
-  window.__POOH_HONEY_HUNT_REPLACE__ = true;
+    "use strict";
+    
+    if (window.__POOH_HONEY_HUNT_LOADED__) return;
+    window.__POOH_HONEY_HUNT_LOADED__ = true;
 
-  /* ======================= DOM + UTILS ======================= */
-  const $ = (id) => document.getElementById(id);
-  const clamp = (v, a, b) => Math.max(a, Math.min(b, v));
-  const now = () => (typeof performance !== "undefined" ? performance.now() : Date.now());
+    /* ======================= DOM + UTILS ======================= */
+    const $ = (id) => document.getElementById(id);
+    const clamp = (v, a, b) => Math.max(a, Math.min(b, v));
+    const lerp = (a, b, t) => a + (b - a) * t;
+    const now = () => performance.now();
 
-  // Rounded-rect path helper (cross-browser; avoids ctx.roundRect dependency)
-  function rrPath(ctx, x, y, w, h, r) {
-    r = Math.max(0, Math.min(r, Math.min(w, h) / 2));
-    ctx.beginPath();
-    ctx.moveTo(x + r, y);
-    ctx.lineTo(x + w - r, y);
-    ctx.quadraticCurveTo(x + w, y, x + w, y + r);
-    ctx.lineTo(x + w, y + h - r);
-    ctx.quadraticCurveTo(x + w, y + h, x + w - r, y + h);
-    ctx.lineTo(x + r, y + h);
-    ctx.quadraticCurveTo(x, y + h, x, y + h - r);
-    ctx.lineTo(x, y + r);
-    ctx.quadraticCurveTo(x, y, x + r, y);
-    ctx.closePath();
-  }
-
-  // Small seeded RNG for stable “paper grain” without flicker
-  function makeRng(seed) {
-    let s = seed >>> 0;
-    return () => {
-      s = (s * 1664525 + 1013904223) >>> 0;
-      return (s & 0xfffffff) / 0xfffffff;
-    };
-  }
-
-  /* ======================= SAFE STORAGE ======================= */
-  const Store = (() => {
-    const mem = new Map();
-    const hasLS = (() => {
-      try {
-        const t = "__t__";
-        localStorage.setItem(t, "1");
-        localStorage.removeItem(t);
-        return true;
-      } catch {
-        return false;
-      }
-    })();
-
-    return {
-      get(k, fallback = null) {
-        if (hasLS) {
-          try {
-            const v = localStorage.getItem(k);
-            return v === null ? fallback : v;
-          } catch {}
-        }
-        return mem.has(k) ? mem.get(k) : fallback;
-      },
-      set(k, v) {
-        if (hasLS) {
-          try {
-            localStorage.setItem(k, String(v));
-            return;
-          } catch {}
-        }
-        mem.set(k, String(v));
-      },
-    };
-  })();
-
-  /* ======================= APP STATE ======================= */
-  const AppState = {
-    running: false,
-    paused: false,
-
-    score: 0,
-    best: Number(Store.get("bestScore", "0") || 0),
-    streak: 0,
-    lives: 3,
-
-    timeMs: 0,
-    timeScale: 1,
-
-    soundOn: Store.get("sound", "on") !== "off",
-    hapticsOn: Store.get("haptics", "on") !== "off",
-    character: Store.get("character", "pooh") || "pooh",
-
-    combo: { mult: 1, timer: 0, tier: 0 },
-
-    achievements: (() => {
-      try {
-        return JSON.parse(Store.get("achievements", "{}") || "{}");
-      } catch {
-        return {};
-      }
-    })(),
-
-    stats: {
-      maxStreak: 0,
-      honeyCaught: 0,
-      beesHit: 0,
-      powerCollected: 0,
-    },
-  };
-
-  const persistAchievements = () => {
-    try {
-      Store.set("achievements", JSON.stringify(AppState.achievements || {}));
-    } catch {}
-  };
-
-  const vibrate = (pattern = 20) => {
-    try {
-      if (AppState.hapticsOn && navigator.vibrate) navigator.vibrate(pattern);
-    } catch {}
-  };
-
-  /* ======================= AUDIO (tiny synth sfx) ======================= */
-  const Audio = (() => {
-    let ctx = null, master = null;
-
-    function init() {
-      if (!AppState.soundOn) return;
-      if (ctx) return;
-      try {
-        ctx = new (window.AudioContext || window.webkitAudioContext)();
-        master = ctx.createGain();
-        master.gain.value = 0.22;
-        master.connect(ctx.destination);
-      } catch {
-        ctx = null;
-        master = null;
-      }
+    /* ======================= CANVAS SETUP ======================= */
+    const canvas = $("game-canvas");
+    const ctx = canvas?.getContext("2d", { alpha: true });
+    
+    if (!canvas || !ctx) {
+        console.error("Canvas not found or 2D context failed.");
+        return;
     }
 
-    function beep(freq = 440, dur = 0.06, gain = 0.07, type = "sine") {
-      if (!AppState.soundOn || !ctx || !master) return;
-      const t = ctx.currentTime;
-      const o = ctx.createOscillator();
-      const g = ctx.createGain();
-      o.type = type;
-      o.frequency.setValueAtTime(freq, t);
-      g.gain.setValueAtTime(gain, t);
-      g.gain.exponentialRampToValueAtTime(0.0001, t + dur);
-      o.connect(g);
-      g.connect(master);
-      o.start(t);
-      o.stop(t + dur);
-    }
+    const BASE_W = 420, BASE_H = 700;
+    canvas.width = BASE_W;
+    canvas.height = BASE_H;
 
-    const sfx = {
-      collect() { beep(740, 0.05, 0.085, "triangle"); },
-      combo()  { beep(920, 0.08, 0.08, "sawtooth"); },
-      hit()    { beep(160, 0.10, 0.10, "square"); },
-      power()  { beep(520, 0.09, 0.08, "sine"); },
-      ui()     { beep(420, 0.04, 0.05, "sine"); },
-      wave()   { beep(620, 0.06, 0.07, "triangle"); setTimeout(() => beep(820, 0.07, 0.06, "triangle"), 70); }
+    /* ======================= GAME STATE ======================= */
+    const GameState = {
+        running: false,
+        paused: false,
+        score: 0,
+        lives: 3,
+        streak: 0,
+        combo: 1.0,
+        timeMs: 0,
+        bestScore: parseInt(localStorage.getItem('bestScore') || '0'),
+        currentLevel: 0,
+        honeyCaught: 0,
+        beesAvoided: 0,
+        soundEnabled: true,
+        currentHelper: 'pooh'
     };
 
-    function toggle() {
-      AppState.soundOn = !AppState.soundOn;
-      Store.set("sound", AppState.soundOn ? "on" : "off");
-      if (AppState.soundOn) init();
-    }
-
-    return { init, toggle, ...sfx };
-  })();
-
-  /* ======================= OVERLAYS ======================= */
-  const Overlays = (() => {
-    const map = {
-      start: $("start-overlay"),
-      pause: $("pause-overlay"),
-      help: $("help-overlay"),
-      character: $("character-select-overlay"),
-      achievements: $("achievements-overlay"),
-      gameover: $("gameover-overlay"),
+    /* ======================= GAME OBJECTS ======================= */
+    const player = {
+        x: BASE_W / 2,
+        y: BASE_H - 100,
+        r: 30,
+        speed: 5,
+        vx: 0
     };
 
-    const anyOpen = () => Object.values(map).some(el => el && !el.classList.contains("hidden"));
-    const sync = () => document.body.classList.toggle("overlay-open", anyOpen());
-
-    function open(name) {
-      const el = map[name];
-      if (!el) return;
-      el.classList.remove("hidden");
-      sync();
-      if (name === "pause") AppState.paused = true;
-    }
-    function close(name) {
-      const el = map[name];
-      if (!el) return;
-      el.classList.add("hidden");
-      sync();
-      if (name === "pause") AppState.paused = false;
-    }
-    function closeAll() {
-      for (const el of Object.values(map)) el?.classList.add("hidden");
-      AppState.paused = false;
-      sync();
-    }
-
-    return { open, close, closeAll };
-  })();
-
-  /* ======================= HUD MICRO-INTERACTIONS ======================= */
-  const HUDFX = (() => {
-    const pulse = (id) => {
-      const el = $(id);
-      if (!el) return;
-      el.classList.remove("hud-pop");
-      void el.offsetWidth;
-      el.classList.add("hud-pop");
-      setTimeout(() => el.classList.remove("hud-pop"), 250);
-    };
-
-    const shake = (id) => {
-      const el = $(id);
-      if (!el) return;
-      el.classList.remove("hud-shake");
-      void el.offsetWidth;
-      el.classList.add("hud-shake");
-      setTimeout(() => el.classList.remove("hud-shake"), 380);
-    };
-
-    return { pulse, shake };
-  })();
-
-  /* ======================= UI BINDINGS ======================= */
-  const UI = (() => {
-    function setText(id, v) {
-      const el = $(id);
-      if (el) el.textContent = String(v);
-    }
-
-    function setSoundIcon() {
-      const icon = $("sound-toggle-btn")?.querySelector("i");
-      if (!icon) return;
-      icon.className = AppState.soundOn ? "fas fa-volume-up" : "fas fa-volume-mute";
-    }
-
-    function updateHUD(prev = null) {
-      setText("score", Math.floor(AppState.score));
-      setText("streak", Math.floor(AppState.streak));
-      setText("lives", Math.floor(AppState.lives));
-
-      const defsCount = 10;
-      const got = Object.values(AppState.achievements || {}).filter(Boolean).length;
-      setText("achievements-count", `${got}/${defsCount}`);
-
-      if (prev) {
-        if (AppState.score !== prev.score) HUDFX.pulse("score");
-        if (AppState.streak !== prev.streak && AppState.streak > prev.streak) HUDFX.pulse("streak");
-        if (AppState.lives < prev.lives) HUDFX.shake("lives");
-      }
-    }
-
-    const ACH_DEFS = [
-      { key:"firstHoney", title:"First Honey", desc:"Catch any honey." },
-      { key:"streak10",  title:"Sticky Streak", desc:"Reach a 10 streak." },
-      { key:"survive60", title:"Steady Paws", desc:"Survive 60 seconds." },
-      { key:"score1k",   title:"Honey Hoarder", desc:"Reach 1000 score." },
-      { key:"beeDodger", title:"Bee Dodger", desc:"30s with full lives." },
-      { key:"combo2x",   title:"Combo Craze", desc:"Hit 2.0× combo." },
-      { key:"powerFan",  title:"Powered Up", desc:"Collect 3 power-ups." },
-      { key:"noMiss20",  title:"Perfect Flow", desc:"20 streak without a miss." },
-      { key:"survive120",title:"Long Walk", desc:"Survive 120 seconds." },
-      { key:"score3k",   title:"Legend", desc:"Reach 3000 score." },
-    ];
-
-    function renderAchievements() {
-      const list = $("achievements-list");
-      if (!list) return;
-
-      const unlocked = (k) => !!AppState.achievements?.[k];
-
-      list.innerHTML = ACH_DEFS.map(d => {
-        const ok = unlocked(d.key);
-        return `
-          <div class="achievement-item ${ok ? "unlocked" : ""}">
-            <div class="achievement-icon">${ok ? "🏆" : "🔒"}</div>
-            <div class="achievement-details">
-              <div class="achievement-name">${d.title}</div>
-              <div class="achievement-desc">${d.desc}</div>
-            </div>
-          </div>
-        `;
-      }).join("");
-    }
-
-    function openAchievements() {
-      renderAchievements();
-      Overlays.open("achievements");
-    }
-
-    function bind() {
-      if (bind._did) return;
-      bind._did = true;
-
-      const on = (id, ev, fn, opts) => $(id)?.addEventListener(ev, fn, opts);
-
-      on("start-btn", "click", () => { Audio.init(); Overlays.closeAll(); Game.start(); });
-      on("pause-btn", "click", () => { if (AppState.running) Overlays.open("pause"); });
-      on("resume-btn", "click", () => Overlays.close("pause"));
-      on("restart-btn", "click", () => { Game.reset(); Overlays.closeAll(); Game.start(); });
-
-      on("quit-btn", "click", () => { Game.reset(); Overlays.closeAll(); Overlays.open("start"); });
-
-      on("help-btn", "click", () => Overlays.open("help"));
-      on("close-help-btn", "click", () => Overlays.close("help"));
-
-      on("sound-toggle-btn", "click", () => { Audio.toggle(); setSoundIcon(); Audio.ui(); });
-
-      on("achievements-btn", "click", () => { Audio.ui(); openAchievements(); });
-      on("view-achievements-btn", "click", () => { Audio.ui(); openAchievements(); });
-
-      on("close-achievements-btn", "click", () => Overlays.close("achievements"));
-      on("close-achievements-btn-2", "click", () => Overlays.close("achievements"));
-
-      on("select-character-btn", "click", () => { Audio.ui(); Overlays.open("character"); });
-      on("back-to-menu-btn", "click", () => Overlays.close("character"));
-      on("start-with-character-btn", "click", () => { Audio.init(); Overlays.closeAll(); Game.start(); });
-
-      // Character cards
-      const cards = Array.from(document.querySelectorAll(".character-card[data-character]"));
-      const applyCharActive = () => {
-        cards.forEach(btn => btn.classList.toggle("active", btn.getAttribute("data-character") === AppState.character));
-      };
-      cards.forEach(btn => {
-        btn.addEventListener("click", () => {
-          const c = btn.getAttribute("data-character");
-          if (!c) return;
-          AppState.character = c;
-          Store.set("character", c);
-          applyCharActive();
-          Audio.ui();
-        });
-      });
-      applyCharActive();
-
-      // Weather drawer wiring
-      const drawer = $("weather-drawer");
-      const setDrawer = (open) => drawer?.classList.toggle("open", !!open);
-
-      const setWeather = (w) => {
-        Store.set("weather", w);
-        document.querySelectorAll(".weather-btn[data-weather]").forEach(b => {
-          b.classList.toggle("active", b.getAttribute("data-weather") === w);
-        });
-        WeatherFX.setMode(w);
-      };
-
-      on("weather-toggle", "click", () => setDrawer(true));
-      on("weather-close", "click", () => setDrawer(false));
-
-      document.querySelectorAll(".weather-btn[data-weather]").forEach(btn => {
-        btn.addEventListener("click", () => {
-          const w = btn.getAttribute("data-weather");
-          if (w) setWeather(w);
-        });
-      });
-
-      setWeather(Store.get("weather", "clear"));
-
-      // Share
-      on("share-btn", "click", async () => {
-        const t = `I scored ${Math.floor(AppState.score)} in Pooh’s Honey Hunt 🍯`;
-        try {
-          if (navigator.share) await navigator.share({ text: t });
-          else if (navigator.clipboard) await navigator.clipboard.writeText(t);
-        } catch {}
-      });
-
-      // Keyboard shortcuts
-      window.addEventListener("keydown", (e) => {
-        if (e.repeat) return;
-
-        if (e.code === "Space") {
-          e.preventDefault();
-          if (!AppState.running) return;
-          if (!document.body.classList.contains("overlay-open")) Overlays.open("pause");
-          else Overlays.close("pause");
-        }
-
-        if (e.code === "Escape") {
-          Overlays.close("help");
-          Overlays.close("achievements");
-          Overlays.close("character");
-          Overlays.close("pause");
-        }
-      });
-
-      setSoundIcon();
-      updateHUD();
-    }
-
-    return { bind, updateHUD, openAchievements, renderAchievements };
-  })();
-
-  /* ======================= WEATHER EFFECTS (DOM overlay) ======================= */
-  const WeatherFX = (() => {
-    let host = $("weather-effects");
-    if (!host) {
-      host = document.createElement("div");
-      host.id = "weather-effects";
-      host.setAttribute("aria-hidden", "true");
-      document.body.appendChild(host);
-    }
-
-    let mode = Store.get("weather", "clear") || "clear";
-    let raf = 0;
-    let lastT = 0;
-    const bits = [];
-
-    function reset() {
-      bits.length = 0;
-      host.innerHTML = "";
-    }
-
-    function spawn() {
-      if (mode === "clear") return;
-
-      const el = document.createElement("div");
-      el.style.position = "absolute";
-      el.style.left = (Math.random() * 100) + "vw";
-      el.style.top = "-8vh";
-      el.style.pointerEvents = "none";
-      el.style.willChange = "transform, opacity";
-      el.style.opacity = "0.95";
-
-      let emoji = "•";
-      if (mode === "rain") emoji = "💧";
-      if (mode === "snow") emoji = "❄️";
-      if (mode === "leaves") emoji = "🍂";
-      if (mode === "blossoms") emoji = "🌸";
-
-      el.textContent = emoji;
-      el.style.fontSize = (18 + Math.random() * 18) + "px";
-
-      host.appendChild(el);
-
-      bits.push({
-        el,
-        x: parseFloat(el.style.left),
-        y: -10,
-        vy: (mode === "rain" ? 90 : 40) + Math.random() * 60,
-        vx: (Math.random() * 20 - 10),
-        rot: Math.random() * 360,
-        vr: (Math.random() * 80 - 40),
-      });
-
-      if (bits.length > 60) {
-        const a = bits.shift();
-        a?.el?.remove();
-      }
-    }
-
-    function tick(t) {
-      const dt = Math.min(50, t - lastT);
-      lastT = t;
-
-      if (mode !== "clear") {
-        const chance = mode === "rain" ? 0.55 : 0.22;
-        if (Math.random() < chance) spawn();
-      }
-
-      for (let i = bits.length - 1; i >= 0; i--) {
-        const b = bits[i];
-        b.y += (b.vy * dt) / 1000;
-        b.x += (b.vx * dt) / 1000;
-        b.rot += (b.vr * dt) / 1000;
-
-        b.el.style.transform = `translate(${b.x}vw, ${b.y}vh) rotate(${b.rot}deg)`;
-
-        if (b.y > 115) {
-          b.el.remove();
-          bits.splice(i, 1);
-        }
-      }
-
-      raf = requestAnimationFrame(tick);
-    }
-
-    function setMode(m) {
-      mode = m || "clear";
-      reset();
-      if (!raf) {
-        lastT = now();
-        raf = requestAnimationFrame(tick);
-      }
-    }
-
-    setMode(mode);
-
-    return { setMode };
-  })();
-
-  /* ======================= CANVAS ======================= */
-  const canvas = $("honey-game");
-  const ctx = canvas?.getContext("2d", { alpha: true, desynchronized: true });
-
-  if (!canvas || !ctx) {
-    console.error("Canvas not found or 2D context failed.");
-    return;
-  }
-
-  const BASE_W = 420, BASE_H = 700;
-  canvas.width = BASE_W;
-  canvas.height = BASE_H;
-
-  /* ======================= INPUT (SMOOTH SPRING) ======================= */
-  const Input = (() => {
-    let down = false;
-    let tx = BASE_W / 2;
-    let x = BASE_W / 2;
-    let vx = 0;
-
-    const setTarget = (clientX) => {
-      const rect = canvas.getBoundingClientRect();
-      const nx = (clientX - rect.left) / rect.width;
-      tx = clamp(nx * BASE_W, 52, BASE_W - 52);
-    };
-
-    const downAt = (clientX) => {
-      down = true;
-      setTarget(clientX);
-      Audio.init();
-    };
-
-    canvas.addEventListener("mousedown", (e) => downAt(e.clientX));
-    window.addEventListener("mousemove", (e) => { if (down) setTarget(e.clientX); });
-    window.addEventListener("mouseup", () => (down = false));
-
-    canvas.addEventListener("touchstart", (e) => {
-      const t = e.touches?.[0];
-      if (!t) return;
-      if (e.cancelable) e.preventDefault();
-      downAt(t.clientX);
-    }, { passive: false });
-
-    canvas.addEventListener("touchmove", (e) => {
-      if (!down) return;
-      const t = e.touches?.[0];
-      if (!t) return;
-      if (e.cancelable) e.preventDefault();
-      setTarget(t.clientX);
-    }, { passive: false });
-
-    canvas.addEventListener("touchend", () => (down = false), { passive: true });
-    canvas.addEventListener("touchcancel", () => (down = false), { passive: true });
-
-    function update(dt) {
-      const t = Math.min(40, dt) / 1000;
-      const k = 26;  // stiffness
-      const d = 12;  // damping
-      const ax = (tx - x) * k - vx * d;
-      vx += ax * t;
-      x += vx * t;
-      x = clamp(x, 52, BASE_W - 52);
-      return x;
-    }
-
-    return { update };
-  })();
-
-  /* ======================= PARTICLES (cheap + juicy) ======================= */
-  const Particles = (() => {
-    const p = [];
-    const MAX = 220;
-
-    function emit(x, y, color, count = 10, spread = 1) {
-      for (let i = 0; i < count; i++) {
-        if (p.length >= MAX) p.shift();
-        const a = Math.random() * Math.PI * 2;
-        const sp = (1 + Math.random() * 2.6) * spread;
-        p.push({
-          x, y,
-          vx: Math.cos(a) * sp,
-          vy: Math.sin(a) * sp - (1.5 + Math.random() * 2),
-          life: 1,
-          r: 2 + Math.random() * 3,
-          color,
-        });
-      }
-    }
-
-    function update(dt) {
-      const t = Math.min(32, dt) / 1000;
-      for (let i = p.length - 1; i >= 0; i--) {
-        const a = p[i];
-        a.x += a.vx * (60 * t);
-        a.y += a.vy * (60 * t);
-        a.vy += 0.12 * (60 * t);
-        a.life -= 1.35 * t;
-        if (a.life <= 0) p.splice(i, 1);
-      }
-    }
-
-    function render(ctx) {
-      if (!p.length) return;
-      ctx.save();
-      for (const a of p) {
-        ctx.globalAlpha = Math.max(0, a.life);
-        ctx.fillStyle = a.color;
-        ctx.beginPath();
-        ctx.arc(a.x, a.y, a.r, 0, Math.PI * 2);
-        ctx.fill();
-      }
-      ctx.restore();
-    }
-
-    return { emit, update, render };
-  })();
-
-  /* ======================= SCORE POPUPS (DOM) ======================= */
-  function spawnScorePopup(text, x, y) {
-    const host = document.querySelector(".game-container");
-    if (!host) return;
-
-    const el = document.createElement("div");
-    el.className = "score-popup";
-    el.textContent = text;
-
-    const px = (x / BASE_W) * 100;
-    const py = (y / BASE_H) * 100;
-    el.style.left = `${px}%`;
-    el.style.top = `${py}%`;
-
-    host.appendChild(el);
-    el.addEventListener("animationend", () => el.remove(), { once: true });
-  }
-
-  /* ======================= ACHIEVEMENTS ======================= */
-  const Achievements = (() => {
-    const unlock = (k, title = "Achievement!") => {
-      if (AppState.achievements[k]) return false;
-      AppState.achievements[k] = true;
-      persistAchievements();
-      UI.updateHUD();
-      UI.renderAchievements();
-
-      const pop = document.createElement("div");
-      pop.className = "achievement-popup";
-      pop.textContent = `🏆 ${title}`;
-      document.body.appendChild(pop);
-      pop.addEventListener("animationend", () => pop.remove(), { once: true });
-
-      Audio.power();
-      vibrate(25);
-      return true;
-    };
-
-    function check() {
-      if (AppState.score > 0) unlock("firstHoney", "First Honey");
-      if (AppState.streak >= 10) unlock("streak10", "Sticky Streak");
-      if (AppState.timeMs >= 60000) unlock("survive60", "Steady Paws");
-      if (AppState.timeMs >= 120000) unlock("survive120", "Long Walk");
-      if (AppState.score >= 1000) unlock("score1k", "Honey Hoarder");
-      if (AppState.score >= 3000) unlock("score3k", "Legend");
-      if (AppState.timeMs >= 30000 && AppState.lives >= 3) unlock("beeDodger", "Bee Dodger");
-      if (AppState.combo.mult >= 2.0) unlock("combo2x", "Combo Craze");
-      if (AppState.streak >= 20) unlock("noMiss20", "Perfect Flow");
-      if (AppState.stats.powerCollected >= 3) unlock("powerFan", "Powered Up");
-    }
-
-    return { check };
-  })();
-
-  /* ======================= GAME ======================= */
-  const Game = (() => {
     const honeys = [];
     const bees = [];
     const powers = [];
+    const particles = [];
+    const effects = [];
 
-    /* ======================= WAVES + VARIANTS ======================= */
-    const WAVE_MS = 30000;
-
-    const WAVES = [
-      { name: "Warm-up",  honeyRate: 520, beeRate: 980, powerRate: 8200, beeMix: { normal: 0.75, zigzag: 0.15, hunter: 0.10, diver: 0.00 } },
-      { name: "Zigzags",  honeyRate: 500, beeRate: 900, powerRate: 7800, beeMix: { normal: 0.35, zigzag: 0.45, hunter: 0.15, diver: 0.05 } },
-      { name: "Breather", honeyRate: 430, beeRate: 1200, powerRate: 7000, beeMix: { normal: 0.80, zigzag: 0.10, hunter: 0.10, diver: 0.00 } },
-      { name: "Storm",    honeyRate: 540, beeRate: 760, powerRate: 7200, beeMix: { normal: 0.35, zigzag: 0.20, hunter: 0.25, diver: 0.20 } },
-    ];
-
-    const pickFromMix = (mix) => {
-      const r = Math.random();
-      let acc = 0;
-      for (const k of Object.keys(mix)) {
-        acc += mix[k];
-        if (r <= acc) return k;
-      }
-      return "normal";
-    };
-
-    const currentWaveIndex = () => Math.floor(AppState.timeMs / WAVE_MS) % WAVES.length;
-    const currentWave = () => WAVES[currentWaveIndex()];
-
-    // Wave announcer (canvas-rendered)
-    const WaveAnnounce = {
-      idx: -1,
-      timer: 0,
-      title: "",
-      set(idx) {
-        const w = WAVES[idx];
-        if (!w) return;
-        this.idx = idx;
-        this.timer = 1600; // ms
-        this.title = `🌿 Wave: ${w.name}`;
-        Audio.wave();
-        vibrate(15);
-      },
-      update(dt) { this.timer = Math.max(0, this.timer - dt); },
-      render() {
-        if (this.timer <= 0) return;
-        const a = clamp(this.timer / 1600, 0, 1);
-        const ease = 1 - Math.pow(1 - a, 2);
-
-        ctx.save();
-        ctx.globalAlpha = 0.18 + 0.35 * ease;
-
-        // backplate
-        const padW = 320, padH = 54;
-        const x = (BASE_W - padW) / 2;
-        const y = 92;
-
-        ctx.fillStyle = "rgba(20,14,10,0.65)";
-        rrPath(ctx, x, y, padW, padH, 18);
-        ctx.fill();
-
-        ctx.globalAlpha = 0.9 * ease;
-        ctx.strokeStyle = "rgba(255,232,170,0.35)";
-        ctx.lineWidth = 3;
-        rrPath(ctx, x, y, padW, padH, 18);
-        ctx.stroke();
-
-        // text
-        ctx.globalAlpha = 0.95 * ease;
-        ctx.font = '900 22px "Fredoka One", system-ui';
-        ctx.textAlign = "center";
-        ctx.textBaseline = "middle";
-        ctx.lineWidth = 6;
-        ctx.strokeStyle = "rgba(0,0,0,0.35)";
-        ctx.fillStyle = "rgba(255,210,120,0.98)";
-        ctx.strokeText(this.title, BASE_W / 2, y + padH / 2);
-        ctx.fillText(this.title, BASE_W / 2, y + padH / 2);
-
-        ctx.restore();
-      }
-    };
-
-    const player = {
-      x: BASE_W / 2,
-      y: BASE_H - 86,
-      r: 54,         // bigger Pooh
-      scale: 1,
-      sv: 0,
-    };
-
-    const buffs = { shield: 0, slow: 0 };
-
-    let running = false;
-    let last = 0;
-
-    let honeyTimer = 0, beeTimer = 0, powerTimer = 0;
-    let baseHoneyRate = 520;
-    let baseBeeRate = 900;
-    let powerRate = 7500;
-
-    let honeyFall = 165, beeFall = 205, beeDrift = 85;
-
-    let shake = 0;
-    let microSlow = 0;
-
-    const hitCircle = (ax, ay, ar, bx, by, br) => {
-      const dx = ax - bx, dy = ay - by, rr = ar + br;
-      return dx * dx + dy * dy <= rr * rr;
-    };
-
-    function momentSlow(amount = 0.15, dur = 160) {
-      microSlow = Math.max(microSlow, dur);
-      AppState.timeScale = Math.min(AppState.timeScale, 1 - amount);
-    }
-
-    function screenShake(intensity = 10) {
-      shake = Math.max(shake, intensity);
-    }
-
-    function punchScale(amount = 0.22) {
-      player.sv -= amount;
-    }
-
-    function reset() {
-      honeys.length = 0; bees.length = 0; powers.length = 0;
-
-      running = false;
-      AppState.running = false;
-      AppState.paused = false;
-
-      AppState.score = 0;
-      AppState.streak = 0;
-      AppState.lives = 3;
-      AppState.timeMs = 0;
-      AppState.timeScale = 1;
-      AppState.combo = { mult: 1, timer: 0, tier: 0 };
-
-      AppState.stats.maxStreak = 0;
-      AppState.stats.honeyCaught = 0;
-      AppState.stats.beesHit = 0;
-      AppState.stats.powerCollected = 0;
-
-      buffs.shield = 0;
-      buffs.slow = 0;
-
-      honeyTimer = beeTimer = powerTimer = 0;
-      honeyFall = 165; beeFall = 205; beeDrift = 85;
-
-      player.x = BASE_W / 2;
-      player.y = BASE_H - 86;
-      player.scale = 1;
-      player.sv = 0;
-
-      shake = 0;
-      microSlow = 0;
-
-      // reset wave announce
-      WaveAnnounce.idx = -1;
-      WaveAnnounce.timer = 0;
-      WaveAnnounce.title = "";
-
-      UI.updateHUD();
-    }
-
-    function start() {
-      Overlays.closeAll();
-      AppState.running = true;
-      AppState.paused = false;
-      running = true;
-      last = now();
-    }
-
-    function gameOver() {
-      running = false;
-      AppState.running = false;
-      AppState.paused = false;
-
-      if (AppState.score > AppState.best) {
-        AppState.best = AppState.score;
-        Store.set("bestScore", String(AppState.best));
-      }
-
-      const fs = $("final-score");
-      if (fs) fs.textContent = String(Math.floor(AppState.score));
-
-      UI.updateHUD();
-      Overlays.closeAll();
-      Overlays.open("gameover");
-    }
-
+    /* ======================= HELPER FUNCTIONS ======================= */
     function spawnHoney() {
-      const seed = (Math.random() * 1e9) | 0;
-
-      // 86% normal, 10% golden, 4% cursed
-      const roll = Math.random();
-      const kind =
-        roll < 0.04 ? "cursed" :
-        roll < 0.14 ? "gold"   :
-        "normal";
-
-      const r =
-        kind === "gold" ? 26 :
-        kind === "cursed" ? 22 :
-        24;
-
-      honeys.push({
-        x: 60 + Math.random() * (BASE_W - 120),
-        y: -35,
-        r,
-        vy: honeyFall * (0.9 + Math.random() * 0.28),
-        seed,
-        kind,
-        wob: Math.random() * 10,
-      });
+        const type = Math.random() < 0.08 ? 'gold' : 
+                    Math.random() < 0.04 ? 'cursed' : 'normal';
+        
+        honeys.push({
+            x: Math.random() * (BASE_W - 60) + 30,
+            y: -30,
+            r: type === 'cursed' ? 12 : 15,
+            vy: 2 + Math.random() * 2,
+            type: type,
+            wobble: Math.random() * Math.PI * 2
+        });
     }
 
-    function spawnBee(forceType = null) {
-      const seed = (Math.random() * 1e9) | 0;
-
-      const wave = currentWave();
-      const type = forceType || pickFromMix(wave.beeMix);
-
-      const b = {
-        x: 60 + Math.random() * (BASE_W - 120),
-        y: -40,
-        r: 24,
-        vy: beeFall * (0.9 + Math.random() * 0.28),
-        vx: (Math.random() * 2 - 1) * beeDrift,
-        flap: Math.random() * 10,
-        seed,
-        type,
-
-        tele: 0,
-        dived: false,
-        zigT: 0,
-      };
-
-      if (type === "hunter") {
-        b.vx *= 0.6;
-      } else if (type === "zigzag") {
-        b.zigT = 200 + Math.random() * 350;
-      } else if (type === "diver") {
-        b.tele = 260 + Math.random() * 260;
-        b.vx *= 0.25;
-        b.vy *= 0.75;
-      }
-
-      bees.push(b);
+    function spawnBee() {
+        bees.push({
+            x: Math.random() * (BASE_W - 60) + 30,
+            y: -40,
+            r: 12,
+            vy: 3 + Math.random() * 2,
+            vx: (Math.random() - 0.5) * 2,
+            angle: 0,
+            flap: 0
+        });
     }
 
     function spawnPower() {
-      const type = Math.random() < 0.5 ? "shield" : "slow";
-      powers.push({
-        x: 60 + Math.random() * (BASE_W - 120),
-        y: -40,
-        r: 18,
-        vy: 175,
-        type,
-        trail: [],
-      });
+        const types = ['shield', 'slow', 'magnet'];
+        const type = types[Math.floor(Math.random() * types.length)];
+        
+        powers.push({
+            x: Math.random() * (BASE_W - 60) + 30,
+            y: -40,
+            r: 12,
+            vy: 2 + Math.random() * 2,
+            type: type,
+            pulse: 0
+        });
     }
 
-    function updateDifficulty() {
-      const t = AppState.timeMs / 1000;
-      honeyFall = 165 + t * 1.05;
-      beeFall   = 205 + t * 1.35;
-      beeDrift  =  85 + t * 0.20;
-    }
-
-    function setComboFromStreak() {
-      const tier = Math.min(6, Math.floor(AppState.streak / 5));
-      const mult = Math.min(2.2, 1 + tier * 0.2);
-      const prevTier = AppState.combo.tier;
-
-      AppState.combo.mult = mult;
-      AppState.combo.timer = 2000;
-      AppState.combo.tier = tier;
-
-      if (tier !== prevTier && tier >= 2) {
-        Audio.combo();
-        momentSlow(0.10, 140);
-        spawnScorePopup(`COMBO x${mult.toFixed(1)}`, player.x, 120);
-      }
-    }
-
-    function awardHoney(h) {
-      const prev = { score: AppState.score, streak: AppState.streak, lives: AppState.lives };
-      const kind = h.kind || "normal";
-
-      AppState.stats.honeyCaught++;
-
-      // cursed: punish + chaos
-      if (kind === "cursed") {
-        AppState.streak = 0;
-        AppState.combo = { mult: 1, timer: 0, tier: 0 };
-
-        AppState.score = Math.max(0, AppState.score - 35);
-
-        Particles.emit(h.x, h.y, "rgba(180,55,25,1)", 24, 1.2);
-        spawnScorePopup("CURSED! -35", h.x, h.y);
-
-        // spawn 2 spicy bees
-        spawnBee("hunter");
-        spawnBee("zigzag");
-
-        Audio.hit();
-        vibrate([30, 20, 30]);
-        momentSlow(0.16, 160);
-        screenShake(12);
-
-        UI.updateHUD(prev);
-        return;
-      }
-
-      // normal/gold: streak grows
-      AppState.streak++;
-      AppState.stats.maxStreak = Math.max(AppState.stats.maxStreak, AppState.streak);
-
-      setComboFromStreak();
-
-      const base = 10;
-      let pts = Math.round(base * AppState.combo.mult);
-
-      if (kind === "gold") {
-        pts = Math.round((base * 2.25) * AppState.combo.mult);
-        AppState.combo.timer = Math.min(2600, AppState.combo.timer + 450);
-        momentSlow(0.08, 120);
-      }
-
-      AppState.score += pts;
-
-      let color = "rgba(255,165,0,1)";
-      if (AppState.character === "piglet") color = "rgba(255,140,170,1)";
-      if (AppState.character === "tigger") color = "rgba(255,140,0,1)";
-      if (AppState.character === "rabbit") color = "rgba(80,170,110,1)";
-      if (kind === "gold") color = "rgba(255,220,120,1)";
-
-      Particles.emit(h.x, h.y, color, 14 + Math.floor(AppState.combo.mult * 6) + (kind === "gold" ? 10 : 0), 1.05);
-      spawnScorePopup(`${kind === "gold" ? "✨ " : ""}+${pts}`, h.x, h.y);
-
-      punchScale(0.22);
-      vibrate(kind === "gold" ? [15, 10, 15] : 15);
-      (kind === "gold" ? Audio.power : Audio.collect)();
-      momentSlow(0.06, 90);
-
-      UI.updateHUD(prev);
-    }
-
-    function takeHit(b) {
-      const prev = { score: AppState.score, streak: AppState.streak, lives: AppState.lives };
-
-      AppState.stats.beesHit++;
-
-      if (buffs.shield > 0) {
-        buffs.shield = 0;
-        Particles.emit(b.x, b.y, "rgba(77,150,255,1)", 18, 1.1);
-        spawnScorePopup("🛡️", b.x, b.y);
-        Audio.power();
-        vibrate([20, 20, 20]);
-        momentSlow(0.10, 120);
-        screenShake(10);
-        UI.updateHUD(prev);
-        return;
-      }
-
-      AppState.lives = Math.max(0, AppState.lives - 1);
-      AppState.streak = 0;
-      AppState.combo = { mult: 1, timer: 0, tier: 0 };
-
-      Particles.emit(b.x, b.y, "rgba(201,76,76,1)", 22, 1.2);
-      spawnScorePopup("OUCH!", player.x, player.y - 40);
-      Audio.hit();
-      vibrate([35, 25, 35]);
-
-      momentSlow(0.22, 180);
-      screenShake(16);
-
-      UI.updateHUD(prev);
-      if (AppState.lives <= 0) gameOver();
-    }
-
-    function takePower(p) {
-      AppState.stats.powerCollected++;
-
-      if (p.type === "shield") {
-        buffs.shield = 12000;
-        spawnScorePopup("🛡️ Shield", p.x, p.y);
-        Particles.emit(p.x, p.y, "rgba(77,150,255,1)", 18, 1.1);
-      } else {
-        buffs.slow = 7000;
-        spawnScorePopup("⏳ Slow", p.x, p.y);
-        Particles.emit(p.x, p.y, "rgba(157,78,221,1)", 18, 1.05);
-      }
-
-      Audio.power();
-      vibrate(20);
-      momentSlow(0.12, 140);
-    }
-
-    /* ======================= STORYBOOK DRAWING ======================= */
-    function inkStroke(width = 3, alpha = 0.45) {
-      ctx.lineWidth = width;
-      ctx.strokeStyle = `rgba(60,45,28,${alpha})`;
-      ctx.lineJoin = "round";
-      ctx.lineCap = "round";
-    }
-
-    function paperNoise(seed, cx, cy, rad, strength = 0.05) {
-      const rng = makeRng(seed);
-      const n = 14;
-      ctx.save();
-      ctx.globalAlpha = strength;
-      ctx.fillStyle = "rgba(255,255,255,1)";
-      for (let i = 0; i < n; i++) {
-        const a = rng() * Math.PI * 2;
-        const d = rng() * rad * 0.85;
-        ctx.beginPath();
-        ctx.arc(cx + Math.cos(a) * d, cy + Math.sin(a) * d, 0.7 + rng() * 0.9, 0, Math.PI * 2);
-        ctx.fill();
-      }
-      ctx.restore();
-    }
-
-    function drawHoney(h) {
-      const r = h.r;
-      const kind = h.kind || "normal";
-
-      ctx.save();
-      ctx.translate(h.x, h.y);
-
-      const wob = Math.sin((AppState.timeMs + h.y * 3) / 220 + (h.wob || 0)) * 0.04;
-      ctx.rotate(wob);
-
-      // body gradient (variant)
-      let g;
-      if (kind === "gold") {
-        g = ctx.createRadialGradient(-r * 0.25, -r * 0.35, r * 0.18, 0, 0, r * 1.35);
-        g.addColorStop(0.00, "#fff7c7");
-        g.addColorStop(0.30, "#ffe08a");
-        g.addColorStop(0.62, "#f7c400");
-        g.addColorStop(1.00, "#b87400");
-      } else if (kind === "cursed") {
-        g = ctx.createRadialGradient(-r * 0.25, -r * 0.35, r * 0.18, 0, 0, r * 1.35);
-        g.addColorStop(0.00, "#ffe3b5");
-        g.addColorStop(0.35, "#ffb86b");
-        g.addColorStop(0.75, "#e46a2d");
-        g.addColorStop(1.00, "#7b2c14");
-      } else {
-        g = ctx.createRadialGradient(-r * 0.3, -r * 0.35, r * 0.2, 0, 0, r * 1.3);
-        g.addColorStop(0.00, "#fff2b5");
-        g.addColorStop(0.35, "#ffd166");
-        g.addColorStop(0.70, "#f4b400");
-        g.addColorStop(1.00, "#d18a00");
-      }
-
-      ctx.fillStyle = g;
-      rrPath(ctx, -r * 1.05, -r * 0.95, r * 2.10, r * 1.90, r * 0.55);
-      ctx.fill();
-
-      inkStroke(3.2, 0.42);
-      ctx.stroke();
-
-      // variant aura ring
-      if (kind === "gold") {
-        ctx.save();
-        ctx.globalAlpha = 0.22;
-        ctx.strokeStyle = "rgba(255,236,140,0.95)";
-        ctx.lineWidth = 5;
-        ctx.beginPath();
-        ctx.ellipse(0, 0, r * 1.18, r * 0.98, 0, 0, Math.PI * 2);
-        ctx.stroke();
-        ctx.restore();
-      } else if (kind === "cursed") {
-        ctx.save();
-        ctx.globalAlpha = 0.22;
-        ctx.strokeStyle = "rgba(140,30,10,0.9)";
-        ctx.lineWidth = 5;
-        ctx.beginPath();
-        ctx.ellipse(0, 0, r * 1.18, r * 0.98, 0, 0, Math.PI * 2);
-        ctx.stroke();
-        ctx.restore();
-      }
-
-      // lid
-      ctx.save();
-      ctx.translate(0, -r * 0.72);
-      const lidG = ctx.createLinearGradient(0, -r * 0.25, 0, r * 0.28);
-      lidG.addColorStop(0, "#9d6a3a");
-      lidG.addColorStop(1, "#6e4324");
-      ctx.fillStyle = lidG;
-      rrPath(ctx, -r * 1.00, -r * 0.22, r * 2.00, r * 0.44, r * 0.18);
-      ctx.fill();
-      inkStroke(2.6, 0.45);
-      ctx.stroke();
-
-      ctx.globalAlpha = 0.18;
-      ctx.fillStyle = "#fff";
-      ctx.beginPath();
-      ctx.ellipse(-r * 0.35, -r * 0.08, r * 0.35, r * 0.14, -0.2, 0, Math.PI * 2);
-      ctx.fill();
-      ctx.restore();
-
-      // inside “liquid”
-      ctx.save();
-      ctx.globalAlpha = 0.9;
-      const hg = ctx.createRadialGradient(-r * 0.25, r * 0.2, r * 0.2, 0, r * 0.25, r * 1.1);
-      hg.addColorStop(0, kind === "cursed" ? "#ffd1a8" : "#ffe58f");
-      hg.addColorStop(0.6, kind === "cursed" ? "#e46a2d" : "#f4b400");
-      hg.addColorStop(1, kind === "cursed" ? "#7b2c14" : "#c97800");
-      ctx.fillStyle = hg;
-      ctx.beginPath();
-      ctx.ellipse(0, r * 0.18, r * 0.78, r * 0.56, 0.08, 0, Math.PI * 2);
-      ctx.fill();
-      ctx.restore();
-
-      // glossy highlight
-      ctx.save();
-      ctx.globalAlpha = 0.32;
-      ctx.strokeStyle = "rgba(255,255,255,0.95)";
-      ctx.lineWidth = 3;
-      ctx.beginPath();
-      ctx.arc(-r * 0.25, -r * 0.05, r * 0.72, Math.PI * 1.05, Math.PI * 1.55);
-      ctx.stroke();
-      ctx.restore();
-
-      // base shadow
-      ctx.save();
-      ctx.globalAlpha = 0.18;
-      ctx.fillStyle = "#000";
-      ctx.beginPath();
-      ctx.ellipse(0, r * 1.05, r * 0.85, r * 0.22, 0, 0, Math.PI * 2);
-      ctx.fill();
-      ctx.restore();
-
-      paperNoise(h.seed, 0, 0, r * 1.05, 0.05);
-
-      ctx.restore();
-    }
-
-    function drawBee(b) {
-      const r = b.r;
-
-      ctx.save();
-      ctx.translate(b.x, b.y);
-
-      const bob = Math.sin(b.flap) * r * 0.08;
-      const lean = Math.sin(b.flap * 0.7) * 0.12;
-      ctx.translate(0, bob);
-      ctx.rotate(lean);
-
-      // diver telegraph aura
-      if (b.type === "diver" && !b.dived) {
-        ctx.save();
-        const pulse = 0.18 + 0.10 * Math.sin(b.flap * 2.4);
-        ctx.globalAlpha = pulse;
-        ctx.strokeStyle = "rgba(255,255,255,0.85)";
-        ctx.lineWidth = 4;
-        ctx.beginPath();
-        ctx.ellipse(0, 0, r * 1.35, r * 1.05, 0, 0, Math.PI * 2);
-        ctx.stroke();
-        ctx.restore();
-      }
-
-      // wings
-      const wing = (sx) => {
-        ctx.save();
-        ctx.globalAlpha = 0.32 + 0.12 * Math.sin(b.flap * 1.6 + sx);
-        const wg = ctx.createRadialGradient(sx * r * 0.25, -r * 0.7, r * 0.2, sx * r * 0.45, -r * 0.55, r * 1.05);
-        wg.addColorStop(0, "rgba(255,255,255,0.95)");
-        wg.addColorStop(0.6, "rgba(255,255,255,0.35)");
-        wg.addColorStop(1, "rgba(255,255,255,0)");
-        ctx.fillStyle = wg;
-        ctx.beginPath();
-        ctx.ellipse(sx * r * 0.75, -r * 0.6, r * 0.78, r * 0.46, sx * 0.25 + Math.sin(b.flap) * 0.35, 0, Math.PI * 2);
-        ctx.fill();
-        inkStroke(2.2, 0.18);
-        ctx.stroke();
-        ctx.restore();
-      };
-      wing(-1); wing(1);
-
-      // body gradient
-      const bg = ctx.createRadialGradient(-r * 0.35, -r * 0.25, r * 0.25, 0, 0, r * 1.25);
-      bg.addColorStop(0, "#fff3b8");
-      bg.addColorStop(0.35, "#ffd86a");
-      bg.addColorStop(0.75, "#f2b93a");
-      bg.addColorStop(1, "#c27a12");
-
-      ctx.fillStyle = bg;
-      ctx.beginPath();
-      ctx.ellipse(0, 0, r * 1.05, r * 0.82, 0, 0, Math.PI * 2);
-      ctx.fill();
-
-      inkStroke(3.0, 0.48);
-      ctx.stroke();
-
-      // painted stripes
-      const stripe = (y, w, h, a = 0.62) => {
-        ctx.save();
-        ctx.globalAlpha = a;
-        const sg = ctx.createLinearGradient(0, y - h, 0, y + h);
-        sg.addColorStop(0, "rgba(40,28,18,0.15)");
-        sg.addColorStop(0.45, "rgba(35,25,17,0.85)");
-        sg.addColorStop(1, "rgba(40,28,18,0.20)");
-        ctx.fillStyle = sg;
-        rrPath(ctx, -r * w, y - h, r * w * 2, h * 2, h * 0.9);
-        ctx.fill();
-        ctx.restore();
-      };
-      stripe(-r * 0.22, 0.92, r * 0.17);
-      stripe( r * 0.10, 0.98, r * 0.18);
-
-      // face + stinger
-      ctx.save();
-      ctx.fillStyle = "rgba(25,18,12,0.75)";
-      ctx.beginPath(); ctx.arc(-r * 0.22, -r * 0.10, r * 0.08, 0, Math.PI * 2); ctx.fill();
-      ctx.beginPath(); ctx.arc( r * 0.22, -r * 0.10, r * 0.08, 0, Math.PI * 2); ctx.fill();
-
-      ctx.globalAlpha = 0.18;
-      ctx.fillStyle = "#fff";
-      ctx.beginPath(); ctx.ellipse(-r * 0.35, -r * 0.28, r * 0.28, r * 0.14, -0.3, 0, Math.PI * 2); ctx.fill();
-
-      ctx.globalAlpha = 0.9;
-      ctx.fillStyle = "rgba(35,25,17,0.85)";
-      ctx.beginPath();
-      ctx.moveTo(0, r * 0.78);
-      ctx.lineTo(-r * 0.12, r * 1.02);
-      ctx.lineTo( r * 0.12, r * 1.02);
-      ctx.closePath();
-      ctx.fill();
-      ctx.restore();
-
-      // shadow
-      ctx.save();
-      ctx.globalAlpha = 0.16;
-      ctx.fillStyle = "#000";
-      ctx.beginPath();
-      ctx.ellipse(0, r * 0.98, r * 0.95, r * 0.22, 0, 0, Math.PI * 2);
-      ctx.fill();
-      ctx.restore();
-
-      paperNoise(b.seed, 0, 0, r * 1.05, 0.045);
-
-      ctx.restore();
-    }
-
-    function drawPower(p) {
-      if (p.trail?.length) {
-        for (let i = 0; i < p.trail.length; i++) {
-          const pos = p.trail[i];
-          const alpha = 0.5 * (1 - i / p.trail.length);
-          ctx.fillStyle =
-            p.type === "shield" ? `rgba(77,150,255,${alpha})` :
-            p.type === "slow" ? `rgba(157,78,221,${alpha})` :
-            `rgba(255,165,0,${alpha})`;
-          ctx.beginPath();
-          ctx.arc(pos.x, pos.y, p.r * (0.75 - i * 0.05), 0, Math.PI * 2);
-          ctx.fill();
+    function spawnParticles(x, y, color, count = 10, size = 3) {
+        for (let i = 0; i < count; i++) {
+            particles.push({
+                x: x,
+                y: y,
+                vx: (Math.random() - 0.5) * 6,
+                vy: (Math.random() - 0.5) * 6 - 2,
+                life: 1.0,
+                color: color,
+                r: size + Math.random() * size
+            });
         }
-      }
-
-      ctx.save();
-      ctx.translate(p.x, p.y);
-      ctx.fillStyle = p.type === "shield" ? "#4a9eff" : "#9d4edd";
-      inkStroke(2.8, 0.35);
-      ctx.beginPath();
-      ctx.arc(0, 0, p.r, 0, Math.PI * 2);
-      ctx.fill();
-      ctx.stroke();
-
-      ctx.fillStyle = "rgba(255,255,255,0.9)";
-      ctx.font = '900 14px "Fredoka One", system-ui';
-      ctx.textAlign = "center";
-      ctx.textBaseline = "middle";
-      ctx.fillText(p.type === "shield" ? "S" : "⏳", 0, 1);
-
-      ctx.restore();
     }
 
+    function addEffect(type, duration) {
+        effects.push({
+            type: type,
+            duration: duration,
+            timer: duration
+        });
+    }
+
+    function hasEffect(type) {
+        return effects.some(effect => effect.type === type && effect.timer > 0);
+    }
+
+    function checkCollision(obj1, obj2) {
+        const dx = obj1.x - obj2.x;
+        const dy = obj1.y - obj2.y;
+        const distance = Math.sqrt(dx * dx + dy * dy);
+        return distance < (obj1.r + obj2.r);
+    }
+
+    /* ======================= DRAWING FUNCTIONS ======================= */
     function drawPlayer() {
-      const r = player.r;
-
-      ctx.save();
-      ctx.translate(player.x, player.y);
-      ctx.scale(player.scale, player.scale);
-
-      // shadow
-      ctx.globalAlpha = 0.22;
-      ctx.fillStyle = "#000";
-      ctx.beginPath();
-      ctx.ellipse(0, r * 0.72, r * 0.95, r * 0.28, 0, 0, Math.PI * 2);
-      ctx.fill();
-      ctx.globalAlpha = 1;
-
-      // body
-      ctx.fillStyle = "#f6c44f";
-      inkStroke(3.0, 0.40);
-      ctx.beginPath();
-      ctx.ellipse(0, 10, r * 0.82, r * 0.66, 0, 0, Math.PI * 2);
-      ctx.fill();
-      ctx.stroke();
-
-      // shirt
-      ctx.fillStyle = "#d64b3c";
-      ctx.beginPath();
-      ctx.ellipse(0, 0, r * 0.88, r * 0.44, 0, 0, Math.PI * 2);
-      ctx.fill();
-
-      // head
-      ctx.fillStyle = "#f7cc63";
-      ctx.beginPath();
-      ctx.arc(0, -r * 0.62, r * 0.52, 0, Math.PI * 2);
-      ctx.fill();
-      ctx.stroke();
-
-      // ears
-      ctx.beginPath();
-      ctx.arc(-r * 0.32, -r * 1.02, r * 0.20, 0, Math.PI * 2);
-      ctx.arc( r * 0.32, -r * 1.02, r * 0.20, 0, Math.PI * 2);
-      ctx.fill();
-      ctx.stroke();
-
-      // face
-      ctx.fillStyle = "rgba(0,0,0,0.65)";
-      ctx.beginPath(); ctx.arc(-r * 0.15, -r * 0.70, r * 0.06, 0, Math.PI * 2); ctx.fill();
-      ctx.beginPath(); ctx.arc( r * 0.15, -r * 0.70, r * 0.06, 0, Math.PI * 2); ctx.fill();
-      ctx.beginPath(); ctx.arc(0, -r * 0.57, r * 0.07, 0, Math.PI * 2); ctx.fill();
-
-      // character accents
-      if (AppState.character === "piglet") {
-        ctx.fillStyle = "rgba(255,183,197,0.85)";
-        ctx.beginPath();
-        ctx.arc(-r * 0.32, -r * 1.02, r * 0.18, 0, Math.PI * 2);
-        ctx.arc( r * 0.32, -r * 1.02, r * 0.18, 0, Math.PI * 2);
-        ctx.fill();
-      } else if (AppState.character === "tigger") {
-        ctx.fillStyle = "rgba(0,0,0,0.18)";
-        for (let i = 0; i < 4; i++) {
-          ctx.beginPath();
-          ctx.ellipse(Math.sin(i) * r * 0.18, 12 + i * r * 0.12, r * 0.14, r * 0.06, Math.PI / 4, 0, Math.PI * 2);
-          ctx.fill();
+        // Apply helper effects
+        const scale = hasEffect('shield') ? 1.2 : 1.0;
+        
+        ctx.save();
+        ctx.translate(player.x, player.y);
+        ctx.scale(scale, scale);
+        
+        // Shield effect
+        if (hasEffect('shield')) {
+            ctx.strokeStyle = 'rgba(0, 150, 255, 0.5)';
+            ctx.lineWidth = 3;
+            ctx.beginPath();
+            ctx.arc(0, 0, player.r + 5, 0, Math.PI * 2);
+            ctx.stroke();
         }
-      } else if (AppState.character === "rabbit") {
-        ctx.fillStyle = "rgba(100,190,120,0.22)";
+        
+        // Body
+        ctx.fillStyle = '#F7C44F';
         ctx.beginPath();
-        ctx.ellipse(0, 12, r * 0.65, r * 0.45, 0, 0, Math.PI * 2);
+        ctx.arc(0, 0, player.r, 0, Math.PI * 2);
         ctx.fill();
-      }
-
-      // shield ring
-      if (buffs.shield > 0) {
-        const pulse = 0.65 + 0.35 * Math.sin(AppState.timeMs / 180);
-        ctx.strokeStyle = `rgba(77,150,255,${pulse})`;
-        ctx.lineWidth = 5;
+        
+        // Shirt
+        ctx.fillStyle = '#D64B3C';
         ctx.beginPath();
-        ctx.arc(0, 0, r * 1.06, 0, Math.PI * 2);
+        ctx.ellipse(0, 5, player.r * 0.9, player.r * 0.6, 0, 0, Math.PI * 2);
+        ctx.fill();
+        
+        // Face
+        ctx.fillStyle = '#000';
+        ctx.beginPath();
+        ctx.arc(-10, -5, 4, 0, Math.PI * 2);
+        ctx.arc(10, -5, 4, 0, Math.PI * 2);
+        ctx.fill();
+        
+        // Mouth
+        ctx.beginPath();
+        ctx.arc(0, 3, 6, 0.2, Math.PI - 0.2);
+        ctx.strokeStyle = '#000';
+        ctx.lineWidth = 2;
         ctx.stroke();
-      }
-
-      ctx.restore();
+        
+        ctx.restore();
     }
 
-    function renderCombo() {
-      if (AppState.combo.timer <= 0 || AppState.streak < 4) return;
-      const a = 0.25 + (AppState.combo.timer / 2000) * 0.75;
-      ctx.save();
-      ctx.globalAlpha = a;
-      ctx.font = '900 34px "Fredoka One", system-ui';
-      ctx.textAlign = "center";
-      ctx.lineWidth = 6;
-      ctx.strokeStyle = "rgba(93,78,55,0.35)";
-      ctx.fillStyle = "rgba(255,165,0,0.95)";
-      const msg = `COMBO x${AppState.combo.mult.toFixed(1)}`;
-      ctx.strokeText(msg, BASE_W / 2, 150);
-      ctx.fillText(msg, BASE_W / 2, 150);
-      ctx.restore();
+    function drawHoney(honey) {
+        ctx.save();
+        ctx.translate(honey.x, honey.y);
+        
+        // Wobble animation
+        const wobble = Math.sin(honey.wobble) * 3;
+        ctx.rotate(wobble * 0.05);
+        
+        let color, lidColor;
+        switch(honey.type) {
+            case 'gold':
+                color = '#FFD700';
+                lidColor = '#FFA500';
+                break;
+            case 'cursed':
+                color = '#8B0000';
+                lidColor = '#4B0082';
+                break;
+            default:
+                color = '#FFA500';
+                lidColor = '#8B4513';
+        }
+        
+        // Jar
+        ctx.fillStyle = color;
+        ctx.beginPath();
+        ctx.ellipse(0, 0, honey.r, honey.r * 0.8, 0, 0, Math.PI * 2);
+        ctx.fill();
+        
+        // Highlight
+        ctx.fillStyle = 'rgba(255, 255, 255, 0.3)';
+        ctx.beginPath();
+        ctx.ellipse(-honey.r * 0.3, -honey.r * 0.2, honey.r * 0.3, honey.r * 0.2, 0, 0, Math.PI * 2);
+        ctx.fill();
+        
+        // Lid
+        ctx.fillStyle = lidColor;
+        ctx.beginPath();
+        ctx.ellipse(0, -honey.r * 0.6, honey.r * 0.8, honey.r * 0.3, 0, 0, Math.PI * 2);
+        ctx.fill();
+        
+        // Cursed effect
+        if (honey.type === 'cursed') {
+            ctx.strokeStyle = '#FF0000';
+            ctx.lineWidth = 2;
+            ctx.beginPath();
+            ctx.moveTo(-honey.r * 0.5, honey.r * 0.5);
+            ctx.lineTo(honey.r * 0.5, -honey.r * 0.5);
+            ctx.stroke();
+            
+            ctx.beginPath();
+            ctx.moveTo(-honey.r * 0.5, -honey.r * 0.5);
+            ctx.lineTo(honey.r * 0.5, honey.r * 0.5);
+            ctx.stroke();
+        }
+        
+        ctx.restore();
     }
 
-    function update(dt) {
-      if (!running || AppState.paused) return;
+    function drawBee(bee) {
+        ctx.save();
+        ctx.translate(bee.x, bee.y);
+        
+        // Flap animation
+        bee.flap += 0.2;
+        const wingY = Math.sin(bee.flap) * 3;
+        
+        // Body
+        ctx.fillStyle = '#FFD700';
+        ctx.beginPath();
+        ctx.ellipse(0, 0, bee.r * 1.2, bee.r, 0, 0, Math.PI * 2);
+        ctx.fill();
+        
+        // Stripes
+        ctx.fillStyle = '#000';
+        ctx.beginPath();
+        ctx.ellipse(0, 0, bee.r * 0.8, bee.r * 0.3, 0, 0, Math.PI * 2);
+        ctx.fill();
+        
+        // Wings
+        ctx.fillStyle = 'rgba(255, 255, 255, 0.6)';
+        ctx.beginPath();
+        ctx.ellipse(-bee.r * 0.8, wingY, bee.r * 0.6, bee.r * 0.4, Math.PI/4, 0, Math.PI * 2);
+        ctx.fill();
+        
+        ctx.beginPath();
+        ctx.ellipse(bee.r * 0.8, wingY, bee.r * 0.6, bee.r * 0.4, -Math.PI/4, 0, Math.PI * 2);
+        ctx.fill();
+        
+        // Eyes
+        ctx.fillStyle = '#000';
+        ctx.beginPath();
+        ctx.arc(-bee.r * 0.4, -bee.r * 0.3, 2, 0, Math.PI * 2);
+        ctx.arc(bee.r * 0.4, -bee.r * 0.3, 2, 0, Math.PI * 2);
+        ctx.fill();
+        
+        ctx.restore();
+    }
 
-      // timescale easing
-      if (microSlow > 0) {
-        microSlow = Math.max(0, microSlow - dt);
-        AppState.timeScale += (1 - AppState.timeScale) * 0.08;
-      } else {
-        AppState.timeScale += (1 - AppState.timeScale) * 0.12;
-      }
-      AppState.timeScale = clamp(AppState.timeScale, 0.70, 1);
-
-      dt = Math.min(dt, 50) * AppState.timeScale;
-      AppState.timeMs += dt;
-
-      // combo decay
-      if (AppState.combo.timer > 0) {
-        AppState.combo.timer = Math.max(0, AppState.combo.timer - dt);
-        if (AppState.combo.timer === 0) AppState.combo = { mult: 1, timer: 0, tier: 0 };
-      }
-
-      // buffs decay
-      if (buffs.shield > 0) buffs.shield = Math.max(0, buffs.shield - dt);
-      if (buffs.slow > 0) buffs.slow = Math.max(0, buffs.slow - dt);
-
-      updateDifficulty();
-
-      // wave script (every 30s)
-      const wIdx = currentWaveIndex();
-      const wave = currentWave();
-      baseHoneyRate = wave.honeyRate;
-      baseBeeRate = wave.beeRate;
-      powerRate = wave.powerRate;
-
-      // announce on wave change
-      if (WaveAnnounce.idx !== wIdx) {
-        WaveAnnounce.set(wIdx);
-      }
-      WaveAnnounce.update(dt);
-
-      // player movement + spring scale
-      player.x = Input.update(dt);
-      player.sv += (1 - player.scale) * 0.18;
-      player.sv *= 0.72;
-      player.scale += player.sv;
-      player.scale = clamp(player.scale, 0.88, 1.25);
-
-      const slowFactor = buffs.slow > 0 ? 0.58 : 1;
-
-      // spawn
-      honeyTimer += dt;
-      beeTimer += dt;
-      powerTimer += dt;
-
-      if (honeyTimer >= baseHoneyRate) { honeyTimer = 0; spawnHoney(); }
-      if (beeTimer >= baseBeeRate) { beeTimer = 0; spawnBee(); }
-      if (powerTimer >= powerRate) { powerTimer = 0; spawnPower(); }
-
-      // honeys
-      for (let i = honeys.length - 1; i >= 0; i--) {
-        const h = honeys[i];
-        h.y += (h.vy * slowFactor) * (dt / 1000);
-
-        if (h.y > BASE_H + 60) {
-          honeys.splice(i, 1);
-          AppState.streak = 0;
-          AppState.combo = { mult: 1, timer: 0, tier: 0 };
-          continue;
+    function drawPower(power) {
+        ctx.save();
+        ctx.translate(power.x, power.y);
+        
+        power.pulse += 0.1;
+        const pulseScale = 1 + Math.sin(power.pulse) * 0.2;
+        ctx.scale(pulseScale, pulseScale);
+        
+        let color, symbol;
+        switch(power.type) {
+            case 'shield':
+                color = '#0096FF';
+                symbol = '🛡️';
+                break;
+            case 'slow':
+                color = '#9D4EDD';
+                symbol = '⏳';
+                break;
+            case 'magnet':
+                color = '#FF6B6B';
+                symbol = '🧲';
+                break;
         }
+        
+        // Circle
+        ctx.fillStyle = color;
+        ctx.beginPath();
+        ctx.arc(0, 0, power.r, 0, Math.PI * 2);
+        ctx.fill();
+        
+        // Symbol
+        ctx.fillStyle = '#FFF';
+        ctx.font = '16px Arial';
+        ctx.textAlign = 'center';
+        ctx.textBaseline = 'middle';
+        ctx.fillText(symbol, 0, 0);
+        
+        ctx.restore();
+    }
 
-        if (hitCircle(player.x, player.y, player.r, h.x, h.y, h.r)) {
-          awardHoney(h);
-          honeys.splice(i, 1);
-        }
-      }
-
-      // bees
-      for (let i = bees.length - 1; i >= 0; i--) {
-        const b = bees[i];
-        b.flap += dt / 120;
-
-        // --- behavior layer ---
-        if (b.type === "hunter") {
-          const steer = clamp((player.x - b.x) * 0.9, -120, 120);
-          b.vx += (steer - b.vx) * 0.06;
-        }
-
-        if (b.type === "zigzag") {
-          b.zigT -= dt;
-          if (b.zigT <= 0) {
-            b.zigT = 180 + Math.random() * 380;
-            b.vx = (Math.random() < 0.5 ? -1 : 1) * (beeDrift * (0.7 + Math.random() * 0.8));
-          }
-        }
-
-        if (b.type === "diver") {
-          if (!b.dived) {
-            b.tele = Math.max(0, b.tele - dt);
-            b.y += (b.vy * 0.35 * slowFactor) * (dt / 1000);
-
-            const aim = clamp((player.x - b.x) * 0.7, -140, 140);
-            b.vx += (aim - b.vx) * 0.05;
-
-            if (b.tele === 0) {
-              b.dived = true;
-              b.vy *= 2.25;
-              b.vx *= 1.15;
-              momentSlow(0.06, 80);
+    function drawParticles() {
+        for (let i = particles.length - 1; i >= 0; i--) {
+            const p = particles[i];
+            
+            ctx.globalAlpha = p.life;
+            ctx.fillStyle = p.color;
+            ctx.beginPath();
+            ctx.arc(p.x, p.y, p.r, 0, Math.PI * 2);
+            ctx.fill();
+            
+            p.x += p.vx;
+            p.y += p.vy;
+            p.vy += 0.1;
+            p.life -= 0.02;
+            
+            if (p.life <= 0) {
+                particles.splice(i, 1);
             }
-          } else {
-            b.y += (b.vy * slowFactor) * (dt / 1000);
-          }
-        } else {
-          b.y += (b.vy * slowFactor) * (dt / 1000);
         }
-
-        b.x += (b.vx * slowFactor) * (dt / 1000);
-
-        if (b.x < 40 || b.x > BASE_W - 40) b.vx *= -1;
-        if (b.y > BASE_H + 80) { bees.splice(i, 1); continue; }
-
-        if (hitCircle(player.x, player.y, player.r, b.x, b.y, b.r)) {
-          takeHit(b);
-          bees.splice(i, 1);
-        }
-      }
-
-      // powers
-      for (let i = powers.length - 1; i >= 0; i--) {
-        const p = powers[i];
-        p.y += p.vy * (dt / 1000);
-        p.trail.unshift({ x: p.x, y: p.y });
-        if (p.trail.length > 8) p.trail.pop();
-
-        if (p.y > BASE_H + 80) { powers.splice(i, 1); continue; }
-
-        if (hitCircle(player.x, player.y, player.r, p.x, p.y, p.r)) {
-          takePower(p);
-          powers.splice(i, 1);
-        }
-      }
-
-      Particles.update(dt);
-      Achievements.check();
-    }
-
-    function render() {
-      ctx.clearRect(0, 0, BASE_W, BASE_H);
-
-      const mf = 1 - AppState.timeScale;
-      ctx.save();
-
-      // screen shake
-      if (shake > 0.01) {
-        const dx = (Math.random() - 0.5) * shake;
-        const dy = (Math.random() - 0.5) * shake;
-        ctx.translate(dx, dy);
-        shake *= 0.88;
-      }
-
-      if (mf > 0.01) {
-        ctx.globalAlpha = clamp(mf * 1.8, 0, 0.22);
-        ctx.fillStyle = "rgba(0,0,0,1)";
-        ctx.fillRect(0, 0, BASE_W, BASE_H);
         ctx.globalAlpha = 1;
-      }
-
-      // entities
-      for (const h of honeys) drawHoney(h);
-      for (const p of powers) drawPower(p);
-      for (const b of bees) drawBee(b);
-
-      drawPlayer();
-
-      // VFX overlays
-      Particles.render(ctx);
-      renderCombo();
-
-      // wave announce overlay
-      WaveAnnounce.render();
-
-      // subtle film grain
-      ctx.save();
-      ctx.globalAlpha = 0.03;
-      ctx.fillStyle = "#000";
-      for (let i = 0; i < 60; i++) {
-        ctx.fillRect(Math.random() * BASE_W, Math.random() * BASE_H, 1, 1);
-      }
-      ctx.restore();
-
-      ctx.restore();
     }
 
-    function tick(ts) {
-      const dt = ts - last;
-      last = ts;
-
-      update(dt);
-      render();
-      requestAnimationFrame(tick);
+    function drawBackground() {
+        // Sky gradient
+        const gradient = ctx.createLinearGradient(0, 0, 0, BASE_H);
+        gradient.addColorStop(0, '#87CEEB');
+        gradient.addColorStop(1, '#98FB98');
+        ctx.fillStyle = gradient;
+        ctx.fillRect(0, 0, BASE_W, BASE_H);
+        
+        // Clouds
+        ctx.fillStyle = 'rgba(255, 255, 255, 0.8)';
+        for (let i = 0; i < 3; i++) {
+            const x = (GameState.timeMs * 0.01 + i * 150) % (BASE_W + 200) - 100;
+            const y = 80 + i * 60;
+            const size = 30 + i * 5;
+            
+            ctx.beginPath();
+            ctx.arc(x, y, size, 0, Math.PI * 2);
+            ctx.arc(x + size * 0.6, y - size * 0.3, size * 0.7, 0, Math.PI * 2);
+            ctx.arc(x + size * 1.2, y, size * 0.8, 0, Math.PI * 2);
+            ctx.fill();
+        }
     }
 
-    function bootLoop() {
-      last = now();
-      requestAnimationFrame(tick);
+    function drawHUD() {
+        // Update HUD elements
+        $('stat-score').textContent = Math.floor(GameState.score);
+        $('stat-lives').textContent = GameState.lives;
+        $('stat-combo').textContent = GameState.combo.toFixed(1) + 'x';
+        
+        // Progress bar
+        const nextLevel = (GameState.currentLevel + 1) * 300;
+        const progress = GameState.score % 300;
+        const progressPercent = (progress / 300) * 100;
+        $('progress-fill').style.width = `${progressPercent}%`;
+        $('next-level-label').textContent = `${progress}/${300}`;
+        
+        // Level display
+        const levelNames = ['Beginner', 'Novice', 'Apprentice', 'Adept', 'Expert', 'Master', 'Grandmaster'];
+        GameState.currentLevel = Math.min(6, Math.floor(GameState.score / 300));
+        $('level-display').textContent = levelNames[GameState.currentLevel];
+        
+        // Update pause screen
+        if ($('pause-score')) $('pause-score').textContent = Math.floor(GameState.score);
+        if ($('pause-streak')) $('pause-streak').textContent = GameState.streak;
+        if ($('pause-lives')) $('pause-lives').textContent = GameState.lives;
+        if ($('pause-time')) $('pause-time').textContent = Math.floor(GameState.timeMs / 1000) + 's';
     }
 
-    return { reset, start, bootLoop };
-  })();
+    /* ======================= INPUT HANDLING ======================= */
+    let mouseX = player.x;
+    let touchActive = false;
 
-  /* ======================= BOOT ======================= */
-  function boot() {
-    UI.bind();
-    Game.reset();
-    Game.bootLoop();
-    Overlays.open("start");
-  }
+    canvas.addEventListener('mousemove', (e) => {
+        const rect = canvas.getBoundingClientRect();
+        mouseX = e.clientX - rect.left;
+        mouseX = clamp(mouseX, player.r, canvas.width - player.r);
+    });
 
-  if (document.readyState === "loading") {
-    document.addEventListener("DOMContentLoaded", boot, { once: true });
-  } else {
-    boot();
-  }
+    canvas.addEventListener('touchmove', (e) => {
+        e.preventDefault();
+        const rect = canvas.getBoundingClientRect();
+        const touch = e.touches[0];
+        mouseX = touch.clientX - rect.left;
+        mouseX = clamp(mouseX, player.r, canvas.width - player.r);
+        touchActive = true;
+    }, { passive: false });
+
+    canvas.addEventListener('touchstart', (e) => {
+        e.preventDefault();
+        const rect = canvas.getBoundingClientRect();
+        const touch = e.touches[0];
+        mouseX = touch.clientX - rect.left;
+        mouseX = clamp(mouseX, player.r, canvas.width - player.r);
+        touchActive = true;
+    }, { passive: false });
+
+    canvas.addEventListener('touchend', () => {
+        touchActive = false;
+    });
+
+    /* ======================= GAME LOGIC ======================= */
+    function updateGame(dt) {
+        if (!GameState.running || GameState.paused) return;
+        
+        GameState.timeMs += dt;
+        
+        // Move player smoothly toward mouse/touch
+        const targetX = mouseX;
+        player.x += (targetX - player.x) * 0.15;
+        player.x = clamp(player.x, player.r, BASE_W - player.r);
+        
+        // Apply magnet effect
+        if (hasEffect('magnet')) {
+            honeys.forEach(honey => {
+                const dx = player.x - honey.x;
+                const dy = player.y - honey.y;
+                const dist = Math.sqrt(dx * dx + dy * dy);
+                
+                if (dist < 200) {
+                    honey.x += (dx / dist) * 3;
+                    honey.y += (dy / dist) * 3;
+                }
+            });
+        }
+        
+        // Apply slow effect
+        const slowFactor = hasEffect('slow') ? 0.5 : 1.0;
+        
+        // Spawn objects based on time
+        const spawnInterval = 1000 - Math.min(500, GameState.currentLevel * 100);
+        if (GameState.timeMs % spawnInterval < dt) {
+            spawnHoney();
+            if (Math.random() < 0.3 + GameState.currentLevel * 0.05) {
+                spawnBee();
+            }
+            if (Math.random() < 0.05) {
+                spawnPower();
+            }
+        }
+        
+        // Update honey wobble
+        honeys.forEach(honey => {
+            honey.wobble += 0.1;
+        });
+        
+        // Update honeys
+        for (let i = honeys.length - 1; i >= 0; i--) {
+            const honey = honeys[i];
+            honey.y += honey.vy * slowFactor;
+            
+            // Check collision with player
+            if (checkCollision(player, honey)) {
+                GameState.honeyCaught++;
+                GameState.streak++;
+                
+                let points = 10;
+                let color = '#FFA500';
+                
+                if (honey.type === 'gold') {
+                    points = 25;
+                    color = '#FFD700';
+                    showFloatingText('GOLD! +' + points, honey.x, honey.y, '#FFD700');
+                } else if (honey.type === 'cursed') {
+                    points = -15;
+                    GameState.lives = Math.max(0, GameState.lives - 1);
+                    GameState.streak = 0;
+                    color = '#FF0000';
+                    showFloatingText('CURSED! ' + points, honey.x, honey.y, '#FF0000');
+                } else {
+                    showFloatingText('+' + points, honey.x, honey.y, '#00FF00');
+                }
+                
+                GameState.score += points * GameState.combo;
+                GameState.score = Math.max(0, GameState.score);
+                
+                // Update combo
+                GameState.combo = 1 + Math.floor(GameState.streak / 5) * 0.2;
+                GameState.combo = Math.min(GameState.combo, 3.0);
+                
+                // Spawn particles
+                spawnParticles(honey.x, honey.y, color, 15);
+                
+                // Play sound
+                if (GameState.soundEnabled) {
+                    playSound(honey.type === 'cursed' ? 'hit' : 'collect');
+                }
+                
+                // Remove honey
+                honeys.splice(i, 1);
+                
+                // Check game over from cursed honey
+                if (GameState.lives <= 0) {
+                    gameOver();
+                    return;
+                }
+            }
+            
+            // Remove if off screen
+            if (honey.y > BASE_H + 50) {
+                honeys.splice(i, 1);
+                if (honey.type !== 'cursed') {
+                    GameState.streak = 0;
+                    GameState.combo = 1.0;
+                }
+            }
+        }
+        
+        // Update bees
+        for (let i = bees.length - 1; i >= 0; i--) {
+            const bee = bees[i];
+            bee.x += bee.vx * slowFactor;
+            bee.y += bee.vy * slowFactor;
+            
+            // Bounce off walls
+            if (bee.x < bee.r || bee.x > BASE_W - bee.r) {
+                bee.vx *= -1;
+            }
+            
+            // Check collision with player
+            if (checkCollision(player, bee)) {
+                if (hasEffect('shield')) {
+                    // Shield protects from damage
+                    removeEffect('shield');
+                    spawnParticles(bee.x, bee.y, '#0096FF', 20);
+                    showFloatingText('SHIELD!', bee.x, bee.y, '#0096FF');
+                } else {
+                    GameState.lives--;
+                    GameState.streak = 0;
+                    GameState.combo = 1.0;
+                    
+                    // Spawn particles
+                    spawnParticles(bee.x, bee.y, '#FF0000', 20);
+                    showFloatingText('OUCH!', bee.x, bee.y, '#FF0000');
+                    
+                    if (GameState.soundEnabled) {
+                        playSound('hit');
+                    }
+                }
+                
+                // Remove bee
+                bees.splice(i, 1);
+                
+                // Check game over
+                if (GameState.lives <= 0) {
+                    gameOver();
+                    return;
+                }
+            }
+            
+            // Remove if off screen
+            if (bee.y > BASE_H + 50) {
+                bees.splice(i, 1);
+                GameState.beesAvoided++;
+            }
+        }
+        
+        // Update powers
+        for (let i = powers.length - 1; i >= 0; i--) {
+            const power = powers[i];
+            power.y += power.vy * slowFactor;
+            
+            // Check collision with player
+            if (checkCollision(player, power)) {
+                addEffect(power.type, 5000); // 5 seconds
+                
+                // Spawn particles
+                let color;
+                switch(power.type) {
+                    case 'shield': color = '#0096FF'; break;
+                    case 'slow': color = '#9D4EDD'; break;
+                    case 'magnet': color = '#FF6B6B'; break;
+                }
+                spawnParticles(power.x, power.y, color, 20);
+                showFloatingText(power.type.toUpperCase() + '!', power.x, power.y, color);
+                
+                if (GameState.soundEnabled) {
+                    playSound('power');
+                }
+                
+                // Remove power
+                powers.splice(i, 1);
+            }
+            
+            // Remove if off screen
+            if (power.y > BASE_H + 50) {
+                powers.splice(i, 1);
+            }
+        }
+        
+        // Update particles
+        for (let i = particles.length - 1; i >= 0; i--) {
+            const p = particles[i];
+            p.x += p.vx;
+            p.y += p.vy;
+            p.vy += 0.1;
+            p.life -= 0.02;
+            
+            if (p.life <= 0) {
+                particles.splice(i, 1);
+            }
+        }
+        
+        // Update effects
+        for (let i = effects.length - 1; i >= 0; i--) {
+            effects[i].timer -= dt;
+            if (effects[i].timer <= 0) {
+                effects.splice(i, 1);
+            }
+        }
+        
+        // Update HUD
+        drawHUD();
+    }
+
+    function removeEffect(type) {
+        for (let i = effects.length - 1; i >= 0; i--) {
+            if (effects[i].type === type) {
+                effects.splice(i, 1);
+                break;
+            }
+        }
+    }
+
+    function showFloatingText(text, x, y, color) {
+        const textEl = document.createElement('div');
+        textEl.className = 'score-popup';
+        textEl.textContent = text;
+        textEl.style.color = color;
+        textEl.style.left = (x / BASE_W * 100) + '%';
+        textEl.style.top = (y / BASE_H * 100) + '%';
+        
+        const container = $('game-container');
+        container.appendChild(textEl);
+        
+        setTimeout(() => {
+            if (textEl.parentNode) {
+                textEl.parentNode.removeChild(textEl);
+            }
+        }, 1000);
+    }
+
+    function renderGame() {
+        // Clear canvas
+        drawBackground();
+        
+        // Draw all game objects
+        powers.forEach(drawPower);
+        honeys.forEach(drawHoney);
+        bees.forEach(drawBee);
+        drawParticles();
+        drawPlayer();
+        
+        // Draw combo text if > 1
+        if (GameState.combo > 1.1) {
+            ctx.fillStyle = '#FFD700';
+            ctx.font = 'bold 24px Fredoka One';
+            ctx.textAlign = 'center';
+            ctx.shadowColor = '#000';
+            ctx.shadowBlur = 4;
+            ctx.fillText(`COMBO x${GameState.combo.toFixed(1)}`, BASE_W / 2, 100);
+            ctx.shadowBlur = 0;
+        }
+        
+        // Draw active effects
+        if (effects.length > 0) {
+            ctx.fillStyle = '#FFF';
+            ctx.font = '14px Arial';
+            ctx.textAlign = 'left';
+            ctx.fillText('Active:', 10, 30);
+            
+            effects.forEach((effect, i) => {
+                const timeLeft = Math.ceil(effect.timer / 1000);
+                ctx.fillText(`${effect.type}: ${timeLeft}s`, 10, 50 + i * 20);
+            });
+        }
+    }
+
+    /* ======================= GAME FLOW ======================= */
+    function startGame() {
+        GameState.running = true;
+        GameState.paused = false;
+        GameState.score = 0;
+        GameState.lives = GameState.currentHelper === 'piglet' ? 5 : 3;
+        GameState.streak = 0;
+        GameState.combo = 1.0;
+        GameState.timeMs = 0;
+        GameState.honeyCaught = 0;
+        GameState.beesAvoided = 0;
+        
+        honeys.length = 0;
+        bees.length = 0;
+        powers.length = 0;
+        particles.length = 0;
+        effects.length = 0;
+        
+        player.x = BASE_W / 2;
+        mouseX = player.x;
+        
+        Overlays.closeAll();
+        drawHUD();
+        
+        if (GameState.soundEnabled) {
+            playSound('start');
+        }
+    }
+
+    function gameOver() {
+        GameState.running = false;
+        
+        // Update best score
+        if (GameState.score > GameState.bestScore) {
+            GameState.bestScore = GameState.score;
+            localStorage.setItem('bestScore', GameState.bestScore.toString());
+            $('new-record-badge').classList.remove('hidden');
+        } else {
+            $('new-record-badge').classList.add('hidden');
+        }
+        
+        // Update final score display
+        $('final-score').textContent = Math.floor(GameState.score);
+        $('final-total').textContent = Math.floor(GameState.score);
+        $('final-streak').textContent = GameState.streak;
+        $('final-honey').textContent = GameState.honeyCaught;
+        $('final-level').textContent = $('level-display').textContent;
+        
+        Overlays.open('gameover');
+        
+        if (GameState.soundEnabled) {
+            playSound('gameover');
+        }
+    }
+
+    /* ======================= AUDIO ======================= */
+    const Audio = {
+        ctx: null,
+        
+        init() {
+            if (!this.ctx && GameState.soundEnabled) {
+                try {
+                    this.ctx = new (window.AudioContext || window.webkitAudioContext)();
+                } catch (e) {
+                    console.log('Audio context failed:', e);
+                }
+            }
+        },
+        
+        playSound(type) {
+            if (!GameState.soundEnabled) return;
+            
+            this.init();
+            if (!this.ctx) return;
+            
+            const oscillator = this.ctx.createOscillator();
+            const gainNode = this.ctx.createGain();
+            
+            oscillator.connect(gainNode);
+            gainNode.connect(this.ctx.destination);
+            
+            let frequency = 440;
+            let duration = 0.2;
+            
+            switch(type) {
+                case 'collect':
+                    frequency = 523.25; // C5
+                    break;
+                case 'hit':
+                    frequency = 220; // A3
+                    duration = 0.3;
+                    break;
+                case 'power':
+                    frequency = 659.25; // E5
+                    break;
+                case 'start':
+                    frequency = 783.99; // G5
+                    break;
+                case 'gameover':
+                    frequency = 174.61; // F3
+                    duration = 0.5;
+                    break;
+                case 'ui':
+                    frequency = 392; // G4
+                    duration = 0.1;
+                    break;
+            }
+            
+            oscillator.frequency.setValueAtTime(frequency, this.ctx.currentTime);
+            gainNode.gain.setValueAtTime(0.1, this.ctx.currentTime);
+            gainNode.gain.exponentialRampToValueAtTime(0.01, this.ctx.currentTime + duration);
+            
+            oscillator.start();
+            oscillator.stop(this.ctx.currentTime + duration);
+        }
+    };
+
+    function playSound(type) {
+        try {
+            Audio.playSound(type);
+        } catch (e) {
+            console.log('Audio error:', e);
+        }
+    }
+
+    /* ======================= UI CONTROLS ======================= */
+    const Overlays = {
+        open(name) {
+            const overlay = $(name + '-screen');
+            if (overlay) {
+                overlay.classList.remove('hidden');
+                document.body.classList.add('overlay-open');
+            }
+            if (name === 'pause') GameState.paused = true;
+        },
+        
+        close(name) {
+            const overlay = $(name + '-screen');
+            if (overlay) {
+                overlay.classList.add('hidden');
+                document.body.classList.remove('overlay-open');
+            }
+            if (name === 'pause') GameState.paused = false;
+        },
+        
+        closeAll() {
+            document.querySelectorAll('.overlay-content').forEach(el => {
+                el.classList.add('hidden');
+            });
+            document.body.classList.remove('overlay-open');
+            GameState.paused = false;
+        }
+    };
+
+    // Bind UI events
+    function setupUI() {
+        // Start buttons
+        $('#start-btn').addEventListener('click', () => {
+            startGame();
+            playSound('ui');
+        });
+        
+        $('#quick-start').addEventListener('click', () => {
+            startGame();
+            playSound('ui');
+        });
+        
+        $('#start-with-character-btn').addEventListener('click', () => {
+            startGame();
+            playSound('ui');
+        });
+        
+        // Pause/Resume
+        $('#pause-toggle').addEventListener('click', () => {
+            if (GameState.running && !GameState.paused) {
+                Overlays.open('pause');
+            } else if (GameState.paused) {
+                Overlays.close('pause');
+            }
+            playSound('ui');
+        });
+        
+        $('#resume-btn').addEventListener('click', () => Overlays.close('pause'));
+        $('#continue-btn').addEventListener('click', () => Overlays.close('pause'));
+        
+        // Restart
+        $('#restart-btn').addEventListener('click', () => {
+            startGame();
+            playSound('ui');
+        });
+        
+        $('#play-again-btn').addEventListener('click', () => {
+            startGame();
+            playSound('ui');
+        });
+        
+        // Menu navigation
+        $('#quit-btn').addEventListener('click', () => {
+            GameState.running = false;
+            Overlays.closeAll();
+            Overlays.open('start');
+            playSound('ui');
+        });
+        
+        $('#close-start').addEventListener('click', () => Overlays.close('start'));
+        $('#gameover-close').addEventListener('click', () => {
+            Overlays.close('gameover');
+            Overlays.open('start');
+            playSound('ui');
+        });
+        
+        // Help
+        $('#help-btn').addEventListener('click', () => {
+            Overlays.open('help');
+            playSound('ui');
+        });
+        
+        $('#close-help-btn').addEventListener('click', () => Overlays.close('help'));
+        
+        // Achievements
+        $('#achievements-pill').addEventListener('click', () => {
+            Overlays.open('achievements');
+            playSound('ui');
+        });
+        
+        $('#view-achievements-btn').addEventListener('click', () => {
+            Overlays.open('achievements');
+            playSound('ui');
+        });
+        
+        $('#close-achievements-btn').addEventListener('click', () => Overlays.close('achievements'));
+        $('#close-achievements-btn-2').addEventListener('click', () => Overlays.close('achievements'));
+        
+        // Character select
+        $('#select-character-btn').addEventListener('click', () => {
+            renderCharacterSelect();
+            Overlays.open('character');
+            playSound('ui');
+        });
+        
+        $('#close-character').addEventListener('click', () => Overlays.close('character'));
+        $('#back-to-menu-btn').addEventListener('click', () => {
+            Overlays.close('character');
+            Overlays.open('start');
+            playSound('ui');
+        });
+        
+        // Character selection
+
+        function renderCharacterSelect() {
+    const characters = [
+        { id: 'pooh', name: 'Pooh', icon: '🐻', ability: 'Balanced', desc: 'Standard gameplay' },
+        { id: 'piglet', name: 'Piglet', icon: '🐷', ability: 'Extra Lives', desc: 'Start with 5 lives' },
+        { id: 'tigger', name: 'Tigger', icon: '🐯', ability: 'Bounce', desc: 'Bounce bees away' },
+        { id: 'rabbit', name: 'Rabbit', icon: '🐰', ability: 'Magnet', desc: 'Attract honey' }
+    ];
+    
+    const grid = $('#character-grid');
+    grid.innerHTML = '';
+    
+    characters.forEach(char => {
+        const card = document.createElement('button');
+        card.className = `character-card ${GameState.currentHelper === char.id ? 'selected' : ''}`;
+        card.setAttribute('data-helper', char.id);
+        
+        // FIXED: Added the closing backtick here
+        card.innerHTML = `
+            <div class="character-icon">${char.icon}</div>
+            <div class="character-name">${char.name}</div>
+            <div class="character-ability">${char.ability}</div>
+            <div class="character-desc">${char.desc}</div>
+        `;
+        
+        card.addEventListener('click', () => {
+            GameState.currentHelper = char.id;
+            document.querySelectorAll('.character-card').forEach(c => c.classList.remove('selected'));
+            card.classList.add('selected');
+            playSound('ui');
+        });
+        
+        grid.appendChild(card);
+    });
+}
+        
+        // Settings
+        $('#settings-btn').addEventListener('click', () => {
+            // Set toggle states
+            $('#sound-toggle-setting').checked = GameState.soundEnabled;
+            $('#haptic-toggle-setting').checked = GameState.soundEnabled;
+            $('#effects-toggle-setting').checked = true;
+            
+            Overlays.open('settings');
+            playSound('ui');
+        });
+        
+        $('#close-settings').addEventListener('click', () => Overlays.close('settings'));
+        
+        $('#save-settings').addEventListener('click', () => {
+            GameState.soundEnabled = $('#sound-toggle-setting').checked;
+            
+            // Update sound icon
+            const soundIcon = $('#sound-toggle-btn i');
+            soundIcon.className = GameState.soundEnabled ? 'fas fa-volume-up' : 'fas fa-volume-mute';
+            
+            Overlays.close('settings');
+            playSound('ui');
+        });
+        
+        $('#reset-progress').addEventListener('click', () => {
+            const confirmBtn = $('#reset-confirm');
+            confirmBtn.style.display = 'block';
+            setTimeout(() => {
+                confirmBtn.style.display = 'none';
+            }, 3000);
+        });
+        
+        $('#reset-confirm').addEventListener('click', () => {
+            if (confirm('Are you sure you want to reset all progress? This cannot be undone.')) {
+                localStorage.clear();
+                GameState.bestScore = 0;
+                GameState.currentHelper = 'pooh';
+                location.reload();
+            }
+        });
+        
+        // Sound toggle
+        $('#sound-toggle-btn').addEventListener('click', () => {
+            GameState.soundEnabled = !GameState.soundEnabled;
+            const icon = $('#sound-toggle-btn i');
+            icon.className = GameState.soundEnabled ? 'fas fa-volume-up' : 'fas fa-volume-mute';
+            
+            if (GameState.soundEnabled) {
+                playSound('ui');
+            }
+        });
+        
+        // Weather drawer
+        const weatherDrawer = $('#weather-drawer');
+        $('#weather-toggle').addEventListener('click', () => {
+            weatherDrawer.classList.toggle('open');
+            playSound('ui');
+        });
+        
+        $('#weather-close').addEventListener('click', () => {
+            weatherDrawer.classList.remove('open');
+            playSound('ui');
+        });
+        
+        document.querySelectorAll('.weather-btn').forEach(btn => {
+            btn.addEventListener('click', () => {
+                document.querySelectorAll('.weather-btn').forEach(b => b.classList.remove('active'));
+                btn.classList.add('active');
+                
+                // Here you would implement weather effects
+                const weather = btn.getAttribute('data-weather');
+                console.log('Weather changed to:', weather);
+                
+                playSound('ui');
+            });
+        });
+        
+        // Share buttons
+        $('#share-btn').addEventListener('click', async () => {
+            await shareScore();
+        });
+        
+        $('#share-final-btn').addEventListener('click', async () => {
+            await shareScore();
+        });
+        
+        async function shareScore() {
+            const text = `I scored ${Math.floor(GameState.score)} points in Pooh's Honey Hunt! 🍯 Can you beat my score?`;
+            
+            try {
+                if (navigator.share) {
+                    await navigator.share({
+                        title: 'Pooh\'s Honey Hunt',
+                        text: text,
+                        url: window.location.href
+                    });
+                } else if (navigator.clipboard) {
+                    await navigator.clipboard.writeText(text);
+                    alert('Score copied to clipboard!');
+                } else {
+                    // Fallback for browsers without clipboard API
+                    const textArea = document.createElement('textarea');
+                    textArea.value = text;
+                    document.body.appendChild(textArea);
+                    textArea.select();
+                    document.execCommand('copy');
+                    document.body.removeChild(textArea);
+                    alert('Score copied to clipboard!');
+                }
+            } catch (err) {
+                console.log('Share failed:', err);
+            }
+            
+            playSound('ui');
+        }
+        
+        // Keyboard shortcuts
+        window.addEventListener('keydown', (e) => {
+            if (e.code === 'Space' || e.code === 'KeyP') {
+                e.preventDefault();
+                if (GameState.running && !GameState.paused) {
+                    Overlays.open('pause');
+                } else if (GameState.paused) {
+                    Overlays.close('pause');
+                }
+                playSound('ui');
+            }
+            
+            if (e.code === 'Escape') {
+                Overlays.closeAll();
+                if (GameState.running) {
+                    GameState.paused = false;
+                }
+            }
+        });
+    }
+
+    /* ======================= LOADING SCREEN ======================= */
+    function initLoading() {
+        const loadingScreen = $('#loading-screen');
+        const progress = $('#loading-progress');
+        const tip = $('#loading-tip');
+        
+        const tips = [
+            "Tip: Try to maintain your combo for bonus points!",
+            "Tip: Gold honey pots give double points!",
+            "Tip: Watch out for cursed honey - it hurts!",
+            "Tip: Unlock all helpers by reaching higher scores!",
+            "Tip: Power-ups give you special abilities!",
+            "Tip: Piglet starts with extra lives!",
+            "Tip: The magnet power-up attracts honey to you!"
+        ];
+        
+        let loadProgress = 0;
+        const interval = setInterval(() => {
+            loadProgress += Math.random() * 10 + 5;
+            if (loadProgress >= 100) {
+                loadProgress = 100;
+                clearInterval(interval);
+                setTimeout(() => {
+                    loadingScreen.classList.add('hidden');
+                    Overlays.open('start');
+                }, 300);
+            }
+            progress.style.width = `${loadProgress}%`;
+            
+            // Change tip every 25%
+            if (Math.floor(loadProgress / 25) > Math.floor((loadProgress - 15) / 25)) {
+                tip.textContent = tips[Math.floor(Math.random() * tips.length)];
+            }
+        }, 100);
+    }
+
+    /* ======================= GAME LOOP ======================= */
+    let lastTime = 0;
+    let gameLoopId = null;
+    
+    function gameLoop(currentTime) {
+        const dt = currentTime - lastTime || 0;
+        lastTime = currentTime;
+        
+        updateGame(dt);
+        renderGame();
+        
+        gameLoopId = requestAnimationFrame(gameLoop);
+    }
+
+    /* ======================= INITIALIZATION ======================= */
+    function init() {
+        // Setup responsive canvas
+        function resizeCanvas() {
+            const container = $('#game-container');
+            const canvas = $('#game-canvas');
+            
+            if (!container || !canvas) return;
+            
+            const containerWidth = container.clientWidth;
+            const containerHeight = container.clientHeight;
+            
+            // Maintain aspect ratio
+            const aspectRatio = BASE_W / BASE_H;
+            let canvasWidth = containerWidth;
+            let canvasHeight = containerWidth / aspectRatio;
+            
+            if (canvasHeight > containerHeight) {
+                canvasHeight = containerHeight;
+                canvasWidth = containerHeight * aspectRatio;
+            }
+            
+            canvas.style.width = `${canvasWidth}px`;
+            canvas.style.height = `${canvasHeight}px`;
+        }
+        
+        window.addEventListener('resize', resizeCanvas);
+        resizeCanvas();
+        
+        // Initialize everything
+        setupUI();
+        initLoading();
+        drawHUD();
+        
+        // Start game loop
+        gameLoopId = requestAnimationFrame(gameLoop);
+        
+        // Prevent zoom on mobile
+        document.addEventListener('touchmove', function(e) {
+            if (e.scale !== 1) {
+                e.preventDefault();
+            }
+        }, { passive: false });
+        
+        // Prevent double-tap zoom
+        let lastTouchEnd = 0;
+        document.addEventListener('touchend', function(e) {
+            const now = Date.now();
+            if (now - lastTouchEnd <= 300) {
+                e.preventDefault();
+            }
+            lastTouchEnd = now;
+        }, false);
+        
+        // Initialize audio context on first user interaction
+        document.addEventListener('click', function initAudio() {
+            if (GameState.soundEnabled) {
+                Audio.init();
+            }
+            document.removeEventListener('click', initAudio);
+        }, { once: true });
+    }
+
+    // Start everything when page loads
+    if (document.readyState === 'loading') {
+        document.addEventListener('DOMContentLoaded', init);
+    } else {
+        setTimeout(init, 100);
+    }
 })();
 </script>
-      </main>
-
-
-      
-   </body>
+</body>
 </html>
