@@ -23,6 +23,7 @@
             --color-success: #4CAF50;
             --color-danger: #FF5252;
             --color-info: #2196F3;
+            --color-text: #5D4E37;
             
             --font-main: 'Patrick Hand', cursive;
             --font-title: 'Fredoka One', sans-serif;
@@ -56,7 +57,7 @@
             touch-action: none;
             background: var(--color-bg);
             font-family: var(--font-main);
-            color: var(--color-secondary);
+            color: var(--color-text);
         }
 
         /* ================= LAYER SYSTEM ================= */
@@ -296,7 +297,7 @@
 
         .hud-stats {
             display: grid;
-            grid-template-columns: repeat(4, 1fr);
+            grid-template-columns: repeat(3, 1fr);
             gap: 10px;
         }
 
@@ -1127,7 +1128,7 @@
             }
 
             .hud-stats {
-                grid-template-columns: repeat(2, 1fr);
+                grid-template-columns: repeat(3, 1fr);
                 gap: 8px;
             }
 
@@ -1187,7 +1188,7 @@
 
         @media (max-width: 480px) {
             .hud-stats {
-                grid-template-columns: repeat(2, 1fr);
+                grid-template-columns: repeat(3, 1fr);
             }
 
             .stat-card {
@@ -1432,20 +1433,7 @@
             color: var(--color-accent);
         }
     
-        /* ================= HUD (PATCH: compact + screenshot-style) ================= */
-        .hud-stats{
-            grid-template-columns: repeat(3, 1fr) !important;
-        }
-        /* Hide extra stats to match the 3-item screenshot HUD */
-        .stat-card.streak-card,
-        .stat-card.combo-card{
-            display:none !important;
-        }
-
-        .hud-bottom{
-            margin-top: 10px !important;
-        }
-
+        /* ================= HUD ACHIEVEMENTS PILL ================= */
         .hud-achievements{
             margin-top: 12px;
         }
@@ -1491,8 +1479,8 @@
 
         @media (max-width: 480px){
             .hud-stats{
-                grid-template-columns: repeat(3, 1fr) !important;
-                gap: 8px !important;
+                grid-template-columns: repeat(3, 1fr);
+                gap: 8px;
             }
             .achievements-pill{
                 font-size: 15px;
@@ -1535,19 +1523,13 @@
                     <div class="stat-label">Score</div>
                 </div>
                 
-                <div class="stat-card streak-card">
-                    <div class="stat-icon">🔥</div>
-                    <div class="stat-value" id="stat-streak">0</div>
-                    <div class="stat-label">Streak</div>
-                </div>
-                
                 <div class="stat-card">
                     <div class="stat-icon">❤️</div>
                     <div class="stat-value" id="stat-lives">3</div>
                     <div class="stat-label">Lives</div>
                 </div>
                 
-                <div class="stat-card combo-card">
+                <div class="stat-card">
                     <div class="stat-icon">⚡</div>
                     <div class="stat-value" id="stat-combo">1.0x</div>
                     <div class="stat-label">Combo</div>
@@ -1561,12 +1543,12 @@
                 <div class="level-display" id="next-level-label">0/300</div>
             </div>
 
-            <!-- PATCH: Achievements pill inside HUD (matches screenshot style) -->
+            <!-- Achievements pill inside HUD -->
             <div class="hud-achievements">
                 <button class="achievements-pill" id="achievements-pill" aria-label="View achievements">
                     <span class="trophy">🏆</span>
                     <span class="label">Achievements</span>
-                    <span class="count" id="achievements-count">0/0</span>
+                    <span class="count" id="achievements-count">0/14</span>
                     <span class="chev">›</span>
                 </button>
             </div>
@@ -1614,9 +1596,6 @@
         <div class="control-cluster bottom-left">
             <button class="control-btn" id="help-btn" aria-label="Show help">
                 <i class="fas fa-question"></i>
-            </button>
-            <button class="control-btn" id="achievements-btn" aria-label="View achievements">
-                <i class="fas fa-trophy"></i>
             </button>
         </div>
     </div>
@@ -1818,17 +1797,6 @@
                     </div>
                     <label class="toggle-switch">
                         <input type="checkbox" id="effects-toggle-setting" checked>
-                        <span class="toggle-slider"></span>
-                    </label>
-                </div>
-                
-                <div class="setting-item">
-                    <div class="setting-label">
-                        <i class="fas fa-gamepad setting-icon"></i>
-                        Virtual Joystick
-                    </div>
-                    <label class="toggle-switch">
-                        <input type="checkbox" id="joystick-toggle-setting">
                         <span class="toggle-slider"></span>
                     </label>
                 </div>
@@ -2035,6 +2003,22 @@
         }
         mem.set(k, String(v));
       },
+      remove(k) {
+        if (hasLS) {
+          try {
+            localStorage.removeItem(k);
+          } catch {}
+        }
+        mem.delete(k);
+      },
+      clear() {
+        if (hasLS) {
+          try {
+            localStorage.clear();
+          } catch {}
+        }
+        mem.clear();
+      }
     };
   })();
 
@@ -2132,10 +2116,17 @@
       return Array.from(unlockedHelpers);
     }
 
+    function reset() {
+      unlockedHelpers = new Set(["piglet"]);
+      currentLevel = 0;
+      Store.remove("unlockedHelpers");
+    }
+
     return {
       checkUnlocks,
       isHelperUnlocked,
       getUnlockedHelpers,
+      reset,
       getCurrentLevel: () => currentLevel,
       getLevelName: (score) => LEVELS[getCurrentLevel(score)].name,
       LEVELS
@@ -2163,7 +2154,8 @@
 
     achievements: (() => {
       try {
-        return JSON.parse(Store.get("achievements", "{}") || "{}");
+        const saved = Store.get("achievements", "{}");
+        return JSON.parse(saved || "{}");
       } catch {
         return {};
       }
@@ -2193,6 +2185,7 @@
   /* ======================= AUDIO (tiny synth sfx) ======================= */
   const Audio = (() => {
     let ctx = null, master = null;
+    let audioResumeAttempts = 0;
 
     function init() {
       if (!AppState.soundOn) return;
@@ -2202,14 +2195,36 @@
         master = ctx.createGain();
         master.gain.value = 0.22;
         master.connect(ctx.destination);
-      } catch {
+        
+        // Resume context if suspended (required by some browsers)
+        if (ctx.state === 'suspended') {
+          ctx.resume().catch(e => console.log('Audio context resume failed:', e));
+        }
+      } catch (e) {
+        console.log('Audio initialization failed:', e);
         ctx = null;
         master = null;
       }
     }
 
+    function resume() {
+      if (ctx && ctx.state === 'suspended' && audioResumeAttempts < 3) {
+        audioResumeAttempts++;
+        ctx.resume().catch(e => {
+          console.log('Audio resume attempt failed:', e);
+        });
+      }
+    }
+
     function beep(freq = 440, dur = 0.06, gain = 0.07, type = "sine") {
       if (!AppState.soundOn || !ctx || !master) return;
+      
+      // Ensure context is running
+      if (ctx.state === 'suspended') {
+        resume();
+        return;
+      }
+
       const t = ctx.currentTime;
       const o = ctx.createOscillator();
       const g = ctx.createGain();
@@ -2234,10 +2249,13 @@
     function toggle() {
       AppState.soundOn = !AppState.soundOn;
       Store.set("sound", AppState.soundOn ? "on" : "off");
-      if (AppState.soundOn) init();
+      if (AppState.soundOn) {
+        init();
+        ui();
+      }
     }
 
-    return { init, toggle, ...sfx };
+    return { init, toggle, resume, ...sfx };
   })();
 
   /* ======================= HELPER EFFECTS ======================= */
@@ -2377,7 +2395,14 @@
       el.classList.remove("hidden");
       sync();
       if (name === "pause") AppState.paused = true;
+      
+      // Focus management for accessibility
+      setTimeout(() => {
+        const firstBtn = el.querySelector('button');
+        if (firstBtn) firstBtn.focus();
+      }, 50);
     }
+    
     function close(name) {
       const el = map[name];
       if (!el) return;
@@ -2385,6 +2410,7 @@
       sync();
       if (name === "pause") AppState.paused = false;
     }
+    
     function closeAll() {
       for (const el of Object.values(map)) if (el) el.classList.add("hidden");
       AppState.paused = false;
@@ -2471,8 +2497,9 @@
         
         return `
           <button class="character-card ${isActive ? 'selected' : ''} ${!unlocked ? 'locked' : ''}" 
-                  data-helper="${key}" ${!unlocked ? 'disabled' : ''}>
-            ${!unlocked ? '<i class="fas fa-lock lock-icon"></i>' : ''}
+                  data-helper="${key}" ${!unlocked ? 'disabled' : ''}
+                  aria-label="${info.name} - ${info.ability}${!unlocked ? ' (Locked)' : ''}">
+            ${!unlocked ? '<i class="fas fa-lock lock-icon" aria-hidden="true"></i>' : ''}
             <div class="character-icon">${info.icon}</div>
             <div class="character-name">${info.name}</div>
             <div class="character-ability">${info.ability}</div>
@@ -2487,7 +2514,6 @@
 
     function updateHUD(prev = null) {
       setText("stat-score", Math.floor(AppState.score));
-      setText("stat-streak", Math.floor(AppState.streak));
       setText("stat-lives", Math.floor(AppState.lives));
       setText("stat-combo", AppState.combo.mult.toFixed(1) + "x");
       
@@ -2525,7 +2551,6 @@
 
       if (prev) {
         if (AppState.score !== prev.score) HUDFX.pulse("stat-score");
-        if (AppState.streak !== prev.streak && AppState.streak > prev.streak) HUDFX.pulse("stat-streak");
         if (AppState.lives < prev.lives) HUDFX.shake("stat-lives");
       }
     }
@@ -2670,7 +2695,7 @@
       });
 
       // Achievements
-      on("achievements-btn", "click", () => { 
+      on("achievements-pill", "click", () => { 
         Audio.ui(); 
         openAchievements(); 
       });
@@ -2769,9 +2794,34 @@
       });
       
       on("save-settings", "click", () => { 
-        // Save settings logic would go here
+        // Save settings from checkboxes
+        AppState.soundOn = document.getElementById("sound-toggle-setting").checked;
+        AppState.hapticsOn = document.getElementById("haptic-toggle-setting").checked;
+        Store.set("sound", AppState.soundOn ? "on" : "off");
+        Store.set("haptics", AppState.hapticsOn ? "on" : "off");
         Overlays.close("settings"); 
         Audio.ui(); 
+      });
+      
+      on("reset-progress", "click", () => {
+        const confirmBtn = document.getElementById("reset-confirm");
+        if (confirmBtn.style.display === "none") {
+          confirmBtn.style.display = "block";
+          setTimeout(() => {
+            confirmBtn.style.display = "none";
+          }, 3000);
+        }
+      });
+      
+      on("reset-confirm", "click", () => {
+        if (confirm("Are you sure you want to reset all progress? This cannot be undone.")) {
+          Store.clear();
+          ProgressiveSystem.reset();
+          AppState.achievements = {};
+          AppState.best = 0;
+          AppState.helper = "piglet";
+          location.reload();
+        }
       });
 
       // Game over
@@ -2785,7 +2835,7 @@
       window.addEventListener("keydown", (e) => {
         if (e.repeat) return;
 
-        if (e.code === "Space") {
+        if (e.code === "Space" || e.code === "KeyP") {
           e.preventDefault();
           if (!AppState.running) return;
           if (!document.body.classList.contains("overlay-open")) Overlays.open("pause");
@@ -2819,7 +2869,7 @@
       // Simulate loading
       let progress = 0;
       const interval = setInterval(() => {
-        progress += Math.random() * 15;
+        progress += Math.random() * 10 + 5; // More controlled progression
         if (progress >= 100) {
           progress = 100;
           clearInterval(interval);
@@ -2978,14 +3028,15 @@
       const hud = $("hud");
       const hudH = hud ? hud.getBoundingClientRect().height : 0;
       
-      // Calculate available space more accurately
-      const topPad = 15; // Space above HUD
-      const bottomPad = 20; // Space for bottom controls
+      // Calculate available space
+      const safeTop = env(safe-area-inset-top, 0);
+      const safeBottom = env(safe-area-inset-bottom, 0);
+      const topPad = 15;
+      const bottomPad = 20;
       
-      // Ensure minimum playable area
       const availableH = Math.max(
           400, 
-          clamp(vh - hudH - topPad - bottomPad, 400, 800)
+          vh - hudH - topPad - bottomPad - safeTop - safeBottom
       );
       
       const contW = container.getBoundingClientRect().width || BASE_W;
@@ -3068,17 +3119,15 @@
     canvas.addEventListener("touchstart", (e) => {
       const t = e.touches?.[0];
       if (!t) return;
-      if (e.cancelable) e.preventDefault();
       downAt(t.clientX);
-    }, { passive: false });
+    }, { passive: true });
 
     canvas.addEventListener("touchmove", (e) => {
       if (!down) return;
       const t = e.touches?.[0];
       if (!t) return;
-      if (e.cancelable) e.preventDefault();
       setTarget(t.clientX);
-    }, { passive: false });
+    }, { passive: true });
 
     canvas.addEventListener("touchend", () => (down = false), { passive: true });
     canvas.addEventListener("touchcancel", () => (down = false), { passive: true });
@@ -3165,7 +3214,23 @@
   }
 
   /* ======================= GAMEPLAY TIPS ======================= */
-  function showGameplayTip() {
+  const GameTips = (() => {
+    let currentTip = null;
+    let tipStyle = null;
+    
+    if (!tipStyle) {
+      tipStyle = document.createElement('style');
+      tipStyle.textContent = `
+          @keyframes fadeInOut {
+              0% { opacity: 0; transform: translate(-50%, -50%) scale(0.8); }
+              15% { opacity: 1; transform: translate(-50%, -50%) scale(1); }
+              85% { opacity: 1; transform: translate(-50%, -50%) scale(1); }
+              100% { opacity: 0; transform: translate(-50%, -50%) scale(0.8); }
+          }
+      `;
+      document.head.appendChild(tipStyle);
+    }
+
     const tips = [
       "💡 Tip: Try to maintain your combo for bonus points!",
       "💡 Tip: Piglet gives you extra lives to start with!",
@@ -3176,52 +3241,44 @@
       "💡 Tip: Unlock all helpers by reaching higher scores!"
     ];
     
-    const tip = tips[Math.floor(Math.random() * tips.length)];
-    
-    // Don't show tip if one already exists
-    if ($("gameplay-tip")) return;
-    
-    const tipEl = document.createElement("div");
-    tipEl.id = "gameplay-tip";
-    tipEl.style.cssText = `
-        position: fixed;
-        top: 50%;
-        left: 50%;
-        transform: translate(-50%, -50%);
-        background: rgba(0,0,0,0.8);
-        color: #FFD700;
-        padding: 15px 25px;
-        border-radius: 15px;
-        border: 3px solid #D4A574;
-        font-family: 'Patrick Hand', cursive;
-        font-size: 18px;
-        text-align: center;
-        max-width: 80%;
-        z-index: 1002;
-        animation: fadeInOut 4s ease forwards;
-    `;
-    
-    // Add animation
-    const style = document.createElement('style');
-    style.textContent = `
-        @keyframes fadeInOut {
-            0% { opacity: 0; transform: translate(-50%, -50%) scale(0.8); }
-            15% { opacity: 1; transform: translate(-50%, -50%) scale(1); }
-            85% { opacity: 1; transform: translate(-50%, -50%) scale(1); }
-            100% { opacity: 0; transform: translate(-50%, -50%) scale(0.8); }
+    function show() {
+      // Don't show tip if one already exists
+      if (currentTip) return;
+      
+      const tip = tips[Math.floor(Math.random() * tips.length)];
+      
+      currentTip = document.createElement("div");
+      currentTip.style.cssText = `
+          position: fixed;
+          top: 50%;
+          left: 50%;
+          transform: translate(-50%, -50%);
+          background: rgba(0,0,0,0.8);
+          color: #FFD700;
+          padding: 15px 25px;
+          border-radius: 15px;
+          border: 3px solid #D4A574;
+          font-family: 'Patrick Hand', cursive;
+          font-size: 18px;
+          text-align: center;
+          max-width: 80%;
+          z-index: 1002;
+          animation: fadeInOut 4s ease forwards;
+      `;
+      
+      currentTip.textContent = tip;
+      document.body.appendChild(currentTip);
+      
+      setTimeout(() => {
+        if (currentTip && currentTip.parentNode) {
+          currentTip.remove();
+          currentTip = null;
         }
-    `;
-    document.head.appendChild(style);
+      }, 4000);
+    }
     
-    tipEl.textContent = tip;
-    document.body.appendChild(tipEl);
-    
-    setTimeout(() => {
-      if (tipEl.parentNode) {
-        tipEl.remove();
-      }
-    }, 4000);
-  }
+    return { show };
+  })();
 
   /* ======================= ACHIEVEMENTS ======================= */
   const Achievements = (() => {
@@ -3265,7 +3322,7 @@
       if (hasAll) unlock("allHelpers", "Full Crew");
     }
 
-    return { check };
+    return { check, unlock };
   })();
 
   /* ======================= GAME ======================= */
@@ -3289,11 +3346,11 @@
 
     // base spawn
     let honeyTimer = 0, beeTimer = 0, powerTimer = 0;
-    let baseHoneyRate = 650;
-    let baseBeeRate = 2200;
-    let powerRate = 7600;
+    let baseHoneyRate = 850; // Start with level-based rate
+    let baseBeeRate = 2000;
+    let powerRate = 12000;
 
-    // movement difficulty - EASIER VALUES
+    // movement difficulty
     let honeyFall = 140, beeFall = 160, beeDrift = 60;
 
     let shake = 0;
@@ -3346,7 +3403,7 @@
       buffs.slow = 0;
 
       honeyTimer = beeTimer = powerTimer = 0;
-      honeyFall = 140; beeFall = 160; beeDrift = 60; // EASIER
+      honeyFall = 140; beeFall = 160; beeDrift = 60;
 
       player.x = BASE_W / 2;
       player.y = BASE_H - 86;
@@ -3372,14 +3429,14 @@
       last = now();
       Layout.apply();
       
-      // Show a helpful tip
-      setTimeout(() => showGameplayTip(), 2000);
+      // Show a helpful tip after 2 seconds
+      setTimeout(() => GameTips.show(), 2000);
       
       // Apply helper start effects
       HelperEffects.onGameStart();
       // Piglet: start with extra lives
-      if (AppState.score === 0 && AppState.timeMs === 0) {
-        AppState.lives = (AppState.helper === 'piglet') ? 5 : 3;
+      if (AppState.helper === 'piglet') {
+        AppState.lives = 5;
       }
       UI.updateHUD();
     }
@@ -3488,17 +3545,17 @@
       baseBeeRate = levelData.beeRate;
       powerRate = levelData.powerRate;
       
-      // Keep some time-based progression for falling speed (slower progression)
+      // Keep some time-based progression for falling speed
       const tSec = Math.min(45, AppState.timeMs / 1000);
-      honeyFall = 140 + tSec * 0.3; // Slower increase
-      beeFall = 160 + tSec * 0.4;   // Slower increase
-      beeDrift = 60 + tSec * 0.05;  // Slower increase
+      honeyFall = 140 + tSec * 0.3;
+      beeFall = 160 + tSec * 0.4;
+      beeDrift = 60 + tSec * 0.05;
       
-      // Director easing (more forgiving)
+      // Director easing
       const targetEase = AppState.lives <= 1 ? 0.7 : (AppState.lives === 2 ? 0.3 : 0);
       directorEase = lerp(directorEase, targetEase, 0.02);
       
-      // Apply director easing to rates (less severe)
+      // Apply director easing to rates
       baseBeeRate = clamp(baseBeeRate + directorEase * 200, 900, 2000);
       baseHoneyRate = clamp(baseHoneyRate + directorEase * 60, 450, 750);
     }
@@ -3529,7 +3586,7 @@
         AppState.streak = 0;
         AppState.combo = { mult: 1, timer: 0, tier: 0 };
 
-        AppState.score = Math.max(0, AppState.score - 25); // Less penalty
+        AppState.score = Math.max(0, AppState.score - 25);
 
         Particles.emit(h.x, h.y, "rgba(180,55,25,1)", 24, 1.2);
         spawnScorePopup("CURSED! -25", h.x, h.y);
@@ -4045,15 +4102,9 @@
           continue;
         }
 
-        // Adaptive collision radius - easier at lower levels
-        const basePlayerRadius = 54;
-        const currentLevel = ProgressiveSystem.getCurrentLevel(AppState.score);
-        let collisionRadius = basePlayerRadius;
-        if (currentLevel <= 1) collisionRadius = 42; // Beginner/Novice
-        else if (currentLevel <= 3) collisionRadius = 48; // Apprentice/Adept
-        else collisionRadius = 54; // Expert+
-        
-        const hitBuffer = 3; // Extra pixels for easier dodging
+        // Consistent collision radius
+        const collisionRadius = 48;
+        const hitBuffer = 3;
 
         if (hitCircle(player.x, player.y, collisionRadius - hitBuffer, h.x, h.y, h.r)) {
           awardHoney(h);
@@ -4101,16 +4152,9 @@
 
         if (b.y > BASE_H + 80) { bees.splice(i, 1); continue; }
 
-        // Adaptive collision radius - easier at lower levels
-        const basePlayerRadius = 54;
-        const currentLevel = ProgressiveSystem.getCurrentLevel(AppState.score);
-        let collisionRadius = basePlayerRadius;
-        if (currentLevel <= 1) collisionRadius = 42; // Beginner/Novice
-        else if (currentLevel <= 3) collisionRadius = 48; // Apprentice/Adept
-        else collisionRadius = 54; // Expert+
-        
-        const beePlayerR = collisionRadius * 0.78;
-        const hitBuffer = 3; // Extra pixels for easier dodging
+        // Consistent collision radius
+        const beePlayerR = 42;
+        const hitBuffer = 3;
         
         if (hitCircle(player.x, player.y, beePlayerR + hitBuffer, b.x, b.y, b.r)) {
           takeHit(b);
@@ -4211,7 +4255,7 @@
         e.preventDefault();
       }
       lastTouchEnd = now;
-    }, { passive: false });
+    }, false);
     
     UI.bind();
     Layout.bind();
@@ -4222,7 +4266,7 @@
   if (document.readyState === "loading") {
     document.addEventListener("DOMContentLoaded", boot, { once: true });
   } else {
-    boot();
+    setTimeout(boot, 100); // Small delay to ensure DOM is ready
   }
 })();
 </script>
