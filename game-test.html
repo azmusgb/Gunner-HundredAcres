@@ -4374,67 +4374,9 @@ function startGame() {
         vj && vj.classList.add("active");
     }
 
-    requestAnimationFrame(gameLoop);
+    Game.start(); 
 }
 
-document.getElementById("quick-start")?.addEventListener("click", startGame);
-document.getElementById("start-btn")?.addEventListener("click", startGame);
-                function render() {
-                    ctx.clearRect(0, 0, BASE_W, BASE_H);
-
-                    const mf = 1 - AppState.timeScale;
-                    ctx.save();
-
-                    if (shake > 0.01) {
-                        const dx = (Math.random() - 0.5) * shake;
-                        const dy = (Math.random() - 0.5) * shake;
-                        ctx.translate(dx, dy);
-                        shake *= 0.88;
-                    }
-
-                    if (mf > 0.01) {
-                        ctx.globalAlpha = clamp(mf * 1.8, 0, 0.22);
-                        ctx.fillStyle = "rgba(0,0,0,1)";
-                        ctx.fillRect(0, 0, BASE_W, BASE_H);
-                        ctx.globalAlpha = 1;
-                    }
-
-                    for (const h of honeys) drawHoney(h);
-                    for (const p of powers) drawPower(p);
-                    for (const b of bees) drawBee(b);
-
-                    drawPlayer();
-
-                    Particles.render(ctx);
-                    renderCombo();
-
-                    ctx.save();
-                    ctx.globalAlpha = 0.03;
-                    ctx.fillStyle = "#000";
-                    for (let i = 0; i < 60; i++) {
-                        ctx.fillRect(Math.random() * BASE_W, Math.random() * BASE_H, 1, 1);
-                    }
-                    ctx.restore();
-
-                    ctx.restore();
-                }
-
-                function tick(ts) {
-                    const dt = ts - last;
-                    last = ts;
-
-                    update(dt);
-                    render();
-                    if (running) requestAnimationFrame(tick);
-                }
-
-                function bootLoop() {
-                    last = now();
-                    requestAnimationFrame(tick);
-                }
-
-                return { reset, start, bootLoop };
-            })();
 
             /* ======================= BOOT ======================= */
             function boot() {
