@@ -2,9 +2,10 @@
 <html lang="en">
 <head>
     <meta charset="UTF-8" />
-    <title>Pooh's Honey Hunt: iOS Fixed Edition 🍯</title>
+    <title>Pooh's Honey Hunt: Complete iOS Edition 🍯</title>
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover" />
     <meta name="theme-color" content="#d4a574" />
+    <meta name="description" content="Help Pooh catch honey pots in the Hundred Acre Wood! Ultimate edition with seasonal events, daily challenges, leaderboards, and more!" />
     <meta name="apple-mobile-web-app-capable" content="yes">
     <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
     <link rel="preconnect" href="https://fonts.googleapis.com" />
@@ -12,33 +13,81 @@
     <link href="https://fonts.googleapis.com/css2?family=Patrick+Hand&family=Fredoka+One&family=Bubblegum+Sans&family=Comic+Neue:wght@700&display=swap" rel="stylesheet" />
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css" />
     <style>
-        /* ======================= RESET & BASE ======================= */
+        /* ======================= BASE STYLES ======================= */
+        :root {
+            --color-primary: #d4a574;
+            --color-secondary: #f7c44f;
+            --color-accent: #e67e22;
+            --color-danger: #e74c3c;
+            --color-success: #2ecc71;
+            --color-dark: #2c3e50;
+            --color-light: #f9f3e9;
+            --color-shadow: rgba(44, 62, 80, 0.3);
+            
+            --shadow-sm: 0 2px 8px rgba(0,0,0,0.1);
+            --shadow-md: 0 4px 16px rgba(0,0,0,0.15);
+            --shadow-lg: 0 8px 32px rgba(0,0,0,0.2);
+            
+            --radius-sm: 12px;
+            --radius-md: 20px;
+            --radius-lg: 30px;
+            
+            --font-title: 'Bubblegum Sans', cursive;
+            --font-body: 'Patrick Hand', cursive;
+            --font-ui: 'Fredoka One', system-ui;
+            --font-fun: 'Comic Neue', cursive;
+        }
+
         * {
             margin: 0;
             padding: 0;
             box-sizing: border-box;
             -webkit-tap-highlight-color: transparent;
             -webkit-touch-callout: none;
-            -webkit-user-select: none;
-            user-select: none;
         }
 
         html, body {
             width: 100%;
             height: 100%;
             overflow: hidden;
-            font-family: 'Patrick Hand', cursive;
-            background: linear-gradient(135deg, #f9f3e9 0%, #f0d9b5 100%);
-            color: #2c3e50;
             touch-action: manipulation;
-            position: fixed;
+            font-family: var(--font-body);
+            background: linear-gradient(135deg, #f9f3e9 0%, #f0d9b5 100%);
+            color: var(--color-dark);
+            user-select: none;
         }
 
         body {
+            position: fixed;
+            width: 100%;
+            height: 100%;
             padding-top: env(safe-area-inset-top);
             padding-bottom: env(safe-area-inset-bottom);
             padding-left: env(safe-area-inset-left);
             padding-right: env(safe-area-inset-right);
+        }
+
+        /* ======================= LAYERS ======================= */
+        .layer {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            pointer-events: none;
+        }
+
+        #game-layer {
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            padding-top: env(safe-area-inset-top);
+            padding-bottom: env(safe-area-inset-bottom);
+            pointer-events: none;
+        }
+
+        #ui-layer, #overlay-layer {
+            pointer-events: auto;
         }
 
         /* ======================= LOADING SCREEN ======================= */
@@ -48,7 +97,7 @@
             left: 0;
             width: 100%;
             height: 100%;
-            background: linear-gradient(135deg, #d4a574 0%, #e67e22 100%);
+            background: linear-gradient(135deg, var(--color-primary) 0%, var(--color-accent) 100%);
             display: flex;
             flex-direction: column;
             justify-content: center;
@@ -115,22 +164,7 @@
             padding: 0 20px;
             max-width: 300px;
             opacity: 0.9;
-            font-family: 'Comic Neue', cursive;
-        }
-
-        /* ======================= GAME LAYOUT ======================= */
-        #game-layer {
-            position: fixed;
-            top: 0;
-            left: 0;
-            width: 100%;
-            height: 100%;
-            display: flex;
-            flex-direction: column;
-            align-items: center;
-            padding-top: max(env(safe-area-inset-top), 10px);
-            padding-bottom: max(env(safe-area-inset-bottom), 10px);
-            pointer-events: none;
+            font-family: var(--font-fun);
         }
 
         /* ======================= HUD ======================= */
@@ -139,12 +173,12 @@
             max-width: 500px;
             padding: 12px 16px;
             background: rgba(255, 255, 255, 0.95);
-            border-radius: 30px;
+            border-radius: var(--radius-lg);
             margin: 12px auto 8px;
-            box-shadow: 0 8px 32px rgba(0,0,0,0.2);
+            box-shadow: var(--shadow-lg);
             pointer-events: auto;
             position: relative;
-            border: 3px solid #d4a574;
+            border: 3px solid var(--color-primary);
         }
 
         .hud-header {
@@ -155,23 +189,23 @@
         }
 
         .hud-title {
-            font-family: 'Bubblegum Sans', cursive;
+            font-family: var(--font-title);
             font-size: 20px;
-            color: #e67e22;
+            color: var(--color-accent);
             display: flex;
             align-items: center;
             gap: 8px;
         }
 
         .level-display {
-            background: #f7c44f;
-            color: #2c3e50;
+            background: var(--color-secondary);
+            color: var(--color-dark);
             padding: 4px 12px;
             border-radius: 20px;
-            font-family: 'Fredoka One', system-ui;
+            font-family: var(--font-ui);
             font-size: 14px;
             font-weight: bold;
-            border: 2px solid #d4a574;
+            border: 2px solid var(--color-primary);
         }
 
         .hud-stats {
@@ -183,11 +217,11 @@
 
         .stat-card {
             flex: 1;
-            background: #f9f3e9;
-            border-radius: 20px;
+            background: var(--color-light);
+            border-radius: var(--radius-md);
             padding: 10px;
             text-align: center;
-            border: 2px solid #d4a574;
+            border: 2px solid var(--color-primary);
             transition: transform 0.2s ease;
         }
 
@@ -201,16 +235,16 @@
         }
 
         .stat-value {
-            font-family: 'Fredoka One', system-ui;
+            font-family: var(--font-ui);
             font-size: 24px;
             font-weight: bold;
-            color: #2c3e50;
+            color: var(--color-dark);
             line-height: 1;
         }
 
         .stat-label {
             font-size: 12px;
-            color: #2c3e50;
+            color: var(--color-dark);
             opacity: 0.8;
             margin-top: 2px;
         }
@@ -225,43 +259,69 @@
         .progress-container {
             flex: 1;
             height: 12px;
-            background: #f9f3e9;
+            background: var(--color-light);
             border-radius: 6px;
             overflow: hidden;
-            border: 2px solid #d4a574;
+            border: 2px solid var(--color-primary);
         }
 
         .progress-fill {
             height: 100%;
-            background: linear-gradient(90deg, #f7c44f, #e67e22);
+            background: linear-gradient(90deg, var(--color-secondary), var(--color-accent));
             border-radius: 6px;
             width: 0%;
             transition: width 0.3s ease;
         }
 
-        .achievements-pill {
+        .hud-achievements {
             position: absolute;
             bottom: -25px;
             left: 50%;
             transform: translateX(-50%);
+        }
+
+        .achievements-pill {
             background: linear-gradient(135deg, #ffd166, #f4b400);
-            border: 3px solid #d4a574;
+            border: 3px solid var(--color-primary);
             border-radius: 25px;
             padding: 8px 16px;
             display: flex;
             align-items: center;
             gap: 8px;
-            font-family: 'Fredoka One', system-ui;
-            color: #2c3e50;
+            font-family: var(--font-ui);
+            color: var(--color-dark);
             font-weight: bold;
             cursor: pointer;
-            pointer-events: auto;
-            box-shadow: 0 2px 8px rgba(0,0,0,0.1);
             transition: all 0.2s ease;
+            pointer-events: auto;
+            box-shadow: var(--shadow-sm);
+            -webkit-appearance: none;
+            appearance: none;
+            border: none;
         }
 
         .achievements-pill:active {
             transform: translateX(-50%) scale(0.95);
+        }
+
+        .achievements-pill .trophy {
+            font-size: 20px;
+        }
+
+        .achievements-pill .label {
+            font-size: 14px;
+        }
+
+        .achievements-pill .count {
+            background: rgba(255,255,255,0.9);
+            padding: 2px 8px;
+            border-radius: 10px;
+            font-size: 12px;
+        }
+
+        .achievements-pill .chev {
+            font-size: 20px;
+            margin-left: 2px;
         }
 
         /* ======================= GAME CONTAINER ======================= */
@@ -281,16 +341,17 @@
             width: 100%;
             height: 100%;
             max-height: 700px;
-            border-radius: 30px;
-            box-shadow: 0 8px 32px rgba(0,0,0,0.2);
+            border-radius: var(--radius-lg);
+            box-shadow: var(--shadow-lg);
             background: linear-gradient(180deg, #87CEEB 0%, #98FB98 100%);
-            border: 5px solid #d4a574;
+            border: 5px solid var(--color-primary);
             pointer-events: auto;
             touch-action: none;
+            user-select: none;
             -webkit-user-drag: none;
         }
 
-        /* ======================= BUTTONS (FIXED FOR iOS) ======================= */
+        /* ======================= CONTROL CLUSTERS ======================= */
         .control-cluster {
             position: fixed;
             display: flex;
@@ -301,22 +362,22 @@
         }
 
         .control-cluster.top-left {
-            top: max(env(safe-area-inset-top), 20px);
+            top: calc(env(safe-area-inset-top) + 20px);
             left: 20px;
         }
 
         .control-cluster.top-right {
-            top: max(env(safe-area-inset-top), 20px);
+            top: calc(env(safe-area-inset-top) + 20px);
             right: 20px;
         }
 
         .control-cluster.bottom-right {
-            bottom: max(env(safe-area-inset-bottom), 20px);
+            bottom: calc(env(safe-area-inset-bottom) + 20px);
             right: 20px;
         }
 
         .control-cluster.bottom-left {
-            bottom: max(env(safe-area-inset-bottom), 20px);
+            bottom: calc(env(safe-area-inset-bottom) + 20px);
             left: 20px;
         }
 
@@ -325,18 +386,18 @@
             height: 50px;
             border-radius: 50%;
             background: rgba(255, 255, 255, 0.95);
-            border: 3px solid #d4a574;
+            border: 3px solid var(--color-primary);
             display: flex;
             align-items: center;
             justify-content: center;
             font-size: 22px;
-            color: #2c3e50;
+            color: var(--color-dark);
             cursor: pointer;
-            transition: all 0.1s ease;
-            box-shadow: 0 4px 16px rgba(0,0,0,0.15);
+            transition: all 0.2s ease;
+            box-shadow: var(--shadow-md);
             -webkit-appearance: none;
             appearance: none;
-            outline: none;
+            border: none;
         }
 
         .control-btn:active {
@@ -344,7 +405,7 @@
             background: rgba(255, 255, 255, 0.8);
         }
 
-        /* ======================= OVERLAY ======================= */
+        /* ======================= OVERLAY STYLES ======================= */
         .overlay-content {
             position: fixed;
             top: 50%;
@@ -354,10 +415,10 @@
             max-width: 500px;
             max-height: 85vh;
             background: rgba(255, 255, 255, 0.98);
-            border-radius: 30px;
+            border-radius: var(--radius-lg);
             padding: 24px;
-            box-shadow: 0 8px 32px rgba(0,0,0,0.2);
-            border: 5px solid #d4a574;
+            box-shadow: var(--shadow-lg);
+            border: 5px solid var(--color-primary);
             overflow-y: auto;
             pointer-events: auto;
             z-index: 1000;
@@ -365,7 +426,11 @@
         }
 
         .overlay-content.hidden {
-            display: none;
+            display: none !important;
+        }
+
+        body.overlay-open {
+            overflow: hidden;
         }
 
         .overlay-header {
@@ -376,9 +441,9 @@
         }
 
         .overlay-title {
-            font-family: 'Bubblegum Sans', cursive;
+            font-family: var(--font-title);
             font-size: 28px;
-            color: #e67e22;
+            color: var(--color-accent);
             text-align: center;
             line-height: 1.2;
         }
@@ -387,7 +452,7 @@
             background: none;
             border: none;
             font-size: 32px;
-            color: #2c3e50;
+            color: var(--color-dark);
             cursor: pointer;
             width: 40px;
             height: 40px;
@@ -404,7 +469,7 @@
             background: rgba(0,0,0,0.1);
         }
 
-        /* ======================= MAIN BUTTONS ======================= */
+        /* ======================= BUTTONS ======================= */
         .btn {
             display: flex;
             align-items: center;
@@ -413,40 +478,56 @@
             width: 100%;
             padding: 16px 24px;
             border: none;
-            border-radius: 20px;
-            font-family: 'Fredoka One', system-ui;
+            border-radius: var(--radius-md);
+            font-family: var(--font-ui);
             font-size: 18px;
             font-weight: bold;
             cursor: pointer;
-            transition: all 0.1s ease;
+            transition: all 0.2s ease;
             text-decoration: none;
             margin: 8px 0;
-            box-shadow: 0 2px 8px rgba(0,0,0,0.1);
+            box-shadow: var(--shadow-sm);
             -webkit-appearance: none;
             appearance: none;
         }
 
+        .btn i {
+            font-size: 20px;
+        }
+
         .btn:active {
             transform: translateY(2px);
-            box-shadow: 0 1px 4px rgba(0,0,0,0.1);
+            box-shadow: var(--shadow-sm);
+        }
+
+        .btn-secondary {
+            background: var(--color-light);
+            color: var(--color-dark);
+            border: 3px solid var(--color-primary);
+        }
+
+        .btn-secondary:active {
+            background: #f0e6d2;
         }
 
         .btn-success {
-            background: linear-gradient(135deg, #2ecc71, #27ae60);
+            background: linear-gradient(135deg, var(--color-success), #27ae60);
             color: white;
             border: 3px solid #27ae60;
         }
 
-        .btn-secondary {
-            background: #f9f3e9;
-            color: #2c3e50;
-            border: 3px solid #d4a574;
+        .btn-success:active {
+            background: linear-gradient(135deg, #27ae60, #219653);
         }
 
         .btn-danger {
-            background: linear-gradient(135deg, #e74c3c, #c0392b);
+            background: linear-gradient(135deg, var(--color-danger), #c0392b);
             color: white;
             border: 3px solid #c0392b;
+        }
+
+        .btn-danger:active {
+            background: linear-gradient(135deg, #c0392b, #a93226);
         }
 
         .btn-grid {
@@ -465,23 +546,44 @@
         .pooh-avatar {
             width: 100px;
             height: 100px;
-            background: url('data:image/svg+xml,<svg xmlns="http://www.w3.org2000/svg" viewBox="0 0 100 100"><circle cx="50" cy="50" r="48" fill="%23f7c44f" stroke="%232c3e50" stroke-width="2"/><path d="M30,40 Q50,20 70,40 Q60,60 40,60 Q30,50 30,40" fill="%23d4a574"/><circle cx="40" cy="40" r="5" fill="%232c3e50"/><circle cx="60" cy="40" r="5" fill="%232c3e50"/><path d="M45,55 Q50,60 55,55" stroke="%232c3e50" stroke-width="3" fill="none"/></svg>');
+            background: url('data:image/svg+xml,<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 100 100"><circle cx="50" cy="50" r="48" fill="%23f7c44f" stroke="%232c3e50" stroke-width="2"/><path d="M30,40 Q50,20 70,40 Q60,60 40,60 Q30,50 30,40" fill="%23d4a574"/><circle cx="40" cy="40" r="5" fill="%232c3e50"/><circle cx="60" cy="40" r="5" fill="%232c3e50"/><path d="M45,55 Q50,60 55,55" stroke="%232c3e50" stroke-width="3" fill="none"/></svg>');
             background-size: contain;
             margin: 0 auto 15px;
         }
 
         .welcome-text {
-            font-family: 'Bubblegum Sans', cursive;
+            font-family: var(--font-title);
             font-size: 24px;
-            color: #e67e22;
+            color: var(--color-accent);
             margin-bottom: 8px;
         }
 
         .subtitle {
             font-size: 16px;
-            color: #2c3e50;
+            color: var(--color-dark);
             opacity: 0.8;
             margin-bottom: 20px;
+        }
+
+        .feature-badge {
+            background: linear-gradient(135deg, #ffeaa7, #fdcb6e);
+            border-radius: var(--radius-md);
+            padding: 15px;
+            margin: 20px 0;
+            border: 3px solid var(--color-primary);
+            text-align: center;
+        }
+
+        .feature-badge h3 {
+            font-family: var(--font-title);
+            color: var(--color-accent);
+            margin-bottom: 8px;
+            font-size: 20px;
+        }
+
+        .feature-badge p {
+            font-size: 14px;
+            color: var(--color-dark);
         }
 
         /* ======================= RESULTS SCREENS ======================= */
@@ -490,22 +592,22 @@
         }
 
         .final-score {
-            font-family: 'Bubblegum Sans', cursive;
+            font-family: var(--font-title);
             font-size: 48px;
-            color: #e67e22;
+            color: var(--color-accent);
             margin: 20px 0;
-            text-shadow: 3px 3px 0 rgba(44, 62, 80, 0.3);
+            text-shadow: 3px 3px 0 var(--color-shadow);
         }
 
         .new-record {
             background: linear-gradient(135deg, #ffd166, #f4b400);
-            color: #2c3e50;
+            color: var(--color-dark);
             padding: 12px;
-            border-radius: 20px;
+            border-radius: var(--radius-md);
             margin: 15px 0;
-            font-family: 'Fredoka One', system-ui;
+            font-family: var(--font-ui);
             font-weight: bold;
-            border: 3px solid #d4a574;
+            border: 3px solid var(--color-primary);
             animation: pulse 1.5s infinite;
         }
 
@@ -515,11 +617,11 @@
         }
 
         .results-stats {
-            background: #f9f3e9;
-            border-radius: 20px;
+            background: var(--color-light);
+            border-radius: var(--radius-md);
             padding: 20px;
             margin: 20px 0;
-            border: 3px solid #d4a574;
+            border: 3px solid var(--color-primary);
         }
 
         .stat-row {
@@ -534,6 +636,98 @@
             border-bottom: none;
         }
 
+        .stat-label {
+            font-size: 16px;
+            color: var(--color-dark);
+        }
+
+        .stat-value {
+            font-family: var(--font-ui);
+            font-size: 20px;
+            font-weight: bold;
+            color: var(--color-accent);
+        }
+
+        /* ======================= SETTINGS ======================= */
+        .settings-section {
+            background: var(--color-light);
+            border-radius: var(--radius-md);
+            padding: 20px;
+            margin: 20px 0;
+            border: 3px solid var(--color-primary);
+        }
+
+        .setting-item {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            padding: 15px 0;
+            border-bottom: 1px solid rgba(0,0,0,0.1);
+        }
+
+        .setting-item:last-child {
+            border-bottom: none;
+        }
+
+        .setting-label {
+            display: flex;
+            align-items: center;
+            gap: 12px;
+            font-size: 16px;
+            color: var(--color-dark);
+        }
+
+        .setting-icon {
+            font-size: 20px;
+            color: var(--color-accent);
+            width: 30px;
+        }
+
+        .toggle-switch {
+            position: relative;
+            display: inline-block;
+            width: 60px;
+            height: 30px;
+        }
+
+        .toggle-switch input {
+            opacity: 0;
+            width: 0;
+            height: 0;
+        }
+
+        .toggle-slider {
+            position: absolute;
+            cursor: pointer;
+            top: 0;
+            left: 0;
+            right: 0;
+            bottom: 0;
+            background-color: #ccc;
+            transition: .4s;
+            border-radius: 34px;
+        }
+
+        .toggle-slider:before {
+            position: absolute;
+            content: "";
+            height: 22px;
+            width: 22px;
+            left: 4px;
+            bottom: 4px;
+            background-color: white;
+            transition: .4s;
+            border-radius: 50%;
+        }
+
+        input:checked + .toggle-slider {
+            background-color: var(--color-success);
+        }
+
+        input:checked + .toggle-slider:before {
+            transform: translateX(30px);
+        }
+
         /* ======================= TUTORIAL ======================= */
         .tutorial-overlay {
             position: fixed;
@@ -546,51 +740,29 @@
             display: flex;
             align-items: center;
             justify-content: center;
-            padding: 20px;
         }
-
+        
         .tutorial-content {
             background: white;
             padding: 30px;
-            border-radius: 30px;
+            border-radius: var(--radius-lg);
             max-width: 500px;
-            width: 100%;
+            margin: 20px;
             text-align: center;
         }
-
+        
         .tutorial-step {
             display: none;
         }
-
+        
         .tutorial-step.active {
             display: block;
         }
 
-        /* ======================= UTILITY ======================= */
-        .hidden {
-            display: none !important;
-        }
-
-        .text-center {
-            text-align: center;
-        }
-
-        /* ======================= IOS FIXES ======================= */
-        @supports (-webkit-touch-callout: none) {
-            .btn, .control-btn, .close-btn {
-                cursor: default;
-            }
-            
-            canvas {
-                -webkit-user-select: none;
-                user-select: none;
-            }
-        }
-
-        /* ======================= POWER INDICATORS ======================= */
+        /* ======================= POWER-UP INDICATORS ======================= */
         .power-indicator {
             position: fixed;
-            bottom: max(env(safe-area-inset-bottom), 20px);
+            bottom: 20px;
             left: 50%;
             transform: translateX(-50%);
             display: flex;
@@ -610,7 +782,7 @@
             opacity: 0;
             transition: opacity 0.3s ease;
             border: 2px solid white;
-            box-shadow: 0 4px 16px rgba(0,0,0,0.15);
+            box-shadow: var(--shadow-md);
         }
         
         .power-icon.active {
@@ -631,6 +803,23 @@
         .magnet-indicator {
             background: rgba(255, 107, 107, 0.8);
             color: white;
+        }
+
+        /* ======================= UTILITY CLASSES ======================= */
+        .hidden {
+            display: none !important;
+        }
+
+        .text-center {
+            text-align: center;
+        }
+
+        .mb-3 {
+            margin-bottom: 15px;
+        }
+
+        .mt-3 {
+            margin-top: 15px;
         }
 
         /* ======================= NOTIFICATIONS ======================= */
@@ -661,7 +850,56 @@
             line-height: 1.5;
             white-space: pre-wrap;
             overflow: auto;
-            -webkit-overflow-scrolling: touch;
+        }
+
+        /* ======================= RESPONSIVE ======================= */
+        @media (max-width: 768px) {
+            .overlay-content {
+                width: 95%;
+                padding: 20px;
+            }
+            
+            .hud {
+                margin: 8px auto 4px;
+                padding: 10px 12px;
+            }
+            
+            .control-cluster {
+                gap: 8px;
+            }
+            
+            .control-btn {
+                width: 45px;
+                height: 45px;
+                font-size: 20px;
+            }
+            
+            .overlay-title {
+                font-size: 24px;
+            }
+            
+            .final-score {
+                font-size: 36px;
+            }
+        }
+
+        @media (max-width: 480px) {
+            .hud-title {
+                font-size: 18px;
+            }
+            
+            .stat-value {
+                font-size: 20px;
+            }
+            
+            .btn {
+                padding: 14px 20px;
+                font-size: 16px;
+            }
+            
+            .overlay-title {
+                font-size: 22px;
+            }
         }
     </style>
 </head>
@@ -687,7 +925,17 @@
             </div>
             <div class="tutorial-step" id="tutorial-step-2">
                 <h2 class="overlay-title">Controls</h2>
-                <p class="subtitle">Touch and drag to move Pooh left and right</p>
+                <div class="settings-section">
+                    <div class="setting-item">
+                        <div class="setting-label">
+                            <i class="fas fa-mouse-pointer setting-icon"></i>
+                            <div>
+                                <strong>Touch/Mouse:</strong><br>
+                                Move left and right to catch honey
+                            </div>
+                        </div>
+                    </div>
+                </div>
                 <div class="btn-grid">
                     <button class="btn btn-secondary" id="tutorial-prev">← Back</button>
                     <button class="btn btn-success" id="tutorial-next-2">Next →</button>
@@ -707,8 +955,9 @@
     <!-- Error Overlay -->
     <div class="error-overlay hidden" id="error-overlay"></div>
 
-    <!-- Game Layer -->
-    <div id="game-layer">
+    <!-- Layers -->
+    <div class="layer" id="bg-layer"></div>
+    <div class="layer" id="game-layer">
         <!-- HUD -->
         <div class="hud" id="hud">
             <div class="hud-header">
@@ -747,23 +996,25 @@
             </div>
 
             <!-- Achievements pill -->
-            <button class="achievements-pill" id="achievements-pill">
-                <span class="trophy">🏆</span>
-                <span class="label">Achievements</span>
-                <span class="count" id="achievements-count">0/20</span>
-                <span class="chev">›</span>
-            </button>
+            <div class="hud-achievements">
+                <button class="achievements-pill" id="achievements-pill">
+                    <span class="trophy">🏆</span>
+                    <span class="label">Achievements</span>
+                    <span class="count" id="achievements-count">0/20</span>
+                    <span class="chev">›</span>
+                </button>
+            </div>
         </div>
 
         <!-- Power-up Indicators -->
         <div class="power-indicator" id="power-indicator">
-            <div class="power-icon shield-indicator" id="shield-indicator" title="Shield Active">
+            <div class="power-icon shield-indicator" id="shield-indicator">
                 <i class="fas fa-shield-alt"></i>
             </div>
-            <div class="power-icon slow-indicator" id="slow-indicator" title="Slow Motion Active">
+            <div class="power-icon slow-indicator" id="slow-indicator">
                 <i class="fas fa-hourglass-half"></i>
             </div>
-            <div class="power-icon magnet-indicator" id="magnet-indicator" title="Magnet Active">
+            <div class="power-icon magnet-indicator" id="magnet-indicator">
                 <i class="fas fa-magnet"></i>
             </div>
         </div>
@@ -772,8 +1023,11 @@
         <div class="game-container" id="game-container">
             <canvas id="game-canvas" width="420" height="700"></canvas>
         </div>
+    </div>
 
-        <!-- Control Buttons -->
+    <!-- UI Layer -->
+    <div class="layer" id="ui-layer">
+        <!-- Control Clusters -->
         <div class="control-cluster top-left">
             <button class="control-btn" id="sound-toggle-btn">
                 <i class="fas fa-volume-up"></i>
@@ -793,837 +1047,1123 @@
         </div>
         
         <div class="control-cluster bottom-right">
-            <button class="control-btn" id="weather-toggle">
-                🌦️
-            </button>
             <button class="control-btn" id="help-btn">
                 <i class="fas fa-question"></i>
             </button>
-        </div>
-        
-        <div class="control-cluster bottom-left">
             <button class="control-btn" id="tutorial-btn">
                 <i class="fas fa-graduation-cap"></i>
             </button>
         </div>
     </div>
 
-    <!-- Start Screen -->
-    <div class="overlay-content" id="start-screen">
-        <div class="overlay-header">
-            <h1 class="overlay-title">Welcome to the<br>Hundred Acre Wood</h1>
-            <button class="close-btn" id="close-start">&times;</button>
-        </div>
-        
-        <div class="welcome-section">
-            <div class="pooh-avatar"></div>
-            <p class="welcome-text">Oh bother! I need your help!</p>
-            <p class="subtitle">Catch honey pots, avoid bees, and have fun!</p>
-        </div>
-        
-        <div style="background: linear-gradient(135deg, #ffeaa7, #fdcb6e); border-radius: 20px; padding: 15px; margin: 20px 0; border: 3px solid #d4a574; text-align: center;">
-            <h3 style="font-family: 'Bubblegum Sans', cursive; color: #e67e22; margin-bottom: 8px; font-size: 20px;">🎮 Ultimate Edition!</h3>
-            <p style="font-size: 14px; color: #2c3e50;">Daily challenges • Weather effects • Achievements • Leaderboards</p>
-        </div>
-        
-        <button class="btn btn-success" id="start-btn" style="margin-top: 20px;">
-            <i class="fas fa-honey-pot"></i> Start Adventure!
-        </button>
-        
-        <div class="btn-grid">
-            <button class="btn btn-secondary" id="quick-start">
-                <i class="fas fa-play"></i> Quick Start
-            </button>
-            <button class="btn btn-secondary" id="settings-btn">
-                <i class="fas fa-cog"></i> Settings
-            </button>
-        </div>
-    </div>
-
-    <!-- Pause Screen -->
-    <div class="overlay-content hidden" id="pause-screen">
-        <div class="overlay-header">
-            <h1 class="overlay-title">Game Paused</h1>
-            <button class="close-btn" id="resume-btn">&times;</button>
-        </div>
-        
-        <div class="results-section">
-            <div class="final-score" id="pause-score">0</div>
-            
-            <div class="results-stats">
-                <div class="stat-row">
-                    <span>Current Streak</span>
-                    <span class="stat-value" id="pause-streak">0</span>
-                </div>
-                <div class="stat-row">
-                    <span>Lives Remaining</span>
-                    <span class="stat-value" id="pause-lives">3</span>
-                </div>
-                <div class="stat-row">
-                    <span>Time Played</span>
-                    <span class="stat-value" id="pause-time">0s</span>
-                </div>
+    <!-- Overlay Layer -->
+    <div class="layer" id="overlay-layer">
+        <!-- Start Screen -->
+        <div class="overlay-content" id="start-screen">
+            <div class="overlay-header">
+                <h1 class="overlay-title">Welcome to the<br>Hundred Acre Wood</h1>
+                <button class="close-btn" id="close-start">&times;</button>
             </div>
+            
+            <div class="welcome-section">
+                <div class="pooh-avatar"></div>
+                <p class="welcome-text">Oh bother! I need your help!</p>
+                <p class="subtitle">Catch honey pots, avoid bees, and unlock helpers!</p>
+            </div>
+            
+            <div class="feature-badge">
+                <h3>🎮 Ultimate Edition!</h3>
+                <p>Daily challenges • Weather effects • Achievements • Leaderboards • Enhanced graphics</p>
+            </div>
+            
+            <button class="btn btn-success" id="start-btn">
+                <i class="fas fa-honey-pot"></i> Start Adventure!
+            </button>
             
             <div class="btn-grid">
-                <button class="btn" id="continue-btn">
-                    <i class="fas fa-play"></i> Continue
+                <button class="btn btn-secondary" id="quick-start">
+                    <i class="fas fa-play"></i> Quick Start
                 </button>
-                <button class="btn btn-secondary" id="restart-btn">
-                    <i class="fas fa-redo"></i> Restart
-                </button>
-                <button class="btn btn-danger" id="quit-btn">
-                    <i class="fas fa-home"></i> Main Menu
+                <button class="btn btn-secondary" id="settings-btn">
+                    <i class="fas fa-cog"></i> Settings
                 </button>
             </div>
         </div>
-    </div>
 
-    <!-- Game Over Screen -->
-    <div class="overlay-content hidden" id="gameover-screen">
-        <div class="overlay-header">
-            <h1 class="overlay-title">Game Over!</h1>
-            <button class="close-btn" id="gameover-close">&times;</button>
+        <!-- Pause Screen -->
+        <div class="overlay-content hidden" id="pause-screen">
+            <div class="overlay-header">
+                <h1 class="overlay-title">Game Paused</h1>
+                <button class="close-btn" id="resume-btn">&times;</button>
+            </div>
+            
+            <div class="results-section">
+                <div class="final-score" id="pause-score">0</div>
+                
+                <div class="results-stats">
+                    <div class="stat-row">
+                        <span class="stat-label">Current Streak</span>
+                        <span class="stat-value" id="pause-streak">0</span>
+                    </div>
+                    <div class="stat-row">
+                        <span class="stat-label">Lives Remaining</span>
+                        <span class="stat-value" id="pause-lives">3</span>
+                    </div>
+                    <div class="stat-row">
+                        <span class="stat-label">Time Played</span>
+                        <span class="stat-value" id="pause-time">0s</span>
+                    </div>
+                </div>
+                
+                <div class="btn-grid">
+                    <button class="btn" id="continue-btn">
+                        <i class="fas fa-play"></i> Continue
+                    </button>
+                    <button class="btn btn-secondary" id="restart-btn">
+                        <i class="fas fa-redo"></i> Restart
+                    </button>
+                    <button class="btn btn-danger" id="quit-btn">
+                        <i class="fas fa-home"></i> Main Menu
+                    </button>
+                </div>
+            </div>
         </div>
-        
-        <div class="results-section">
-            <div class="final-score" id="final-score">0</div>
-            
-            <div id="new-record-badge" class="new-record hidden">
-                🏆 New Personal Best! 🏆
-            </div>
-            
-            <div class="results-stats">
-                <div class="stat-row">
-                    <span>Total Score</span>
-                    <span class="stat-value" id="final-total">0</span>
-                </div>
-                <div class="stat-row">
-                    <span>Highest Streak</span>
-                    <span class="stat-value" id="final-streak">0</span>
-                </div>
-                <div class="stat-row">
-                    <span>Honey Caught</span>
-                    <span class="stat-value" id="final-honey">0</span>
-                </div>
-            </div>
-            
-            <div class="btn-grid">
-                <button class="btn" id="play-again-btn">
-                    <i class="fas fa-redo"></i> Play Again
-                </button>
-                <button class="btn btn-secondary" id="share-final-btn">
-                    <i class="fas fa-share"></i> Share Score
-                </button>
-            </div>
-        </div>
-    </div>
 
-    <!-- Settings Screen -->
-    <div class="overlay-content hidden" id="settings-screen">
-        <div class="overlay-header">
-            <h1 class="overlay-title">Settings</h1>
-            <button class="close-btn" id="close-settings">&times;</button>
-        </div>
-        
-        <div style="background: #f9f3e9; border-radius: 20px; padding: 20px; margin: 20px 0; border: 3px solid #d4a574;">
-            <div style="display: flex; justify-content: space-between; align-items: center; padding: 15px 0; border-bottom: 1px solid rgba(0,0,0,0.1);">
-                <div style="display: flex; align-items: center; gap: 12px; font-size: 16px; color: #2c3e50;">
-                    <i class="fas fa-volume-up" style="font-size: 20px; color: #e67e22; width: 30px;"></i>
-                    Sound Effects
-                </div>
-                <label style="position: relative; display: inline-block; width: 60px; height: 30px;">
-                    <input type="checkbox" id="sound-toggle-setting" checked style="opacity: 0; width: 0; height: 0;">
-                    <span style="position: absolute; cursor: pointer; top: 0; left: 0; right: 0; bottom: 0; background-color: #ccc; transition: .4s; border-radius: 34px;"></span>
-                    <span style="position: absolute; content: ''; height: 22px; width: 22px; left: 4px; bottom: 4px; background-color: white; transition: .4s; border-radius: 50%;"></span>
-                </label>
+        <!-- Game Over Screen -->
+        <div class="overlay-content hidden" id="gameover-screen">
+            <div class="overlay-header">
+                <h1 class="overlay-title">Game Over!</h1>
+                <button class="close-btn" id="gameover-close">&times;</button>
             </div>
             
-            <div style="display: flex; justify-content: space-between; align-items: center; padding: 15px 0;">
-                <div style="display: flex; align-items: center; gap: 12px; font-size: 16px; color: #2c3e50;">
-                    <i class="fas fa-paint-brush" style="font-size: 20px; color: #e67e22; width: 30px;"></i>
-                    Visual Effects
+            <div class="results-section">
+                <div class="final-score" id="final-score">0</div>
+                
+                <div id="new-record-badge" class="new-record hidden">
+                    🏆 New Personal Best! 🏆
                 </div>
-                <label style="position: relative; display: inline-block; width: 60px; height: 30px;">
-                    <input type="checkbox" id="effects-toggle-setting" checked style="opacity: 0; width: 0; height: 0;">
-                    <span style="position: absolute; cursor: pointer; top: 0; left: 0; right: 0; bottom: 0; background-color: #ccc; transition: .4s; border-radius: 34px;"></span>
-                    <span style="position: absolute; content: ''; height: 22px; width: 22px; left: 4px; bottom: 4px; background-color: white; transition: .4s; border-radius: 50%;"></span>
-                </label>
+                
+                <div class="results-stats">
+                    <div class="stat-row">
+                        <span class="stat-label">Total Score</span>
+                        <span class="stat-value" id="final-total">0</span>
+                    </div>
+                    <div class="stat-row">
+                        <span class="stat-label">Highest Streak</span>
+                        <span class="stat-value" id="final-streak">0</span>
+                    </div>
+                    <div class="stat-row">
+                        <span class="stat-label">Honey Caught</span>
+                        <span class="stat-value" id="final-honey">0</span>
+                    </div>
+                </div>
+                
+                <div class="btn-grid">
+                    <button class="btn" id="play-again-btn">
+                        <i class="fas fa-redo"></i> Play Again
+                    </button>
+                    <button class="btn btn-secondary" id="share-final-btn">
+                        <i class="fas fa-share"></i> Share Score
+                    </button>
+                </div>
             </div>
         </div>
-        
-        <button class="btn btn-success" id="save-settings">
-            <i class="fas fa-save"></i> Save Settings
-        </button>
+
+        <!-- Settings -->
+        <div class="overlay-content hidden" id="settings-screen">
+            <div class="overlay-header">
+                <h1 class="overlay-title">Settings</h1>
+                <button class="close-btn" id="close-settings">&times;</button>
+            </div>
+            
+            <div class="settings-section">
+                <div class="setting-item">
+                    <div class="setting-label">
+                        <i class="fas fa-volume-up setting-icon"></i>
+                        Sound Effects
+                    </div>
+                    <label class="toggle-switch">
+                        <input type="checkbox" id="sound-toggle-setting" checked>
+                        <span class="toggle-slider"></span>
+                    </label>
+                </div>
+                
+                <div class="setting-item">
+                    <div class="setting-label">
+                        <i class="fas fa-paint-brush setting-icon"></i>
+                        Visual Effects
+                    </div>
+                    <label class="toggle-switch">
+                        <input type="checkbox" id="effects-toggle-setting" checked>
+                        <span class="toggle-slider"></span>
+                    </label>
+                </div>
+            </div>
+            
+            <button class="btn btn-success" id="save-settings">
+                <i class="fas fa-save"></i> Save Settings
+            </button>
+        </div>
     </div>
 
     <!-- Notification Container -->
     <div id="notification-container"></div>
 
 <script>
-(function() {
-    "use strict";
-    
-    // Detect iOS
-    const isIOS = /iPad|iPhone|iPod/.test(navigator.userAgent) && !window.MSStream;
-    console.log('iOS detected:', isIOS);
-    
-    // Prevent accidental zooming
-    document.addEventListener('touchstart', function(e) {
-        if (e.touches.length > 1) {
-            e.preventDefault();
-        }
-    }, { passive: false });
-    
-    document.addEventListener('gesturestart', function(e) {
-        e.preventDefault();
+(() => {
+  "use strict";
+
+  // Detect iOS
+  const isIOS = /iPad|iPhone|iPod/.test(navigator.userAgent) && !window.MSStream;
+  console.log('iOS detected:', isIOS);
+
+  // Error handling
+  (function setupCrashOverlay() {
+    function show(msg) {
+      try {
+        const el = document.getElementById("error-overlay");
+        if (!el) return;
+        el.textContent = String(msg).substring(0, 1200);
+        el.classList.remove("hidden");
+      } catch {}
+    }
+    window.addEventListener("error", (e) => show("JS ERROR: " + (e.message || e.type)));
+    window.addEventListener("unhandledrejection", (e) =>
+      show("PROMISE REJECTION: " + (e.reason?.message || String(e.reason)))
+    );
+  })();
+
+  if (window.__POOH_HONEY_HUNT_LOADED__) return;
+  window.__POOH_HONEY_HUNT_LOADED__ = true;
+
+  // DOM helper
+  const $ = (sel) => (typeof sel === "string" ? document.getElementById(sel) || document.querySelector(sel) : null);
+
+  // Math helpers
+  const clamp = (v, a, b) => Math.max(a, Math.min(b, v));
+  const distance = (x1, y1, x2, y2) => Math.sqrt((x2 - x1) ** 2 + (y2 - y1) ** 2);
+
+  // Storage
+  const Storage = {
+    get(key, fallback = null) {
+      try {
+        const v = localStorage.getItem(key);
+        return v === null ? fallback : JSON.parse(v);
+      } catch {
+        return fallback;
+      }
+    },
+    set(key, value) {
+      try {
+        localStorage.setItem(key, JSON.stringify(value));
+      } catch {}
+    }
+  };
+
+  // Story/Notifications
+  const Story = (() => {
+    const host = $("notification-container");
+
+    function toast(text, ms = 2200) {
+      if (!host) return;
+      const n = document.createElement("div");
+      n.style.cssText = `
+        pointer-events: none;
+        margin-bottom: 10px;
+        padding: 12px 14px;
+        border-radius: 16px;
+        border: 3px solid rgba(44,62,80,0.25);
+        background: rgba(255,255,255,0.96);
+        box-shadow: 0 6px 20px rgba(0,0,0,0.16);
+        font-family: var(--font-body);
+        font-size: 16px;
+        line-height: 1.25;
+      `;
+      n.textContent = text;
+      host.appendChild(n);
+      setTimeout(() => {
+        n.style.opacity = "0";
+        n.style.transition = "opacity 280ms ease";
+        setTimeout(() => n.remove(), 320);
+      }, ms);
+    }
+
+    const Lines = {
+      poohStart: [
+        "Pooh: Right then. Let's be brave about it.",
+        "Pooh: This seems like a good time for honey.",
+        "Pooh: Pooh is ready. Mostly.",
+      ],
+      poohCollect: [
+        "Pooh: That one looks like a particularly sensible honey.",
+        "Pooh: A very respectable catch.",
+        "Pooh: That's the sort of honey you can trust.",
+      ],
+      pigletEncourage: [
+        "Piglet: You're doing ever so well. Truly.",
+        "Piglet: Just a tiny bit more... and you've got it.",
+        "Piglet: I'm with you. Quietly. But definitely.",
+      ],
+      eeyoreGameOver: [
+        "Eeyore: Well. That was a thing that happened.",
+        "Eeyore: If you needed me, I was here the whole time.",
+        "Eeyore: Not the worst ending. Not the best either.",
+      ],
+    };
+
+    function pick(arr) {
+      return arr[(Math.random() * arr.length) | 0];
+    }
+
+    return { toast, pick, Lines };
+  })();
+
+  // Game config
+  const GAME_CONFIG = {
+    BASE_W: 420,
+    BASE_H: 700,
+    MAX_HONEYS: 40,
+    MAX_BEES: 26,
+    MAX_POWERS: 6,
+  };
+
+  // Game state
+  const GameState = {
+    running: false,
+    paused: false,
+    score: 0,
+    lives: 3,
+    combo: 1.0,
+    streak: 0,
+    honeyCaught: 0,
+    beesHit: 0,
+    startTimeMs: 0,
+    timePlayedMs: 0,
+    soundEnabled: true,
+    visualEffects: true,
+    power: {
+      shieldUntil: 0,
+      slowUntil: 0,
+      magnetUntil: 0,
+    },
+  };
+
+  // Load saved settings
+  const saved = Storage.get("gameSettings");
+  if (saved) Object.assign(GameState, saved);
+
+  // Canvas setup
+  const canvas = $("game-canvas");
+  if (!canvas) return;
+  const ctx = canvas.getContext("2d", { alpha: false });
+  const { BASE_W, BASE_H } = GAME_CONFIG;
+
+  // Player
+  const player = { x: BASE_W / 2, y: BASE_H - 96, r: 30 };
+
+  // Game objects
+  const honeys = [];
+  const bees = [];
+  const powers = [];
+
+  // Input
+  let targetX = player.x;
+  let isTouching = false;
+
+  // iOS touch handling
+  function setTargetFromClientX(clientX) {
+    const rect = canvas.getBoundingClientRect();
+    const x = ((clientX - rect.left) / rect.width) * BASE_W;
+    targetX = clamp(x, player.r, BASE_W - player.r);
+    isTouching = true;
+  }
+
+  // Prevent iOS zoom
+  document.addEventListener('touchstart', (e) => {
+    if (e.touches && e.touches.length > 1) e.preventDefault();
+  }, { passive: false });
+
+  document.addEventListener('gesturestart', (e) => {
+    e.preventDefault();
+  });
+
+  // Canvas events
+  canvas.addEventListener('touchstart', (e) => {
+    e.preventDefault();
+    const t = e.touches[0];
+    if (!t) return;
+    setTargetFromClientX(t.clientX);
+  }, { passive: false });
+
+  canvas.addEventListener('touchmove', (e) => {
+    e.preventDefault();
+    const t = e.touches[0];
+    if (!t) return;
+    setTargetFromClientX(t.clientX);
+  }, { passive: false });
+
+  canvas.addEventListener('touchend', () => {
+    isTouching = false;
+  }, { passive: true });
+
+  // Mouse events
+  canvas.addEventListener('mousedown', (e) => setTargetFromClientX(e.clientX));
+  canvas.addEventListener('mousemove', (e) => {
+    if (e.buttons) setTargetFromClientX(e.clientX);
+  });
+  window.addEventListener('mouseup', () => (isTouching = false));
+
+  // Audio
+  let audioCtx = null;
+  let audioInitialized = false;
+
+  function initAudio() {
+    if (audioInitialized) return;
+    try {
+      audioCtx = new (window.AudioContext || window.webkitAudioContext)();
+      audioInitialized = true;
+    } catch {}
+  }
+
+  function playSound(type) {
+    if (!GameState.soundEnabled) return;
+    const ac = audioCtx;
+    if (!ac) return;
+
+    try {
+      const osc = ac.createOscillator();
+      const gain = ac.createGain();
+      osc.connect(gain);
+      gain.connect(ac.destination);
+
+      let f = 440;
+      if (type === "collect") f = 523.25;
+      if (type === "hit") f = 220;
+      if (type === "start") f = 783.99;
+      if (type === "power") f = 659.25;
+
+      osc.frequency.value = f;
+      gain.gain.value = 0.08;
+
+      const now = ac.currentTime;
+      gain.gain.setValueAtTime(0.0001, now);
+      gain.gain.exponentialRampToValueAtTime(0.08, now + 0.01);
+      gain.gain.exponentialRampToValueAtTime(0.0001, now + 0.12);
+
+      osc.start();
+      osc.stop(now + 0.14);
+    } catch {}
+  }
+
+  // Initialize audio on first interaction
+  ['touchstart', 'mousedown'].forEach(event => {
+    document.addEventListener(event, initAudio, { once: true });
+  });
+
+  // Drawing functions
+  function drawBackground() {
+    const g = ctx.createLinearGradient(0, 0, 0, canvas.height);
+    g.addColorStop(0, "#87CEEB");
+    g.addColorStop(1, "#98FB98");
+    ctx.fillStyle = g;
+    ctx.fillRect(0, 0, canvas.width, canvas.height);
+  }
+
+  function drawPlayer() {
+    ctx.save();
+    ctx.translate((player.x / BASE_W) * canvas.width, (player.y / BASE_H) * canvas.height);
+
+    const sx = canvas.width / BASE_W;
+    const sy = canvas.height / BASE_H;
+    ctx.scale(sx, sy);
+
+    // Body
+    ctx.fillStyle = "#f7c44f";
+    ctx.beginPath();
+    ctx.arc(0, 0, player.r, 0, Math.PI * 2);
+    ctx.fill();
+
+    // Shirt
+    ctx.fillStyle = "#d63a2f";
+    ctx.beginPath();
+    if (ctx.roundRect) ctx.roundRect(-26, 10, 52, 34, 10);
+    else ctx.rect(-26, 10, 52, 34);
+    ctx.fill();
+
+    // Ears
+    ctx.fillStyle = "#f2b83e";
+    ctx.beginPath();
+    ctx.arc(-18, -20, 10, 0, Math.PI * 2);
+    ctx.arc(18, -20, 10, 0, Math.PI * 2);
+    ctx.fill();
+
+    // Snout
+    ctx.fillStyle = "#f2b83e";
+    ctx.beginPath();
+    ctx.ellipse(0, 10, 14, 10, 0, 0, Math.PI * 2);
+    ctx.fill();
+
+    // Eyes
+    ctx.fillStyle = "#1b1b1b";
+    ctx.beginPath();
+    ctx.arc(-10, -6, 3.2, 0, Math.PI * 2);
+    ctx.arc(10, -6, 3.2, 0, Math.PI * 2);
+    ctx.fill();
+
+    // Nose
+    ctx.beginPath();
+    ctx.ellipse(0, 6, 4, 3, 0, 0, Math.PI * 2);
+    ctx.fill();
+
+    // Smile
+    ctx.strokeStyle = "rgba(0,0,0,0.65)";
+    ctx.lineWidth = 2;
+    ctx.beginPath();
+    ctx.arc(0, 14, 10, 0.15 * Math.PI, 0.85 * Math.PI);
+    ctx.stroke();
+
+    ctx.restore();
+  }
+
+  function drawHoney(h) {
+    ctx.save();
+    const x = (h.x / BASE_W) * canvas.width;
+    const y = (h.y / BASE_H) * canvas.height;
+    const sx = canvas.width / BASE_W;
+    const sy = canvas.height / BASE_H;
+    ctx.translate(x, y);
+    ctx.scale(sx, sy);
+
+    ctx.fillStyle = h.type === "gold" ? "#FFD700" : h.type === "cursed" ? "#7d3cff" : "#FFA500";
+    ctx.beginPath();
+    ctx.ellipse(0, 0, h.r, h.r * 0.8, 0, 0, Math.PI * 2);
+    ctx.fill();
+
+    ctx.fillStyle = "rgba(255,255,255,0.35)";
+    ctx.beginPath();
+    ctx.ellipse(-5, -5, 5, 3.5, -0.4, 0, Math.PI * 2);
+    ctx.fill();
+
+    ctx.restore();
+  }
+
+  function drawBee(b) {
+    ctx.save();
+    const x = (b.x / BASE_W) * canvas.width;
+    const y = (b.y / BASE_H) * canvas.height;
+    const sx = canvas.width / BASE_W;
+    const sy = canvas.height / BASE_H;
+    ctx.translate(x, y);
+    ctx.scale(sx, sy);
+
+    ctx.fillStyle = "#FFD700";
+    ctx.beginPath();
+    ctx.ellipse(0, 0, b.r * 1.25, b.r, 0, 0, Math.PI * 2);
+    ctx.fill();
+
+    ctx.fillStyle = "rgba(0,0,0,0.25)";
+    ctx.fillRect(-6, -b.r + 2, 3, b.r * 2 - 4);
+    ctx.fillRect(0, -b.r + 2, 3, b.r * 2 - 4);
+
+    ctx.restore();
+  }
+
+  function drawPower(p) {
+    ctx.save();
+    const x = (p.x / BASE_W) * canvas.width;
+    const y = (p.y / BASE_H) * canvas.height;
+    const sx = canvas.width / BASE_W;
+    const sy = canvas.height / BASE_H;
+    ctx.translate(x, y);
+    ctx.scale(sx, sy);
+
+    const color = p.type === "shield" ? "#0096ff" : p.type === "slow" ? "#9d4edd" : "#ff6b6b";
+    ctx.fillStyle = color;
+    ctx.beginPath();
+    ctx.arc(0, 0, p.r, 0, Math.PI * 2);
+    ctx.fill();
+
+    ctx.fillStyle = "rgba(255,255,255,0.9)";
+    ctx.font = "bold 14px sans-serif";
+    ctx.textAlign = "center";
+    ctx.textBaseline = "middle";
+    ctx.fillText(p.type === "shield" ? "S" : p.type === "slow" ? "⏳" : "M", 0, 1);
+
+    ctx.restore();
+  }
+
+  function renderGame() {
+    drawBackground();
+    honeys.forEach(drawHoney);
+    bees.forEach(drawBee);
+    powers.forEach(drawPower);
+    drawPlayer();
+  }
+
+  // Game logic
+  function spawnHoney() {
+    if (honeys.length >= GAME_CONFIG.MAX_HONEYS) return;
+    const roll = Math.random();
+    const type = roll < 0.08 ? "gold" : roll < 0.12 ? "cursed" : "normal";
+    honeys.push({
+      x: Math.random() * (BASE_W - 60) + 30,
+      y: -30,
+      r: 15,
+      vy: 2 + Math.random() * 2,
+      type,
     });
-    
-    // DOM elements
-    const $ = (id) => document.getElementById(id);
-    
-    // Game state
-    const GameState = {
-        running: false,
-        paused: false,
-        score: 0,
-        lives: 3,
-        combo: 1.0,
-        streak: 0,
-        soundEnabled: true,
-        visualEffects: true
+  }
+
+  function spawnBee() {
+    if (bees.length >= GAME_CONFIG.MAX_BEES) return;
+    bees.push({
+      x: Math.random() * (BASE_W - 60) + 30,
+      y: -40,
+      r: 12,
+      vy: 3 + Math.random() * 2,
+      vx: (Math.random() - 0.5) * 2,
+    });
+  }
+
+  function spawnPower() {
+    if (powers.length >= GAME_CONFIG.MAX_POWERS) return;
+    const r = Math.random();
+    const type = r < 0.34 ? "shield" : r < 0.67 ? "slow" : "magnet";
+    powers.push({
+      x: Math.random() * (BASE_W - 60) + 30,
+      y: -40,
+      r: 14,
+      vy: 2.4 + Math.random() * 1.2,
+      type,
+    });
+  }
+
+  function collides(a, b) {
+    return distance(a.x, a.y, b.x, b.y) < a.r + b.r;
+  }
+
+  let didFirstHoneyLine = false;
+  let lastPepTalkAt = 0;
+
+  function slowFactor(now) {
+    return GameState.power.slowUntil > now ? 0.55 : 1.0;
+  }
+
+  function magnetOn(now) {
+    return GameState.power.magnetUntil > now;
+  }
+
+  function shieldOn(now) {
+    return GameState.power.shieldUntil > now;
+  }
+
+  function updateGame(dt) {
+    if (!GameState.running || GameState.paused) return;
+
+    const now = performance.now();
+    GameState.timePlayedMs = now - GameState.startTimeMs;
+
+    const sf = slowFactor(now);
+
+    // Update player
+    if (isTouching) {
+      const dx = targetX - player.x;
+      player.x += dx * 0.28;
+    }
+    player.x = clamp(player.x, player.r, BASE_W - player.r);
+
+    // Spawn objects
+    const honeyChance = 0.018 * sf;
+    const beeChance = 0.010 * sf;
+    const powerChance = 0.0026 * sf;
+
+    if (Math.random() < honeyChance) spawnHoney();
+    if (Math.random() < beeChance) spawnBee();
+    if (Math.random() < powerChance) spawnPower();
+
+    // Update honeys
+    for (let i = honeys.length - 1; i >= 0; i--) {
+      const h = honeys[i];
+
+      // Magnet effect
+      if (magnetOn(now)) {
+        const pull = clamp((player.x - h.x) * 0.03, -2.2, 2.2);
+        h.x += pull;
+      }
+
+      h.y += h.vy * sf;
+
+      if (collides(player, h)) {
+        if (h.type === "cursed") {
+          GameState.score = Math.max(0, GameState.score - 15);
+          GameState.lives = Math.max(0, GameState.lives - 1);
+          GameState.streak = 0;
+          GameState.combo = 1.0;
+          playSound("hit");
+          Story.toast("That one was a terrible idea.", 2000);
+        } else {
+          GameState.honeyCaught += 1;
+          GameState.streak += 1;
+          GameState.combo = clamp(1 + GameState.streak * 0.05, 1, 2.5);
+
+          const add = h.type === "gold" ? 25 : 10;
+          GameState.score += Math.round(add * GameState.combo);
+          playSound("collect");
+
+          if (!didFirstHoneyLine) {
+            didFirstHoneyLine = true;
+            Story.toast(Story.pick(Story.Lines.pigletEncourage), 2400);
+          } else if (Math.random() < 0.12) {
+            Story.toast(Story.pick(Story.Lines.poohCollect), 2100);
+          }
+        }
+
+        honeys.splice(i, 1);
+        updateHUD();
+
+        if (GameState.lives <= 0) {
+          gameOver();
+          return;
+        }
+        continue;
+      }
+
+      if (h.y > BASE_H + 60) {
+        GameState.streak = Math.max(0, GameState.streak - 1);
+        GameState.combo = clamp(1 + GameState.streak * 0.05, 1, 2.5);
+        honeys.splice(i, 1);
+      }
+    }
+
+    // Update bees
+    for (let i = bees.length - 1; i >= 0; i--) {
+      const b = bees[i];
+      b.x += b.vx * sf;
+      b.y += b.vy * sf;
+
+      if (b.x < b.r || b.x > BASE_W - b.r) b.vx *= -1;
+
+      if (collides(player, b)) {
+        if (shieldOn(now)) {
+          GameState.power.shieldUntil = 0;
+          GameState._usedShield = true;
+          playSound("power");
+          Story.toast("Pooh: That was close. Quite close.", 2000);
+        } else {
+          GameState.beesHit += 1;
+          GameState.lives -= 1;
+          GameState.streak = 0;
+          GameState.combo = 1.0;
+          playSound("hit");
+
+          if (GameState.lives <= 1 && now - lastPepTalkAt > 4500) {
+            lastPepTalkAt = now;
+            Story.toast(Story.pick(Story.Lines.pigletEncourage), 2600);
+          }
+        }
+
+        bees.splice(i, 1);
+        updateHUD();
+
+        if (GameState.lives <= 0) {
+          gameOver();
+          return;
+        }
+        continue;
+      }
+
+      if (b.y > BASE_H + 60) bees.splice(i, 1);
+    }
+
+    // Update powers
+    for (let i = powers.length - 1; i >= 0; i--) {
+      const p = powers[i];
+      p.y += p.vy * sf;
+
+      if (collides(player, p)) {
+        const t = performance.now();
+        if (p.type === "shield") {
+          GameState.power.shieldUntil = t + 6500;
+          GameState._usedShield = true;
+          Story.toast("Pooh: A shield! That seems helpful.", 2000);
+        } else if (p.type === "slow") {
+          GameState.power.slowUntil = t + 5200;
+          GameState._usedSlow = true;
+          Story.toast("Piglet: Everything's... taking a small breath.", 2200);
+        } else {
+          GameState.power.magnetUntil = t + 5200;
+          GameState._usedMagnet = true;
+          Story.toast("Pooh: The honey is coming to us. How polite.", 2200);
+        }
+        playSound("power");
+        powers.splice(i, 1);
+        updateHUD();
+        continue;
+      }
+
+      if (p.y > BASE_H + 60) powers.splice(i, 1);
+    }
+
+    updateHUD();
+  }
+
+  // HUD updates
+  function updateHUD() {
+    const scoreEl = $("stat-score");
+    const livesEl = $("stat-lives");
+    const comboEl = $("stat-combo");
+    const pauseScore = $("pause-score");
+    const pauseLives = $("pause-lives");
+    const pauseStreak = $("pause-streak");
+    const pauseTime = $("pause-time");
+    const nextLevel = $("next-level-label");
+    const prog = $("progress-fill");
+
+    if (scoreEl) scoreEl.textContent = String(GameState.score);
+    if (livesEl) livesEl.textContent = String(GameState.lives);
+    if (comboEl) comboEl.textContent = `${GameState.combo.toFixed(1)}x`;
+
+    if (pauseScore) pauseScore.textContent = String(GameState.score);
+    if (pauseLives) pauseLives.textContent = String(GameState.lives);
+    if (pauseStreak) pauseStreak.textContent = String(GameState.streak);
+
+    if (pauseTime) pauseTime.textContent = `${Math.floor(GameState.timePlayedMs / 1000)}s`;
+
+    const tier = Math.floor(GameState.score / 300);
+    const within = GameState.score % 300;
+    if (nextLevel) nextLevel.textContent = `${within}/300`;
+    if (prog) prog.style.width = `${(within / 300) * 100}%`;
+
+    const levelDisplay = $("level-display");
+    if (levelDisplay) {
+      const names = ["Beginner", "Brave", "Busy", "Very Busy", "Legendary"];
+      levelDisplay.textContent = names[Math.min(tier, names.length - 1)];
+    }
+
+    const now = performance.now();
+    $("shield-indicator")?.classList.toggle("active", GameState.power.shieldUntil > now);
+    $("slow-indicator")?.classList.toggle("active", GameState.power.slowUntil > now);
+    $("magnet-indicator")?.classList.toggle("active", GameState.power.magnetUntil > now);
+  }
+
+  // Game flow
+  function startGame() {
+    GameState.running = true;
+    GameState.paused = false;
+
+    GameState.score = 0;
+    GameState.lives = 3;
+    GameState.combo = 1.0;
+    GameState.streak = 0;
+    GameState.honeyCaught = 0;
+    GameState.beesHit = 0;
+
+    GameState._usedShield = false;
+    GameState._usedSlow = false;
+    GameState._usedMagnet = false;
+
+    GameState.power.shieldUntil = 0;
+    GameState.power.slowUntil = 0;
+    GameState.power.magnetUntil = 0;
+
+    didFirstHoneyLine = false;
+    lastPepTalkAt = 0;
+
+    honeys.length = 0;
+    bees.length = 0;
+    powers.length = 0;
+
+    player.x = BASE_W / 2;
+    targetX = player.x;
+
+    GameState.startTimeMs = performance.now();
+    GameState.timePlayedMs = 0;
+
+    document.querySelectorAll(".overlay-content").forEach((el) => el.classList.add("hidden"));
+
+    updateHUD();
+
+    playSound("start");
+    Story.toast(Story.pick(Story.Lines.poohStart), 2200);
+  }
+
+  function gameOver() {
+    GameState.running = false;
+    GameState.paused = false;
+
+    // Update final score display
+    $("final-score") && ($("final-score").textContent = String(GameState.score));
+    $("final-total") && ($("final-total").textContent = String(GameState.score));
+    $("final-streak") && ($("final-streak").textContent = String(GameState.streak));
+    $("final-honey") && ($("final-honey").textContent = String(GameState.honeyCaught));
+
+    // Show game over screen
+    $("gameover-screen")?.classList.remove("hidden");
+
+    Story.toast(Story.pick(Story.Lines.eeyoreGameOver), 2600);
+  }
+
+  // UI Setup - Direct event handlers for iOS compatibility
+  function setupUI() {
+    const startScreen = $("start-screen");
+
+    // Start game
+    $("start-btn").onclick = startGame;
+    $("quick-start").onclick = startGame;
+    $("play-again-btn").onclick = startGame;
+    $("restart-btn").onclick = startGame;
+
+    // Close buttons
+    $("close-start").onclick = function() {
+      startScreen.classList.add("hidden");
     };
     
-    // Canvas setup
-    const canvas = $('game-canvas');
-    const ctx = canvas.getContext('2d');
-    const BASE_W = 420;
-    const BASE_H = 700;
+    $("close-settings").onclick = function() {
+      $("settings-screen").classList.add("hidden");
+    };
     
-    // Player
-    const player = { x: BASE_W / 2, y: BASE_H - 96, r: 30 };
-    let targetX = player.x;
-    let isTouching = false;
-    
-    // Game objects
-    const honeys = [];
-    const bees = [];
-    
-    // Audio context (iOS compatible)
-    let audioCtx = null;
-    let audioInitialized = false;
-    
-    function initAudio() {
-        if (audioInitialized) return;
-        try {
-            audioCtx = new (window.AudioContext || window.webkitAudioContext)();
-            audioInitialized = true;
-            console.log('Audio initialized');
-        } catch (e) {
-            console.log('Audio not supported:', e);
-        }
-    }
-    
-    function playSound(freq, duration = 0.1) {
-        if (!GameState.soundEnabled || !audioCtx) return;
-        
-        try {
-            const oscillator = audioCtx.createOscillator();
-            const gainNode = audioCtx.createGain();
-            
-            oscillator.connect(gainNode);
-            gainNode.connect(audioCtx.destination);
-            
-            oscillator.frequency.value = freq;
-            gainNode.gain.value = 0.1;
-            
-            const now = audioCtx.currentTime;
-            gainNode.gain.setValueAtTime(0.001, now);
-            gainNode.gain.exponentialRampToValueAtTime(0.1, now + 0.01);
-            gainNode.gain.exponentialRampToValueAtTime(0.001, now + duration);
-            
-            oscillator.start();
-            oscillator.stop(now + duration + 0.01);
-        } catch (e) {
-            // Audio error - ignore
-        }
-    }
-    
-    // Initialize audio on first interaction
-    ['touchstart', 'mousedown', 'click'].forEach(event => {
-        document.addEventListener(event, initAudio, { once: true });
-    });
-    
-    // Drawing functions
-    function drawBackground() {
-        const g = ctx.createLinearGradient(0, 0, 0, canvas.height);
-        g.addColorStop(0, "#87CEEB");
-        g.addColorStop(1, "#98FB98");
-        ctx.fillStyle = g;
-        ctx.fillRect(0, 0, canvas.width, canvas.height);
-    }
-    
-    function drawPlayer() {
-        ctx.save();
-        const x = (player.x / BASE_W) * canvas.width;
-        const y = (player.y / BASE_H) * canvas.height;
-        const scaleX = canvas.width / BASE_W;
-        const scaleY = canvas.height / BASE_H;
-        
-        ctx.translate(x, y);
-        ctx.scale(scaleX, scaleY);
-        
-        // Body
-        ctx.fillStyle = "#f7c44f";
-        ctx.beginPath();
-        ctx.arc(0, 0, player.r, 0, Math.PI * 2);
-        ctx.fill();
-        
-        // Shirt
-        ctx.fillStyle = "#d63a2f";
-        ctx.fillRect(-26, 10, 52, 34);
-        
-        // Ears
-        ctx.fillStyle = "#f2b83e";
-        ctx.beginPath();
-        ctx.arc(-18, -20, 10, 0, Math.PI * 2);
-        ctx.arc(18, -20, 10, 0, Math.PI * 2);
-        ctx.fill();
-        
-        // Snout
-        ctx.beginPath();
-        ctx.ellipse(0, 10, 14, 10, 0, 0, Math.PI * 2);
-        ctx.fill();
-        
-        // Eyes
-        ctx.fillStyle = "#1b1b1b";
-        ctx.beginPath();
-        ctx.arc(-10, -6, 3.2, 0, Math.PI * 2);
-        ctx.arc(10, -6, 3.2, 0, Math.PI * 2);
-        ctx.fill();
-        
-        // Nose
-        ctx.beginPath();
-        ctx.ellipse(0, 6, 4, 3, 0, 0, Math.PI * 2);
-        ctx.fill();
-        
-        // Smile
-        ctx.strokeStyle = "rgba(0,0,0,0.65)";
-        ctx.lineWidth = 2;
-        ctx.beginPath();
-        ctx.arc(0, 14, 10, 0.15 * Math.PI, 0.85 * Math.PI);
-        ctx.stroke();
-        
-        ctx.restore();
-    }
-    
-    function drawHoney(h) {
-        ctx.save();
-        const x = (h.x / BASE_W) * canvas.width;
-        const y = (h.y / BASE_H) * canvas.height;
-        const scaleX = canvas.width / BASE_W;
-        const scaleY = canvas.height / BASE_H;
-        
-        ctx.translate(x, y);
-        ctx.scale(scaleX, scaleY);
-        
-        ctx.fillStyle = h.type === "gold" ? "#FFD700" : "#FFA500";
-        ctx.beginPath();
-        ctx.ellipse(0, 0, h.r, h.r * 0.8, 0, 0, Math.PI * 2);
-        ctx.fill();
-        
-        // Shine
-        ctx.fillStyle = "rgba(255,255,255,0.35)";
-        ctx.beginPath();
-        ctx.ellipse(-5, -5, 5, 3.5, -0.4, 0, Math.PI * 2);
-        ctx.fill();
-        
-        ctx.restore();
-    }
-    
-    function drawBee(b) {
-        ctx.save();
-        const x = (b.x / BASE_W) * canvas.width;
-        const y = (b.y / BASE_H) * canvas.height;
-        const scaleX = canvas.width / BASE_W;
-        const scaleY = canvas.height / BASE_H;
-        
-        ctx.translate(x, y);
-        ctx.scale(scaleX, scaleY);
-        
-        ctx.fillStyle = "#FFD700";
-        ctx.beginPath();
-        ctx.ellipse(0, 0, b.r * 1.25, b.r, 0, 0, Math.PI * 2);
-        ctx.fill();
-        
-        ctx.fillStyle = "rgba(0,0,0,0.25)";
-        ctx.fillRect(-6, -b.r + 2, 3, b.r * 2 - 4);
-        ctx.fillRect(0, -b.r + 2, 3, b.r * 2 - 4);
-        
-        ctx.restore();
-    }
-    
-    // Game functions
-    function spawnHoney() {
-        if (honeys.length >= 20) return;
-        const type = Math.random() < 0.1 ? "gold" : "normal";
-        honeys.push({
-            x: Math.random() * (BASE_W - 60) + 30,
-            y: -30,
-            r: 15,
-            vy: 2 + Math.random() * 2,
-            type
-        });
-    }
-    
-    function spawnBee() {
-        if (bees.length >= 10) return;
-        bees.push({
-            x: Math.random() * (BASE_W - 60) + 30,
-            y: -40,
-            r: 12,
-            vy: 3 + Math.random() * 2,
-            vx: (Math.random() - 0.5) * 2
-        });
-    }
-    
-    function distance(x1, y1, x2, y2) {
-        return Math.sqrt((x2 - x1) ** 2 + (y2 - y1) ** 2);
-    }
-    
-    function clamp(value, min, max) {
-        return Math.max(min, Math.min(max, value));
-    }
-    
-    // Touch/mouse controls
-    function handleStart(e) {
-        e.preventDefault();
-        isTouching = true;
-        handleMove(e);
-    }
-    
-    function handleMove(e) {
-        if (!isTouching) return;
-        e.preventDefault();
-        
-        let clientX;
-        if (e.type.includes('touch')) {
-            clientX = e.touches[0].clientX;
-        } else {
-            clientX = e.clientX;
-        }
-        
-        const rect = canvas.getBoundingClientRect();
-        const x = ((clientX - rect.left) / rect.width) * BASE_W;
-        targetX = clamp(x, player.r, BASE_W - player.r);
-    }
-    
-    function handleEnd() {
-        isTouching = false;
-    }
-    
-    // Add event listeners for controls
-    canvas.addEventListener('touchstart', handleStart, { passive: false });
-    canvas.addEventListener('touchmove', handleMove, { passive: false });
-    canvas.addEventListener('touchend', handleEnd);
-    
-    canvas.addEventListener('mousedown', handleStart);
-    canvas.addEventListener('mousemove', (e) => {
-        if (e.buttons) handleMove(e);
-    });
-    canvas.addEventListener('mouseup', handleEnd);
-    
-    // Update HUD
-    function updateHUD() {
-        $('stat-score').textContent = GameState.score;
-        $('stat-lives').textContent = GameState.lives;
-        $('stat-combo').textContent = GameState.combo.toFixed(1) + 'x';
-        
-        $('pause-score').textContent = GameState.score;
-        $('pause-lives').textContent = GameState.lives;
-        $('pause-streak').textContent = GameState.streak;
-        
-        // Level progress
-        const tier = Math.floor(GameState.score / 300);
-        const within = GameState.score % 300;
-        $('next-level-label').textContent = within + '/300';
-        $('progress-fill').style.width = (within / 300 * 100) + '%';
-        
-        const levelNames = ["Beginner", "Brave", "Busy", "Very Busy", "Legendary"];
-        $('level-display').textContent = levelNames[Math.min(tier, levelNames.length - 1)];
-    }
-    
-    // Game loop
-    let lastTime = 0;
-    function gameLoop(timestamp) {
-        const dt = Math.min(100, timestamp - lastTime || 0);
-        lastTime = timestamp;
-        
-        if (GameState.running && !GameState.paused) {
-            // Update player position
-            const dx = targetX - player.x;
-            player.x += dx * 0.3;
-            
-            // Spawn objects
-            if (Math.random() < 0.02) spawnHoney();
-            if (Math.random() < 0.01) spawnBee();
-            
-            // Update honeys
-            for (let i = honeys.length - 1; i >= 0; i--) {
-                const h = honeys[i];
-                h.y += h.vy;
-                
-                // Check collision with player
-                if (distance(player.x, player.y, h.x, h.y) < player.r + h.r) {
-                    // Collect honey
-                    GameState.honeyCaught = (GameState.honeyCaught || 0) + 1;
-                    GameState.streak++;
-                    GameState.combo = clamp(1 + GameState.streak * 0.05, 1, 2.5);
-                    
-                    const points = h.type === "gold" ? 25 : 10;
-                    GameState.score += Math.round(points * GameState.combo);
-                    
-                    playSound(523.25); // Collect sound
-                    honeys.splice(i, 1);
-                    updateHUD();
-                    
-                    // Check for game over
-                    if (GameState.lives <= 0) {
-                        gameOver();
-                    }
-                    continue;
-                }
-                
-                // Remove if off screen
-                if (h.y > BASE_H + 60) {
-                    honeys.splice(i, 1);
-                    GameState.streak = Math.max(0, GameState.streak - 1);
-                    GameState.combo = clamp(1 + GameState.streak * 0.05, 1, 2.5);
-                }
-            }
-            
-            // Update bees
-            for (let i = bees.length - 1; i >= 0; i--) {
-                const b = bees[i];
-                b.x += b.vx;
-                b.y += b.vy;
-                
-                // Bounce off walls
-                if (b.x < b.r || b.x > BASE_W - b.r) {
-                    b.vx *= -1;
-                }
-                
-                // Check collision with player
-                if (distance(player.x, player.y, b.x, b.y) < player.r + b.r) {
-                    // Hit by bee
-                    GameState.lives--;
-                    GameState.streak = 0;
-                    GameState.combo = 1.0;
-                    
-                    playSound(220); // Hit sound
-                    bees.splice(i, 1);
-                    updateHUD();
-                    
-                    // Check for game over
-                    if (GameState.lives <= 0) {
-                        gameOver();
-                    }
-                    continue;
-                }
-                
-                // Remove if off screen
-                if (b.y > BASE_H + 60) {
-                    bees.splice(i, 1);
-                }
-            }
-        }
-        
-        // Draw everything
-        drawBackground();
-        honeys.forEach(drawHoney);
-        bees.forEach(drawBee);
-        drawPlayer();
-        
-        requestAnimationFrame(gameLoop);
-    }
-    
-    // Start game
-    function startGame() {
-        GameState.running = true;
+    $("gameover-close").onclick = function() {
+      $("gameover-screen").classList.add("hidden");
+      startScreen.classList.remove("hidden");
+    };
+
+    // Pause/Resume
+    $("pause-toggle").onclick = function() {
+      if (!GameState.running) return;
+      if (!GameState.paused) {
+        GameState.paused = true;
+        $("pause-screen").classList.remove("hidden");
+        Story.toast("Game paused", 2000);
+      } else {
         GameState.paused = false;
-        GameState.score = 0;
-        GameState.lives = 3;
-        GameState.combo = 1.0;
-        GameState.streak = 0;
-        
-        honeys.length = 0;
-        bees.length = 0;
-        
-        player.x = BASE_W / 2;
-        targetX = player.x;
-        
-        // Close all overlays
-        document.querySelectorAll('.overlay-content').forEach(el => {
-            el.classList.add('hidden');
-        });
-        
-        updateHUD();
-        playSound(783.99); // Start sound
-    }
-    
-    // Game over
-    function gameOver() {
-        GameState.running = false;
-        
-        // Update final score display
-        $('final-score').textContent = GameState.score;
-        $('final-total').textContent = GameState.score;
-        $('final-streak').textContent = GameState.streak;
-        $('final-honey').textContent = GameState.honeyCaught || 0;
-        
-        // Show game over screen
-        $('gameover-screen').classList.remove('hidden');
-    }
-    
-    // UI Event Handlers - SIMPLE AND DIRECT
-    function setupUI() {
-        // Start game buttons
-        $('start-btn').onclick = startGame;
-        $('quick-start').onclick = startGame;
-        $('play-again-btn').onclick = startGame;
-        $('restart-btn').onclick = startGame;
-        
-        // Close buttons
-        $('close-start').onclick = function() {
-            $('start-screen').classList.add('hidden');
-        };
-        
-        $('close-settings').onclick = function() {
-            $('settings-screen').classList.add('hidden');
-        };
-        
-        $('gameover-close').onclick = function() {
-            $('gameover-screen').classList.add('hidden');
-            $('start-screen').classList.remove('hidden');
-        };
-        
-        // Pause/Resume
-        $('pause-toggle').onclick = function() {
-            if (GameState.running) {
-                GameState.paused = !GameState.paused;
-                if (GameState.paused) {
-                    $('pause-screen').classList.remove('hidden');
-                } else {
-                    $('pause-screen').classList.add('hidden');
-                }
-            }
-        };
-        
-        $('resume-btn').onclick = function() {
-            GameState.paused = false;
-            $('pause-screen').classList.add('hidden');
-        };
-        
-        $('continue-btn').onclick = function() {
-            GameState.paused = false;
-            $('pause-screen').classList.add('hidden');
-        };
-        
-        // Quit to menu
-        $('quit-btn').onclick = function() {
-            GameState.running = false;
-            GameState.paused = false;
-            $('pause-screen').classList.add('hidden');
-            $('start-screen').classList.remove('hidden');
-        };
-        
-        // Settings
-        $('settings-btn').onclick = function() {
-            $('settings-screen').classList.remove('hidden');
-        };
-        
-        $('save-settings').onclick = function() {
-            GameState.soundEnabled = $('sound-toggle-setting').checked;
-            GameState.visualEffects = $('effects-toggle-setting').checked;
-            $('settings-screen').classList.add('hidden');
-            playSound(659.25); // Success sound
-        };
-        
-        // Sound toggle
-        $('sound-toggle-btn').onclick = function() {
-            GameState.soundEnabled = !GameState.soundEnabled;
-            const icon = $('sound-toggle-btn').querySelector('i');
-            icon.className = GameState.soundEnabled ? 'fas fa-volume-up' : 'fas fa-volume-mute';
-            playSound(523.25);
-        };
-        
-        // Share button
-        $('share-btn').onclick = $('share-final-btn').onclick = async function() {
-            const text = `I scored ${GameState.score} points in Pooh's Honey Hunt! 🍯`;
-            try {
-                if (navigator.share) {
-                    await navigator.share({ text });
-                } else if (navigator.clipboard) {
-                    await navigator.clipboard.writeText(text);
-                    alert('Score copied to clipboard!');
-                }
-            } catch (err) {
-                console.log('Share failed:', err);
-            }
-        };
-        
-        // Menu button
-        $('menu-toggle').onclick = function() {
-            if (GameState.running && !GameState.paused) {
-                GameState.paused = true;
-                $('pause-screen').classList.remove('hidden');
-            } else {
-                $('start-screen').classList.remove('hidden');
-            }
-        };
-        
-        // Tutorial
-        $('tutorial-btn').onclick = function() {
-            $('tutorial-overlay').classList.remove('hidden');
-        };
-        
-        $('tutorial-start').onclick = function() {
-            $('tutorial-overlay').classList.add('hidden');
-            startGame();
-        };
-        
-        $('tutorial-next').onclick = function() {
-            $('tutorial-step-1').classList.remove('active');
-            $('tutorial-step-2').classList.add('active');
-        };
-        
-        $('tutorial-next-2').onclick = function() {
-            $('tutorial-step-2').classList.remove('active');
-            $('tutorial-step-3').classList.add('active');
-        };
-        
-        $('tutorial-prev').onclick = function() {
-            $('tutorial-step-2').classList.remove('active');
-            $('tutorial-step-1').classList.add('active');
-        };
-        
-        $('tutorial-prev-2').onclick = function() {
-            $('tutorial-step-3').classList.remove('active');
-            $('tutorial-step-2').classList.add('active');
-        };
-        
-        // Help button
-        $('help-btn').onclick = function() {
-            $('tutorial-overlay').classList.remove('hidden');
-        };
-        
-        // Weather button (placeholder)
-        $('weather-toggle').onclick = function() {
-            playSound(523.25);
-            alert('Weather effects coming soon!');
-        };
-        
-        // Achievements button
-        $('achievements-pill').onclick = function() {
-            playSound(523.25);
-            alert('Achievements coming soon!');
-        };
-        
-        // Initialize settings checkboxes
-        $('sound-toggle-setting').checked = GameState.soundEnabled;
-        $('effects-toggle-setting').checked = GameState.visualEffects;
-    }
-    
-    // Loading screen
-    function initLoading() {
-        const loadingScreen = $('loading-screen');
-        const progress = $('loading-progress');
-        const tip = $('loading-tip');
-        
-        const tips = [
-            "You always play as Pooh — his friends pop in when it matters.",
-            "Honey is splendid. Bees are... less splendid.",
-            "Move left and right. Try not to look too surprised about it.",
-            "Golden honey is extra lovely — like finding a good idea twice.",
-            "If things get tricky, pause and take a small think.",
-        ];
-        
-        let loadProgress = 0;
-        let lastBucket = -1;
-        
-        const interval = setInterval(() => {
-            loadProgress += Math.random() * 10 + 6;
-            if (loadProgress >= 100) {
-                loadProgress = 100;
-                clearInterval(interval);
-                setTimeout(() => {
-                    loadingScreen.classList.add('hidden');
-                    $('start-screen').classList.remove('hidden');
-                }, 300);
-            }
-            
-            progress.style.width = loadProgress + '%';
-            
-            const bucket = Math.floor(loadProgress / 25);
-            if (bucket !== lastBucket) {
-                lastBucket = bucket;
-                tip.textContent = tips[Math.floor(Math.random() * tips.length)];
-            }
-        }, 100);
-        
-        // Failsafe
-        setTimeout(() => {
-            if (!loadingScreen.classList.contains('hidden')) {
-                loadingScreen.classList.add('hidden');
-                $('start-screen').classList.remove('hidden');
-            }
-        }, 3000);
-    }
-    
-    // Responsive canvas
-    function resizeCanvas() {
-        const container = $('game-container');
-        const hud = $('hud');
-        
-        const hudHeight = hud.getBoundingClientRect().height;
-        const availableHeight = window.innerHeight - hudHeight - 40;
-        
-        const aspectRatio = BASE_W / BASE_H;
-        let canvasWidth = container.clientWidth;
-        let canvasHeight = canvasWidth / aspectRatio;
-        
-        if (canvasHeight > availableHeight) {
-            canvasHeight = availableHeight;
-            canvasWidth = canvasHeight * aspectRatio;
+        $("pause-screen").classList.add("hidden");
+      }
+      updateHUD();
+    };
+
+    $("resume-btn").onclick = $("continue-btn").onclick = function() {
+      GameState.paused = false;
+      $("pause-screen").classList.add("hidden");
+    };
+
+    // Quit to menu
+    $("quit-btn").onclick = function() {
+      GameState.running = false;
+      GameState.paused = false;
+      $("pause-screen").classList.add("hidden");
+      startScreen.classList.remove("hidden");
+      updateHUD();
+    };
+
+    // Settings
+    $("settings-btn").onclick = function() {
+      $("settings-screen").classList.remove("hidden");
+      $("sound-toggle-setting").checked = GameState.soundEnabled;
+      $("effects-toggle-setting").checked = GameState.visualEffects;
+    };
+
+    $("save-settings").onclick = function() {
+      GameState.soundEnabled = $("sound-toggle-setting").checked;
+      GameState.visualEffects = $("effects-toggle-setting").checked;
+      Storage.set("gameSettings", {
+        soundEnabled: GameState.soundEnabled,
+        visualEffects: GameState.visualEffects,
+      });
+      $("settings-screen").classList.add("hidden");
+      playSound("collect");
+      Story.toast("Settings saved", 1800);
+    };
+
+    // Sound toggle
+    $("sound-toggle-btn").onclick = function() {
+      GameState.soundEnabled = !GameState.soundEnabled;
+      const icon = $("sound-toggle-btn").querySelector("i");
+      icon.className = GameState.soundEnabled ? "fas fa-volume-up" : "fas fa-volume-mute";
+      Storage.set("gameSettings", { ...Storage.get("gameSettings", {}), soundEnabled: GameState.soundEnabled });
+      playSound("collect");
+      Story.toast(GameState.soundEnabled ? "Sound on" : "Sound off", 1800);
+    };
+
+    // Share
+    async function shareScore() {
+      const text = `Pooh's Honey Hunt — ${GameState.score} points 🍯`;
+      try {
+        if (navigator.share) {
+          await navigator.share({ title: "Pooh's Honey Hunt", text });
+        } else if (navigator.clipboard) {
+          await navigator.clipboard.writeText(text);
+          Story.toast("Copied to clipboard!", 1800);
         }
-        
-        canvas.style.width = canvasWidth + 'px';
-        canvas.style.height = canvasHeight + 'px';
+      } catch (err) {
+        console.log('Share failed:', err);
+      }
+    }
+    $("share-btn").onclick = $("share-final-btn").onclick = shareScore;
+
+    // Menu button
+    $("menu-toggle").onclick = function() {
+      if (GameState.running && !GameState.paused) {
+        GameState.paused = true;
+        $("pause-screen").classList.remove("hidden");
+        Story.toast("Game paused", 2000);
+        updateHUD();
+      } else {
+        startScreen.classList.remove("hidden");
+      }
+    };
+
+    // Tutorial
+    $("tutorial-btn").onclick = function() {
+      $("tutorial-overlay").classList.remove("hidden");
+    };
+    
+    $("tutorial-start").onclick = function() {
+      $("tutorial-overlay").classList.add("hidden");
+      startGame();
+    };
+    
+    $("tutorial-next").onclick = function() {
+      $("tutorial-step-1").classList.remove("active");
+      $("tutorial-step-2").classList.add("active");
+    };
+    
+    $("tutorial-next-2").onclick = function() {
+      $("tutorial-step-2").classList.remove("active");
+      $("tutorial-step-3").classList.add("active");
+    };
+    
+    $("tutorial-prev").onclick = function() {
+      $("tutorial-step-2").classList.remove("active");
+      $("tutorial-step-1").classList.add("active");
+    };
+    
+    $("tutorial-prev-2").onclick = function() {
+      $("tutorial-step-3").classList.remove("active");
+      $("tutorial-step-2").classList.add("active");
+    };
+
+    // Help button
+    $("help-btn").onclick = function() {
+      $("tutorial-overlay").classList.remove("hidden");
+    };
+
+    // Achievements button
+    $("achievements-pill").onclick = function() {
+      playSound("collect");
+      Story.toast("Achievements coming soon!", 2000);
+    };
+
+    // Initialize settings
+    $("sound-toggle-setting").checked = GameState.soundEnabled;
+    $("effects-toggle-setting").checked = GameState.visualEffects;
+  }
+
+  // Loading screen
+  function initLoading() {
+    const loadingScreen = $("loading-screen");
+    const progress = $("loading-progress");
+    const tip = $("loading-tip");
+    
+    if (!loadingScreen || !progress || !tip) return;
+
+    const tips = [
+      "You always play as Pooh — his friends pop in when it matters.",
+      "Honey is splendid. Bees are... less splendid.",
+      "Move left and right. Try not to look too surprised about it.",
+      "Golden honey is extra lovely — like finding a good idea twice.",
+      "If things get tricky, pause and take a small think.",
+    ];
+
+    let loadProgress = 0;
+    let lastBucket = -1;
+
+    const interval = setInterval(() => {
+      loadProgress += Math.random() * 10 + 6;
+      if (loadProgress >= 100) {
+        loadProgress = 100;
+        clearInterval(interval);
+        setTimeout(() => {
+          loadingScreen.classList.add("hidden");
+          $("start-screen")?.classList.remove("hidden");
+        }, 280);
+      }
+
+      progress.style.width = `${loadProgress}%`;
+
+      const bucket = Math.floor(loadProgress / 25);
+      if (bucket !== lastBucket) {
+        lastBucket = bucket;
+        tip.textContent = tips[(Math.random() * tips.length) | 0];
+      }
+    }, 100);
+
+    // Failsafe
+    setTimeout(() => {
+      if (!loadingScreen.classList.contains("hidden")) {
+        loadingScreen.classList.add("hidden");
+        $("start-screen")?.classList.remove("hidden");
+      }
+    }, 3200);
+  }
+
+  // Responsive canvas
+  function resizeCanvas() {
+    const container = $("game-container");
+    const hud = $("hud");
+    
+    if (!container || !canvas || !hud) return;
+
+    const hudHeight = hud.getBoundingClientRect().height;
+    const availableHeight = window.innerHeight - hudHeight - 40;
+    
+    const aspectRatio = BASE_W / BASE_H;
+    let canvasWidth = container.clientWidth;
+    let canvasHeight = canvasWidth / aspectRatio;
+    
+    if (canvasHeight > availableHeight) {
+      canvasHeight = availableHeight;
+      canvasWidth = canvasHeight * aspectRatio;
     }
     
-    // Initialize everything
-    function init() {
-        console.log('Initializing game...');
-        
-        setupUI();
-        initLoading();
-        resizeCanvas();
-        
-        window.addEventListener('resize', resizeCanvas);
-        window.addEventListener('orientationchange', resizeCanvas);
-        
-        // Start game loop
-        requestAnimationFrame(gameLoop);
-        
-        console.log('Game initialized successfully');
-    }
+    canvas.style.width = `${Math.round(canvasWidth)}px`;
+    canvas.style.height = `${Math.round(canvasHeight)}px`;
+  }
+
+  // Game loop
+  let last = 0;
+  function loop(t) {
+    const dt = Math.min(64, t - last || 0);
+    last = t;
+
+    updateGame(dt);
+    renderGame();
+
+    requestAnimationFrame(loop);
+  }
+
+  // Initialize
+  function init() {
+    console.log('Initializing game...');
     
-    // Start when DOM is ready
-    if (document.readyState === 'loading') {
-        document.addEventListener('DOMContentLoaded', init);
-    } else {
-        setTimeout(init, 100);
-    }
+    setupUI();
+    initLoading();
+    resizeCanvas();
+    
+    window.addEventListener('resize', resizeCanvas);
+    window.addEventListener('orientationchange', resizeCanvas);
+    
+    // Start game loop
+    requestAnimationFrame(loop);
+    
+    console.log('Game initialized successfully');
+  }
+
+  // Start when ready
+  if (document.readyState === 'loading') {
+    document.addEventListener('DOMContentLoaded', init);
+  } else {
+    setTimeout(init, 100);
+  }
 })();
 </script>
 </body>
