@@ -2,10 +2,9 @@
 <html lang="en">
 <head>
     <meta charset="UTF-8" />
-    <title>Pooh's Honey Hunt: Complete iOS Edition 🍯</title>
+    <title>Pooh's Honey Hunt: Playable iOS Edition 🍯</title>
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover" />
     <meta name="theme-color" content="#d4a574" />
-    <meta name="description" content="Help Pooh catch honey pots in the Hundred Acre Wood! Ultimate edition with seasonal events, daily challenges, leaderboards, and more!" />
     <meta name="apple-mobile-web-app-capable" content="yes">
     <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
     <link rel="preconnect" href="https://fonts.googleapis.com" />
@@ -921,7 +920,7 @@
                 <div class="pooh-avatar"></div>
                 <h2 class="overlay-title">Welcome to Pooh's Honey Hunt!</h2>
                 <p class="subtitle">Help Pooh catch as many honey pots as you can!</p>
-                <div class="btn btn-success" id="tutorial-next">Next →</div>
+                <button class="btn btn-success" id="tutorial-next">Next →</button>
             </div>
             <div class="tutorial-step" id="tutorial-step-2">
                 <h2 class="overlay-title">Controls</h2>
@@ -1210,125 +1209,15 @@
     <div id="notification-container"></div>
 
 <script>
-(() => {
-  "use strict";
+// iOS detection
+const isIOS = /iPad|iPhone|iPod/.test(navigator.userAgent) && !window.MSStream;
+console.log('iOS detected:', isIOS);
 
-  // Detect iOS
-  const isIOS = /iPad|iPhone|iPod/.test(navigator.userAgent) && !window.MSStream;
-  console.log('iOS detected:', isIOS);
+// DOM helper
+const $ = (id) => document.getElementById(id);
 
-  // Error handling
-  (function setupCrashOverlay() {
-    function show(msg) {
-      try {
-        const el = document.getElementById("error-overlay");
-        if (!el) return;
-        el.textContent = String(msg).substring(0, 1200);
-        el.classList.remove("hidden");
-      } catch {}
-    }
-    window.addEventListener("error", (e) => show("JS ERROR: " + (e.message || e.type)));
-    window.addEventListener("unhandledrejection", (e) =>
-      show("PROMISE REJECTION: " + (e.reason?.message || String(e.reason)))
-    );
-  })();
-
-  if (window.__POOH_HONEY_HUNT_LOADED__) return;
-  window.__POOH_HONEY_HUNT_LOADED__ = true;
-
-  // DOM helper
-  const $ = (sel) => (typeof sel === "string" ? document.getElementById(sel) || document.querySelector(sel) : null);
-
-  // Math helpers
-  const clamp = (v, a, b) => Math.max(a, Math.min(b, v));
-  const distance = (x1, y1, x2, y2) => Math.sqrt((x2 - x1) ** 2 + (y2 - y1) ** 2);
-
-  // Storage
-  const Storage = {
-    get(key, fallback = null) {
-      try {
-        const v = localStorage.getItem(key);
-        return v === null ? fallback : JSON.parse(v);
-      } catch {
-        return fallback;
-      }
-    },
-    set(key, value) {
-      try {
-        localStorage.setItem(key, JSON.stringify(value));
-      } catch {}
-    }
-  };
-
-  // Story/Notifications
-  const Story = (() => {
-    const host = $("notification-container");
-
-    function toast(text, ms = 2200) {
-      if (!host) return;
-      const n = document.createElement("div");
-      n.style.cssText = `
-        pointer-events: none;
-        margin-bottom: 10px;
-        padding: 12px 14px;
-        border-radius: 16px;
-        border: 3px solid rgba(44,62,80,0.25);
-        background: rgba(255,255,255,0.96);
-        box-shadow: 0 6px 20px rgba(0,0,0,0.16);
-        font-family: var(--font-body);
-        font-size: 16px;
-        line-height: 1.25;
-      `;
-      n.textContent = text;
-      host.appendChild(n);
-      setTimeout(() => {
-        n.style.opacity = "0";
-        n.style.transition = "opacity 280ms ease";
-        setTimeout(() => n.remove(), 320);
-      }, ms);
-    }
-
-    const Lines = {
-      poohStart: [
-        "Pooh: Right then. Let's be brave about it.",
-        "Pooh: This seems like a good time for honey.",
-        "Pooh: Pooh is ready. Mostly.",
-      ],
-      poohCollect: [
-        "Pooh: That one looks like a particularly sensible honey.",
-        "Pooh: A very respectable catch.",
-        "Pooh: That's the sort of honey you can trust.",
-      ],
-      pigletEncourage: [
-        "Piglet: You're doing ever so well. Truly.",
-        "Piglet: Just a tiny bit more... and you've got it.",
-        "Piglet: I'm with you. Quietly. But definitely.",
-      ],
-      eeyoreGameOver: [
-        "Eeyore: Well. That was a thing that happened.",
-        "Eeyore: If you needed me, I was here the whole time.",
-        "Eeyore: Not the worst ending. Not the best either.",
-      ],
-    };
-
-    function pick(arr) {
-      return arr[(Math.random() * arr.length) | 0];
-    }
-
-    return { toast, pick, Lines };
-  })();
-
-  // Game config
-  const GAME_CONFIG = {
-    BASE_W: 420,
-    BASE_H: 700,
-    MAX_HONEYS: 40,
-    MAX_BEES: 26,
-    MAX_POWERS: 6,
-  };
-
-  // Game state
-  const GameState = {
+// Game state
+const GameState = {
     running: false,
     paused: false,
     score: 0,
@@ -1337,782 +1226,704 @@
     streak: 0,
     honeyCaught: 0,
     beesHit: 0,
-    startTimeMs: 0,
-    timePlayedMs: 0,
     soundEnabled: true,
     visualEffects: true,
     power: {
-      shieldUntil: 0,
-      slowUntil: 0,
-      magnetUntil: 0,
-    },
-  };
+        shieldUntil: 0,
+        slowUntil: 0,
+        magnetUntil: 0
+    }
+};
 
-  // Load saved settings
-  const saved = Storage.get("gameSettings");
-  if (saved) Object.assign(GameState, saved);
+// Load saved settings
+try {
+    const saved = JSON.parse(localStorage.getItem('gameSettings') || '{}');
+    Object.assign(GameState, saved);
+} catch (e) {}
 
-  // Canvas setup
-  const canvas = $("game-canvas");
-  if (!canvas) return;
-  const ctx = canvas.getContext("2d", { alpha: false });
-  const { BASE_W, BASE_H } = GAME_CONFIG;
+// Canvas setup
+const canvas = $('game-canvas');
+const ctx = canvas.getContext('2d');
+const BASE_W = 420;
+const BASE_H = 700;
 
-  // Player
-  const player = { x: BASE_W / 2, y: BASE_H - 96, r: 30 };
+// Player
+const player = { x: BASE_W / 2, y: BASE_H - 96, r: 30 };
 
-  // Game objects
-  const honeys = [];
-  const bees = [];
-  const powers = [];
+// Game objects
+const honeys = [];
+const bees = [];
+const powers = [];
 
-  // Input
-  let targetX = player.x;
-  let isTouching = false;
+// Input
+let targetX = player.x;
+let isTouching = false;
 
-  // iOS touch handling
-  function setTargetFromClientX(clientX) {
-    const rect = canvas.getBoundingClientRect();
-    const x = ((clientX - rect.left) / rect.width) * BASE_W;
-    targetX = clamp(x, player.r, BASE_W - player.r);
-    isTouching = true;
-  }
+// Audio
+let audioCtx = null;
+let audioInitialized = false;
 
-  // Prevent iOS zoom
-  document.addEventListener('touchstart', (e) => {
-    if (e.touches && e.touches.length > 1) e.preventDefault();
-  }, { passive: false });
-
-  document.addEventListener('gesturestart', (e) => {
-    e.preventDefault();
-  });
-
-  // Canvas events
-  canvas.addEventListener('touchstart', (e) => {
-    e.preventDefault();
-    const t = e.touches[0];
-    if (!t) return;
-    setTargetFromClientX(t.clientX);
-  }, { passive: false });
-
-  canvas.addEventListener('touchmove', (e) => {
-    e.preventDefault();
-    const t = e.touches[0];
-    if (!t) return;
-    setTargetFromClientX(t.clientX);
-  }, { passive: false });
-
-  canvas.addEventListener('touchend', () => {
-    isTouching = false;
-  }, { passive: true });
-
-  // Mouse events
-  canvas.addEventListener('mousedown', (e) => setTargetFromClientX(e.clientX));
-  canvas.addEventListener('mousemove', (e) => {
-    if (e.buttons) setTargetFromClientX(e.clientX);
-  });
-  window.addEventListener('mouseup', () => (isTouching = false));
-
-  // Audio
-  let audioCtx = null;
-  let audioInitialized = false;
-
-  function initAudio() {
+function initAudio() {
     if (audioInitialized) return;
     try {
-      audioCtx = new (window.AudioContext || window.webkitAudioContext)();
-      audioInitialized = true;
-    } catch {}
-  }
+        audioCtx = new (window.AudioContext || window.webkitAudioContext)();
+        audioInitialized = true;
+        console.log('Audio initialized');
+    } catch (e) {}
+}
 
-  function playSound(type) {
+function playSound(type) {
     if (!GameState.soundEnabled) return;
     const ac = audioCtx;
     if (!ac) return;
-
+    
     try {
-      const osc = ac.createOscillator();
-      const gain = ac.createGain();
-      osc.connect(gain);
-      gain.connect(ac.destination);
+        const osc = ac.createOscillator();
+        const gain = ac.createGain();
+        osc.connect(gain);
+        gain.connect(ac.destination);
+        
+        let freq = 440;
+        if (type === "collect") freq = 523.25;
+        if (type === "hit") freq = 220;
+        if (type === "start") freq = 783.99;
+        if (type === "power") freq = 659.25;
+        
+        osc.frequency.value = freq;
+        gain.gain.value = 0.08;
+        
+        const now = ac.currentTime;
+        gain.gain.setValueAtTime(0.0001, now);
+        gain.gain.exponentialRampToValueAtTime(0.08, now + 0.01);
+        gain.gain.exponentialRampToValueAtTime(0.0001, now + 0.12);
+        
+        osc.start();
+        osc.stop(now + 0.14);
+    } catch (e) {}
+}
 
-      let f = 440;
-      if (type === "collect") f = 523.25;
-      if (type === "hit") f = 220;
-      if (type === "start") f = 783.99;
-      if (type === "power") f = 659.25;
+// Initialize audio on first tap
+document.addEventListener('touchstart', initAudio, { once: true });
+document.addEventListener('mousedown', initAudio, { once: true });
 
-      osc.frequency.value = f;
-      gain.gain.value = 0.08;
+// Touch controls for iOS
+canvas.addEventListener('touchstart', function(e) {
+    e.preventDefault();
+    isTouching = true;
+    const touch = e.touches[0];
+    updateTarget(touch.clientX);
+}, { passive: false });
 
-      const now = ac.currentTime;
-      gain.gain.setValueAtTime(0.0001, now);
-      gain.gain.exponentialRampToValueAtTime(0.08, now + 0.01);
-      gain.gain.exponentialRampToValueAtTime(0.0001, now + 0.12);
+canvas.addEventListener('touchmove', function(e) {
+    e.preventDefault();
+    if (!isTouching) return;
+    const touch = e.touches[0];
+    updateTarget(touch.clientX);
+}, { passive: false });
 
-      osc.start();
-      osc.stop(now + 0.14);
-    } catch {}
-  }
+canvas.addEventListener('touchend', function() {
+    isTouching = false;
+});
 
-  // Initialize audio on first interaction
-  ['touchstart', 'mousedown'].forEach(event => {
-    document.addEventListener(event, initAudio, { once: true });
-  });
+// Mouse controls
+canvas.addEventListener('mousedown', function(e) {
+    isTouching = true;
+    updateTarget(e.clientX);
+});
 
-  // Drawing functions
-  function drawBackground() {
-    const g = ctx.createLinearGradient(0, 0, 0, canvas.height);
-    g.addColorStop(0, "#87CEEB");
-    g.addColorStop(1, "#98FB98");
-    ctx.fillStyle = g;
+canvas.addEventListener('mousemove', function(e) {
+    if (!isTouching) return;
+    updateTarget(e.clientX);
+});
+
+canvas.addEventListener('mouseup', function() {
+    isTouching = false;
+});
+
+function updateTarget(clientX) {
+    const rect = canvas.getBoundingClientRect();
+    const x = ((clientX - rect.left) / rect.width) * BASE_W;
+    targetX = Math.max(player.r, Math.min(BASE_W - player.r, x));
+}
+
+// Drawing functions
+function drawBackground() {
+    const gradient = ctx.createLinearGradient(0, 0, 0, canvas.height);
+    gradient.addColorStop(0, "#87CEEB");
+    gradient.addColorStop(1, "#98FB98");
+    ctx.fillStyle = gradient;
     ctx.fillRect(0, 0, canvas.width, canvas.height);
-  }
+}
 
-  function drawPlayer() {
+function drawPlayer() {
+    const scaleX = canvas.width / BASE_W;
+    const scaleY = canvas.height / BASE_H;
+    
     ctx.save();
-    ctx.translate((player.x / BASE_W) * canvas.width, (player.y / BASE_H) * canvas.height);
-
-    const sx = canvas.width / BASE_W;
-    const sy = canvas.height / BASE_H;
-    ctx.scale(sx, sy);
-
+    ctx.translate(player.x * scaleX, player.y * scaleY);
+    ctx.scale(scaleX, scaleY);
+    
     // Body
     ctx.fillStyle = "#f7c44f";
     ctx.beginPath();
     ctx.arc(0, 0, player.r, 0, Math.PI * 2);
     ctx.fill();
-
+    
     // Shirt
     ctx.fillStyle = "#d63a2f";
-    ctx.beginPath();
-    if (ctx.roundRect) ctx.roundRect(-26, 10, 52, 34, 10);
-    else ctx.rect(-26, 10, 52, 34);
-    ctx.fill();
-
+    ctx.fillRect(-26, 10, 52, 34);
+    
     // Ears
     ctx.fillStyle = "#f2b83e";
     ctx.beginPath();
     ctx.arc(-18, -20, 10, 0, Math.PI * 2);
     ctx.arc(18, -20, 10, 0, Math.PI * 2);
     ctx.fill();
-
+    
     // Snout
-    ctx.fillStyle = "#f2b83e";
     ctx.beginPath();
     ctx.ellipse(0, 10, 14, 10, 0, 0, Math.PI * 2);
     ctx.fill();
-
+    
     // Eyes
     ctx.fillStyle = "#1b1b1b";
     ctx.beginPath();
     ctx.arc(-10, -6, 3.2, 0, Math.PI * 2);
     ctx.arc(10, -6, 3.2, 0, Math.PI * 2);
     ctx.fill();
-
+    
     // Nose
     ctx.beginPath();
     ctx.ellipse(0, 6, 4, 3, 0, 0, Math.PI * 2);
     ctx.fill();
-
+    
     // Smile
     ctx.strokeStyle = "rgba(0,0,0,0.65)";
     ctx.lineWidth = 2;
     ctx.beginPath();
     ctx.arc(0, 14, 10, 0.15 * Math.PI, 0.85 * Math.PI);
     ctx.stroke();
-
+    
     ctx.restore();
-  }
+}
 
-  function drawHoney(h) {
+function drawHoney(honey) {
+    const scaleX = canvas.width / BASE_W;
+    const scaleY = canvas.height / BASE_H;
+    
     ctx.save();
-    const x = (h.x / BASE_W) * canvas.width;
-    const y = (h.y / BASE_H) * canvas.height;
-    const sx = canvas.width / BASE_W;
-    const sy = canvas.height / BASE_H;
-    ctx.translate(x, y);
-    ctx.scale(sx, sy);
-
-    ctx.fillStyle = h.type === "gold" ? "#FFD700" : h.type === "cursed" ? "#7d3cff" : "#FFA500";
+    ctx.translate(honey.x * scaleX, honey.y * scaleY);
+    ctx.scale(scaleX, scaleY);
+    
+    ctx.fillStyle = honey.type === "gold" ? "#FFD700" : "#FFA500";
     ctx.beginPath();
-    ctx.ellipse(0, 0, h.r, h.r * 0.8, 0, 0, Math.PI * 2);
+    ctx.ellipse(0, 0, honey.r, honey.r * 0.8, 0, 0, Math.PI * 2);
     ctx.fill();
-
+    
+    // Shine
     ctx.fillStyle = "rgba(255,255,255,0.35)";
     ctx.beginPath();
     ctx.ellipse(-5, -5, 5, 3.5, -0.4, 0, Math.PI * 2);
     ctx.fill();
-
+    
     ctx.restore();
-  }
+}
 
-  function drawBee(b) {
+function drawBee(bee) {
+    const scaleX = canvas.width / BASE_W;
+    const scaleY = canvas.height / BASE_H;
+    
     ctx.save();
-    const x = (b.x / BASE_W) * canvas.width;
-    const y = (b.y / BASE_H) * canvas.height;
-    const sx = canvas.width / BASE_W;
-    const sy = canvas.height / BASE_H;
-    ctx.translate(x, y);
-    ctx.scale(sx, sy);
-
+    ctx.translate(bee.x * scaleX, bee.y * scaleY);
+    ctx.scale(scaleX, scaleY);
+    
     ctx.fillStyle = "#FFD700";
     ctx.beginPath();
-    ctx.ellipse(0, 0, b.r * 1.25, b.r, 0, 0, Math.PI * 2);
+    ctx.ellipse(0, 0, bee.r * 1.25, bee.r, 0, 0, Math.PI * 2);
     ctx.fill();
-
+    
     ctx.fillStyle = "rgba(0,0,0,0.25)";
-    ctx.fillRect(-6, -b.r + 2, 3, b.r * 2 - 4);
-    ctx.fillRect(0, -b.r + 2, 3, b.r * 2 - 4);
-
+    ctx.fillRect(-6, -bee.r + 2, 3, bee.r * 2 - 4);
+    ctx.fillRect(0, -bee.r + 2, 3, bee.r * 2 - 4);
+    
     ctx.restore();
-  }
+}
 
-  function drawPower(p) {
+function drawPower(power) {
+    const scaleX = canvas.width / BASE_W;
+    const scaleY = canvas.height / BASE_H;
+    
     ctx.save();
-    const x = (p.x / BASE_W) * canvas.width;
-    const y = (p.y / BASE_H) * canvas.height;
-    const sx = canvas.width / BASE_W;
-    const sy = canvas.height / BASE_H;
-    ctx.translate(x, y);
-    ctx.scale(sx, sy);
-
-    const color = p.type === "shield" ? "#0096ff" : p.type === "slow" ? "#9d4edd" : "#ff6b6b";
+    ctx.translate(power.x * scaleX, power.y * scaleY);
+    ctx.scale(scaleX, scaleY);
+    
+    const color = power.type === "shield" ? "#0096ff" : 
+                  power.type === "slow" ? "#9d4edd" : "#ff6b6b";
     ctx.fillStyle = color;
     ctx.beginPath();
-    ctx.arc(0, 0, p.r, 0, Math.PI * 2);
+    ctx.arc(0, 0, power.r, 0, Math.PI * 2);
     ctx.fill();
-
+    
     ctx.fillStyle = "rgba(255,255,255,0.9)";
     ctx.font = "bold 14px sans-serif";
     ctx.textAlign = "center";
     ctx.textBaseline = "middle";
-    ctx.fillText(p.type === "shield" ? "S" : p.type === "slow" ? "⏳" : "M", 0, 1);
-
+    ctx.fillText(power.type === "shield" ? "S" : power.type === "slow" ? "⏳" : "M", 0, 1);
+    
     ctx.restore();
-  }
+}
 
-  function renderGame() {
-    drawBackground();
-    honeys.forEach(drawHoney);
-    bees.forEach(drawBee);
-    powers.forEach(drawPower);
-    drawPlayer();
-  }
-
-  // Game logic
-  function spawnHoney() {
-    if (honeys.length >= GAME_CONFIG.MAX_HONEYS) return;
-    const roll = Math.random();
-    const type = roll < 0.08 ? "gold" : roll < 0.12 ? "cursed" : "normal";
+// Game logic
+function spawnHoney() {
+    if (honeys.length >= 20) return;
+    const type = Math.random() < 0.1 ? "gold" : "normal";
     honeys.push({
-      x: Math.random() * (BASE_W - 60) + 30,
-      y: -30,
-      r: 15,
-      vy: 2 + Math.random() * 2,
-      type,
+        x: Math.random() * (BASE_W - 60) + 30,
+        y: -30,
+        r: 15,
+        vy: 2 + Math.random() * 2,
+        type: type
     });
-  }
+}
 
-  function spawnBee() {
-    if (bees.length >= GAME_CONFIG.MAX_BEES) return;
+function spawnBee() {
+    if (bees.length >= 10) return;
     bees.push({
-      x: Math.random() * (BASE_W - 60) + 30,
-      y: -40,
-      r: 12,
-      vy: 3 + Math.random() * 2,
-      vx: (Math.random() - 0.5) * 2,
+        x: Math.random() * (BASE_W - 60) + 30,
+        y: -40,
+        r: 12,
+        vy: 3 + Math.random() * 2,
+        vx: (Math.random() - 0.5) * 2
     });
-  }
+}
 
-  function spawnPower() {
-    if (powers.length >= GAME_CONFIG.MAX_POWERS) return;
-    const r = Math.random();
-    const type = r < 0.34 ? "shield" : r < 0.67 ? "slow" : "magnet";
+function spawnPower() {
+    if (powers.length >= 5) return;
+    const types = ["shield", "slow", "magnet"];
+    const type = types[Math.floor(Math.random() * types.length)];
     powers.push({
-      x: Math.random() * (BASE_W - 60) + 30,
-      y: -40,
-      r: 14,
-      vy: 2.4 + Math.random() * 1.2,
-      type,
+        x: Math.random() * (BASE_W - 60) + 30,
+        y: -40,
+        r: 14,
+        vy: 2.4 + Math.random() * 1.2,
+        type: type
     });
-  }
+}
 
-  function collides(a, b) {
-    return distance(a.x, a.y, b.x, b.y) < a.r + b.r;
-  }
+function distance(x1, y1, x2, y2) {
+    return Math.sqrt((x2 - x1) ** 2 + (y2 - y1) ** 2);
+}
 
-  let didFirstHoneyLine = false;
-  let lastPepTalkAt = 0;
-
-  function slowFactor(now) {
-    return GameState.power.slowUntil > now ? 0.55 : 1.0;
-  }
-
-  function magnetOn(now) {
-    return GameState.power.magnetUntil > now;
-  }
-
-  function shieldOn(now) {
-    return GameState.power.shieldUntil > now;
-  }
-
-  function updateGame(dt) {
+function updateGame(dt) {
     if (!GameState.running || GameState.paused) return;
-
-    const now = performance.now();
-    GameState.timePlayedMs = now - GameState.startTimeMs;
-
-    const sf = slowFactor(now);
-
+    
     // Update player
-    if (isTouching) {
-      const dx = targetX - player.x;
-      player.x += dx * 0.28;
-    }
-    player.x = clamp(player.x, player.r, BASE_W - player.r);
-
+    const dx = targetX - player.x;
+    player.x += dx * 0.3;
+    player.x = Math.max(player.r, Math.min(BASE_W - player.r, player.x));
+    
     // Spawn objects
-    const honeyChance = 0.018 * sf;
-    const beeChance = 0.010 * sf;
-    const powerChance = 0.0026 * sf;
-
-    if (Math.random() < honeyChance) spawnHoney();
-    if (Math.random() < beeChance) spawnBee();
-    if (Math.random() < powerChance) spawnPower();
-
+    if (Math.random() < 0.02) spawnHoney();
+    if (Math.random() < 0.01) spawnBee();
+    if (Math.random() < 0.002) spawnPower();
+    
+    const now = Date.now();
+    const slowActive = GameState.power.slowUntil > now;
+    const magnetActive = GameState.power.magnetUntil > now;
+    const shieldActive = GameState.power.shieldUntil > now;
+    
     // Update honeys
     for (let i = honeys.length - 1; i >= 0; i--) {
-      const h = honeys[i];
-
-      // Magnet effect
-      if (magnetOn(now)) {
-        const pull = clamp((player.x - h.x) * 0.03, -2.2, 2.2);
-        h.x += pull;
-      }
-
-      h.y += h.vy * sf;
-
-      if (collides(player, h)) {
-        if (h.type === "cursed") {
-          GameState.score = Math.max(0, GameState.score - 15);
-          GameState.lives = Math.max(0, GameState.lives - 1);
-          GameState.streak = 0;
-          GameState.combo = 1.0;
-          playSound("hit");
-          Story.toast("That one was a terrible idea.", 2000);
-        } else {
-          GameState.honeyCaught += 1;
-          GameState.streak += 1;
-          GameState.combo = clamp(1 + GameState.streak * 0.05, 1, 2.5);
-
-          const add = h.type === "gold" ? 25 : 10;
-          GameState.score += Math.round(add * GameState.combo);
-          playSound("collect");
-
-          if (!didFirstHoneyLine) {
-            didFirstHoneyLine = true;
-            Story.toast(Story.pick(Story.Lines.pigletEncourage), 2400);
-          } else if (Math.random() < 0.12) {
-            Story.toast(Story.pick(Story.Lines.poohCollect), 2100);
-          }
+        const h = honeys[i];
+        
+        // Magnet effect
+        if (magnetActive) {
+            const pull = Math.max(-2.2, Math.min(2.2, (player.x - h.x) * 0.03));
+            h.x += pull;
         }
-
-        honeys.splice(i, 1);
-        updateHUD();
-
-        if (GameState.lives <= 0) {
-          gameOver();
-          return;
+        
+        h.y += h.vy * (slowActive ? 0.55 : 1);
+        
+        if (distance(player.x, player.y, h.x, h.y) < player.r + h.r) {
+            // Collect honey
+            GameState.honeyCaught++;
+            GameState.streak++;
+            GameState.combo = Math.min(2.5, 1 + GameState.streak * 0.05);
+            
+            const points = h.type === "gold" ? 25 : 10;
+            GameState.score += Math.round(points * GameState.combo);
+            
+            playSound("collect");
+            honeys.splice(i, 1);
+            updateHUD();
+            continue;
         }
-        continue;
-      }
-
-      if (h.y > BASE_H + 60) {
-        GameState.streak = Math.max(0, GameState.streak - 1);
-        GameState.combo = clamp(1 + GameState.streak * 0.05, 1, 2.5);
-        honeys.splice(i, 1);
-      }
+        
+        if (h.y > BASE_H + 60) {
+            honeys.splice(i, 1);
+            GameState.streak = Math.max(0, GameState.streak - 1);
+            GameState.combo = Math.min(2.5, 1 + GameState.streak * 0.05);
+            updateHUD();
+        }
     }
-
+    
     // Update bees
     for (let i = bees.length - 1; i >= 0; i--) {
-      const b = bees[i];
-      b.x += b.vx * sf;
-      b.y += b.vy * sf;
-
-      if (b.x < b.r || b.x > BASE_W - b.r) b.vx *= -1;
-
-      if (collides(player, b)) {
-        if (shieldOn(now)) {
-          GameState.power.shieldUntil = 0;
-          GameState._usedShield = true;
-          playSound("power");
-          Story.toast("Pooh: That was close. Quite close.", 2000);
-        } else {
-          GameState.beesHit += 1;
-          GameState.lives -= 1;
-          GameState.streak = 0;
-          GameState.combo = 1.0;
-          playSound("hit");
-
-          if (GameState.lives <= 1 && now - lastPepTalkAt > 4500) {
-            lastPepTalkAt = now;
-            Story.toast(Story.pick(Story.Lines.pigletEncourage), 2600);
-          }
+        const b = bees[i];
+        b.x += b.vx * (slowActive ? 0.55 : 1);
+        b.y += b.vy * (slowActive ? 0.55 : 1);
+        
+        if (b.x < b.r || b.x > BASE_W - b.r) {
+            b.vx *= -1;
         }
-
-        bees.splice(i, 1);
-        updateHUD();
-
-        if (GameState.lives <= 0) {
-          gameOver();
-          return;
+        
+        if (distance(player.x, player.y, b.x, b.y) < player.r + b.r) {
+            if (shieldActive) {
+                GameState.power.shieldUntil = 0;
+                playSound("power");
+                updatePowerIndicators();
+            } else {
+                GameState.beesHit++;
+                GameState.lives--;
+                GameState.streak = 0;
+                GameState.combo = 1.0;
+                playSound("hit");
+                
+                if (GameState.lives <= 0) {
+                    gameOver();
+                    return;
+                }
+            }
+            bees.splice(i, 1);
+            updateHUD();
+            continue;
         }
-        continue;
-      }
-
-      if (b.y > BASE_H + 60) bees.splice(i, 1);
+        
+        if (b.y > BASE_H + 60) {
+            bees.splice(i, 1);
+        }
     }
-
+    
     // Update powers
     for (let i = powers.length - 1; i >= 0; i--) {
-      const p = powers[i];
-      p.y += p.vy * sf;
-
-      if (collides(player, p)) {
-        const t = performance.now();
-        if (p.type === "shield") {
-          GameState.power.shieldUntil = t + 6500;
-          GameState._usedShield = true;
-          Story.toast("Pooh: A shield! That seems helpful.", 2000);
-        } else if (p.type === "slow") {
-          GameState.power.slowUntil = t + 5200;
-          GameState._usedSlow = true;
-          Story.toast("Piglet: Everything's... taking a small breath.", 2200);
-        } else {
-          GameState.power.magnetUntil = t + 5200;
-          GameState._usedMagnet = true;
-          Story.toast("Pooh: The honey is coming to us. How polite.", 2200);
+        const p = powers[i];
+        p.y += p.vy * (slowActive ? 0.55 : 1);
+        
+        if (distance(player.x, player.y, p.x, p.y) < player.r + p.r) {
+            // Collect power-up
+            const duration = 5000; // 5 seconds
+            if (p.type === "shield") {
+                GameState.power.shieldUntil = now + 6500;
+            } else if (p.type === "slow") {
+                GameState.power.slowUntil = now + 5200;
+            } else {
+                GameState.power.magnetUntil = now + 5200;
+            }
+            
+            playSound("power");
+            powers.splice(i, 1);
+            updatePowerIndicators();
+            continue;
         }
-        playSound("power");
-        powers.splice(i, 1);
-        updateHUD();
-        continue;
-      }
-
-      if (p.y > BASE_H + 60) powers.splice(i, 1);
+        
+        if (p.y > BASE_H + 60) {
+            powers.splice(i, 1);
+        }
     }
+    
+    updatePowerIndicators();
+}
 
-    updateHUD();
-  }
+function updatePowerIndicators() {
+    const now = Date.now();
+    $('shield-indicator').classList.toggle('active', GameState.power.shieldUntil > now);
+    $('slow-indicator').classList.toggle('active', GameState.power.slowUntil > now);
+    $('magnet-indicator').classList.toggle('active', GameState.power.magnetUntil > now);
+}
 
-  // HUD updates
-  function updateHUD() {
-    const scoreEl = $("stat-score");
-    const livesEl = $("stat-lives");
-    const comboEl = $("stat-combo");
-    const pauseScore = $("pause-score");
-    const pauseLives = $("pause-lives");
-    const pauseStreak = $("pause-streak");
-    const pauseTime = $("pause-time");
-    const nextLevel = $("next-level-label");
-    const prog = $("progress-fill");
-
-    if (scoreEl) scoreEl.textContent = String(GameState.score);
-    if (livesEl) livesEl.textContent = String(GameState.lives);
-    if (comboEl) comboEl.textContent = `${GameState.combo.toFixed(1)}x`;
-
-    if (pauseScore) pauseScore.textContent = String(GameState.score);
-    if (pauseLives) pauseLives.textContent = String(GameState.lives);
-    if (pauseStreak) pauseStreak.textContent = String(GameState.streak);
-
-    if (pauseTime) pauseTime.textContent = `${Math.floor(GameState.timePlayedMs / 1000)}s`;
-
+function updateHUD() {
+    $('stat-score').textContent = GameState.score;
+    $('stat-lives').textContent = GameState.lives;
+    $('stat-combo').textContent = GameState.combo.toFixed(1) + 'x';
+    
+    $('pause-score').textContent = GameState.score;
+    $('pause-lives').textContent = GameState.lives;
+    $('pause-streak').textContent = GameState.streak;
+    $('pause-time').textContent = Math.floor((Date.now() - GameState.startTime) / 1000) + 's';
+    
+    // Level progress
     const tier = Math.floor(GameState.score / 300);
     const within = GameState.score % 300;
-    if (nextLevel) nextLevel.textContent = `${within}/300`;
-    if (prog) prog.style.width = `${(within / 300) * 100}%`;
+    $('next-level-label').textContent = within + '/300';
+    $('progress-fill').style.width = (within / 300 * 100) + '%';
+    
+    const levelNames = ["Beginner", "Brave", "Busy", "Very Busy", "Legendary"];
+    $('level-display').textContent = levelNames[Math.min(tier, levelNames.length - 1)];
+}
 
-    const levelDisplay = $("level-display");
-    if (levelDisplay) {
-      const names = ["Beginner", "Brave", "Busy", "Very Busy", "Legendary"];
-      levelDisplay.textContent = names[Math.min(tier, names.length - 1)];
-    }
-
-    const now = performance.now();
-    $("shield-indicator")?.classList.toggle("active", GameState.power.shieldUntil > now);
-    $("slow-indicator")?.classList.toggle("active", GameState.power.slowUntil > now);
-    $("magnet-indicator")?.classList.toggle("active", GameState.power.magnetUntil > now);
-  }
-
-  // Game flow
-  function startGame() {
+// Game flow
+function startGame() {
     GameState.running = true;
     GameState.paused = false;
-
     GameState.score = 0;
     GameState.lives = 3;
     GameState.combo = 1.0;
     GameState.streak = 0;
     GameState.honeyCaught = 0;
     GameState.beesHit = 0;
-
-    GameState._usedShield = false;
-    GameState._usedSlow = false;
-    GameState._usedMagnet = false;
-
+    GameState.startTime = Date.now();
+    
     GameState.power.shieldUntil = 0;
     GameState.power.slowUntil = 0;
     GameState.power.magnetUntil = 0;
-
-    didFirstHoneyLine = false;
-    lastPepTalkAt = 0;
-
+    
     honeys.length = 0;
     bees.length = 0;
     powers.length = 0;
-
+    
     player.x = BASE_W / 2;
     targetX = player.x;
-
-    GameState.startTimeMs = performance.now();
-    GameState.timePlayedMs = 0;
-
-    document.querySelectorAll(".overlay-content").forEach((el) => el.classList.add("hidden"));
-
+    
+    document.querySelectorAll('.overlay-content').forEach(el => {
+        el.classList.add('hidden');
+    });
+    
     updateHUD();
-
+    updatePowerIndicators();
+    
     playSound("start");
-    Story.toast(Story.pick(Story.Lines.poohStart), 2200);
-  }
+    showNotification("Pooh: Let's find some honey!");
+}
 
-  function gameOver() {
+function gameOver() {
     GameState.running = false;
-    GameState.paused = false;
+    
+    $('final-score').textContent = GameState.score;
+    $('final-total').textContent = GameState.score;
+    $('final-streak').textContent = GameState.streak;
+    $('final-honey').textContent = GameState.honeyCaught;
+    
+    $('gameover-screen').classList.remove('hidden');
+    
+    showNotification("Eeyore: Well, that happened.");
+}
 
-    // Update final score display
-    $("final-score") && ($("final-score").textContent = String(GameState.score));
-    $("final-total") && ($("final-total").textContent = String(GameState.score));
-    $("final-streak") && ($("final-streak").textContent = String(GameState.streak));
-    $("final-honey") && ($("final-honey").textContent = String(GameState.honeyCaught));
+// Notifications
+function showNotification(text) {
+    const container = $('notification-container');
+    if (!container) return;
+    
+    const notification = document.createElement('div');
+    notification.textContent = text;
+    notification.style.cssText = `
+        background: rgba(255, 255, 255, 0.95);
+        padding: 10px 15px;
+        border-radius: 10px;
+        margin-bottom: 10px;
+        box-shadow: 0 4px 12px rgba(0,0,0,0.15);
+        font-family: var(--font-body);
+        font-size: 14px;
+        animation: fadeIn 0.3s ease;
+    `;
+    
+    container.appendChild(notification);
+    
+    setTimeout(() => {
+        notification.style.opacity = '0';
+        notification.style.transition = 'opacity 0.3s ease';
+        setTimeout(() => notification.remove(), 300);
+    }, 2000);
+}
 
-    // Show game over screen
-    $("gameover-screen")?.classList.remove("hidden");
-
-    Story.toast(Story.pick(Story.Lines.eeyoreGameOver), 2600);
-  }
-
-  // UI Setup - Direct event handlers for iOS compatibility
-  function setupUI() {
-    const startScreen = $("start-screen");
-
-    // Start game
-    $("start-btn").onclick = startGame;
-    $("quick-start").onclick = startGame;
-    $("play-again-btn").onclick = startGame;
-    $("restart-btn").onclick = startGame;
-
+// UI Setup
+function setupUI() {
+    // Start game buttons
+    $('start-btn').onclick = startGame;
+    $('quick-start').onclick = startGame;
+    $('play-again-btn').onclick = startGame;
+    $('restart-btn').onclick = startGame;
+    
     // Close buttons
-    $("close-start").onclick = function() {
-      startScreen.classList.add("hidden");
+    $('close-start').onclick = () => $('start-screen').classList.add('hidden');
+    $('close-settings').onclick = () => $('settings-screen').classList.add('hidden');
+    $('gameover-close').onclick = () => {
+        $('gameover-screen').classList.add('hidden');
+        $('start-screen').classList.remove('hidden');
     };
     
-    $("close-settings").onclick = function() {
-      $("settings-screen").classList.add("hidden");
-    };
-    
-    $("gameover-close").onclick = function() {
-      $("gameover-screen").classList.add("hidden");
-      startScreen.classList.remove("hidden");
-    };
-
     // Pause/Resume
-    $("pause-toggle").onclick = function() {
-      if (!GameState.running) return;
-      if (!GameState.paused) {
-        GameState.paused = true;
-        $("pause-screen").classList.remove("hidden");
-        Story.toast("Game paused", 2000);
-      } else {
+    $('pause-toggle').onclick = function() {
+        if (!GameState.running) return;
+        GameState.paused = !GameState.paused;
+        if (GameState.paused) {
+            $('pause-screen').classList.remove('hidden');
+        } else {
+            $('pause-screen').classList.add('hidden');
+        }
+        updateHUD();
+    };
+    
+    $('resume-btn').onclick = $('continue-btn').onclick = function() {
         GameState.paused = false;
-        $("pause-screen").classList.add("hidden");
-      }
-      updateHUD();
+        $('pause-screen').classList.add('hidden');
     };
-
-    $("resume-btn").onclick = $("continue-btn").onclick = function() {
-      GameState.paused = false;
-      $("pause-screen").classList.add("hidden");
-    };
-
+    
     // Quit to menu
-    $("quit-btn").onclick = function() {
-      GameState.running = false;
-      GameState.paused = false;
-      $("pause-screen").classList.add("hidden");
-      startScreen.classList.remove("hidden");
-      updateHUD();
+    $('quit-btn').onclick = function() {
+        GameState.running = false;
+        GameState.paused = false;
+        $('pause-screen').classList.add('hidden');
+        $('start-screen').classList.remove('hidden');
+        updateHUD();
     };
-
+    
     // Settings
-    $("settings-btn").onclick = function() {
-      $("settings-screen").classList.remove("hidden");
-      $("sound-toggle-setting").checked = GameState.soundEnabled;
-      $("effects-toggle-setting").checked = GameState.visualEffects;
+    $('settings-btn').onclick = function() {
+        $('settings-screen').classList.remove('hidden');
+        $('sound-toggle-setting').checked = GameState.soundEnabled;
+        $('effects-toggle-setting').checked = GameState.visualEffects;
     };
-
-    $("save-settings").onclick = function() {
-      GameState.soundEnabled = $("sound-toggle-setting").checked;
-      GameState.visualEffects = $("effects-toggle-setting").checked;
-      Storage.set("gameSettings", {
-        soundEnabled: GameState.soundEnabled,
-        visualEffects: GameState.visualEffects,
-      });
-      $("settings-screen").classList.add("hidden");
-      playSound("collect");
-      Story.toast("Settings saved", 1800);
+    
+    $('save-settings').onclick = function() {
+        GameState.soundEnabled = $('sound-toggle-setting').checked;
+        GameState.visualEffects = $('effects-toggle-setting').checked;
+        localStorage.setItem('gameSettings', JSON.stringify({
+            soundEnabled: GameState.soundEnabled,
+            visualEffects: GameState.visualEffects
+        }));
+        $('settings-screen').classList.add('hidden');
+        playSound("collect");
+        showNotification("Settings saved!");
     };
-
+    
     // Sound toggle
-    $("sound-toggle-btn").onclick = function() {
-      GameState.soundEnabled = !GameState.soundEnabled;
-      const icon = $("sound-toggle-btn").querySelector("i");
-      icon.className = GameState.soundEnabled ? "fas fa-volume-up" : "fas fa-volume-mute";
-      Storage.set("gameSettings", { ...Storage.get("gameSettings", {}), soundEnabled: GameState.soundEnabled });
-      playSound("collect");
-      Story.toast(GameState.soundEnabled ? "Sound on" : "Sound off", 1800);
+    $('sound-toggle-btn').onclick = function() {
+        GameState.soundEnabled = !GameState.soundEnabled;
+        const icon = $('sound-toggle-btn').querySelector('i');
+        icon.className = GameState.soundEnabled ? 'fas fa-volume-up' : 'fas fa-volume-mute';
+        localStorage.setItem('gameSettings', JSON.stringify({
+            soundEnabled: GameState.soundEnabled,
+            visualEffects: GameState.visualEffects
+        }));
+        playSound("collect");
+        showNotification(GameState.soundEnabled ? "Sound on" : "Sound off");
     };
-
+    
     // Share
     async function shareScore() {
-      const text = `Pooh's Honey Hunt — ${GameState.score} points 🍯`;
-      try {
-        if (navigator.share) {
-          await navigator.share({ title: "Pooh's Honey Hunt", text });
-        } else if (navigator.clipboard) {
-          await navigator.clipboard.writeText(text);
-          Story.toast("Copied to clipboard!", 1800);
+        const text = `I scored ${GameState.score} points in Pooh's Honey Hunt! 🍯`;
+        try {
+            if (navigator.share) {
+                await navigator.share({ title: "Pooh's Honey Hunt", text: text });
+            } else if (navigator.clipboard) {
+                await navigator.clipboard.writeText(text);
+                showNotification("Score copied to clipboard!");
+            }
+        } catch (err) {
+            console.log('Share failed:', err);
         }
-      } catch (err) {
-        console.log('Share failed:', err);
-      }
     }
-    $("share-btn").onclick = $("share-final-btn").onclick = shareScore;
-
+    $('share-btn').onclick = $('share-final-btn').onclick = shareScore;
+    
     // Menu button
-    $("menu-toggle").onclick = function() {
-      if (GameState.running && !GameState.paused) {
-        GameState.paused = true;
-        $("pause-screen").classList.remove("hidden");
-        Story.toast("Game paused", 2000);
-        updateHUD();
-      } else {
-        startScreen.classList.remove("hidden");
-      }
+    $('menu-toggle').onclick = function() {
+        if (GameState.running && !GameState.paused) {
+            GameState.paused = true;
+            $('pause-screen').classList.remove('hidden');
+            updateHUD();
+        } else {
+            $('start-screen').classList.remove('hidden');
+        }
     };
-
+    
     // Tutorial
-    $("tutorial-btn").onclick = function() {
-      $("tutorial-overlay").classList.remove("hidden");
+    $('tutorial-btn').onclick = () => $('tutorial-overlay').classList.remove('hidden');
+    $('tutorial-start').onclick = () => {
+        $('tutorial-overlay').classList.add('hidden');
+        startGame();
+    };
+    $('tutorial-next').onclick = () => {
+        $('tutorial-step-1').classList.remove('active');
+        $('tutorial-step-2').classList.add('active');
+    };
+    $('tutorial-next-2').onclick = () => {
+        $('tutorial-step-2').classList.remove('active');
+        $('tutorial-step-3').classList.add('active');
+    };
+    $('tutorial-prev').onclick = () => {
+        $('tutorial-step-2').classList.remove('active');
+        $('tutorial-step-1').classList.add('active');
+    };
+    $('tutorial-prev-2').onclick = () => {
+        $('tutorial-step-3').classList.remove('active');
+        $('tutorial-step-2').classList.add('active');
     };
     
-    $("tutorial-start").onclick = function() {
-      $("tutorial-overlay").classList.add("hidden");
-      startGame();
-    };
-    
-    $("tutorial-next").onclick = function() {
-      $("tutorial-step-1").classList.remove("active");
-      $("tutorial-step-2").classList.add("active");
-    };
-    
-    $("tutorial-next-2").onclick = function() {
-      $("tutorial-step-2").classList.remove("active");
-      $("tutorial-step-3").classList.add("active");
-    };
-    
-    $("tutorial-prev").onclick = function() {
-      $("tutorial-step-2").classList.remove("active");
-      $("tutorial-step-1").classList.add("active");
-    };
-    
-    $("tutorial-prev-2").onclick = function() {
-      $("tutorial-step-3").classList.remove("active");
-      $("tutorial-step-2").classList.add("active");
-    };
-
     // Help button
-    $("help-btn").onclick = function() {
-      $("tutorial-overlay").classList.remove("hidden");
-    };
-
-    // Achievements button
-    $("achievements-pill").onclick = function() {
-      playSound("collect");
-      Story.toast("Achievements coming soon!", 2000);
-    };
-
-    // Initialize settings
-    $("sound-toggle-setting").checked = GameState.soundEnabled;
-    $("effects-toggle-setting").checked = GameState.visualEffects;
-  }
-
-  // Loading screen
-  function initLoading() {
-    const loadingScreen = $("loading-screen");
-    const progress = $("loading-progress");
-    const tip = $("loading-tip");
+    $('help-btn').onclick = () => $('tutorial-overlay').classList.remove('hidden');
     
-    if (!loadingScreen || !progress || !tip) return;
+    // Achievements button
+    $('achievements-pill').onclick = function() {
+        playSound("collect");
+        showNotification("Achievements coming soon!");
+    };
+    
+    // Initialize settings
+    $('sound-toggle-setting').checked = GameState.soundEnabled;
+    $('effects-toggle-setting').checked = GameState.visualEffects;
+}
 
+// Loading screen
+function initLoading() {
+    const loadingScreen = $('loading-screen');
+    const progress = $('loading-progress');
+    const tip = $('loading-tip');
+    
     const tips = [
-      "You always play as Pooh — his friends pop in when it matters.",
-      "Honey is splendid. Bees are... less splendid.",
-      "Move left and right. Try not to look too surprised about it.",
-      "Golden honey is extra lovely — like finding a good idea twice.",
-      "If things get tricky, pause and take a small think.",
+        "Touch and drag to move Pooh left and right",
+        "Catch honey for points, avoid bees!",
+        "Golden honey gives extra points",
+        "Power-ups give special abilities",
+        "Keep your streak for combo bonus!"
     ];
-
+    
     let loadProgress = 0;
     let lastBucket = -1;
-
+    
     const interval = setInterval(() => {
-      loadProgress += Math.random() * 10 + 6;
-      if (loadProgress >= 100) {
-        loadProgress = 100;
-        clearInterval(interval);
-        setTimeout(() => {
-          loadingScreen.classList.add("hidden");
-          $("start-screen")?.classList.remove("hidden");
-        }, 280);
-      }
-
-      progress.style.width = `${loadProgress}%`;
-
-      const bucket = Math.floor(loadProgress / 25);
-      if (bucket !== lastBucket) {
-        lastBucket = bucket;
-        tip.textContent = tips[(Math.random() * tips.length) | 0];
-      }
+        loadProgress += Math.random() * 10 + 6;
+        if (loadProgress >= 100) {
+            loadProgress = 100;
+            clearInterval(interval);
+            setTimeout(() => {
+                loadingScreen.classList.add('hidden');
+                $('start-screen').classList.remove('hidden');
+            }, 300);
+        }
+        
+        progress.style.width = loadProgress + '%';
+        
+        const bucket = Math.floor(loadProgress / 25);
+        if (bucket !== lastBucket) {
+            lastBucket = bucket;
+            tip.textContent = tips[Math.floor(Math.random() * tips.length)];
+        }
     }, 100);
-
+    
     // Failsafe
     setTimeout(() => {
-      if (!loadingScreen.classList.contains("hidden")) {
-        loadingScreen.classList.add("hidden");
-        $("start-screen")?.classList.remove("hidden");
-      }
-    }, 3200);
-  }
+        if (!loadingScreen.classList.contains('hidden')) {
+            loadingScreen.classList.add('hidden');
+            $('start-screen').classList.remove('hidden');
+        }
+    }, 3000);
+}
 
-  // Responsive canvas
-  function resizeCanvas() {
-    const container = $("game-container");
-    const hud = $("hud");
+// Responsive canvas
+function resizeCanvas() {
+    const container = $('game-container');
+    const hud = $('hud');
     
-    if (!container || !canvas || !hud) return;
-
     const hudHeight = hud.getBoundingClientRect().height;
     const availableHeight = window.innerHeight - hudHeight - 40;
     
@@ -2121,28 +1932,34 @@
     let canvasHeight = canvasWidth / aspectRatio;
     
     if (canvasHeight > availableHeight) {
-      canvasHeight = availableHeight;
-      canvasWidth = canvasHeight * aspectRatio;
+        canvasHeight = availableHeight;
+        canvasWidth = canvasHeight * aspectRatio;
     }
     
-    canvas.style.width = `${Math.round(canvasWidth)}px`;
-    canvas.style.height = `${Math.round(canvasHeight)}px`;
-  }
+    canvas.style.width = canvasWidth + 'px';
+    canvas.style.height = canvasHeight + 'px';
+}
 
-  // Game loop
-  let last = 0;
-  function loop(t) {
-    const dt = Math.min(64, t - last || 0);
-    last = t;
-
+// Game loop
+let lastTime = 0;
+function gameLoop(timestamp) {
+    const dt = timestamp - lastTime || 0;
+    lastTime = timestamp;
+    
     updateGame(dt);
-    renderGame();
+    
+    // Draw everything
+    drawBackground();
+    honeys.forEach(drawHoney);
+    bees.forEach(drawBee);
+    powers.forEach(drawPower);
+    drawPlayer();
+    
+    requestAnimationFrame(gameLoop);
+}
 
-    requestAnimationFrame(loop);
-  }
-
-  // Initialize
-  function init() {
+// Initialize everything
+function init() {
     console.log('Initializing game...');
     
     setupUI();
@@ -2153,18 +1970,17 @@
     window.addEventListener('orientationchange', resizeCanvas);
     
     // Start game loop
-    requestAnimationFrame(loop);
+    requestAnimationFrame(gameLoop);
     
     console.log('Game initialized successfully');
-  }
+}
 
-  // Start when ready
-  if (document.readyState === 'loading') {
+// Start when ready
+if (document.readyState === 'loading') {
     document.addEventListener('DOMContentLoaded', init);
-  } else {
+} else {
     setTimeout(init, 100);
-  }
-})();
+}
 </script>
 </body>
 </html>
