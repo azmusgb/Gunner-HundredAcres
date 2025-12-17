@@ -1415,7 +1415,7 @@ canvas {
   inset: 0;
   background: rgba(0, 0, 0, 0.1);
   border: 2px solid rgba(255, 255, 255, 0.6);
-  border-radius: var(--radius-full;
+  border-radius: var(--radius-full);
   transition: all 0.4s var(--transition-smooth);
   box-shadow: var(--shadow-inner);
 }
@@ -2260,15 +2260,24 @@ function initAudio() {
     if (audioInitialized) return;
     try {
         audioCtx = new (window.AudioContext || window.webkitAudioContext)();
+        // iOS requires audio context to be resumed after user gesture
+        if (audioCtx.state === 'suspended') {
+            audioCtx.resume();
+        }
         audioInitialized = true;
         console.log('Audio initialized');
-    } catch (e) {}
+    } catch (e) {
+        console.log('Audio init failed:', e);
+    }
 }
 
 function playSound(type) {
     if (!GameState.soundEnabled) return;
     const ac = audioCtx;
-    if (!ac) return;
+    if (!ac || ac.state === 'suspended') {
+        initAudio();
+        return;
+    }
     
     try {
         const osc = ac.createOscillator();
@@ -2292,7 +2301,9 @@ function playSound(type) {
         
         osc.start();
         osc.stop(now + 0.14);
-    } catch (e) {}
+    } catch (e) {
+        console.log('Sound play failed:', e);
+    }
 }
 
 // Initialize audio on first tap
@@ -2305,6 +2316,7 @@ canvas.addEventListener('touchstart', function(e) {
     isTouching = true;
     const touch = e.touches[0];
     updateTarget(touch.clientX);
+    initAudio();
 }, { passive: false });
 
 canvas.addEventListener('touchmove', function(e) {
@@ -2322,6 +2334,7 @@ canvas.addEventListener('touchend', function() {
 canvas.addEventListener('mousedown', function(e) {
     isTouching = true;
     updateTarget(e.clientX);
+    initAudio();
 });
 
 canvas.addEventListener('mousemove', function(e) {
@@ -2468,8 +2481,8 @@ function drawPower(power) {
 
 // Game logic
 function spawnHoney() {
-    if (honeys.length >= 20) return;
-    const type = Math.random() < 0.1 ? "gold" : "normal";
+    if (honeys.length >= 15) return;
+    const type = Math.random() < 0.15 ? "gold" : "normal";
     honeys.push({
         x: Math.random() * (BASE_W - 60) + 30,
         y: -30,
@@ -2480,25 +2493,25 @@ function spawnHoney() {
 }
 
 function spawnBee() {
-    if (bees.length >= 10) return;
+    if (bees.length >= 8) return;
     bees.push({
         x: Math.random() * (BASE_W - 60) + 30,
         y: -40,
         r: 12,
-        vy: 3 + Math.random() * 2,
-        vx: (Math.random() - 0.5) * 2
+        vy: 2.5 + Math.random() * 1.5,
+        vx: (Math.random() - 0.5) * 1.5
     });
 }
 
 function spawnPower() {
-    if (powers.length >= 5) return;
+    if (powers.length >= 3) return;
     const types = ["shield", "slow", "magnet"];
     const type = types[Math.floor(Math.random() * types.length)];
     powers.push({
         x: Math.random() * (BASE_W - 60) + 30,
         y: -40,
         r: 14,
-        vy: 2.4 + Math.random() * 1.2,
+        vy: 2 + Math.random() * 1,
         type: type
     });
 }
@@ -2512,13 +2525,13 @@ function updateGame(dt) {
     
     // Update player
     const dx = targetX - player.x;
-    player.x += dx * 0.3;
+    player.x += dx * 0.4;
     player.x = Math.max(player.r, Math.min(BASE_W - player.r, player.x));
     
     // Spawn objects
-    if (Math.random() < 0.02) spawnHoney();
-    if (Math.random() < 0.01) spawnBee();
-    if (Math.random() < 0.002) spawnPower();
+    if (Math.random() < 0.03) spawnHoney();
+    if (Math.random() < 0.015) spawnBee();
+    if (Math.random() < 0.005) spawnPower();
     
     const now = Date.now();
     const slowActive = GameState.power.slowUntil > now;
@@ -2531,31 +2544,32 @@ function updateGame(dt) {
         
         // Magnet effect
         if (magnetActive) {
-            const pull = Math.max(-2.2, Math.min(2.2, (player.x - h.x) * 0.03));
+            const pull = Math.max(-3, Math.min(3, (player.x - h.x) * 0.04));
             h.x += pull;
         }
         
-        h.y += h.vy * (slowActive ? 0.55 : 1);
+        h.y += h.vy * (slowActive ? 0.6 : 1);
         
         if (distance(player.x, player.y, h.x, h.y) < player.r + h.r) {
             // Collect honey
             GameState.honeyCaught++;
             GameState.streak++;
-            GameState.combo = Math.min(2.5, 1 + GameState.streak * 0.05);
+            GameState.combo = Math.min(3.0, 1 + GameState.streak * 0.06);
             
-            const points = h.type === "gold" ? 25 : 10;
+            const points = h.type === "gold" ? 35 : 15;
             GameState.score += Math.round(points * GameState.combo);
             
             playSound("collect");
             honeys.splice(i, 1);
             updateHUD();
+            showNotification(h.type === "gold" ? "Golden Honey! +35" : "Honey! +15");
             continue;
         }
         
         if (h.y > BASE_H + 60) {
             honeys.splice(i, 1);
             GameState.streak = Math.max(0, GameState.streak - 1);
-            GameState.combo = Math.min(2.5, 1 + GameState.streak * 0.05);
+            GameState.combo = Math.min(3.0, 1 + GameState.streak * 0.06);
             updateHUD();
         }
     }
@@ -2563,18 +2577,19 @@ function updateGame(dt) {
     // Update bees
     for (let i = bees.length - 1; i >= 0; i--) {
         const b = bees[i];
-        b.x += b.vx * (slowActive ? 0.55 : 1);
-        b.y += b.vy * (slowActive ? 0.55 : 1);
+        b.x += b.vx * (slowActive ? 0.6 : 1);
+        b.y += b.vy * (slowActive ? 0.6 : 1);
         
         if (b.x < b.r || b.x > BASE_W - b.r) {
             b.vx *= -1;
         }
         
-        if (distance(player.x, player.y, b.x, b.y) < player.r + b.r) {
+        if (distance(player.x, player.y, b.x, b.y) < player.r + b.r + 5) {
             if (shieldActive) {
                 GameState.power.shieldUntil = 0;
                 playSound("power");
                 updatePowerIndicators();
+                showNotification("Shield protected you!");
             } else {
                 GameState.beesHit++;
                 GameState.lives--;
@@ -2585,6 +2600,8 @@ function updateGame(dt) {
                 if (GameState.lives <= 0) {
                     gameOver();
                     return;
+                } else {
+                    showNotification("Ouch! Bee hit! Lives: " + GameState.lives);
                 }
             }
             bees.splice(i, 1);
@@ -2600,17 +2617,20 @@ function updateGame(dt) {
     // Update powers
     for (let i = powers.length - 1; i >= 0; i--) {
         const p = powers[i];
-        p.y += p.vy * (slowActive ? 0.55 : 1);
+        p.y += p.vy * (slowActive ? 0.6 : 1);
         
-        if (distance(player.x, player.y, p.x, p.y) < player.r + p.r) {
+        if (distance(player.x, player.y, p.x, p.y) < player.r + p.r + 5) {
             // Collect power-up
-            const duration = 5000; // 5 seconds
+            const duration = 8000; // 8 seconds
             if (p.type === "shield") {
-                GameState.power.shieldUntil = now + 6500;
+                GameState.power.shieldUntil = now + duration;
+                showNotification("Shield activated!");
             } else if (p.type === "slow") {
-                GameState.power.slowUntil = now + 5200;
+                GameState.power.slowUntil = now + duration;
+                showNotification("Time slowed!");
             } else {
-                GameState.power.magnetUntil = now + 5200;
+                GameState.power.magnetUntil = now + duration;
+                showNotification("Magnet active!");
             }
             
             playSound("power");
@@ -2635,14 +2655,14 @@ function updatePowerIndicators() {
 }
 
 function updateHUD() {
-    $('stat-score').textContent = GameState.score;
+    $('stat-score').textContent = GameState.score.toLocaleString();
     $('stat-lives').textContent = GameState.lives;
     $('stat-combo').textContent = GameState.combo.toFixed(1) + 'x';
     
-    $('pause-score').textContent = GameState.score;
+    $('pause-score').textContent = GameState.score.toLocaleString();
     $('pause-lives').textContent = GameState.lives;
     $('pause-streak').textContent = GameState.streak;
-    $('pause-time').textContent = Math.floor((Date.now() - GameState.startTime) / 1000) + 's';
+    $('pause-time').textContent = GameState.startTime ? Math.floor((Date.now() - GameState.startTime) / 1000) + 's' : '0s';
     
     // Level progress
     const tier = Math.floor(GameState.score / 300);
@@ -2652,6 +2672,10 @@ function updateHUD() {
     
     const levelNames = ["Beginner", "Brave", "Busy", "Very Busy", "Legendary"];
     $('level-display').textContent = levelNames[Math.min(tier, levelNames.length - 1)];
+    
+    // Update achievements count
+    const achievements = Math.min(20, Math.floor(GameState.score / 100));
+    $('achievements-count').textContent = achievements + '/20';
 }
 
 // Game flow
@@ -2691,41 +2715,43 @@ function startGame() {
 function gameOver() {
     GameState.running = false;
     
-    $('final-score').textContent = GameState.score;
-    $('final-total').textContent = GameState.score;
+    $('final-score').textContent = GameState.score.toLocaleString();
+    $('final-total').textContent = GameState.score.toLocaleString();
     $('final-streak').textContent = GameState.streak;
     $('final-honey').textContent = GameState.honeyCaught;
     
+    // Check for new record
+    const bestScore = parseInt(localStorage.getItem('bestScore') || '0');
+    if (GameState.score > bestScore) {
+        localStorage.setItem('bestScore', GameState.score);
+        $('new-record-badge').classList.remove('hidden');
+    }
+    
     $('gameover-screen').classList.remove('hidden');
     
-    showNotification("Eeyore: Well, that happened.");
+    showNotification("Eeyore: Well, that happened. Score: " + GameState.score);
 }
 
 // Notifications
 function showNotification(text) {
     const container = $('notification-container');
-    if (!container) return;
+    if (!container || !GameState.visualEffects) return;
     
     const notification = document.createElement('div');
     notification.textContent = text;
-    notification.style.cssText = `
-        background: rgba(255, 255, 255, 0.95);
-        padding: 10px 15px;
-        border-radius: 10px;
-        margin-bottom: 10px;
-        box-shadow: 0 4px 12px rgba(0,0,0,0.15);
-        font-family: var(--font-body);
-        font-size: 14px;
-        animation: fadeIn 0.3s ease;
-    `;
+    notification.className = 'notification';
     
     container.appendChild(notification);
     
     setTimeout(() => {
         notification.style.opacity = '0';
         notification.style.transition = 'opacity 0.3s ease';
-        setTimeout(() => notification.remove(), 300);
-    }, 2000);
+        setTimeout(() => {
+            if (notification.parentNode) {
+                notification.parentNode.removeChild(notification);
+            }
+        }, 300);
+    }, 2500);
 }
 
 // UI Setup
@@ -2811,6 +2837,9 @@ function setupUI() {
             } else if (navigator.clipboard) {
                 await navigator.clipboard.writeText(text);
                 showNotification("Score copied to clipboard!");
+            } else {
+                prompt("Copy this score:", text);
+                showNotification("Score copied!");
             }
         } catch (err) {
             console.log('Share failed:', err);
@@ -2858,7 +2887,7 @@ function setupUI() {
     // Achievements button
     $('achievements-pill').onclick = function() {
         playSound("collect");
-        showNotification("Achievements coming soon!");
+        showNotification("Achievements coming in next update!");
     };
     
     // Initialize settings
@@ -2941,6 +2970,9 @@ function gameLoop(timestamp) {
     
     updateGame(dt);
     
+    // Clear canvas
+    ctx.clearRect(0, 0, canvas.width, canvas.height);
+    
     // Draw everything
     drawBackground();
     honeys.forEach(drawHoney);
@@ -2955,17 +2987,23 @@ function gameLoop(timestamp) {
 function init() {
     console.log('Initializing game...');
     
-    setupUI();
-    initLoading();
-    resizeCanvas();
-    
-    window.addEventListener('resize', resizeCanvas);
-    window.addEventListener('orientationchange', resizeCanvas);
-    
-    // Start game loop
-    requestAnimationFrame(gameLoop);
-    
-    console.log('Game initialized successfully');
+    try {
+        setupUI();
+        initLoading();
+        resizeCanvas();
+        
+        window.addEventListener('resize', resizeCanvas);
+        window.addEventListener('orientationchange', resizeCanvas);
+        
+        // Start game loop
+        requestAnimationFrame(gameLoop);
+        
+        console.log('Game initialized successfully');
+    } catch (error) {
+        console.error('Initialization failed:', error);
+        $('error-overlay').classList.remove('hidden');
+        $('error-overlay').textContent = 'Error: ' + error.message + '\n\n' + error.stack;
+    }
 }
 
 // Start when ready
