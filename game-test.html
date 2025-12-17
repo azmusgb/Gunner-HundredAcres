@@ -2,97 +2,43 @@
 <html lang="en">
 <head>
     <meta charset="UTF-8" />
-    <title>Pooh's Honey Hunt: Ultimate Edition 🍯</title>
-    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover, shrink-to-fit=no" />
+    <title>Pooh's Honey Hunt: iOS Fixed Edition 🍯</title>
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover" />
     <meta name="theme-color" content="#d4a574" />
-    <meta name="description" content="Help Pooh catch honey pots in the Hundred Acre Wood! Ultimate edition with seasonal events, daily challenges, leaderboards, and more!" />
     <meta name="apple-mobile-web-app-capable" content="yes">
     <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
-    <meta name="apple-mobile-web-app-title" content="Pooh Honey Hunt">
-    <meta name="format-detection" content="telephone=no">
     <link rel="preconnect" href="https://fonts.googleapis.com" />
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
     <link href="https://fonts.googleapis.com/css2?family=Patrick+Hand&family=Fredoka+One&family=Bubblegum+Sans&family=Comic+Neue:wght@700&display=swap" rel="stylesheet" />
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css" />
     <style>
-        /* ======================= BASE STYLES ======================= */
-        :root {
-            --color-primary: #d4a574;
-            --color-secondary: #f7c44f;
-            --color-accent: #e67e22;
-            --color-danger: #e74c3c;
-            --color-success: #2ecc71;
-            --color-dark: #2c3e50;
-            --color-light: #f9f3e9;
-            --color-shadow: rgba(44, 62, 80, 0.3);
-            
-            --shadow-sm: 0 2px 8px rgba(0,0,0,0.1);
-            --shadow-md: 0 4px 16px rgba(0,0,0,0.15);
-            --shadow-lg: 0 8px 32px rgba(0,0,0,0.2);
-            
-            --radius-sm: 12px;
-            --radius-md: 20px;
-            --radius-lg: 30px;
-            
-            --font-title: 'Bubblegum Sans', cursive;
-            --font-body: 'Patrick Hand', cursive;
-            --font-ui: 'Fredoka One', system-ui;
-            --font-fun: 'Comic Neue', cursive;
-        }
-
+        /* ======================= RESET & BASE ======================= */
         * {
             margin: 0;
             padding: 0;
             box-sizing: border-box;
             -webkit-tap-highlight-color: transparent;
             -webkit-touch-callout: none;
+            -webkit-user-select: none;
+            user-select: none;
         }
 
         html, body {
             width: 100%;
             height: 100%;
             overflow: hidden;
-            touch-action: manipulation;
-            font-family: var(--font-body);
+            font-family: 'Patrick Hand', cursive;
             background: linear-gradient(135deg, #f9f3e9 0%, #f0d9b5 100%);
-            color: var(--color-dark);
-            user-select: none;
+            color: #2c3e50;
+            touch-action: manipulation;
+            position: fixed;
         }
 
         body {
-            position: fixed;
-            width: 100%;
-            height: 100%;
             padding-top: env(safe-area-inset-top);
             padding-bottom: env(safe-area-inset-bottom);
             padding-left: env(safe-area-inset-left);
             padding-right: env(safe-area-inset-right);
-            -webkit-transform: translate3d(0,0,0);
-            transform: translate3d(0,0,0);
-            -webkit-overflow-scrolling: touch;
-        }
-
-        /* ======================= LAYERS ======================= */
-        .layer {
-            position: fixed;
-            top: 0;
-            left: 0;
-            width: 100%;
-            height: 100%;
-            pointer-events: none;
-        }
-
-        #game-layer {
-            display: flex;
-            flex-direction: column;
-            align-items: center;
-            padding-top: max(env(safe-area-inset-top), 10px);
-            padding-bottom: max(env(safe-area-inset-bottom), 10px);
-            pointer-events: none;
-        }
-
-        #ui-layer, #overlay-layer {
-            pointer-events: auto;
         }
 
         /* ======================= LOADING SCREEN ======================= */
@@ -102,7 +48,7 @@
             left: 0;
             width: 100%;
             height: 100%;
-            background: linear-gradient(135deg, var(--color-primary) 0%, var(--color-accent) 100%);
+            background: linear-gradient(135deg, #d4a574 0%, #e67e22 100%);
             display: flex;
             flex-direction: column;
             justify-content: center;
@@ -123,8 +69,6 @@
             background-size: contain;
             margin-bottom: 30px;
             animation: bounce 2s infinite;
-            -webkit-transform: translate3d(0,0,0);
-            transform: translate3d(0,0,0);
         }
 
         @keyframes bounce {
@@ -171,7 +115,22 @@
             padding: 0 20px;
             max-width: 300px;
             opacity: 0.9;
-            font-family: var(--font-fun);
+            font-family: 'Comic Neue', cursive;
+        }
+
+        /* ======================= GAME LAYOUT ======================= */
+        #game-layer {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            padding-top: max(env(safe-area-inset-top), 10px);
+            padding-bottom: max(env(safe-area-inset-bottom), 10px);
+            pointer-events: none;
         }
 
         /* ======================= HUD ======================= */
@@ -180,14 +139,12 @@
             max-width: 500px;
             padding: 12px 16px;
             background: rgba(255, 255, 255, 0.95);
-            border-radius: var(--radius-lg);
+            border-radius: 30px;
             margin: 12px auto 8px;
-            box-shadow: var(--shadow-lg);
+            box-shadow: 0 8px 32px rgba(0,0,0,0.2);
             pointer-events: auto;
             position: relative;
-            border: 3px solid var(--color-primary);
-            -webkit-transform: translate3d(0,0,0);
-            transform: translate3d(0,0,0);
+            border: 3px solid #d4a574;
         }
 
         .hud-header {
@@ -198,23 +155,23 @@
         }
 
         .hud-title {
-            font-family: var(--font-title);
+            font-family: 'Bubblegum Sans', cursive;
             font-size: 20px;
-            color: var(--color-accent);
+            color: #e67e22;
             display: flex;
             align-items: center;
             gap: 8px;
         }
 
         .level-display {
-            background: var(--color-secondary);
-            color: var(--color-dark);
+            background: #f7c44f;
+            color: #2c3e50;
             padding: 4px 12px;
             border-radius: 20px;
-            font-family: var(--font-ui);
+            font-family: 'Fredoka One', system-ui;
             font-size: 14px;
             font-weight: bold;
-            border: 2px solid var(--color-primary);
+            border: 2px solid #d4a574;
         }
 
         .hud-stats {
@@ -226,18 +183,16 @@
 
         .stat-card {
             flex: 1;
-            background: var(--color-light);
-            border-radius: var(--radius-md);
+            background: #f9f3e9;
+            border-radius: 20px;
             padding: 10px;
             text-align: center;
-            border: 2px solid var(--color-primary);
+            border: 2px solid #d4a574;
             transition: transform 0.2s ease;
-            -webkit-transform: translate3d(0,0,0);
-            transform: translate3d(0,0,0);
         }
 
-        .stat-card:hover {
-            transform: translateY(-2px);
+        .stat-card:active {
+            transform: scale(0.98);
         }
 
         .stat-icon {
@@ -246,16 +201,16 @@
         }
 
         .stat-value {
-            font-family: var(--font-ui);
+            font-family: 'Fredoka One', system-ui;
             font-size: 24px;
             font-weight: bold;
-            color: var(--color-dark);
+            color: #2c3e50;
             line-height: 1;
         }
 
         .stat-label {
             font-size: 12px;
-            color: var(--color-dark);
+            color: #2c3e50;
             opacity: 0.8;
             margin-top: 2px;
         }
@@ -270,71 +225,43 @@
         .progress-container {
             flex: 1;
             height: 12px;
-            background: var(--color-light);
+            background: #f9f3e9;
             border-radius: 6px;
             overflow: hidden;
-            border: 2px solid var(--color-primary);
+            border: 2px solid #d4a574;
         }
 
         .progress-fill {
             height: 100%;
-            background: linear-gradient(90deg, var(--color-secondary), var(--color-accent));
+            background: linear-gradient(90deg, #f7c44f, #e67e22);
             border-radius: 6px;
             width: 0%;
             transition: width 0.3s ease;
         }
 
-        .hud-achievements {
+        .achievements-pill {
             position: absolute;
             bottom: -25px;
             left: 50%;
             transform: translateX(-50%);
-        }
-
-        .achievements-pill {
             background: linear-gradient(135deg, #ffd166, #f4b400);
-            border: 3px solid var(--color-primary);
+            border: 3px solid #d4a574;
             border-radius: 25px;
             padding: 8px 16px;
             display: flex;
             align-items: center;
             gap: 8px;
-            font-family: var(--font-ui);
-            color: var(--color-dark);
+            font-family: 'Fredoka One', system-ui;
+            color: #2c3e50;
             font-weight: bold;
             cursor: pointer;
-            transition: all 0.2s ease;
             pointer-events: auto;
-            box-shadow: var(--shadow-sm);
-        }
-
-        .achievements-pill:hover {
-            transform: translateY(-2px);
-            box-shadow: var(--shadow-md);
+            box-shadow: 0 2px 8px rgba(0,0,0,0.1);
+            transition: all 0.2s ease;
         }
 
         .achievements-pill:active {
-            transform: translateY(0);
-        }
-
-        .achievements-pill .trophy {
-            font-size: 20px;
-        }
-
-        .achievements-pill .label {
-            font-size: 14px;
-        }
-
-        .achievements-pill .count {
-            background: rgba(255,255,255,0.9);
-            padding: 2px 8px;
-            border-radius: 10px;
-            font-size: 12px;
-        }
-
-        .achievements-pill .chev {
-            font-size: 20px;
-            margin-left: 2px;
+            transform: translateX(-50%) scale(0.95);
         }
 
         /* ======================= GAME CONTAINER ======================= */
@@ -347,8 +274,6 @@
             justify-content: center;
             position: relative;
             pointer-events: none;
-            -webkit-transform: translate3d(0,0,0);
-            transform: translate3d(0,0,0);
         }
 
         canvas {
@@ -356,21 +281,16 @@
             width: 100%;
             height: 100%;
             max-height: 700px;
-            border-radius: var(--radius-lg);
-            box-shadow: var(--shadow-lg);
+            border-radius: 30px;
+            box-shadow: 0 8px 32px rgba(0,0,0,0.2);
             background: linear-gradient(180deg, #87CEEB 0%, #98FB98 100%);
-            border: 5px solid var(--color-primary);
+            border: 5px solid #d4a574;
             pointer-events: auto;
             touch-action: none;
-            user-select: none;
             -webkit-user-drag: none;
-            image-rendering: -webkit-optimize-contrast;
-            image-rendering: pixelated;
-            -webkit-transform: translate3d(0,0,0);
-            transform: translate3d(0,0,0);
         }
 
-        /* ======================= CONTROL CLUSTERS ======================= */
+        /* ======================= BUTTONS (FIXED FOR iOS) ======================= */
         .control-cluster {
             position: fixed;
             display: flex;
@@ -405,29 +325,26 @@
             height: 50px;
             border-radius: 50%;
             background: rgba(255, 255, 255, 0.95);
-            border: 3px solid var(--color-primary);
+            border: 3px solid #d4a574;
             display: flex;
             align-items: center;
             justify-content: center;
             font-size: 22px;
-            color: var(--color-dark);
+            color: #2c3e50;
             cursor: pointer;
-            transition: all 0.2s ease;
-            box-shadow: var(--shadow-md);
-            -webkit-transform: translate3d(0,0,0);
-            transform: translate3d(0,0,0);
-        }
-
-        .control-btn:hover {
-            transform: scale(1.1);
-            box-shadow: var(--shadow-lg);
+            transition: all 0.1s ease;
+            box-shadow: 0 4px 16px rgba(0,0,0,0.15);
+            -webkit-appearance: none;
+            appearance: none;
+            outline: none;
         }
 
         .control-btn:active {
-            transform: scale(0.95);
+            transform: scale(0.9);
+            background: rgba(255, 255, 255, 0.8);
         }
 
-        /* ======================= OVERLAY STYLES ======================= */
+        /* ======================= OVERLAY ======================= */
         .overlay-content {
             position: fixed;
             top: 50%;
@@ -437,10 +354,10 @@
             max-width: 500px;
             max-height: 85vh;
             background: rgba(255, 255, 255, 0.98);
-            border-radius: var(--radius-lg);
+            border-radius: 30px;
             padding: 24px;
-            box-shadow: var(--shadow-lg);
-            border: 5px solid var(--color-primary);
+            box-shadow: 0 8px 32px rgba(0,0,0,0.2);
+            border: 5px solid #d4a574;
             overflow-y: auto;
             pointer-events: auto;
             z-index: 1000;
@@ -451,10 +368,6 @@
             display: none;
         }
 
-        body.overlay-open {
-            overflow: hidden;
-        }
-
         .overlay-header {
             display: flex;
             justify-content: space-between;
@@ -463,9 +376,9 @@
         }
 
         .overlay-title {
-            font-family: var(--font-title);
+            font-family: 'Bubblegum Sans', cursive;
             font-size: 28px;
-            color: var(--color-accent);
+            color: #e67e22;
             text-align: center;
             line-height: 1.2;
         }
@@ -474,7 +387,7 @@
             background: none;
             border: none;
             font-size: 32px;
-            color: var(--color-dark);
+            color: #2c3e50;
             cursor: pointer;
             width: 40px;
             height: 40px;
@@ -483,13 +396,15 @@
             justify-content: center;
             border-radius: 50%;
             transition: background-color 0.2s ease;
+            -webkit-appearance: none;
+            appearance: none;
         }
 
-        .close-btn:hover {
+        .close-btn:active {
             background: rgba(0,0,0,0.1);
         }
 
-        /* ======================= BUTTONS ======================= */
+        /* ======================= MAIN BUTTONS ======================= */
         .btn {
             display: flex;
             align-items: center;
@@ -498,60 +413,40 @@
             width: 100%;
             padding: 16px 24px;
             border: none;
-            border-radius: var(--radius-md);
-            font-family: var(--font-ui);
+            border-radius: 20px;
+            font-family: 'Fredoka One', system-ui;
             font-size: 18px;
             font-weight: bold;
             cursor: pointer;
-            transition: all 0.2s ease;
+            transition: all 0.1s ease;
             text-decoration: none;
             margin: 8px 0;
-            box-shadow: var(--shadow-sm);
-            -webkit-transform: translate3d(0,0,0);
-            transform: translate3d(0,0,0);
-        }
-
-        .btn i {
-            font-size: 20px;
-        }
-
-        .btn:hover {
-            transform: translateY(-2px);
-            box-shadow: var(--shadow-md);
+            box-shadow: 0 2px 8px rgba(0,0,0,0.1);
+            -webkit-appearance: none;
+            appearance: none;
         }
 
         .btn:active {
-            transform: translateY(0);
-        }
-
-        .btn-secondary {
-            background: var(--color-light);
-            color: var(--color-dark);
-            border: 3px solid var(--color-primary);
-        }
-
-        .btn-secondary:hover {
-            background: #f0e6d2;
+            transform: translateY(2px);
+            box-shadow: 0 1px 4px rgba(0,0,0,0.1);
         }
 
         .btn-success {
-            background: linear-gradient(135deg, var(--color-success), #27ae60);
+            background: linear-gradient(135deg, #2ecc71, #27ae60);
             color: white;
             border: 3px solid #27ae60;
         }
 
-        .btn-success:hover {
-            background: linear-gradient(135deg, #27ae60, #219653);
+        .btn-secondary {
+            background: #f9f3e9;
+            color: #2c3e50;
+            border: 3px solid #d4a574;
         }
 
         .btn-danger {
-            background: linear-gradient(135deg, var(--color-danger), #c0392b);
+            background: linear-gradient(135deg, #e74c3c, #c0392b);
             color: white;
             border: 3px solid #c0392b;
-        }
-
-        .btn-danger:hover {
-            background: linear-gradient(135deg, #c0392b, #a93226);
         }
 
         .btn-grid {
@@ -570,46 +465,23 @@
         .pooh-avatar {
             width: 100px;
             height: 100px;
-            background: url('data:image/svg+xml,<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 100 100"><circle cx="50" cy="50" r="48" fill="%23f7c44f" stroke="%232c3e50" stroke-width="2"/><path d="M30,40 Q50,20 70,40 Q60,60 40,60 Q30,50 30,40" fill="%23d4a574"/><circle cx="40" cy="40" r="5" fill="%232c3e50"/><circle cx="60" cy="40" r="5" fill="%232c3e50"/><path d="M45,55 Q50,60 55,55" stroke="%232c3e50" stroke-width="3" fill="none"/></svg>');
+            background: url('data:image/svg+xml,<svg xmlns="http://www.w3.org2000/svg" viewBox="0 0 100 100"><circle cx="50" cy="50" r="48" fill="%23f7c44f" stroke="%232c3e50" stroke-width="2"/><path d="M30,40 Q50,20 70,40 Q60,60 40,60 Q30,50 30,40" fill="%23d4a574"/><circle cx="40" cy="40" r="5" fill="%232c3e50"/><circle cx="60" cy="40" r="5" fill="%232c3e50"/><path d="M45,55 Q50,60 55,55" stroke="%232c3e50" stroke-width="3" fill="none"/></svg>');
             background-size: contain;
             margin: 0 auto 15px;
-            -webkit-transform: translate3d(0,0,0);
-            transform: translate3d(0,0,0);
         }
 
         .welcome-text {
-            font-family: var(--font-title);
+            font-family: 'Bubblegum Sans', cursive;
             font-size: 24px;
-            color: var(--color-accent);
+            color: #e67e22;
             margin-bottom: 8px;
         }
 
         .subtitle {
             font-size: 16px;
-            color: var(--color-dark);
+            color: #2c3e50;
             opacity: 0.8;
             margin-bottom: 20px;
-        }
-
-        .feature-badge {
-            background: linear-gradient(135deg, #ffeaa7, #fdcb6e);
-            border-radius: var(--radius-md);
-            padding: 15px;
-            margin: 20px 0;
-            border: 3px solid var(--color-primary);
-            text-align: center;
-        }
-
-        .feature-badge h3 {
-            font-family: var(--font-title);
-            color: var(--color-accent);
-            margin-bottom: 8px;
-            font-size: 20px;
-        }
-
-        .feature-badge p {
-            font-size: 14px;
-            color: var(--color-dark);
         }
 
         /* ======================= RESULTS SCREENS ======================= */
@@ -618,22 +490,22 @@
         }
 
         .final-score {
-            font-family: var(--font-title);
+            font-family: 'Bubblegum Sans', cursive;
             font-size: 48px;
-            color: var(--color-accent);
+            color: #e67e22;
             margin: 20px 0;
-            text-shadow: 3px 3px 0 var(--color-shadow);
+            text-shadow: 3px 3px 0 rgba(44, 62, 80, 0.3);
         }
 
         .new-record {
             background: linear-gradient(135deg, #ffd166, #f4b400);
-            color: var(--color-dark);
+            color: #2c3e50;
             padding: 12px;
-            border-radius: var(--radius-md);
+            border-radius: 20px;
             margin: 15px 0;
-            font-family: var(--font-ui);
+            font-family: 'Fredoka One', system-ui;
             font-weight: bold;
-            border: 3px solid var(--color-primary);
+            border: 3px solid #d4a574;
             animation: pulse 1.5s infinite;
         }
 
@@ -643,11 +515,11 @@
         }
 
         .results-stats {
-            background: var(--color-light);
-            border-radius: var(--radius-md);
+            background: #f9f3e9;
+            border-radius: 20px;
             padding: 20px;
             margin: 20px 0;
-            border: 3px solid var(--color-primary);
+            border: 3px solid #d4a574;
         }
 
         .stat-row {
@@ -662,518 +534,39 @@
             border-bottom: none;
         }
 
-        .stat-label {
-            font-size: 16px;
-            color: var(--color-dark);
-        }
-
-        .stat-value {
-            font-family: var(--font-ui);
-            font-size: 20px;
-            font-weight: bold;
-            color: var(--color-accent);
-        }
-
-        /* ======================= CHARACTER SELECT ======================= */
-        .character-grid {
-            display: grid;
-            grid-template-columns: repeat(auto-fit, minmax(150px, 1fr));
-            gap: 15px;
-            margin: 20px 0;
-        }
-
-        .character-card {
-            background: var(--color-light);
-            border: 3px solid var(--color-primary);
-            border-radius: var(--radius-md);
-            padding: 15px;
-            text-align: center;
-            cursor: pointer;
-            transition: all 0.3s ease;
-            position: relative;
-            -webkit-transform: translate3d(0,0,0);
-            transform: translate3d(0,0,0);
-        }
-
-        .character-card:hover {
-            transform: translateY(-5px);
-            box-shadow: var(--shadow-md);
-        }
-
-        .character-card.selected {
-            background: linear-gradient(135deg, #ffeaa7, #fdcb6e);
-            border-color: var(--color-accent);
-            transform: scale(1.05);
-        }
-
-        .character-card.locked {
-            opacity: 0.6;
-            cursor: not-allowed;
-        }
-
-        .character-card.locked:hover {
-            transform: none;
-            box-shadow: none;
-        }
-
-        .lock-icon {
-            position: absolute;
-            top: 10px;
-            right: 10px;
-            color: var(--color-dark);
-            font-size: 16px;
-        }
-
-        .character-icon {
-            font-size: 40px;
-            margin-bottom: 10px;
-        }
-
-        .character-name {
-            font-family: var(--font-title);
-            font-size: 20px;
-            color: var(--color-accent);
-            margin-bottom: 5px;
-        }
-
-        .character-ability {
-            font-family: var(--font-ui);
-            font-size: 14px;
-            color: var(--color-dark);
-            font-weight: bold;
-            margin-bottom: 5px;
-        }
-
-        .character-desc {
-            font-size: 12px;
-            color: var(--color-dark);
-            opacity: 0.8;
-        }
-
-        /* ======================= SETTINGS ======================= */
-        .settings-section {
-            background: var(--color-light);
-            border-radius: var(--radius-md);
-            padding: 20px;
-            margin: 20px 0;
-            border: 3px solid var(--color-primary);
-        }
-
-        .setting-item {
-            display: flex;
-            justify-content: space-between;
-            align-items: center;
-            padding: 15px 0;
-            border-bottom: 1px solid rgba(0,0,0,0.1);
-        }
-
-        .setting-item:last-child {
-            border-bottom: none;
-        }
-
-        .setting-label {
-            display: flex;
-            align-items: center;
-            gap: 12px;
-            font-size: 16px;
-            color: var(--color-dark);
-        }
-
-        .setting-icon {
-            font-size: 20px;
-            color: var(--color-accent);
-            width: 30px;
-        }
-
-        .toggle-switch {
-            position: relative;
-            display: inline-block;
-            width: 60px;
-            height: 30px;
-        }
-
-        .toggle-switch input {
-            opacity: 0;
-            width: 0;
-            height: 0;
-        }
-
-        .toggle-slider {
-            position: absolute;
-            cursor: pointer;
-            top: 0;
-            left: 0;
-            right: 0;
-            bottom: 0;
-            background-color: #ccc;
-            transition: .4s;
-            border-radius: 34px;
-        }
-
-        .toggle-slider:before {
-            position: absolute;
-            content: "";
-            height: 22px;
-            width: 22px;
-            left: 4px;
-            bottom: 4px;
-            background-color: white;
-            transition: .4s;
-            border-radius: 50%;
-        }
-
-        input:checked + .toggle-slider {
-            background-color: var(--color-success);
-        }
-
-        input:checked + .toggle-slider:before {
-            transform: translateX(30px);
-        }
-
-        /* ======================= ACHIEVEMENTS ======================= */
-        .achievements-list {
-            max-height: 300px;
-            overflow-y: auto;
-            margin: 20px 0;
-            padding-right: 10px;
-            -webkit-overflow-scrolling: touch;
-        }
-
-        .achievement-item {
-            display: flex;
-            align-items: center;
-            gap: 15px;
-            padding: 15px;
-            background: var(--color-light);
-            border-radius: var(--radius-md);
-            margin-bottom: 10px;
-            border: 2px solid var(--color-primary);
-            transition: transform 0.2s ease;
-        }
-
-        .achievement-item:hover {
-            transform: translateX(5px);
-        }
-
-        .achievement-item.unlocked {
-            background: linear-gradient(135deg, #ffeaa7, #fdcb6e);
-            border-color: var(--color-accent);
-        }
-
-        .achievement-icon {
-            font-size: 30px;
-            width: 50px;
-            text-align: center;
-        }
-
-        .achievement-details {
-            flex: 1;
-        }
-
-        .achievement-name {
-            font-family: var(--font-title);
-            font-size: 18px;
-            color: var(--color-dark);
-            margin-bottom: 5px;
-        }
-
-        .achievement-desc {
-            font-size: 14px;
-            color: var(--color-dark);
-            opacity: 0.8;
-        }
-
-        /* ======================= WEATHER DRAWER ======================= */
-        .weather-drawer {
+        /* ======================= TUTORIAL ======================= */
+        .tutorial-overlay {
             position: fixed;
             top: 0;
-            right: -100%;
-            width: 300px;
+            left: 0;
+            width: 100%;
             height: 100%;
-            background: rgba(255, 255, 255, 0.98);
-            border-left: 5px solid var(--color-primary);
-            padding: 24px;
-            transition: right 0.3s ease;
-            z-index: 1001;
-            box-shadow: var(--shadow-lg);
-            overflow-y: auto;
-            -webkit-overflow-scrolling: touch;
-        }
-
-        .weather-drawer.open {
-            right: 0;
-        }
-
-        .weather-grid {
-            display: grid;
-            grid-template-columns: repeat(3, 1fr);
-            gap: 15px;
-            margin: 20px 0;
-        }
-
-        .weather-option {
-            width: 70px;
-            height: 70px;
-            border-radius: var(--radius-md);
-            border: 3px solid var(--color-primary);
-            background: var(--color-light);
-            font-size: 30px;
+            background: rgba(0, 0, 0, 0.7);
+            z-index: 9999;
             display: flex;
             align-items: center;
             justify-content: center;
-            cursor: pointer;
-            transition: all 0.2s ease;
-        }
-
-        .weather-option:hover {
-            transform: scale(1.1);
-            background: #f0e6d2;
-        }
-
-        .weather-option.active {
-            background: linear-gradient(135deg, #ffeaa7, #fdcb6e);
-            border-color: var(--color-accent);
-            transform: scale(1.05);
-        }
-
-        /* ======================= ANIMATIONS & EFFECTS ======================= */
-        @keyframes hud-pop {
-            0% { transform: scale(1); }
-            50% { transform: scale(1.1); }
-            100% { transform: scale(1); }
-        }
-
-        .hud-pop {
-            animation: hud-pop 0.3s ease;
-        }
-
-        @keyframes hud-shake {
-            0%, 100% { transform: translateX(0); }
-            25% { transform: translateX(-5px); }
-            75% { transform: translateX(5px); }
-        }
-
-        .hud-shake {
-            animation: hud-shake 0.4s ease;
-        }
-
-        .score-popup {
-            position: absolute;
-            font-family: var(--font-title);
-            font-size: 24px;
-            font-weight: bold;
-            color: var(--color-accent);
-            text-shadow: 2px 2px 0 var(--color-shadow);
-            pointer-events: none;
-            z-index: 100;
-            animation: floatUp 1s ease forwards;
-            -webkit-transform: translate3d(0,0,0);
-            transform: translate3d(0,0,0);
-        }
-
-        @keyframes floatUp {
-            0% {
-                opacity: 0;
-                transform: translate(-50%, -50%) scale(0.5);
-            }
-            20% {
-                opacity: 1;
-                transform: translate(-50%, -100%) scale(1);
-            }
-            100% {
-                opacity: 0;
-                transform: translate(-50%, -200%) scale(0.8);
-            }
-        }
-
-        .achievement-popup {
-            position: fixed;
-            top: 50%;
-            left: 50%;
-            transform: translate(-50%, -50%);
-            background: linear-gradient(135deg, #ffeaa7, #fdcb6e);
-            color: var(--color-dark);
-            padding: 20px 40px;
-            border-radius: var(--radius-lg);
-            font-family: var(--font-title);
-            font-size: 24px;
-            font-weight: bold;
-            text-align: center;
-            z-index: 1002;
-            border: 5px solid var(--color-primary);
-            box-shadow: var(--shadow-lg);
-            animation: popInOut 2s ease forwards;
-            -webkit-transform: translate3d(0,0,0);
-            transform: translate3d(0,0,0);
-        }
-
-        @keyframes popInOut {
-            0%, 100% {
-                opacity: 0;
-                transform: translate(-50%, -50%) scale(0.5);
-            }
-            15%, 85% {
-                opacity: 1;
-                transform: translate(-50%, -50%) scale(1);
-            }
-        }
-
-        .unlock-notification {
-            position: fixed;
-            top: 50%;
-            left: 50%;
-            transform: translate(-50%, -50%) scale(0.8);
-            background: linear-gradient(135deg, #a29bfe, #6c5ce7);
-            color: white;
             padding: 20px;
-            border-radius: var(--radius-lg);
-            display: flex;
-            align-items: center;
-            gap: 15px;
-            z-index: 1002;
-            box-shadow: var(--shadow-lg);
-            border: 5px solid #8e44ad;
-            opacity: 0;
-            transition: all 0.3s ease;
         }
 
-        .unlock-notification.show {
-            opacity: 1;
-            transform: translate(-50%, -50%) scale(1);
+        .tutorial-content {
+            background: white;
+            padding: 30px;
+            border-radius: 30px;
+            max-width: 500px;
+            width: 100%;
+            text-align: center;
         }
 
-        .unlock-icon {
-            font-size: 40px;
-        }
-
-        .unlock-content {
-            text-align: left;
-        }
-
-        .unlock-title {
-            font-family: var(--font-title);
-            font-size: 18px;
-            margin-bottom: 5px;
-        }
-
-        .unlock-name {
-            font-family: var(--font-ui);
-            font-size: 24px;
-            font-weight: bold;
-        }
-
-        /* ======================= VIRTUAL JOYSTICK ======================= */
-        .virtual-joystick {
-            position: fixed;
-            bottom: max(env(safe-area-inset-bottom), 120px);
-            left: 50%;
-            transform: translateX(-50%);
+        .tutorial-step {
             display: none;
-            pointer-events: none;
-            z-index: 99;
         }
 
-        .virtual-joystick.active {
+        .tutorial-step.active {
             display: block;
         }
 
-        .joystick-base {
-            width: 120px;
-            height: 120px;
-            background: rgba(255, 255, 255, 0.7);
-            border-radius: 50%;
-            border: 3px solid var(--color-primary);
-            box-shadow: var(--shadow-md);
-            -webkit-transform: translate3d(0,0,0);
-            transform: translate3d(0,0,0);
-        }
-
-        .joystick-handle {
-            position: absolute;
-            top: 50%;
-            left: 50%;
-            transform: translate(-50%, -50%);
-            width: 60px;
-            height: 60px;
-            background: linear-gradient(135deg, var(--color-accent), #d35400);
-            border-radius: 50%;
-            border: 3px solid var(--color-primary);
-            box-shadow: var(--shadow-md);
-            -webkit-transform: translate3d(0,0,0);
-            transform: translate3d(0,0,0);
-        }
-
-        /* ======================= RESPONSIVE ======================= */
-        @media (max-width: 768px) {
-            .overlay-content {
-                width: 95%;
-                padding: 20px;
-            }
-            
-            .hud {
-                margin: 8px auto 4px;
-                padding: 10px 12px;
-            }
-            
-            .control-cluster {
-                gap: 8px;
-            }
-            
-            .control-btn {
-                width: 45px;
-                height: 45px;
-                font-size: 20px;
-            }
-            
-            .overlay-title {
-                font-size: 24px;
-            }
-            
-            .final-score {
-                font-size: 36px;
-            }
-            
-            .character-grid {
-                grid-template-columns: repeat(2, 1fr);
-            }
-            
-            .weather-drawer {
-                width: 250px;
-            }
-            
-            .weather-grid {
-                grid-template-columns: repeat(2, 1fr);
-            }
-        }
-
-        @media (max-width: 480px) {
-            .hud-title {
-                font-size: 18px;
-            }
-            
-            .stat-value {
-                font-size: 20px;
-            }
-            
-            .btn {
-                padding: 14px 20px;
-                font-size: 16px;
-            }
-            
-            .overlay-title {
-                font-size: 22px;
-            }
-            
-            .character-grid {
-                grid-template-columns: 1fr;
-            }
-            
-            .weather-drawer {
-                width: 100%;
-            }
-        }
-
-        /* ======================= UTILITY CLASSES ======================= */
+        /* ======================= UTILITY ======================= */
         .hidden {
             display: none !important;
         }
@@ -1182,201 +575,19 @@
             text-align: center;
         }
 
-        .mb-3 {
-            margin-bottom: 15px;
+        /* ======================= IOS FIXES ======================= */
+        @supports (-webkit-touch-callout: none) {
+            .btn, .control-btn, .close-btn {
+                cursor: default;
+            }
+            
+            canvas {
+                -webkit-user-select: none;
+                user-select: none;
+            }
         }
 
-        .mt-3 {
-            margin-top: 15px;
-        }
-
-        /* ======================= HONEY CURSOR ======================= */
-        .honey-cursor {
-            position: fixed;
-            width: 40px;
-            height: 40px;
-            pointer-events: none;
-            z-index: 9999;
-            transform: translate(-50%, -50%);
-            display: none;
-            -webkit-transform: translate3d(0,0,0);
-            transform: translate3d(0,0,0);
-        }
-
-        .spoon {
-            width: 40px;
-            height: 40px;
-            background: url('data:image/svg+xml,<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 40 40"><path d="M20,5 Q25,0 30,5 Q35,10 30,15 L25,35 Q20,40 15,35 L10,15 Q5,10 10,5 Q15,0 20,5" fill="%23f7c44f" stroke="%23d4a574" stroke-width="2"/></svg>');
-            background-size: contain;
-            animation: wobble 2s infinite;
-        }
-
-        @keyframes wobble {
-            0%, 100% { transform: rotate(0deg); }
-            25% { transform: rotate(5deg); }
-            75% { transform: rotate(-5deg); }
-        }
-
-        /* ======================= NOTIFICATIONS ======================= */
-        #notification-container {
-            position: fixed;
-            top: 20px;
-            right: 20px;
-            z-index: 1002;
-            pointer-events: none;
-        }
-
-        #weather-effects {
-            position: fixed;
-            top: 0;
-            left: 0;
-            width: 100%;
-            height: 100%;
-            pointer-events: none;
-            z-index: 1;
-        }
-        
-        /* ======================= WEATHER EFFECTS ======================= */
-        .weather-particle {
-            position: absolute;
-            pointer-events: none;
-            z-index: 2;
-            -webkit-transform: translate3d(0,0,0);
-            transform: translate3d(0,0,0);
-        }
-        
-        .rain-drop {
-            width: 2px;
-            height: 15px;
-            background: linear-gradient(to bottom, transparent, rgba(0, 150, 255, 0.8));
-            border-radius: 1px;
-            animation: rainFall 1s linear infinite;
-        }
-        
-        .snow-flake {
-            width: 6px;
-            height: 6px;
-            background: white;
-            border-radius: 50%;
-            filter: blur(1px);
-            animation: snowFall 3s linear infinite;
-        }
-        
-        .leaf {
-            width: 12px;
-            height: 12px;
-            background: #8B4513;
-            clip-path: polygon(50% 0%, 0% 100%, 100% 100%);
-            animation: leafFall 4s linear infinite;
-        }
-        
-        .blossom {
-            width: 8px;
-            height: 8px;
-            background: pink;
-            border-radius: 50%;
-            animation: blossomFall 5s linear infinite;
-        }
-        
-        .fog-particle {
-            width: 100px;
-            height: 50px;
-            background: rgba(255, 255, 255, 0.1);
-            border-radius: 50%;
-            filter: blur(10px);
-            animation: fogFloat 10s linear infinite;
-        }
-        
-        .star {
-            width: 3px;
-            height: 3px;
-            background: white;
-            border-radius: 50%;
-            animation: twinkle 2s infinite alternate;
-        }
-        
-        @keyframes rainFall {
-            0% {
-                transform: translateY(-100px) rotate(15deg);
-                opacity: 0;
-            }
-            10% {
-                opacity: 1;
-            }
-            90% {
-                opacity: 1;
-            }
-            100% {
-                transform: translateY(100vh) rotate(15deg);
-                opacity: 0;
-            }
-        }
-        
-        @keyframes snowFall {
-            0% {
-                transform: translateY(-100px) rotate(0deg);
-                opacity: 0;
-            }
-            10% {
-                opacity: 1;
-            }
-            100% {
-                transform: translateY(100vh) rotate(360deg);
-                opacity: 0;
-            }
-        }
-        
-        @keyframes leafFall {
-            0% {
-                transform: translateY(-100px) rotate(0deg);
-                opacity: 0;
-            }
-            10% {
-                opacity: 1;
-            }
-            100% {
-                transform: translateY(100vh) rotate(720deg);
-                opacity: 0;
-            }
-        }
-        
-        @keyframes blossomFall {
-            0% {
-                transform: translateY(-100px) rotate(0deg);
-                opacity: 0;
-            }
-            10% {
-                opacity: 1;
-            }
-            100% {
-                transform: translateY(100vh) rotate(360deg);
-                opacity: 0;
-            }
-        }
-        
-        @keyframes fogFloat {
-            0% {
-                transform: translateX(-100px) translateY(0);
-                opacity: 0;
-            }
-            10% {
-                opacity: 0.5;
-            }
-            90% {
-                opacity: 0.5;
-            }
-            100% {
-                transform: translateX(100vw) translateY(100px);
-                opacity: 0;
-            }
-        }
-        
-        @keyframes twinkle {
-            0% { opacity: 0.3; }
-            100% { opacity: 1; }
-        }
-
-        /* ======================= POWER-UP INDICATORS ======================= */
+        /* ======================= POWER INDICATORS ======================= */
         .power-indicator {
             position: fixed;
             bottom: max(env(safe-area-inset-bottom), 20px);
@@ -1399,9 +610,7 @@
             opacity: 0;
             transition: opacity 0.3s ease;
             border: 2px solid white;
-            box-shadow: var(--shadow-md);
-            -webkit-transform: translate3d(0,0,0);
-            transform: translate3d(0,0,0);
+            box-shadow: 0 4px 16px rgba(0,0,0,0.15);
         }
         
         .power-icon.active {
@@ -1424,140 +633,13 @@
             color: white;
         }
 
-        /* ======================= TUTORIAL ======================= */
-        .tutorial-overlay {
+        /* ======================= NOTIFICATIONS ======================= */
+        #notification-container {
             position: fixed;
-            top: 0;
-            left: 0;
-            width: 100%;
-            height: 100%;
-            background: rgba(0, 0, 0, 0.7);
-            z-index: 9999;
-            display: flex;
-            align-items: center;
-            justify-content: center;
-        }
-        
-        .tutorial-content {
-            background: white;
-            padding: 30px;
-            border-radius: var(--radius-lg);
-            max-width: 500px;
-            margin: 20px;
-            text-align: center;
-            -webkit-transform: translate3d(0,0,0);
-            transform: translate3d(0,0,0);
-        }
-        
-        .tutorial-step {
-            display: none;
-        }
-        
-        .tutorial-step.active {
-            display: block;
-        }
-        
-        .tutorial-bullet {
-            width: 10px;
-            height: 10px;
-            border-radius: 50%;
-            background: #ccc;
-            display: inline-block;
-            margin: 0 5px;
-            cursor: pointer;
-        }
-        
-        .tutorial-bullet.active {
-            background: var(--color-accent);
-        }
-
-        /* ======================= DAILY CHALLENGE ======================= */
-        .challenge-card {
-            background: linear-gradient(135deg, #a8edea, #fed6e3);
-            border-radius: var(--radius-md);
-            padding: 20px;
-            margin: 15px 0;
-            border: 3px solid var(--color-primary);
-            text-align: center;
-        }
-        
-        .challenge-title {
-            font-family: var(--font-title);
-            color: var(--color-accent);
-            font-size: 24px;
-            margin-bottom: 10px;
-        }
-        
-        .challenge-description {
-            font-size: 16px;
-            color: var(--color-dark);
-            margin-bottom: 15px;
-        }
-        
-        .challenge-progress {
-            height: 10px;
-            background: rgba(255, 255, 255, 0.5);
-            border-radius: 5px;
-            overflow: hidden;
-            margin-bottom: 10px;
-        }
-        
-        .challenge-progress-fill {
-            height: 100%;
-            background: linear-gradient(90deg, var(--color-success), #27ae60);
-            border-radius: 5px;
-            transition: width 0.3s ease;
-        }
-        
-        .challenge-reward {
-            display: flex;
-            align-items: center;
-            justify-content: center;
-            gap: 10px;
-            font-family: var(--font-ui);
-            font-weight: bold;
-            color: var(--color-accent);
-        }
-
-        /* ======================= ACCESSIBILITY ======================= */
-        .sr-only {
-            position: absolute;
-            width: 1px;
-            height: 1px;
-            padding: 0;
-            margin: -1px;
-            overflow: hidden;
-            clip: rect(0, 0, 0, 0);
-            white-space: nowrap;
-            border: 0;
-        }
-        
-        .focus-visible {
-            outline: 3px solid var(--color-accent);
-            outline-offset: 3px;
-        }
-        
-        .high-contrast .stat-card {
-            background: white;
-            border: 3px solid black;
-        }
-        
-        .high-contrast .btn {
-            border: 3px solid black;
-        }
-
-        /* ======================= PERFORMANCE OPTIMIZATIONS ======================= */
-        .will-change-transform {
-            will-change: transform;
-        }
-        
-        .transform-3d {
-            -webkit-transform: translate3d(0,0,0);
-            transform: translate3d(0,0,0);
-            -webkit-backface-visibility: hidden;
-            backface-visibility: hidden;
-            -webkit-perspective: 1000;
-            perspective: 1000;
+            top: 20px;
+            right: 20px;
+            z-index: 1002;
+            pointer-events: none;
         }
 
         /* ======================= ERROR OVERLAY ======================= */
@@ -1581,48 +663,9 @@
             overflow: auto;
             -webkit-overflow-scrolling: touch;
         }
-
-        /* ======================= IOS WARNING ======================= */
-        .ios-warning {
-            position: fixed;
-            top: 0;
-            left: 0;
-            right: 0;
-            background: linear-gradient(135deg, #ff9a00, #ff5e00);
-            color: white;
-            padding: 12px 16px;
-            text-align: center;
-            font-family: var(--font-ui);
-            font-size: 14px;
-            font-weight: bold;
-            z-index: 99999;
-            box-shadow: 0 4px 12px rgba(0,0,0,0.2);
-            display: none;
-        }
-        
-        .ios-warning.active {
-            display: block;
-        }
-        
-        .ios-warning button {
-            background: white;
-            color: #ff5e00;
-            border: none;
-            border-radius: 20px;
-            padding: 6px 16px;
-            margin-left: 12px;
-            font-weight: bold;
-            cursor: pointer;
-        }
     </style>
 </head>
 <body>
-    <!-- iOS Warning -->
-    <div class="ios-warning" id="ios-warning">
-        <span>Tap anywhere to enable sound and controls</span>
-        <button id="ios-warning-dismiss">Got it!</button>
-    </div>
-
     <!-- Loading Screen -->
     <div class="loading-screen" id="loading-screen">
         <div class="loading-logo"></div>
@@ -1644,26 +687,7 @@
             </div>
             <div class="tutorial-step" id="tutorial-step-2">
                 <h2 class="overlay-title">Controls</h2>
-                <div class="settings-section">
-                    <div class="setting-item">
-                        <div class="setting-label">
-                            <i class="fas fa-mouse-pointer setting-icon"></i>
-                            <div>
-                                <strong>Mouse/Touch:</strong><br>
-                                Move left and right to catch honey
-                            </div>
-                        </div>
-                    </div>
-                    <div class="setting-item">
-                        <div class="setting-label">
-                            <i class="fas fa-keyboard setting-icon"></i>
-                            <div>
-                                <strong>Keyboard:</strong><br>
-                                Use A/D or Arrow keys to move
-                            </div>
-                        </div>
-                    </div>
-                </div>
+                <p class="subtitle">Touch and drag to move Pooh left and right</p>
                 <div class="btn-grid">
                     <button class="btn btn-secondary" id="tutorial-prev">← Back</button>
                     <button class="btn btn-success" id="tutorial-next-2">Next →</button>
@@ -1671,28 +695,7 @@
             </div>
             <div class="tutorial-step" id="tutorial-step-3">
                 <h2 class="overlay-title">Game Elements</h2>
-                <div class="character-grid">
-                    <div class="character-card">
-                        <div class="character-icon">🍯</div>
-                        <div class="character-name">Honey</div>
-                        <div class="character-ability">+10 points</div>
-                    </div>
-                    <div class="character-card">
-                        <div class="character-icon">🌟</div>
-                        <div class="character-name">Gold Honey</div>
-                        <div class="character-ability">+25 points</div>
-                    </div>
-                    <div class="character-card">
-                        <div class="character-icon">🐝</div>
-                        <div class="character-name">Bee</div>
-                        <div class="character-ability">-1 life</div>
-                    </div>
-                    <div class="character-card">
-                        <div class="character-icon">💀</div>
-                        <div class="character-name">Cursed Honey</div>
-                        <div class="character-ability">-15 points</div>
-                    </div>
-                </div>
+                <p class="subtitle">🍯 Honey = +10 points<br>🌟 Gold Honey = +25 points<br>🐝 Bee = -1 life</p>
                 <div class="btn-grid">
                     <button class="btn btn-secondary" id="tutorial-prev-2">← Back</button>
                     <button class="btn btn-success" id="tutorial-start">Start Playing!</button>
@@ -1704,10 +707,8 @@
     <!-- Error Overlay -->
     <div class="error-overlay hidden" id="error-overlay"></div>
 
-    <!-- Layers -->
-    <div class="layer" id="bg-layer"></div>
-    <div class="layer" id="weather-layer"></div>
-    <div class="layer" id="game-layer">
+    <!-- Game Layer -->
+    <div id="game-layer">
         <!-- HUD -->
         <div class="hud" id="hud">
             <div class="hud-header">
@@ -1745,15 +746,13 @@
                 <div class="level-display" id="next-level-label">0/300</div>
             </div>
 
-            <!-- Achievements pill inside HUD -->
-            <div class="hud-achievements">
-                <button class="achievements-pill" id="achievements-pill" aria-label="View achievements">
-                    <span class="trophy">🏆</span>
-                    <span class="label">Achievements</span>
-                    <span class="count" id="achievements-count">0/20</span>
-                    <span class="chev">›</span>
-                </button>
-            </div>
+            <!-- Achievements pill -->
+            <button class="achievements-pill" id="achievements-pill">
+                <span class="trophy">🏆</span>
+                <span class="label">Achievements</span>
+                <span class="count" id="achievements-count">0/20</span>
+                <span class="chev">›</span>
+            </button>
         </div>
 
         <!-- Power-up Indicators -->
@@ -1774,2312 +773,857 @@
             <canvas id="game-canvas" width="420" height="700"></canvas>
         </div>
 
-        <!-- Virtual Joystick (Mobile) -->
-        <div class="virtual-joystick" id="virtual-joystick">
-            <div class="joystick-base"></div>
-            <div class="joystick-handle" id="joystick-handle"></div>
-        </div>
-    </div>
-
-    <!-- UI Layer -->
-    <div class="layer" id="ui-layer">
-        <!-- Control Clusters -->
+        <!-- Control Buttons -->
         <div class="control-cluster top-left">
-            <button class="control-btn" id="sound-toggle-btn" aria-label="Toggle sound">
+            <button class="control-btn" id="sound-toggle-btn">
                 <i class="fas fa-volume-up"></i>
             </button>
-            <button class="control-btn" id="menu-toggle" aria-label="Open menu">
+            <button class="control-btn" id="menu-toggle">
                 <i class="fas fa-bars"></i>
             </button>
         </div>
         
         <div class="control-cluster top-right">
-            <button class="control-btn" id="pause-toggle" aria-label="Pause game">
+            <button class="control-btn" id="pause-toggle">
                 <i class="fas fa-pause"></i>
             </button>
-            <button class="control-btn" id="share-btn" aria-label="Share score">
+            <button class="control-btn" id="share-btn">
                 <i class="fas fa-share-alt"></i>
             </button>
         </div>
         
         <div class="control-cluster bottom-right">
-            <button class="control-btn" id="weather-toggle" aria-label="Change weather">
+            <button class="control-btn" id="weather-toggle">
                 🌦️
             </button>
-            <button class="control-btn" id="virtual-joystick-toggle" aria-label="Toggle virtual joystick">
-                🕹️
+            <button class="control-btn" id="help-btn">
+                <i class="fas fa-question"></i>
             </button>
         </div>
         
         <div class="control-cluster bottom-left">
-            <button class="control-btn" id="help-btn" aria-label="Show help">
-                <i class="fas fa-question"></i>
-            </button>
-            <button class="control-btn" id="tutorial-btn" aria-label="Show tutorial">
+            <button class="control-btn" id="tutorial-btn">
                 <i class="fas fa-graduation-cap"></i>
             </button>
         </div>
     </div>
 
-    <!-- Overlay Layer -->
-    <div class="layer" id="overlay-layer">
-        <!-- Start Screen -->
-        <div class="overlay-content" id="start-screen">
-            <div class="overlay-header">
-                <h1 class="overlay-title">Welcome to the<br>Hundred Acre Wood</h1>
-                <button class="close-btn" id="close-start">&times;</button>
-            </div>
-            
-            <div class="welcome-section">
-                <div class="pooh-avatar"></div>
-                <p class="welcome-text">Oh bother! I need your help!</p>
-                <p class="subtitle">Catch honey pots, avoid bees, and unlock helpers!</p>
-            </div>
-            
-            <!-- Daily Challenge Card -->
-            <div class="challenge-card" id="daily-challenge-card">
-                <div class="challenge-title">📅 Daily Challenge</div>
-                <div class="challenge-description" id="daily-challenge-desc">Catch 50 honey pots</div>
-                <div class="challenge-progress">
-                    <div class="challenge-progress-fill" id="daily-challenge-progress" style="width: 0%"></div>
-                </div>
-                <div class="challenge-reward">
-                    <i class="fas fa-gem"></i>
-                    <span id="daily-challenge-reward">+100 Bonus Points</span>
-                </div>
-            </div>
-            
-            <div class="feature-badge">
-                <h3>🎮 Ultimate Edition!</h3>
-                <p>Daily challenges • Weather effects • Achievements • Leaderboards • Enhanced graphics</p>
-            </div>
-            
-            <div class="btn-grid">
-                <button class="btn" id="quick-start">
-                    <i class="fas fa-play"></i> Quick Start
-                </button>
-                <button class="btn btn-secondary" id="select-character-btn">
-                    <i class="fas fa-users"></i> Choose Helper
-                </button>
-                <button class="btn btn-secondary" id="daily-challenge-btn">
-                    <i class="fas fa-calendar-day"></i> Daily Challenge
-                </button>
-                <button class="btn btn-secondary" id="settings-btn">
-                    <i class="fas fa-cog"></i> Settings
-                </button>
-                <button class="btn btn-secondary" id="leaderboard-btn-main">
-                    <i class="fas fa-trophy"></i> Leaderboard
-                </button>
-            </div>
-            
-            <button class="btn btn-success" id="start-btn">
-                <i class="fas fa-honey-pot"></i> Start Adventure!
-            </button>
-        </div>
-
-        <!-- Pause Screen -->
-        <div class="overlay-content hidden" id="pause-screen">
-            <div class="overlay-header">
-                <h1 class="overlay-title">Game Paused</h1>
-                <button class="close-btn" id="resume-btn">&times;</button>
-            </div>
-            
-            <div class="results-section">
-                <div class="final-score" id="pause-score">0</div>
-                
-                <div class="results-stats">
-                    <div class="stat-row">
-                        <span class="stat-label">Current Streak</span>
-                        <span class="stat-value" id="pause-streak">0</span>
-                    </div>
-                    <div class="stat-row">
-                        <span class="stat-label">Lives Remaining</span>
-                        <span class="stat-value" id="pause-lives">3</span>
-                    </div>
-                    <div class="stat-row">
-                        <span class="stat-label">Time Played</span>
-                        <span class="stat-value" id="pause-time">0s</span>
-                    </div>
-                    <div class="stat-row">
-                        <span class="stat-label">Daily Progress</span>
-                        <span class="stat-value" id="pause-daily">0/50</span>
-                    </div>
-                </div>
-                
-                <div class="btn-grid">
-                    <button class="btn" id="continue-btn">
-                        <i class="fas fa-play"></i> Continue
-                    </button>
-                    <button class="btn btn-secondary" id="restart-btn">
-                        <i class="fas fa-redo"></i> Restart
-                    </button>
-                    <button class="btn btn-danger" id="quit-btn">
-                        <i class="fas fa-home"></i> Main Menu
-                    </button>
-                </div>
-            </div>
-        </div>
-
-        <!-- Game Over Screen -->
-        <div class="overlay-content hidden" id="gameover-screen">
-            <div class="overlay-header">
-                <h1 class="overlay-title">Game Over!</h1>
-                <button class="close-btn" id="gameover-close">&times;</button>
-            </div>
-            
-            <div class="results-section">
-                <div class="final-score" id="final-score">0</div>
-                
-                <div id="new-record-badge" class="new-record hidden">
-                    🏆 New Personal Best! 🏆
-                </div>
-                
-                <div id="daily-complete-badge" class="new-record hidden" style="background: linear-gradient(135deg, #a8edea, #fed6e3);">
-                    🎉 Daily Challenge Complete! +100 Bonus Points
-                </div>
-                
-                <div class="results-stats">
-                    <div class="stat-row">
-                        <span class="stat-label">Total Score</span>
-                        <span class="stat-value" id="final-total">0</span>
-                    </div>
-                    <div class="stat-row">
-                        <span class="stat-label">Highest Streak</span>
-                        <span class="stat-value" id="final-streak">0</span>
-                    </div>
-                    <div class="stat-row">
-                        <span class="stat-label">Honey Caught</span>
-                        <span class="stat-value" id="final-honey">0</span>
-                    </div>
-                    <div class="stat-row">
-                        <span class="stat-label">Level Reached</span>
-                        <span class="stat-value" id="final-level">Beginner</span>
-                    </div>
-                    <div class="stat-row">
-                        <span class="stat-label">Bees Avoided</span>
-                        <span class="stat-value" id="final-bees">0</span>
-                    </div>
-                </div>
-                
-                <div class="btn-grid">
-                    <button class="btn" id="play-again-btn">
-                        <i class="fas fa-redo"></i> Play Again
-                    </button>
-                    <button class="btn btn-secondary" id="leaderboard-btn">
-                        <i class="fas fa-trophy"></i> Leaderboard
-                    </button>
-                    <button class="btn btn-secondary" id="share-final-btn">
-                        <i class="fas fa-share"></i> Share Score
-                    </button>
-                </div>
-            </div>
-        </div>
-
-        <!-- Character Select -->
-        <div class="overlay-content hidden" id="character-screen">
-            <div class="overlay-header">
-                <h1 class="overlay-title">Choose Your Helper</h1>
-                <button class="close-btn" id="close-character">&times;</button>
-            </div>
-            
-            <p class="subtitle text-center mb-3">Each helper has unique abilities!</p>
-            
-            <div class="character-grid" id="character-grid">
-                <!-- Characters will be dynamically added -->
-            </div>
-            
-            <div class="btn-grid">
-                <button class="btn" id="start-with-character-btn">
-                    <i class="fas fa-check"></i> Start Game
-                </button>
-                <button class="btn btn-secondary" id="back-to-menu-btn">
-                    <i class="fas fa-arrow-left"></i> Back to Menu
-                </button>
-            </div>
-        </div>
-
-        <!-- Settings -->
-        <div class="overlay-content hidden" id="settings-screen">
-            <div class="overlay-header">
-                <h1 class="overlay-title">Settings</h1>
-                <button class="close-btn" id="close-settings">&times;</button>
-            </div>
-            
-            <div class="settings-section">
-                <div class="setting-item">
-                    <div class="setting-label">
-                        <i class="fas fa-volume-up setting-icon"></i>
-                        Sound Effects
-                    </div>
-                    <label class="toggle-switch">
-                        <input type="checkbox" id="sound-toggle-setting" checked>
-                        <span class="toggle-slider"></span>
-                    </label>
-                </div>
-                
-                <div class="setting-item">
-                    <div class="setting-label">
-                        <i class="fas fa-music setting-icon"></i>
-                        Background Music
-                    </div>
-                    <label class="toggle-switch">
-                        <input type="checkbox" id="music-toggle-setting" checked>
-                        <span class="toggle-slider"></span>
-                    </label>
-                </div>
-                
-                <div class="setting-item">
-                    <div class="setting-label">
-                        <i class="fas fa-vibrate setting-icon"></i>
-                        Haptic Feedback
-                    </div>
-                    <label class="toggle-switch">
-                        <input type="checkbox" id="haptic-toggle-setting" checked>
-                        <span class="toggle-slider"></span>
-                    </label>
-                </div>
-                
-                <div class="setting-item">
-                    <div class="setting-label">
-                        <i class="fas fa-paint-brush setting-icon"></i>
-                        Visual Effects
-                    </div>
-                    <label class="toggle-switch">
-                        <input type="checkbox" id="effects-toggle-setting" checked>
-                        <span class="toggle-slider"></span>
-                    </label>
-                </div>
-                
-                <div class="setting-item">
-                    <div class="setting-label">
-                        <i class="fas fa-joystick setting-icon"></i>
-                        Virtual Joystick
-                    </div>
-                    <label class="toggle-switch">
-                        <input type="checkbox" id="joystick-toggle-setting">
-                        <span class="toggle-slider"></span>
-                    </label>
-                </div>
-                
-                <div class="setting-item">
-                    <div class="setting-label">
-                        <i class="fas fa-eye setting-icon"></i>
-                        High Contrast Mode
-                    </div>
-                    <label class="toggle-switch">
-                        <input type="checkbox" id="contrast-toggle-setting">
-                        <span class="toggle-slider"></span>
-                    </label>
-                </div>
-            </div>
-            
-            <div class="btn-grid">
-                <button class="btn btn-success" id="save-settings">
-                    <i class="fas fa-save"></i> Save Settings
-                </button>
-                <button class="btn btn-secondary" id="reset-progress">
-                    <i class="fas fa-trash"></i> Reset Progress
-                </button>
-                <button class="btn btn-danger" id="reset-confirm" style="display: none;">
-                    <i class="fas fa-exclamation-triangle"></i> Confirm Reset
-                </button>
-            </div>
-        </div>
-
-        <!-- Achievements -->
-        <div class="overlay-content hidden" id="achievements-screen">
-            <div class="overlay-header">
-                <h1 class="overlay-title">Achievements</h1>
-                <button class="close-btn" id="close-achievements-btn">&times;</button>
-            </div>
-            
-            <div class="achievements-list" id="achievements-list">
-                <!-- Achievements will be dynamically added -->
-            </div>
-            
-            <button class="btn btn-secondary" id="close-achievements-btn-2">
-                <i class="fas fa-arrow-left"></i> Back
-            </button>
-        </div>
-
-        <!-- Help Screen -->
-        <div class="overlay-content hidden" id="help-screen">
-            <div class="overlay-header">
-                <h1 class="overlay-title">How to Play</h1>
-                <button class="close-btn" id="close-help-btn">&times;</button>
-            </div>
-            
-            <div class="settings-section">
-                <div class="setting-item">
-                    <div class="setting-label">
-                        <i class="fas fa-mouse-pointer setting-icon"></i>
-                        <div>
-                            <strong>Controls:</strong><br>
-                            Move mouse or touch to control Pooh<br>
-                            Use A/D or Arrow keys on desktop
-                        </div>
-                    </div>
-                </div>
-                
-                <div class="setting-item">
-                    <div class="setting-label">
-                        <i class="fas fa-honey-pot setting-icon"></i>
-                        <div>
-                            <strong>Catch Honey:</strong><br>
-                            Normal honey = 10 points<br>
-                            Golden honey = 25 points<br>
-                            Cursed honey = -15 points & -1 life
-                        </div>
-                    </div>
-                </div>
-                
-                <div class="setting-item">
-                    <div class="setting-label">
-                        <i class="fas fa-bee setting-icon"></i>
-                        <div>
-                            <strong>Avoid Bees:</strong><br>
-                            Bees reduce your lives<br>
-                            Keep your streak for combo bonus<br>
-                            Shield protects from bees
-                        </div>
-                    </div>
-                </div>
-                
-                <div class="setting-item">
-                    <div class="setting-label">
-                        <i class="fas fa-bolt setting-icon"></i>
-                        <div>
-                            <strong>Power-ups:</strong><br>
-                            Shield = protection from bees<br>
-                            Slow = slows everything down<br>
-                            Magnet = attracts honey to you
-                        </div>
-                    </div>
-                </div>
-                
-                <div class="setting-item">
-                    <div class="setting-label">
-                        <i class="fas fa-users setting-icon"></i>
-                        <div>
-                            <strong>Helpers:</strong><br>
-                            Unlock new helpers as you progress<br>
-                            Each has unique abilities
-                        </div>
-                    </div>
-                </div>
-            </div>
-            
-            <button class="btn" id="view-achievements-btn">
-                <i class="fas fa-trophy"></i> View Achievements
-            </button>
-        </div>
-
-        <!-- Leaderboard Screen -->
-        <div class="overlay-content hidden" id="leaderboard-screen">
-            <div class="overlay-header">
-                <h1 class="overlay-title">Leaderboard</h1>
-                <button class="close-btn" id="close-leaderboard-btn">&times;</button>
-            </div>
-            
-            <div class="settings-section">
-                <div class="setting-item">
-                    <div class="setting-label">
-                        <i class="fas fa-crown setting-icon"></i>
-                        <div>
-                            <strong>Global High Scores</strong><br>
-                            <small>Powered by Local Storage</small>
-                        </div>
-                    </div>
-                </div>
-                
-                <div id="leaderboard-list">
-                    <!-- Leaderboard entries will be dynamically added -->
-                </div>
-                
-                <div class="setting-item" style="border-bottom: none;">
-                    <div class="setting-label">
-                        <i class="fas fa-info-circle setting-icon"></i>
-                        <div>
-                            <strong>Note:</strong><br>
-                            Leaderboard data is stored locally in your browser.
-                        </div>
-                    </div>
-                </div>
-            </div>
-            
-            <div class="btn-grid">
-                <button class="btn btn-secondary" id="refresh-leaderboard">
-                    <i class="fas fa-sync"></i> Refresh
-                </button>
-                <button class="btn btn-secondary" id="clear-leaderboard">
-                    <i class="fas fa-trash"></i> Clear Local Data
-                </button>
-            </div>
-        </div>
-
-        <!-- Daily Challenge Screen -->
-        <div class="overlay-content hidden" id="daily-challenge-screen">
-            <div class="overlay-header">
-                <h1 class="overlay-title">Daily Challenges</h1>
-                <button class="close-btn" id="close-daily-btn">&times;</button>
-            </div>
-            
-            <div class="challenge-card">
-                <div class="challenge-title" id="current-daily-title">Today's Challenge</div>
-                <div class="challenge-description" id="current-daily-desc">Loading...</div>
-                <div class="challenge-progress">
-                    <div class="challenge-progress-fill" id="current-daily-progress" style="width: 0%"></div>
-                </div>
-                <div class="challenge-reward">
-                    <i class="fas fa-gem"></i>
-                    <span id="current-daily-reward">+100 Bonus Points</span>
-                </div>
-            </div>
-            
-            <div class="settings-section">
-                <div class="setting-item">
-                    <div class="setting-label">
-                        <i class="fas fa-calendar-alt setting-icon"></i>
-                        <div>
-                            <strong>Challenge Reset</strong><br>
-                            Daily challenges reset at midnight local time
-                        </div>
-                    </div>
-                </div>
-                
-                <div class="setting-item">
-                    <div class="setting-label">
-                        <i class="fas fa-trophy setting-icon"></i>
-                        <div>
-                            <strong>Streak Bonus</strong><br>
-                            Complete challenges daily for bonus points!
-                        </div>
-                    </div>
-                </div>
-            </div>
-            
-            <div class="btn-grid">
-                <button class="btn btn-success" id="start-daily-challenge">
-                    <i class="fas fa-play"></i> Start Daily Challenge
-                </button>
-                <button class="btn btn-secondary" id="view-achievements-from-daily">
-                    <i class="fas fa-trophy"></i> View Achievements
-                </button>
-            </div>
-        </div>
-    </div>
-
-    <!-- Weather Drawer -->
-    <div class="weather-drawer" id="weather-drawer">
+    <!-- Start Screen -->
+    <div class="overlay-content" id="start-screen">
         <div class="overlay-header">
-            <h1 class="overlay-title">Weather Effects</h1>
-            <button class="close-btn" id="weather-close">&times;</button>
+            <h1 class="overlay-title">Welcome to the<br>Hundred Acre Wood</h1>
+            <button class="close-btn" id="close-start">&times;</button>
         </div>
         
-        <p class="subtitle text-center mb-3">Change the atmosphere!</p>
-        
-        <div class="weather-grid">
-            <button class="weather-option weather-btn active" data-weather="clear" title="Clear Sky">
-                ☀️
-            </button>
-            <button class="weather-option weather-btn" data-weather="rain" title="Rain">
-                🌧️
-            </button>
-            <button class="weather-option weather-btn" data-weather="snow" title="Snow">
-                ❄️
-            </button>
-            <button class="weather-option weather-btn" data-weather="leaves" title="Falling Leaves">
-                🍂
-            </button>
-            <button class="weather-option weather-btn" data-weather="blossoms" title="Cherry Blossoms">
-                🌸
-            </button>
-            <button class="weather-option weather-btn" data-weather="windy" title="Windy">
-                💨
-            </button>
-            <button class="weather-option weather-btn" data-weather="foggy" title="Foggy">
-                🌫️
-            </button>
-            <button class="weather-option weather-btn" data-weather="starry" title="Starry Night">
-                🌠
-            </button>
+        <div class="welcome-section">
+            <div class="pooh-avatar"></div>
+            <p class="welcome-text">Oh bother! I need your help!</p>
+            <p class="subtitle">Catch honey pots, avoid bees, and have fun!</p>
         </div>
         
-        <div class="settings-section mt-3">
-            <div class="setting-item">
-                <div class="setting-label">
-                    <i class="fas fa-sliders-h setting-icon"></i>
-                    Weather Intensity
+        <div style="background: linear-gradient(135deg, #ffeaa7, #fdcb6e); border-radius: 20px; padding: 15px; margin: 20px 0; border: 3px solid #d4a574; text-align: center;">
+            <h3 style="font-family: 'Bubblegum Sans', cursive; color: #e67e22; margin-bottom: 8px; font-size: 20px;">🎮 Ultimate Edition!</h3>
+            <p style="font-size: 14px; color: #2c3e50;">Daily challenges • Weather effects • Achievements • Leaderboards</p>
+        </div>
+        
+        <button class="btn btn-success" id="start-btn" style="margin-top: 20px;">
+            <i class="fas fa-honey-pot"></i> Start Adventure!
+        </button>
+        
+        <div class="btn-grid">
+            <button class="btn btn-secondary" id="quick-start">
+                <i class="fas fa-play"></i> Quick Start
+            </button>
+            <button class="btn btn-secondary" id="settings-btn">
+                <i class="fas fa-cog"></i> Settings
+            </button>
+        </div>
+    </div>
+
+    <!-- Pause Screen -->
+    <div class="overlay-content hidden" id="pause-screen">
+        <div class="overlay-header">
+            <h1 class="overlay-title">Game Paused</h1>
+            <button class="close-btn" id="resume-btn">&times;</button>
+        </div>
+        
+        <div class="results-section">
+            <div class="final-score" id="pause-score">0</div>
+            
+            <div class="results-stats">
+                <div class="stat-row">
+                    <span>Current Streak</span>
+                    <span class="stat-value" id="pause-streak">0</span>
                 </div>
-                <input type="range" id="weather-intensity" min="1" max="10" value="5" style="width: 100px;">
+                <div class="stat-row">
+                    <span>Lives Remaining</span>
+                    <span class="stat-value" id="pause-lives">3</span>
+                </div>
+                <div class="stat-row">
+                    <span>Time Played</span>
+                    <span class="stat-value" id="pause-time">0s</span>
+                </div>
+            </div>
+            
+            <div class="btn-grid">
+                <button class="btn" id="continue-btn">
+                    <i class="fas fa-play"></i> Continue
+                </button>
+                <button class="btn btn-secondary" id="restart-btn">
+                    <i class="fas fa-redo"></i> Restart
+                </button>
+                <button class="btn btn-danger" id="quit-btn">
+                    <i class="fas fa-home"></i> Main Menu
+                </button>
             </div>
         </div>
     </div>
 
-    <!-- Honey Cursor -->
-    <div class="honey-cursor" id="honey-cursor">
-        <div class="spoon"></div>
+    <!-- Game Over Screen -->
+    <div class="overlay-content hidden" id="gameover-screen">
+        <div class="overlay-header">
+            <h1 class="overlay-title">Game Over!</h1>
+            <button class="close-btn" id="gameover-close">&times;</button>
+        </div>
+        
+        <div class="results-section">
+            <div class="final-score" id="final-score">0</div>
+            
+            <div id="new-record-badge" class="new-record hidden">
+                🏆 New Personal Best! 🏆
+            </div>
+            
+            <div class="results-stats">
+                <div class="stat-row">
+                    <span>Total Score</span>
+                    <span class="stat-value" id="final-total">0</span>
+                </div>
+                <div class="stat-row">
+                    <span>Highest Streak</span>
+                    <span class="stat-value" id="final-streak">0</span>
+                </div>
+                <div class="stat-row">
+                    <span>Honey Caught</span>
+                    <span class="stat-value" id="final-honey">0</span>
+                </div>
+            </div>
+            
+            <div class="btn-grid">
+                <button class="btn" id="play-again-btn">
+                    <i class="fas fa-redo"></i> Play Again
+                </button>
+                <button class="btn btn-secondary" id="share-final-btn">
+                    <i class="fas fa-share"></i> Share Score
+                </button>
+            </div>
+        </div>
+    </div>
+
+    <!-- Settings Screen -->
+    <div class="overlay-content hidden" id="settings-screen">
+        <div class="overlay-header">
+            <h1 class="overlay-title">Settings</h1>
+            <button class="close-btn" id="close-settings">&times;</button>
+        </div>
+        
+        <div style="background: #f9f3e9; border-radius: 20px; padding: 20px; margin: 20px 0; border: 3px solid #d4a574;">
+            <div style="display: flex; justify-content: space-between; align-items: center; padding: 15px 0; border-bottom: 1px solid rgba(0,0,0,0.1);">
+                <div style="display: flex; align-items: center; gap: 12px; font-size: 16px; color: #2c3e50;">
+                    <i class="fas fa-volume-up" style="font-size: 20px; color: #e67e22; width: 30px;"></i>
+                    Sound Effects
+                </div>
+                <label style="position: relative; display: inline-block; width: 60px; height: 30px;">
+                    <input type="checkbox" id="sound-toggle-setting" checked style="opacity: 0; width: 0; height: 0;">
+                    <span style="position: absolute; cursor: pointer; top: 0; left: 0; right: 0; bottom: 0; background-color: #ccc; transition: .4s; border-radius: 34px;"></span>
+                    <span style="position: absolute; content: ''; height: 22px; width: 22px; left: 4px; bottom: 4px; background-color: white; transition: .4s; border-radius: 50%;"></span>
+                </label>
+            </div>
+            
+            <div style="display: flex; justify-content: space-between; align-items: center; padding: 15px 0;">
+                <div style="display: flex; align-items: center; gap: 12px; font-size: 16px; color: #2c3e50;">
+                    <i class="fas fa-paint-brush" style="font-size: 20px; color: #e67e22; width: 30px;"></i>
+                    Visual Effects
+                </div>
+                <label style="position: relative; display: inline-block; width: 60px; height: 30px;">
+                    <input type="checkbox" id="effects-toggle-setting" checked style="opacity: 0; width: 0; height: 0;">
+                    <span style="position: absolute; cursor: pointer; top: 0; left: 0; right: 0; bottom: 0; background-color: #ccc; transition: .4s; border-radius: 34px;"></span>
+                    <span style="position: absolute; content: ''; height: 22px; width: 22px; left: 4px; bottom: 4px; background-color: white; transition: .4s; border-radius: 50%;"></span>
+                </label>
+            </div>
+        </div>
+        
+        <button class="btn btn-success" id="save-settings">
+            <i class="fas fa-save"></i> Save Settings
+        </button>
     </div>
 
     <!-- Notification Container -->
     <div id="notification-container"></div>
-    <div id="weather-effects"></div>
 
 <script>
-(() => {
-  "use strict";
-
-  /* ======================= IOS DETECTION ======================= */
-  const isIOS = /iPad|iPhone|iPod/.test(navigator.userAgent) && !window.MSStream;
-  const isSafari = /^((?!chrome|android).)*safari/i.test(navigator.userAgent);
-  const isIOSChrome = /CriOS/.test(navigator.userAgent);
-
-  /* ======================= DEBUG LOG ======================= */
-  console.log('iOS Device:', isIOS, 'Safari:', isSafari, 'Chrome iOS:', isIOSChrome);
-  console.log('User Agent:', navigator.userAgent);
-
-  /* ======================= IOS WARNING ======================= */
-  if (isIOS) {
-    const warning = document.getElementById('ios-warning');
-    if (warning) {
-      warning.classList.add('active');
-      
-      // Hide warning after first tap
-      document.addEventListener('touchstart', function hideWarning() {
-        warning.classList.remove('active');
-        document.removeEventListener('touchstart', hideWarning);
-      }, { once: true });
-      
-      document.getElementById('ios-warning-dismiss')?.addEventListener('click', () => {
-        warning.classList.remove('active');
-      });
-    }
-  }
-
-  /* ======================= CRASH OVERLAY ======================= */
-  (function setupCrashOverlay() {
-    function show(msg) {
-      try {
-        const el = document.getElementById("error-overlay");
-        if (!el) return;
-        el.textContent = String(msg).substring(0, 1200);
-        el.classList.remove("hidden");
-      } catch {}
-    }
-    window.addEventListener("error", (e) => show("JS ERROR: " + (e.message || e.type)));
-    window.addEventListener("unhandledrejection", (e) =>
-      show("PROMISE REJECTION: " + (e.reason?.message || String(e.reason)))
-    );
-  })();
-
-  if (window.__POOH_HONEY_HUNT_LOADED__) return;
-  window.__POOH_HONEY_HUNT_LOADED__ = true;
-
-  /* ======================= DOM HELPERS ======================= */
-  const $ = (sel) => (typeof sel === "string" ? document.getElementById(sel) || document.querySelector(sel) : null);
-
-  function addPress(el, fn, opts = {}) {
-    if (!el) return;
-    const handler = (e) => {
-      if (opts.prevent !== false) e.preventDefault();
-      if (opts.stop !== false) e.stopPropagation();
-      fn(e);
+(function() {
+    "use strict";
+    
+    // Detect iOS
+    const isIOS = /iPad|iPhone|iPod/.test(navigator.userAgent) && !window.MSStream;
+    console.log('iOS detected:', isIOS);
+    
+    // Prevent accidental zooming
+    document.addEventListener('touchstart', function(e) {
+        if (e.touches.length > 1) {
+            e.preventDefault();
+        }
+    }, { passive: false });
+    
+    document.addEventListener('gesturestart', function(e) {
+        e.preventDefault();
+    });
+    
+    // DOM elements
+    const $ = (id) => document.getElementById(id);
+    
+    // Game state
+    const GameState = {
+        running: false,
+        paused: false,
+        score: 0,
+        lives: 3,
+        combo: 1.0,
+        streak: 0,
+        soundEnabled: true,
+        visualEffects: true
     };
-    el.addEventListener("pointerdown", handler, { passive: false });
-    el.addEventListener("touchstart", handler, { passive: false });
-    el.addEventListener("click", handler, { passive: false });
-  }
-
-  const clamp = (v, a, b) => Math.max(a, Math.min(b, v));
-  const distance = (x1, y1, x2, y2) => Math.sqrt((x2 - x1) ** 2 + (y2 - y1) ** 2);
-
-  /* ======================= SAFE STORAGE ======================= */
-  const Storage = {
-    get(key, fallback = null) {
-      try {
-        const v = localStorage.getItem(key);
-        return v === null ? fallback : JSON.parse(v);
-      } catch {
-        return fallback;
-      }
-    },
-    set(key, value) {
-      try {
-        localStorage.setItem(key, JSON.stringify(value));
-        return true;
-      } catch (e) {
-        console.warn('Storage full, attempting cleanup...');
+    
+    // Canvas setup
+    const canvas = $('game-canvas');
+    const ctx = canvas.getContext('2d');
+    const BASE_W = 420;
+    const BASE_H = 700;
+    
+    // Player
+    const player = { x: BASE_W / 2, y: BASE_H - 96, r: 30 };
+    let targetX = player.x;
+    let isTouching = false;
+    
+    // Game objects
+    const honeys = [];
+    const bees = [];
+    
+    // Audio context (iOS compatible)
+    let audioCtx = null;
+    let audioInitialized = false;
+    
+    function initAudio() {
+        if (audioInitialized) return;
         try {
-          // Clear some old data if storage is full
-          const keys = Object.keys(localStorage);
-          if (keys.length > 20) {
-            for (let i = 0; i < 5; i++) {
-              if (keys[i] && !keys[i].includes('settings')) {
-                localStorage.removeItem(keys[i]);
-              }
-            }
-          }
-          localStorage.setItem(key, JSON.stringify(value));
-          return true;
-        } catch {
-          return false;
+            audioCtx = new (window.AudioContext || window.webkitAudioContext)();
+            audioInitialized = true;
+            console.log('Audio initialized');
+        } catch (e) {
+            console.log('Audio not supported:', e);
         }
-      }
-    },
-    remove(key) {
-      try {
-        localStorage.removeItem(key);
-      } catch {}
-    },
-  };
-
-  /* ======================= STORYBOOK VOICE ======================= */
-  const Story = (() => {
-    const host = $("notification-container");
-
-    function toast(text, ms = 2200) {
-      if (!host) return;
-      const n = document.createElement("div");
-      n.style.pointerEvents = "none";
-      n.style.marginBottom = "10px";
-      n.style.padding = "12px 14px";
-      n.style.borderRadius = "16px";
-      n.style.border = "3px solid rgba(44,62,80,0.25)";
-      n.style.background = "rgba(255,255,255,0.96)";
-      n.style.boxShadow = "0 6px 20px rgba(0,0,0,0.16)";
-      n.style.fontFamily = "var(--font-body)";
-      n.style.fontSize = "16px";
-      n.style.lineHeight = "1.25";
-      n.textContent = text;
-      host.appendChild(n);
-      setTimeout(() => {
-        n.style.opacity = "0";
-        n.style.transition = "opacity 280ms ease";
-        setTimeout(() => n.remove(), 320);
-      }, ms);
-    }
-
-    const Lines = {
-      poohStart: [
-        "Pooh: Right then. Let's be brave about it.",
-        "Pooh: This seems like a good time for honey.",
-        "Pooh: Pooh is ready. Mostly.",
-      ],
-      poohCollect: [
-        "Pooh: That one looks like a particularly sensible honey.",
-        "Pooh: A very respectable catch.",
-        "Pooh: That's the sort of honey you can trust.",
-      ],
-      pigletEncourage: [
-        "Piglet: You're doing ever so well. Truly.",
-        "Piglet: Just a tiny bit more... and you've got it.",
-        "Piglet: I'm with you. Quietly. But definitely.",
-      ],
-      rabbitRules: [
-        "Rabbit: If we're doing this properly, we should mind the bees.",
-        "Rabbit: Try not to rush. Rushing is how trouble starts.",
-        "Rabbit: Rules are simple: honey good, bees not good.",
-      ],
-      tiggerHype: [
-        "Tigger: Bouncy feeling detected! Keep going!",
-        "Tigger: That's the way—quick quick quick!",
-        "Tigger: Hoo-hoo! Everything's getting exciting!",
-      ],
-      eeyoreGameOver: [
-        "Eeyore: Well. That was a thing that happened.",
-        "Eeyore: If you needed me, I was here the whole time.",
-        "Eeyore: Not the worst ending. Not the best either.",
-      ],
-    };
-
-    function pick(arr) {
-      return arr[(Math.random() * arr.length) | 0];
-    }
-
-    return { toast, pick, Lines };
-  })();
-
-  /* ======================= CONFIG ======================= */
-  const GAME_CONFIG = {
-    BASE_W: 420,
-    BASE_H: 700,
-    MAX_HONEYS: 40,
-    MAX_BEES: 26,
-    MAX_POWERS: 6,
-  };
-
-  /* ======================= STATE ======================= */
-  const GameState = {
-    running: false,
-    paused: false,
-
-    score: 0,
-    lives: 3,
-    combo: 1.0,
-    streak: 0,
-
-    honeyCaught: 0,
-    beesHit: 0,
-
-    startTimeMs: 0,
-    timePlayedMs: 0,
-
-    soundEnabled: true,
-    musicEnabled: false,
-    hapticEnabled: true,
-    visualEffects: true,
-
-    weather: "clear",
-    weatherIntensity: 5,
-
-    power: {
-      shieldUntil: 0,
-      slowUntil: 0,
-      magnetUntil: 0,
-    },
-  };
-
-  const saved = Storage.get("gameSettings");
-  if (saved) Object.assign(GameState, saved);
-
-  // iOS-specific defaults
-  if (isIOS) {
-    GameState.musicEnabled = false;
-    GameState.hapticEnabled = false; // iOS haptics can be problematic
-  }
-
-  /* ======================= CANVAS SETUP ======================= */
-  const canvas = $("game-canvas");
-  if (!canvas) return;
-  const ctx = canvas.getContext("2d", { alpha: false });
-
-  const { BASE_W, BASE_H } = GAME_CONFIG;
-
-  // iOS Canvas Optimizations
-  function fixIOSCanvas() {
-    if (!isIOS) return;
-    
-    canvas.style.transform = "translateZ(0)";
-    canvas.style.webkitTransform = "translateZ(0)";
-    canvas.style.imageRendering = "-webkit-optimize-contrast";
-    canvas.style.imageRendering = "pixelated";
-    
-    // Disable image smoothing for crisp pixels
-    ctx.imageSmoothingEnabled = false;
-    ctx.mozImageSmoothingEnabled = false;
-    ctx.webkitImageSmoothingEnabled = false;
-    ctx.msImageSmoothingEnabled = false;
-    
-    console.log('iOS canvas optimizations applied');
-  }
-
-  /* ======================= AUDIO CONTEXT (IOS FIXED) ======================= */
-  let audioCtx = null;
-  let audioInitialized = false;
-
-  function ensureAudio() {
-    if (!GameState.soundEnabled) return null;
-    
-    // iOS requires user gesture to create/resume audio context
-    if (!audioInitialized) {
-      console.log('Audio not initialized yet (requires user gesture on iOS)');
-      return null;
     }
     
-    try {
-      if (!audioCtx) {
-        audioCtx = new (window.AudioContext || window.webkitAudioContext)();
-        console.log('AudioContext created');
-      }
-      
-      if (audioCtx.state === 'suspended') {
-        audioCtx.resume().then(() => {
-          console.log('AudioContext resumed');
-        }).catch(e => {
-          console.warn('Failed to resume audio:', e);
+    function playSound(freq, duration = 0.1) {
+        if (!GameState.soundEnabled || !audioCtx) return;
+        
+        try {
+            const oscillator = audioCtx.createOscillator();
+            const gainNode = audioCtx.createGain();
+            
+            oscillator.connect(gainNode);
+            gainNode.connect(audioCtx.destination);
+            
+            oscillator.frequency.value = freq;
+            gainNode.gain.value = 0.1;
+            
+            const now = audioCtx.currentTime;
+            gainNode.gain.setValueAtTime(0.001, now);
+            gainNode.gain.exponentialRampToValueAtTime(0.1, now + 0.01);
+            gainNode.gain.exponentialRampToValueAtTime(0.001, now + duration);
+            
+            oscillator.start();
+            oscillator.stop(now + duration + 0.01);
+        } catch (e) {
+            // Audio error - ignore
+        }
+    }
+    
+    // Initialize audio on first interaction
+    ['touchstart', 'mousedown', 'click'].forEach(event => {
+        document.addEventListener(event, initAudio, { once: true });
+    });
+    
+    // Drawing functions
+    function drawBackground() {
+        const g = ctx.createLinearGradient(0, 0, 0, canvas.height);
+        g.addColorStop(0, "#87CEEB");
+        g.addColorStop(1, "#98FB98");
+        ctx.fillStyle = g;
+        ctx.fillRect(0, 0, canvas.width, canvas.height);
+    }
+    
+    function drawPlayer() {
+        ctx.save();
+        const x = (player.x / BASE_W) * canvas.width;
+        const y = (player.y / BASE_H) * canvas.height;
+        const scaleX = canvas.width / BASE_W;
+        const scaleY = canvas.height / BASE_H;
+        
+        ctx.translate(x, y);
+        ctx.scale(scaleX, scaleY);
+        
+        // Body
+        ctx.fillStyle = "#f7c44f";
+        ctx.beginPath();
+        ctx.arc(0, 0, player.r, 0, Math.PI * 2);
+        ctx.fill();
+        
+        // Shirt
+        ctx.fillStyle = "#d63a2f";
+        ctx.fillRect(-26, 10, 52, 34);
+        
+        // Ears
+        ctx.fillStyle = "#f2b83e";
+        ctx.beginPath();
+        ctx.arc(-18, -20, 10, 0, Math.PI * 2);
+        ctx.arc(18, -20, 10, 0, Math.PI * 2);
+        ctx.fill();
+        
+        // Snout
+        ctx.beginPath();
+        ctx.ellipse(0, 10, 14, 10, 0, 0, Math.PI * 2);
+        ctx.fill();
+        
+        // Eyes
+        ctx.fillStyle = "#1b1b1b";
+        ctx.beginPath();
+        ctx.arc(-10, -6, 3.2, 0, Math.PI * 2);
+        ctx.arc(10, -6, 3.2, 0, Math.PI * 2);
+        ctx.fill();
+        
+        // Nose
+        ctx.beginPath();
+        ctx.ellipse(0, 6, 4, 3, 0, 0, Math.PI * 2);
+        ctx.fill();
+        
+        // Smile
+        ctx.strokeStyle = "rgba(0,0,0,0.65)";
+        ctx.lineWidth = 2;
+        ctx.beginPath();
+        ctx.arc(0, 14, 10, 0.15 * Math.PI, 0.85 * Math.PI);
+        ctx.stroke();
+        
+        ctx.restore();
+    }
+    
+    function drawHoney(h) {
+        ctx.save();
+        const x = (h.x / BASE_W) * canvas.width;
+        const y = (h.y / BASE_H) * canvas.height;
+        const scaleX = canvas.width / BASE_W;
+        const scaleY = canvas.height / BASE_H;
+        
+        ctx.translate(x, y);
+        ctx.scale(scaleX, scaleY);
+        
+        ctx.fillStyle = h.type === "gold" ? "#FFD700" : "#FFA500";
+        ctx.beginPath();
+        ctx.ellipse(0, 0, h.r, h.r * 0.8, 0, 0, Math.PI * 2);
+        ctx.fill();
+        
+        // Shine
+        ctx.fillStyle = "rgba(255,255,255,0.35)";
+        ctx.beginPath();
+        ctx.ellipse(-5, -5, 5, 3.5, -0.4, 0, Math.PI * 2);
+        ctx.fill();
+        
+        ctx.restore();
+    }
+    
+    function drawBee(b) {
+        ctx.save();
+        const x = (b.x / BASE_W) * canvas.width;
+        const y = (b.y / BASE_H) * canvas.height;
+        const scaleX = canvas.width / BASE_W;
+        const scaleY = canvas.height / BASE_H;
+        
+        ctx.translate(x, y);
+        ctx.scale(scaleX, scaleY);
+        
+        ctx.fillStyle = "#FFD700";
+        ctx.beginPath();
+        ctx.ellipse(0, 0, b.r * 1.25, b.r, 0, 0, Math.PI * 2);
+        ctx.fill();
+        
+        ctx.fillStyle = "rgba(0,0,0,0.25)";
+        ctx.fillRect(-6, -b.r + 2, 3, b.r * 2 - 4);
+        ctx.fillRect(0, -b.r + 2, 3, b.r * 2 - 4);
+        
+        ctx.restore();
+    }
+    
+    // Game functions
+    function spawnHoney() {
+        if (honeys.length >= 20) return;
+        const type = Math.random() < 0.1 ? "gold" : "normal";
+        honeys.push({
+            x: Math.random() * (BASE_W - 60) + 30,
+            y: -30,
+            r: 15,
+            vy: 2 + Math.random() * 2,
+            type
         });
-      }
-      
-      return audioCtx;
-    } catch (e) {
-      console.error('AudioContext error:', e);
-      return null;
     }
-  }
-
-  function playSound(type) {
-    if (!GameState.soundEnabled) return;
-    const ac = ensureAudio();
-    if (!ac) return;
-
-    try {
-      const osc = ac.createOscillator();
-      const gain = ac.createGain();
-      osc.connect(gain);
-      gain.connect(ac.destination);
-
-      let f = 440;
-      if (type === "collect") f = 523.25;
-      if (type === "hit") f = 220;
-      if (type === "start") f = 783.99;
-      if (type === "power") f = 659.25;
-
-      osc.frequency.value = f;
-      gain.gain.value = 0.08;
-
-      const now = ac.currentTime;
-      gain.gain.setValueAtTime(0.0001, now);
-      gain.gain.exponentialRampToValueAtTime(0.08, now + 0.01);
-      gain.gain.exponentialRampToValueAtTime(0.0001, now + 0.12);
-
-      osc.start();
-      osc.stop(now + 0.14);
-    } catch (e) {
-      console.warn('Audio play failed:', e);
-    }
-  }
-
-  // Initialize audio on first user interaction (iOS requirement)
-  function initAudioOnFirstTouch() {
-    if (audioInitialized) return;
     
-    console.log('Initializing audio on first user gesture...');
+    function spawnBee() {
+        if (bees.length >= 10) return;
+        bees.push({
+            x: Math.random() * (BASE_W - 60) + 30,
+            y: -40,
+            r: 12,
+            vy: 3 + Math.random() * 2,
+            vx: (Math.random() - 0.5) * 2
+        });
+    }
     
-    // Create audio context
-    try {
-      audioCtx = new (window.AudioContext || window.webkitAudioContext)();
-      audioInitialized = true;
-      console.log('AudioContext initialized successfully');
-      
-      // Play a silent sound to unlock audio
-      const osc = audioCtx.createOscillator();
-      const gain = audioCtx.createGain();
-      osc.connect(gain);
-      gain.connect(audioCtx.destination);
-      gain.gain.value = 0.001;
-      osc.frequency.value = 1;
-      osc.start();
-      osc.stop(audioCtx.currentTime + 0.01);
-      
-      // Hide iOS warning if present
-      document.getElementById('ios-warning')?.classList.remove('active');
-    } catch (e) {
-      console.error('Failed to initialize audio:', e);
+    function distance(x1, y1, x2, y2) {
+        return Math.sqrt((x2 - x1) ** 2 + (y2 - y1) ** 2);
     }
-  }
-
-  // Listen for user gestures to initialize audio
-  ['touchstart', 'mousedown', 'pointerdown'].forEach(event => {
-    document.addEventListener(event, initAudioOnFirstTouch, { 
-      once: true, 
-      passive: true 
-    });
-  });
-
-  /* ======================= WORLD OBJECTS ======================= */
-  const player = { x: BASE_W / 2, y: BASE_H - 96, r: 30 };
-
-  const honeys = [];
-  const bees = [];
-  const powers = [];
-
-  /* ======================= INPUT HANDLING (IOS OPTIMIZED) ======================= */
-  let targetX = player.x;
-  let isTouching = false;
-
-  function setTargetFromClientX(clientX) {
-    const rect = canvas.getBoundingClientRect();
-    const x = ((clientX - rect.left) / rect.width) * BASE_W;
-    targetX = clamp(x, player.r, BASE_W - player.r);
-    isTouching = true;
-  }
-
-  // Prevent iOS zoom/pinch/scroll during gameplay
-  document.addEventListener('touchstart', (e) => {
-    if (e.touches && e.touches.length > 1) {
-      e.preventDefault();
-    }
-  }, { passive: false });
-
-  document.addEventListener('touchmove', (e) => {
-    if (GameState.running && !GameState.paused) {
-      e.preventDefault();
-    }
-  }, { passive: false });
-
-  document.addEventListener('gesturestart', (e) => {
-    e.preventDefault();
-  }, { passive: false });
-
-  // Canvas touch events
-  canvas.addEventListener('touchstart', (e) => {
-    e.preventDefault();
-    initAudioOnFirstTouch(); // Ensure audio is initialized
     
-    const t = e.touches?.[0];
-    if (!t) return;
-    setTargetFromClientX(t.clientX);
-  }, { passive: false });
-
-  canvas.addEventListener('touchmove', (e) => {
-    e.preventDefault();
-    const t = e.touches?.[0];
-    if (!t) return;
-    setTargetFromClientX(t.clientX);
-  }, { passive: false });
-
-  canvas.addEventListener('touchend', () => {
-    isTouching = false;
-  }, { passive: true });
-
-  // Mouse events for desktop
-  canvas.addEventListener('mousedown', (e) => {
-    setTargetFromClientX(e.clientX);
-  });
-  
-  canvas.addEventListener('mousemove', (e) => {
-    if (e.buttons) setTargetFromClientX(e.clientX);
-  });
-  
-  window.addEventListener('mouseup', () => {
-    isTouching = false;
-  });
-
-  /* ======================= VIRTUAL JOYSTICK ======================= */
-  const Joy = (() => {
-    const root = $("virtual-joystick");
-    const handle = $("joystick-handle");
-    let active = false;
-    let centerX = 0;
-    let radius = 46;
-
-    function setActive(on) {
-      if (!root) return;
-      root.classList.toggle("active", !!on);
-      active = !!on;
+    function clamp(value, min, max) {
+        return Math.max(min, Math.min(max, value));
     }
-
-    function attach() {
-      if (!root || !handle) return;
-
-      function start(e) {
-        if (!active) return;
+    
+    // Touch/mouse controls
+    function handleStart(e) {
         e.preventDefault();
-        const t = e.touches?.[0] || e;
-        const rect = root.getBoundingClientRect();
-        centerX = rect.left + rect.width / 2;
-        move(t);
-      }
-
-      function move(t) {
-        if (!active) return;
-        const dx = clamp(t.clientX - centerX, -radius, radius);
-        handle.style.transform = `translate(calc(-50% + ${dx}px), -50%)`;
-        const pct = dx / radius;
-        targetX = clamp(player.x + pct * 120, player.r, BASE_W - player.r);
         isTouching = true;
-      }
-
-      function end() {
-        if (!active) return;
-        handle.style.transform = "translate(-50%, -50%)";
-        isTouching = false;
-      }
-
-      root.addEventListener("touchstart", (e) => start(e), { passive: false });
-      root.addEventListener("touchmove", (e) => {
+        handleMove(e);
+    }
+    
+    function handleMove(e) {
+        if (!isTouching) return;
         e.preventDefault();
-        move(e.touches[0]);
-      }, { passive: false });
-      root.addEventListener("touchend", end, { passive: true });
-    }
-
-    return { setActive, attach };
-  })();
-
-  /* ======================= WEATHER FX ======================= */
-  const WeatherFX = (() => {
-    const host = $("weather-effects");
-    let timer = 0;
-
-    function clearAll() {
-      if (!host) return;
-      host.innerHTML = "";
-    }
-
-    function spawnOne() {
-      if (!host) return;
-      const w = GameState.weather;
-      if (!w || w === "clear") return;
-
-      const p = document.createElement("div");
-      p.className = "weather-particle transform-3d";
-
-      const x = Math.random() * 100;
-      const delay = Math.random() * 0.6;
-
-      p.style.left = x + "vw";
-      p.style.top = "-40px";
-      p.style.animationDelay = delay + "s";
-
-      let inner = document.createElement("div");
-
-      if (w === "rain") inner.className = "rain-drop";
-      else if (w === "snow") inner.className = "snow-flake";
-      else if (w === "leaves" || w === "windy") inner.className = "leaf";
-      else if (w === "blossoms") inner.className = "blossom";
-      else if (w === "foggy") inner.className = "fog-particle";
-      else if (w === "starry") inner.className = "star";
-
-      p.appendChild(inner);
-      host.appendChild(p);
-
-      setTimeout(() => p.remove(), 12000);
-    }
-
-    function tick(dt) {
-      if (!host) return;
-      const w = GameState.weather;
-      if (!w || w === "clear") return;
-
-      const intensity = clamp(Number(GameState.weatherIntensity) || 5, 1, 10);
-      const base = w === "foggy" ? 700 : w === "starry" ? 450 : w === "rain" ? 90 : 130;
-      const interval = clamp(base - intensity * 6, 50, 900);
-
-      timer += dt;
-      while (timer >= interval) {
-        timer -= interval;
-        spawnOne();
-      }
-    }
-
-    return { clearAll, tick };
-  })();
-
-  /* ======================= DAILY CHALLENGE ======================= */
-  const Daily = (() => {
-    function dayKey() {
-      const d = new Date();
-      return `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, "0")}-${String(d.getDate()).padStart(2, "0")}`;
-    }
-
-    function genForToday() {
-      const key = dayKey();
-      let seed = 0;
-      for (let i = 0; i < key.length; i++) seed = (seed * 31 + key.charCodeAt(i)) >>> 0;
-
-      const pick = seed % 3;
-      let challenge;
-      if (pick === 0) challenge = { type: "catch", goal: 35 + (seed % 26), reward: 100 };
-      else if (pick === 1) challenge = { type: "score", goal: 300 + (seed % 401), reward: 150 };
-      else challenge = { type: "streak", goal: 10 + (seed % 9), reward: 120 };
-
-      return { key, ...challenge, progress: 0, completed: false, claimed: false };
-    }
-
-    function load() {
-      const saved = Storage.get("dailyChallenge");
-      const today = dayKey();
-      if (!saved || saved.key !== today) {
-        const fresh = genForToday();
-        Storage.set("dailyChallenge", fresh);
-        return fresh;
-      }
-      return saved;
-    }
-
-    function save(dc) {
-      Storage.set("dailyChallenge", dc);
-    }
-
-    function describe(dc) {
-      if (!dc) return "A small challenge is loading...";
-      if (dc.type === "catch") return `Catch ${dc.goal} honey pots`;
-      if (dc.type === "score") return `Reach ${dc.goal} points`;
-      return `Keep a streak of ${dc.goal} honey`;
-    }
-
-    function progressText(dc) {
-      if (!dc) return "0/0";
-      return `${Math.min(dc.progress, dc.goal)}/${dc.goal}`;
-    }
-
-    function applyEvent(evt) {
-      const dc = load();
-      if (!dc || dc.completed) return dc;
-
-      if (dc.type === "catch" && evt.type === "honey") dc.progress += 1;
-      if (dc.type === "score" && evt.type === "score") dc.progress = Math.max(dc.progress, evt.value);
-      if (dc.type === "streak" && evt.type === "streak") dc.progress = Math.max(dc.progress, evt.value);
-
-      if (dc.progress >= dc.goal) {
-        dc.completed = true;
-      }
-
-      save(dc);
-      return dc;
-    }
-
-    function maybeRewardOnGameOver() {
-      const dc = load();
-      if (dc && dc.completed && !dc.claimed) {
-        dc.claimed = true;
-        save(dc);
-        return dc.reward || 0;
-      }
-      return 0;
-    }
-
-    function renderAll() {
-      const dc = load();
-      const desc = describe(dc);
-
-      const startCardDesc = $("daily-challenge-desc");
-      const startCardProg = $("daily-challenge-progress");
-      const startCardReward = $("daily-challenge-reward");
-
-      if (startCardDesc) startCardDesc.textContent = desc;
-      if (startCardReward) startCardReward.textContent = `+${dc.reward} Bonus Points`;
-
-      const pct = dc.goal ? (clamp(dc.progress, 0, dc.goal) / dc.goal) * 100 : 0;
-      if (startCardProg) startCardProg.style.width = `${pct}%`;
-
-      const currTitle = $("current-daily-title");
-      const currDesc = $("current-daily-desc");
-      const currProg = $("current-daily-progress");
-      const currReward = $("current-daily-reward");
-
-      if (currTitle) currTitle.textContent = "Today's Challenge";
-      if (currDesc) currDesc.textContent = desc;
-      if (currReward) currReward.textContent = `+${dc.reward} Bonus Points`;
-      if (currProg) currProg.style.width = `${pct}%`;
-
-      const pauseDaily = $("pause-daily");
-      if (pauseDaily) pauseDaily.textContent = progressText(dc);
-    }
-
-    return { load, applyEvent, renderAll, maybeRewardOnGameOver, describe };
-  })();
-
-  /* ======================= LEADERBOARD ======================= */
-  const Leaderboard = (() => {
-    const KEY = "poohLeaderboard";
-
-    function load() {
-      return Storage.get(KEY, []);
-    }
-
-    function save(list) {
-      Storage.set(KEY, list);
-    }
-
-    function add(score) {
-      const list = load();
-      const entry = {
-        score: Math.max(0, score | 0),
-        when: Date.now(),
-      };
-      list.push(entry);
-      list.sort((a, b) => b.score - a.score);
-      const top = list.slice(0, 10);
-      save(top);
-      return top;
-    }
-
-    function clear() {
-      save([]);
-      render();
-    }
-
-    function fmtTime(ms) {
-      try {
-        const d = new Date(ms);
-        return d.toLocaleDateString() + " " + d.toLocaleTimeString([], { hour: "2-digit", minute: "2-digit" });
-      } catch {
-        return "";
-      }
-    }
-
-    function render() {
-      const list = load();
-      const host = $("leaderboard-list");
-      if (!host) return;
-
-      host.innerHTML = "";
-      if (!list.length) {
-        const empty = document.createElement("div");
-        empty.className = "setting-item";
-        empty.innerHTML = `
-          <div class="setting-label">
-            <i class="fas fa-info-circle setting-icon"></i>
-            <div><strong>No scores yet.</strong><br><small>Play a round, then come back and have a look.</small></div>
-          </div>`;
-        host.appendChild(empty);
-        return;
-      }
-
-      list.forEach((e, idx) => {
-        const row = document.createElement("div");
-        row.className = "setting-item";
-        row.innerHTML = `
-          <div class="setting-label">
-            <i class="fas fa-crown setting-icon"></i>
-            <div><strong>#${idx + 1} — ${e.score} points</strong><br><small>${fmtTime(e.when)}</small></div>
-          </div>`;
-        host.appendChild(row);
-      });
-    }
-
-    function bestScore() {
-      const list = load();
-      return list.length ? list[0].score : 0;
-    }
-
-    return { add, clear, render, bestScore };
-  })();
-
-  /* ======================= ACHIEVEMENTS ======================= */
-  const Achievements = (() => {
-    const KEY = "poohAchievementsUnlocked";
-
-    const defs = [
-      { id: "first_honey", name: "A Taste for Honey", desc: "Catch your first honey pot.", test: (s) => s.honeyCaught >= 1 },
-      { id: "hundred", name: "Quite a Lot", desc: "Reach 100 points.", test: (s) => s.score >= 100 },
-      { id: "three_hundred", name: "Properly Busy", desc: "Reach 300 points.", test: (s) => s.score >= 300 },
-      { id: "five_hundred", name: "A Big Sort of Day", desc: "Reach 500 points.", test: (s) => s.score >= 500 },
-      { id: "no_bees_60", name: "Bee-Free Minute", desc: "Play 60 seconds without being hit.", test: (s) => s.timePlayedMs >= 60000 && s.beesHit === 0 },
-      { id: "streak_10", name: "On a Roll", desc: "Catch 10 honey in a row.", test: (s) => s.streak >= 10 },
-      { id: "streak_20", name: "Very Determined", desc: "Catch 20 honey in a row.", test: (s) => s.streak >= 20 },
-      { id: "survive_2", name: "Still Here", desc: "Finish a game with 2+ lives.", test: (s) => !s.running && s.lives >= 2 && s.score > 0 },
-      { id: "use_shield", name: "Not Today, Bees", desc: "Use a shield.", test: (s) => s._usedShield },
-      { id: "use_slow", name: "A Small Breath", desc: "Use slow motion.", test: (s) => s._usedSlow },
-      { id: "use_magnet", name: "Honey Finds You", desc: "Use a honey magnet.", test: (s) => s._usedMagnet },
-      { id: "daily_done", name: "Daily Sort of Hero", desc: "Complete today's challenge.", test: () => Daily.load().completed === true },
-      { id: "top_1", name: "Highest of the High", desc: "Take the #1 spot on your local leaderboard.", test: (s) => s.score >= Leaderboard.bestScore() && s.score > 0 },
-    ];
-
-    function loadUnlocked() {
-      return new Set(Storage.get(KEY, []));
-    }
-
-    function saveUnlocked(set) {
-      Storage.set(KEY, Array.from(set));
-    }
-
-    function unlock(id) {
-      const set = loadUnlocked();
-      if (set.has(id)) return false;
-      set.add(id);
-      saveUnlocked(set);
-      render();
-      updateCount();
-      Story.toast("Pooh: An achievement! That seems important.", 2000);
-      return true;
-    }
-
-    function evaluate() {
-      const set = loadUnlocked();
-      let changed = false;
-      for (const a of defs) {
-        if (!set.has(a.id) && a.test(GameState)) {
-          set.add(a.id);
-          changed = true;
-        }
-      }
-      if (changed) {
-        saveUnlocked(set);
-        render();
-        updateCount();
-      }
-    }
-
-    function updateCount() {
-      const set = loadUnlocked();
-      const el = $("achievements-count");
-      if (el) el.textContent = `${set.size}/${Math.max(20, defs.length)}`;
-    }
-
-    function render() {
-      const host = $("achievements-list");
-      if (!host) return;
-      const set = loadUnlocked();
-      host.innerHTML = "";
-      defs.forEach((a) => {
-        const item = document.createElement("div");
-        item.className = "achievement-item" + (set.has(a.id) ? " unlocked" : "");
-        item.innerHTML = `
-          <div class="achievement-icon">${set.has(a.id) ? "🏆" : "🔒"}</div>
-          <div class="achievement-details">
-            <div class="achievement-name">${a.name}</div>
-            <div class="achievement-desc">${a.desc}</div>
-          </div>`;
-        host.appendChild(item);
-      });
-    }
-
-    return { evaluate, render, updateCount };
-  })();
-
-  /* ======================= HUD + OVERLAYS ======================= */
-  const Overlays = {
-    open(name) {
-      const overlay = $(name + "-screen");
-      if (overlay) {
-        overlay.classList.remove("hidden");
-        document.body.classList.add("overlay-open");
-      }
-      if (name === "pause") GameState.paused = true;
-    },
-    close(name) {
-      const overlay = $(name + "-screen");
-      if (overlay) overlay.classList.add("hidden");
-      const anyOpen = document.querySelectorAll(".overlay-content:not(.hidden)").length > 0;
-      if (!anyOpen) document.body.classList.remove("overlay-open");
-      if (name === "pause") GameState.paused = false;
-    },
-  };
-
-  function updateHUD() {
-    const scoreEl = $("stat-score");
-    const livesEl = $("stat-lives");
-    const comboEl = $("stat-combo");
-    const pauseScore = $("pause-score");
-    const pauseLives = $("pause-lives");
-    const pauseStreak = $("pause-streak");
-    const pauseTime = $("pause-time");
-    const nextLevel = $("next-level-label");
-    const prog = $("progress-fill");
-
-    if (scoreEl) scoreEl.textContent = String(GameState.score);
-    if (livesEl) livesEl.textContent = String(GameState.lives);
-    if (comboEl) comboEl.textContent = `${GameState.combo.toFixed(1)}x`;
-
-    if (pauseScore) pauseScore.textContent = String(GameState.score);
-    if (pauseLives) pauseLives.textContent = String(GameState.lives);
-    if (pauseStreak) pauseStreak.textContent = String(GameState.streak);
-
-    if (pauseTime) pauseTime.textContent = `${Math.floor(GameState.timePlayedMs / 1000)}s`;
-
-    const tier = Math.floor(GameState.score / 300);
-    const within = GameState.score % 300;
-    if (nextLevel) nextLevel.textContent = `${within}/300`;
-    if (prog) prog.style.width = `${(within / 300) * 100}%`;
-
-    const levelDisplay = $("level-display");
-    if (levelDisplay) {
-      const names = ["Beginner", "Brave", "Busy", "Very Busy", "Legendary"];
-      levelDisplay.textContent = names[Math.min(tier, names.length - 1)];
-    }
-
-    const now = performance.now();
-    $("shield-indicator")?.classList.toggle("active", GameState.power.shieldUntil > now);
-    $("slow-indicator")?.classList.toggle("active", GameState.power.slowUntil > now);
-    $("magnet-indicator")?.classList.toggle("active", GameState.power.magnetUntil > now);
-  }
-
-  /* ======================= DRAWING FUNCTIONS ======================= */
-  function drawBackground() {
-    const g = ctx.createLinearGradient(0, 0, 0, canvas.height);
-    g.addColorStop(0, "#87CEEB");
-    g.addColorStop(1, "#98FB98");
-    ctx.fillStyle = g;
-    ctx.fillRect(0, 0, canvas.width, canvas.height);
-  }
-
-  function drawPlayer() {
-    ctx.save();
-    ctx.translate((player.x / BASE_W) * canvas.width, (player.y / BASE_H) * canvas.height);
-
-    const sx = canvas.width / BASE_W;
-    const sy = canvas.height / BASE_H;
-    ctx.scale(sx, sy);
-
-    ctx.fillStyle = "#d63a2f";
-    ctx.beginPath();
-    if (ctx.roundRect) ctx.roundRect(-26, 10, 52, 34, 10);
-    else ctx.rect(-26, 10, 52, 34);
-    ctx.fill();
-
-    ctx.fillStyle = "#f7c44f";
-    ctx.beginPath();
-    ctx.arc(0, 0, player.r, 0, Math.PI * 2);
-    ctx.fill();
-
-    ctx.fillStyle = "#f2b83e";
-    ctx.beginPath();
-    ctx.arc(-18, -20, 10, 0, Math.PI * 2);
-    ctx.arc(18, -20, 10, 0, Math.PI * 2);
-    ctx.fill();
-
-    ctx.fillStyle = "#f2b83e";
-    ctx.beginPath();
-    ctx.ellipse(0, 10, 14, 10, 0, 0, Math.PI * 2);
-    ctx.fill();
-
-    ctx.fillStyle = "#1b1b1b";
-    ctx.beginPath();
-    ctx.arc(-10, -6, 3.2, 0, Math.PI * 2);
-    ctx.arc(10, -6, 3.2, 0, Math.PI * 2);
-    ctx.fill();
-
-    ctx.beginPath();
-    ctx.ellipse(0, 6, 4, 3, 0, 0, Math.PI * 2);
-    ctx.fill();
-
-    ctx.strokeStyle = "rgba(0,0,0,0.65)";
-    ctx.lineWidth = 2;
-    ctx.beginPath();
-    ctx.arc(0, 14, 10, 0.15 * Math.PI, 0.85 * Math.PI);
-    ctx.stroke();
-
-    ctx.restore();
-  }
-
-  function drawHoney(h) {
-    ctx.save();
-    const x = (h.x / BASE_W) * canvas.width;
-    const y = (h.y / BASE_H) * canvas.height;
-    const sx = canvas.width / BASE_W;
-    const sy = canvas.height / BASE_H;
-    ctx.translate(x, y);
-    ctx.scale(sx, sy);
-
-    ctx.fillStyle = h.type === "gold" ? "#FFD700" : h.type === "cursed" ? "#7d3cff" : "#FFA500";
-    ctx.beginPath();
-    ctx.ellipse(0, 0, h.r, h.r * 0.8, 0, 0, Math.PI * 2);
-    ctx.fill();
-
-    ctx.fillStyle = "rgba(255,255,255,0.35)";
-    ctx.beginPath();
-    ctx.ellipse(-5, -5, 5, 3.5, -0.4, 0, Math.PI * 2);
-    ctx.fill();
-
-    ctx.restore();
-  }
-
-  function drawBee(b) {
-    ctx.save();
-    const x = (b.x / BASE_W) * canvas.width;
-    const y = (b.y / BASE_H) * canvas.height;
-    const sx = canvas.width / BASE_W;
-    const sy = canvas.height / BASE_H;
-    ctx.translate(x, y);
-    ctx.scale(sx, sy);
-
-    ctx.fillStyle = "#FFD700";
-    ctx.beginPath();
-    ctx.ellipse(0, 0, b.r * 1.25, b.r, 0, 0, Math.PI * 2);
-    ctx.fill();
-
-    ctx.fillStyle = "rgba(0,0,0,0.25)";
-    ctx.fillRect(-6, -b.r + 2, 3, b.r * 2 - 4);
-    ctx.fillRect(0, -b.r + 2, 3, b.r * 2 - 4);
-
-    ctx.restore();
-  }
-
-  function drawPower(p) {
-    ctx.save();
-    const x = (p.x / BASE_W) * canvas.width;
-    const y = (p.y / BASE_H) * canvas.height;
-    const sx = canvas.width / BASE_W;
-    const sy = canvas.height / BASE_H;
-    ctx.translate(x, y);
-    ctx.scale(sx, sy);
-
-    const color = p.type === "shield" ? "#0096ff" : p.type === "slow" ? "#9d4edd" : "#ff6b6b";
-    ctx.fillStyle = color;
-    ctx.beginPath();
-    ctx.arc(0, 0, p.r, 0, Math.PI * 2);
-    ctx.fill();
-
-    ctx.fillStyle = "rgba(255,255,255,0.9)";
-    ctx.font = "bold 14px sans-serif";
-    ctx.textAlign = "center";
-    ctx.textBaseline = "middle";
-    ctx.fillText(p.type === "shield" ? "S" : p.type === "slow" ? "⏳" : "M", 0, 1);
-
-    ctx.restore();
-  }
-
-  function renderGame() {
-    drawBackground();
-    honeys.forEach(drawHoney);
-    bees.forEach(drawBee);
-    powers.forEach(drawPower);
-    drawPlayer();
-  }
-
-  /* ======================= SPAWN FUNCTIONS ======================= */
-  function spawnHoney() {
-    if (honeys.length >= GAME_CONFIG.MAX_HONEYS) return;
-    const roll = Math.random();
-    const type = roll < 0.08 ? "gold" : roll < 0.12 ? "cursed" : "normal";
-    honeys.push({
-      x: Math.random() * (BASE_W - 60) + 30,
-      y: -30,
-      r: 15,
-      vy: 2 + Math.random() * 2,
-      type,
-    });
-  }
-
-  function spawnBee() {
-    if (bees.length >= GAME_CONFIG.MAX_BEES) return;
-    bees.push({
-      x: Math.random() * (BASE_W - 60) + 30,
-      y: -40,
-      r: 12,
-      vy: 3 + Math.random() * 2,
-      vx: (Math.random() - 0.5) * 2,
-    });
-  }
-
-  function spawnPower() {
-    if (powers.length >= GAME_CONFIG.MAX_POWERS) return;
-    const r = Math.random();
-    const type = r < 0.34 ? "shield" : r < 0.67 ? "slow" : "magnet";
-    powers.push({
-      x: Math.random() * (BASE_W - 60) + 30,
-      y: -40,
-      r: 14,
-      vy: 2.4 + Math.random() * 1.2,
-      type,
-    });
-  }
-
-  function collides(a, b) {
-    return distance(a.x, a.y, b.x, b.y) < a.r + b.r;
-  }
-
-  /* ======================= GAME LOGIC ======================= */
-  let didFirstHoneyLine = false;
-  let lastPepTalkAt = 0;
-  let lastTiggerAt = 0;
-
-  function slowFactor(now) {
-    return GameState.power.slowUntil > now ? 0.55 : 1.0;
-  }
-
-  function magnetOn(now) {
-    return GameState.power.magnetUntil > now;
-  }
-
-  function shieldOn(now) {
-    return GameState.power.shieldUntil > now;
-  }
-
-  function updateGame(dt) {
-    if (!GameState.running || GameState.paused) return;
-
-    const now = performance.now();
-    GameState.timePlayedMs = now - GameState.startTimeMs;
-
-    const sf = slowFactor(now);
-
-    if (isTouching) {
-      const dx = targetX - player.x;
-      player.x += dx * 0.28;
-    }
-    player.x = clamp(player.x, player.r, BASE_W - player.r);
-
-    const honeyChance = 0.018 * sf;
-    const beeChance = 0.010 * sf;
-    const powerChance = 0.0026 * sf;
-
-    if (Math.random() < honeyChance) spawnHoney();
-    if (Math.random() < beeChance) spawnBee();
-    if (Math.random() < powerChance) spawnPower();
-
-    for (let i = honeys.length - 1; i >= 0; i--) {
-      const h = honeys[i];
-
-      if (magnetOn(now)) {
-        const pull = clamp((player.x - h.x) * 0.03, -2.2, 2.2);
-        h.x += pull;
-      }
-
-      h.y += h.vy * sf;
-
-      if (collides(player, h)) {
-        if (h.type === "cursed") {
-          GameState.score = Math.max(0, GameState.score - 15);
-          GameState.lives = Math.max(0, GameState.lives - 1);
-          GameState.streak = 0;
-          GameState.combo = 1.0;
-          playSound("hit");
-          Story.toast("Rabbit: That one was a terrible idea.", 2000);
+        
+        let clientX;
+        if (e.type.includes('touch')) {
+            clientX = e.touches[0].clientX;
         } else {
-          GameState.honeyCaught += 1;
-          GameState.streak += 1;
-          GameState.combo = clamp(1 + GameState.streak * 0.05, 1, 2.5);
-
-          const add = h.type === "gold" ? 25 : 10;
-          GameState.score += Math.round(add * GameState.combo);
-          playSound("collect");
-
-          Daily.applyEvent({ type: "honey" });
-          Daily.applyEvent({ type: "streak", value: GameState.streak });
-          Daily.applyEvent({ type: "score", value: GameState.score });
-
-          if (!didFirstHoneyLine) {
-            didFirstHoneyLine = true;
-            Story.toast(Story.pick(Story.Lines.pigletEncourage), 2400);
-          } else if (Math.random() < 0.12) {
-            Story.toast(Story.pick(Story.Lines.poohCollect), 2100);
-          }
-
-          if (GameState.streak >= 10 && now - lastTiggerAt > 4500 && Math.random() < 0.55) {
-            lastTiggerAt = now;
-            Story.toast(Story.pick(Story.Lines.tiggerHype), 2200);
-          }
+            clientX = e.clientX;
         }
-
-        honeys.splice(i, 1);
-        updateHUD();
-        Daily.renderAll();
-        Achievements.evaluate();
-
-        if (GameState.lives <= 0) {
-          gameOver();
-          return;
-        }
-        continue;
-      }
-
-      if (h.y > BASE_H + 60) {
-        GameState.streak = Math.max(0, GameState.streak - 1);
-        GameState.combo = clamp(1 + GameState.streak * 0.05, 1, 2.5);
-        honeys.splice(i, 1);
-      }
+        
+        const rect = canvas.getBoundingClientRect();
+        const x = ((clientX - rect.left) / rect.width) * BASE_W;
+        targetX = clamp(x, player.r, BASE_W - player.r);
     }
-
-    for (let i = bees.length - 1; i >= 0; i--) {
-      const b = bees[i];
-      b.x += b.vx * sf;
-      b.y += b.vy * sf;
-
-      if (b.x < b.r || b.x > BASE_W - b.r) b.vx *= -1;
-
-      if (collides(player, b)) {
-        if (shieldOn(now)) {
-          GameState.power.shieldUntil = 0;
-          GameState._usedShield = true;
-          playSound("power");
-          Story.toast("Pooh: That was close. Quite close.", 2000);
-        } else {
-          GameState.beesHit += 1;
-          GameState.lives -= 1;
-          GameState.streak = 0;
-          GameState.combo = 1.0;
-          playSound("hit");
-
-          if (GameState.lives <= 1 && now - lastPepTalkAt > 4500) {
-            lastPepTalkAt = now;
-            Story.toast(Story.pick(Story.Lines.pigletEncourage), 2600);
-          }
-        }
-
-        bees.splice(i, 1);
-        updateHUD();
-        Achievements.evaluate();
-
-        if (GameState.lives <= 0) {
-          gameOver();
-          return;
-        }
-        continue;
-      }
-
-      if (b.y > BASE_H + 60) bees.splice(i, 1);
-    }
-
-    for (let i = powers.length - 1; i >= 0; i--) {
-      const p = powers[i];
-      p.y += p.vy * sf;
-
-      if (collides(player, p)) {
-        const t = performance.now();
-        if (p.type === "shield") {
-          GameState.power.shieldUntil = t + 6500;
-          GameState._usedShield = true;
-          Story.toast("Pooh: A shield! That seems helpful.", 2000);
-        } else if (p.type === "slow") {
-          GameState.power.slowUntil = t + 5200;
-          GameState._usedSlow = true;
-          Story.toast("Piglet: Everything's... taking a small breath.", 2200);
-        } else {
-          GameState.power.magnetUntil = t + 5200;
-          GameState._usedMagnet = true;
-          Story.toast("Pooh: The honey is coming to us. How polite.", 2200);
-        }
-        playSound("power");
-        powers.splice(i, 1);
-        updateHUD();
-        Achievements.evaluate();
-        continue;
-      }
-
-      if (p.y > BASE_H + 60) powers.splice(i, 1);
-    }
-
-    updateHUD();
-  }
-
-  /* ======================= GAME FLOW ======================= */
-  function startGame() {
-    // Ensure audio is initialized before starting game
-    initAudioOnFirstTouch();
     
-    GameState.running = true;
-    GameState.paused = false;
-
-    GameState.score = 0;
-    GameState.lives = 3;
-    GameState.combo = 1.0;
-    GameState.streak = 0;
-    GameState.honeyCaught = 0;
-    GameState.beesHit = 0;
-
-    GameState._usedShield = false;
-    GameState._usedSlow = false;
-    GameState._usedMagnet = false;
-
-    GameState.power.shieldUntil = 0;
-    GameState.power.slowUntil = 0;
-    GameState.power.magnetUntil = 0;
-
-    didFirstHoneyLine = false;
-    lastPepTalkAt = 0;
-    lastTiggerAt = 0;
-
-    honeys.length = 0;
-    bees.length = 0;
-    powers.length = 0;
-
-    player.x = BASE_W / 2;
-    targetX = player.x;
-
-    GameState.startTimeMs = performance.now();
-    GameState.timePlayedMs = 0;
-
-    document.querySelectorAll(".overlay-content").forEach((el) => el.classList.add("hidden"));
-    document.body.classList.remove("overlay-open");
-
-    updateHUD();
-    Daily.renderAll();
-    Achievements.evaluate();
-
-    playSound("start");
-    Story.toast(Story.pick(Story.Lines.poohStart), 2200);
-  }
-
-  function gameOver() {
-    GameState.running = false;
-    GameState.paused = false;
-
-    const reward = Daily.maybeRewardOnGameOver();
-    if (reward > 0) {
-      GameState.score += reward;
-      $("daily-complete-badge")?.classList.remove("hidden");
-      Story.toast("Rabbit: Daily challenge complete. That's a sensible thing.", 2400);
-    } else {
-      $("daily-complete-badge")?.classList.add("hidden");
+    function handleEnd() {
+        isTouching = false;
     }
-
-    const bestBefore = Leaderboard.bestScore();
-    const list = Leaderboard.add(GameState.score);
-    const isNew = GameState.score > bestBefore;
-
-    const newRecord = $("new-record-badge");
-    if (newRecord) newRecord.classList.toggle("hidden", !isNew);
-
-    $("final-score") && ($("final-score").textContent = String(GameState.score));
-    $("final-total") && ($("final-total").textContent = String(GameState.score));
-    $("final-streak") && ($("final-streak").textContent = String(GameState.streak));
-    $("final-honey") && ($("final-honey").textContent = String(GameState.honeyCaught));
-    $("final-bees") && ($("final-bees").textContent = String(Math.max(0, GameState.honeyCaught - GameState.beesHit)));
-    $("final-level") && ($("final-level").textContent = $("level-display")?.textContent || "Beginner");
-
-    $("gameover-screen")?.classList.remove("hidden");
-    document.body.classList.add("overlay-open");
-
-    Leaderboard.render();
-    Daily.renderAll();
-    Achievements.evaluate();
-    Achievements.render();
-    Achievements.updateCount();
-
-    Story.toast(Story.pick(Story.Lines.eeyoreGameOver), 2600);
-  }
-
-  /* ======================= UI WIRING ======================= */
-  function setupUI() {
-    const startScreen = $("start-screen");
-    const weatherDrawer = $("weather-drawer");
-
-    const openOverlay = (id) => {
-      const el = $(id);
-      if (!el) return;
-      el.classList.remove("hidden");
-      document.body.classList.add("overlay-open");
-    };
-
-    const closeOverlay = (id) => {
-      const el = $(id);
-      if (!el) return;
-      el.classList.add("hidden");
-      const anyOpen = document.querySelectorAll(".overlay-content:not(.hidden)").length > 0;
-      if (!anyOpen) document.body.classList.remove("overlay-open");
-    };
-
-    addPress($("start-btn"), startGame);
-    addPress($("quick-start"), startGame);
-
-    addPress($("close-start"), () => {
-      startScreen?.classList.add("hidden");
-      const anyOpen = document.querySelectorAll(".overlay-content:not(.hidden)").length > 0;
-      if (!anyOpen) document.body.classList.remove("overlay-open");
+    
+    // Add event listeners for controls
+    canvas.addEventListener('touchstart', handleStart, { passive: false });
+    canvas.addEventListener('touchmove', handleMove, { passive: false });
+    canvas.addEventListener('touchend', handleEnd);
+    
+    canvas.addEventListener('mousedown', handleStart);
+    canvas.addEventListener('mousemove', (e) => {
+        if (e.buttons) handleMove(e);
     });
-
-    addPress($("pause-toggle"), () => {
-      if (!GameState.running) return;
-      if (!GameState.paused) {
-        Overlays.open("pause");
-        Story.toast(Story.pick(Story.Lines.rabbitRules), 2200);
-      } else Overlays.close("pause");
-      updateHUD();
-      Daily.renderAll();
-    });
-
-    addPress($("resume-btn"), () => Overlays.close("pause"));
-    addPress($("continue-btn"), () => Overlays.close("pause"));
-
-    addPress($("restart-btn"), () => {
-      Overlays.close("pause");
-      startGame();
-    });
-
-    addPress($("quit-btn"), () => {
-      GameState.running = false;
-      GameState.paused = false;
-      document.querySelectorAll(".overlay-content").forEach((el) => el.classList.add("hidden"));
-      startScreen?.classList.remove("hidden");
-      document.body.classList.add("overlay-open");
-      updateHUD();
-    });
-
-    addPress($("gameover-close"), () => {
-      closeOverlay("gameover-screen");
-      startScreen?.classList.remove("hidden");
-      document.body.classList.add("overlay-open");
-      Leaderboard.render();
-      Daily.renderAll();
-    });
-
-    addPress($("play-again-btn"), startGame);
-
-    addPress($("help-btn"), () => {
-      openOverlay("help-screen");
-      Story.toast(Story.pick(Story.Lines.rabbitRules), 2200);
-    });
-    addPress($("close-help-btn"), () => closeOverlay("help-screen"));
-
-    addPress($("tutorial-btn"), () => $("tutorial-overlay")?.classList.remove("hidden"));
-    addPress($("tutorial-start"), () => {
-      $("tutorial-overlay")?.classList.add("hidden");
-      startGame();
-    });
-    addPress($("tutorial-next"), () => {
-      $("tutorial-step-1")?.classList.remove("active");
-      $("tutorial-step-2")?.classList.add("active");
-    });
-    addPress($("tutorial-next-2"), () => {
-      $("tutorial-step-2")?.classList.remove("active");
-      $("tutorial-step-3")?.classList.add("active");
-    });
-    addPress($("tutorial-prev"), () => {
-      $("tutorial-step-2")?.classList.remove("active");
-      $("tutorial-step-1")?.classList.add("active");
-    });
-    addPress($("tutorial-prev-2"), () => {
-      $("tutorial-step-3")?.classList.remove("active");
-      $("tutorial-step-2")?.classList.add("active");
-    });
-
-    const openAch = () => {
-      openOverlay("achievements-screen");
-      Achievements.render();
-      Achievements.updateCount();
-    };
-    addPress($("achievements-pill"), openAch);
-    addPress($("view-achievements-btn"), openAch);
-    addPress($("close-achievements-btn"), () => closeOverlay("achievements-screen"));
-    addPress($("close-achievements-btn-2"), () => closeOverlay("achievements-screen"));
-
-    addPress($("settings-btn"), () => {
-      openOverlay("settings-screen");
-      Story.toast("Rabbit: Let's make everything sensible again.", 2200);
-
-      $("sound-toggle-setting") && ($("sound-toggle-setting").checked = !!GameState.soundEnabled);
-      $("music-toggle-setting") && ($("music-toggle-setting").checked = !!GameState.musicEnabled);
-      $("haptic-toggle-setting") && ($("haptic-toggle-setting").checked = !!GameState.hapticEnabled);
-      $("effects-toggle-setting") && ($("effects-toggle-setting").checked = !!GameState.visualEffects);
-      $("joystick-toggle-setting") && ($("joystick-toggle-setting").checked = $("virtual-joystick")?.classList.contains("active") || false);
-      $("contrast-toggle-setting") && document.body.classList.toggle("high-contrast", false);
-    });
-
-    addPress($("close-settings"), () => closeOverlay("settings-screen"));
-
-    addPress($("save-settings"), () => {
-      const s = $("sound-toggle-setting");
-      const m = $("music-toggle-setting");
-      const h = $("haptic-toggle-setting");
-      const e = $("effects-toggle-setting");
-      const j = $("joystick-toggle-setting");
-      const c = $("contrast-toggle-setting");
-
-      if (s) GameState.soundEnabled = !!s.checked;
-      if (m) GameState.musicEnabled = !!m.checked;
-      if (h) GameState.hapticEnabled = !!h.checked;
-      if (e) GameState.visualEffects = !!e.checked;
-
-      if (j) Joy.setActive(!!j.checked);
-      if (c) document.body.classList.toggle("high-contrast", !!c.checked);
-
-      Storage.set("gameSettings", {
-        soundEnabled: GameState.soundEnabled,
-        musicEnabled: GameState.musicEnabled,
-        hapticEnabled: GameState.hapticEnabled,
-        visualEffects: GameState.visualEffects,
-        weather: GameState.weather,
-        weatherIntensity: GameState.weatherIntensity,
-      });
-
-      Story.toast("Pooh: That feels better already.", 2000);
-      updateHUD();
-      closeOverlay("settings-screen");
-    });
-
-    addPress($("reset-progress"), () => {
-      $("reset-confirm") && ($("reset-confirm").style.display = "flex");
-      Story.toast("Rabbit: Are you quite sure about that?", 2200);
-    });
-
-    addPress($("reset-confirm"), () => {
-      Storage.remove("poohLeaderboard");
-      Storage.remove("poohAchievementsUnlocked");
-      Storage.remove("dailyChallenge");
-      Leaderboard.render();
-      Achievements.render();
-      Achievements.updateCount();
-      Daily.renderAll();
-      $("reset-confirm") && ($("reset-confirm").style.display = "none");
-      Story.toast("Eeyore: Everything's gone now. If that helps.", 2400);
-    });
-
-    addPress($("menu-toggle"), () => {
-      if (GameState.running && !GameState.paused) {
-        Overlays.open("pause");
-        Story.toast(Story.pick(Story.Lines.rabbitRules), 2200);
-        updateHUD();
-        Daily.renderAll();
-      } else {
-        startScreen?.classList.remove("hidden");
-        document.body.classList.add("overlay-open");
-      }
-    });
-
-    addPress($("sound-toggle-btn"), () => {
-      GameState.soundEnabled = !GameState.soundEnabled;
-      const icon = $("sound-toggle-btn")?.querySelector("i");
-      if (icon) icon.className = GameState.soundEnabled ? "fas fa-volume-up" : "fas fa-volume-mute";
-      Storage.set("gameSettings", { ...Storage.get("gameSettings", {}), soundEnabled: GameState.soundEnabled });
-      playSound("collect");
-      Story.toast(GameState.soundEnabled ? "Pooh: That sounds nice." : "Pooh: Quiet is also nice.", 1800);
-    });
-
-    async function shareScore() {
-      const text = `Pooh's Honey Hunt — ${GameState.score} points 🍯`;
-      const url = window.location.href;
-      
-      try {
-        if (navigator.share && isIOS) {
-          await navigator.share({
-            title: "Pooh's Honey Hunt",
-            text: text,
-            url: url
-          });
-          Story.toast("Piglet: Sent along very nicely.", 1800);
-        } else if (navigator.clipboard) {
-          await navigator.clipboard.writeText(text);
-          Story.toast("Copied to clipboard!", 1800);
-        } else {
-          // Fallback for older browsers
-          const textArea = document.createElement('textarea');
-          textArea.value = text;
-          document.body.appendChild(textArea);
-          textArea.select();
-          document.execCommand('copy');
-          document.body.removeChild(textArea);
-          Story.toast("Copied to clipboard!", 1800);
+    canvas.addEventListener('mouseup', handleEnd);
+    
+    // Update HUD
+    function updateHUD() {
+        $('stat-score').textContent = GameState.score;
+        $('stat-lives').textContent = GameState.lives;
+        $('stat-combo').textContent = GameState.combo.toFixed(1) + 'x';
+        
+        $('pause-score').textContent = GameState.score;
+        $('pause-lives').textContent = GameState.lives;
+        $('pause-streak').textContent = GameState.streak;
+        
+        // Level progress
+        const tier = Math.floor(GameState.score / 300);
+        const within = GameState.score % 300;
+        $('next-level-label').textContent = within + '/300';
+        $('progress-fill').style.width = (within / 300 * 100) + '%';
+        
+        const levelNames = ["Beginner", "Brave", "Busy", "Very Busy", "Legendary"];
+        $('level-display').textContent = levelNames[Math.min(tier, levelNames.length - 1)];
+    }
+    
+    // Game loop
+    let lastTime = 0;
+    function gameLoop(timestamp) {
+        const dt = Math.min(100, timestamp - lastTime || 0);
+        lastTime = timestamp;
+        
+        if (GameState.running && !GameState.paused) {
+            // Update player position
+            const dx = targetX - player.x;
+            player.x += dx * 0.3;
+            
+            // Spawn objects
+            if (Math.random() < 0.02) spawnHoney();
+            if (Math.random() < 0.01) spawnBee();
+            
+            // Update honeys
+            for (let i = honeys.length - 1; i >= 0; i--) {
+                const h = honeys[i];
+                h.y += h.vy;
+                
+                // Check collision with player
+                if (distance(player.x, player.y, h.x, h.y) < player.r + h.r) {
+                    // Collect honey
+                    GameState.honeyCaught = (GameState.honeyCaught || 0) + 1;
+                    GameState.streak++;
+                    GameState.combo = clamp(1 + GameState.streak * 0.05, 1, 2.5);
+                    
+                    const points = h.type === "gold" ? 25 : 10;
+                    GameState.score += Math.round(points * GameState.combo);
+                    
+                    playSound(523.25); // Collect sound
+                    honeys.splice(i, 1);
+                    updateHUD();
+                    
+                    // Check for game over
+                    if (GameState.lives <= 0) {
+                        gameOver();
+                    }
+                    continue;
+                }
+                
+                // Remove if off screen
+                if (h.y > BASE_H + 60) {
+                    honeys.splice(i, 1);
+                    GameState.streak = Math.max(0, GameState.streak - 1);
+                    GameState.combo = clamp(1 + GameState.streak * 0.05, 1, 2.5);
+                }
+            }
+            
+            // Update bees
+            for (let i = bees.length - 1; i >= 0; i--) {
+                const b = bees[i];
+                b.x += b.vx;
+                b.y += b.vy;
+                
+                // Bounce off walls
+                if (b.x < b.r || b.x > BASE_W - b.r) {
+                    b.vx *= -1;
+                }
+                
+                // Check collision with player
+                if (distance(player.x, player.y, b.x, b.y) < player.r + b.r) {
+                    // Hit by bee
+                    GameState.lives--;
+                    GameState.streak = 0;
+                    GameState.combo = 1.0;
+                    
+                    playSound(220); // Hit sound
+                    bees.splice(i, 1);
+                    updateHUD();
+                    
+                    // Check for game over
+                    if (GameState.lives <= 0) {
+                        gameOver();
+                    }
+                    continue;
+                }
+                
+                // Remove if off screen
+                if (b.y > BASE_H + 60) {
+                    bees.splice(i, 1);
+                }
+            }
         }
-      } catch (err) {
-        console.log('Share failed:', err);
-        Story.toast("Couldn't share, but that's okay.", 1800);
-      }
+        
+        // Draw everything
+        drawBackground();
+        honeys.forEach(drawHoney);
+        bees.forEach(drawBee);
+        drawPlayer();
+        
+        requestAnimationFrame(gameLoop);
     }
-    addPress($("share-btn"), shareScore);
-    addPress($("share-final-btn"), shareScore);
-
-    const openLB = () => {
-      openOverlay("leaderboard-screen");
-      Leaderboard.render();
-    };
-    addPress($("leaderboard-btn-main"), openLB);
-    addPress($("leaderboard-btn"), openLB);
-    addPress($("close-leaderboard-btn"), () => closeOverlay("leaderboard-screen"));
-    addPress($("refresh-leaderboard"), () => {
-      Leaderboard.render();
-      Story.toast("Rabbit: Updated.", 1600);
-    });
-    addPress($("clear-leaderboard"), () => {
-      Leaderboard.clear();
-      Story.toast("Eeyore: Nobody's winning now.", 2000);
-    });
-
-    const openDaily = () => {
-      openOverlay("daily-challenge-screen");
-      Daily.renderAll();
-    };
-    addPress($("daily-challenge-btn"), openDaily);
-    addPress($("close-daily-btn"), () => closeOverlay("daily-challenge-screen"));
-    addPress($("start-daily-challenge"), () => {
-      closeOverlay("daily-challenge-screen");
-      startGame();
-      Story.toast("Pooh: Today's challenge. That sounds busy.", 2200);
-    });
-
-    addPress($("weather-toggle"), () => {
-      weatherDrawer?.classList.add("open");
-      Story.toast("Pooh: Weather is important. For moods.", 2000);
-    });
-    addPress($("weather-close"), () => weatherDrawer?.classList.remove("open"));
-
-    document.querySelectorAll(".weather-btn").forEach((btn) => {
-      addPress(btn, () => {
-        document.querySelectorAll(".weather-btn").forEach((b) => b.classList.remove("active"));
-        btn.classList.add("active");
-        GameState.weather = btn.dataset.weather || "clear";
-        Storage.set("gameSettings", { ...Storage.get("gameSettings", {}), weather: GameState.weather });
-        WeatherFX.clearAll();
-      });
-    });
-
-    const intensity = $("weather-intensity");
-    if (intensity) {
-      intensity.value = String(GameState.weatherIntensity || 5);
-      intensity.addEventListener("input", () => {
-        GameState.weatherIntensity = clamp(Number(intensity.value) || 5, 1, 10);
-        Storage.set("gameSettings", { ...Storage.get("gameSettings", {}), weatherIntensity: GameState.weatherIntensity });
-      });
+    
+    // Start game
+    function startGame() {
+        GameState.running = true;
+        GameState.paused = false;
+        GameState.score = 0;
+        GameState.lives = 3;
+        GameState.combo = 1.0;
+        GameState.streak = 0;
+        
+        honeys.length = 0;
+        bees.length = 0;
+        
+        player.x = BASE_W / 2;
+        targetX = player.x;
+        
+        // Close all overlays
+        document.querySelectorAll('.overlay-content').forEach(el => {
+            el.classList.add('hidden');
+        });
+        
+        updateHUD();
+        playSound(783.99); // Start sound
     }
-
-    addPress($("virtual-joystick-toggle"), () => {
-      const on = !$("virtual-joystick")?.classList.contains("active");
-      Joy.setActive(on);
-      Story.toast(on ? "Tigger: Ooo! A bouncy control thing!" : "Rabbit: Back to sensible controls.", 2000);
-    });
-  }
-
-  /* ======================= LOADING SCREEN ======================= */
-  function initLoading() {
-    const loadingScreen = $("loading-screen");
-    const progress = $("loading-progress");
-    const tip = $("loading-tip");
-    if (!loadingScreen || !progress || !tip) return;
-
-    const tips = [
-      "You always play as Pooh — his friends pop in when it matters.",
-      "Honey is splendid. Bees are... less splendid.",
-      "Move left and right. Try not to look too surprised about it.",
-      "Golden honey is extra lovely — like finding a good idea twice.",
-      "If things get tricky, pause and take a small think.",
-    ];
-
-    let loadProgress = 0;
-    let lastBucket = -1;
-
-    const interval = setInterval(() => {
-      loadProgress += Math.random() * 10 + 6;
-      if (loadProgress >= 100) {
-        loadProgress = 100;
-        clearInterval(interval);
+    
+    // Game over
+    function gameOver() {
+        GameState.running = false;
+        
+        // Update final score display
+        $('final-score').textContent = GameState.score;
+        $('final-total').textContent = GameState.score;
+        $('final-streak').textContent = GameState.streak;
+        $('final-honey').textContent = GameState.honeyCaught || 0;
+        
+        // Show game over screen
+        $('gameover-screen').classList.remove('hidden');
+    }
+    
+    // UI Event Handlers - SIMPLE AND DIRECT
+    function setupUI() {
+        // Start game buttons
+        $('start-btn').onclick = startGame;
+        $('quick-start').onclick = startGame;
+        $('play-again-btn').onclick = startGame;
+        $('restart-btn').onclick = startGame;
+        
+        // Close buttons
+        $('close-start').onclick = function() {
+            $('start-screen').classList.add('hidden');
+        };
+        
+        $('close-settings').onclick = function() {
+            $('settings-screen').classList.add('hidden');
+        };
+        
+        $('gameover-close').onclick = function() {
+            $('gameover-screen').classList.add('hidden');
+            $('start-screen').classList.remove('hidden');
+        };
+        
+        // Pause/Resume
+        $('pause-toggle').onclick = function() {
+            if (GameState.running) {
+                GameState.paused = !GameState.paused;
+                if (GameState.paused) {
+                    $('pause-screen').classList.remove('hidden');
+                } else {
+                    $('pause-screen').classList.add('hidden');
+                }
+            }
+        };
+        
+        $('resume-btn').onclick = function() {
+            GameState.paused = false;
+            $('pause-screen').classList.add('hidden');
+        };
+        
+        $('continue-btn').onclick = function() {
+            GameState.paused = false;
+            $('pause-screen').classList.add('hidden');
+        };
+        
+        // Quit to menu
+        $('quit-btn').onclick = function() {
+            GameState.running = false;
+            GameState.paused = false;
+            $('pause-screen').classList.add('hidden');
+            $('start-screen').classList.remove('hidden');
+        };
+        
+        // Settings
+        $('settings-btn').onclick = function() {
+            $('settings-screen').classList.remove('hidden');
+        };
+        
+        $('save-settings').onclick = function() {
+            GameState.soundEnabled = $('sound-toggle-setting').checked;
+            GameState.visualEffects = $('effects-toggle-setting').checked;
+            $('settings-screen').classList.add('hidden');
+            playSound(659.25); // Success sound
+        };
+        
+        // Sound toggle
+        $('sound-toggle-btn').onclick = function() {
+            GameState.soundEnabled = !GameState.soundEnabled;
+            const icon = $('sound-toggle-btn').querySelector('i');
+            icon.className = GameState.soundEnabled ? 'fas fa-volume-up' : 'fas fa-volume-mute';
+            playSound(523.25);
+        };
+        
+        // Share button
+        $('share-btn').onclick = $('share-final-btn').onclick = async function() {
+            const text = `I scored ${GameState.score} points in Pooh's Honey Hunt! 🍯`;
+            try {
+                if (navigator.share) {
+                    await navigator.share({ text });
+                } else if (navigator.clipboard) {
+                    await navigator.clipboard.writeText(text);
+                    alert('Score copied to clipboard!');
+                }
+            } catch (err) {
+                console.log('Share failed:', err);
+            }
+        };
+        
+        // Menu button
+        $('menu-toggle').onclick = function() {
+            if (GameState.running && !GameState.paused) {
+                GameState.paused = true;
+                $('pause-screen').classList.remove('hidden');
+            } else {
+                $('start-screen').classList.remove('hidden');
+            }
+        };
+        
+        // Tutorial
+        $('tutorial-btn').onclick = function() {
+            $('tutorial-overlay').classList.remove('hidden');
+        };
+        
+        $('tutorial-start').onclick = function() {
+            $('tutorial-overlay').classList.add('hidden');
+            startGame();
+        };
+        
+        $('tutorial-next').onclick = function() {
+            $('tutorial-step-1').classList.remove('active');
+            $('tutorial-step-2').classList.add('active');
+        };
+        
+        $('tutorial-next-2').onclick = function() {
+            $('tutorial-step-2').classList.remove('active');
+            $('tutorial-step-3').classList.add('active');
+        };
+        
+        $('tutorial-prev').onclick = function() {
+            $('tutorial-step-2').classList.remove('active');
+            $('tutorial-step-1').classList.add('active');
+        };
+        
+        $('tutorial-prev-2').onclick = function() {
+            $('tutorial-step-3').classList.remove('active');
+            $('tutorial-step-2').classList.add('active');
+        };
+        
+        // Help button
+        $('help-btn').onclick = function() {
+            $('tutorial-overlay').classList.remove('hidden');
+        };
+        
+        // Weather button (placeholder)
+        $('weather-toggle').onclick = function() {
+            playSound(523.25);
+            alert('Weather effects coming soon!');
+        };
+        
+        // Achievements button
+        $('achievements-pill').onclick = function() {
+            playSound(523.25);
+            alert('Achievements coming soon!');
+        };
+        
+        // Initialize settings checkboxes
+        $('sound-toggle-setting').checked = GameState.soundEnabled;
+        $('effects-toggle-setting').checked = GameState.visualEffects;
+    }
+    
+    // Loading screen
+    function initLoading() {
+        const loadingScreen = $('loading-screen');
+        const progress = $('loading-progress');
+        const tip = $('loading-tip');
+        
+        const tips = [
+            "You always play as Pooh — his friends pop in when it matters.",
+            "Honey is splendid. Bees are... less splendid.",
+            "Move left and right. Try not to look too surprised about it.",
+            "Golden honey is extra lovely — like finding a good idea twice.",
+            "If things get tricky, pause and take a small think.",
+        ];
+        
+        let loadProgress = 0;
+        let lastBucket = -1;
+        
+        const interval = setInterval(() => {
+            loadProgress += Math.random() * 10 + 6;
+            if (loadProgress >= 100) {
+                loadProgress = 100;
+                clearInterval(interval);
+                setTimeout(() => {
+                    loadingScreen.classList.add('hidden');
+                    $('start-screen').classList.remove('hidden');
+                }, 300);
+            }
+            
+            progress.style.width = loadProgress + '%';
+            
+            const bucket = Math.floor(loadProgress / 25);
+            if (bucket !== lastBucket) {
+                lastBucket = bucket;
+                tip.textContent = tips[Math.floor(Math.random() * tips.length)];
+            }
+        }, 100);
+        
+        // Failsafe
         setTimeout(() => {
-          loadingScreen.classList.add("hidden");
-          $("start-screen")?.classList.remove("hidden");
-          document.body.classList.add("overlay-open");
-          Daily.renderAll();
-          Leaderboard.render();
-          Achievements.render();
-          Achievements.updateCount();
-        }, 280);
-      }
-
-      progress.style.width = `${loadProgress}%`;
-
-      const bucket = Math.floor(loadProgress / 25);
-      if (bucket !== lastBucket) {
-        lastBucket = bucket;
-        tip.textContent = tips[(Math.random() * tips.length) | 0];
-      }
-    }, 100);
-
-    setTimeout(() => {
-      if (!loadingScreen.classList.contains("hidden")) {
-        loadingScreen.classList.add("hidden");
-        $("start-screen")?.classList.remove("hidden");
-        document.body.classList.add("overlay-open");
-        Daily.renderAll();
-        Leaderboard.render();
-        Achievements.render();
-        Achievements.updateCount();
-      }
-    }, 3200);
-  }
-
-  /* ======================= LAYOUT ======================= */
-  const Layout = (() => {
-    const container = $("game-container");
-    const gameLayer = $("game-layer");
-
-    let lastKey = "";
-    let stableVH = window.visualViewport?.height || window.innerHeight || 700;
-
-    function getVH() {
-      const vv = window.visualViewport;
-      if (vv && typeof vv.height === "number") stableVH = vv.height;
-      else if (typeof window.innerHeight === "number") stableVH = window.innerHeight;
-      return Math.max(420, stableVH);
+            if (!loadingScreen.classList.contains('hidden')) {
+                loadingScreen.classList.add('hidden');
+                $('start-screen').classList.remove('hidden');
+            }
+        }, 3000);
     }
-
-    function apply() {
-      if (!container || !canvas) return;
-
-      const vh = getVH();
-      const hud = $("hud");
-      const hudH = hud ? hud.getBoundingClientRect().height : 0;
-
-      const gls = gameLayer ? getComputedStyle(gameLayer) : null;
-      const safeTop = gls ? (parseFloat(gls.paddingTop) || 0) : 0;
-      const safeBottom = gls ? (parseFloat(gls.paddingBottom) || 0) : 0;
-
-      const topPad = 15;
-      const bottomPad = 20;
-
-      const availableH = Math.max(
-        380,
-        vh - hudH - topPad - bottomPad - safeTop - safeBottom
-      );
-
-      const contW = container.getBoundingClientRect().width || GAME_CONFIG.BASE_W;
-
-      const desiredW = availableH * (GAME_CONFIG.BASE_W / GAME_CONFIG.BASE_H);
-      const finalW = clamp(desiredW, 300, Math.min(contW, 500));
-      const finalH = finalW * (GAME_CONFIG.BASE_H / GAME_CONFIG.BASE_W);
-
-      const key = `${Math.round(vh)}|${Math.round(hudH)}|${Math.round(contW)}|${Math.round(finalW)}|${Math.round(finalH)}`;
-      if (key === lastKey) return;
-      lastKey = key;
-
-      container.style.display = "flex";
-      container.style.alignItems = "center";
-      container.style.justifyContent = "center";
-      container.style.padding = "10px";
-      container.style.minHeight = `${Math.round(finalH)}px`;
-      container.style.maxHeight = `${Math.round(finalH)}px`;
-
-      canvas.style.width = `${Math.round(finalW)}px`;
-      canvas.style.height = `${Math.round(finalH)}px`;
-      canvas.style.maxWidth = "100%";
-      canvas.style.maxHeight = "100%";
-
-      document.body.style.overflow = "hidden";
-      document.documentElement.style.overflow = "hidden";
-    }
-
-    function bind() {
-      let r = 0;
-      const req = () => {
-        if (r) cancelAnimationFrame(r);
-        r = requestAnimationFrame(apply);
-      };
-
-      window.addEventListener("resize", req, { passive: true });
-      window.addEventListener("orientationchange", req, { passive: true });
-
-      if (window.visualViewport) {
-        window.visualViewport.addEventListener("resize", req, { passive: true });
-        window.visualViewport.addEventListener("scroll", req, { passive: true });
-      }
-
-      setTimeout(apply, 60);
-      setTimeout(apply, 260);
-      apply();
-    }
-
-    return { bind, apply };
-  })();
-
-  /* ======================= VISIBILITY HANDLING ======================= */
-  document.addEventListener('visibilitychange', () => {
-    if (document.hidden && GameState.running && !GameState.paused) {
-      GameState.paused = true;
-      Overlays.open('pause');
-      Story.toast("Pooh: Taking a small pause?", 2000);
-    }
-  });
-
-  /* ======================= LOOP ======================= */
-  let last = 0;
-  function loop(t) {
-    const dt = Math.min(64, t - last || 0);
-    last = t;
-
-    updateGame(dt);
-    renderGame();
-
-    if (GameState.visualEffects !== false) WeatherFX.tick(dt);
-
-    requestAnimationFrame(loop);
-  }
-
-  /* ======================= INIT ======================= */
-  function init() {
-    console.log('Initializing game...');
-    fixIOSCanvas();
-    Joy.attach();
-    Layout.bind();
-    Layout.apply();
-
-    setupUI();
-    Daily.renderAll();
-    Leaderboard.render();
-    Achievements.render();
-    Achievements.updateCount();
-    updateHUD();
-
-    initLoading();
-    requestAnimationFrame(loop);
     
-    console.log('Game initialized successfully');
-  }
-
-  if (document.readyState === "loading") {
-    document.addEventListener("DOMContentLoaded", init);
-  } else {
-    setTimeout(init, 50);
-  }
+    // Responsive canvas
+    function resizeCanvas() {
+        const container = $('game-container');
+        const hud = $('hud');
+        
+        const hudHeight = hud.getBoundingClientRect().height;
+        const availableHeight = window.innerHeight - hudHeight - 40;
+        
+        const aspectRatio = BASE_W / BASE_H;
+        let canvasWidth = container.clientWidth;
+        let canvasHeight = canvasWidth / aspectRatio;
+        
+        if (canvasHeight > availableHeight) {
+            canvasHeight = availableHeight;
+            canvasWidth = canvasHeight * aspectRatio;
+        }
+        
+        canvas.style.width = canvasWidth + 'px';
+        canvas.style.height = canvasHeight + 'px';
+    }
+    
+    // Initialize everything
+    function init() {
+        console.log('Initializing game...');
+        
+        setupUI();
+        initLoading();
+        resizeCanvas();
+        
+        window.addEventListener('resize', resizeCanvas);
+        window.addEventListener('orientationchange', resizeCanvas);
+        
+        // Start game loop
+        requestAnimationFrame(gameLoop);
+        
+        console.log('Game initialized successfully');
+    }
+    
+    // Start when DOM is ready
+    if (document.readyState === 'loading') {
+        document.addEventListener('DOMContentLoaded', init);
+    } else {
+        setTimeout(init, 100);
+    }
 })();
 </script>
 </body>
