@@ -1837,6 +1837,72 @@
                 animation-duration: 1s !important;
             }
         }
+
+        /* =========================================================
+   UX PATCH: THUMB-FIRST HUD + SAFE-AREA
+   ========================================================= */
+
+        /* Give interactive UI priority; keep game drag from stealing taps */
+        .hud,
+        .pause-pill,
+        .settings-panel,
+        .overlay,
+        .tutorial-overlay {
+            pointer-events: auto;
+        }
+
+        #game-container {
+            pointer-events: none;
+        }
+
+        /* items already pointer-events:none */
+
+        /* Make settings button a real tap target */
+        #settingsBtn {
+            min-width: 44px;
+            min-height: 44px;
+            border-radius: 12px;
+            display: inline-flex;
+            align-items: center;
+            justify-content: center;
+        }
+
+        /* Mobile / touch devices: dock HUD at bottom */
+        @media (hover: none) and (pointer: coarse) {
+            .hud {
+                top: auto;
+                bottom: calc(12px + var(--safe-bottom));
+                left: 12px;
+                right: 12px;
+                padding: 12px 14px;
+                border-radius: 22px;
+            }
+
+            /* Don’t compact-hide the HUD on mobile; it causes “where did it go?” */
+            .hud.compact {
+                transform: none !important;
+                opacity: 1 !important;
+            }
+
+            /* Keep toast lane above the bottom HUD */
+            .toast-lane {
+                top: auto;
+                bottom: calc(110px + var(--safe-bottom));
+            }
+
+            /* Pause pill should not fight the HUD; anchor it just above HUD */
+            .pause-pill {
+                right: 12px;
+                bottom: calc(98px + var(--safe-bottom));
+                padding: 10px 14px;
+            }
+
+            /* Reduce accidental UI overlap */
+            .powerup-status {
+                top: 14px;
+                right: 12px;
+            }
+        }
     </style>
 </head>
 
@@ -1856,7 +1922,7 @@
     <div class="stage">
         <div class="game-frame" id="frame">
             <div id="game-container"></div>
-
+            <div class="toast-lane" id="toastLane" aria-live="polite" aria-atomic="true"></div>
             <!-- Settings Panel -->
             <div class="settings-panel" id="settingsPanel">
                 <div class="setting-item">
@@ -3141,6 +3207,13 @@
             function onPointerDown(e) {
                 if (!state.running || state.paused) return;
 
+                // ✅ Ignore taps on UI (prevents “buttons don’t work” feel)
+                const ui = e.target?.closest?.(
+                    ".hud, .pause-pill, .settings-panel, .overlay, .tutorial-overlay, button, input, label"
+                );
+                if (ui) return;
+
+                // Ignore joystick area
                 if (e.target && (e.target.id === "joystick" || e.target.id === "joystick-handle" ||
                         e.target.closest?.("#joystick"))) return;
 
